@@ -333,7 +333,7 @@
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
     <div id="instructionText">Kippe den Würfel in der Box in beliebige Richtung und langsam von Ecke zu Ecke. Merke dir möglichst viele Zahlenpositionen.<br>Wenn du bereit bist, dann decke hier links dein erstes von sechs KIPP-Zielen auf.</div>
-    <img id="verdecktesKippziel" src="leernohit.webp" style="display:block;">
+    <img id="verdecktesKippziel" src="leernohit.webp" style="display:none;">
     <div id="brainScore"></div>
     <div id="countdown">60</div>
     <button id="actionButton">weiter</button>
@@ -560,6 +560,19 @@
 
       gameCards.push({ mesh: plane, canvas: canvas, ctx: ctx, texture: texture });
     }
+    
+    // === Verdecktes Kippziel als 3D-Mesh auf dem Spieltisch ===
+    const verdecktesTexture = new THREE.TextureLoader().load('leernohit.webp');
+    const verdecktesGeo = new THREE.PlaneGeometry(cardWidth, cardHeight);
+    const verdecktesMat = new THREE.MeshBasicMaterial({ 
+      map: verdecktesTexture, 
+      side: THREE.DoubleSide,
+      transparent: true
+    });
+    const verdecktesMesh = new THREE.Mesh(verdecktesGeo, verdecktesMat);
+    verdecktesMesh.rotation.x = -Math.PI / 2;
+    verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ); // knapp über Spieltisch
+    scene.add(verdecktesMesh);
     // =========================
     // GRADIENT SCHATTEN ÜBER KÄRTCHEN
     // =========================
@@ -1660,7 +1673,7 @@
       hintText.style.display = 'none';
       actionButton.style.display = 'none';
       document.getElementById('instructionText').style.display = 'none';
-      document.getElementById('verdecktesKippziel').style.display = 'none';
+      verdecktesMesh.visible = false;
       document.getElementById('richtungButtons').classList.remove('hidden');
       kippButtons.classList.remove('hidden');
 
@@ -1711,9 +1724,40 @@
       }
     });
     
-    // verdecktes Kippziel Click-Handler
-    document.getElementById('verdecktesKippziel').addEventListener('click', () => {
-      if (gamePhase === 'kippen') {
+    // verdecktes Kippziel Tap-Erkennung (Raycaster)
+    const vkRaycaster = new THREE.Raycaster();
+    const vkMouse = new THREE.Vector2();
+    let lastTouchPos = null;
+    
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      if (gamePhase === 'kippen' && verdecktesMesh.visible) {
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    }, { passive: true });
+    
+    renderer.domElement.addEventListener('touchend', (e) => {
+      if (gamePhase !== 'kippen' || !verdecktesMesh.visible || !lastTouchPos) return;
+      if (dragActive) { lastTouchPos = null; return; }
+      
+      const rect = renderer.domElement.getBoundingClientRect();
+      vkMouse.x = ((lastTouchPos.x - rect.left) / rect.width) * 2 - 1;
+      vkMouse.y = -((lastTouchPos.y - rect.top) / rect.height) * 2 + 1;
+      vkRaycaster.setFromCamera(vkMouse, camera);
+      
+      if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
+        phaseKippenToSpielen();
+      }
+      lastTouchPos = null;
+    }, { passive: true });
+    
+    // Desktop-Klick Fallback
+    renderer.domElement.addEventListener('click', (e) => {
+      if (gamePhase !== 'kippen' || !verdecktesMesh.visible) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      vkRaycaster.setFromCamera(vkMouse, camera);
+      if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
         phaseKippenToSpielen();
       }
     });
@@ -1729,7 +1773,7 @@
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
       document.getElementById('instructionText').style.display = 'block';
-      document.getElementById('verdecktesKippziel').style.display = 'block';
+      verdecktesMesh.visible = true;
       kippButtons.classList.add('hidden');
       document.getElementById('richtungButtons').classList.add('hidden');
       
@@ -2440,6 +2484,16 @@
     // Animation loop
     function renderLoop() {
       requestAnimationFrame(renderLoop);
+      
+      // Puls-Animation für verdecktes Kippziel
+      if (verdecktesMesh.visible) {
+        const t = (Date.now() % 1500) / 1500 * Math.PI * 2;
+        const pulse = (Math.sin(t) + 1) / 2; // 0 bis 1
+        const s = 1 + 0.08 * pulse;
+        verdecktesMesh.scale.set(s, s, s);
+        verdecktesMat.opacity = 1 - 0.4 * pulse;
+      }
+      
       renderer.render(scene, camera);
     }
 
