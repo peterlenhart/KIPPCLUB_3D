@@ -1661,49 +1661,6 @@
     
     // Flag um Demo-Animation abbrechen zu können
     let isDemoAnimating = false;
-    let demoSavedPos = null;
-    let demoSavedQuat = null;
-    
-    // Demo-Konfiguration pro Quadrant (exakte Offsets)
-    // W1 = vertikaler Wobble, W2 = horizontaler Wobble
-    const DEMO_Q = {
-      3: { // SW → push Nord + Ost (ORIGINAL)
-        w1Axis: new THREE.Vector3(1,0,0), w1Sign: -1,
-        w2Axis: new THREE.Vector3(0,0,1), w2Sign: -1,
-        handW1Dx: -0.15625, handW1Dz: +0.46875, handW1Rot: 0,
-        handW2Dx: -0.59,    handW2Dz:  0,        handW2Rot: -Math.PI/2,
-        w1Move: 'z', w1Dir: -1,  // Hand bewegt sich nach Nord (z-)
-        w2Move: 'x', w2Dir: +1,  // Hand bewegt sich nach Ost (x+)
-        scaleX: 1
-      },
-      2: { // SE → push Nord + West
-        w1Axis: new THREE.Vector3(1,0,0), w1Sign: -1,
-        w2Axis: new THREE.Vector3(0,0,1), w2Sign: +1,
-        handW1Dx: +0.15625, handW1Dz: +0.46875, handW1Rot: 0,
-        handW2Dx: +0.59,    handW2Dz:  0,        handW2Rot: Math.PI/2,
-        w1Move: 'z', w1Dir: -1,
-        w2Move: 'x', w2Dir: -1,
-        scaleX: -1
-      },
-      1: { // NE → push Süd + West
-        w1Axis: new THREE.Vector3(1,0,0), w1Sign: +1,
-        w2Axis: new THREE.Vector3(0,0,1), w2Sign: +1,
-        handW1Dx: +0.15625, handW1Dz: -0.46875, handW1Rot: Math.PI,
-        handW2Dx: +0.59,    handW2Dz:  0,        handW2Rot: Math.PI/2,
-        w1Move: 'z', w1Dir: +1,
-        w2Move: 'x', w2Dir: -1,
-        scaleX: -1
-      },
-      0: { // NW → push Süd + Ost
-        w1Axis: new THREE.Vector3(1,0,0), w1Sign: +1,
-        w2Axis: new THREE.Vector3(0,0,1), w2Sign: -1,
-        handW1Dx: -0.15625, handW1Dz: -0.46875, handW1Rot: Math.PI,
-        handW2Dx: -0.59,    handW2Dz:  0,        handW2Rot: -Math.PI/2,
-        w1Move: 'z', w1Dir: +1,
-        w2Move: 'x', w2Dir: +1,
-        scaleX: 1
-      }
-    };
     
     function startCountdown(onFinish, maxTime) {
       let timeElapsed = 0;
@@ -1743,131 +1700,157 @@
     }
     
     function startDemoAnimation() {
-      const qc = DEMO_Q[currentQuadrant];
-      const handY = 0.001 + 3 * 0.15625 + 0.15;
-      
-      // Cube-Zustand speichern (für Restore bei User-Touch)
-      demoSavedPos = cube.position.clone();
-      demoSavedQuat = cube.quaternion.clone();
+      // Hand auf Ursprungsposition zurücksetzen
+      handDemo.position.copy(handOriginalPos);
+      handDemo.visible = true;
+      handDemo.rotation.z = 0; // Initial keine Drehung
       
       const cubeStart = cube.position.clone();
       const cubeStartRot = cube.quaternion.clone();
+      const handStart = handDemo.position.clone();
       
-      // Hand-Positionen relativ zum Würfel
-      const handW1Pos = new THREE.Vector3(cubeStart.x + qc.handW1Dx, handY, cubeStart.z + qc.handW1Dz);
-      const handW2Pos = new THREE.Vector3(cubeStart.x + qc.handW2Dx, handY, cubeStart.z + qc.handW2Dz);
+      const wippAngle = 20 * Math.PI / 180; // 20° Aufkipp-Winkel
+      const wippDuration = 800; // ms pro Wipp
+      const pauseBetween = 250; // ms Pause zwischen Wipps (reduziert)
       
-      // Hand starten bei Wobble1-Position
-      handDemo.position.copy(handW1Pos);
-      handDemo.visible = true;
-      handDemo.rotation.z = qc.handW1Rot;
-      handDemo.scale.x = qc.scaleX;
-      
-      const wippAngle = 20 * Math.PI / 180;
-      const wippDuration = 800;
-      const pauseBetween = 250;
-      
-      // Wobble 1 (vertikal)
-      function wipp1() {
+      // Wipp Richtung Q0 (Nord, um X-Achse)
+      function wippNord() {
         return new Promise(resolve => {
           isDemoAnimating = true;
-          showTextAtWobble();
-          handDemo.position.copy(handW1Pos);
-          handDemo.rotation.z = qc.handW1Rot;
-          handDemo.scale.x = qc.scaleX;
+          showTextAtWobble(); // Text genau beim Wobble-Start
           const startTime = performance.now();
-          function anim(now) {
-            if (!isDemoAnimating) { resolve(); return; }
-            const t = Math.min((now - startTime) / wippDuration, 1);
-            const angle = Math.sin(t * Math.PI) * wippAngle;
+          function animateWippNord(currentTime) {
+            if (!isDemoAnimating) {
+              resolve();
+              return;
+            }
+            const elapsed = currentTime - startTime;
+            const t = Math.min(elapsed / wippDuration, 1);
+            const angle = Math.sin(t * Math.PI) * wippAngle; // Hin und zurück
             
-            // WORLD-Frame Wobble: premultiply statt multiply
-            const wobbleQuat = new THREE.Quaternion().setFromAxisAngle(qc.w1Axis, qc.w1Sign * angle);
+            // Würfel wippen
             cube.quaternion.copy(cubeStartRot);
-            cube.quaternion.premultiply(wobbleQuat);
+            cube.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle)); // Negativ für Nord
             
+            // Hand synchron bewegen (z-Richtung, nach hinten/Nord)
             const handOffset = Math.sin(t * Math.PI) * 0.1;
-            handDemo.position[qc.w1Move] = handW1Pos[qc.w1Move] + qc.w1Dir * handOffset;
+            handDemo.position.z = handStart.z - handOffset; // Nach Nord (kleinerer z-Wert)
             
-            if (t < 1) { requestAnimationFrame(anim); }
-            else {
+            if (t < 1) {
+              requestAnimationFrame(animateWippNord);
+            } else {
+              // Zurück zur Ausgangslage
               cube.quaternion.copy(cubeStartRot);
               cube.position.copy(cubeStart);
-              handDemo.position.copy(handW1Pos);
+              handDemo.position.copy(handStart);
+              handDemo.rotation.z = 0; // Rotation zurücksetzen
               isDemoAnimating = false;
               setTimeout(resolve, pauseBetween);
             }
           }
-          requestAnimationFrame(anim);
+          requestAnimationFrame(animateWippNord);
         });
       }
       
-      // Wobble 2 (horizontal)
-      function wipp2() {
+      // Wipp Richtung Q2 (Ost, um Z-Achse)
+      function wippOst() {
         return new Promise(resolve => {
           isDemoAnimating = true;
-          showTextAtWobble();
-          handDemo.position.copy(handW2Pos);
-          handDemo.rotation.z = qc.handW2Rot;
-          handDemo.scale.x = qc.scaleX;
+          showTextAtWobble(); // Text genau beim Wobble-Start
+          // Hand für Ost-Kipp neu positionieren (3 Zellen nördlicher, 2.77 Zellen westlicher)
+          const handQ2PosZ = handStart.z - 0.46875;
+          const handQ2PosX = handStart.x - 0.43375;
+          handDemo.position.set(handQ2PosX, handDemo.position.y, handQ2PosZ);
+          const handStartQ2 = handDemo.position.clone();
+          handDemo.rotation.z = -Math.PI / 2; // 90° cw gedreht
+          
           const startTime = performance.now();
-          function anim(now) {
-            if (!isDemoAnimating) { resolve(); return; }
-            const t = Math.min((now - startTime) / wippDuration, 1);
+          function animateWippOst(currentTime) {
+            if (!isDemoAnimating) {
+              resolve();
+              return;
+            }
+            const elapsed = currentTime - startTime;
+            const t = Math.min(elapsed / wippDuration, 1);
             const angle = Math.sin(t * Math.PI) * wippAngle;
             
-            // WORLD-Frame Wobble
-            const wobbleQuat = new THREE.Quaternion().setFromAxisAngle(qc.w2Axis, qc.w2Sign * angle);
+            // Würfel wippen
             cube.quaternion.copy(cubeStartRot);
-            cube.quaternion.premultiply(wobbleQuat);
+            cube.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -angle));
             
+            // Hand synchron bewegen (x-Richtung, nach rechts)
             const handOffset = Math.sin(t * Math.PI) * 0.1;
-            handDemo.position[qc.w2Move] = handW2Pos[qc.w2Move] + qc.w2Dir * handOffset;
+            handDemo.position.x = handStartQ2.x + handOffset;
             
-            if (t < 1) { requestAnimationFrame(anim); }
-            else {
+            if (t < 1) {
+              requestAnimationFrame(animateWippOst);
+            } else {
+              // Zurück zur Ausgangslage
               cube.quaternion.copy(cubeStartRot);
               cube.position.copy(cubeStart);
-              handDemo.position.copy(handW1Pos);
-              handDemo.rotation.z = qc.handW1Rot;
+              handDemo.position.copy(handStart); // Zurück zur Original-Position!
+              handDemo.rotation.z = 0; // Rotation zurücksetzen
               isDemoAnimating = false;
               setTimeout(resolve, pauseBetween);
             }
           }
-          requestAnimationFrame(anim);
+          requestAnimationFrame(animateWippOst);
         });
       }
       
-      // Demo-Loop: W1 → W2 → W1, Pause, repeat
+      // Demo-Loop: Wobbles immer N-O-N, dann Pause, wieder N-O-N...
       function demoLoop() {
-        if (gamePhase !== 'demo') { handDemo.visible = false; return; }
+        if (gamePhase !== 'demo') {
+          handDemo.visible = false;
+          return;
+        }
         
-        wipp1()
+        // Immer N → O → N
+        wippNord()
           .then(() => {
-            if (gamePhase !== 'demo') { handDemo.visible = false; return Promise.reject('end'); }
-            return wipp2();
+            if (gamePhase !== 'demo') {
+              handDemo.visible = false;
+              return Promise.reject('demo ended');
+            }
+            return wippOst();
           })
           .then(() => {
-            if (gamePhase !== 'demo') { handDemo.visible = false; return Promise.reject('end'); }
+            if (gamePhase !== 'demo') {
+              handDemo.visible = false;
+              return Promise.reject('demo ended');
+            }
+            // Pause zwischen "SCHAUEN" und "MERKEN": +0,4 Sek (reduziert)
             return new Promise(resolve => setTimeout(resolve, 400));
           })
           .then(() => {
-            if (gamePhase !== 'demo') { handDemo.visible = false; return Promise.reject('end'); }
-            return wipp1();
+            if (gamePhase !== 'demo') {
+              handDemo.visible = false;
+              return Promise.reject('demo ended');
+            }
+            return wippNord();
           })
           .then(() => {
-            if (gamePhase !== 'demo') { handDemo.visible = false; return; }
+            if (gamePhase !== 'demo') {
+              handDemo.visible = false;
+              return;
+            }
+            // 3 Wobbles/Texte durch → Hand ausblenden für Pause
             handDemo.visible = false;
+            
+            // Pause 1,5s, dann nächster Zyklus (reduziert)
             setTimeout(() => {
               if (gamePhase === 'demo') {
-                handDemo.position.copy(handW1Pos);
-                handDemo.rotation.z = qc.handW1Rot;
+                // Hand zurücksetzen und wieder sichtbar machen
+                handDemo.position.copy(handStart);
+                handDemo.rotation.z = 0;
                 handDemo.visible = true;
-                demoLoop();
+                demoLoop(); // Nächster Zyklus
               }
             }, 1500);
           })
-          .catch(() => {});
+          .catch(() => {
+            // Demo wurde abgebrochen
+          });
       }
       
       demoLoop();
@@ -2023,7 +2006,7 @@
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = '<b>KIPPEN</b><br>Überlege! Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
+        tutText.innerHTML = '<b>ÜBERLEGE!</b> Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
       }
       tutText.style.display = 'block';
       
@@ -2140,11 +2123,9 @@
       // Nach 1,5s Spielphase starten
       setTimeout(() => {
         if (!gameStarted) {
-          // Erste Runde: volles Setup
           gameStarted = true;
           phaseKippenToSpielen();
         } else {
-          // Folgerunden: leichtgewichtig
           startNextKippRunde();
         }
       }, 1500);
@@ -2252,12 +2233,8 @@
       console.log('Ergebnis:', isHit ? 'TREFFER' : 'MISS');
       
       drawKippzielBorder(isHit);
-      
-      // Nach 1.5s: Kärtchen markieren und weiter
       setTimeout(() => afterKippwertung(isHit), 1500);
     }
-    
-    let firstAfterKipp = true; // Text nur beim ersten Mal
     
     function afterKippwertung(isHit) {
       const card = gameCards[activeCardIdx];
@@ -2279,12 +2256,8 @@
       
       activeCardIdx++;
       
-      if (activeCardIdx >= 6) {
-        showGameEnd();
-        return;
-      }
+      if (activeCardIdx >= 6) { showGameEnd(); return; }
       
-      // Pause nach 3. Kärtchen
       if (activeCardIdx === 3) {
         setButtonsDisabled(true);
         document.getElementById('richtungButtons').classList.add('hidden');
@@ -2297,7 +2270,7 @@
         return;
       }
       
-      // Verdecktes Kippziel an nächsten Kartenplatz
+      // Nächstes verdecktes Kippziel pulsierend am nächsten Platz
       const nextCardX = cardStartX + activeCardIdx * (cardWidth + cardGap);
       verdecktesMesh.position.set(nextCardX, cardY + 0.001, cardZ);
       drawLeernohitOnVerdecktes();
@@ -2306,29 +2279,18 @@
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
       
-      // State reset
       kippzielChecked = false;
       erstesKippziel = null;
       lockedKippDir = null;
       currentDragDir = null;
       
-      // Text nur beim ersten Mal
-      if (firstAfterKipp) {
-        const instrText = document.getElementById('instructionText');
-        instrText.innerHTML = '<b>KIPPEN oder SCHAUEN</b><br><br>• Würfelschauen, danach nächstes Kippziel öffnen (kostet SCHAU-Sek.)<br><br>• Gleich nächstes Kippziel, nächster Kippzug.';
-        instrText.style.display = 'block';
-        firstAfterKipp = false;
-      } else {
-        document.getElementById('instructionText').style.display = 'none';
-      }
+      // Kein Text – direkt kippen-Phase, Würfel bleibt wo er ist
+      document.getElementById('instructionText').style.display = 'none';
       document.getElementById('tutorialText').style.display = 'none';
-      
-      // Direkt kippen-Phase: Spieler schiebt Würfel (SCHAUEN) oder tippt Kippziel
       gamePhase = 'kippen';
       currentMode = 'kanten';
     }
     
-    // Spielphase für Folgerunden (ab Runde 2)
     function startNextKippRunde() {
       gamePhase = 'spielen';
       currentMode = 'kanten';
@@ -2345,12 +2307,10 @@
       lockedKippDir = null;
       currentDragDir = null;
       
-      // Kärtchen mit Kippziel befüllen
       if (erstesKippziel) {
         fillCardWithKombi(activeCardIdx, erstesKippziel.zahl, erstesKippziel.color);
       }
       
-      // KIPPEN-Text
       const tutText = document.getElementById('tutorialText');
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
@@ -2367,12 +2327,9 @@
       tapCount = 0;
       updateTapIndicators();
       
-      liegeZeiten = [];
-      liegeStartTime = performance.now();
-      
       setButtonsDisabled(false);
     }
-    
+
     function drawKippzielBorder(isHit) {
       if (isHit) {
         // Treffer: goldgelber Rahmen mit Outer Glow
@@ -2474,6 +2431,7 @@
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       drawLeernohitOnVerdecktes();
       verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
+      gameStarted = false;
       kippButtons.classList.add('hidden');
       document.getElementById('richtungButtons').classList.add('hidden');
       
@@ -2485,10 +2443,6 @@
       cube.rotation.set(0, 0, 0);
       currentQuadrant = 3;
       topFace = 'f2'; // Anfangslage zurücksetzen
-      gameStarted = false;
-      firstAfterKipp = true;
-      demoSavedPos = null;
-      demoSavedQuat = null;
       
     });
     
@@ -2523,9 +2477,6 @@
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       gameStarted = false;
-      firstAfterKipp = true;
-      demoSavedPos = null;
-      demoSavedQuat = null;
       verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
       
       gamePhase = 'spielziel';
@@ -2667,11 +2618,11 @@
     renderer.domElement.addEventListener('touchstart', (e) => {
       // Demo-Phase beenden beim ersten Touch
       if (gamePhase === 'demo') {
-        e.preventDefault();
+        e.preventDefault(); // Touch während Demo verarbeiten
         
         gamePhase = 'kippen';
-        isDemoAnimating = false;
-        handDemo.visible = false;
+        isDemoAnimating = false; // Animation sofort stoppen
+        handDemo.visible = false; // Hand sofort ausblenden
         
         // SCHAUEN-Timer jetzt starten (60 Sek)
         startCountdown(() => {
@@ -2680,17 +2631,11 @@
           }
         }, 60);
         
-        // Cube: Wobble-Rotation rückgängig, Position/Quadrant beibehalten
-        if (demoSavedQuat) {
-          cube.quaternion.copy(demoSavedQuat);
-          cube.position.copy(demoSavedPos);
-        } else {
-          // Allererste Demo: Q3/f2
-          cube.quaternion.set(0, 0, 0, 1);
-          cube.position.set(-offset, offset, 0.109375 + offset);
-          currentQuadrant = 3;
-          topFace = 'f2';
-        }
+        // ALLE State-Variablen sauber resetten
+        cube.quaternion.set(0, 0, 0, 1); // Reset zu neutraler Rotation
+        cube.position.set(-offset, offset, 0.109375 + offset);
+        currentQuadrant = 3;
+        topFace = 'f2';
         dragActive = false;
         isAnimating = false;
         
@@ -2794,7 +2739,7 @@
         }
         
         // SCHAUEN-Phase: normaler manueller Drag
-        // Timer beim ersten Drag starten (falls noch nicht läuft)
+        // Timer starten beim ersten Drag (falls noch nicht läuft)
         if (gamePhase === 'kippen' && !countdownTimer) {
           startCountdown(() => {
             if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
