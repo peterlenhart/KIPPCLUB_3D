@@ -108,7 +108,7 @@
     
     #instructionText {
       position: absolute;
-      top: 477px;
+      top: 421px;
       left: 66px;
       width: 284px;
       text-align: left;
@@ -119,6 +119,14 @@
       pointer-events: none;
       line-height: 1.4;
       display: none;
+    }
+    
+    #instructionText .hand-float {
+      float: right;
+      width: 55px;
+      height: auto;
+      margin: 0 0 6px 10px;
+      opacity: 0.85;
     }
     
     #tutorialText {
@@ -362,7 +370,7 @@
   <div id="uiOverlay">
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
-    <div id="instructionText">Kippe den Würfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir möglichst viele Zahlenpositionen.<br>Wenn du bereit bist, dann decke hier links dein erstes von sechs KIPP-Zielen auf.</div>
+    <div id="instructionText">Kippe den Würfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir möglichst viele Zahlenpositionen in möglichst kurzer Zeit.<br>Wenn du bereit bist, dann decke hier links dein erstes von sechs KIPP-Zielen auf.</div>
     <img id="verdecktesKippziel" src="leernohit.webp" style="display:none;">
     <div id="tutorialText"></div>
     <div id="spielZielText"></div>
@@ -1767,7 +1775,7 @@
       setTimeout(() => {
         const szRect = szText.getBoundingClientRect();
         const containerRect = renderer.domElement.getBoundingClientRect();
-        actionButton.style.top = (szRect.bottom - containerRect.top + 22) + 'px';
+        actionButton.style.top = (szRect.bottom - containerRect.top + 32) + 'px';
         actionButton.style.left = '180px';
       }, 10);
     }
@@ -1777,7 +1785,16 @@
     function spielzielToDemoPhase() {
       gamePhase = 'demo';
       document.getElementById('spielZielText').style.display = 'none';
-      document.getElementById('instructionText').style.display = 'block';
+      
+      // Hand-Bild als Float in instructionText einfügen
+      const instrText = document.getElementById('instructionText');
+      if (!instrText.querySelector('.hand-float')) {
+        const handImg = document.createElement('img');
+        handImg.className = 'hand-float';
+        handImg.src = handTexture.image ? handTexture.image.src : '';
+        instrText.insertBefore(handImg, instrText.firstChild);
+      }
+      instrText.style.display = 'block';
       actionButton.style.display = 'none';
       
       // verdecktesMesh zurück auf leernohit + Puls
