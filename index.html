@@ -108,7 +108,7 @@
     
     #instructionText {
       position: absolute;
-      top: 421px;
+      top: 477px;
       left: 66px;
       width: 284px;
       text-align: left;
@@ -124,8 +124,8 @@
     #instructionText .hand-spacer {
       float: left;
       width: 105px;
-      height: 165px;
-      margin: 0 10px 4px 0;
+      height: 65px;
+      margin: 0 10px 0 0;
     }
     
     #tutorialText {
@@ -1530,23 +1530,16 @@
     let isDemoAnimating = false;
     
     function startCountdown(onFinish) {
-      let timeLeft = 60;
-      countdown.textContent = timeLeft;
+      let timeElapsed = 0;
+      countdown.textContent = timeElapsed;
       countdown.style.display = 'block';
-      
-      // Position wie weiter-Button: zentriert unter instructionText
-      setTimeout(() => {
-        const instrRect = document.getElementById('instructionText').getBoundingClientRect();
-        const containerRect = renderer.domElement.getBoundingClientRect();
-        countdown.style.top = (instrRect.bottom - containerRect.top + 32) + 'px';
-        countdown.style.left = '180px';
-      }, 50);
+      if (savedTimerTop) countdown.style.top = savedTimerTop;
       
       countdownTimer = setInterval(() => {
-        timeLeft--;
+        timeElapsed++;
         totalObservationTime++;
-        countdown.textContent = timeLeft;
-        if (timeLeft <= 0) {
+        countdown.textContent = timeElapsed;
+        if (timeElapsed >= 60) {
           stopCountdown();
           countdown.style.display = 'none';
           if (onFinish) onFinish();
@@ -1795,10 +1788,13 @@
       setTimeout(() => {
         const szRect = szText.getBoundingClientRect();
         const containerRect = renderer.domElement.getBoundingClientRect();
-        actionButton.style.top = (szRect.bottom - containerRect.top + 32) + 'px';
+        const topVal = (szRect.bottom - containerRect.top + 32) + 'px';
+        actionButton.style.top = topVal;
         actionButton.style.left = '180px';
+        savedTimerTop = topVal;
       }, 10);
     }
+    let savedTimerTop = null;
     initSpielzielPhase();
     
     // Spielziel → Demo Übergang
