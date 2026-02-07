@@ -664,36 +664,99 @@
     // Gespeichertes erstes Kippziel
     let erstesKippziel = null;
     
-    // === Tap-Counter Anzeige unter dem Kippziel ===
-    const tapCountCanvas = document.createElement('canvas');
-    tapCountCanvas.width = 64;
-    tapCountCanvas.height = 64;
-    const tapCountCtx = tapCountCanvas.getContext('2d');
-    const tapCountTex = new THREE.CanvasTexture(tapCountCanvas);
-    const tapCountGeo = new THREE.PlaneGeometry(cardWidth * 0.8, cardWidth * 0.8);
-    const tapCountMat = new THREE.MeshBasicMaterial({ map: tapCountTex, side: THREE.DoubleSide, transparent: true });
-    const tapCountMesh = new THREE.Mesh(tapCountGeo, tapCountMat);
-    tapCountMesh.rotation.x = -Math.PI / 2;
-    tapCountMesh.position.set(cardStartX, cardY + 0.002, cardZ + cardHeight / 2 + cardWidth * 0.5);
-    tapCountMesh.visible = false;
-    scene.add(tapCountMesh);
+    // === Tap-Counter Anzeige in benachbarten Quadranten ===
+    // Benachbarte Quadranten pro Würfelposition
+    const ADJACENT_Q = { 0: [3, 1], 1: [0, 2], 2: [1, 3], 3: [0, 2] };
+    
+    const tapIndicatorY = cardY + 0.003;
+    const tapIndicatorSize = 0.28;
+    
+    function createTapIndicator() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      const tex = new THREE.CanvasTexture(canvas);
+      const geo = new THREE.PlaneGeometry(tapIndicatorSize, tapIndicatorSize);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.visible = false;
+      scene.add(mesh);
+      return { mesh, canvas, ctx, tex };
+    }
+    
+    const tapIndicatorA = createTapIndicator();
+    const tapIndicatorB = createTapIndicator();
     
     let tapCount = 0;
     
-    function drawTapCount(n) {
-      tapCountCtx.clearRect(0, 0, 64, 64);
-      if (n > 0) {
-        tapCountCtx.fillStyle = 'rgba(0,0,0,0.6)';
-        tapCountCtx.beginPath();
-        tapCountCtx.arc(32, 32, 28, 0, Math.PI * 2);
-        tapCountCtx.fill();
-        tapCountCtx.fillStyle = '#FFD700';
-        tapCountCtx.font = 'bold 36px Arial';
-        tapCountCtx.textAlign = 'center';
-        tapCountCtx.textBaseline = 'middle';
-        tapCountCtx.fillText(n.toString(), 32, 33);
-      }
-      tapCountTex.needsUpdate = true;
+    function drawTapIndicator(indicator, n) {
+      const ctx = indicator.ctx;
+      ctx.clearRect(0, 0, 128, 128);
+      if (n <= 0) { indicator.tex.needsUpdate = true; return; }
+      
+      // Äußerer Ring mit metallischem Silber
+      const grad = ctx.createRadialGradient(64, 64, 30, 64, 64, 56);
+      grad.addColorStop(0, 'rgba(200,210,220,0)');
+      grad.addColorStop(0.6, 'rgba(180,190,200,0.15)');
+      grad.addColorStop(0.85, 'rgba(200,210,220,0.4)');
+      grad.addColorStop(1, 'rgba(160,170,180,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      
+      // Zahl mit Silber-Glanz
+      ctx.save();
+      ctx.font = 'bold 72px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Schatten für Tiefe
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+      
+      // Silber-Gradient für die Zahl
+      const textGrad = ctx.createLinearGradient(40, 20, 88, 108);
+      textGrad.addColorStop(0, '#f0f0f0');
+      textGrad.addColorStop(0.3, '#c0c8d0');
+      textGrad.addColorStop(0.5, '#e8ecf0');
+      textGrad.addColorStop(0.7, '#a8b0b8');
+      textGrad.addColorStop(1, '#d0d8e0');
+      ctx.fillStyle = textGrad;
+      ctx.fillText(n.toString(), 64, 62);
+      
+      // Glanz-Highlight oben
+      ctx.shadowColor = 'transparent';
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(n.toString(), 64, 60);
+      ctx.restore();
+      
+      indicator.tex.needsUpdate = true;
+    }
+    
+    function updateTapIndicators() {
+      const off = 0.234375; // cubeSize/2
+      const QC = {
+        0: { x: -off, z: 0.109375 - off },
+        1: { x:  off, z: 0.109375 - off },
+        2: { x:  off, z: 0.109375 + off },
+        3: { x: -off, z: 0.109375 + off }
+      };
+      const adj = ADJACENT_Q[currentQuadrant];
+      const qA = QC[adj[0]];
+      const qB = QC[adj[1]];
+      
+      tapIndicatorA.mesh.position.set(qA.x, tapIndicatorY, qA.z);
+      tapIndicatorB.mesh.position.set(qB.x, tapIndicatorY, qB.z);
+      
+      drawTapIndicator(tapIndicatorA, tapCount);
+      drawTapIndicator(tapIndicatorB, tapCount);
+      
+      tapIndicatorA.mesh.visible = tapCount > 0;
+      tapIndicatorB.mesh.visible = tapCount > 0;
     }
     // =========================
     // GRADIENT SCHATTEN ÜBER KÄRTCHEN
@@ -1845,7 +1908,7 @@
       const szText = document.getElementById('spielZielText');
       szText.innerHTML = '<b>SPIEL ZIEL:</b> Erkippe möglichst viele der 6 Kippziele (z.B. ' + beispielZahl + ' an ' + farbDisplay + ') mit möglichst wenig <b>SCHAU</b>-Sekunden.' +
         '<div style="margin-top:0.5em"><b>BRAIN SCORE:</b></div>' +
-        '<b>100%</b> = <b>6</b> Hits / ≤<b>30</b> SCHAU-Sek.<br>' +
+        '<b>100%</b> = <b>6</b> Hits / bis <b>30</b> SCHAU-Sek.<br>' +
         '<b>12%</b> = 1 Hit / 120 SCHAU-Sek.<br>' +
         '0 Hits = kein Score.';
       szText.style.display = 'block';
@@ -1956,8 +2019,7 @@
       
       // Tap-Counter zurücksetzen
       tapCount = 0;
-      drawTapCount(0);
-      tapCountMesh.visible = false;
+      updateTapIndicators();
       
       // Liegezeit-Tracking (erste Liegezeit = Denkzeit, kein Auto-Eval)
       liegeZeiten = [];
@@ -2104,8 +2166,8 @@
       if (gamePhase === 'spielen' && !kippzielChecked && !isAnimating) {
         if (vkRaycaster.intersectObject(cube).length > 0 && tapCount < 6) {
           tapCount++;
-          drawTapCount(tapCount);
-          tapCountMesh.visible = true;
+          updateTapIndicators();
+          
         }
         return;
       }
@@ -2264,7 +2326,7 @@
       lockedKippDir = null;
       currentDragDir = null;
       tapCount = 0;
-      tapCountMesh.visible = false;
+      tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       drawLeernohitOnVerdecktes();
       kippButtons.classList.add('hidden');
       document.getElementById('richtungButtons').classList.add('hidden');
@@ -2309,7 +2371,7 @@
       kippzielChecked = false;
       totalObservationTime = 0;
       tapCount = 0;
-      tapCountMesh.visible = false;
+      tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       
       gamePhase = 'spielziel';
       initSpielzielPhase();
@@ -2670,8 +2732,8 @@
         if (vkRaycaster.intersectObject(cube).length > 0) {
           if (tapCount < 6) {
             tapCount++;
-            drawTapCount(tapCount);
-            tapCountMesh.visible = true;
+            updateTapIndicators();
+            
           }
         }
         lastTouchPos = null;
@@ -2935,7 +2997,7 @@
       isAnimating = true;
       
       // Tap-Counter ausblenden
-      tapCountMesh.visible = false;
+      tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       
       for (let i = 0; i < steps; i++) {
         let direction;
