@@ -1533,14 +1533,8 @@
       let timeElapsed = 0;
       countdown.textContent = timeElapsed;
       countdown.style.display = 'block';
-      
-      // Position: 32px unter dem instructionText (wie weiter-Button)
-      setTimeout(() => {
-        const instrRect = document.getElementById('instructionText').getBoundingClientRect();
-        const containerRect = renderer.domElement.getBoundingClientRect();
-        countdown.style.top = (instrRect.bottom - containerRect.top + 32) + 'px';
-        countdown.style.left = '180px';
-      }, 50);
+      if (timerTopPos) countdown.style.top = timerTopPos;
+      countdown.style.left = '180px';
       
       countdownTimer = setInterval(() => {
         timeElapsed++;
@@ -1798,8 +1792,10 @@
         const topVal = (szRect.bottom - containerRect.top + 32) + 'px';
         actionButton.style.top = topVal;
         actionButton.style.left = '180px';
+        timerTopPos = topVal; // Position für alle Timer merken
       }, 10);
     }
+    let timerTopPos = null;
     // Direkt SCHAUEN-Phase starten (SPIEL ZIEL überspringen für Preview)
     initSpielzielPhase();
     
@@ -1831,25 +1827,11 @@
       // Demo starten
       startDemoAnimation();
       
-      // SCHAUEN-Timer starten (60 Sek)
-      startCountdown(() => {
-        // Nach 60 Sek: automatisch Kippziel aufdecken
-        if (gamePhase === 'demo' || gamePhase === 'kippen') {
-          // Falls noch in Demo: Cube resetten
-          if (gamePhase === 'demo') {
-            isDemoAnimating = false;
-            handDemo.visible = false;
-            cube.quaternion.set(0, 0, 0, 1);
-            cube.position.set(-offset, offset, 0.109375 + offset);
-            currentQuadrant = 3;
-            topFace = 'f2';
-          }
-          gamePhase = 'kippen';
-          if (!verdecktesMesh.userData.revealed) {
-            revealVerdecktesKippziel();
-          }
-        }
-      });
+      // SCHAUEN-Timer: nur "00" anzeigen, startet erst bei erstem Kipp
+      countdown.textContent = '00';
+      countdown.style.display = 'block';
+      if (timerTopPos) countdown.style.top = timerTopPos;
+      countdown.style.left = '180px';
     }
     
     function phaseKippenToSpielen() {
@@ -1882,19 +1864,15 @@
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = 'Überlege: Wie oft und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br><i>Erste Kipprichtung gilt, Umkehr gesperrt.</i><br>Kippe zügig, sonst zählt der Timer SCHAU-Sekunden, und dein Kippziel verfällt (nicht erkippt).<br>MIT TAP AUF WÜRFEL loggst du deinen Kippzug ein.';
+        tutText.innerHTML = 'Überlege! Wie oft und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br><i>Erste Kipprichtung gilt, Umkehr gesperrt.</i><br>Kippe zügig, sonst zählt der Timer SCHAU-Sekunden, und dein Kippziel verfällt (nicht erkippt).<br><b>MIT TAP AUF WÜRFEL</b> loggst du deinen Kippzug ein.';
       }
       tutText.style.display = 'block';
       
       // Kipp-Timer "00" anzeigen (gleiche Position wie weiter-Button)
       countdown.textContent = '00';
       countdown.style.display = 'block';
-      setTimeout(() => {
-        const tutRect = tutText.getBoundingClientRect();
-        const containerRect = renderer.domElement.getBoundingClientRect();
-        countdown.style.top = (tutRect.bottom - containerRect.top + 32) + 'px';
-        countdown.style.left = '180px';
-      }, 50);
+      if (timerTopPos) countdown.style.top = timerTopPos;
+      countdown.style.left = '180px';
 
       // Kärtchen werden in fillAllCards() sichtbar gemacht - NICHT hier
 
@@ -2316,6 +2294,13 @@
         gamePhase = 'kippen';
         isDemoAnimating = false; // Animation sofort stoppen
         handDemo.visible = false; // Hand sofort ausblenden
+        
+        // SCHAUEN-Timer jetzt starten (60 Sek)
+        startCountdown(() => {
+          if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
+            revealVerdecktesKippziel();
+          }
+        });
         
         // ALLE State-Variablen sauber resetten
         cube.quaternion.set(0, 0, 0, 1); // Reset zu neutraler Rotation
