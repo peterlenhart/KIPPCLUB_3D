@@ -346,7 +346,7 @@
       height: 26px;
       display: block;
       margin: auto;
-      margin-top: 8px;
+      margin-top: 2px;
     }
 
     #backButton {
@@ -1563,23 +1563,31 @@
     // Flag um Demo-Animation abbrechen zu können
     let isDemoAnimating = false;
     
-    function startCountdown(onFinish) {
+    function startCountdown(onFinish, maxTime) {
       let timeElapsed = 0;
+      let movementAccum = 0;
       countdown.textContent = timeElapsed;
       countdown.style.display = 'block';
       if (timerTopPos) countdown.style.top = timerTopPos;
       countdown.style.left = '180px';
       
       countdownTimer = setInterval(() => {
-        timeElapsed++;
-        totalObservationTime++;
-        countdown.textContent = timeElapsed;
-        if (timeElapsed >= 60) {
+        // Nur zählen wenn Würfel in Bewegung
+        if (dragActive || isAnimating) {
+          movementAccum += 200;
+          if (movementAccum >= 1000) {
+            movementAccum -= 1000;
+            timeElapsed++;
+            totalObservationTime++;
+            countdown.textContent = timeElapsed;
+          }
+        }
+        if (maxTime && timeElapsed >= maxTime) {
           stopCountdown();
           countdown.style.display = 'none';
           if (onFinish) onFinish();
         }
-      }, 1000);
+      }, 200);
     }
     
     function stopCountdown() {
@@ -1843,8 +1851,8 @@
       resetPos3D.project(camera);
       const resetScreenX = (resetPos3D.x * 0.5 + 0.5) * 360;
       const resetScreenY = (-resetPos3D.y * 0.5 + 0.5) * 720;
-      resetButton.style.left = (resetScreenX - 22) + 'px';
-      resetButton.style.top = (resetScreenY - 22) + 'px';
+      resetButton.style.left = resetScreenX + 'px';
+      resetButton.style.top = (resetScreenY - 22 - 6) + 'px';
       
       // Unsichtbarer Spacer für Text-Umfluss um animierte 3D-Hand
       const instrText = document.getElementById('instructionText');
@@ -1870,7 +1878,7 @@
       startDemoAnimation();
       
       // SCHAUEN-Timer: nur "00" anzeigen, startet erst bei erstem Kipp
-      countdown.textContent = '00';
+      countdown.textContent = '0';
       countdown.style.display = 'block';
       if (timerTopPos) countdown.style.top = timerTopPos;
       countdown.style.left = '180px';
@@ -1910,15 +1918,13 @@
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = 'Überlege! Wie oft und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br><i>Erste Kipprichtung gilt, Umkehr gesperrt.</i><br>Kippe zügig, sonst zählt der Timer SCHAU-Sekunden, und dein Kippziel verfällt (nicht erkippt).<br><b>MIT TAP AUF WÜRFEL</b> loggst du deinen Kippzug ein.';
+        tutText.innerHTML = 'Überlege! Wie oft und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br><i>Erste Kipprichtung gilt, Umkehr gesperrt.</i><br>Kippe zügig, sonst zählt der Timer SCHAU-Sekunden, und dein Kippziel verfällt (nicht erkippt).<br>Mit <b>KLICK AUF KIPPZIEL</b> (hier links) loggst du deinen Kippzug ein.';
       }
       tutText.style.display = 'block';
       
-      // Kipp-Timer "00" anzeigen (gleiche Position wie weiter-Button)
-      countdown.textContent = '00';
-      countdown.style.display = 'block';
-      if (timerTopPos) countdown.style.top = timerTopPos;
-      countdown.style.left = '180px';
+      // Kipp-Timer starten (Go/Stopp bei Würfelbewegung, kein Limit)
+      stopCountdown(); // Evtl. laufenden SCHAUEN-Timer stoppen
+      startCountdown(null, null);
 
       // Kärtchen werden in fillAllCards() sichtbar gemacht - NICHT hier
 
@@ -2050,26 +2056,35 @@
       lastTouchPos = null;
     }, { passive: true });
     
-    // Desktop-Klick Fallback
+    // Desktop-Klick: Kippziel aufdecken (kippen) ODER Kippziel-Check (spielen)
     renderer.domElement.addEventListener('click', (e) => {
-      if (gamePhase === 'spielen' && !kippzielChecked) {
-        checkKippzielTap();
-        return;
-      }
-      if (gamePhase !== 'kippen' || !verdecktesMesh.visible || verdecktesMesh.userData.revealed) return;
       const rect = renderer.domElement.getBoundingClientRect();
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       vkRaycaster.setFromCamera(vkMouse, camera);
+      
+      if (gamePhase === 'spielen' && !kippzielChecked && verdecktesMesh.visible) {
+        if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
+          checkKippzielTap();
+        }
+        return;
+      }
+      if (gamePhase !== 'kippen' || !verdecktesMesh.visible || verdecktesMesh.userData.revealed) return;
       if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
         revealVerdecktesKippziel();
       }
     });
     
-    // Tap-auf-Würfel für Touch
+    // Touch auf Kippziel (spielen-Phase)
     renderer.domElement.addEventListener('touchend', (e) => {
-      if (gamePhase === 'spielen' && !kippzielChecked && !dragActive && lastTouchPos) {
-        checkKippzielTap();
+      if (gamePhase === 'spielen' && !kippzielChecked && !dragActive && lastTouchPos && verdecktesMesh.visible) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rect.left) / rect.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rect.top) / rect.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
+          checkKippzielTap();
+        }
         lastTouchPos = null;
         return;
       }
@@ -2195,7 +2210,7 @@
           gamePhase = 'kippen';
           revealVerdecktesKippziel();
         }
-      });
+      }, 60);
       verdecktesMesh.visible = true;
       verdecktesMesh.userData.revealed = false;
       verdecktesMesh.scale.set(1, 1, 1);
@@ -2397,7 +2412,7 @@
           if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
             revealVerdecktesKippziel();
           }
-        });
+        }, 60);
         
         // ALLE State-Variablen sauber resetten
         cube.quaternion.set(0, 0, 0, 1); // Reset zu neutraler Rotation
