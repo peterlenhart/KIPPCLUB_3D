@@ -808,6 +808,25 @@
     scene.add(handDemo);
 
     // =========================
+    // SILBERNER KREIS in Box-Mitte
+    // =========================
+    const kreisRadius = 0.08;
+    const kreisGeometry = new THREE.CircleGeometry(kreisRadius, 32);
+    const kreisMaterial = new THREE.MeshStandardMaterial({
+      color: 0xc0c0c0,
+      metalness: 0.8,
+      roughness: 0.2,
+      transparent: true,
+      opacity: 0.85
+    });
+    const kreisMesh = new THREE.Mesh(kreisGeometry, kreisMaterial);
+    kreisMesh.rotation.x = -Math.PI / 2;
+    // Mitte der Box: x=0, z=0.109375 (wo 4 Quadranten sich treffen), knapp über Grid
+    kreisMesh.position.set(0, 0.001 + 3 * 0.15625 + 0.003, 0.109375);
+    kreisMesh.visible = false;
+    scene.add(kreisMesh);
+
+    // =========================
     // WÜRFEL mit 3x3 Grid-Textur
     // =========================
     // Würfel-Textur WebP (für f0, f1, f2)
@@ -1881,9 +1900,22 @@
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = 'Überlege: Wie oft und in welche Richtung muss ich kippen, damit ' + zahl + ' an ' + farbe + ' liegt? Kippe zügig und entschieden – langsames, zögerliches oder ungleichmäßiges Kippen wertet der Algo als &bdquo;SCHAU Sek.&ldquo; (senkt den BRAIN SCORE).<br><i>Erste Kipprichtung gilt – Umkehr gesperrt.</i>';
+        tutText.innerHTML = 'Überlege: Wie oft und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br><i>Erste Kipprichtung gilt, Umkehr gesperrt.</i><br>Kippe zügig, sonst zählt der Timer SCHAU-Sekunden, und dein Kippziel verfällt (nicht erkippt).<br><br>Mit KLICK auf den Kreis im Zentrum loggst du deinen Kippzug ein.';
       }
       tutText.style.display = 'block';
+      
+      // Silbernen Kreis anzeigen
+      kreisMesh.visible = true;
+      
+      // Kipp-Timer "00" anzeigen (gleiche Position wie weiter-Button)
+      countdown.textContent = '00';
+      countdown.style.display = 'block';
+      setTimeout(() => {
+        const tutRect = tutText.getBoundingClientRect();
+        const containerRect = renderer.domElement.getBoundingClientRect();
+        countdown.style.top = (tutRect.bottom - containerRect.top + 32) + 'px';
+        countdown.style.left = '180px';
+      }, 50);
 
       // Kärtchen werden in fillAllCards() sichtbar gemacht - NICHT hier
 
@@ -2034,6 +2066,7 @@
       actionButton.style.display = 'none';
       stopCountdown();
       countdown.style.display = 'none';
+      kreisMesh.visible = false;
       document.getElementById('instructionText').style.display = 'block';
       document.getElementById('tutorialText').style.display = 'none';
       
