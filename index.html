@@ -2006,7 +2006,7 @@
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = '<b>ÜBERLEGE!</b> Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
+        tutText.innerHTML = '<b>KIPPEN</b><br>Überlege! Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
       }
       tutText.style.display = 'block';
       
@@ -2312,12 +2312,7 @@
       }
       
       const tutText = document.getElementById('tutorialText');
-      if (erstesKippziel) {
-        const zahl = erstesKippziel.zahl;
-        const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = '<b>KIPPEN</b><br>Überlege! Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
-      }
-      tutText.style.display = 'block';
+      tutText.style.display = 'none';
       
       stopCountdown();
       countdown.style.display = 'none';
@@ -3128,12 +3123,12 @@
         }
         
         isAnimating = false; // performKipp setzt isAnimating selbst
-        await performKipp(direction, 350);
+        await performKipp(direction, 500);
         advanceTopFace();
         
         // Kurze Pause zwischen Kipps
         if (i < steps - 1) {
-          await sleep(100);
+          await sleep(200);
         }
       }
       
