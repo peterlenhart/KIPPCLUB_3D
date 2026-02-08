@@ -2144,7 +2144,7 @@
       tutText.style.display = 'block';
       
       // Zielscheibe zwischen Zeile 7/8, Spalte C/D positionieren
-      const targetPos3D = new THREE.Vector3(-0.78125, 0.002, 0.265625);
+      const targetPos3D = new THREE.Vector3(-0.15625, 0.48, 0.265625);
       targetPos3D.project(camera);
       const targetEl = document.getElementById('kippTarget');
       targetEl.style.left = ((targetPos3D.x * 0.5 + 0.5) * 360) + 'px';
