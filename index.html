@@ -449,10 +449,63 @@
     .hidden {
       display: none !important;
     }
+
+    /* === START-OVERLAY === */
+    #startOverlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 360px; height: 720px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+    }
+    #startOverlay img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .startClickZone {
+      position: absolute;
+      left: 67.5px;
+      width: 225px;
+      height: 42px;
+      cursor: pointer;
+      pointer-events: auto;
+      background: transparent;
+      border: none;
+      /* border: 1px dashed rgba(255,255,0,0.4); /* DEBUG */ 
+    }
+    #btnTutorial { top: 496px; }
+    #btnSpielen  { top: 541px; }
+
+    /* === ZURÜCK-BUTTON (zur Startseite) === */
+    #backToStart {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 45px;
+      height: 90px;
+      z-index: 150;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      pointer-events: auto;
+      display: none;
+    }
+    #backToStart svg {
+      width: 28px;
+      height: 28px;
+    }
   </style>
 </head>
 <body>
   <div id="container"></div>
+  
+  <!-- START-OVERLAY -->
+  <div id="startOverlay">
+    <img src="coloreingang.webp" alt="DIGIKIPP color">
+    <button class="startClickZone" id="btnTutorial"></button>
+    <button class="startClickZone" id="btnSpielen"></button>
+  </div>
   
   <div id="uiOverlay">
     <div id="handIcon">👆</div>
@@ -469,6 +522,7 @@
     <button id="actionButton">weiter</button>
     <button id="backButton">↻</button>
     <button id="resetButton"><svg viewBox="0 0 24 24" fill="none" stroke="#c0b8a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <button id="backToStart"><svg viewBox="0 0 24 24" fill="none" stroke="#c0b8a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
     
     <div id="richtungButtons" class="hidden" style="position:absolute;top:540px;left:50%;transform:translateX(-50%);display:flex;gap:21px;width:180px;z-index:200;">
       <button id="cwBtn" class="kippBtn" style="flex:1;height:45px;font-size:40px;line-height:1;position:relative;"><span style="position:absolute;top:calc(50% - 3px);left:50%;transform:translate(-50%,-50%);font-size:40px;">↻</span></button>
@@ -2054,6 +2108,13 @@
       actionButton.disabled = false;
       actionButton.style.display = 'block';
       actionButton.style.opacity = '1';
+      
+      // Zurück-Button zur Startseite (Zeilen 1/2, Spalte A)
+      const backBtn = document.getElementById('backToStart');
+      backBtn.style.display = 'block';
+      backBtn.style.top = '0px';
+      backBtn.style.left = '0px';
+      
       setTimeout(() => {
         const szRect = szText.getBoundingClientRect();
         const containerRect = renderer.domElement.getBoundingClientRect();
@@ -2064,8 +2125,36 @@
       }, 10);
     }
     let timerTopPos = null;
-    // Direkt SCHAUEN-Phase starten (SPIEL ZIEL überspringen für Preview)
-    initSpielzielPhase();
+    // === START-OVERLAY: Warten auf Spieler-Wahl ===
+    document.getElementById('btnTutorial').addEventListener('click', () => {
+      document.getElementById('startOverlay').style.display = 'none';
+      isReplay = false;
+      initSpielzielPhase();
+    });
+    document.getElementById('btnSpielen').addEventListener('click', () => {
+      document.getElementById('startOverlay').style.display = 'none';
+      isReplay = true;
+      initSpielzielPhase(); // springt intern direkt zu initEntscheidungPhase()
+    });
+    
+    // Zurück zur Startseite
+    document.getElementById('backToStart').addEventListener('click', () => {
+      // Alle UI-Elemente ausblenden
+      document.getElementById('spielZielText').style.display = 'none';
+      document.getElementById('instructionText').style.display = 'none';
+      document.getElementById('tutorialText').style.display = 'none';
+      document.getElementById('entscheidungText').style.display = 'none';
+      document.getElementById('eyeIcon').style.display = 'none';
+      document.getElementById('kippTarget').style.display = 'none';
+      document.getElementById('backToStart').style.display = 'none';
+      actionButton.style.display = 'none';
+      resetButton.style.display = 'none';
+      countdown.style.display = 'none';
+      verdecktesMesh.visible = false;
+      // Start-Overlay wieder zeigen
+      document.getElementById('startOverlay').style.display = 'block';
+      gamePhase = 'spielziel';
+    });
     
     // === ENTSCHEIDUNGS-PHASE ===
     function initEntscheidungPhase() {
@@ -2073,6 +2162,7 @@
       
       // SpielZiel-Text ausblenden
       document.getElementById('spielZielText').style.display = 'none';
+      document.getElementById('backToStart').style.display = 'none';
       actionButton.style.display = 'none';
       document.getElementById('instructionText').style.display = 'none';
       document.getElementById('tutorialText').style.display = 'none';
