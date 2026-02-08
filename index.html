@@ -125,9 +125,9 @@
     }
     #kippTarget {
       position: absolute;
-      width: 14px;
-      height: 14px;
-      border: 2px solid #4a2a10;
+      width: 21px;
+      height: 21px;
+      border: 3px solid #4a2a10;
       border-radius: 50%;
       pointer-events: none;
       display: none;
@@ -140,8 +140,8 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 4px;
-      height: 4px;
+      width: 6px;
+      height: 6px;
       background: #4a2a10;
       border-radius: 50%;
       transform: translate(-50%, -50%);
@@ -1357,22 +1357,20 @@
         }
       }
       
-      // DANN: Pause-Check
-      if (activeCardIdx === 3) {
-        // Nach drittem Kärtchen: Würfel auf Ecke stellen, dann Pause-Phase
-        setButtonsDisabled(true);
-        document.getElementById('richtungButtons').classList.add('hidden');
-        kippButtons.classList.add('hidden');
-        // Pose vor der Animation speichern
-        savedCubePosition = cube.position.clone();
-        savedCubeQuaternion = cube.quaternion.clone();
-        savedTopFace = topFace;
-        savedCurrentQuadrant = currentQuadrant;
-        animateAufEcke().then(() => {
-          startPausePhase();
-        });
-        return;
-      }
+      // DANN: Pause-Check (ÜBERSPRUNGEN - Pause-Phase deaktiviert)
+      // if (activeCardIdx === 3) {
+      //   setButtonsDisabled(true);
+      //   document.getElementById('richtungButtons').classList.add('hidden');
+      //   kippButtons.classList.add('hidden');
+      //   savedCubePosition = cube.position.clone();
+      //   savedCubeQuaternion = cube.quaternion.clone();
+      //   savedTopFace = topFace;
+      //   savedCurrentQuadrant = currentQuadrant;
+      //   animateAufEcke().then(() => {
+      //     startPausePhase();
+      //   });
+      //   return;
+      // }
       
       // Weiterspielen
       setButtonsDisabled(false);
@@ -2054,12 +2052,20 @@
       e.stopPropagation();
       e.preventDefault();
       if (gamePhase !== 'entscheidung') return;
-      spielzielToDemoPhase();
+      if (activeCardIdx === 0) {
+        spielzielToDemoPhase();
+      } else {
+        startFreeSchauenPhase();
+      }
     }, { passive: false });
     eyeEl.addEventListener('click', (e) => {
       e.stopPropagation();
       if (gamePhase !== 'entscheidung') return;
-      spielzielToDemoPhase();
+      if (activeCardIdx === 0) {
+        spielzielToDemoPhase();
+      } else {
+        startFreeSchauenPhase();
+      }
     });
     
     // Spielziel → Demo Übergang (jetzt von Entscheidung aufgerufen)
@@ -2407,6 +2413,9 @@
         }
         requestAnimationFrame(pulseTick);
         
+        // Nach 2s zur nächsten Runde
+        setTimeout(() => proceedToNextRound(true), 2000);
+        
       } else {
         // Miss: Zahl grau zeichnen
         const img = colorTargetImages[erstesKippziel.color.name];
@@ -2437,7 +2446,110 @@
         verdecktesCtx.strokeRect(4, 4, 77, 162);
         
         verdecktesCanvasTex.needsUpdate = true;
+        
+        // Nach 2s zur nächsten Runde
+        setTimeout(() => proceedToNextRound(false), 2000);
       }
+    }
+
+    function proceedToNextRound(isHit) {
+      // 1. Visuellen Zustand von verdecktesMesh auf gameCard übertragen
+      const card = gameCards[activeCardIdx];
+      card.ctx.clearRect(0, 0, 85, 170);
+      card.ctx.drawImage(verdecktesCanvas, 0, 0);
+      card.texture.needsUpdate = true;
+      card.mesh.material.map = card.texture;
+      card.mesh.material.transparent = false;
+      card.mesh.material.opacity = 1;
+      card.mesh.material.needsUpdate = true;
+      card.mesh.visible = true;
+      
+      // 2. Treffer tracken
+      if (isHit && erstesKippziel) {
+        bereitsGetroffen.add(erstesKippziel.zahl + '_' + erstesKippziel.color.name);
+      }
+      
+      // 3. Kombi als ausgegeben markieren
+      if (erstesKippziel) {
+        bereitsAusgegeben.add(erstesKippziel.zahl + '_' + erstesKippziel.color.name);
+      }
+      
+      // 4. Weiter
+      activeCardIdx++;
+      
+      // 5. Spielende?
+      if (activeCardIdx >= 6) {
+        verdecktesMesh.visible = false;
+        document.getElementById('kippTarget').style.display = 'none';
+        showGameEnd();
+        return;
+      }
+      
+      // 6. Nächste Entscheidungs-Runde
+      initNextRoundEntscheidung();
+    }
+
+    function initNextRoundEntscheidung() {
+      gamePhase = 'entscheidung';
+      kippzielChecked = false;
+      erstesKippziel = null;
+      
+      // Spielen-UI ausblenden
+      document.getElementById('tutorialText').style.display = 'none';
+      document.getElementById('kippTarget').style.display = 'none';
+      tapCount = 0;
+      tapIndicatorA.mesh.visible = false;
+      tapIndicatorB.mesh.visible = false;
+      
+      // Richtungs-Lock zurücksetzen
+      lockedKippDir = null;
+      currentDragDir = null;
+      
+      // verdecktesMesh an nächste Kärtchen-Position verschieben
+      const nextX = cardStartX + activeCardIdx * (cardWidth + cardGap);
+      verdecktesMesh.position.set(nextX, cardY + 0.001, cardZ);
+      verdecktesMesh.userData.revealed = false;
+      drawLeernohitOnVerdecktes();
+      verdecktesMesh.visible = true;
+      verdecktesMesh.scale.set(1, 1, 1);
+      verdecktesMat.opacity = 1;
+      
+      // Auge an fester Position einblenden (zentriert, top 475px)
+      const eyeIcon = document.getElementById('eyeIcon');
+      eyeIcon.style.display = 'block';
+      
+      // Entscheidungs-Text
+      const etText = document.getElementById('entscheidungText');
+      etText.innerHTML = '<b>IMMER 2 OPTIONEN</b><br>• Zuerst auf Augen-Icon – Würfelschauen (empfohlen)<br>• Gleich auf Kippziel – Kippzug machen';
+      etText.style.display = 'block';
+      
+      // Timer ausblenden
+      countdown.style.display = 'none';
+    }
+
+    function startFreeSchauenPhase() {
+      gamePhase = 'kippen';
+      
+      // Auge und Entscheidungs-Text ausblenden
+      document.getElementById('eyeIcon').style.display = 'none';
+      document.getElementById('entscheidungText').style.display = 'none';
+      
+      // WÜRFELSCHAUEN-Anleitung zeigen
+      document.getElementById('instructionText').style.display = 'block';
+      
+      // Timer "0" anzeigen und starten (60 Sek max)
+      countdown.textContent = '0';
+      countdown.style.display = 'block';
+      if (timerTopPos) countdown.style.top = timerTopPos;
+      countdown.style.left = '180px';
+      
+      startCountdown(() => {
+        if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
+          revealVerdecktesKippziel();
+        }
+      }, 60);
+      
+      // Würfel bleibt wo er ist - KEIN Reset!
     }
 
     backButton.addEventListener('click', () => {
