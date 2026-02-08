@@ -82,7 +82,7 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.8);
       pointer-events: none;
       width: 360px;
-      line-height: 1.6;
+      line-height: 1.2;
       opacity: 0;
       display: none;
     }
@@ -608,7 +608,7 @@
     const cardZ = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720); // 4 Zeilen südlich, + 15px
 
     const totalCardsWidth = 6 * cardWidth + 5 * cardGap; // Tatsächliche Breite aller Kärtchen + Gaps
-    const cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+    const cardStartX = totalCardsWidth / 2 - cardWidth / 2; // Rechteste 3D-Position = links auf Screen
 
     const gameCards = [];
     
@@ -683,7 +683,7 @@
       });
       const plane = new THREE.Mesh(geo, mat);
       plane.rotation.x = -Math.PI / 2;
-      plane.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
+      plane.position.set(cardStartX - i * (cardWidth + cardGap), cardY, cardZ);
       plane.castShadow = true;
       plane.receiveShadow = true;
       scene.add(plane);
@@ -2668,7 +2668,7 @@
       currentDragDir = null;
       
       // verdecktesMesh an nächste Kärtchen-Position verschieben
-      const nextX = cardStartX + activeCardIdx * (cardWidth + cardGap);
+      const nextX = cardStartX - activeCardIdx * (cardWidth + cardGap);
       verdecktesMesh.position.set(nextX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
       drawLeernohitOnVerdecktes();
