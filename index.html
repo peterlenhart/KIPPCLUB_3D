@@ -379,10 +379,8 @@
     }
 
     #resetButton {
-      display: block;
+      display: none;
       position: absolute;
-      top: 22px;
-      left: 0px;
       width: 45px;
       height: 45px;
       background: linear-gradient(180deg, #606060 0%, #404040 100%);
@@ -2104,8 +2102,14 @@
       document.getElementById('instructionText').style.display = 'none';
       document.getElementById('tutorialText').style.display = 'none';
       
-      // Zurück-Button zur Startseite zeigen (derselbe resetButton wie in anderen Phasen)
+      // Zurück-Button zur Startseite zeigen (per 3D-Projektion positioniert)
       resetButton.style.display = 'block';
+      const resetPos3D_sz = new THREE.Vector3(-0.625, 0.46875, -0.828125 + 0.15625);
+      resetPos3D_sz.project(camera);
+      const resetScreenX_sz = (resetPos3D_sz.x * 0.5 + 0.5) * 360;
+      const resetScreenY_sz = (-resetPos3D_sz.y * 0.5 + 0.5) * 720;
+      resetButton.style.left = resetScreenX_sz + 'px';
+      resetButton.style.top = (resetScreenY_sz - 22 - 6) + 'px';
       
       const szText = document.getElementById('spielZielText');
       szText.innerHTML = '<b>SPIEL ZIEL</b><br>' +
@@ -2151,7 +2155,6 @@
       document.getElementById('eyeIcon').style.display = 'none';
       document.getElementById('kippTarget').style.display = 'none';
       document.getElementById('brainScore').style.display = 'none';
-      resetButton.style.display = 'none';
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
       verdecktesMesh.visible = false;
@@ -2171,8 +2174,14 @@
       document.getElementById('tutorialText').style.display = 'none';
       document.getElementById('kippTarget').style.display = 'none';
       
-      // Reset-Button zeigen (ab hier verfügbar)
+      // Reset-Button zeigen (per 3D-Projektion positioniert)
       resetButton.style.display = 'block';
+      const resetPos3D = new THREE.Vector3(-0.625, 0.46875, -0.828125 + 0.15625);
+      resetPos3D.project(camera);
+      const resetScreenX = (resetPos3D.x * 0.5 + 0.5) * 360;
+      const resetScreenY = (-resetPos3D.y * 0.5 + 0.5) * 720;
+      resetButton.style.left = resetScreenX + 'px';
+      resetButton.style.top = (resetScreenY - 22 - 6) + 'px';
       
       // Würfel in Q3, ruhig liegend (kein Reset nötig - steht schon)
       cube.quaternion.set(0, 0, 0, 1);
@@ -3717,6 +3726,15 @@
       }
       
       renderer.render(scene, camera);
+    }
+
+    // resetButton auf Einstiegsseite sofort sichtbar + positionieren
+    resetButton.style.display = 'block';
+    {
+      const rp = new THREE.Vector3(-0.625, 0.46875, -0.828125 + 0.15625);
+      rp.project(camera);
+      resetButton.style.left = (rp.x * 0.5 + 0.5) * 360 + 'px';
+      resetButton.style.top = ((-rp.y * 0.5 + 0.5) * 720 - 22 - 6) + 'px';
     }
 
     renderLoop();
