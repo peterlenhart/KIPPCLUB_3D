@@ -1193,6 +1193,22 @@
       3: { S1: 'violett', S2: 'gruen',   S3: 'orange',  S4: 'blau'    }
     };
 
+    // Zielkreis-Positionen pro Quadrant (3D-Koordinaten)
+    const KIPP_TARGET_POS_3D = {
+      0: new THREE.Vector3(-0.15625, 0.48, -0.046875),  // Q0 NW: Zeilen 5/6, Spalten C/D
+      1: new THREE.Vector3( 0.15625, 0.48, -0.046875),  // Q1 NE: Zeilen 5/6, Spalten E/F
+      2: new THREE.Vector3( 0.15625, 0.48,  0.265625),  // Q2 SE: Zeilen 7/8, Spalten E/F
+      3: new THREE.Vector3(-0.15625, 0.48,  0.265625)   // Q3 SW: Zeilen 7/8, Spalten C/D
+    };
+
+    function updateKippTargetPosition() {
+      const pos3D = KIPP_TARGET_POS_3D[currentQuadrant].clone();
+      pos3D.project(camera);
+      const targetEl = document.getElementById('kippTarget');
+      targetEl.style.left = ((pos3D.x * 0.5 + 0.5) * 360) + 'px';
+      targetEl.style.top = ((-pos3D.y * 0.5 + 0.5) * 720) + 'px';
+    }
+
     // 4 Farbfelder pro Quadrant (für Nicht-Treffer-Animation)
     const QUADRANT_COLORS = {
       0: ['Nord_C', 'Nord_D', 'West_5', 'West_6'],
@@ -2151,12 +2167,9 @@
         tutText.style.display = 'none';
       }
       
-      // Zielscheibe zwischen Zeile 7/8, Spalte C/D positionieren
-      const targetPos3D = new THREE.Vector3(-0.15625, 0.48, 0.265625);
-      targetPos3D.project(camera);
+      // Zielscheibe positionieren basierend auf aktuellem Quadranten
+      updateKippTargetPosition();
       const targetEl = document.getElementById('kippTarget');
-      targetEl.style.left = ((targetPos3D.x * 0.5 + 0.5) * 360) + 'px';
-      targetEl.style.top = ((-targetPos3D.y * 0.5 + 0.5) * 720) + 'px';
       targetEl.style.display = 'block';
       
       // Kein Timer-Display in Spielphase
@@ -2219,6 +2232,62 @@
       setButtonsDisabled(false);
     }
     
+    // === Spielen-Phase für Runde 2+ (ohne Reset) ===
+    function startSpielenForCurrentRound() {
+      gamePhase = 'spielen';
+      currentMode = 'kanten';
+      kippzielChecked = false;
+      
+      // Countdown STOPPEN
+      stopCountdown();
+      
+      // UI umschalten
+      hintText.style.display = 'none';
+      actionButton.style.display = 'none';
+      document.getElementById('instructionText').style.display = 'none';
+      document.getElementById('tutorialText').style.display = 'none';
+      document.getElementById('entscheidungText').style.display = 'none';
+      document.getElementById('eyeIcon').style.display = 'none';
+      
+      // verdecktesMesh bleibt sichtbar (zeigt aufgedecktes Kippziel)
+      verdecktesMesh.userData.revealed = true;
+      
+      // Buttons versteckt
+      document.getElementById('richtungButtons').classList.add('hidden');
+      kippButtons.classList.add('hidden');
+      
+      // Richtungs-Lock zurücksetzen
+      lockedKippDir = null;
+      currentDragDir = null;
+      
+      // Zielscheibe positionieren und anzeigen
+      updateKippTargetPosition();
+      document.getElementById('kippTarget').style.display = 'block';
+      
+      // Timer aus
+      stopCountdown();
+      countdown.style.display = 'none';
+      
+      // kippCount zurücksetzen
+      kippCount = 0;
+      autoEvalTimeout = null;
+      
+      // Tap-Counter zurücksetzen
+      tapCount = 0;
+      updateTapIndicators();
+      
+      // Liegezeit-Tracking
+      liegeZeiten = [];
+      liegeStartTime = performance.now();
+      
+      // Aktuelles Kärtchen mit dem generierten Kippziel befüllen
+      if (erstesKippziel) {
+        fillCardWithKombi(activeCardIdx, erstesKippziel.zahl, erstesKippziel.color);
+      }
+      
+      setButtonsDisabled(false);
+    }
+
     actionButton.addEventListener('click', () => {
       if (gamePhase === 'spielziel') {
         initEntscheidungPhase();
@@ -2274,7 +2343,11 @@
       
       // Nach 1,5s Spielphase starten
       setTimeout(() => {
-        phaseKippenToSpielen();
+        if (activeCardIdx === 0) {
+          phaseKippenToSpielen(); // Erste Runde: volles Init
+        } else {
+          startSpielenForCurrentRound(); // Folgerunden: ohne Reset
+        }
       }, 1500);
     }
     
@@ -2956,6 +3029,7 @@
       // Buttons bleiben versteckt (Tutorial-Modus: Swipe-Kipping)
       document.getElementById('richtungButtons').classList.add('hidden');
       kippButtons.classList.add('hidden');
+      updateKippTargetPosition();
       document.getElementById('kippTarget').style.display = 'block';
 
       // Pause-Lichter aus
@@ -3256,8 +3330,9 @@
       if (isAnimating || kippzielChecked) return;
       isAnimating = true;
       
-      // Tap-Counter ausblenden
+      // Tap-Counter und Zielkreis ausblenden
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
+      document.getElementById('kippTarget').style.display = 'none';
       
       for (let i = 0; i < steps; i++) {
         let direction;
@@ -3413,6 +3488,9 @@
 
       kippDirection = direction;
       updateRichtungButtons();
+
+      // Zielkreis ausblenden während Kipp-Animation
+      document.getElementById('kippTarget').style.display = 'none';
 
       // Kärtchen auf Original zurücksetzen - Image neu zeichnen
       const card = gameCards[activeCardIdx];
