@@ -105,6 +105,34 @@
       pointer-events: none;
       display: none;
     }
+    #eyeIcon {
+      position: absolute;
+      top: 475px;
+      left: 180px;
+      transform: translateX(-50%);
+      width: 80px;
+      height: auto;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4));
+      display: none;
+      z-index: 150;
+      animation: eyePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes eyePulse {
+      0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
+      50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
+    }
+    #entscheidungText {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      color: #d4c8a0;
+      font-size: 14px;
+      line-height: 1.4;
+      text-align: left;
+      display: none;
+      z-index: 100;
+    }
     
     #instructionText {
       position: absolute;
@@ -403,8 +431,10 @@
     <img id="verdecktesKippziel" src="leernohit.webp" style="display:none;">
     <div id="tutorialText"></div>
     <div id="spielZielText"></div>
+    <div id="entscheidungText"></div>
     <div id="brainScore"></div>
     <div id="countdown">60</div>
+    <img id="eyeIcon" src="data:image/png;base64,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" />
     <button id="actionButton">weiter</button>
     <button id="backButton">↻</button>
     <button id="resetButton"><svg viewBox="0 0 24 24" fill="none" stroke="#c0b8a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
@@ -1182,7 +1212,6 @@
     }
 
     let activeCardIdx = 0;
-    let gameStarted = false;
     const bereitsGetroffen = new Set(); // "zahl_farbe" Kombinationen die bereits Treffer waren
     const bereitsAusgegeben = new Set(); // "zahl_farbe" Kombinationen die bereits als Ziel ausgegeben wurden
     
@@ -1932,12 +1961,74 @@
     // Direkt SCHAUEN-Phase starten (SPIEL ZIEL überspringen für Preview)
     initSpielzielPhase();
     
-    // Spielziel → Demo Übergang
+    // === ENTSCHEIDUNGS-PHASE ===
+    function initEntscheidungPhase() {
+      gamePhase = 'entscheidung';
+      
+      // SpielZiel-Text ausblenden
+      document.getElementById('spielZielText').style.display = 'none';
+      actionButton.style.display = 'none';
+      document.getElementById('instructionText').style.display = 'none';
+      document.getElementById('tutorialText').style.display = 'none';
+      
+      // Reset-Button zeigen
+      resetButton.style.display = 'block';
+      const resetPos3D = new THREE.Vector3(-0.625, 0.46875, -0.828125 + 0.15625);
+      resetPos3D.project(camera);
+      const resetScreenX = (resetPos3D.x * 0.5 + 0.5) * 360;
+      const resetScreenY = (-resetPos3D.y * 0.5 + 0.5) * 720;
+      resetButton.style.left = resetScreenX + 'px';
+      resetButton.style.top = (resetScreenY - 22 - 6) + 'px';
+      
+      // Würfel in Q3, ruhig liegend (kein Reset nötig - steht schon)
+      cube.quaternion.set(0, 0, 0, 1);
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      
+      // Verdecktes Kärtchen pulsierend
+      verdecktesMesh.userData.revealed = false;
+      drawLeernohitOnVerdecktes();
+      verdecktesMesh.visible = true;
+      verdecktesMesh.scale.set(1, 1, 1);
+      verdecktesMat.opacity = 1;
+      
+      // Augen-Icon an Timer-Position
+      const eyeIcon = document.getElementById('eyeIcon');
+      if (timerTopPos) eyeIcon.style.top = timerTopPos;
+      eyeIcon.style.left = '180px';
+      eyeIcon.style.display = 'block';
+      
+      // Entscheidungs-Text unter Auge
+      const etText = document.getElementById('entscheidungText');
+      etText.innerHTML = '<b>IMMER 2 OPTIONEN</b><br>• Zuerst auf Augen-Icon – Würfelschauen (empfohlen)<br>• Gleich auf Kippziel – Kippzug machen';
+      // Position: unter dem Auge
+      setTimeout(() => {
+        const eyeRect = eyeIcon.getBoundingClientRect();
+        const containerRect = renderer.domElement.getBoundingClientRect();
+        etText.style.top = (eyeRect.bottom - containerRect.top + 12) + 'px';
+      }, 10);
+      etText.style.display = 'block';
+      
+      // Timer ausblenden
+      countdown.style.display = 'none';
+    }
+    
+    // Eye-Icon Click → Schauen-Phase (Demo)
+    document.getElementById('eyeIcon').addEventListener('click', () => {
+      if (gamePhase !== 'entscheidung') return;
+      spielzielToDemoPhase();
+    });
+    
+    // Spielziel → Demo Übergang (jetzt von Entscheidung aufgerufen)
     function spielzielToDemoPhase() {
       gamePhase = 'demo';
-      document.getElementById('spielZielText').style.display = 'none';
+      
+      // Auge ausblenden, Timer zeigen
+      document.getElementById('eyeIcon').style.display = 'none';
+      document.getElementById('entscheidungText').style.display = 'none';
+      
       resetButton.style.display = 'block';
-      // Position: Rasterzeile 1/2 Grenze, Spalte A (3D → Screen)
       const resetPos3D = new THREE.Vector3(-0.625, 0.46875, -0.828125 + 0.15625);
       resetPos3D.project(camera);
       const resetScreenX = (resetPos3D.x * 0.5 + 0.5) * 360;
@@ -2006,7 +2097,7 @@
       if (erstesKippziel) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = '<b>KIPPEN</b><br>Überlege! Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
+        tutText.innerHTML = '<b>ÜBERLEGE!</b> Wie oft, <b>von 1 bis 6</b>, und in welche Richtung musst du kippen, damit ' + zahl + ' an ' + farbe + ' liegt?<br>Tippe sooft auf den Würfel, wie du planst, zu kippen. Schubbse dann den Würfel in die gewünschte Richtung an.';
       }
       tutText.style.display = 'block';
       
@@ -2072,7 +2163,7 @@
     
     actionButton.addEventListener('click', () => {
       if (gamePhase === 'spielziel') {
-        spielzielToDemoPhase();
+        initEntscheidungPhase();
       } else if (gamePhase === 'kippen') {
         phaseKippenToSpielen();
       } else if (gamePhase === 'pause') {
@@ -2119,15 +2210,13 @@
       
       // instructionText ausblenden
       document.getElementById('instructionText').style.display = 'none';
+      // Entscheidungs-UI ausblenden
+      document.getElementById('eyeIcon').style.display = 'none';
+      document.getElementById('entscheidungText').style.display = 'none';
       
       // Nach 1,5s Spielphase starten
       setTimeout(() => {
-        if (!gameStarted) {
-          gameStarted = true;
-          phaseKippenToSpielen();
-        } else {
-          startNextKippRunde();
-        }
+        phaseKippenToSpielen();
       }, 1500);
     }
     
@@ -2140,14 +2229,14 @@
     let lastTouchPos = null;
     
     renderer.domElement.addEventListener('touchstart', (e) => {
-      if ((gamePhase === 'kippen' && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) ||
+      if (((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) ||
           (gamePhase === 'spielen' && !kippzielChecked)) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     }, { passive: true });
     
     renderer.domElement.addEventListener('touchend', (e) => {
-      if (gamePhase !== 'kippen' || !verdecktesMesh.visible || !lastTouchPos || verdecktesMesh.userData.revealed) return;
+      if ((gamePhase !== 'kippen' && gamePhase !== 'entscheidung') || !verdecktesMesh.visible || !lastTouchPos || verdecktesMesh.userData.revealed) return;
       if (dragActive) { lastTouchPos = null; return; }
       
       const rect = renderer.domElement.getBoundingClientRect();
@@ -2178,7 +2267,7 @@
         return;
       }
       
-      if (gamePhase !== 'kippen' || !verdecktesMesh.visible || verdecktesMesh.userData.revealed) return;
+      if ((gamePhase !== 'kippen' && gamePhase !== 'entscheidung') || !verdecktesMesh.visible || verdecktesMesh.userData.revealed) return;
       if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
         revealVerdecktesKippziel();
       }
@@ -2204,7 +2293,6 @@
       if (kippCount > 6) {
         console.log('=== AUTO-MISS: mehr als 6 Kipps ===');
         drawKippzielBorder(false);
-        setTimeout(() => afterKippwertung(false), 1500);
         return;
       }
       
@@ -2233,98 +2321,8 @@
       console.log('Ergebnis:', isHit ? 'TREFFER' : 'MISS');
       
       drawKippzielBorder(isHit);
-      setTimeout(() => afterKippwertung(isHit), 1500);
     }
     
-    function afterKippwertung(isHit) {
-      const card = gameCards[activeCardIdx];
-      
-      if (isHit) {
-        bereitsGetroffen.add(card.zahl + '_' + card.color.name);
-        drawGoldenBorder(card);
-      } else {
-        card.ctx.clearRect(0, 0, 85, 170);
-        card.ctx.drawImage(leerImage, 0, 0, 85, 170);
-        card.texture.needsUpdate = true;
-        card.mesh.material.transparent = true;
-        card.mesh.material.opacity = 0.6;
-        card.mesh.material.needsUpdate = true;
-        card.zahl = null;
-        card.color = null;
-        card.isMiss = true;
-      }
-      
-      activeCardIdx++;
-      
-      if (activeCardIdx >= 6) { showGameEnd(); return; }
-      
-      if (activeCardIdx === 3) {
-        setButtonsDisabled(true);
-        document.getElementById('richtungButtons').classList.add('hidden');
-        kippButtons.classList.add('hidden');
-        savedCubePosition = cube.position.clone();
-        savedCubeQuaternion = cube.quaternion.clone();
-        savedTopFace = topFace;
-        savedCurrentQuadrant = currentQuadrant;
-        animateAufEcke().then(() => startPausePhase());
-        return;
-      }
-      
-      // Nächstes verdecktes Kippziel pulsierend am nächsten Platz
-      const nextCardX = cardStartX + activeCardIdx * (cardWidth + cardGap);
-      verdecktesMesh.position.set(nextCardX, cardY + 0.001, cardZ);
-      drawLeernohitOnVerdecktes();
-      verdecktesMesh.visible = true;
-      verdecktesMesh.userData.revealed = false;
-      verdecktesMesh.scale.set(1, 1, 1);
-      verdecktesMat.opacity = 1;
-      
-      kippzielChecked = false;
-      erstesKippziel = null;
-      lockedKippDir = null;
-      currentDragDir = null;
-      
-      // Kein Text – direkt kippen-Phase, Würfel bleibt wo er ist
-      document.getElementById('instructionText').style.display = 'none';
-      document.getElementById('tutorialText').style.display = 'none';
-      gamePhase = 'kippen';
-      currentMode = 'kanten';
-    }
-    
-    function startNextKippRunde() {
-      gamePhase = 'spielen';
-      currentMode = 'kanten';
-      kippzielChecked = false;
-      
-      hintText.style.display = 'none';
-      actionButton.style.display = 'none';
-      document.getElementById('instructionText').style.display = 'none';
-      verdecktesMesh.userData.revealed = true;
-      
-      document.getElementById('richtungButtons').classList.add('hidden');
-      kippButtons.classList.add('hidden');
-      
-      lockedKippDir = null;
-      currentDragDir = null;
-      
-      if (erstesKippziel) {
-        fillCardWithKombi(activeCardIdx, erstesKippziel.zahl, erstesKippziel.color);
-      }
-      
-      const tutText = document.getElementById('tutorialText');
-      tutText.style.display = 'none';
-      
-      stopCountdown();
-      countdown.style.display = 'none';
-      
-      kippCount = 0;
-      autoEvalTimeout = null;
-      tapCount = 0;
-      updateTapIndicators();
-      
-      setButtonsDisabled(false);
-    }
-
     function drawKippzielBorder(isHit) {
       if (isHit) {
         // Treffer: goldgelber Rahmen mit Outer Glow
@@ -2425,8 +2423,6 @@
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       drawLeernohitOnVerdecktes();
-      verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
-      gameStarted = false;
       kippButtons.classList.add('hidden');
       document.getElementById('richtungButtons').classList.add('hidden');
       
@@ -2451,6 +2447,8 @@
       
       document.getElementById('instructionText').style.display = 'none';
       document.getElementById('tutorialText').style.display = 'none';
+      document.getElementById('eyeIcon').style.display = 'none';
+      document.getElementById('entscheidungText').style.display = 'none';
       hintText.style.display = 'none';
       actionButton.style.display = 'none';
       kippButtons.classList.add('hidden');
@@ -2471,8 +2469,6 @@
       totalObservationTime = 0;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
-      gameStarted = false;
-      verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
       
       gamePhase = 'spielziel';
       initSpielzielPhase();
@@ -2734,14 +2730,6 @@
         }
         
         // SCHAUEN-Phase: normaler manueller Drag
-        // Timer starten beim ersten Drag (falls noch nicht läuft)
-        if (gamePhase === 'kippen' && !countdownTimer) {
-          startCountdown(() => {
-            if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
-              revealVerdecktesKippziel();
-            }
-          }, 60);
-        }
         currentDragDir = direction;
 
         const config = getKippConfig(direction);
@@ -3123,12 +3111,12 @@
         }
         
         isAnimating = false; // performKipp setzt isAnimating selbst
-        await performKipp(direction, 500);
+        await performKipp(direction, 350);
         advanceTopFace();
         
         // Kurze Pause zwischen Kipps
         if (i < steps - 1) {
-          await sleep(200);
+          await sleep(100);
         }
       }
       
