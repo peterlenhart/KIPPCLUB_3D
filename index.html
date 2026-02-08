@@ -2036,9 +2036,9 @@
       document.getElementById('tutorialText').style.display = 'none';
       const szText = document.getElementById('spielZielText');
       szText.innerHTML = '<b>SPIEL ZIEL</b><br>' +
-        '• Finde möglichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der Würfel, wie hier z.B., das Kippziel <i>' + beispielZahl + '</i> an <i>' + farbDisplay + '</i> trifft.<br>' +
-        'Es sind nie mehr als 6 Kipps, wenn die Richtung stimmt.<br>' +
-        '• Nutze SCHAU-Sekunden effektiv.';
+        '• Finde möglichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der Würfel das Kippziel trifft. Hier z.B. <b>' + beispielZahl + '</b> an <b>' + farbDisplay + '</b>.<br>' +
+        'Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>' +
+        '• Nutze <b>SCHAU</b>-Sek. effektiv.';
       szText.style.display = 'block';
       
       // weiter-Button zentriert unter Text positionieren
@@ -2216,7 +2216,7 @@
       if (activeCardIdx === 0 && erstesKippziel && !isReplay) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = '<b>TIPPEN & SCHUBSEN</b><br>Das Kippziel links zeigt: <i>' + zahl + '</i> muss zu <i>' + farbe + '</i> gekippt werden.<br>TIPPE ein- bis sechsmal auf den Würfel.<br>SCHUBSE ihn anschließend in die gewünschte Richtung, um den Kippzug auszulösen.';
+        tutText.innerHTML = '<b>TIPPEN & SCHUBSEN</b><br>Das Kippziel links zeigt: <b>' + zahl + '</b> muss zu <b>' + farbe + '</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den Würfel.<br><b>SCHUBSE</b> ihn anschließend in die gewünschte Richtung, um den Kippzug auszulösen.';
         tutText.style.display = 'block';
       } else {
         tutText.style.display = 'none';
