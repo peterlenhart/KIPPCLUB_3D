@@ -502,7 +502,7 @@
   <div id="uiOverlay">
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
-    <div id="instructionText"><b>SCHAUEN & MERKEN</b><br>Kippe den Würfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir möglichst viele Zahlenpositionen in möglichst kurzer Zeit (Nutze SCHAU-Sek. effektiv).<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.</div>
+    <div id="instructionText"></div>
     <img id="verdecktesKippziel" src="leernohit.webp" style="display:none;">
     <div id="tutorialText"></div>
     <div id="spielZielText"></div>
@@ -511,7 +511,7 @@
     <div id="brainScore"></div>
     <div id="countdown">60</div>
     <img id="eyeIcon" src="data:image/png;base64,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" />
-    <button id="actionButton">weiter</button>
+    <button id="actionButton"></button>
     <button id="backButton">↻</button>
     <button id="resetButton"><svg viewBox="0 0 24 24" fill="none" stroke="#c0b8a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
     
@@ -533,6 +533,67 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
+    // === SPRACH-SYSTEM ===
+    var _digikippLang = "de";
+    try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
+    var T = {
+      "de": {
+        s1:"SPIEL ZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>\u2022 Nutze <b>SCHAU</b>-Sek. effektiv.",
+        w:"weiter", n:"Neues Spiel",
+        e1:"IMMER 2 OPTIONEN", e2:"Zuerst auf Augen-Icon \u2013 W\u00fcrfelschauen (empfohlen)", e3:"Gleich auf Kippziel \u2013 Kippzug machen",
+        k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit (Nutze SCHAU-Sek. effektiv).<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
+        p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
+        bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} SCHAU-Sekunden", bw:"Best: 100% | Worst: 12%",
+        fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange"
+      },
+      "en": {
+        s1:"OBJECTIVE", s2:"\u2022 Find the right number of tips and the correct direction so the cube hits the target. E.g. <b>{zahl}</b> to <b>{farbe}</b>.<br>It\u2019s never more than <b>6</b> tips if the direction is right.<br>\u2022 Use <b>LOOK</b> seconds efficiently.",
+        w:"next", n:"New Game",
+        e1:"ALWAYS 2 OPTIONS", e2:"First tap eye icon \u2013 look at the cube (recommended)", e3:"Go straight to target \u2013 make your tipping move",
+        k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
+        p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
+        bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} LOOK seconds", bw:"Best: 100% | Worst: 12%",
+        fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange"
+      },
+      "es": {
+        s1:"OBJETIVO", s2:"\u2022 Encuentra el n\u00famero correcto de volcados y la direcci\u00f3n adecuada para que el cubo alcance el objetivo. P.ej. <b>{zahl}</b> a <b>{farbe}</b>.<br>Nunca son m\u00e1s de <b>6</b> volcados si la direcci\u00f3n es correcta.<br>\u2022 Usa los segundos de <b>MIRAR</b> eficientemente.",
+        w:"siguiente", n:"Nuevo Juego",
+        e1:"SIEMPRE 2 OPCIONES", e2:"Primero pulsa el icono del ojo \u2013 mirar el cubo (recomendado)", e3:"Directo al objetivo \u2013 hacer tu jugada",
+        k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
+        p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
+        bs:"BRAIN SCORE", nh:"Sin acierto, sin puntos", st:"{t} ACIERTOS | {z} seg. de MIRAR", bw:"Mejor: 100% | Peor: 12%",
+        fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja"
+      },
+      "fr": {
+        s1:"OBJECTIF", s2:"\u2022 Trouve le bon nombre de basculements et la bonne direction pour que le cube atteigne la cible. Par ex. <b>{zahl}</b> \u00e0 <b>{farbe}</b>.<br>Jamais plus de <b>6</b> basculements si la direction est bonne.<br>\u2022 Utilise les secondes de <b>REGARD</b> efficacement.",
+        w:"suivant", n:"Nouvelle Partie",
+        e1:"TOUJOURS 2 OPTIONS", e2:"D\u2019abord l\u2019ic\u00f4ne \u0153il \u2013 regarder le cube (recommand\u00e9)", e3:"Directement \u00e0 la cible \u2013 faire ton coup",
+        k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
+        p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
+        bs:"BRAIN SCORE", nh:"Aucun coup, aucun score", st:"{t} COUPS | {z} sec. de REGARD", bw:"Meilleur: 100% | Pire: 12%",
+        fV:"Violet", fB:"Bleu", fG:"Vert", fO:"Orange"
+      },
+      "it": {
+        s1:"OBIETTIVO", s2:"\u2022 Trova il numero giusto di ribaltamenti e la direzione corretta affinch\u00e9 il cubo raggiunga il bersaglio. Es. <b>{zahl}</b> a <b>{farbe}</b>.<br>Non sono mai pi\u00f9 di <b>6</b> ribaltamenti se la direzione \u00e8 giusta.<br>\u2022 Usa i secondi di <b>GUARDA</b> in modo efficiente.",
+        w:"avanti", n:"Nuova Partita",
+        e1:"SEMPRE 2 OPZIONI", e2:"Prima tocca l\u2019icona occhio \u2013 guardare il cubo (consigliato)", e3:"Diretto al bersaglio \u2013 fare la tua mossa",
+        k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
+        p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
+        bs:"BRAIN SCORE", nh:"Nessun colpo, nessun punteggio", st:"{t} COLPI | {z} sec. di GUARDA", bw:"Migliore: 100% | Peggiore: 12%",
+        fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione"
+      },
+      "tr": {
+        s1:"HEDEF", s2:"\u2022 K\u00fcp\u00fcn hedefe ula\u015fmas\u0131 i\u00e7in do\u011fru devrilme say\u0131s\u0131n\u0131 ve y\u00f6n\u00fcn\u00fc bul. \u00d6rn. <b>{zahl}</b> \u2192 <b>{farbe}</b>.<br>Y\u00f6n do\u011fruysa asla <b>6</b>\u2019dan fazla devrilme olmaz.<br>\u2022 <b>BAKMA</b> saniyelerini verimli kullan.",
+        w:"devam", n:"Yeni Oyun",
+        e1:"HER ZAMAN 2 SE\u00c7ENEK", e2:"\u00d6nce g\u00f6z ikonuna dokun \u2013 k\u00fcpe bak (\u00f6nerilen)", e3:"Do\u011frudan hedefe \u2013 hamle yap",
+        k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
+        p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
+        bs:"BRAIN SCORE", nh:"\u0130sabet yok, puan yok", st:"{t} \u0130SABET | {z} BAKMA saniyesi", bw:"En iyi: 100% | En k\u00f6t\u00fc: 12%",
+        fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu"
+      }
+    }[_digikippLang];
+    if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"{t} HITS | {z} SCHAU-Sekunden",bw:"Best: 100% | Worst: 12%",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
+
     // =========================
     // Scene Setup
     // =========================
@@ -1552,18 +1613,18 @@
       // Brain Score anzeigen
       const brainScore = document.getElementById('brainScore');
       if (scoreValue === "No Hit, no Score") {
-        brainScore.innerHTML = '<span style="font-size:12pt;font-weight:bold;">BRAIN SCORE:<br>No Hit, no Score</span>' +
-          '<br><span style="font-size:10pt;font-weight:normal;">' + treffer + ' HITS | ' + totalObservationTime + ' SCHAU-Sekunden</span>';
+        brainScore.innerHTML = '<span style="font-size:12pt;font-weight:bold;">' + T.bs + ':<br>' + T.nh + '</span>' +
+          '<br><span style="font-size:10pt;font-weight:normal;">' + T.st.replace("{t}",treffer).replace("{z}",totalObservationTime) + '</span>';
       } else {
-        brainScore.innerHTML = '<span style="font-size:12pt;font-weight:bold;">BRAIN SCORE: ' + scoreValue + '</span>' +
-          '<br><span style="font-size:10pt;font-weight:normal;">Best: 100% | Worst: 12%</span>' +
-          '<br><span style="font-size:10pt;font-weight:normal;">' + treffer + ' HITS | ' + totalObservationTime + ' SCHAU-Sekunden</span>';
+        brainScore.innerHTML = '<span style="font-size:12pt;font-weight:bold;">' + T.bs + ': ' + scoreValue + '</span>' +
+          '<br><span style="font-size:10pt;font-weight:normal;">' + T.bw + '</span>' +
+          '<br><span style="font-size:10pt;font-weight:normal;">' + T.st.replace("{t}",treffer).replace("{z}",totalObservationTime) + '</span>';
       }
       brainScore.style.display = 'block';
       brainScore.style.opacity = '1';
       
       // "Neues Spiel" Button anzeigen (Position wie Auge/Timer/weiter)
-      actionButton.textContent = 'Neues Spiel';
+      actionButton.textContent = T.n;
       actionButton.style.display = 'block';
       actionButton.style.opacity = '1';
       if (timerTopPos) {
@@ -1629,7 +1690,7 @@
 
         // UI faden ein (ohne Text)
         hintText.style.display = 'none';
-        actionButton.textContent = 'weiter';
+        actionButton.textContent = T.w;
         actionButton.style.opacity = '0';
         actionButton.style.display = 'block';
 
@@ -2056,9 +2117,9 @@
     
     // === PHASE 1: SPIEL ZIEL ===
     // Farbnamen für Tutorial-Anzeige
-    const FARB_DISPLAY = {
-      'violett': 'Violett', 'blau': 'Blau', 'gruen': 'Grün', 'orange': 'Orange'
-    };
+    var FARB_DISPLAY = {"violett":T.fV,"blau":T.fB,"gruen":T.fG,"orange":T.fO};
+
+
     
     // Beispiel-Kippziel aus aktueller Würfellage (Q3, f2 oben) generieren
     function initSpielzielPhase() {
@@ -2116,14 +2177,14 @@
       resetButton.style.top = (resetScreenY_sz - 22 - 6) + 'px';
       
       const szText = document.getElementById('spielZielText');
-      szText.innerHTML = '<b>SPIEL ZIEL</b><br>' +
-        '• Finde möglichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der Würfel das Kippziel trifft. Hier z.B. <b>' + beispielZahl + '</b> an <b>' + farbDisplay + '</b>.<br>' +
-        'Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>' +
-        '• Nutze <b>SCHAU</b>-Sek. effektiv.';
+      szText.innerHTML = "<b>" + T.s1 + "</b><br>" + T.s2.replace("{zahl}",beispielZahl).replace("{farbe}",farbDisplay);
+
+
+
       szText.style.display = 'block';
       
       // weiter-Button zentriert unter Text positionieren
-      actionButton.textContent = 'weiter';
+      actionButton.textContent = T.w;
       actionButton.disabled = false;
       actionButton.style.display = 'block';
       actionButton.style.opacity = '1';
@@ -2220,7 +2281,7 @@
       if (isReplay) {
         etText.style.display = 'none';
       } else {
-        etText.innerHTML = '<b>IMMER 2 OPTIONEN</b><br>• Zuerst auf Augen-Icon – Würfelschauen (empfohlen)<br>• Gleich auf Kippziel – Kippzug machen';
+        etText.innerHTML = "<b>" + T.e1 + "</b><br>\u2022 " + T.e2 + "<br>\u2022 " + T.e3;
         etText.style.display = 'block';
       }
       
@@ -2268,6 +2329,7 @@
         spacer.className = 'hand-spacer';
         instrText.insertBefore(spacer, instrText.firstChild);
       }
+      instrText.innerHTML = '<b>' + T.k1 + '</b><br>' + T.k2;
       instrText.style.display = isReplay ? 'none' : 'block';
       actionButton.style.display = 'none';
       
@@ -2322,7 +2384,7 @@
       if (activeCardIdx === 0 && erstesKippziel && !isReplay) {
         const zahl = erstesKippziel.zahl;
         const farbe = FARB_DISPLAY[erstesKippziel.color.name] || erstesKippziel.color.name;
-        tutText.innerHTML = '<b>TIPPEN & SCHUBSEN</b><br>Das Kippziel links zeigt: <b>' + zahl + '</b> muss zu <b>' + farbe + '</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den Würfel.<br><b>SCHUBSE</b> ihn anschließend in die gewünschte Richtung, um den Kippzug auszulösen.';
+        tutText.innerHTML = "<b>" + T.p1 + "</b><br>" + T.p2.replace("{zahl}",zahl).replace("{farbe}",farbe);
         tutText.style.display = 'block';
       } else {
         tutText.style.display = 'none';
