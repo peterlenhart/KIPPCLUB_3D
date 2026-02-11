@@ -106,12 +106,12 @@
     }
     #demoSubtitle {
       position: absolute;
-      top: 576px;
+      top: 556px;
       left: 50%;
       transform: translateX(-50%);
       width: 320px;
       text-align: center;
-      font-size: 12pt;
+      font-size: 16pt;
       font-weight: bold;
       color: #f0f0f0;
       text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
@@ -2407,10 +2407,11 @@
     }
 
     async function showSubtitleSequence(lines, perLine) {
-      perLine = perLine || 2000;
+      perLine = perLine || 2500;
       for (let i = 0; i < lines.length; i++) {
         if (!autoDemoActive) return;
-        await showSubtitle(lines[i], perLine);
+        const dur = (i === 0) ? 3000 : perLine;
+        await showSubtitle(lines[i], dur);
       }
     }
 
@@ -2821,7 +2822,7 @@
       countdown.style.display = 'none';
 
       // Subtitle: explain eye/schauen
-      await showSubtitleSequence(T.d1, 2000);
+      await showSubtitleSequence(T.d1, 2500);
       if (!autoDemoActive) return;
 
       // ==========================================
@@ -2940,7 +2941,7 @@
       const zfText = kz.zahl + ' \u2192 ' + (farbDisplay[kz.color.name] || kz.color.name);
       const d3Lines = T.d3.map(l => l === '{zf}' ? zfText : l);
 
-      await showSubtitleSequence(d3Lines, 2200);
+      await showSubtitleSequence(d3Lines, 2500);
       if (!autoDemoActive) return;
       hideSubtitle();
 
