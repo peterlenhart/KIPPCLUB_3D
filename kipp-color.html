@@ -2396,7 +2396,7 @@
     function autoRevealKippziel(zahl, colorObj) {
       erstesKippziel = { zahl: zahl, color: colorObj };
       const img = colorTargetImages[colorObj.name];
-      if (!img) return;
+      if (!img) { console.error('autoReveal: Missing image for', colorObj.name); return; }
       verdecktesCtx.clearRect(0, 0, 85, 170);
       verdecktesCtx.drawImage(img, 0, 0, 85, 170);
       const displayText = zahl + ((zahl === 6 || zahl === 9) ? '.' : '');
@@ -2405,9 +2405,14 @@
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
       verdecktesCtx.fillText(displayText, 42, 42);
+      // Force texture refresh (critical for 2nd+ runs)
       verdecktesCanvasTex.needsUpdate = true;
-      verdecktesMesh.scale.set(1, 1, 1);
+      verdecktesMat.map = verdecktesCanvasTex;
+      verdecktesMat.transparent = true;
       verdecktesMat.opacity = 1;
+      verdecktesMat.needsUpdate = true;
+      verdecktesMesh.material = verdecktesMat;
+      verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMesh.userData.revealed = true;
     }
 
@@ -2435,6 +2440,105 @@
       isAnimating = false;
     }
 
+    // === HALF-KIPP WITH WOBBLE ===
+    // Realistic "peek at 2 faces" technique: tilt to edge, wobble slowly, then complete
+    async function halfKippWithWobble(direction, wobbleCount, wobblePause) {
+      wobbleCount = wobbleCount || 3;
+      wobblePause = wobblePause || 0; // extra pause after wobble before completing
+
+      // Direction → pivot definitions (same as performKipp)
+      const defs = {
+        'north':         { pivot: [-0.234375, 0, 0.109375],       ax: 'x', angle: -Math.PI/2, toQ: 0 },
+        'south':         { pivot: [-0.234375, 0, 0.109375],       ax: 'x', angle:  Math.PI/2, toQ: 3 },
+        'east':          { pivot: [0, 0, 0.109375 + 0.234375],    ax: 'z', angle: -Math.PI/2, toQ: 1 },
+        'west':          { pivot: [0, 0, 0.109375 + 0.234375],    ax: 'z', angle:  Math.PI/2, toQ: 0 },
+        'south_from_q1': { pivot: [0.234375, 0, 0.109375],        ax: 'x', angle:  Math.PI/2, toQ: 2 },
+        'north_from_q2': { pivot: [0.234375, 0, 0.109375],        ax: 'x', angle: -Math.PI/2, toQ: 1 },
+        'west_from_q2':  { pivot: [0, 0, 0.109375 + 0.234375],    ax: 'z', angle:  Math.PI/2, toQ: 3 },
+        'east_from_q3':  { pivot: [0, 0, 0.109375 + 0.234375],    ax: 'z', angle: -Math.PI/2, toQ: 2 }
+      };
+      const def = defs[direction];
+      if (!def) return;
+
+      const pivotPoint = new THREE.Vector3(def.pivot[0], def.pivot[1], def.pivot[2]);
+      const fullAngle = def.angle;
+      const halfAngle = fullAngle * 0.5;           // 45°
+      const wobbleMin = fullAngle * 0.35;           // ~31.5°
+      const wobbleMax = fullAngle * 0.65;           // ~58.5°
+
+      // --- Setup pivot (cube stays in pivot for entire sequence) ---
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(pivotPoint);
+      kipGroup.add(pivotGroup);
+
+      cube.updateMatrixWorld();
+      const cubeWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(cubeWorldPos);
+      kipGroup.remove(cube);
+      cube.position.copy(cubeWorldPos.clone().sub(pivotPoint));
+      pivotGroup.add(cube);
+
+      function setAngle(a) {
+        if (def.ax === 'x') pivotGroup.rotation.x = a;
+        else pivotGroup.rotation.z = a;
+      }
+
+      // Helper: animate angle from → to
+      function animAngle(from, to, dur) {
+        return new Promise(resolve => {
+          const startTime = performance.now();
+          function tick() {
+            const t = Math.min((performance.now() - startTime) / dur, 1);
+            const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+            setAngle(from + (to - from) * ease);
+            if (t < 1) requestAnimationFrame(tick);
+            else { setAngle(to); resolve(); }
+          }
+          requestAnimationFrame(tick);
+        });
+      }
+
+      // 1) Tilt to half angle (45°) — 600ms, smooth
+      await animAngle(0, halfAngle, 600);
+
+      // 2) Wobble: slow oscillation between wobbleMin and wobbleMax
+      let currentAnglePos = halfAngle;
+      for (let w = 0; w < wobbleCount; w++) {
+        const target = (w % 2 === 0) ? wobbleMin : wobbleMax;
+        await animAngle(currentAnglePos, target, 800);
+        currentAnglePos = target;
+      }
+      // Return to halfAngle
+      if (Math.abs(currentAnglePos - halfAngle) > 0.01) {
+        await animAngle(currentAnglePos, halfAngle, 500);
+      }
+
+      // Optional extra pause (player is memorizing)
+      if (wobblePause > 0) await sleep(wobblePause);
+
+      // 3) Complete: animate from halfAngle to fullAngle — 500ms
+      await animAngle(halfAngle, fullAngle, 500);
+
+      // --- Finalize: extract cube from pivot ---
+      cube.updateMatrixWorld();
+      const newWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(newWorldPos);
+      const newWorldQuat = new THREE.Quaternion();
+      cube.getWorldQuaternion(newWorldQuat);
+
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      cube.position.copy(newWorldPos);
+      cube.quaternion.copy(newWorldQuat);
+      kipGroup.add(cube);
+
+      // Snap Y
+      if (Math.abs(cube.position.y - offset) < 0.01) cube.position.y = offset;
+
+      currentQuadrant = def.toQ;
+      advanceTopFace();
+    }
+
     // Show HIT/MISS on verdecktes mesh (no proceedToNextRound timer)
     function autoDemoShowResult(isHit) {
       if (isHit) {
@@ -2448,6 +2552,7 @@
         verdecktesCtx.lineWidth = 1;
         verdecktesCtx.strokeRect(7, 7, 71, 156);
         verdecktesCanvasTex.needsUpdate = true;
+        verdecktesMat.needsUpdate = true;
         // Pulse animation
         const startTime = performance.now();
         function pulseTick(now) {
@@ -2480,6 +2585,7 @@
         verdecktesCtx.lineWidth = 4;
         verdecktesCtx.strokeRect(4, 4, 77, 162);
         verdecktesCanvasTex.needsUpdate = true;
+        verdecktesMat.needsUpdate = true;
       }
     }
 
@@ -2504,6 +2610,12 @@
       // Hide start overlay
       document.getElementById('startOverlay').style.display = 'none';
 
+      // Stop any lingering timers/animations from previous runs
+      stopCountdown();
+      if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
+      isDemoAnimating = false;
+      handDemo.visible = false;
+
       // Reset cube to Q3, f2
       cube.position.set(-offset, offset, 0.109375 + offset);
       cube.quaternion.set(0, 0, 0, 1);
@@ -2512,7 +2624,7 @@
       kippDirection = 'cw';
       isAnimating = false;
 
-      // Reset game state
+      // Reset game state - COMPREHENSIVE
       activeCardIdx = 0;
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
@@ -2522,6 +2634,11 @@
       kippCount = 0;
       totalObservationTime = 0;
       lockedKippDir = null;
+      currentDragDir = null;
+      offeneKippzieleVergeben = 0;
+      openKippzielPositions = pickTwoRandomPositions();
+      timerStarted = false;
+      dragActive = false;
 
       // Reset cards
       gameCards.forEach(c => { c.mesh.visible = false; c.zahl = null; c.color = null; c.isHit = false; c.isMiss = false; });
@@ -2547,188 +2664,222 @@
       resetButton.style.left = ((resetPos3D.x * 0.5 + 0.5) * 360) + 'px';
       resetButton.style.top = (((-resetPos3D.y * 0.5 + 0.5) * 720) - 28) + 'px';
 
-      // Show verdecktes at position 0, pulsing
-      verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
-      drawLeernohitOnVerdecktes();
-      verdecktesMesh.visible = true;
+      // Compute timerTopPos if not yet set (demo may run before spielziel)
+      if (!timerTopPos) {
+        timerTopPos = '553px';
+      }
+
+      // Hit/Miss pattern: 4 Hits, 2 Misses (realistic good player)
+      const hitPattern = [true, true, false, true, true, false];
+
+      // ==========================================
+      // 6 ROUNDS
+      // ==========================================
+      for (let round = 0; round < 6; round++) {
+        if (!autoDemoActive) return;
+        await autoDemoRound(round, hitPattern[round]);
+        if (!autoDemoActive) return;
+      }
+
+      // ==========================================
+      // BRAIN SCORE
+      // ==========================================
+      verdecktesMesh.visible = false;
+      document.getElementById('kippTarget').style.display = 'none';
+      document.getElementById('eyeIcon').style.display = 'none';
+      tapIndicatorA.mesh.visible = false;
+      tapIndicatorB.mesh.visible = false;
+
+      // Calculate and show Brain Score (reuse existing logic)
+      const treffer = bereitsGetroffen.size;
+      const scoreValue = calculateBrainScore(totalObservationTime, treffer);
+
+      const brainScore = document.getElementById('brainScore');
+      if (scoreValue === "No Hit, no Score") {
+        brainScore.innerHTML = '<span style="font-size:12pt;font-weight:bold;">' + T.bs + ':<br>' + T.nh + '</span>' +
+          '<br><span style="font-size:10pt;font-weight:normal;">' + T.st.replace("{t}",treffer).replace("{z}",totalObservationTime) + '</span>';
+      } else {
+        brainScore.innerHTML = '<span style="font-size:12pt;font-weight:bold;">' + T.bs + ': ' + scoreValue + '</span>' +
+          '<br><span style="font-size:10pt;font-weight:normal;">' + T.bw + '</span>' +
+          '<br><span style="font-size:10pt;font-weight:normal;">' + T.st.replace("{t}",treffer).replace("{z}",totalObservationTime) + '</span>';
+      }
+      brainScore.style.display = 'block';
+      brainScore.style.opacity = '1';
+
+      // Show score for 5 seconds, then back to start
+      await sleep(5000);
+
+      if (!autoDemoActive) return;
+      autoDemoActive = false;
+
+      // Cube zurück auf Start
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      backToStartScreen();
+    }
+
+    // === Single demo round ===
+    async function autoDemoRound(roundIdx, shouldHit) {
+      if (!autoDemoActive) return;
+
+      activeCardIdx = roundIdx;
+
+      // 1) Show verdecktes Kippziel (leernohit) at correct card position
+      const posX = cardStartX + roundIdx * (cardWidth + cardGap);
+      verdecktesMesh.position.set(posX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
+      verdecktesMesh.visible = true;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
+      verdecktesMat.transparent = true;
+      verdecktesMat.needsUpdate = true;
+      verdecktesMesh.material = verdecktesMat;
+      drawLeernohitOnVerdecktes();
+
+      // 2) Show eye icon below verdecktes
+      const eyeIcon = document.getElementById('eyeIcon');
+      const vkPos = new THREE.Vector3().copy(verdecktesMesh.position);
+      vkPos.project(camera);
+      const vkScreenY = (-vkPos.y * 0.5 + 0.5) * 720;
+      eyeIcon.style.top = (vkScreenY + 55) + 'px';
+      eyeIcon.style.display = 'block';
+
+      // 3) Show timer at 0 (not counting yet)
+      countdown.textContent = '0';
+      countdown.style.display = 'block';
+      countdown.style.top = timerTopPos;
+      countdown.style.left = '180px';
+
+      // Pause: let user see the "Entscheidung" state
+      await sleep(2000);
+      if (!autoDemoActive) return;
 
       // ==========================================
-      // PHASE 1: SCHAUEN (Look at the cube)
+      // 4) Auto-"click" eye → SCHAUEN-Phase
       // ==========================================
-      await sleep(1200);
+      eyeIcon.style.display = 'none';
 
-      // Start SCHAU-timer
-      totalObservationTime = 0;
+      // Start SCHAU-timer (continues from previous rounds)
       startCountdown(null, 120);
 
-      // Kipp 1: north → Q0, f0 on top
-      kippDirection = 'cw';
-      isAnimating = false;
-      await performKipp('north', 800);
-      advanceTopFace();
-      isAnimating = false;
-      await sleep(1000);
+      // SCHAUEN: Use the edge-wobble technique to see 2 faces at once
+      if (roundIdx === 0) {
+        // First round: thorough look - 3 half-kipp-wobbles
+        // Wobble 1: north → see f2 (top) + f0 (will be top) simultaneously
+        kippDirection = 'cw';
+        await halfKippWithWobble('north', 3, 400);
+        if (!autoDemoActive) return;
+        await sleep(300);
 
-      // Kipp 2: east → Q1, f1 on top
-      isAnimating = false;
-      await performKipp('east', 800);
-      advanceTopFace();
-      isAnimating = false;
-      await sleep(1200);
+        // Wobble 2: east → see f0 (top) + f1 (will be top)
+        await halfKippWithWobble('east', 3, 400);
+        if (!autoDemoActive) return;
+        await sleep(300);
 
-      // Kipp 3: go back west → Q0, face changes via ccw
-      kippDirection = 'ccw';
-      isAnimating = false;
-      await performKipp('west', 800);
-      advanceTopFace();
-      isAnimating = false;
-      await sleep(600);
+        // Wobble 3: go back west → review f1 + f0 one more time
+        kippDirection = 'ccw';
+        await halfKippWithWobble('west', 2, 200);
+        if (!autoDemoActive) return;
+        await sleep(300);
+      } else if (roundIdx <= 2) {
+        // Rounds 2-3: medium look - 2 half-kipp-wobbles
+        kippDirection = 'cw';
+        await halfKippWithWobble('north', 2, 200);
+        if (!autoDemoActive) return;
+        await sleep(200);
+
+        await halfKippWithWobble('east', 2, 200);
+        if (!autoDemoActive) return;
+        await sleep(200);
+      } else {
+        // Rounds 4-6: quick glance - 1 half-kipp-wobble (player knows the cube)
+        kippDirection = 'cw';
+        await halfKippWithWobble('north', 1, 0);
+        if (!autoDemoActive) return;
+        await sleep(200);
+      }
 
       // Stop SCHAU timer
       stopCountdown();
       countdown.style.display = 'none';
 
-      // Now at Q0, topFace = ccw from f1 → f0
-      // State: Q0, f0
-      console.log('After SCHAUEN: Q=' + currentQuadrant + ' face=' + topFace);
+      if (!autoDemoActive) return;
+
+      console.log('Round ' + roundIdx + ' after SCHAUEN: Q=' + currentQuadrant + ' face=' + topFace);
 
       // ==========================================
-      // PHASE 2: REVEAL KIPPZIEL 1
+      // 5) Auto-"click" kippziel → Aufdecken
       // ==========================================
-      const erfuellteKombis1 = getCurrentErfuellteKombis();
-      let kz1 = generateNeueKombiOhne(erfuellteKombis1);
-      if (!kz1) kz1 = generateNeueKombiOhne(new Set());
+      // Generate a kippziel
+      const erfuellteKombis = getCurrentErfuellteKombis();
+      let kz = generateNeueKombiOhne(erfuellteKombis);
+      if (!kz) kz = generateNeueKombiOhne(new Set());
+      if (!kz) { console.error('No kombi available!'); return; }
 
-      // Flip-reveal animation
-      autoRevealKippziel(kz1.zahl, kz1.color);
-      bereitsAusgegeben.add(kz1.zahl + '_' + kz1.color.name);
+      // Reveal on verdecktes mesh
+      autoRevealKippziel(kz.zahl, kz.color);
+      bereitsAusgegeben.add(kz.zahl + '_' + kz.color.name);
 
-      await sleep(2000); // "thinking" pause
+      // "Thinking" pause
+      await sleep(2000);
+      if (!autoDemoActive) return;
 
       // ==========================================
-      // PHASE 3: SOLVE & EXECUTE - ROUND 1 (HIT)
+      // 6) Solve & Execute
       // ==========================================
-      const sol1 = solveKippziel(kz1.zahl, kz1.color.name, currentQuadrant, topFace);
-      console.log('Round 1 solution:', sol1, 'for', kz1.zahl, kz1.color.name);
+      const solution = solveKippziel(kz.zahl, kz.color.name, currentQuadrant, topFace);
+      console.log('Round ' + roundIdx + ' solution:', solution, 'for', kz.zahl, kz.color.name);
 
-      if (!sol1) {
+      if (!solution) {
         console.error('No solution found!');
-        autoDemoActive = false;
-        backToStartScreen();
         return;
       }
 
+      kippDirection = solution.dir;
+
+      // Decide steps: correct for HIT, deliberately wrong for MISS
+      let execSteps;
+      if (shouldHit) {
+        execSteps = solution.steps;
+      } else {
+        execSteps = (solution.steps < 6) ? solution.steps + 1 : solution.steps - 1;
+      }
+
       // Show target circle
-      kippDirection = sol1.dir;
       updateKippTargetPosition();
       document.getElementById('kippTarget').style.display = 'block';
 
-      // Animate taps (one by one, like a thoughtful player)
+      // Animate taps
       tapCount = 0;
-      for (let i = 1; i <= sol1.steps; i++) {
+      for (let i = 1; i <= execSteps; i++) {
         tapCount = i;
         updateTapIndicators();
         await sleep(420);
+        if (!autoDemoActive) return;
       }
-      await sleep(700); // pause before execution
+      await sleep(700);
 
       // Hide indicators, execute kipps
       document.getElementById('kippTarget').style.display = 'none';
       tapIndicatorA.mesh.visible = false;
       tapIndicatorB.mesh.visible = false;
 
-      await autoPerformKipps(sol1.steps, sol1.dir);
+      await autoPerformKipps(execSteps, solution.dir);
+      if (!autoDemoActive) return;
       await sleep(500);
 
-      // Show HIT!
-      autoDemoShowResult(true);
-      await sleep(2500);
-
-      // Transfer to gameCard 0
-      autoDemoTransferToCard(0);
-      bereitsGetroffen.add(kz1.zahl + '_' + kz1.color.name);
-
-      // ==========================================
-      // PHASE 4: TRANSITION TO ROUND 2
-      // ==========================================
-      activeCardIdx = 1;
-      const nextX = cardStartX + 1 * (cardWidth + cardGap);
-      verdecktesMesh.position.set(nextX, cardY + 0.001, cardZ);
-      verdecktesMesh.userData.revealed = false;
-      drawLeernohitOnVerdecktes();
-      verdecktesMesh.scale.set(1, 1, 1);
-      verdecktesMat.opacity = 1;
-
-      await sleep(1500);
-
-      // ==========================================
-      // PHASE 5: REVEAL KIPPZIEL 2
-      // ==========================================
-      const erfuellteKombis2 = getCurrentErfuellteKombis();
-      let kz2 = generateNeueKombiOhne(erfuellteKombis2);
-      if (!kz2) kz2 = generateNeueKombiOhne(new Set());
-
-      autoRevealKippziel(kz2.zahl, kz2.color);
-      bereitsAusgegeben.add(kz2.zahl + '_' + kz2.color.name);
-
-      await sleep(2000);
-
-      // ==========================================
-      // PHASE 6: SOLVE & EXECUTE - ROUND 2 (MISS!)
-      // ==========================================
-      const sol2 = solveKippziel(kz2.zahl, kz2.color.name, currentQuadrant, topFace);
-      console.log('Round 2 solution:', sol2, 'for', kz2.zahl, kz2.color.name);
-
-      if (!sol2) {
-        console.error('No solution found!');
-        autoDemoActive = false;
-        backToStartScreen();
-        return;
+      // Show result
+      autoDemoShowResult(shouldHit);
+      if (shouldHit) {
+        bereitsGetroffen.add(kz.zahl + '_' + kz.color.name);
       }
-
-      kippDirection = sol2.dir;
-
-      // Deliberately wrong: 1 extra kipp (the "miscalculation")
-      const wrongSteps = (sol2.steps < 6) ? sol2.steps + 1 : sol2.steps - 1;
-
-      updateKippTargetPosition();
-      document.getElementById('kippTarget').style.display = 'block';
-
-      // Animate wrong number of taps
-      tapCount = 0;
-      for (let i = 1; i <= wrongSteps; i++) {
-        tapCount = i;
-        updateTapIndicators();
-        await sleep(420);
-      }
-      await sleep(700);
-
-      document.getElementById('kippTarget').style.display = 'none';
-      tapIndicatorA.mesh.visible = false;
-      tapIndicatorB.mesh.visible = false;
-
-      await autoPerformKipps(wrongSteps, sol2.dir);
-      await sleep(500);
-
-      // Show MISS
-      autoDemoShowResult(false);
       await sleep(2500);
+      if (!autoDemoActive) return;
 
-      // Transfer to gameCard 1
-      autoDemoTransferToCard(1);
-
-      verdecktesMesh.visible = false;
-
-      // ==========================================
-      // PHASE 7: BACK TO START
-      // ==========================================
-      await sleep(2000);
-
-      autoDemoActive = false;
-      backToStartScreen();
+      // Transfer to gameCard
+      autoDemoTransferToCard(roundIdx);
     }
 
     // =========================
@@ -2767,6 +2918,11 @@
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
       verdecktesMesh.visible = false;
+      // Alle Kärtchen ausblenden
+      gameCards.forEach(c => c.mesh.visible = false);
+      // Tap-Indikatoren ausblenden
+      tapIndicatorA.mesh.visible = false;
+      tapIndicatorB.mesh.visible = false;
       // Start-Buttons wieder zeigen
       document.getElementById('startOverlay').style.display = 'block';
       document.getElementById('btnTutorial').textContent = T.ma;
