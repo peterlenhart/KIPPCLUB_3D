@@ -569,6 +569,7 @@
         d1b:["Auf Kante wippen,","Zahlenpositionen merken.","Auf Kante wippen,","Zahlenpositionen merken.","Der Counter z\u00e4hlt","die SCHAU-Sekunden."],
         d2:"Klick dir dein KIPP ZIEL.",
         d3:["Das Kippziel zeigt:","{z} muss zu {f}.","TIPPE 1 bis 6 mal","auf den W\u00fcrfel.","SCHUBSE ihn anschlie\u00dfend","in eine beliebige Richtung."],
+        d4h:"GETROFFEN!", d4m:"KNAPP DANEBEN!",
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange"
       },
       "en": {
@@ -583,6 +584,7 @@
         d1b:["Tilt to the edge,","memorize number positions.","Tilt to the edge,","memorize number positions.","The counter counts","your LOOK seconds."],
         d2:"Click to reveal your TARGET.",
         d3:["The target shows:","{z} must reach {f}.","TAP the cube 1 to 6 times.","","Then PUSH it","in any direction."],
+        d4h:"HIT!", d4m:"JUST MISSED!",
         fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange"
       },
       "es": {
@@ -597,6 +599,7 @@
         d1b:["Inclinar al borde,","memoriza las posiciones.","Inclinar al borde,","memoriza las posiciones.","El contador cuenta","tus segundos de MIRAR."],
         d2:"Pulsa para ver tu OBJETIVO.",
         d3:["El objetivo muestra:","{z} debe llegar a {f}.","TOCA el cubo de 1 a 6 veces.","","Luego EMP\u00daJALO","en cualquier direcci\u00f3n."],
+        d4h:"\u00a1ACERTADO!", d4m:"\u00a1POR POCO!",
         fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja"
       },
       "fr": {
@@ -611,6 +614,7 @@
         d1b:["Basculer sur l\u2019ar\u00eate,","m\u00e9morise les positions.","Basculer sur l\u2019ar\u00eate,","m\u00e9morise les positions.","Le compteur compte","tes secondes de REGARD."],
         d2:"Clique pour r\u00e9v\u00e9ler ta CIBLE.",
         d3:["La cible indique :","{z} doit atteindre {f}.","TAPE 1 \u00e0 6 fois","sur le cube.","Puis POUSSE-le","dans n\u2019importe quelle direction."],
+        d4h:"TOUCH\u00c9 !", d4m:"TOUT PR\u00c8S !",
         fV:"Violet", fB:"Bleu", fG:"Vert", fO:"Orange"
       },
       "it": {
@@ -625,6 +629,7 @@
         d1b:["Inclinare sul bordo,","memorizza le posizioni.","Inclinare sul bordo,","memorizza le posizioni.","Il contatore conta","i tuoi secondi di GUARDA."],
         d2:"Clicca per rivelare il BERSAGLIO.",
         d3:["Il bersaglio mostra:","{z} deve raggiungere {f}.","TOCCA il cubo da 1 a 6 volte.","","Poi SPINGI","in qualsiasi direzione."],
+        d4h:"COLPITO!", d4m:"QUASI PRESO!",
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione"
       },
       "tr": {
@@ -639,6 +644,7 @@
         d1b:["Kenara yat\u0131r,","pozisyonlar\u0131 ezberle.","Kenara yat\u0131r,","pozisyonlar\u0131 ezberle.","Saya\u00e7 senin","BAKMA saniyelerini sayar."],
         d2:"HEDEF\u0130NI a\u00e7mak i\u00e7in t\u0131kla.",
         d3:["Hedef g\u00f6steriyor:","{z} \u2192 {f} olmal\u0131.","K\u00fcpe 1\u20136 kez DOKUN.","","Sonra \u0130T","herhangi bir y\u00f6ne."],
+        d4h:"\u0130SABET!", d4m:"AZ KALDI!",
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu"
       }
     }[_digikippLang];
@@ -2627,8 +2633,6 @@
         verdecktesCtx.strokeStyle = '#FFF0A0';
         verdecktesCtx.lineWidth = 1;
         verdecktesCtx.strokeRect(7, 7, 71, 156);
-        verdecktesCanvasTex.needsUpdate = true;
-        verdecktesMat.needsUpdate = true;
         // Pulse animation
         const startTime = performance.now();
         function pulseTick(now) {
@@ -2660,9 +2664,14 @@
         verdecktesCtx.strokeRect(1, 1, 83, 168);
         verdecktesCtx.lineWidth = 4;
         verdecktesCtx.strokeRect(4, 4, 77, 162);
-        verdecktesCanvasTex.needsUpdate = true;
-        verdecktesMat.needsUpdate = true;
       }
+      // Refresh texture on material (freshTex may have replaced verdecktesCanvasTex)
+      const resultTex = new THREE.CanvasTexture(verdecktesCanvas);
+      resultTex.needsUpdate = true;
+      verdecktesMat.map = resultTex;
+      verdecktesMat.needsUpdate = true;
+      // Show subtitle
+      showSubtitle(isHit ? T.d4h : T.d4m, 2000);
     }
 
     // Transfer verdecktes visual to gameCard
