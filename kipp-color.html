@@ -500,9 +500,8 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnTutorial { top: 451px; padding-top: 4px; }
-    #btnSpielen  { top: 519px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 587px; padding-top: 4px; font-size: 14px; letter-spacing: 1.5px; }
+    #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 519px; padding-top: 4px; font-size: 14px; letter-spacing: 1.5px; }
 
     /* === ZURUECK-BUTTON (zur Startseite) === */
   </style>
@@ -513,7 +512,6 @@
   <!-- START-OVERLAY -->
   <div id="startOverlay">
     <div id="startBackBtn" style="position:absolute; top:0; left:0; width:90px; height:90px; cursor:pointer; pointer-events:auto; z-index:310;"></div>
-    <button class="startClickZone" id="btnTutorial" disabled style="opacity:0.4">SPIEL MIT ANLEITUNG</button>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0.4">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0.4">DEMO</button>
   </div>
@@ -649,7 +647,6 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"{t} HITS | {z} SCHAU-Sekunden",bw:"Best: 100% | Worst: 12%",ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
-    document.getElementById("btnTutorial").textContent = T.ma;
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
 
@@ -881,18 +878,11 @@
     const verdecktesCanvasTex = new THREE.CanvasTexture(verdecktesCanvas);
     
     // leernohit.webp initial draufzeichnen sobald geladen
-    function refreshVerdecktesTex() {
-      if (verdecktesMat._currentTex) verdecktesMat._currentTex.dispose();
-      const tex = new THREE.CanvasTexture(verdecktesCanvas);
-      verdecktesMat._currentTex = tex;
-      verdecktesMat.map = tex;
-      verdecktesMat.needsUpdate = true;
-    }
     function drawLeernohitOnVerdecktes() {
       if (leerImage) {
         verdecktesCtx.clearRect(0, 0, 85, 170);
         verdecktesCtx.drawImage(leerImage, 0, 0, 85, 170);
-        refreshVerdecktesTex();
+        verdecktesCanvasTex.needsUpdate = true;
       } else {
         setTimeout(drawLeernohitOnVerdecktes, 50);
       }
@@ -1454,8 +1444,6 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
-        document.getElementById('btnTutorial').disabled = false;
-        document.getElementById('btnTutorial').style.opacity = '1';
         document.getElementById('btnSpielen').disabled = false;
         document.getElementById('btnSpielen').style.opacity = '1';
         document.getElementById('btnDemo').disabled = false;
@@ -2358,7 +2346,7 @@
         verdecktesCtx.textAlign = 'center';
         verdecktesCtx.textBaseline = 'middle';
         verdecktesCtx.fillText(displayText, 42, 42);
-        refreshVerdecktesTex();
+        verdecktesCanvasTex.needsUpdate = true;
       }
       drawBeispiel();
       
@@ -2492,9 +2480,12 @@
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
       verdecktesCtx.fillText(displayText, 42, 42);
-      refreshVerdecktesTex();
+      verdecktesCanvasTex.needsUpdate = true;
+      verdecktesMat.map = verdecktesCanvasTex;
       verdecktesMat.transparent = true;
       verdecktesMat.opacity = 1;
+      verdecktesMat.needsUpdate = true;
+      verdecktesMesh.material = verdecktesMat;
       verdecktesMesh.visible = true;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMesh.userData.revealed = true;
@@ -2635,6 +2626,8 @@
         verdecktesCtx.strokeStyle = '#FFF0A0';
         verdecktesCtx.lineWidth = 1;
         verdecktesCtx.strokeRect(7, 7, 71, 156);
+        verdecktesCanvasTex.needsUpdate = true;
+        verdecktesMat.needsUpdate = true;
         // Pulse animation
         const startTime = performance.now();
         function pulseTick(now) {
@@ -2666,9 +2659,9 @@
         verdecktesCtx.strokeRect(1, 1, 83, 168);
         verdecktesCtx.lineWidth = 4;
         verdecktesCtx.strokeRect(4, 4, 77, 162);
+        verdecktesCanvasTex.needsUpdate = true;
+        verdecktesMat.needsUpdate = true;
       }
-      // Update texture on material
-      refreshVerdecktesTex();
       // Show subtitle
       showSubtitle(isHit ? T.d4h : T.d4m, 2000);
     }
@@ -3046,12 +3039,6 @@
     // =========================
     // BUTTON EVENT LISTENERS
     // =========================
-    document.getElementById('btnTutorial').addEventListener('click', () => {
-      if (!texturesReady) return;
-      document.getElementById('startOverlay').style.display = 'none';
-      isReplay = false;
-      initSpielzielPhase();
-    });
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (!texturesReady) return;
       document.getElementById('startOverlay').style.display = 'none';
@@ -3087,7 +3074,6 @@
       tapIndicatorB.mesh.visible = false;
       // Start-Buttons wieder zeigen
       document.getElementById('startOverlay').style.display = 'block';
-      document.getElementById('btnTutorial').textContent = T.ma;
       document.getElementById('btnSpielen').textContent = T.sp;
       document.getElementById('btnDemo').textContent = T.dm;
       gamePhase = 'start';
@@ -3441,7 +3427,7 @@
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
       verdecktesCtx.fillText(displayText, 42, 42);
-      refreshVerdecktesTex();
+      verdecktesCanvasTex.needsUpdate = true;
       
       // Puls stoppen, volle Deckkraft
       verdecktesMesh.scale.set(1, 1, 1);
@@ -3583,7 +3569,7 @@
         verdecktesCtx.lineWidth = 1;
         verdecktesCtx.strokeRect(7, 7, 71, 156);
         
-        refreshVerdecktesTex();
+        verdecktesCanvasTex.needsUpdate = true;
         
         // Puls-Animation: kurz größer, dann zurück
         const origScale = 1;
@@ -3633,7 +3619,7 @@
         verdecktesCtx.lineWidth = 4;
         verdecktesCtx.strokeRect(4, 4, 77, 162);
         
-        refreshVerdecktesTex();
+        verdecktesCanvasTex.needsUpdate = true;
         
         // Nach 2s zur nächsten Runde
         setTimeout(() => proceedToNextRound(false), 2000);
