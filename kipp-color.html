@@ -2479,9 +2479,10 @@
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
       verdecktesCtx.fillText(displayText, 42, 42);
-      // Force texture refresh (critical for 2nd+ runs)
-      verdecktesCanvasTex.needsUpdate = true;
-      verdecktesMat.map = verdecktesCanvasTex;
+      // Create fresh texture from canvas to guarantee update
+      const freshTex = new THREE.CanvasTexture(verdecktesCanvas);
+      freshTex.needsUpdate = true;
+      verdecktesMat.map = freshTex;
       verdecktesMat.transparent = true;
       verdecktesMat.opacity = 1;
       verdecktesMat.needsUpdate = true;
@@ -2489,8 +2490,6 @@
       verdecktesMesh.visible = true;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMesh.userData.revealed = true;
-      // Force renderer update
-      renderer.render(scene, camera);
     }
 
     // Perform N kipps in given direction (no game-state side effects)
@@ -2823,7 +2822,7 @@
       // 1) SHOW EYE ONLY + subtitle sequence
       // ==========================================
       const eyeIcon = document.getElementById('eyeIcon');
-      eyeIcon.style.top = timerTopPos || '553px';
+      eyeIcon.style.top = (parseInt(timerTopPos || '553') + 45) + 'px';
       eyeIcon.style.display = 'block';
       countdown.style.display = 'none';
 
@@ -2929,8 +2928,12 @@
       if (!kz) kz = generateNeueKombiOhne(new Set());
       if (!kz) { console.error('No kombi available!'); return; }
 
+      console.log('Revealing Kippziel:', kz.zahl, kz.color.name, 'img loaded:', !!colorTargetImages[kz.color.name]);
       autoRevealKippziel(kz.zahl, kz.color);
       bereitsAusgegeben.add(kz.zahl + '_' + kz.color.name);
+
+      // Ensure texture is visible (wait one frame)
+      await sleep(50);
 
       // ==========================================
       // 6) Show target circle + indicators (empty) immediately
