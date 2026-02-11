@@ -106,7 +106,7 @@
     }
     #demoSubtitle {
       position: absolute;
-      top: 686px;
+      top: 506px;
       left: 50%;
       transform: translateX(-50%);
       width: 320px;
@@ -2832,7 +2832,7 @@
       // Show "0" (counter replaces eye)
       countdown.textContent = '0';
       countdown.style.display = 'block';
-      countdown.style.top = timerTopPos;
+      countdown.style.top = (parseInt(timerTopPos) + 45) + 'px';
       countdown.style.left = '180px';
 
       await sleep(400);
@@ -2840,6 +2840,7 @@
 
       // Start counter on first movement
       startCountdown(null, 120);
+      countdown.style.top = (parseInt(timerTopPos) + 45) + 'px'; // demo offset
 
       // SCHAUEN: 3 half-kipp-wobbles CW
       kippDirection = 'cw';
