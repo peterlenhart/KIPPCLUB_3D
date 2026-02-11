@@ -2821,17 +2821,21 @@
       }
       // a) = no extra (just fall through)
 
-      // Stop SCHAU timer
+      // ==========================================
+      // 5) PAUSE after SCHAUEN: counter keeps running, blinking verdecktes
+      // ==========================================
+      // DON'T stop counter — it keeps ticking during this pause
+      await sleep(2000);
+      if (!autoDemoActive) return;
+
+      // ==========================================
+      // 6) OPEN Kippziel — counter stops
+      // ==========================================
       stopCountdown();
       countdown.style.display = 'none';
 
-      if (!autoDemoActive) return;
-
       console.log('Round ' + roundIdx + ' after SCHAUEN: Q=' + currentQuadrant + ' face=' + topFace);
 
-      // ==========================================
-      // 5) Auto-"click" kippziel → Aufdecken
-      // ==========================================
       // Generate a kippziel
       const erfuellteKombis = getCurrentErfuellteKombis();
       let kz = generateNeueKombiOhne(erfuellteKombis);
@@ -2842,12 +2846,14 @@
       autoRevealKippziel(kz.zahl, kz.color);
       bereitsAusgegeben.add(kz.zahl + '_' + kz.color.name);
 
-      // "Thinking" pause
-      await sleep(2000);
+      // ==========================================
+      // 7) THINKING phase — 3 sec, just open Kippziel + previous cards
+      // ==========================================
+      await sleep(3000);
       if (!autoDemoActive) return;
 
       // ==========================================
-      // 6) Solve & Execute
+      // 8) Solve & TAP sequence
       // ==========================================
       const solution = solveKippziel(kz.zahl, kz.color.name, currentQuadrant, topFace);
       console.log('Round ' + roundIdx + ' solution:', solution, 'for', kz.zahl, kz.color.name);
@@ -2867,35 +2873,61 @@
         execSteps = (solution.steps < 6) ? solution.steps + 1 : solution.steps - 1;
       }
 
-      // Show target circle
+      // Show target circle — starts small, grows with each tap
+      const kippTargetEl = document.getElementById('kippTarget');
       updateKippTargetPosition();
-      document.getElementById('kippTarget').style.display = 'block';
+      const baseSize = 14;
+      kippTargetEl.style.width = baseSize + 'px';
+      kippTargetEl.style.height = baseSize + 'px';
+      kippTargetEl.style.display = 'block';
+      kippTargetEl.style.animation = 'none'; // disable default pulse during taps
 
-      // Animate taps
+      // TAP sequence: 1 tap per second, circle grows, cube flashes
       tapCount = 0;
       for (let i = 1; i <= execSteps; i++) {
         tapCount = i;
         updateTapIndicators();
-        await sleep(420);
+
+        // Grow target circle
+        const newSize = baseSize + i * 7;
+        kippTargetEl.style.width = newSize + 'px';
+        kippTargetEl.style.height = newSize + 'px';
+
+        // Flash effect on cube — brief white highlight
+        const origEmissive = cube.material[2].emissive.getHex();
+        cube.material.forEach(m => { m.emissive.setHex(0x444444); });
+        setTimeout(() => {
+          cube.material.forEach(m => { m.emissive.setHex(origEmissive); });
+        }, 150);
+
+        await sleep(1000); // 1 tap per second
         if (!autoDemoActive) return;
       }
-      await sleep(700);
 
-      // Hide indicators, execute kipps
-      document.getElementById('kippTarget').style.display = 'none';
+      // 1.3 sec after last tap → execute kipps
+      await sleep(1300);
+
+      // Hide target + indicators, execute kipps
+      kippTargetEl.style.display = 'none';
+      kippTargetEl.style.animation = ''; // restore default animation
+      kippTargetEl.style.width = '21px'; // reset size
+      kippTargetEl.style.height = '21px';
       tapIndicatorA.mesh.visible = false;
       tapIndicatorB.mesh.visible = false;
 
       await autoPerformKipps(execSteps, solution.dir);
       if (!autoDemoActive) return;
-      await sleep(500);
 
-      // Show result
+      // 2 sec wait → show result
+      await sleep(2000);
+
       autoDemoShowResult(shouldHit);
       if (shouldHit) {
         bereitsGetroffen.add(kz.zahl + '_' + kz.color.name);
       }
-      await sleep(2500);
+
+      // 2 sec pause with result visible
+      await sleep(2000);
       if (!autoDemoActive) return;
 
       // Transfer to gameCard
