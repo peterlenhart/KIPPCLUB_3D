@@ -407,6 +407,14 @@
       z-index: 310;
       padding: 0;
     }
+    #resetButton::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      left: -30px;
+      right: -30px;
+      bottom: -30px;
+    }
 
     #resetButton svg {
       display: none;
@@ -3844,7 +3852,8 @@
         return;
       }
       
-      // Abort auto-demo if active
+      // Abort auto-demo if active → go to game
+      const wasAutoDemo = (gamePhase === 'autoDemo');
       autoDemoActive = false;
       savedDemoData = null;
       
@@ -3862,8 +3871,13 @@
       actionButton.style.display = 'none';
       kippButtons.classList.add('hidden');
       document.getElementById('richtungButtons').classList.add('hidden');
+      hideSubtitle();
+      if (demoCycleInterval) { clearInterval(demoCycleInterval); demoCycleInterval = null; }
+      if (demoPauseResolve) { demoPauseResolve('abort'); demoPauseResolve = null; }
       
       gameCards.forEach(c => c.mesh.visible = false);
+      verdecktesMesh.visible = false;
+      document.getElementById('kippTarget').style.display = 'none';
       
       cube.quaternion.set(0, 0, 0, 1);
       cube.position.set(-offset, offset, 0.109375 + offset);
@@ -3883,8 +3897,13 @@
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
       
-      gamePhase = 'start';
-      backToStartScreen();
+      if (wasAutoDemo) {
+        isReplay = true;
+        initSpielzielPhase();
+      } else {
+        gamePhase = 'start';
+        backToStartScreen();
+      }
     });
 
     // =========================
