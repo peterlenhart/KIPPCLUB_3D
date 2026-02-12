@@ -2412,7 +2412,6 @@
     let autoDemoActive = false;
     let demoPauseResolve = null;
     let demoCycleInterval = null;
-    let savedDemoData = null; // {kombi, extraOption} from first run
 
     // === SUBTITLE ENGINE ===
     const subEl = document.getElementById('demoSubtitle');
@@ -2496,9 +2495,8 @@
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
       verdecktesCtx.fillText(displayText, 42, 42);
-      // Nuclear: fresh texture object — Three.js cannot cache what it never saw
-      const freshTex = new THREE.CanvasTexture(verdecktesCanvas);
-      verdecktesMat.map = freshTex;
+      verdecktesCanvasTex.needsUpdate = true;
+      verdecktesMat.map = verdecktesCanvasTex;
       verdecktesMat.transparent = true;
       verdecktesMat.opacity = 1;
       verdecktesMat.needsUpdate = true;
@@ -2643,7 +2641,8 @@
         verdecktesCtx.strokeStyle = '#FFF0A0';
         verdecktesCtx.lineWidth = 1;
         verdecktesCtx.strokeRect(7, 7, 71, 156);
-        const hitTex = new THREE.CanvasTexture(verdecktesCanvas);
+        const hitTex = verdecktesCanvasTex;
+        hitTex.needsUpdate = true;
         verdecktesMat.map = hitTex;
         verdecktesMat.needsUpdate = true;
         // Pulse animation
@@ -2677,7 +2676,8 @@
         verdecktesCtx.strokeRect(1, 1, 83, 168);
         verdecktesCtx.lineWidth = 4;
         verdecktesCtx.strokeRect(4, 4, 77, 162);
-        const missTex = new THREE.CanvasTexture(verdecktesCanvas);
+        const missTex = verdecktesCanvasTex;
+        missTex.needsUpdate = true;
         verdecktesMat.map = missTex;
         verdecktesMat.needsUpdate = true;
       }
@@ -2736,8 +2736,9 @@
       timerStarted = false;
       dragActive = false;
 
-      // Reset cards
+      // Reset cards + verdecktes
       gameCards.forEach(c => { c.mesh.visible = false; c.zahl = null; c.color = null; c.isHit = false; c.isMiss = false; });
+      verdecktesMesh.visible = false;
 
       // Hide all UI
       document.getElementById('spielZielText').style.display = 'none';
@@ -2766,17 +2767,16 @@
         timerTopPos = '553px';
       }
 
-      // Hit/Miss pattern: 4 Hits, 2 Misses (realistic good player)
-      const hitPattern = [true, true, false, true, true, false];
-
       // ==========================================
-      // SINGLE DEMO ROUND + PAUSE
+      // SINGLE DEMO ROUND
       // ==========================================
       if (!autoDemoActive) return;
       await autoDemoRound(0, true);
       if (!autoDemoActive) return;
 
-      // Pause: eye pulsiert, Untertitel wechseln
+      // ==========================================
+      // PAUSE: eye pulsiert, dc1/dc2 wechseln
+      // ==========================================
       const eyePause = document.getElementById('eyeIcon');
       eyePause.style.top = (parseInt(timerTopPos || '553') + 26) + 'px';
       eyePause.style.display = 'block';
@@ -2795,24 +2795,7 @@
       hideSubtitle();
       eyePause.style.display = 'none';
       demoPauseResolve = null;
-      if (choice === 'play' || !autoDemoActive) return;
-      // Auge geklickt → alles aufräumen, Demo von vorne
-      if (savedDemoData) savedDemoData.kombi = null;
-      verdecktesMesh.visible = false;
-      gameCards.forEach(c => c.mesh.visible = false);
-      document.getElementById('kippTarget').style.display = 'none';
-      tapIndicatorA.mesh.visible = false;
-      tapIndicatorB.mesh.visible = false;
-      countdown.style.display = 'none';
-      handDemo.visible = false;
-      cube.position.set(-offset, offset, 0.109375 + offset);
-      cube.quaternion.set(0, 0, 0, 1);
-      currentQuadrant = 3;
-      topFace = 'f2';
-      bereitsGetroffen.clear();
-      bereitsAusgegeben.clear();
-      activeCardIdx = 0;
-      runAutoDemo();
+      // Fertig. Eye-Handler oder resetButton-Handler übernehmen.
     }
 
     // === Single demo round ===
@@ -2879,9 +2862,8 @@
           if (hw < 2) await sleep(200);
         }
 
-        // Random extra move (saved for replay)
-        const extraOption = savedDemoData ? savedDemoData.extraOption : Math.floor(Math.random() * 4);
-        if (!savedDemoData) savedDemoData = { extraOption: extraOption, kombi: null };
+        // Random extra move
+        const extraOption = Math.floor(Math.random() * 4);
         if (extraOption === 1) {
           kippDirection = 'ccw';
           await sleep(300);
@@ -2941,16 +2923,10 @@
       // ==========================================
       console.log('Round ' + roundIdx + ' after SCHAUEN: Q=' + currentQuadrant + ' face=' + topFace);
 
-      let kz;
-      if (savedDemoData && savedDemoData.kombi) {
-        kz = savedDemoData.kombi;
-      } else {
-        const erfuellteKombis = getCurrentErfuellteKombis();
-        kz = generateNeueKombiOhne(erfuellteKombis);
-        if (!kz) kz = generateNeueKombiOhne(new Set());
-        if (!kz) { console.error('No kombi available!'); return; }
-        if (savedDemoData) savedDemoData.kombi = kz;
-      }
+      const erfuellteKombis = getCurrentErfuellteKombis();
+      let kz = generateNeueKombiOhne(erfuellteKombis);
+      if (!kz) kz = generateNeueKombiOhne(new Set());
+      if (!kz) { console.error('No kombi available!'); return; }
 
       console.log('Revealing Kippziel:', kz.zahl, kz.color.name, 'img loaded:', !!colorTargetImages[kz.color.name]);
       autoRevealKippziel(kz.zahl, kz.color);
@@ -3173,7 +3149,14 @@
     eyeEl.addEventListener('touchend', (e) => {
       e.stopPropagation();
       e.preventDefault();
-      if (gamePhase === 'autoDemo' && demoPauseResolve) { demoPauseResolve('continue'); return; }
+      if (gamePhase === 'autoDemo' && demoPauseResolve) {
+        if (demoCycleInterval) { clearInterval(demoCycleInterval); demoCycleInterval = null; }
+        hideSubtitle();
+        document.getElementById('eyeIcon').style.display = 'none';
+        const r = demoPauseResolve; demoPauseResolve = null; r('done');
+        runAutoDemo();
+        return;
+      }
       if (gamePhase !== 'entscheidung') return;
       if (activeCardIdx === 0 && !isReplay) {
         spielzielToDemoPhase();
@@ -3183,7 +3166,14 @@
     }, { passive: false });
     eyeEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (gamePhase === 'autoDemo' && demoPauseResolve) { demoPauseResolve('continue'); return; }
+      if (gamePhase === 'autoDemo' && demoPauseResolve) {
+        if (demoCycleInterval) { clearInterval(demoCycleInterval); demoCycleInterval = null; }
+        hideSubtitle();
+        document.getElementById('eyeIcon').style.display = 'none';
+        const r = demoPauseResolve; demoPauseResolve = null; r('done');
+        runAutoDemo();
+        return;
+      }
       if (gamePhase !== 'entscheidung') return;
       if (activeCardIdx === 0 && !isReplay) {
         spielzielToDemoPhase();
@@ -3821,7 +3811,6 @@
       // During demo pause → start real game
       if (gamePhase === 'autoDemo' && demoPauseResolve) {
         autoDemoActive = false;
-        savedDemoData = null;
         if (demoCycleInterval) { clearInterval(demoCycleInterval); demoCycleInterval = null; }
         hideSubtitle();
         demoPauseResolve('play');
@@ -3855,7 +3844,6 @@
       // Abort auto-demo if active → go to game
       const wasAutoDemo = (gamePhase === 'autoDemo');
       autoDemoActive = false;
-      savedDemoData = null;
       
       stopCountdown();
       if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
