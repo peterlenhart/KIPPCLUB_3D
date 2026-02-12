@@ -2480,6 +2480,8 @@
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
       verdecktesCtx.fillText(displayText, 42, 42);
+      // Force Three.js to re-read the canvas source
+      verdecktesCanvasTex.image = verdecktesCanvas;
       verdecktesCanvasTex.needsUpdate = true;
       verdecktesMat.map = verdecktesCanvasTex;
       verdecktesMat.transparent = true;
@@ -2489,6 +2491,12 @@
       verdecktesMesh.visible = true;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMesh.userData.revealed = true;
+      // Safety: re-trigger update after 2 render frames
+      setTimeout(() => {
+        verdecktesCanvasTex.image = verdecktesCanvas;
+        verdecktesCanvasTex.needsUpdate = true;
+        verdecktesMat.needsUpdate = true;
+      }, 50);
     }
 
     // Perform N kipps in given direction (no game-state side effects)
@@ -2626,6 +2634,7 @@
         verdecktesCtx.strokeStyle = '#FFF0A0';
         verdecktesCtx.lineWidth = 1;
         verdecktesCtx.strokeRect(7, 7, 71, 156);
+        verdecktesCanvasTex.image = verdecktesCanvas;
         verdecktesCanvasTex.needsUpdate = true;
         verdecktesMat.needsUpdate = true;
         // Pulse animation
@@ -2659,6 +2668,7 @@
         verdecktesCtx.strokeRect(1, 1, 83, 168);
         verdecktesCtx.lineWidth = 4;
         verdecktesCtx.strokeRect(4, 4, 77, 162);
+        verdecktesCanvasTex.image = verdecktesCanvas;
         verdecktesCanvasTex.needsUpdate = true;
         verdecktesMat.needsUpdate = true;
       }
@@ -3076,6 +3086,7 @@
       document.getElementById('startOverlay').style.display = 'block';
       document.getElementById('btnSpielen').textContent = T.sp;
       document.getElementById('btnDemo').textContent = T.dm;
+      erstesKippziel = null;
       gamePhase = 'start';
     }
     
