@@ -412,74 +412,6 @@
       display: none;
     }
 
-    #transportBar {
-      display: none;
-      position: absolute;
-      left: 0;
-      width: 360px;
-      height: 80px;
-      pointer-events: none;
-      z-index: 320;
-    }
-    #btnSelbstSpielen {
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: auto;
-      cursor: pointer;
-      background: rgba(0,0,0,0.45);
-      border: 1px solid rgba(192,184,168,0.5);
-      border-radius: 6px;
-      color: #c0b8a8;
-      font-size: 11px;
-      font-weight: bold;
-      padding: 8px 10px;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-    }
-    #btnSelbstSpielen:active { transform: translateY(-50%) scale(0.92); }
-    #speedArrows {
-      position: absolute;
-      right: 90px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 80px;
-      height: 50px;
-      pointer-events: auto;
-      cursor: pointer;
-    }
-    .speedArrow {
-      position: absolute;
-      top: 0;
-      height: 50px;
-      width: auto;
-      object-fit: contain;
-      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
-      display: none;
-      pointer-events: none;
-    }
-    #arrow1 { left: 0; }
-    #arrow2 { left: 20px; }
-    #arrow3 { left: 40px; }
-    #btnSkipEnd {
-      position: absolute;
-      right: 5px;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 50px;
-      width: auto;
-      object-fit: contain;
-      pointer-events: auto;
-      cursor: pointer;
-      opacity: 0.55;
-      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
-      transition: opacity 0.2s;
-    }
-    #btnSkipEnd:active { transform: translateY(-50%) scale(0.88); }
-    #btnSkipEnd.activeSpeed { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,0.5)); }
-
     #backButton {
       display: none;
       position: absolute;
@@ -600,15 +532,6 @@
     <button id="actionButton"></button>
     <button id="backButton">↻</button>
     <button id="resetButton"><svg viewBox="0 0 24 24" fill="none" stroke="#c0b8a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
-    <div id="transportBar">
-      <button id="btnSelbstSpielen"></button>
-      <div id="speedArrows">
-        <img id="arrow1" class="speedArrow" src="playarrow.png" />
-        <img id="arrow2" class="speedArrow" src="playarrow.png" />
-        <img id="arrow3" class="speedArrow" src="playarrow.png" />
-      </div>
-      <img id="btnSkipEnd" src="skipend.png" />
-    </div>
     
     <div id="richtungButtons" class="hidden" style="position:absolute;top:540px;left:50%;transform:translateX(-50%);display:flex;gap:21px;width:180px;z-index:200;">
       <button id="cwBtn" class="kippBtn" style="flex:1;height:45px;font-size:40px;line-height:1;position:relative;"><span style="position:absolute;top:calc(50% - 3px);left:50%;transform:translate(-50%,-50%);font-size:40px;">↻</span></button>
@@ -639,7 +562,7 @@
         k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit (Nutze SCHAU-Sek. effektiv).<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
         bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} SCHAU-Sekunden", bw:"Best: 100% | Worst: 12%",
-        ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", ss:"selber spielen", dm:"DEMO ANSEHEN",
+        ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"DEMO ANSEHEN",
         d1:["Nach Klick aufs Auge<br>l\u00e4sst sich der W\u00fcrfel","mit dem Finger<br>durch die Box kippen."],
         d1b:["Auf Kante wippen,<br>Zahlenpositionen merken.","Auf Kante wippen,<br>Zahlenpositionen merken.","Der Counter z\u00e4hlt<br>die SCHAU-Sekunden.","Nutze SCHAU-Sek. sparsam,<br>sie verschlechtern deinen","BRAIN SCORE<br>(Endauswertung)."],
         d2:"Klick dir dein KIPP ZIEL.",
@@ -654,7 +577,7 @@
         k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
         p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
         bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} LOOK seconds", bw:"Best: 100% | Worst: 12%",
-        ma:"PLAY WITH TUTORIAL", sp:"PLAY", ss:"play yourself", dm:"WATCH DEMO",
+        ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"WATCH DEMO",
         d1:["After clicking the eye<br>you can tip the cube","with your finger<br>through the box."],
         d1b:["Tilt to the edge,<br>memorize number positions.","Tilt to the edge,<br>memorize number positions.","The counter counts<br>your LOOK seconds.","Use LOOK sec. sparingly,<br>they worsen your","BRAIN SCORE<br>(final rating)."],
         d2:"Click to reveal your TARGET.",
@@ -669,7 +592,7 @@
         k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
         p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
         bs:"BRAIN SCORE", nh:"Sin acierto, sin puntos", st:"{t} ACIERTOS | {z} seg. de MIRAR", bw:"Mejor: 100% | Peor: 12%",
-        ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", ss:"jugar solo", dm:"VER DEMO",
+        ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"VER DEMO",
         d1:["Tras pulsar el ojo<br>puedes volcar el cubo","con el dedo<br>por la caja."],
         d1b:["Inclinar al borde,<br>memoriza las posiciones.","Inclinar al borde,<br>memoriza las posiciones.","El contador cuenta<br>tus segundos de MIRAR.","Usa seg. MIRA con cuidado,<br>empeoran tu","BRAIN SCORE<br>(evaluaci\u00f3n final)."],
         d2:"Pulsa para ver tu OBJETIVO.",
@@ -684,7 +607,7 @@
         k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
         p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
         bs:"BRAIN SCORE", nh:"Aucun coup, aucun score", st:"{t} COUPS | {z} sec. de REGARD", bw:"Meilleur: 100% | Pire: 12%",
-        ma:"JOUER AVEC GUIDE", sp:"JOUER", ss:"jouer soi-m00eame", dm:"VOIR LA D\u00c9MO",
+        ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"VOIR LA D\u00c9MO",
         d1:["Apr\u00e8s clic sur l\u2019\u0153il<br>tu peux basculer le cube","avec le doigt<br>dans la bo\u00eete."],
         d1b:["Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Le compteur compte<br>tes secondes de REGARD.","Utilise les sec. REGARD<br>avec parcimonie,","elles d\u00e9gradent ton<br>BRAIN SCORE."],
         d2:"Clique pour r\u00e9v\u00e9ler ta CIBLE.",
@@ -699,7 +622,7 @@
         k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
         p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
         bs:"BRAIN SCORE", nh:"Nessun colpo, nessun punteggio", st:"{t} COLPI | {z} sec. di GUARDA", bw:"Migliore: 100% | Peggiore: 12%",
-        ma:"GIOCA CON GUIDA", sp:"GIOCARE", ss:"giocare da solo", dm:"GUARDA DEMO",
+        ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"GUARDA DEMO",
         d1:["Dopo il clic sull\u2019occhio<br>puoi ribaltare il cubo","con il dito<br>nella scatola."],
         d1b:["Inclinare sul bordo,<br>memorizza le posizioni.","Inclinare sul bordo,<br>memorizza le posizioni.","Il contatore conta<br>i tuoi secondi di GUARDA.","Usa i sec. GUARDA<br>con parsimonia,","peggiorano il tuo<br>BRAIN SCORE."],
         d2:"Clicca per rivelare il BERSAGLIO.",
@@ -714,7 +637,7 @@
         k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
         p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
         bs:"BRAIN SCORE", nh:"\u0130sabet yok, puan yok", st:"{t} \u0130SABET | {z} BAKMA saniyesi", bw:"En iyi: 100% | En k\u00f6t\u00fc: 12%",
-        ma:"REHBERL\u0130 OYNA", sp:"OYNA", ss:"kendin oyna", dm:"DEMOYU \u0130ZLE",
+        ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"DEMOYU \u0130ZLE",
         d1:["G\u00f6ze t\u0131klad\u0131ktan sonra<br>k\u00fcp\u00fc parma\u011f\u0131nla","kutuda<br>devrilebilirsin."],
         d1b:["Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","Saya\u00e7 senin<br>BAKMA saniyelerini sayar.","BAKI\u015e saniyelerini<br>az kullan,","BRAIN SCORE\u2019unu<br>k\u00f6t\u00fcle\u015ftirir."],
         d2:"HEDEF\u0130NI a\u00e7mak i\u00e7in t\u0131kla.",
@@ -723,7 +646,7 @@
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu"
       }
     }[_digikippLang];
-    if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"{t} HITS | {z} SCHAU-Sekunden",bw:"Best: 100% | Worst: 12%",ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",ss:"selber spielen",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
+    if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"{t} HITS | {z} SCHAU-Sekunden",bw:"Best: 100% | Worst: 12%",ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
 
@@ -2473,14 +2396,12 @@
     // AUTO-DEMO MODULE
     // =========================
     let autoDemoActive = false;
-    let demoSpeed = 1;
 
     // === SUBTITLE ENGINE ===
     const subEl = document.getElementById('demoSubtitle');
 
     async function showSubtitle(text, duration) {
       duration = duration || 2000;
-      if (autoDemoActive && demoSpeed !== 1) duration = Math.max(duration / demoSpeed, 300);
       if (!text || text === '') return await sleep(duration); // skip empty lines
       subEl.innerHTML = text;
       subEl.style.display = 'block';
@@ -2639,11 +2560,10 @@
 
       // Helper: animate angle from → to
       function animAngle(from, to, dur) {
-        const aDur = (autoDemoActive && demoSpeed !== 1) ? Math.max(dur / demoSpeed, 30) : dur;
         return new Promise(resolve => {
           const startTime = performance.now();
           function tick() {
-            const t = Math.min((performance.now() - startTime) / aDur, 1);
+            const t = Math.min((performance.now() - startTime) / dur, 1);
             const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
             setAngle(from + (to - from) * ease);
             if (t < 1) requestAnimationFrame(tick);
@@ -2829,9 +2749,6 @@
         timerTopPos = '553px';
       }
 
-      // Show transport speed controls
-      showTransportBar();
-
       // Hit/Miss pattern: 4 Hits, 2 Misses (realistic good player)
       const hitPattern = [true, true, false, true, true, false];
 
@@ -2870,9 +2787,8 @@
       brainScore.style.display = 'block';
       brainScore.style.opacity = '1';
 
-      // Show score for 4 seconds (fixed, ignoring speed), then back to start
-      hideTransportBar();
-      await new Promise(r => setTimeout(r, 4000));
+      // Show score for 5 seconds, then back to start
+      await sleep(5000);
 
       if (!autoDemoActive) return;
       autoDemoActive = false;
@@ -3142,79 +3058,6 @@
     document.getElementById('startBackBtn').addEventListener('click', () => {
       window.location.href = 'index.html';
     });
-
-    // === TRANSPORT BAR (Demo Speed Control) ===
-    const transportBar = document.getElementById('transportBar');
-    let arrowLevel = 0; // 0=off, 1=4x, 2=8x, 3=12x
-
-    function updateArrowDisplay() {
-      document.getElementById('arrow1').style.display = arrowLevel >= 1 ? 'block' : 'none';
-      document.getElementById('arrow2').style.display = arrowLevel >= 2 ? 'block' : 'none';
-      document.getElementById('arrow3').style.display = arrowLevel >= 3 ? 'block' : 'none';
-      document.getElementById('arrow1').style.opacity = arrowLevel >= 1 ? '1' : '0.55';
-    }
-
-    function showTransportBar() {
-      const top = parseInt(timerTopPos || '553') + 45;
-      transportBar.style.top = top + 'px';
-      transportBar.style.display = 'block';
-      demoSpeed = 1;
-      arrowLevel = 0;
-      updateArrowDisplay();
-      document.getElementById('btnSkipEnd').classList.remove('activeSpeed');
-      // Set "selber spielen" label
-      const T = TRANSLATIONS[currentLang] || TRANSLATIONS['de'];
-      document.getElementById('btnSelbstSpielen').textContent = T.ss || 'selber spielen';
-    }
-
-    function hideTransportBar() {
-      transportBar.style.display = 'none';
-      demoSpeed = 1;
-      arrowLevel = 0;
-    }
-
-    // Speed arrows: click cycles 0→1→2→3→0
-    document.getElementById('speedArrows').addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (!autoDemoActive) return;
-      arrowLevel = (arrowLevel >= 3) ? 0 : arrowLevel + 1;
-      const speeds = [1, 4, 8, 12];
-      demoSpeed = speeds[arrowLevel];
-      updateArrowDisplay();
-      document.getElementById('btnSkipEnd').classList.remove('activeSpeed');
-    });
-
-    // Skip to end: 5x speed
-    document.getElementById('btnSkipEnd').addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (!autoDemoActive) return;
-      demoSpeed = 5;
-      arrowLevel = 0;
-      updateArrowDisplay();
-      document.getElementById('btnSkipEnd').classList.add('activeSpeed');
-    });
-
-    // Selber spielen: go to SPIELEN
-    document.getElementById('btnSelbstSpielen').addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      autoDemoActive = false;
-      hideTransportBar();
-      // Reset cube
-      cube.position.set(-offset, offset, 0.109375 + offset);
-      cube.quaternion.set(0, 0, 0, 1);
-      currentQuadrant = 3;
-      topFace = 'f2';
-      backToStartScreen();
-      // Trigger SPIELEN
-      setTimeout(() => {
-        document.getElementById('startOverlay').style.display = 'none';
-        isReplay = true;
-        initSpielzielPhase();
-      }, 100);
-    });
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
@@ -3228,7 +3071,6 @@
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
       hideSubtitle();
-      hideTransportBar();
       verdecktesMesh.visible = false;
       // Alle Kärtchen ausblenden
       gameCards.forEach(c => c.mesh.visible = false);
@@ -3955,7 +3797,6 @@
       
       // Abort auto-demo if active
       autoDemoActive = false;
-      hideTransportBar();
       
       stopCountdown();
       if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
@@ -4457,9 +4298,6 @@
       if (isAnimating) return;
       isAnimating = true;
       
-      // Apply demo speed
-      const dur = (autoDemoActive && demoSpeed !== 1) ? Math.max(duration / demoSpeed, 50) : duration;
-      
       let pivotPoint, axis, targetRotation, fromQ, toQ;
       
       if (direction === 'north') {
@@ -4531,7 +4369,7 @@
       return new Promise((resolve) => {
         function animate() {
           const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / dur, 1);
+          const progress = Math.min(elapsed / duration, 1);
           
           const eased = progress < 0.5 
             ? 2 * progress * progress 
@@ -4579,8 +4417,7 @@
     // KIPP-SEQUENZ mit 2D-Timing
     // =========================
     function sleep(ms) {
-      const actual = (autoDemoActive && demoSpeed !== 1) ? Math.max(ms / demoSpeed, 16) : ms;
-      return new Promise(resolve => setTimeout(resolve, actual));
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async function runKippSequence(steps) {
