@@ -126,20 +126,21 @@
       top: 470px;
       left: 0;
       width: 360px;
+      height: 45px;
       display: none;
-      justify-content: space-evenly;
-      align-items: center;
       z-index: 130;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.35s ease;
     }
     #jokerIconsRow img {
+      position: absolute;
       width: 45px;
       height: 45px;
       object-fit: contain;
       pointer-events: auto;
       cursor: pointer;
+      transform: translateX(-50%);
     }
     #jokerIconsRow img:last-child {
       width: auto;
@@ -2869,14 +2870,25 @@
       eyeIconEl.style.animation = 'none';
       eyeIconEl.style.display = 'block';
 
-      // Position joker row below verdecktesMesh (cards area)
+      // Position joker icons at exact card X positions, 20px below cards
       const vkP = new THREE.Vector3().copy(verdecktesMesh.position);
-      vkP.y = 0.003; // card Y level
-      vkP.z += 0.2;  // slightly below cards
+      vkP.y = 0.003;
+      vkP.z += 0.2;
       vkP.project(camera);
       const jokerScreenY = (-vkP.y * 0.5 + 0.5) * 720;
       jokerRow.style.top = Math.round(jokerScreenY + 20) + 'px';
-      jokerRow.style.display = 'flex';
+
+      // Project each card center X to screen X
+      const icons = jokerRow.querySelectorAll('img');
+      for (let i = 0; i < 6; i++) {
+        const cx = cardStartX + i * (cardWidth + cardGap);
+        const p = new THREE.Vector3(cx, cardY, cardZ);
+        p.project(camera);
+        const screenX = (p.x * 0.5 + 0.5) * 360;
+        icons[i].style.left = Math.round(screenX) + 'px';
+      }
+
+      jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
 
       await showSubtitle(T.d5c, 4000);
