@@ -106,11 +106,11 @@
     }
     #demoSubtitle {
       position: absolute;
-      top: 521px;
+      top: 472px;
       left: 50%;
-      transform: translateX(-50%);
-      width: 320px;
-      text-align: center;
+      right: 5px;
+      transform: none;
+      text-align: left;
       font-size: 16pt;
       font-weight: bold;
       color: #f0f0f0;
@@ -408,8 +408,10 @@
     #resetButton {
       display: none;
       position: absolute;
-      width: 109px;
-      height: 117px;
+      left: 0;
+      top: 6px;
+      width: 90px;
+      height: 90px;
       background: transparent;
       border: none;
       cursor: pointer;
@@ -525,7 +527,7 @@
   
   <!-- START-OVERLAY -->
   <div id="startOverlay">
-    <div id="startBackBtn" style="position:absolute; cursor:pointer; pointer-events:auto; z-index:310; background:transparent; border:none; padding:0;"><img src="rw.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    <div id="startBackBtn" style="position:absolute; left:0; top:6px; width:90px; height:90px; cursor:pointer; pointer-events:auto; z-index:310; background:transparent; border:none; padding:0;"><img src="rw.png" style="width:100%;height:100%;object-fit:contain;"></div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0.4">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0.4">DEMO</button>
   </div>
@@ -1507,23 +1509,9 @@
     const resetButton = document.getElementById('resetButton');
     const kippButtons = document.getElementById('kippButtons');
     
-    // Zentrale Positionierung resetButton: 1/2 A|B = X -0.46875
+    // resetButton anzeigen (feste Position A-B, Zeile 1-2, 6px südlich)
     function positionResetButton() {
-      const rp = new THREE.Vector3(-0.46875, 0.46875, -0.828125 + 0.15625);
-      rp.project(camera);
-      const sx = (rp.x * 0.5 + 0.5) * 360;
-      const sy = (-rp.y * 0.5 + 0.5) * 720;
-      const l = (sx - 54.5) + 'px';
-      const t = (sy - 58.5) + 'px';
-      resetButton.style.left = l;
-      resetButton.style.top = t;
       resetButton.style.display = 'block';
-      // startBackBtn (im startOverlay) synchron positionieren
-      const sbb = document.getElementById('startBackBtn');
-      sbb.style.left = l;
-      sbb.style.top = t;
-      sbb.style.width = '109px';
-      sbb.style.height = '117px';
     }
     
     // WICHTIG: Button disabled bis Texturen geladen sind
@@ -2434,6 +2422,12 @@
     async function showSubtitle(text, duration) {
       duration = duration || 2000;
       if (!text || text === '') return await sleep(duration); // skip empty lines
+      // Linksbündig neben dem Kippziel positionieren
+      const vp = verdecktesMesh.position.clone();
+      vp.x += cardWidth / 2 + 0.02; // rechte Kante + kleiner Abstand
+      vp.project(camera);
+      const screenLeft = (vp.x * 0.5 + 0.5) * 360;
+      subEl.style.left = Math.round(screenLeft) + 'px';
       subEl.innerHTML = text;
       subEl.style.display = 'block';
       subEl.style.opacity = '1';
