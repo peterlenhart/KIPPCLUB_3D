@@ -564,7 +564,6 @@
   
   <!-- START-OVERLAY -->
   <div id="startOverlay">
-    <div id="startBackBtn" style="position:absolute; left:-13.5px; top:-13.5px; width:117px; height:117px; cursor:pointer; pointer-events:auto; z-index:310; background:transparent; border:none; padding:0;"><img src="rw.png" style="width:100%;height:100%;object-fit:contain;"></div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0.4">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0.4">TUTORIAL</button>
   </div>
@@ -3228,9 +3227,6 @@
       runAutoDemo();
     });
     
-    document.getElementById('startBackBtn').addEventListener('click', () => {
-      window.location.href = 'index.html';
-    });
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
