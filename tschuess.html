@@ -2,24 +2,15 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>DigiKipp – Tschüss</title>
 
-  <!-- iOS Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DigiKipp">
-
-  <!-- Theme Color -->
   <meta name="theme-color" content="#4a2418">
 
   <style>
-    :root {
-      --cols: 8;
-      --cell: 142px;
-      --scale: 1;
-    }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
@@ -32,69 +23,57 @@
       user-select: none;
     }
 
-    .pageWrap {
+    #wrap {
       position: relative;
-      width: calc(var(--cols) * var(--cell));
-      height: calc(16 * var(--cell));
-      transform: scale(var(--scale));
-      transform-origin: top center;
-      margin: 0 auto;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
     }
 
-    .pageWrap img {
-      display: block;
-      width: 100%;
+    #wrap img {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
       height: auto;
       pointer-events: none;
     }
 
-    .clickArea {
+    #clickNochmal {
       position: absolute;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
-  <div class="pageWrap">
-    <img src="tschuess.webp" alt="Tschüss">
-    <!-- NOCHMAL SPIELEN: Zeile 10.1, Spalte 1.5–6.5 -->
-    <div id="clickNochmal" class="clickArea"></div>
+  <div id="wrap">
+    <img id="bgImg" src="tschuess.webp" alt="Tschüss">
+    <div id="clickNochmal"></div>
   </div>
 
   <script>
-    function setScale() {
-      const cols = 8;
-      const cell = 142;
-      const gridW = cols * cell;
-      const vw = window.innerWidth;
-      const targetW = vw * 0.94;
-      const scale = Math.min(1, targetW / gridW);
-      document.documentElement.style.setProperty("--scale", scale.toFixed(4));
+    function positionButton() {
+      // Bild: 1134 x 2788 Originalpixel
+      // Bei 100vw Breite: Scale = window.innerWidth / 1134
+      // Button im Original: Y=1420..1570, X=213..923
+      var vw = window.innerWidth;
+      var scale = vw / 1134;
+
+      var btn = document.getElementById("clickNochmal");
+      btn.style.left   = Math.round(213 * scale) + "px";
+      btn.style.top    = Math.round(1420 * scale) + "px";
+      btn.style.width  = Math.round(710 * scale) + "px";
+      btn.style.height = Math.round(150 * scale) + "px";
     }
 
-    function positionUI() {
-      const cell = 142;
+    positionButton();
+    window.addEventListener("resize", positionButton);
 
-      // NOCHMAL SPIELEN Button: Y=1420..1570, X=213..923 (im 1136px-Raster)
-      const btn = document.getElementById("clickNochmal");
-      btn.style.left   = (cell * 1.5) + "px";
-      btn.style.top    = (cell * 10.0) + "px";
-      btn.style.width  = (cell * 5.0) + "px";
-      btn.style.height = (cell * 1.1) + "px";
-    }
-
-    function rebuild() {
-      setScale();
-      positionUI();
-    }
-
-    rebuild();
-    window.addEventListener("resize", rebuild);
-
-    document.getElementById("clickNochmal").onclick = () => {
+    document.getElementById("clickNochmal").onclick = function() {
       location.href = "index.html";
     };
   </script>
