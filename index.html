@@ -2,80 +2,572 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>DigiKipp – Tschüss</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DigiKipp – Start</title>
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  
+  <!-- iOS Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DigiKipp">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Theme Color -->
   <meta name="theme-color" content="#4a2418">
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --cols: 8;
+      --cell: 142px;
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #1a0e0a;
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
+      --scale: 1;
+      --uiscale: 1;
+      --gridW: calc(var(--cols) * var(--cell));
+      --gridH: 100vh;
+
+      --ui-panel-bg: #4a2418;
+      --ui-text: #ead7be;
+      --btn-bg: #ead7be;
+      --btn-text: #2a160c;
+
+      --bg-off-x: 0px;
+      --bg-off-y: 0px;
     }
 
-    #wrap {
-      position: relative;
+    html, body{
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      touch-action: manipulation;
+      background: #000;
+    }
+
+    body{
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    .stage{
       width: 100vw;
       height: 100vh;
+      position: relative;
       overflow: hidden;
     }
 
-    #wrap img {
+    .layout{
       position: absolute;
-      top: 0;
       left: 50%;
-      transform: translateX(-50%);
-      width: 100vw;
-      height: auto;
-      pointer-events: none;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      transform-origin: top center;
+      transform: translateX(-50%) scale(var(--scale));
     }
 
-    #clickNochmal {
+    /* Hintergrund – Startscreen PNG */
+    .bgPNG{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      background-image: url("digikipp_starts.webp");
+      background-repeat: no-repeat;
+      background-size: 100% auto;
+      background-position:
+        calc(0px + var(--bg-off-x))
+        calc(0px + var(--bg-off-y));
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .dimOverlay {
       position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .dimOverlay.active {
+      opacity: 1;
+    }
+
+    .uiLayer{
+      position:absolute;
+      left:0;
+      top:0;
+      width:var(--gridW);
+      height:var(--gridH);
+      z-index:10;
+      pointer-events:none;
+    }
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.75);
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      backdrop-filter:blur(4px);
+      opacity:1;
+      transition:opacity 0.2s ease;
+    }
+
+    .modalOverlay.hidden{
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .modalOverlay.hidden .modalClickArea{
+      pointer-events:none;
+    }
+
+    .modalContainer{
+      position:relative;
+      transform: scale(var(--scale));
+      transform-origin: center;
+    }
+
+    .modalImage{
+      display:block;
+      width: 1136px;
+    }
+
+    .modalClickArea{
+      position:absolute;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events:auto;
+    }
+
+    /* Unsichtbare Klickbereiche für Game Buttons */
+    .gameClickArea{
+      position:absolute;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events:auto;
+    }
+
+    /* Unsichtbare Klickbereiche für Icons */
+    .iconClickArea{
+      position:absolute;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      width: 142px;
+      height: 142px;
+      pointer-events:auto;
+    }
+
+    /* Flashscreen Overlay */
+    #flashOverlay{
+      position:fixed;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      background:#000;
+      z-index:99999;
+      opacity:1;
+      transition:opacity 0.6s ease;
+      pointer-events:none;
+    }
+
+    #flashOverlay.hidden{
+      opacity:0;
+    }
+
+    #flashContainer{
+      position:absolute;
+      left:50%;
+      top:0;
+      transform:translateX(-50%) scale(var(--scale));
+      transform-origin:top center;
+    }
+
+    #flashImage{
+      display:block;
+      width:1136px;
+    }
+
+    /* Language Icon & Dropdown */
+    #langIcon {
+      position: absolute;
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 15;
+    }
+    #langIcon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #langDropdown {
+      display: none;
+      position: absolute;
+      z-index: 9000;
+      pointer-events: auto;
+      background-image: url("sprachdrop.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      box-shadow: 10px 14px 30px rgba(0,0,0,0.75), 3px 5px 10px rgba(0,0,0,0.5);
+      border-radius: 12px;
+    }
+    #langDropdown.show { display: block; }
+
+    .langRow {
+      position: absolute;
+      left: 0;
+      width: 100%;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
-      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10%;
+      box-sizing: border-box;
     }
+
+    /* Toggle Switch */
+    .langToggle {
+      width: 108px; height: 57px;
+      border-radius: 29px;
+      background: #1a0e06;
+      border: 3px solid #5a3a20;
+      position: relative;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .langToggle.active {
+      background: linear-gradient(90deg, #8b6914, #d4a843);
+      border-color: #d4a843;
+    }
+    .langToggle::after {
+      content: '';
+      position: absolute;
+      top: 5px; left: 5px;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #888, #555);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .langToggle.active::after {
+      transform: translateX(51px);
+      background: linear-gradient(180deg, #f0d080, #c89b30);
+    }
+
   </style>
 </head>
+
 <body>
-  <div id="wrap">
-    <img id="bgImg" src="tschuess.webp" alt="Tschüss">
-    <div id="clickNochmal"></div>
+  <!-- Flashscreen Overlay -->
+  <div id="flashOverlay">
+    <div id="flashContainer">
+      <img id="flashImage" src="flashscreen.webp" alt="DigiKipp">
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="layout" id="layout">
+      <div class="bgPNG"></div>
+      <div class="dimOverlay" id="dimOverlay"></div>
+
+      <div class="uiLayer">
+
+        <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild -->
+        <div id="clickColor" class="gameClickArea"></div>
+        <div id="clickCard" class="gameClickArea"></div>
+        <div id="clickQueen" class="gameClickArea"></div>
+        <div id="clickKing" class="gameClickArea"></div>
+
+        <!-- Unsichtbare Klickbereiche für Icons -->
+        <div id="closeBtn" class="iconClickArea"></div>
+        <div id="legalBtn" class="iconClickArea"></div>
+        <div id="shareBtn" class="iconClickArea"></div>
+
+        <!-- Language Icon at 2F -->
+        <div id="langIcon">
+          <img src="sprachicon.png" alt="Language">
+        </div>
+
+        <!-- Language Dropdown (sprachdrop.png as background) -->
+        <div id="langDropdown">
+          <div class="langRow" data-lang="de" style="top:33.6%; height:11.2%"><div class="langToggle"></div></div>
+          <div class="langRow" data-lang="en" style="top:45.0%; height:9.0%"><div class="langToggle"></div></div>
+          <div class="langRow" data-lang="it" style="top:54.3%; height:8.8%"><div class="langToggle"></div></div>
+          <div class="langRow" data-lang="fr" style="top:63.4%; height:9.0%"><div class="langToggle"></div></div>
+          <div class="langRow" data-lang="es" style="top:72.7%; height:8.6%"><div class="langToggle"></div></div>
+          <div class="langRow" data-lang="tr" style="top:81.5%; height:10.4%"><div class="langToggle"></div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="closeModal" class="modalOverlay hidden">
+    <div class="modalContainer">
+      <img src="sicherheitsabfrage.webp" class="modalImage" alt="Sicherheitsabfrage">
+      <div id="modalAbbrechen" class="modalClickArea"></div>
+      <div id="modalBeenden" class="modalClickArea"></div>
+    </div>
   </div>
 
   <script>
-    function positionButton() {
-      // Bild: 1134 x 2788 Originalpixel
-      // Bei 100vw Breite: Scale = window.innerWidth / 1134
-      // Button im Original: Y=1420..1570, X=213..923
-      var vw = window.innerWidth;
-      var scale = vw / 1134;
 
-      var btn = document.getElementById("clickNochmal");
-      btn.style.left   = Math.round(213 * scale) + "px";
-      btn.style.top    = Math.round(1420 * scale) + "px";
-      btn.style.width  = Math.round(710 * scale) + "px";
-      btn.style.height = Math.round(150 * scale) + "px";
+    // Flashscreen: Warten bis Bild geladen ist, dann 2 Sek anzeigen
+    const flashImg = document.getElementById("flashImage");
+    const flashOverlay = document.getElementById("flashOverlay");
+    
+    if(flashImg.complete) {
+      hideFlash();
+    } else {
+      flashImg.onload = hideFlash;
+      flashImg.onerror = hideFlash;
+    }
+    
+    function hideFlash() {
+      setTimeout(() => {
+        flashOverlay.classList.add("hidden");
+        setTimeout(() => flashOverlay.style.display = "none", 600);
+      }, 2000);
     }
 
-    positionButton();
-    window.addEventListener("resize", positionButton);
+    const HEADER_ROW_OFFSET = 2;
 
-    document.getElementById("clickNochmal").onclick = function() {
-      location.href = "index.html";
+    function numVar(name){
+      return parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(name)
+      ) || 0;
+    }
+
+    function setScaleToFitWidth(){
+      const cols = numVar("--cols") || 8;
+      const cell = numVar("--cell") || 142;
+
+      const gridW = cols * cell;
+      const vw = window.innerWidth;
+
+      const targetW = vw * 0.94;
+      const scale = Math.min(1, targetW / gridW);
+
+      document.documentElement.style.setProperty("--scale", scale.toFixed(4));
+      document.documentElement.style.setProperty("--gridW", gridW + "px");
+
+      const uiscale = 1 / (scale || 1);
+      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
+
+      return { cell, scale, gridW };
+    }
+
+    function positionUI(){
+      const cellPx = numVar("--cell") || 142;
+
+      const clickColor = document.getElementById("clickColor");
+      const clickCard  = document.getElementById("clickCard");
+      const clickQueen = document.getElementById("clickQueen");
+      const clickKing  = document.getElementById("clickKing");
+
+      // Alle Buttons: halbe Spalte B (1.5) bis halbe Spalte G (6.5) = 5 Spalten breit
+      const btnLeft = cellPx * 1.5;
+      const btnWidth = cellPx * 5;
+      const btnHeight = cellPx;
+
+      // KIPP COLOR: Zeile 5
+      const row5 = ((5 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickColor.style.left = btnLeft + "px";
+      clickColor.style.top = row5 + "px";
+      clickColor.style.width = btnWidth + "px";
+      clickColor.style.height = btnHeight + "px";
+
+      // KIPP CARD: zwischen Zeile 7 und 8 (Zeile 7.5)
+      const row75 = ((7.5 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickCard.style.left = btnLeft + "px";
+      clickCard.style.top = row75 + "px";
+      clickCard.style.width = btnWidth + "px";
+      clickCard.style.height = btnHeight + "px";
+
+      // KIPP QUEEN: Zeile 10
+      const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickQueen.style.left = btnLeft + "px";
+      clickQueen.style.top = row10 + "px";
+      clickQueen.style.width = btnWidth + "px";
+      clickQueen.style.height = btnHeight + "px";
+
+      // KIPP KING: Zeile 12
+      const row12 = ((12 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickKing.style.left = btnLeft + "px";
+      clickKing.style.top = row12 + "px";
+      clickKing.style.width = btnWidth + "px";
+      clickKing.style.height = btnHeight + "px";
+
+      // Icon-Klickbereiche in Zeile 0_2
+      const iconRow = cellPx; // Zeile 0_2 = 1 Zelle tiefer
+      const iconSize = cellPx; // 142x142px
+
+      // Close Button: zwischen Spalten A und B = Spalte 0.5
+      const closeBtn = document.getElementById("closeBtn");
+      closeBtn.style.left = (cellPx * 0.5) + "px";
+      closeBtn.style.top = iconRow + "px";
+
+      // Legal (§) Button: Spalte C = Spalte 2
+      const legalBtn = document.getElementById("legalBtn");
+      legalBtn.style.left = (cellPx * 2) + "px";
+      legalBtn.style.top = iconRow + "px";
+
+      // Share Button: zwischen Spalten G und H = Spalte 6.5
+      const shareBtn = document.getElementById("shareBtn");
+      shareBtn.style.left = (cellPx * 6.5) + "px";
+      shareBtn.style.top = iconRow + "px";
+
+      // Language Icon: Zelle 2F (Spalte F = index 5, row 0_2)
+      const langIcon = document.getElementById("langIcon");
+      langIcon.style.left = (cellPx * 4.5) + "px";
+      langIcon.style.top = (iconRow - 8) + "px";
+      langIcon.style.width = (cellPx * 1.303) + "px";
+      langIcon.style.height = (cellPx * 1.303) + "px";
+
+      // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
+      const langDD = document.getElementById("langDropdown");
+      const ddWidth = cellPx * 6;
+      const ddHeight = ddWidth * (935 / 700);
+      const ddRight = cellPx * 6;
+      const ddLeft = ddRight - ddWidth;
+      langDD.style.width = ddWidth + "px";
+      langDD.style.height = ddHeight + "px";
+      langDD.style.left = Math.max(0, ddLeft) + "px";
+      langDD.style.top = (iconRow + cellPx + 8) + "px";
+    }
+
+    function rebuild(){
+      const { cell, scale } = setScaleToFitWidth();
+      const vh = window.innerHeight;
+      const effective = vh / (scale || 1);
+      const rows = Math.ceil(effective / cell) + 1;
+      const gridH = rows * cell;
+      document.documentElement.style.setProperty("--gridH", gridH + "px");
+      positionUI();
+    }
+
+    window.addEventListener("load", rebuild);
+    window.addEventListener("resize", rebuild);
+
+    // Game navigation
+    document.getElementById("clickColor").onclick = () => location.href="kipp-color.html";
+    document.getElementById("clickCard").onclick  = () => location.href="kipp-card.html";
+    // clickQueen und clickKing haben vorerst keine Funktion
+
+    // Modal
+    const closeBtn = document.getElementById("closeBtn");
+    const closeModal = document.getElementById("closeModal");
+    const modalAbbrechen = document.getElementById("modalAbbrechen");
+    const modalBeenden = document.getElementById("modalBeenden");
+
+    // Klickbereiche für 1136px breites Bild (8 × 142px)
+    const imgWidth = 1136;
+    const cellSize = 142;
+    const row8Top = (8 + HEADER_ROW_OFFSET - 1) * cellSize;
+    
+    // Abbrechen: halbe Spalte B (1.5) bis Ende Spalte D (4)
+    modalAbbrechen.style.left = (cellSize * 1.5) + "px";
+    modalAbbrechen.style.top = row8Top + "px";
+    modalAbbrechen.style.width = (cellSize * 2.5) + "px";
+    modalAbbrechen.style.height = cellSize + "px";
+    
+    // Beenden: Spalte E (4) bis halbe Spalte G (6.5)
+    modalBeenden.style.left = (cellSize * 4) + "px";
+    modalBeenden.style.top = row8Top + "px";
+    modalBeenden.style.width = (cellSize * 2.5) + "px";
+    modalBeenden.style.height = cellSize + "px";
+
+    closeBtn.onclick = () => closeModal.classList.remove("hidden");
+    modalAbbrechen.onclick = () => closeModal.classList.add("hidden");
+    modalBeenden.onclick = () => location.href="tschuess.html";
+
+    closeModal.onclick = (e) => { if(e.target === closeModal) closeModal.classList.add("hidden"); };
+
+    // Teilen
+    function shareApp(){
+      const url = window.location.href;
+      const text = "DigiKipp – schau mal vorbei!";
+
+      if(navigator.share){
+        navigator.share({ title:"DigiKipp", text, url }).catch(()=>{});
+      } else {
+        window.open("https://wa.me/?text=" + encodeURIComponent(text + " " + url), "_blank");
+      }
+    }
+
+    document.getElementById("shareBtn").onclick = shareApp;
+
+    // Legal (§) Button
+    document.getElementById("legalBtn").onclick = () => {
+      window.open("legal.html", "_blank");
     };
+
+    // === LANGUAGE SELECTION ===
+    const langDropdown = document.getElementById("langDropdown");
+    const langIcon = document.getElementById("langIcon");
+    const langRows = document.querySelectorAll(".langRow");
+
+    // Aktive Sprache aus localStorage oder default DE
+    let currentLang = localStorage.getItem("digikipp_lang") || "de";
+
+    function updateToggles() {
+      langRows.forEach(row => {
+        const toggle = row.querySelector(".langToggle");
+        if (row.dataset.lang === currentLang) {
+          toggle.classList.add("active");
+        } else {
+          toggle.classList.remove("active");
+        }
+      });
+    }
+    updateToggles();
+
+    // Icon klick → Dropdown auf/zu
+    langIcon.onclick = (e) => {
+      e.stopPropagation();
+      langDropdown.classList.toggle("show");
+      document.getElementById("dimOverlay").classList.toggle("active", langDropdown.classList.contains("show"));
+    };
+
+    // Sprache wählen → setzen, schließen
+    langRows.forEach(row => {
+      row.onclick = (e) => {
+        e.stopPropagation();
+        currentLang = row.dataset.lang;
+        localStorage.setItem("digikipp_lang", currentLang);
+        updateToggles();
+        // Auto-close nach kurzer Verzögerung
+        setTimeout(() => { langDropdown.classList.remove("show"); document.getElementById("dimOverlay").classList.remove("active"); }, 200);
+      };
+    });
+
+    // Klick außerhalb → Dropdown schließen
+    document.addEventListener("click", () => {
+      langDropdown.classList.remove("show");
+      document.getElementById("dimOverlay").classList.remove("active");
+    });
+    langDropdown.onclick = (e) => e.stopPropagation();
+
   </script>
 </body>
 </html>
