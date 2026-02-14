@@ -2988,7 +2988,7 @@
       totalObservationTime = 0;
       lockedKippDir = null;
       currentDragDir = null;
-      demoFromSpielen = false;
+      autoSchauenActive = false;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
       timerStarted = false;
@@ -3473,7 +3473,7 @@
         }
       } else if (gamePhase === 'spielen') {
         // Auge im Spiel = Demo starten (wie im Tutorial)
-        startDemoFromSpielen();
+        startAutoSchauen();
       }
     }, { passive: false });
     eyeEl.addEventListener('click', (e) => {
@@ -3485,7 +3485,7 @@
           startFreeSchauenPhase();
         }
       } else if (gamePhase === 'spielen') {
-        startDemoFromSpielen();
+        startAutoSchauen();
       }
     });
     
@@ -3819,7 +3819,7 @@
     }, { passive: true });
     
     renderer.domElement.addEventListener('touchend', (e) => {
-      if (!verdecktesMesh.visible || !lastTouchPos || verdecktesMesh.userData.revealed) { lastTouchPos = null; return; }
+      if (!verdecktesMesh.visible || !lastTouchPos) { lastTouchPos = null; return; }
       if (dragActive) { lastTouchPos = null; return; }
       
       const rect = renderer.domElement.getBoundingClientRect();
@@ -3828,14 +3828,14 @@
       vkRaycaster.setFromCamera(vkMouse, camera);
       
       if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
-        if (gamePhase === 'entscheidung') {
+        if (gamePhase === 'entscheidung' && !verdecktesMesh.userData.revealed) {
           // Kippziel-Klick = Auge-Klick: Schauen/Demo starten
           if (activeCardIdx === 0 && !isReplay) {
             spielzielToDemoPhase();
           } else {
             startFreeSchauenPhase();
           }
-        } else if (gamePhase === 'kippen') {
+        } else if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
           revealVerdecktesKippziel();
         }
       }
@@ -3849,16 +3849,15 @@
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       vkRaycaster.setFromCamera(vkMouse, camera);
       
-      if (!verdecktesMesh.visible || verdecktesMesh.userData.revealed) return;
+      if (!verdecktesMesh.visible) return;
       if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
-        if (gamePhase === 'entscheidung') {
-          // Kippziel-Klick = Auge-Klick: Schauen/Demo starten
+        if (gamePhase === 'entscheidung' && !verdecktesMesh.userData.revealed) {
           if (activeCardIdx === 0 && !isReplay) {
             spielzielToDemoPhase();
           } else {
             startFreeSchauenPhase();
           }
-        } else if (gamePhase === 'kippen') {
+        } else if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
           revealVerdecktesKippziel();
         }
       }
@@ -4093,16 +4092,18 @@
     }
 
     // === 500ms Liegezeit-Schwelle für Auto-Eval ===
-    const LIEGEZEIT_SCHWELLE = 500; // ms
-    let demoFromSpielen = false; // Flag: Demo wurde aus SPIELEN gestartet
+    const LIEGEZEIT_SCHWELLE = 650; // ms
+    let autoSchauenActive = false; // Flag: Auto-Schauen läuft
+    let autoSchauenAborted = false; // Abbruch-Flag
 
-    // === Demo aus SPIELEN starten (Auge-Klick) ===
-    function startDemoFromSpielen() {
+    // === 30s Auto-Schauen aus SPIELEN (Auge-Klick) ===
+    async function startAutoSchauen() {
       // Auto-Eval-Timeout löschen
       if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
       
-      demoFromSpielen = true;
-      gamePhase = 'demo';
+      autoSchauenActive = true;
+      autoSchauenAborted = false;
+      gamePhase = 'autoSchauen';
       
       // UI ausblenden
       document.getElementById('eyeIcon').style.display = 'none';
@@ -4111,20 +4112,146 @@
       tapIndicatorA.mesh.visible = false;
       tapIndicatorB.mesh.visible = false;
       stopCountdown();
-      countdown.style.display = 'none';
       
-      // Cube für Demo zurücksetzen auf Q3
+      // Cube zurücksetzen auf Q3
       cube.quaternion.set(0, 0, 0, 1);
       cube.position.set(-offset, offset, 0.109375 + offset);
       currentQuadrant = 3;
       topFace = 'f2';
+      kippDirection = 'cw';
+      isAnimating = false;
       
-      // Demo-Animation starten (Wobble-Hand)
-      startDemoAnimation();
+      // Timer von 30 runter anzeigen
+      const SCHAUEN_DAUER = 30; // Sekunden
+      countdown.textContent = SCHAUEN_DAUER;
+      countdown.style.display = 'block';
+      if (timerTopPos) countdown.style.top = (parseInt(timerTopPos) + 45) + 'px';
+      countdown.style.left = '180px';
+      
+      const startTime = performance.now();
+      
+      // Timer-Update alle 200ms
+      const timerInterval = setInterval(() => {
+        if (!autoSchauenActive) { clearInterval(timerInterval); return; }
+        const elapsed = (performance.now() - startTime) / 1000;
+        const remaining = Math.max(0, Math.ceil(SCHAUEN_DAUER - elapsed));
+        countdown.textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+        }
+      }, 200);
+      
+      // Auto-Kipp/Wobble-Loop
+      // CW-Zyklus Richtungen von jeweiligem Quadranten
+      function getNextCwDir(q) {
+        if (q === 3) return 'north';
+        if (q === 0) return 'east';
+        if (q === 1) return 'south_from_q1';
+        if (q === 2) return 'west_from_q2';
+      }
+      function getNextCcwDir(q) {
+        if (q === 3) return 'east_from_q3';
+        if (q === 0) return 'south';
+        if (q === 1) return 'west';
+        if (q === 2) return 'north_from_q2';
+      }
+      
+      // Wobble: kurzes Hin-und-Her-Wippen (ohne echten Kipp)
+      function wobble(durationMs) {
+        return new Promise(resolve => {
+          if (!autoSchauenActive) { resolve(); return; }
+          const wAngle = 18 * Math.PI / 180;
+          const origQuat = cube.quaternion.clone();
+          const origPos = cube.position.clone();
+          const wStart = performance.now();
+          // Zufällige Achse (X oder Z)
+          const useX = Math.random() < 0.5;
+          function wAnim(now) {
+            if (!autoSchauenActive) {
+              cube.quaternion.copy(origQuat);
+              cube.position.copy(origPos);
+              resolve(); return;
+            }
+            const t = Math.min((now - wStart) / durationMs, 1);
+            const angle = Math.sin(t * Math.PI) * wAngle;
+            cube.quaternion.copy(origQuat);
+            if (useX) {
+              cube.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -angle));
+            } else {
+              cube.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), -angle));
+            }
+            if (t < 1) requestAnimationFrame(wAnim);
+            else {
+              cube.quaternion.copy(origQuat);
+              cube.position.copy(origPos);
+              resolve();
+            }
+          }
+          requestAnimationFrame(wAnim);
+        });
+      }
+      
+      // Hauptschleife: Kipps + Wobbles bis 30s um
+      let loopDir = 'cw'; // Startrichtung
+      while (autoSchauenActive && !autoSchauenAborted) {
+        const elapsed = (performance.now() - startTime) / 1000;
+        if (elapsed >= SCHAUEN_DAUER) break;
+        
+        // 1 Kipp
+        const dir = (loopDir === 'cw') ? getNextCwDir(currentQuadrant) : getNextCcwDir(currentQuadrant);
+        kippDirection = loopDir; // Sync für advanceTopFace
+        await performKipp(dir, 700);
+        if (!autoSchauenActive) break;
+        advanceTopFace();
+        
+        // Kurze Pause
+        await sleep(200 + Math.random() * 300);
+        if (!autoSchauenActive) break;
+        
+        // Wobble (50% Chance)
+        if (Math.random() < 0.5) {
+          await wobble(600 + Math.random() * 400);
+          if (!autoSchauenActive) break;
+          await sleep(200);
+          if (!autoSchauenActive) break;
+        }
+        
+        // Gelegentlich Richtung wechseln (30% Chance)
+        if (Math.random() < 0.3) {
+          loopDir = (loopDir === 'cw') ? 'ccw' : 'cw';
+        }
+      }
+      
+      // Aufräumen
+      clearInterval(timerInterval);
+      endAutoSchauen();
+    }
+    
+    function endAutoSchauen() {
+      autoSchauenActive = false;
+      autoSchauenAborted = false;
+      gamePhase = 'spielen';
+      kippzielChecked = false;
+      kippCount = 0;
+      isAnimating = false;
+      
+      // Timer weg
+      stopCountdown();
+      countdown.style.display = 'none';
+      
+      // Eye-Icon zeigen für nochmalige Schauen-Runde
+      const eyeIcon = document.getElementById('eyeIcon');
+      if (timerTopPos) eyeIcon.style.top = (parseInt(timerTopPos) + 26) + 'px';
+      eyeIcon.style.display = 'block';
+      
+      // Würfel bleibt wo er ist
     }
 
     backButton.addEventListener('click', () => {
-      if (gamePhase !== 'kippen' && gamePhase !== 'spielen') return;
+      if (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'autoSchauen') return;
+      // Abort auto-schauen if active
+      if (autoSchauenActive) { autoSchauenAborted = true; autoSchauenActive = false; isAnimating = false; }
+      autoSchauenActive = false;
       gamePhase = 'kippen'; // Zurück zu Phase 2
       currentMode = 'kanten';
       kippCount = 0;
@@ -4185,6 +4312,8 @@
       
       // Abort auto-demo if active
       autoDemoActive = false;
+      // Abort auto-schauen if active
+      if (autoSchauenActive) { autoSchauenAborted = true; autoSchauenActive = false; isAnimating = false; }
       swReset(); swStopLive();
       
       stopCountdown();
@@ -4213,7 +4342,7 @@
       kippCount = 0;
       lockedKippDir = null;
       currentDragDir = null;
-      demoFromSpielen = false;
+      autoSchauenActive = false;
       erstesKippziel = null;
       kippzielChecked = false;
       totalObservationTime = 0;
@@ -4364,6 +4493,15 @@
     renderer.domElement.addEventListener('touchstart', (e) => {
       // Start-Phase: keine Touch-Interaktion
       if (gamePhase === 'start') return;
+      // Auto-Schauen: Tap auf Würfel = sofortiger Abbruch
+      if (gamePhase === 'autoSchauen' && autoSchauenActive) {
+        e.preventDefault();
+        autoSchauenAborted = true;
+        autoSchauenActive = false;
+        isAnimating = false;
+        // endAutoSchauen wird von der Hauptschleife aufgerufen
+        return;
+      }
       // Demo-Phase beenden beim ersten Touch
       if (gamePhase === 'demo') {
         e.preventDefault(); // Touch während Demo verarbeiten
@@ -4379,28 +4517,15 @@
         dragActive = false;
         isAnimating = false;
         
-        if (demoFromSpielen) {
-          // Zurück zu SPIELEN (Kippziel bleibt aktiv)
-          demoFromSpielen = false;
-          gamePhase = 'spielen';
-          kippzielChecked = false;
-          kippCount = 0;
-          
-          // Eye-Icon zeigen für nochmalige Demo
-          const eyeIcon = document.getElementById('eyeIcon');
-          eyeIcon.style.display = 'block';
-          
-        } else {
-          // Normal: Demo → KIPPEN
-          gamePhase = 'kippen';
-          
-          // SCHAUEN-Timer jetzt starten (60 Sek)
-          startCountdown(() => {
-            if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
-              revealVerdecktesKippziel();
-            }
-          }, 60);
-        }
+        // Normal: Demo → KIPPEN
+        gamePhase = 'kippen';
+        
+        // SCHAUEN-Timer jetzt starten (60 Sek)
+        startCountdown(() => {
+          if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
+            revealVerdecktesKippziel();
+          }
+        }, 60);
         
         // Touch-Punkt SOFORT für Drag-System speichern
         const touch = e.touches[0];
