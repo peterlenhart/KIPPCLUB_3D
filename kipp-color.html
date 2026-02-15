@@ -1980,7 +1980,6 @@
       html += '<div>Rundenwertungen: [' + spielenRundenScores.map(s => s.toFixed(1)).join(', ') + ']</div>';
       html += '<div style="color:#cedb25;">BSc (Summe): ' + Math.round(spielenRundenScores.reduce((a, b) => a + b, 0)) + '</div>';
       html += '<div>Spionage/Runde: [' + spielenSpionagePerRound.join(', ') + ']</div>';
-      html += '<div>Slow Kipps/Runde: [' + spielenSlowKippsPerRound.join(', ') + ']</div>';
       html += '<div>Wipps/Runde: [' + spielenWippsPerRound.join(', ') + ']</div>';
       html += '<div>Kniffs/Runde: [' + spielenKniffsPerRound.join(', ') + ']</div>';
       html += '<div>Kippzug-Dauern: [' + spielenKippzugDauern.map(d => d + 'ms').join(', ') + ']</div>';
@@ -2026,14 +2025,16 @@
       // Brain Score = Summe der Rundenwertungen
       const scoreValue = Math.round(spielenRundenScores.reduce((a, b) => a + b, 0));
       
-      // Zügig/Zögernd per Runde: gezögert wenn Spionage ODER Wipps ODER langsame Kipps
+      // Zügig/Zögernd per Runde: Eine Runde ist "gezögert" wenn Spionage ODER Wipps ODER langsam
       let zuegigRounds = 0;
       for (let ri = 0; ri < spielenKippsPerRound.length; ri++) {
         const rSp = spielenSpionagePerRound[ri] || 0;
         const rW = spielenWippsPerRound[ri] || 0;
-        const rSlow = spielenSlowKippsPerRound[ri] || 0;
-        // Zügig = keine Spionage, keine Wipps, keine langsamen Kipps
-        if (rSp === 0 && rW === 0 && rSlow === 0) zuegigRounds++;
+        const rK = spielenKippsPerRound[ri] || 1;
+        const rD = ri < spielenKippzugDauern.length ? spielenKippzugDauern[ri] : 0;
+        const avgPerKipp = rK > 0 && rD > 0 ? rD / rK : 0;
+        // Zügig = keine Spionage, keine Wipps, und schnell genug
+        if (rSp === 0 && rW === 0 && (avgPerKipp === 0 || avgPerKipp < 1500)) zuegigRounds++;
       }
       const totalRounds = spielenKippsPerRound.length;
       const zuegigPct = totalRounds > 0 ? Math.round((zuegigRounds / totalRounds) * 100) : 100;
@@ -2113,7 +2114,7 @@
         
         // Statistik-Zeilen
         '<div style="font-size:15px;line-height:2.0;margin-bottom:12px;">' +
-          'Gewippt: <span style="font-weight:bold;">' + d.wipps + '-mal</span><br>' +
+          'Gewippt: <span style="font-weight:bold;">' + d.totalKipps + '-mal</span><br>' +
           'Richtungswechsel: <span style="font-weight:bold;">' + d.zykluswechsel + '-mal</span><br>' +
           'Mehr als 6 Kipps ben\u00f6tigt: <span style="font-weight:bold;">' + d.mehrAls6 + '-mal</span>' +
         '</div>' +
@@ -2126,7 +2127,7 @@
         
         // Hinweis-Text
         '<div style="font-size:14px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
-          'Je z\u00fcgiger du in eine Richtung kippst, ohne HIN&amp;HER-Wippen, desto h\u00f6her werden deine HITS bewertet.' +
+          'Je z\u00fcgiger du in nur eine Richtung, ohne HIN&amp;HER-Wippen, kippst, desto h\u00f6her werden deine HITS bewertet.' +
         '</div>' +
         
         // Trennlinie
@@ -2449,8 +2450,6 @@
     let spielenWippsPerRound = [];  // Wipps pro Runde
     let currentRoundSpionage = 0;   // Spionage-Wipps (>10° + Zurückfall) in aktueller Runde
     let spielenSpionagePerRound = []; // Spionage-Wipps pro Runde
-    let currentRoundSlowKipps = 0;  // Langsame Kipps (>700ms) in aktueller Runde
-    let spielenSlowKippsPerRound = []; // Langsame Kipps pro Runde
     let currentRoundKniffs = 0;     // Kniffs in aktueller Kippziel-Runde
     let spielenKniffsPerRound = []; // Kniffs pro Runde
     let spielenRundenScores = [];   // Per-Hit Score pro Runde (0 bei Miss)
@@ -2952,8 +2951,6 @@
       spielenRundenScores = [];
       currentRoundSpionage = 0;
       spielenSpionagePerRound = [];
-      currentRoundSlowKipps = 0;
-      spielenSlowKippsPerRound = [];
       lastKippLandTime = null;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
@@ -3366,8 +3363,6 @@
       spielenRundenScores = [];
       currentRoundSpionage = 0;
       spielenSpionagePerRound = [];
-      currentRoundSlowKipps = 0;
-      spielenSlowKippsPerRound = [];
       lastKippLandTime = null;
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
@@ -3847,11 +3842,9 @@
       spielenWippsPerRound.push(currentRoundWipps);
       spielenKniffsPerRound.push(currentRoundKniffs);
       spielenSpionagePerRound.push(currentRoundSpionage);
-      spielenSlowKippsPerRound.push(currentRoundSlowKipps);
       currentRoundWipps = 0;
       currentRoundKniffs = 0;
       currentRoundSpionage = 0;
-      currentRoundSlowKipps = 0;
       
       // Kipps dieser Runde speichern (Haltungsnote)
       spielenKippsPerRound.push(kippCount);
@@ -3904,7 +3897,6 @@
       const rWipps = spielenWippsPerRound[rIdx] || 0;
       const rKniffs = spielenKniffsPerRound[rIdx] || 0;
       const rSpionage = spielenSpionagePerRound[rIdx] || 0;
-      const rSlow = spielenSlowKippsPerRound[rIdx] || 0;
       const rDauer = rIdx < spielenKippzugDauern.length ? spielenKippzugDauern[rIdx] : 0;
       // Zykluswechsel in dieser Runde
       let rZyklusW = 0;
@@ -3920,14 +3912,19 @@
         // Normale Wipps (ohne Spionage-Schwelle): leichterer Abzug
         const normalWipps = Math.max(0, rWipps - rSpionage);
         penalty += normalWipps * 0.10;
-        // Langsame Einzelkipps (>700ms = geschaut beim Durchkippen)
-        penalty += rSlow * 0.15;
         // Kniffs (nachschauen per Demo)
         penalty += rKniffs * 0.30;
         // Zykluswechsel
         penalty += rZyklusW * 0.15;
         // Extra-Kipps über 6
         if (rKipps > 6) penalty += (rKipps - 6) * 0.08;
+        // Langsame Kippzug-Dauer (Grübeln/Zögern)
+        if (rKipps > 0 && rDauer > 0) {
+          const avgPerKipp = rDauer / rKipps;
+          if (avgPerKipp > 2000) penalty += 0.20;
+          else if (avgPerKipp > 1500) penalty += 0.12;
+          else if (avgPerKipp > 1000) penalty += 0.06;
+        }
         spielenRundenScores.push(Math.max(2, MAX_HIT * (1 - Math.min(penalty, 0.88))));
       } else {
         spielenRundenScores.push(0);
@@ -4347,8 +4344,6 @@
       spielenRundenScores = [];
       currentRoundSpionage = 0;
       spielenSpionagePerRound = [];
-      currentRoundSlowKipps = 0;
-      spielenSlowKippsPerRound = [];
       lastKippLandTime = null;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
@@ -4797,8 +4792,6 @@
               if (dragStartTime) {
                 const kippdauer = Math.round(performance.now() - dragStartTime);
                 spielenKippdauern.push(kippdauer);
-                // Langsamer Kipp = geschaut (zügig wäre 250-400ms)
-                if (kippdauer > 700) currentRoundSlowKipps++;
                 // Gesamtentscheidungszeit = Liegezeit + Kippdauer
                 spielenGesamtzeiten.push(currentKippLiegezeit + kippdauer);
               }
