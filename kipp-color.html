@@ -2024,23 +2024,23 @@
       ov.innerHTML = 
         // BRAIN SCORE + Zahl auf einer Zeile
         '<div style="margin-top:100px;margin-bottom:6px;display:flex;align-items:baseline;gap:14px;">' +
-          '<div style="font-size:20px;font-weight:bold;letter-spacing:3px;">BRAIN SCORE</div>' +
+          '<div style="font-size:22px;font-weight:bold;letter-spacing:3px;">BRAIN SCORE</div>' +
           '<div style="font-size:48px;font-weight:bold;text-shadow:0 0 25px rgba(212,180,140,0.4);">' + d.score + '</div>' +
         '</div>' +
         
         // Drei Faktoren in einer Zeile, linksbündig
         '<div style="display:flex;gap:24px;margin-bottom:6px;">' +
           '<div>' +
-            '<div style="font-size:26px;font-weight:bold;">' + d.hits + '<span style="font-size:15px;opacity:0.6;">/6</span></div>' +
-            '<div style="font-size:10px;letter-spacing:1px;opacity:0.5;">HITS</div>' +
+            '<div style="font-size:28px;font-weight:bold;">' + d.hits + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
+            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">HITS</div>' +
           '</div>' +
           '<div>' +
-            '<div style="font-size:26px;font-weight:bold;">' + d.kniffs + '<span style="font-size:15px;opacity:0.6;">/6</span></div>' +
-            '<div style="font-size:10px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
+            '<div style="font-size:28px;font-weight:bold;">' + d.kniffs + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
+            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
           '</div>' +
           '<div>' +
-            '<div style="font-size:26px;font-weight:bold;">\u26A1' + (d.zugfaktor * 6).toFixed(1) + '</div>' +
-            '<div style="font-size:10px;letter-spacing:1px;opacity:0.5;">ZUGFAKTOR</div>' +
+            '<div style="font-size:28px;font-weight:bold;">\u26A1' + (d.zugfaktor * 6).toFixed(1) + '</div>' +
+            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">ZUGFAKTOR</div>' +
           '</div>' +
         '</div>' +
         
@@ -2048,16 +2048,16 @@
         '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:12px 0 16px;"></div>' +
         
         // Kippstil-Titel linksbündig
-        '<div style="font-size:15px;font-weight:bold;letter-spacing:2.5px;margin-bottom:12px;">' + kippTitel + '</div>' +
+        '<div style="font-size:17px;font-weight:bold;letter-spacing:2.5px;margin-bottom:12px;">' + kippTitel + '</div>' +
         
         // Prozent-Zeilen linksbündig
-        '<div style="font-size:13px;line-height:1.7;margin-bottom:16px;">' +
+        '<div style="font-size:15px;line-height:1.7;margin-bottom:16px;">' +
           '<span style="color:#cedb25;font-weight:bold;">' + d.zuegigPct + '%</span> entschlossen gekippt<br>' +
           '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
         '</div>' +
         
         // kippMsg als Blocktext linksbündig
-        '<div style="font-size:12px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
+        '<div style="font-size:14px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
           kippMsg +
         '</div>' +
         
@@ -2066,10 +2066,10 @@
         
         // Neues Spiel Button zentriert
         '<div style="width:100%;display:flex;justify-content:center;">' +
-          '<button id="neuesSpielBtn" style="width:200px;height:49px;' +
-            'background:url(\'button_kurz.webp\') center/contain no-repeat;' +
+          '<button id="neuesSpielBtn" style="width:280px;height:49px;' +
+            'background:url(\'button_lang.webp\') center/contain no-repeat;' +
             'border:none;cursor:pointer;font-family:Arial,sans-serif;' +
-            'font-size:18px;font-weight:bold;letter-spacing:2.5px;' +
+            'font-size:20px;font-weight:bold;letter-spacing:2.5px;' +
             'color:#d0d0d0;text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);">' +
             T.n + '</button>' +
         '</div>';
