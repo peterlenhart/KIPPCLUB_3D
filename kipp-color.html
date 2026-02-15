@@ -3930,8 +3930,40 @@
       if (hitSlot) {
         const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
         isHit = (neighborColor === erstesKippziel.color.name);
+        console.log('[HIT-CHECK] Q=' + currentQuadrant + ' topFace=' + topFace + 
+          ' Ziel=' + erstesKippziel.zahl + '/' + erstesKippziel.color.name +
+          ' Slot=' + hitSlot + ' neighborColor=' + neighborColor + ' → ' + (isHit ? 'HIT' : 'MISS'));
+      } else {
+        console.log('[HIT-CHECK] Q=' + currentQuadrant + ' topFace=' + topFace + 
+          ' Ziel=' + erstesKippziel.zahl + '/' + erstesKippziel.color.name +
+          ' visible=' + JSON.stringify(visible) + ' → ZAHL NICHT SICHTBAR');
       }
       
+      
+      // DEBUG: Sichtbare Anzeige auf Screen
+      const debugMsg = hitSlot 
+        ? 'Q=' + currentQuadrant + ' face=' + topFace + ' kipps=' + kippCount +
+          '\nZiel: ' + erstesKippziel.zahl + ' an ' + erstesKippziel.color.name +
+          '\nSlot=' + hitSlot + ' neighbor=' + SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot] +
+          '\nf0=[' + deck.slice(0,4) + '] f1=[' + deck.slice(4,8) + '] f2=[' + deck.slice(8,12) + ']' +
+          '\n→ ' + (isHit ? 'HIT!' : 'MISS!')
+        : 'Q=' + currentQuadrant + ' face=' + topFace + ' kipps=' + kippCount +
+          '\nZiel: ' + erstesKippziel.zahl + ' an ' + erstesKippziel.color.name +
+          '\nSichtbar auf ' + topFace + ': [' + Object.values(visible) + ']' +
+          '\nf0=[' + deck.slice(0,4) + '] f1=[' + deck.slice(4,8) + '] f2=[' + deck.slice(8,12) + ']' +
+          '\n→ ZAHL NICHT AUF FACE';
+      
+      let dbgEl = document.getElementById('debugHitInfo');
+      if (!dbgEl) {
+        dbgEl = document.createElement('div');
+        dbgEl.id = 'debugHitInfo';
+        dbgEl.style.cssText = 'position:absolute;top:10px;left:10px;width:340px;background:rgba(0,0,0,0.85);color:#0f0;' +
+          'font:12px monospace;padding:8px;z-index:999;white-space:pre-wrap;pointer-events:auto;border:1px solid #0f0;';
+        dbgEl.addEventListener('click', () => dbgEl.style.display = 'none');
+        document.getElementById('uiOverlay').appendChild(dbgEl);
+      }
+      dbgEl.textContent = debugMsg;
+      dbgEl.style.display = 'block';
       
       drawKippzielBorder(isHit);
     }
