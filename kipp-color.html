@@ -1839,6 +1839,77 @@
       return zuegig / spielenLiegezeiten.length;
     }
     
+    // === MESSUNG OVERLAY (wie KIPP COLOR) ===
+    function showMessung() {
+      // Vorheriges Overlay entfernen
+      const old = document.getElementById('messungOverlay');
+      if (old) { old.remove(); return; } // Toggle
+      
+      const kd = alleKippdauern;
+      const lz = alleLiegezeiten;
+      const totalKipps = kd.length;
+      
+      const avg = arr => arr.length ? Math.round(arr.reduce((a,b) => a+b, 0) / arr.length) : 0;
+      const min = arr => arr.length ? Math.min(...arr) : 0;
+      const max = arr => arr.length ? Math.max(...arr) : 0;
+      
+      const mo = document.createElement('div');
+      mo.id = 'messungOverlay';
+      mo.style.cssText = 'position:absolute;top:50px;left:20px;right:20px;' +
+        'background:rgba(0,0,0,0.92);z-index:400;padding:16px;box-sizing:border-box;' +
+        'font-family:monospace;font-size:12px;color:#00ff00;border:1px solid #00ff00;' +
+        'border-radius:8px;pointer-events:auto;max-height:620px;overflow-y:auto;';
+      
+      let html = '<div style="text-align:center;font-size:14px;margin-bottom:8px;">== MESSUNG ==</div>';
+      html += '<div style="color:#ffa500;">' + totalKipps + ' Kipps gemessen</div><br>';
+      
+      html += '<div style="text-align:center;">—— Kippdauer (Ecke\u2192Ecke) ——</div>';
+      html += '<div>\u00D8 ' + avg(kd) + 'ms</div>';
+      html += '<div style="color:#ffa500;">Min ' + min(kd) + '   Max ' + max(kd) + '</div><br>';
+      
+      html += '<div style="text-align:center;">—— Liegezeit ——</div>';
+      html += '<div>\u00D8 ' + avg(lz) + 'ms</div>';
+      html += '<div style="color:#ffa500;">Min ' + min(lz) + '   Max ' + max(lz) + '</div><br>';
+      
+      if (kd.length > 0) {
+        html += '<div style="text-align:center;">—— Alle Kippdauern ——</div>';
+        html += '<div style="color:#ffa500;word-break:break-all;">';
+        for (let i = 0; i < kd.length; i++) {
+          html += kd[i];
+          if (i < kd.length - 1) html += ', ';
+          if ((i + 1) % 6 === 0) html += '<br>';
+        }
+        html += '</div><br>';
+      }
+      
+      if (lz.length > 0) {
+        html += '<div style="text-align:center;">—— Alle Liegezeiten ——</div>';
+        html += '<div style="color:#ffa500;word-break:break-all;">';
+        for (let i = 0; i < lz.length; i++) {
+          html += lz[i];
+          if (i < lz.length - 1) html += ', ';
+          if ((i + 1) % 6 === 0) html += '<br>';
+        }
+        html += '</div>';
+      }
+      
+      // Schließen per Tap
+      html += '<div style="text-align:center;margin-top:12px;opacity:0.5;font-size:10px;">Tap zum Schlie\u00dfen</div>';
+      
+      mo.innerHTML = html;
+      mo.addEventListener('click', () => mo.remove());
+      document.getElementById('uiOverlay').appendChild(mo);
+    }
+    
+    // Mess-Button (📊) oben rechts
+    const messBtn = document.createElement('div');
+    messBtn.id = 'messBtn';
+    messBtn.textContent = '\uD83D\uDCCA';
+    messBtn.style.cssText = 'position:absolute;top:8px;right:8px;font-size:20px;' +
+      'pointer-events:auto;cursor:pointer;z-index:250;opacity:0.4;';
+    messBtn.addEventListener('click', (e) => { e.stopPropagation(); showMessung(); });
+    document.getElementById('uiOverlay').appendChild(messBtn);
+
     function showGameEnd() {
       gamePhase = 'ende';
       schauenWobbleActive = false; isDemoAnimating = false;
@@ -2361,6 +2432,11 @@
     // === BRAIN SCORE Tracking ===
     let kniffsCount = 0;            // Wie oft Schauen-Demo genutzt
     let spielenLiegezeiten = [];    // Alle Liegezeiten in SPIELEN (ms)
+    let spielenKippdauern = [];     // Alle Kippdauern Ecke→Ecke in SPIELEN (ms)
+    let alleKippdauern = [];        // Alle Kippdauern über alle Phasen (für Messung)
+    let alleLiegezeiten = [];       // Alle Liegezeiten über alle Phasen (für Messung)
+    let lastAnyKippLandTime = null; // Letztes Kipp-Landing aller Phasen
+    let dragStartTime = null;       // Zeitpunkt Drag-Beginn
     let lastKippLandTime = null;    // Zeitpunkt des letzten Kipp-Landens in SPIELEN
 
     // UI für Demo-Phase initialisieren
@@ -3245,6 +3321,10 @@
       activeCardIdx = 0;
       kniffsCount = 0;
       spielenLiegezeiten = [];
+      spielenKippdauern = [];
+      alleKippdauern = [];
+      alleLiegezeiten = [];
+      lastAnyKippLandTime = null;
       lastKippLandTime = null;
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
@@ -4444,6 +4524,12 @@
 
         dragActive = true;
         dragCurrentAngle = 0;
+        dragStartTime = performance.now();
+
+        // Liegezeit für Messung (alle Phasen)
+        if (lastAnyKippLandTime) {
+          alleLiegezeiten.push(Math.round(performance.now() - lastAnyKippLandTime));
+        }
 
         // SPIELEN: Liegezeit tracken (für Zugfaktor)
         if (gamePhase === 'spielen' && lastKippLandTime) {
@@ -4581,6 +4667,12 @@
             // Gekippt: finalisieren
             finalizeKipp(finalQ, null);
             
+            // Kippdauer Ecke→Ecke für Messung (alle Phasen)
+            if (dragStartTime) {
+              alleKippdauern.push(Math.round(performance.now() - dragStartTime));
+            }
+            lastAnyKippLandTime = performance.now();
+            
             // topFace bei jedem Kipp aktualisieren (kippen + spielen)
             if ((gamePhase === 'kippen' || gamePhase === 'spielen') && currentDragDir) {
               const isCW = CW_DIRS.has(currentDragDir);
@@ -4592,6 +4684,10 @@
             if (gamePhase === 'spielen' && !kippzielChecked) {
               kippCount++;
               lastKippLandTime = performance.now();
+              // Kippdauer Ecke→Ecke tracken
+              if (dragStartTime) {
+                spielenKippdauern.push(Math.round(performance.now() - dragStartTime));
+              }
               // Vorherigen Auto-Eval-Timer löschen
               if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
               // Liegezeit-Schwelle: wenn Würfel 1s liegt → Kippzug eingeloggt
