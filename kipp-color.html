@@ -1833,10 +1833,12 @@
     }
     
     function berechneZugfaktor() {
-      // Keine Liegezeiten = neutral (1.0)
-      if (spielenLiegezeiten.length === 0) return 1.0;
-      const zuegig = spielenLiegezeiten.filter(lz => lz < ZUEGIG_SCHWELLE).length;
-      return zuegig / spielenLiegezeiten.length;
+      // Gesamtentscheidungszeit (Liegezeit + Kippdauer) als Basis
+      const zeiten = spielenGesamtzeiten.length > 0 ? spielenGesamtzeiten : spielenLiegezeiten;
+      if (zeiten.length === 0) return 1.0;
+      const schwelle = spielenGesamtzeiten.length > 0 ? GESAMT_SCHWELLE : ZUEGIG_SCHWELLE;
+      const zuegig = zeiten.filter(t => t < schwelle).length;
+      return zuegig / zeiten.length;
     }
     
     // === MESSUNG OVERLAY (wie KIPP COLOR) ===
@@ -1870,6 +1872,16 @@
       html += '<div style="text-align:center;">—— Liegezeit ——</div>';
       html += '<div>\u00D8 ' + avg(lz) + 'ms</div>';
       html += '<div style="color:#ffa500;">Min ' + min(lz) + '   Max ' + max(lz) + '</div><br>';
+      
+      // Gesamtzeiten (SPIELEN-Phase)
+      const gz = spielenGesamtzeiten;
+      if (gz.length > 0) {
+        html += '<div style="text-align:center;">\u2014\u2014 Gesamtzeit (Liege+Kipp) \u2014\u2014</div>';
+        html += '<div>\u00D8 ' + avg(gz) + 'ms (Schwelle: ' + GESAMT_SCHWELLE + 'ms)</div>';
+        html += '<div style="color:#ffa500;">Min ' + min(gz) + '   Max ' + max(gz) + '</div>';
+        const zuegigCount = gz.filter(function(t) { return t < GESAMT_SCHWELLE; }).length;
+        html += '<div style="color:#cedb25;">' + zuegigCount + '/' + gz.length + ' z\u00fcgig (' + Math.round(zuegigCount/gz.length*100) + '%)</div><br>';
+      }
       
       if (kd.length > 0) {
         html += '<div style="text-align:center;">—— Alle Kippdauern ——</div>';
@@ -1933,8 +1945,10 @@
       
       // Zugfaktor berechnen
       const Z = berechneZugfaktor();
-      const zuegigPct = spielenLiegezeiten.length > 0 
-        ? Math.round((spielenLiegezeiten.filter(lz => lz < ZUEGIG_SCHWELLE).length / spielenLiegezeiten.length) * 100)
+      const zeiten = spielenGesamtzeiten.length > 0 ? spielenGesamtzeiten : spielenLiegezeiten;
+      const schwelle = spielenGesamtzeiten.length > 0 ? GESAMT_SCHWELLE : ZUEGIG_SCHWELLE;
+      const zuegigPct = zeiten.length > 0 
+        ? Math.round((zeiten.filter(t => t < schwelle).length / zeiten.length) * 100)
         : 100;
       
       // Brain Score berechnen
@@ -1948,7 +1962,9 @@
         zugfaktor: Z,
         zuegigPct: zuegigPct,
         zoegerndPct: 100 - zuegigPct,
-        liegezeiten: spielenLiegezeiten.slice()
+        liegezeiten: spielenLiegezeiten.slice(),
+        kippdauern: spielenKippdauern.slice(),
+        gesamtzeiten: spielenGesamtzeiten.slice()
       };
       
       // hintText verstecken
@@ -2433,10 +2449,12 @@
     let kniffsCount = 0;            // Wie oft Schauen-Demo genutzt
     let spielenLiegezeiten = [];    // Alle Liegezeiten in SPIELEN (ms)
     let spielenKippdauern = [];     // Alle Kippdauern Ecke→Ecke in SPIELEN (ms)
+    let spielenGesamtzeiten = [];   // Liegezeit + Kippdauer pro Kipp in SPIELEN
     let alleKippdauern = [];        // Alle Kippdauern über alle Phasen (für Messung)
     let alleLiegezeiten = [];       // Alle Liegezeiten über alle Phasen (für Messung)
     let lastAnyKippLandTime = null; // Letztes Kipp-Landing aller Phasen
     let dragStartTime = null;       // Zeitpunkt Drag-Beginn
+    let currentKippLiegezeit = 0;   // Liegezeit des aktuellen Kipps (zwischengespeichert)
     let lastKippLandTime = null;    // Zeitpunkt des letzten Kipp-Landens in SPIELEN
 
     // UI für Demo-Phase initialisieren
@@ -2918,6 +2936,9 @@
       schauenFromSpielen = false;
       kniffsCount = 0;
       spielenLiegezeiten = [];
+      spielenKippdauern = [];
+      spielenGesamtzeiten = [];
+      currentKippLiegezeit = 0;
       lastKippLandTime = null;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
@@ -3055,18 +3076,8 @@
       // ==========================================
       eyeIcon.style.display = 'none';
 
-      // Show countdown start value
-      countdown.textContent = '30';
-      countdown.style.display = 'block';
-      countdown.style.top = (parseInt(timerTopPos) + 45) + 'px';
-      countdown.style.left = '180px';
-
       await sleep(400);
       if (!autoDemoActive) return;
-
-      // Start counter on first movement
-      startCountdown(null, 30);
-      countdown.style.top = (parseInt(timerTopPos) + 45) + 'px'; // demo offset
 
       // WOBBLES + d1b SUBTITLES run in parallel
       async function doWobbles() {
@@ -3322,9 +3333,11 @@
       kniffsCount = 0;
       spielenLiegezeiten = [];
       spielenKippdauern = [];
+      spielenGesamtzeiten = [];
       alleKippdauern = [];
       alleLiegezeiten = [];
       lastAnyKippLandTime = null;
+      currentKippLiegezeit = 0;
       lastKippLandTime = null;
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
@@ -4001,7 +4014,8 @@
 
     // === 650ms Liegezeit-Schwelle für Auto-Eval ===
     const LIEGEZEIT_SCHWELLE = 1000; // ms – 1 Sek = Kippzug eingeloggt
-    const ZUEGIG_SCHWELLE = 500;     // ms – darunter = zügig gekippt
+    const ZUEGIG_SCHWELLE = 500;     // ms – Liegezeit darunter = zügig (Legacy)
+    const GESAMT_SCHWELLE = 1000;    // ms – Liegezeit + Kippdauer darunter = entschlossen
     let schauenFromSpielen = false; // Flag: Demo wurde aus SPIELEN gestartet
 
     // === Schauen aus SPIELEN (Auge-Klick) ===
@@ -4134,8 +4148,7 @@
       
       // SCHAUEN-Timer neu starten
       startCountdown(() => {
-        if ((gamePhase === 'demo' || gamePhase === 'kippen') && !verdecktesMesh.userData.revealed) {
-          gamePhase = 'kippen';
+        if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
           revealVerdecktesKippziel();
         }
       }, 30);
@@ -4219,6 +4232,9 @@
       totalObservationTime = 0;
       kniffsCount = 0;
       spielenLiegezeiten = [];
+      spielenKippdauern = [];
+      spielenGesamtzeiten = [];
+      currentKippLiegezeit = 0;
       lastKippLandTime = null;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
@@ -4367,63 +4383,8 @@
     renderer.domElement.addEventListener('touchstart', (e) => {
       // Start-Phase: keine Touch-Interaktion
       if (gamePhase === 'start') return;
-      // Demo-Phase beenden beim ersten Touch
-      if (gamePhase === 'demo') {
-        e.preventDefault(); // Touch während Demo verarbeiten
-        
-        schauenWobbleActive = false; // Wobble-Sequenz stoppen
-        schauenWobbleActive = false; isDemoAnimating = false;
-        handDemo.visible = false;
-        
-        // Cube sicher zurück in kipGroup (kann in PivotGroup sein)
-        if (cube.parent !== kipGroup) {
-          const oldP = cube.parent;
-          if (oldP) oldP.remove(cube);
-          kipGroup.add(cube);
-        }
-        
-        // ALLE State-Variablen sauber resetten
-        cube.quaternion.set(0, 0, 0, 1);
-        cube.position.set(-offset, offset, 0.109375 + offset);
-        currentQuadrant = 3;
-        topFace = 'f2';
-        dragActive = false;
-        isAnimating = false;
-        
-        if (schauenFromSpielen) {
-          // Zurück zu SPIELEN (kein Timer, kein KIPPEN)
-          schauenFromSpielen = false;
-          gamePhase = 'spielen';
-          kippzielChecked = false;
-          kippCount = 0;
-          
-          // Eye-Icon nicht mehr zeigen (nur einmalig zu Spielbeginn)
-          document.getElementById('eyeIcon').style.display = 'none';
-        } else {
-          // Normal: Demo → KIPPEN
-          gamePhase = 'kippen';
-          
-          // SCHAUEN-Timer jetzt starten (60 Sek)
-          startCountdown(() => {
-            if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
-              revealVerdecktesKippziel();
-            }
-          }, 30);
-        }
-        
-        // Touch-Punkt SOFORT für Drag-System speichern
-        const touch = e.touches[0];
-        swipeStartX = touch.clientX;
-        swipeStartY = touch.clientY;
-        isSwiping = true;
-        
-        // Auch für Raycaster (verdecktes Kippziel) speichern
-        if (verdecktesMesh.visible) {
-          lastTouchPos = { x: touch.clientX, y: touch.clientY };
-        }
-        
-        return; // Demo-Stop komplett, jetzt touchmove übernimmt
-      }
+      // Demo-Phase: KEINE Touch-Interaktion (Demo läuft automatisch)
+      if (gamePhase === 'demo') return;
       
       if (gamePhase === 'pause' && pausePivotGroup) {
         e.preventDefault();
@@ -4535,6 +4496,9 @@
         if (gamePhase === 'spielen' && lastKippLandTime) {
           const liege = performance.now() - lastKippLandTime;
           spielenLiegezeiten.push(Math.round(liege));
+          currentKippLiegezeit = Math.round(liege);
+        } else {
+          currentKippLiegezeit = 0; // Erster Kipp = keine Liegezeit
         }
         // SPIELEN: Auto-Eval-Timer abbrechen bei neuem Kipp-Start
         if (gamePhase === 'spielen' && autoEvalTimeout) {
@@ -4686,7 +4650,10 @@
               lastKippLandTime = performance.now();
               // Kippdauer Ecke→Ecke tracken
               if (dragStartTime) {
-                spielenKippdauern.push(Math.round(performance.now() - dragStartTime));
+                const kippdauer = Math.round(performance.now() - dragStartTime);
+                spielenKippdauern.push(kippdauer);
+                // Gesamtentscheidungszeit = Liegezeit + Kippdauer
+                spielenGesamtzeiten.push(currentKippLiegezeit + kippdauer);
               }
               // Vorherigen Auto-Eval-Timer löschen
               if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
@@ -4716,22 +4683,8 @@
 
     // Desktop-Support: Click startet Spielphase
     renderer.domElement.addEventListener('click', (e) => {
-      if (gamePhase === 'demo') {
-        gamePhase = 'kippen';
-        handDemo.visible = false;
-        
-        // Direkt prüfen ob verdecktes Kippziel angeklickt wurde
-        if (verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
-          const rect = renderer.domElement.getBoundingClientRect();
-          vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-          vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-          vkRaycaster.setFromCamera(vkMouse, camera);
-          if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
-            revealVerdecktesKippziel();
-          }
-        }
-        return;
-      }
+      // Demo-Phase: KEINE Click-Interaktion
+      if (gamePhase === 'demo') return;
     });
     
     async function performKipp(direction, duration = 800) {
