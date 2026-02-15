@@ -3180,20 +3180,17 @@
       currentQuadrant = 3;
       topFace = 'f2';
       
-      // Verdecktes Kärtchen pulsierend - IMMER auf linkeste Position (Index 0) zurücksetzen
+      // Verdecktes Kärtchen NICHT zeigen in Entscheidungsphase
       verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
       drawLeernohitOnVerdecktes();
-      verdecktesMesh.visible = true;
+      verdecktesMesh.visible = false;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
       
-      // Augen-Icon UNTER dem verdeckten Kippziel positionieren
+      // Augen-Icon 60px nördlicher positionieren (ohne verdecktes Kippziel)
       const eyeIcon = document.getElementById('eyeIcon');
-      const vkPos = new THREE.Vector3().copy(verdecktesMesh.position);
-      vkPos.project(camera);
-      const vkScreenY = (-vkPos.y * 0.5 + 0.5) * 720;
-      eyeIcon.style.top = (parseInt(timerTopPos || '553') + 26) + 'px'; // 55px unter Kippziel-Mitte
+      eyeIcon.style.top = (parseInt(timerTopPos || '553') - 34) + 'px';
       eyeIcon.style.animation = '';
       eyeIcon.style.display = 'block';
       document.getElementById('skipEndBtn').style.display = 'none';
@@ -3902,11 +3899,17 @@
         eyeIcon.style.display = 'block';
       } else {
         gamePhase = 'kippen';
-        startCountdown(() => {
-          if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
-            revealVerdecktesKippziel();
-          }
-        }, 30);
+        // Kein Timer - stattdessen verdecktes Kippziel pulsierend anzeigen
+        countdown.style.display = 'none';
+        const posX = cardStartX + activeCardIdx * (cardWidth + cardGap);
+        verdecktesMesh.position.set(posX, cardY + 0.001, cardZ);
+        verdecktesMesh.userData.revealed = false;
+        drawLeernohitOnVerdecktes();
+        verdecktesMesh.visible = true;
+        verdecktesMesh.scale.set(1, 1, 1);
+        verdecktesMat.opacity = 1;
+        verdecktesMat.transparent = true;
+        verdecktesMat.needsUpdate = true;
       }
     }
 
