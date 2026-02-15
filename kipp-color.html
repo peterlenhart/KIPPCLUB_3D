@@ -1577,6 +1577,23 @@
     // =========================
     let topFace = 'f2'; // Anfangslage beim Spieleintritt
 
+    // Physische Top-Face Erkennung aus Würfel-Quaternion
+    function getPhysicalTopFace() {
+      const q = new THREE.Quaternion();
+      cube.getWorldQuaternion(q);
+      // Face-Normalen: f0=+Z(0,0,1), f1=-X(-1,0,0), f2=+Y(0,1,0)
+      const normals = {
+        f0: new THREE.Vector3(0, 0, 1).applyQuaternion(q),
+        f1: new THREE.Vector3(-1, 0, 0).applyQuaternion(q),
+        f2: new THREE.Vector3(0, 1, 0).applyQuaternion(q)
+      };
+      let best = 'f2', bestY = -Infinity;
+      for (const [face, n] of Object.entries(normals)) {
+        if (n.y > bestY) { bestY = n.y; best = face; }
+      }
+      return best;
+    }
+
     function advanceTopFace() {
       const cw  = { f2: 'f0', f0: 'f1', f1: 'f2' };
       const ccw = { f2: 'f1', f1: 'f0', f0: 'f2' };
@@ -1971,12 +1988,13 @@
     messBtn.id = 'messBtn';
     messBtn.textContent = '\uD83D\uDCCA';
     messBtn.style.cssText = 'position:absolute;top:8px;right:8px;font-size:20px;' +
-      'pointer-events:auto;cursor:pointer;z-index:250;opacity:0.4;';
+      'pointer-events:auto;cursor:pointer;z-index:250;opacity:0.4;display:none;';
     messBtn.addEventListener('click', (e) => { e.stopPropagation(); showMessung(); });
     document.getElementById('uiOverlay').appendChild(messBtn);
 
     function showGameEnd() {
       gamePhase = 'ende';
+      messBtn.style.display = 'block';  // Mess-Button erst am Ende zeigen
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
       stopCountdown();
@@ -2065,14 +2083,18 @@
       let kippTitel, kippMsg;
       
       // === GRENZWERT TOP (BSc ~90-100) ===
-      if (d.hits === 6 && d.kniffs === 0 && d.zuegigPct >= 80) {
+      if (d.hits === 6 && d.kniffs === 0 && d.zuegigPct >= 80 && d.score >= 90) {
         // #1 BRAIN PRO
         kippTitel = 'BRAIN PRO';
         kippMsg = 'Perfektes Spiel! 6 aus 6, ohne Nachschauen, entschlossen gekippt. Besser geht\u2019s nicht.';
-      } else if (d.hits === 6 && d.kniffs === 0 && d.zuegigPct < 80) {
+      } else if (d.hits === 6 && d.kniffs === 0 && d.score >= 75) {
         // #2 MASTER MIND
         kippTitel = 'MASTER MIND';
-        kippMsg = 'Alle getroffen, kein Kniff gebraucht. Etwas schneller kippen und du erreichst die 100.';
+        kippMsg = 'Alle getroffen, kein Kniff gebraucht. Etwas schneller und sauberer kippen und du erreichst die 100.';
+      } else if (d.hits === 6 && d.score < 75) {
+        // 6 Treffer aber unsaubere Ausführung
+        kippTitel = 'TREFFSICHER';
+        kippMsg = 'Alle 6 getroffen \u2013 starkes Ergebnis! Aber deine Kipp-Haltung kostet Score. Weniger wackeln, eine Richtung beibehalten, z\u00fcgiger kippen.';
       
       // === OBERE MITTE (BSc ~55-90) ===
       } else if (d.hits >= 5 && d.zuegigPct >= 80 && d.kniffs <= 1) {
@@ -3025,6 +3047,7 @@
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       kippzielChecked = false;
+      cubeLocked = false;
       erstesKippziel = null;
       tapCount = 0;
       kippCount = 0;
@@ -3404,6 +3427,7 @@
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
+      messBtn.style.display = 'none';
       document.getElementById('spielZielText').style.display = 'none';
       document.getElementById('instructionText').style.display = 'none';
       document.getElementById('tutorialText').style.display = 'none';
@@ -3593,6 +3617,7 @@
       gamePhase = 'spielen';
       currentMode = 'kanten';
       kippzielChecked = false;
+      cubeLocked = false;
       
       // resetButton sichtbar halten in Spielen-Phase
       resetButton.style.display = 'block';
@@ -3700,6 +3725,7 @@
       gamePhase = 'spielen';
       currentMode = 'kanten';
       kippzielChecked = false;
+      cubeLocked = false;
       
       // resetButton sichtbar halten
       resetButton.style.display = 'block';
@@ -3844,6 +3870,7 @@
     
     // Tap-auf-Würfel Flag
     let kippzielChecked = false;
+    let cubeLocked = false;  // Sperre nach 1s Auswertung - kein Kippen bis nächstes Kippziel
     
     // verdecktes Kippziel Tap-Erkennung (Raycaster)
     const vkRaycaster = new THREE.Raycaster();
@@ -3907,6 +3934,7 @@
     function checkKippzielTap() {
       if (!erstesKippziel || kippzielChecked) return;
       kippzielChecked = true;
+      cubeLocked = true;  // Würfel gesperrt bis nächstes Kippziel
       
       // Kipps dieser Runde speichern (Haltungsnote)
       spielenKippsPerRound.push(kippCount);
@@ -3924,6 +3952,20 @@
       stopCountdown();
       
       // Treffer prüfen (kein Kipp-Limit mehr - Haltungsnote regelt Score)
+      // Physische Verifikation: topFace + Quadrant aus 3D-State ableiten (Drift-Schutz)
+      const physFace = getPhysicalTopFace();
+      if (physFace !== topFace) {
+        topFace = physFace;
+      }
+      const cubeWorldP = new THREE.Vector3();
+      cube.getWorldPosition(cubeWorldP);
+      const physQ = (cubeWorldP.x < 0)
+        ? (cubeWorldP.z < 0.1105 ? 0 : 3)
+        : (cubeWorldP.z < 0.1105 ? 1 : 2);
+      if (physQ !== currentQuadrant) {
+        currentQuadrant = physQ;
+      }
+      
       const faceOff = { f0: 0, f1: 4, f2: 8 };
       const off = faceOff[topFace];
       const visible = { S1: deck[off], S2: deck[off+1], S3: deck[off+2], S4: deck[off+3] };
@@ -4055,6 +4097,7 @@
     function initNextRoundEntscheidung() {
       gamePhase = 'entscheidung';
       kippzielChecked = false;
+      cubeLocked = false;
       erstesKippziel = null;
       
       // ALLE Texte ausblenden - nach erstem Kippziel keine Texte mehr
@@ -4178,6 +4221,7 @@
         schauenFromSpielen = false;
         gamePhase = 'spielen';
         kippzielChecked = false;
+      cubeLocked = false;
         kippCount = 0;
         // Eye-Icon nicht mehr zeigen (nur einmalig zu Spielbeginn)
         document.getElementById('eyeIcon').style.display = 'none';
@@ -4259,6 +4303,7 @@
       verdecktesMat.opacity = 1;
       erstesKippziel = null;
       kippzielChecked = false;
+      cubeLocked = false;
       lockedKippDir = null;
       currentDragDir = null;
       tapCount = 0;
@@ -4330,6 +4375,7 @@
       schauenFromSpielen = false;
       erstesKippziel = null;
       kippzielChecked = false;
+      cubeLocked = false;
       totalObservationTime = 0;
       kniffsCount = 0;
       spielenLiegezeiten = [];
@@ -4502,6 +4548,7 @@
       }
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen')) {
         if (isAnimating) return;
+        if (cubeLocked) return;  // Nach Auswertung gesperrt
         e.preventDefault();
         
         const touch = e.touches[0];
