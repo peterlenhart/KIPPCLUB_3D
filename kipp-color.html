@@ -2013,73 +2013,66 @@
         kippMsg = 'Merke dir die Zahlen-Lagen beim Schauen, dann kippe entschlossen.';
       }
       
-      // KNIFFS-Kommentar
-      let kniffMsg;
-      if (d.kniffs === 0) {
-        kniffMsg = 'Perfektes Gedächtnis! Kein Schauen gebraucht.';
-      } else if (d.kniffs <= 2) {
-        kniffMsg = 'Gute Merkleistung. Nur ' + d.kniffs + '× nachgeschaut.';
-      } else if (d.kniffs <= 4) {
-        kniffMsg = d.kniffs + '× nachgeschaut. Versuche, dir mehr Lagen zu merken.';
-      } else {
-        kniffMsg = 'Viel geschaut. Nutze die Demo-Runde intensiver zum Merken!';
-      }
-      
-      // Overlay erstellen
+      // Overlay erstellen (Layout nach Entwurf: linksbündig, Blocktext)
       const ov = document.createElement('div');
       ov.id = 'auswertungOverlay';
       ov.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
         'background:rgba(20,12,8,0.95);z-index:300;display:flex;flex-direction:column;' +
-        'align-items:center;justify-content:center;font-family:Arial,sans-serif;' +
-        'color:#d4b48c;pointer-events:auto;padding:20px;box-sizing:border-box;';
+        'align-items:flex-start;justify-content:flex-start;font-family:Arial,sans-serif;' +
+        'color:#d4b48c;pointer-events:auto;padding:0 32px;box-sizing:border-box;';
       
       ov.innerHTML = 
-        '<div style="font-size:11px;letter-spacing:2px;opacity:0.5;margin-bottom:2px;">YOUR</div>' +
-        '<div style="font-size:20px;font-weight:bold;letter-spacing:3px;">BRAIN SCORE</div>' +
-        '<div style="font-size:56px;font-weight:bold;margin:8px 0;' +
-          'text-shadow:0 0 25px rgba(212,180,140,0.4);">' + d.score + '</div>' +
+        // BRAIN SCORE + Zahl auf einer Zeile
+        '<div style="margin-top:100px;margin-bottom:6px;display:flex;align-items:baseline;gap:14px;">' +
+          '<div style="font-size:20px;font-weight:bold;letter-spacing:3px;">BRAIN SCORE</div>' +
+          '<div style="font-size:48px;font-weight:bold;text-shadow:0 0 25px rgba(212,180,140,0.4);">' + d.score + '</div>' +
+        '</div>' +
         
-        // Drei Faktoren
-        '<div style="display:flex;gap:18px;margin:10px 0 18px;font-size:14px;">' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:bold;">' + d.hits + '<span style="font-size:16px;opacity:0.6;">/6</span></div>' +
-            '<div style="font-size:10px;letter-spacing:1px;opacity:0.6;">HITS</div>' +
+        // Drei Faktoren in einer Zeile, linksbündig
+        '<div style="display:flex;gap:24px;margin-bottom:6px;">' +
+          '<div>' +
+            '<div style="font-size:26px;font-weight:bold;">' + d.hits + '<span style="font-size:15px;opacity:0.6;">/6</span></div>' +
+            '<div style="font-size:10px;letter-spacing:1px;opacity:0.5;">HITS</div>' +
           '</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:bold;">' + d.kniffs + '<span style="font-size:16px;opacity:0.6;">/6</span></div>' +
-            '<div style="font-size:10px;letter-spacing:1px;opacity:0.6;">KNIFFS</div>' +
+          '<div>' +
+            '<div style="font-size:26px;font-weight:bold;">' + d.kniffs + '<span style="font-size:15px;opacity:0.6;">/6</span></div>' +
+            '<div style="font-size:10px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
           '</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:bold;">⚡' + (d.zugfaktor * 6).toFixed(1) + '</div>' +
-            '<div style="font-size:10px;letter-spacing:1px;opacity:0.6;">ZUGFAKTOR</div>' +
+          '<div>' +
+            '<div style="font-size:26px;font-weight:bold;">\u26A1' + (d.zugfaktor * 6).toFixed(1) + '</div>' +
+            '<div style="font-size:10px;letter-spacing:1px;opacity:0.5;">ZUGFAKTOR</div>' +
           '</div>' +
         '</div>' +
         
         // Trennlinie
-        '<div style="width:200px;height:1px;background:rgba(212,180,140,0.25);margin:4px 0 14px;"></div>' +
+        '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:12px 0 16px;"></div>' +
         
-        // Kippstil
-        '<div style="text-align:center;margin-bottom:12px;">' +
-          '<div style="font-size:14px;font-weight:bold;letter-spacing:2px;margin-bottom:6px;">' + kippTitel + '</div>' +
-          '<div style="font-size:12px;opacity:0.8;line-height:1.5;">' +
-            '<span style="color:#cedb25;">' + d.zuegigPct + '%</span> entschlossen gekippt<br>' +
-            '<span style="color:#e07040;">' + d.zoegerndPct + '%</span> geschaut &amp; gezögert' +
-          '</div>' +
-          '<div style="font-size:11px;opacity:0.6;margin-top:6px;font-style:italic;max-width:260px;">' + kippMsg + '</div>' +
+        // Kippstil-Titel linksbündig
+        '<div style="font-size:15px;font-weight:bold;letter-spacing:2.5px;margin-bottom:12px;">' + kippTitel + '</div>' +
+        
+        // Prozent-Zeilen linksbündig
+        '<div style="font-size:13px;line-height:1.7;margin-bottom:16px;">' +
+          '<span style="color:#cedb25;font-weight:bold;">' + d.zuegigPct + '%</span> entschlossen gekippt<br>' +
+          '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
         '</div>' +
         
-        // KNIFFS-Kommentar
-        '<div style="font-size:11px;opacity:0.6;margin-bottom:20px;max-width:260px;text-align:center;line-height:1.4;">' +
-          '👁 ' + kniffMsg +
+        // kippMsg als Blocktext linksbündig
+        '<div style="font-size:12px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
+          kippMsg +
         '</div>' +
         
-        // Neues Spiel Button
-        '<button id="neuesSpielBtn" style="width:200px;height:49px;' +
-          'background:url(\'button_kurz.webp\') center/contain no-repeat;' +
-          'border:none;cursor:pointer;font-family:Arial,sans-serif;' +
-          'font-size:18px;font-weight:bold;letter-spacing:2.5px;' +
-          'color:#d0d0d0;text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);">' +
-          T.n + '</button>';
+        // Trennlinie
+        '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:0 0 24px;"></div>' +
+        
+        // Neues Spiel Button zentriert
+        '<div style="width:100%;display:flex;justify-content:center;">' +
+          '<button id="neuesSpielBtn" style="width:200px;height:49px;' +
+            'background:url(\'button_kurz.webp\') center/contain no-repeat;' +
+            'border:none;cursor:pointer;font-family:Arial,sans-serif;' +
+            'font-size:18px;font-weight:bold;letter-spacing:2.5px;' +
+            'color:#d0d0d0;text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);">' +
+            T.n + '</button>' +
+        '</div>';
       
       document.getElementById('uiOverlay').appendChild(ov);
       
