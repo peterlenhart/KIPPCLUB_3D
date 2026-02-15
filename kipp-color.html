@@ -1846,13 +1846,21 @@
       return 1 - (5/6) * Math.pow(1 - Z, 3);
     }
     
+    function zaehlZykluswechsel() {
+      let wechsel = 0;
+      for (let i = 1; i < spielenKippRichtungen.length; i++) {
+        if (spielenKippRichtungen[i] !== spielenKippRichtungen[i-1]) wechsel++;
+      }
+      return wechsel;
+    }
+    
     function berechneWobbleWippFaktor() {
-      // e^(-0.3 * (totalWobbles + 2*totalWipps) / totalKipps)
-      // Wipps doppelt gewichtet (bewusstes Spionage-Anheben)
-      const totalKipps = spielenWobbelCounts.length;
+      // e^(-0.3 * (Wipps + 1.5×Zykluswechsel) / totalKipps)
+      // Wipps = alle Richtungswechsel + Zurückfaller zusammen
+      const totalKipps = spielenKippRichtungen.length;
       if (totalKipps === 0) return 1.0;
-      const totalWobbles = spielenWobbelCounts.reduce((a, b) => a + b, 0);
-      const belastung = (totalWobbles + 2 * spielenWippCount) / totalKipps;
+      const zyklusW = zaehlZykluswechsel();
+      const belastung = (spielenWipps + 1.5 * zyklusW) / totalKipps;
       return Math.exp(-0.3 * belastung);
     }
     
@@ -1928,25 +1936,17 @@
         html += '</div><br>';
       }
       
-      // Wobble-Daten (SPIELEN-Phase)
-      const wc = spielenWobbelCounts;
-      if (wc.length > 0) {
-        const totalW = wc.reduce(function(a, b) { return a + b; }, 0);
-        html += '<div style="text-align:center;">—— HIN & HER (Wobbles) ——</div>';
-        html += '<div>Total: ' + totalW + ' Richtungswechsel</div>';
-        html += '<div>\u00D8 ' + (totalW / wc.length).toFixed(1) + ' pro Kipp</div>';
-        html += '<div style="color:#cedb25;">Wobble-Wipp-Faktor: ' + berechneWobbleWippFaktor().toFixed(2) + '</div>';
-        html += '<div>Wipps: ' + spielenWippCount + '</div>';
-        html += '<div style="color:#ffa500;word-break:break-all;">';
-        for (let i = 0; i < wc.length; i++) {
-          html += wc[i];
-          if (i < wc.length - 1) html += ', ';
-          if ((i + 1) % 6 === 0) html += '<br>';
-        }
-        html += '</div>';
+      // Kippverhalten (SPIELEN-Phase)
+      const totalKippsM = spielenKippRichtungen.length;
+      if (totalKippsM > 0) {
+        const zykW = zaehlZykluswechsel();
+        html += '<div style="text-align:center;">—— KIPPVERHALTEN ——</div>';
+        html += '<div style="color:#e07040;font-weight:bold;">Zykluswechsel (CW\u2194CCW): ' + zykW + '</div>';
+        html += '<div style="color:#e07040;">Wipps: ' + spielenWipps + '</div>';
+        html += '<div style="color:#cedb25;">Kippverhalten-Faktor: ' + berechneWobbleWippFaktor().toFixed(2) + '</div>';
+        html += '<div style="font-size:10px;opacity:0.5;">Richtungen: [' + spielenKippRichtungen.join(',') + ']</div>';
       }
       
-      // Schließen per Tap
       // Effizienz (Kipps pro Runde)
       if (spielenKippsPerRound.length > 0) {
         html += '<br><div style="text-align:center;">—— Effizienz (Kipps/Runde) ——</div>';
@@ -1954,9 +1954,6 @@
         html += '<div style="color:#cedb25;">Effizienz-Faktor: ' + berechneEffizienzFaktor().toFixed(2) + '</div>';
         html += '<div style="color:#ffa500;">[' + spielenKippsPerRound.join(', ') + ']</div>';
       }
-      
-      // Wipps
-      html += '<br><div>Wipps (Zurückfaller): <span style="color:#e07040;">' + spielenWippCount + '</span></div>';
       
       // Gesamt-Haltungsnote
       html += '<br><div style="text-align:center;font-size:14px;color:#cedb25;font-weight:bold;">Haltungsnote: ' + 
@@ -2011,11 +2008,12 @@
         ? Math.round((zeiten.filter(t => t < schwelle).length / zeiten.length) * 100)
         : 100;
       
-      const totalWobbles = spielenWobbelCounts.reduce((a, b) => a + b, 0);
-      const totalKipps = spielenWobbelCounts.length;
+      const totalKipps = spielenKippRichtungen.length;
       const avgKippsPerRound = spielenKippsPerRound.length > 0
         ? (spielenKippsPerRound.reduce((a, b) => a + b, 0) / spielenKippsPerRound.length)
         : 0;
+      
+      const zykluswechsel = zaehlZykluswechsel();
       
       // Brain Score berechnen
       const scoreValue = calculateBrainScore(treffer, kniffsCount, zeitF, wobWippF, effizienzF);
@@ -2029,12 +2027,12 @@
         zeitFaktor: zeitF,
         wobbleWippFaktor: wobWippF,
         effizienzFaktor: effizienzF,
-        totalWobbles: totalWobbles,
-        totalWipps: spielenWippCount,
+        wipps: spielenWipps,
+        zykluswechsel: zykluswechsel,
         totalKipps: totalKipps,
         avgKippsPerRound: avgKippsPerRound,
         kippsPerRound: spielenKippsPerRound.slice(),
-        wobbelCounts: spielenWobbelCounts.slice(),
+        kippRichtungen: spielenKippRichtungen.slice(),
         zuegigPct: zuegigPct,
         zoegerndPct: 100 - zuegigPct,
         liegezeiten: spielenLiegezeiten.slice(),
@@ -2218,15 +2216,17 @@
           '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
         '</div>' +
         
-        // Richtungswechsel + Wipps (nur wenn auffällig)
-        ((d.totalWobbles > 0 || d.totalWipps > 0) ? 
+        // Kippverhalten-Details (nur wenn auffällig)
+        ((d.zykluswechsel > 0 || d.wipps > 0) ? 
           '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
-            (d.totalWobbles > 0 ? '<span style="color:#e07040;font-weight:bold;">Richtungswechsel:</span> ' + d.totalWobbles + '<br>' : '') +
-            (d.totalWipps > 0 ? '<span style="color:#e07040;font-weight:bold;">Wipps:</span> ' + d.totalWipps + '<br>' : '') +
+            (d.zykluswechsel > 0 ? '<span style="color:#e07040;font-weight:bold;">Zykluswechsel:</span> ' + d.zykluswechsel + '\u00d7<br>' : '') +
+            (d.wipps > 0 ? '<span style="color:#e07040;font-weight:bold;">Wipps:</span> ' + d.wipps + '<br>' : '') +
             (d.avgKippsPerRound > 2 ? '\u00D8 ' + d.avgKippsPerRound.toFixed(1) + ' Kipps pro Ziel<br>' : '') +
           '</div>' +
           '<div style="font-size:12px;line-height:1.5;opacity:0.55;text-align:left;max-width:296px;margin-bottom:12px;font-style:italic;">' +
-            'Du wippst und wobbelst viel. Ein Treffer wird h\u00f6her bewertet, wenn du z\u00fcgig ohne Richtungswechsel kippst.' +
+            (d.zykluswechsel > 2 
+              ? 'Halte eine Kipprichtung bei \u2013 jeder Zykluswechsel kostet Score.'
+              : 'Kippe entschlossen in eine Richtung \u2013 das erh\u00f6ht den Score.') +
           '</div>'
         : (d.avgKippsPerRound > 2 ? 
           '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
@@ -2546,12 +2546,12 @@
     let lastAnyKippLandTime = null; // Letztes Kipp-Landing aller Phasen
     let dragStartTime = null;       // Zeitpunkt Drag-Beginn
     let currentKippLiegezeit = 0;   // Liegezeit des aktuellen Kipps (zwischengespeichert)
-    let dragPrevAngle = 0;          // Vorheriger Winkel für Wobble-Erkennung
+    let dragPrevAngle = 0;          // Vorheriger Winkel für Wipp-Erkennung
     let dragPrevDirection = 0;      // 1 = zur Zielseite, -1 = zurück, 0 = neutral
-    let dragWobbleCount = 0;        // Richtungswechsel im aktuellen Kipp
-    let spielenWobbelCounts = [];   // Wobble-Counts pro Kipp in SPIELEN
-    let spielenWippCount = 0;       // Wipps (gescheiterte Kipps/Zurückfaller) in SPIELEN
+    let dragWobbleCount = 0;        // Richtungswechsel im aktuellen Drag (= Wipps intra-Drag)
+    let spielenWipps = 0;           // Wipps gesamt (Wobbles + Zurückfaller zusammen)
     let spielenKippsPerRound = [];  // Kipp-Anzahl pro Kippziel-Runde
+    let spielenKippRichtungen = []; // CW/CCW pro Kipp in SPIELEN (Zykluswechsel-Erkennung)
     const WOBBLE_MIN_DELTA = 0.04;  // ~2.3° Mindestbewegung für Richtungserkennung
     let lastKippLandTime = null;    // Zeitpunkt des letzten Kipp-Landens in SPIELEN
 
@@ -3037,9 +3037,9 @@
       spielenKippdauern = [];
       spielenGesamtzeiten = [];
       currentKippLiegezeit = 0;
-      spielenWobbelCounts = [];
-      spielenWippCount = 0;
+      spielenWipps = 0;
       spielenKippsPerRound = [];
+      spielenKippRichtungen = [];
       lastKippLandTime = null;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
@@ -3439,9 +3439,9 @@
       alleLiegezeiten = [];
       lastAnyKippLandTime = null;
       currentKippLiegezeit = 0;
-      spielenWobbelCounts = [];
-      spielenWippCount = 0;
+      spielenWipps = 0;
       spielenKippsPerRound = [];
+      spielenKippRichtungen = [];
       lastKippLandTime = null;
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
@@ -3937,40 +3937,7 @@
       if (hitSlot) {
         const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
         isHit = (neighborColor === erstesKippziel.color.name);
-        console.log('[HIT-CHECK] Q=' + currentQuadrant + ' topFace=' + topFace + 
-          ' Ziel=' + erstesKippziel.zahl + '/' + erstesKippziel.color.name +
-          ' Slot=' + hitSlot + ' neighborColor=' + neighborColor + ' → ' + (isHit ? 'HIT' : 'MISS'));
-      } else {
-        console.log('[HIT-CHECK] Q=' + currentQuadrant + ' topFace=' + topFace + 
-          ' Ziel=' + erstesKippziel.zahl + '/' + erstesKippziel.color.name +
-          ' visible=' + JSON.stringify(visible) + ' → ZAHL NICHT SICHTBAR');
       }
-      
-      
-      // DEBUG: Sichtbare Anzeige auf Screen
-      const debugMsg = hitSlot 
-        ? 'Q=' + currentQuadrant + ' face=' + topFace + ' kipps=' + kippCount +
-          '\nZiel: ' + erstesKippziel.zahl + ' an ' + erstesKippziel.color.name +
-          '\nSlot=' + hitSlot + ' neighbor=' + SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot] +
-          '\nf0=[' + deck.slice(0,4) + '] f1=[' + deck.slice(4,8) + '] f2=[' + deck.slice(8,12) + ']' +
-          '\n→ ' + (isHit ? 'HIT!' : 'MISS!')
-        : 'Q=' + currentQuadrant + ' face=' + topFace + ' kipps=' + kippCount +
-          '\nZiel: ' + erstesKippziel.zahl + ' an ' + erstesKippziel.color.name +
-          '\nSichtbar auf ' + topFace + ': [' + Object.values(visible) + ']' +
-          '\nf0=[' + deck.slice(0,4) + '] f1=[' + deck.slice(4,8) + '] f2=[' + deck.slice(8,12) + ']' +
-          '\n→ ZAHL NICHT AUF FACE';
-      
-      let dbgEl = document.getElementById('debugHitInfo');
-      if (!dbgEl) {
-        dbgEl = document.createElement('div');
-        dbgEl.id = 'debugHitInfo';
-        dbgEl.style.cssText = 'position:absolute;top:10px;left:10px;width:340px;background:rgba(0,0,0,0.85);color:#0f0;' +
-          'font:12px monospace;padding:8px;z-index:999;white-space:pre-wrap;pointer-events:auto;border:1px solid #0f0;';
-        dbgEl.addEventListener('click', () => dbgEl.style.display = 'none');
-        document.getElementById('uiOverlay').appendChild(dbgEl);
-      }
-      dbgEl.textContent = debugMsg;
-      dbgEl.style.display = 'block';
       
       drawKippzielBorder(isHit);
     }
@@ -4369,9 +4336,9 @@
       spielenKippdauern = [];
       spielenGesamtzeiten = [];
       currentKippLiegezeit = 0;
-      spielenWobbelCounts = [];
-      spielenWippCount = 0;
+      spielenWipps = 0;
       spielenKippsPerRound = [];
+      spielenKippRichtungen = [];
       lastKippLandTime = null;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
@@ -4742,7 +4709,7 @@
         finalQ = currentQuadrant;
         // Wipp zählen in SPIELEN (nur wenn merklich angehoben, >5°)
         if (gamePhase === 'spielen' && absAngle > 0.09) {
-          spielenWippCount++;
+          spielenWipps++;
         }
       }
 
@@ -4810,8 +4777,10 @@
                 // Gesamtentscheidungszeit = Liegezeit + Kippdauer
                 spielenGesamtzeiten.push(currentKippLiegezeit + kippdauer);
               }
-              // Wobble-Count speichern
-              spielenWobbelCounts.push(dragWobbleCount);
+              // Wipps aus Wobbles addieren (Richtungswechsel im Drag)
+              spielenWipps += dragWobbleCount;
+              // Zyklusrichtung speichern (CW/CCW)
+              spielenKippRichtungen.push(kippDirection);
               // Vorherigen Auto-Eval-Timer löschen
               if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
               // Liegezeit-Schwelle: wenn Würfel 1s liegt → Kippzug eingeloggt
