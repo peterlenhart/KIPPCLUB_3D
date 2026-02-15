@@ -1971,9 +1971,18 @@
         html += '<div style="color:#ffa500;">[' + spielenKippsPerRound.join(', ') + ']</div>';
       }
       
-      // Gesamt-Haltungsnote
-      html += '<br><div style="text-align:center;font-size:14px;color:#cedb25;font-weight:bold;">Haltungsnote: ' + 
+      // Gesamt-Haltungsnote (Legacy)
+      html += '<br><div style="text-align:center;font-size:14px;color:#cedb25;font-weight:bold;">Haltungsnote (Legacy): ' + 
         (berechneZeitfaktor() * berechneWobbleWippFaktor() * berechneEffizienzFaktor() * 100).toFixed(0) + '%</div>';
+      
+      // Per-Hit Scoring
+      html += '<br><div style="text-align:center;color:#00ff00;">—— PER-HIT SCORING ——</div>';
+      html += '<div>Rundenwertungen: [' + spielenRundenScores.map(s => s.toFixed(1)).join(', ') + ']</div>';
+      html += '<div style="color:#cedb25;">BSc (Summe): ' + Math.round(spielenRundenScores.reduce((a, b) => a + b, 0)) + '</div>';
+      html += '<div>Spionage/Runde: [' + spielenSpionagePerRound.join(', ') + ']</div>';
+      html += '<div>Wipps/Runde: [' + spielenWippsPerRound.join(', ') + ']</div>';
+      html += '<div>Kniffs/Runde: [' + spielenKniffsPerRound.join(', ') + ']</div>';
+      html += '<div>Kippzug-Dauern: [' + spielenKippzugDauern.map(d => d + 'ms').join(', ') + ']</div>';
       
       html += '<div style="text-align:center;margin-top:12px;opacity:0.5;font-size:10px;">Tap zum Schlie\u00dfen</div>';
       
@@ -2013,48 +2022,43 @@
       // Wie viele Treffer?
       const treffer = bereitsGetroffen.size;
       
-      // Haltungsnote berechnen (3 Teilfaktoren)
-      const zeitF = berechneZeitfaktor();
-      const wobWippF = berechneWobbleWippFaktor();
-      const effizienzF = berechneEffizienzFaktor();
-      const haltungsnote = zeitF * wobWippF * effizienzF;
+      // Brain Score = Summe der Rundenwertungen
+      const scoreValue = Math.round(spielenRundenScores.reduce((a, b) => a + b, 0));
       
-      const zeiten = spielenGesamtzeiten.length > 0 ? spielenGesamtzeiten : spielenLiegezeiten;
-      const schwelle = spielenGesamtzeiten.length > 0 ? GESAMT_SCHWELLE : ZUEGIG_SCHWELLE;
-      const zuegigPct = zeiten.length > 0 
-        ? Math.round((zeiten.filter(t => t < schwelle).length / zeiten.length) * 100)
-        : 100;
+      // Zügig/Zögernd per Runde: Eine Runde ist "gezögert" wenn Spionage ODER Wipps ODER langsam
+      let zuegigRounds = 0;
+      for (let ri = 0; ri < spielenKippsPerRound.length; ri++) {
+        const rSp = spielenSpionagePerRound[ri] || 0;
+        const rW = spielenWippsPerRound[ri] || 0;
+        const rK = spielenKippsPerRound[ri] || 1;
+        const rD = ri < spielenKippzugDauern.length ? spielenKippzugDauern[ri] : 0;
+        const avgPerKipp = rK > 0 && rD > 0 ? rD / rK : 0;
+        // Zügig = keine Spionage, keine Wipps, und schnell genug
+        if (rSp === 0 && rW === 0 && (avgPerKipp === 0 || avgPerKipp < 1500)) zuegigRounds++;
+      }
+      const totalRounds = spielenKippsPerRound.length;
+      const zuegigPct = totalRounds > 0 ? Math.round((zuegigRounds / totalRounds) * 100) : 100;
       
       const totalKipps = spielenKippRichtungen.length;
-      const avgKippsPerRound = spielenKippsPerRound.length > 0
-        ? (spielenKippsPerRound.reduce((a, b) => a + b, 0) / spielenKippsPerRound.length)
-        : 0;
-      
       const zykluswechsel = zaehlZykluswechsel();
-      
-      // Brain Score berechnen
-      const scoreValue = calculateBrainScore(treffer, kniffsCount, zeitF, wobWippF, effizienzF);
+      const mehrAls6 = spielenKippsPerRound.filter(k => k > 6).length;
       
       // Daten für Auswertung speichern
       window._brainScoreData = {
         score: scoreValue,
         hits: treffer,
         kniffs: kniffsCount,
-        haltungsnote: haltungsnote,
-        zeitFaktor: zeitF,
-        wobbleWippFaktor: wobWippF,
-        effizienzFaktor: effizienzF,
         wipps: spielenWipps,
         zykluswechsel: zykluswechsel,
         totalKipps: totalKipps,
-        avgKippsPerRound: avgKippsPerRound,
+        mehrAls6: mehrAls6,
         kippsPerRound: spielenKippsPerRound.slice(),
-        kippRichtungen: spielenKippRichtungen.slice(),
+        rundenScores: spielenRundenScores.slice(),
         zuegigPct: zuegigPct,
         zoegerndPct: 100 - zuegigPct,
-        liegezeiten: spielenLiegezeiten.slice(),
-        kippdauern: spielenKippdauern.slice(),
-        gesamtzeiten: spielenGesamtzeiten.slice()
+        kippzugDauern: spielenKippzugDauern.slice(),
+        wippsPerRound: spielenWippsPerRound.slice(),
+        kniffsPerRound: spielenKniffsPerRound.slice()
       };
       
       // hintText verstecken
@@ -2078,123 +2082,7 @@
       const d = window._brainScoreData;
       if (!d) return;
       
-      // Kippstil-Titel (24 Szenarien, Entschlossenheit immer im Verhältnis zur Trefferquote)
-      let kippTitel, kippMsg;
-      
-      // === GRENZWERT TOP (BSc ~90-100) ===
-      if (d.hits === 6 && d.kniffs === 0 && d.zuegigPct >= 80 && d.score === 100) {
-        // #1 BRAIN PRO
-        kippTitel = 'BRAIN PRO';
-        kippMsg = 'Perfektes Spiel! 6 aus 6, ohne Nachschauen, entschlossen gekippt. Besser geht\u2019s nicht.';
-      } else if (d.hits === 6 && d.kniffs === 0 && d.score >= 75) {
-        // #2 MASTER MIND
-        kippTitel = 'MASTER MIND';
-        kippMsg = 'Alle getroffen, kein Kniff gebraucht. Etwas schneller und sauberer kippen und du erreichst die 100.';
-      } else if (d.hits === 6 && d.score < 75) {
-        // 6 Treffer aber unsaubere Ausführung
-        kippTitel = 'TREFFSICHER';
-        kippMsg = 'Alle 6 getroffen \u2013 starkes Ergebnis! Aber deine Kipp-Haltung kostet Score. Weniger wackeln, eine Richtung beibehalten, z\u00fcgiger kippen.';
-      
-      // === OBERE MITTE (BSc ~55-90) ===
-      } else if (d.hits >= 5 && d.zuegigPct >= 80 && d.kniffs <= 1) {
-        // #3 KIPPMEISTER
-        kippTitel = 'KIPPMEISTER';
-        kippMsg = 'Jeder Kipp sa\u00df. Du planst und handelst \u2013 Chapeau!';
-      } else if (d.hits >= 5 && d.kniffs >= 3 && d.zuegigPct >= 60) {
-        // #4 PERFEKTIONIST
-        kippTitel = 'PERFEKTIONIST';
-        kippMsg = 'Starke Trefferquote! Aber viel nachgeschaut. Durchschau die Kipplogik \u2013 wie drehen sich die Fl\u00e4chen beim Kippen? Dann brauchst du weniger Kniffs.';
-      } else if (d.hits >= 4 && d.kniffs === 0 && d.zuegigPct < 40) {
-        // #5 GEDÄCHTNISKÜNSTLER
-        kippTitel = 'GED\u00c4CHTNISK\u00dcNSTLER';
-        kippMsg = 'Du triffst gut, brauchst aber lange zum Kippen. Vertraue deinem Ged\u00e4chtnis \u2013 du wei\u00dft mehr als du denkst!';
-      } else if (d.hits >= 3 && d.zuegigPct >= 40 && d.zuegigPct <= 70 && d.kniffs <= 2) {
-        // #6 STRATEGE
-        kippTitel = 'STRATEGE';
-        kippMsg = 'Clever: Nachgeschaut wenn n\u00f6tig, entschlossen gekippt wenn sicher. Weiter so!';
-      } else if (d.hits === 4 && d.zuegigPct >= 70 && d.kniffs <= 1) {
-        // #7 ROUTINIER
-        kippTitel = 'ROUTINIER';
-        kippMsg = 'Solide Leistung mit klarem Plan. Ein bis zwei Treffer mehr und du bist Meisterklasse.';
-      } else if (d.hits >= 3 && d.hits <= 4 && d.zuegigPct >= 50 && d.kniffs >= 2 && d.kniffs <= 3) {
-        // #8 TAKTIKER
-        kippTitel = 'TAKTIKER';
-        kippMsg = 'Guter Mix aus Merken und Nachschauen. Etwas weniger Kniffs und du bist top.';
-      
-      // === MITTE (BSc ~20-55) ===
-      } else if (d.hits === 3 && d.zuegigPct >= 40 && d.zuegigPct <= 60 && d.kniffs >= 2 && d.kniffs <= 3) {
-        // #9 HALBWISSER
-        kippTitel = 'HALBWISSER';
-        kippMsg = 'Die H\u00e4lfte getroffen \u2013 da geht noch was. Beim Schauen gezielter auf die Lagen achten.';
-      } else if (d.hits === 2 && d.zuegigPct >= 50 && d.zuegigPct <= 70 && d.kniffs <= 2) {
-        // #10 WECHSELHAFT
-        kippTitel = 'WECHSELHAFT';
-        kippMsg = 'Mal treffsicher, mal daneben. Mehr Konstanz kommt mit \u00dcbung.';
-      } else if (d.hits >= 1 && d.hits <= 2 && d.zuegigPct >= 70 && d.kniffs <= 2) {
-        // #11 GLÜCKSKIPPER
-        kippTitel = 'GL\u00dcCKSKIPPER';
-        kippMsg = 'Du kippst auf gut Gl\u00fcck \u2013 manchmal trifft\u2019s! Bei KIPP CARD geht das auch mit weniger pr\u00e4zisen Kipps.';
-      } else if (d.hits >= 2 && d.hits <= 3 && d.zuegigPct < 30 && d.kniffs <= 2) {
-        // #12 SPÄTZÜNDER
-        kippTitel = 'SP\u00c4TZ\u00dcNDER';
-        kippMsg = 'Ein paar Treffer, aber viel gez\u00f6gert. Nutze KIPP KNIFFS effektiver.';
-      } else if (d.hits === 2 && d.zuegigPct < 40 && d.kniffs >= 2 && d.kniffs <= 3) {
-        // #13 VORSICHTIGER
-        kippTitel = 'VORSICHTIGER';
-        kippMsg = 'Nachgeschaut und trotzdem unsicher gekippt. Merk dir beim Schauen gezielt eine Zahl pro Seite.';
-      } else if (d.hits >= 2 && d.hits <= 3 && d.zuegigPct < 30 && d.kniffs >= 3) {
-        // #14 GRÜBLER
-        kippTitel = 'GR\u00dcBLER';
-        kippMsg = 'Viel nachgeschaut, wenige Treffer. Denk \u00fcber die Bewegungslogik nach: Was passiert mit den Zahlen bei 3 oder 6 Kipps? Logik und Merken zusammen ersetzt viel Gr\u00fcbeln.';
-      } else if (d.hits >= 1 && d.hits <= 2 && d.kniffs >= 4) {
-        // #15 NACHSCHAUER
-        kippTitel = 'NACHSCHAUER';
-        kippMsg = 'Oft nachgeschaut und trotzdem wenig getroffen. Erg\u00e4nze dein Merken mit Kipplogik: Wie wandern die Fl\u00e4chen beim Kippen?';
-      } else if (d.hits === 1 && d.zuegigPct >= 30 && d.zuegigPct <= 60 && d.kniffs >= 2 && d.kniffs <= 3) {
-        // #16 SUCHENDER
-        kippTitel = 'SUCHENDER';
-        kippMsg = 'Nur ein Treffer. Konzentrier dich beim Schauen auf zwei Zahlen und ihre Position.';
-      } else if (d.hits === 1 && d.zuegigPct >= 70 && d.kniffs <= 1) {
-        // #17 DRAUFGÄNGER
-        kippTitel = 'DRAUFG\u00c4NGER';
-        kippMsg = 'Schnell gekippt aber kaum getroffen. Entschlossenheit ist gut \u2013 mit mehr Merken wirst du sicherer.';
-      } else if (d.hits >= 1 && d.hits <= 2 && d.kniffs >= 5) {
-        // #18 IRRLÄUFER
-        kippTitel = 'IRRL\u00c4UFER';
-        kippMsg = 'Trotz viel Nachschauen kaum Treffer. Kombiniere Merken mit Logik: Wie drehen sich die Fl\u00e4chen? Was ist das Besondere an 3 und 6 Kipps? Wer das durchschaut, braucht weniger Kniffs.';
-      
-      // === UNTERE MITTE (BSc ~1-20, 0 Hits) ===
-      } else if (d.hits === 0 && d.zuegigPct >= 80 && d.kniffs === 0) {
-        // #19 BLINDKIPPER
-        kippTitel = 'BLINDKIPPER';
-        kippMsg = 'Blitz-Tempo ohne Nachschauen \u2013 mutig! Aber ohne Plan ist Kippen Lotterie. Schau dir die Zahlenlage besser an.';
-      } else if (d.hits === 0 && d.zuegigPct >= 50 && d.kniffs <= 2) {
-        // #20 GLÜCKSSPIELER
-        kippTitel = 'GL\u00dcCKSSPIELER';
-        kippMsg = 'Entschlossen gekippt, aber null Treffer. Ohne Merken, ohne Logik ist KIPPEN wie Roulette.';
-      } else if (d.hits === 0 && d.zuegigPct < 40 && d.kniffs >= 3) {
-        // #21 RÄTSELRATER
-        kippTitel = 'R\u00c4TSELRATER';
-        kippMsg = 'Viel geschaut, nichts getroffen. Merken und Kipplogik zusammen bringen dich weiter: Wie bewegen sich die Zahlen beim Kippen? Fang mit zwei gegen\u00fcberliegenden Zahlen an.';
-      } else if (d.hits === 0 && d.zuegigPct < 25 && d.kniffs <= 2) {
-        // #22 ZÖGERER
-        kippTitel = 'Z\u00d6GERER';
-        kippMsg = 'Viel gez\u00f6gert und nicht getroffen. Nutze KNIFFS f\u00fcrs W\u00fcrfel Kennenlernen.';
-      } else if (d.hits === 0 && d.kniffs >= 3 && d.zuegigPct < 30) {
-        // #24 NEULING
-        kippTitel = 'NEULING';
-        kippMsg = 'Kein Treffer trotz viel Nachschauen. Merken und Logik zusammen helfen: Welche Zahlen liegen sich an den Kanten gegen\u00fcber? Bei 3 und 6 Kipps passiert etwas Besonderes \u2013 findest du es heraus?';
-      } else if (d.hits === 0) {
-        // #23 BEOBACHTER (0-Hits Fallback)
-        kippTitel = 'BEOBACHTER';
-        kippMsg = 'Noch kein Treffer. Merke dir die Zahlen-Lagen beim Schauen, dann kippe entschlossen.';
-      } else {
-        // General Fallback
-        kippTitel = 'BEOBACHTER';
-        kippMsg = 'Merke dir die Zahlen-Lagen beim Schauen, dann kippe entschlossen.';
-      }
-      
-      // Overlay erstellen (Layout nach Entwurf: linksbündig, Blocktext)
+      // Overlay erstellen (Layout nach Entwurf: linksbündig)
       const ov = document.createElement('div');
       ov.id = 'auswertungOverlay';
       ov.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
@@ -2209,7 +2097,7 @@
           '<div style="font-size:48px;font-weight:bold;text-shadow:0 0 25px rgba(212,180,140,0.4);">' + d.score + '<span style="font-size:28px;opacity:0.6;">/100</span></div>' +
         '</div>' +
         
-        // Drei Faktoren in einer Zeile, linksbündig
+        // HITS und KNIFFS
         '<div style="display:flex;gap:24px;margin-bottom:6px;">' +
           '<div>' +
             '<div style="font-size:28px;font-weight:bold;">' + d.hits + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
@@ -2219,16 +2107,19 @@
             '<div style="font-size:28px;font-weight:bold;">' + d.kniffs + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
             '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
           '</div>' +
-          '<div>' +
-            '<div style="font-size:28px;font-weight:bold;">' + (d.haltungsnote * 100).toFixed(0) + '<span style="font-size:17px;opacity:0.6;">%</span></div>' +
-            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">HALTUNG</div>' +
-          '</div>' +
         '</div>' +
         
         // Trennlinie
         '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:12px 0 16px;"></div>' +
         
-        // Prozent-Zeilen linksbündig (17px)
+        // Statistik-Zeilen
+        '<div style="font-size:15px;line-height:2.0;margin-bottom:12px;">' +
+          'Gewippt: <span style="font-weight:bold;">' + d.totalKipps + '-mal</span><br>' +
+          'Richtungswechsel: <span style="font-weight:bold;">' + d.zykluswechsel + '-mal</span><br>' +
+          'Mehr als 6 Kipps ben\u00f6tigt: <span style="font-weight:bold;">' + d.mehrAls6 + '-mal</span>' +
+        '</div>' +
+        
+        // Prozent-Zeilen (17px)
         '<div style="font-size:17px;line-height:1.7;margin-bottom:12px;">' +
           '<span style="color:#cedb25;font-weight:bold;">' + d.zuegigPct + '%</span> entschlossen gekippt<br>' +
           '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
@@ -2549,9 +2440,19 @@
     let dragPrevAngle = 0;          // Vorheriger Winkel für Wipp-Erkennung
     let dragPrevDirection = 0;      // 1 = zur Zielseite, -1 = zurück, 0 = neutral
     let dragWobbleCount = 0;        // Richtungswechsel im aktuellen Drag (= Wipps intra-Drag)
+    let dragMaxAngle = 0;           // Höchster Kippwinkel im aktuellen Drag (Spionage-Erkennung)
     let spielenWipps = 0;           // Wipps gesamt (Wobbles + Zurückfaller zusammen)
     let spielenKippsPerRound = [];  // Kipp-Anzahl pro Kippziel-Runde
     let spielenKippRichtungen = []; // CW/CCW pro Kipp in SPIELEN (Zykluswechsel-Erkennung)
+    let kippzugStartTime = null;    // Erste Würfelberührung nach Kippziel-Öffnung
+    let spielenKippzugDauern = [];  // Kippzug-Gesamtdauer pro Runde (Touch→Landed)
+    let currentRoundWipps = 0;      // Wipps in aktueller Kippziel-Runde
+    let spielenWippsPerRound = [];  // Wipps pro Runde
+    let currentRoundSpionage = 0;   // Spionage-Wipps (>10° + Zurückfall) in aktueller Runde
+    let spielenSpionagePerRound = []; // Spionage-Wipps pro Runde
+    let currentRoundKniffs = 0;     // Kniffs in aktueller Kippziel-Runde
+    let spielenKniffsPerRound = []; // Kniffs pro Runde
+    let spielenRundenScores = [];   // Per-Hit Score pro Runde (0 bei Miss)
     const WOBBLE_MIN_DELTA = 0.04;  // ~2.3° Mindestbewegung für Richtungserkennung
     let lastKippLandTime = null;    // Zeitpunkt des letzten Kipp-Landens in SPIELEN
 
@@ -3041,6 +2942,15 @@
       spielenWipps = 0;
       spielenKippsPerRound = [];
       spielenKippRichtungen = [];
+      kippzugStartTime = null;
+      spielenKippzugDauern = [];
+      currentRoundWipps = 0;
+      spielenWippsPerRound = [];
+      currentRoundKniffs = 0;
+      spielenKniffsPerRound = [];
+      spielenRundenScores = [];
+      currentRoundSpionage = 0;
+      spielenSpionagePerRound = [];
       lastKippLandTime = null;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
@@ -3444,6 +3354,15 @@
       spielenWipps = 0;
       spielenKippsPerRound = [];
       spielenKippRichtungen = [];
+      kippzugStartTime = null;
+      spielenKippzugDauern = [];
+      currentRoundWipps = 0;
+      spielenWippsPerRound = [];
+      currentRoundKniffs = 0;
+      spielenKniffsPerRound = [];
+      spielenRundenScores = [];
+      currentRoundSpionage = 0;
+      spielenSpionagePerRound = [];
       lastKippLandTime = null;
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
@@ -3914,6 +3833,19 @@
       kippzielChecked = true;
       cubeLocked = true;  // Würfel gesperrt bis nächstes Kippziel
       
+      // Kippzug-Dauer: erste Berührung bis letztes Kipp-Landing
+      if (kippzugStartTime !== null && lastKippLandTime) {
+        const kippzugDauer = Math.round(lastKippLandTime - kippzugStartTime);
+        spielenKippzugDauern.push(kippzugDauer);
+      }
+      kippzugStartTime = null; // Reset für nächste Runde
+      spielenWippsPerRound.push(currentRoundWipps);
+      spielenKniffsPerRound.push(currentRoundKniffs);
+      spielenSpionagePerRound.push(currentRoundSpionage);
+      currentRoundWipps = 0;
+      currentRoundKniffs = 0;
+      currentRoundSpionage = 0;
+      
       // Kipps dieser Runde speichern (Haltungsnote)
       spielenKippsPerRound.push(kippCount);
       
@@ -3957,6 +3889,45 @@
       if (hitSlot) {
         const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
         isHit = (neighborColor === erstesKippziel.color.name);
+      }
+      
+      // === Per-Hit Bewertung ===
+      const rIdx = spielenKippsPerRound.length - 1;
+      const rKipps = spielenKippsPerRound[rIdx] || 1;
+      const rWipps = spielenWippsPerRound[rIdx] || 0;
+      const rKniffs = spielenKniffsPerRound[rIdx] || 0;
+      const rSpionage = spielenSpionagePerRound[rIdx] || 0;
+      const rDauer = rIdx < spielenKippzugDauern.length ? spielenKippzugDauern[rIdx] : 0;
+      // Zykluswechsel in dieser Runde
+      let rZyklusW = 0;
+      const rStart = spielenKippRichtungen.length - rKipps;
+      for (let ri = rStart + 1; ri < spielenKippRichtungen.length; ri++) {
+        if (spielenKippRichtungen[ri] !== spielenKippRichtungen[ri - 1]) rZyklusW++;
+      }
+      if (isHit) {
+        const MAX_HIT = 100 / 6; // 16.667
+        let penalty = 0;
+        // Spionage-Wipps: härtester Abzug (Würfel anheben >10° und zurückfallen lassen)
+        penalty += rSpionage * 0.40;
+        // Normale Wipps (ohne Spionage-Schwelle): leichterer Abzug
+        const normalWipps = Math.max(0, rWipps - rSpionage);
+        penalty += normalWipps * 0.10;
+        // Kniffs (nachschauen per Demo)
+        penalty += rKniffs * 0.30;
+        // Zykluswechsel
+        penalty += rZyklusW * 0.15;
+        // Extra-Kipps über 6
+        if (rKipps > 6) penalty += (rKipps - 6) * 0.08;
+        // Langsame Kippzug-Dauer (Grübeln/Zögern)
+        if (rKipps > 0 && rDauer > 0) {
+          const avgPerKipp = rDauer / rKipps;
+          if (avgPerKipp > 2000) penalty += 0.20;
+          else if (avgPerKipp > 1500) penalty += 0.12;
+          else if (avgPerKipp > 1000) penalty += 0.06;
+        }
+        spielenRundenScores.push(Math.max(2, MAX_HIT * (1 - Math.min(penalty, 0.88))));
+      } else {
+        spielenRundenScores.push(0);
       }
       
       drawKippzielBorder(isHit);
@@ -4221,6 +4192,7 @@
 
     function startSchauenDemo() {
       kniffsCount++;
+      currentRoundKniffs++;
       if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
       
       schauenFromSpielen = true;
@@ -4363,6 +4335,15 @@
       spielenWipps = 0;
       spielenKippsPerRound = [];
       spielenKippRichtungen = [];
+      kippzugStartTime = null;
+      spielenKippzugDauern = [];
+      currentRoundWipps = 0;
+      spielenWippsPerRound = [];
+      currentRoundKniffs = 0;
+      spielenKniffsPerRound = [];
+      spielenRundenScores = [];
+      currentRoundSpionage = 0;
+      spielenSpionagePerRound = [];
       lastKippLandTime = null;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
@@ -4614,7 +4595,12 @@
 
         dragActive = true;
         dragCurrentAngle = 0;
+        dragMaxAngle = 0;
         dragStartTime = performance.now();
+        // Kippzug-Stoppuhr: Start bei erster Berührung nach Kippziel-Öffnung
+        if (gamePhase === 'spielen' && kippzugStartTime === null) {
+          kippzugStartTime = performance.now();
+        }
         dragPrevAngle = 0;
         dragPrevDirection = 0;
         dragWobbleCount = 0;
@@ -4654,6 +4640,8 @@
       }
 
       dragCurrentAngle = angle;
+      const absA = Math.abs(dragCurrentAngle);
+      if (absA > dragMaxAngle) dragMaxAngle = absA;
 
       // Wobble-Erkennung: Richtungswechsel während eines Kippzugs
       const angleDelta = dragCurrentAngle - dragPrevAngle;
@@ -4735,6 +4723,11 @@
         // Wipp zählen in SPIELEN (nur wenn merklich angehoben, >5°)
         if (gamePhase === 'spielen' && absAngle > 0.09) {
           spielenWipps++;
+          currentRoundWipps++;
+          // Spionage-Erkennung: ab 10° (0.175 rad) sieht man verdeckte Zahlen
+          if (dragMaxAngle > 0.175) {
+            currentRoundSpionage++;
+          }
         }
       }
 
@@ -4804,6 +4797,7 @@
               }
               // Wipps aus Wobbles addieren (Richtungswechsel im Drag)
               spielenWipps += dragWobbleCount;
+              currentRoundWipps += dragWobbleCount;
               // Zyklusrichtung speichern (CW/CCW)
               spielenKippRichtungen.push(kippDirection);
               // Vorherigen Auto-Eval-Timer löschen
