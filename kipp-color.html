@@ -1363,7 +1363,7 @@
     kipGroup.add(cube);
 
     // Face-Definitionen für Rebuild mit variablem Alpha
-    const faceSlots = {
+    let faceSlots = {
       f1: {
         slotMap: { '0,0': { val: deck[4], rot: Math.PI }, '0,1': { val: deck[5], rot: Math.PI }, '1,2': { val: deck[6], rot: -Math.PI/2 }, '2,2': { val: deck[7], rot: -Math.PI/2 } },
         imgRot: Math.PI/2, matIdx: 1
@@ -1377,6 +1377,12 @@
         imgRot: 0, matIdx: 4
       }
     };
+
+    function updateFaceSlots() {
+      faceSlots.f1.slotMap = { '0,0': { val: deck[4], rot: Math.PI }, '0,1': { val: deck[5], rot: Math.PI }, '1,2': { val: deck[6], rot: -Math.PI/2 }, '2,2': { val: deck[7], rot: -Math.PI/2 } };
+      faceSlots.f2.slotMap = { '2,2': { val: deck[8], rot: 0 }, '2,1': { val: deck[9], rot: 0 }, '1,0': { val: deck[10], rot: Math.PI/2 }, '0,0': { val: deck[11], rot: Math.PI/2 } };
+      faceSlots.f0.slotMap = { '2,0': { val: deck[0], rot: Math.PI/2 }, '1,0': { val: deck[1], rot: Math.PI/2 }, '0,1': { val: deck[2], rot: Math.PI }, '0,2': { val: deck[3], rot: Math.PI } };
+    }
 
     function rebuildFaceMat(faceKey, alpha) {
       const f = faceSlots[faceKey];
@@ -3440,6 +3446,7 @@
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
       deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
+      updateFaceSlots();
       rebuildFaceMat('f0', 1);
       rebuildFaceMat('f1', 1);
       rebuildFaceMat('f2', 1);
