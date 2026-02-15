@@ -2238,24 +2238,6 @@
           '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
         '</div>' +
         
-        // Kippverhalten-Details (nur wenn auffällig)
-        ((d.zykluswechsel > 0 || d.wipps > 0) ? 
-          '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
-            (d.zykluswechsel > 0 ? '<span style="color:#e07040;font-weight:bold;">Zykluswechsel:</span> ' + d.zykluswechsel + '\u00d7<br>' : '') +
-            (d.wipps > 0 ? '<span style="color:#e07040;font-weight:bold;">Wipps:</span> ' + d.wipps + '<br>' : '') +
-            (d.avgKippsPerRound > 2 ? '\u00D8 ' + d.avgKippsPerRound.toFixed(1) + ' Kipps pro Ziel<br>' : '') +
-          '</div>' +
-          '<div style="font-size:12px;line-height:1.5;opacity:0.55;text-align:left;max-width:296px;margin-bottom:12px;font-style:italic;">' +
-            (d.zykluswechsel > 2 
-              ? 'Halte eine Kipprichtung bei \u2013 jeder Zykluswechsel kostet Score.'
-              : 'Kippe entschlossen in eine Richtung \u2013 das erh\u00f6ht den Score.') +
-          '</div>'
-        : (d.avgKippsPerRound > 2 ? 
-          '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
-            '\u00D8 ' + d.avgKippsPerRound.toFixed(1) + ' Kipps pro Ziel' +
-          '</div>'
-        : '')) +
-        
         // kippMsg als Blocktext linksbündig
         '<div style="font-size:14px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
           kippMsg +
