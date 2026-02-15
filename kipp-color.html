@@ -1815,30 +1815,47 @@
       setButtonsDisabled(false);
     }
     
-    function calculateBrainScore(hits, kniffs, zugfaktor) {
-      // BRAIN SCORE = 100 × H^0.75 × e^(−0.55·K) × (1 − 5/6·(1−Z)³)
-      // H = hits/6, K = kniffs/6, Z = zugfaktor (0-1)
+    function calculateBrainScore(hits, kniffs, zeitFaktor, wobbleWippFaktor, effizienzFaktor) {
+      // BRAIN SCORE = 100 * H^0.75 * e^(-0.55*K) * Haltungsnote
+      // Haltungsnote = Zeitfaktor * Wobble-Wipp-Faktor * Effizienz-Faktor
       
       if (hits === 0) return 0;
       
       const H = hits / 6;
       const K = kniffs / 6;
-      const Z = Math.max(0, Math.min(1, zugfaktor));
       
       const hitFactor = Math.pow(H, 0.75);
       const kniffFactor = Math.exp(-0.55 * K);
-      const zugFactor = 1 - (5/6) * Math.pow(1 - Z, 3);
+      const haltungsnote = zeitFaktor * wobbleWippFaktor * effizienzFaktor;
       
-      return Math.round(100 * hitFactor * kniffFactor * zugFactor);
+      return Math.round(100 * hitFactor * kniffFactor * haltungsnote);
     }
     
-    function berechneZugfaktor() {
-      // Gesamtentscheidungszeit (Liegezeit + Kippdauer) als Basis
+    function berechneZeitfaktor() {
+      // Gesamtentscheidungszeit -> kubische Strafe
       const zeiten = spielenGesamtzeiten.length > 0 ? spielenGesamtzeiten : spielenLiegezeiten;
       if (zeiten.length === 0) return 1.0;
       const schwelle = spielenGesamtzeiten.length > 0 ? GESAMT_SCHWELLE : ZUEGIG_SCHWELLE;
-      const zuegig = zeiten.filter(t => t < schwelle).length;
-      return zuegig / zeiten.length;
+      const Z = zeiten.filter(t => t < schwelle).length / zeiten.length;
+      return 1 - (5/6) * Math.pow(1 - Z, 3);
+    }
+    
+    function berechneWobbleWippFaktor() {
+      // e^(-0.3 * (totalWobbles + 2*totalWipps) / totalKipps)
+      // Wipps doppelt gewichtet (bewusstes Spionage-Anheben)
+      const totalKipps = spielenWobbelCounts.length;
+      if (totalKipps === 0) return 1.0;
+      const totalWobbles = spielenWobbelCounts.reduce((a, b) => a + b, 0);
+      const belastung = (totalWobbles + 2 * spielenWippCount) / totalKipps;
+      return Math.exp(-0.3 * belastung);
+    }
+    
+    function berechneEffizienzFaktor() {
+      // e^(-0.15 * max(0, avgKippsPerRound - 1))
+      // 1 Kipp/Runde -> 1.0, 4 -> 0.64, 6 -> 0.47, 12 -> 0.19
+      if (spielenKippsPerRound.length === 0) return 1.0;
+      const avgKipps = spielenKippsPerRound.reduce((a, b) => a + b, 0) / spielenKippsPerRound.length;
+      return Math.exp(-0.15 * Math.max(0, avgKipps - 1));
     }
     
     // === MESSUNG OVERLAY (wie KIPP COLOR) ===
@@ -1902,10 +1919,43 @@
           if (i < lz.length - 1) html += ', ';
           if ((i + 1) % 6 === 0) html += '<br>';
         }
+        html += '</div><br>';
+      }
+      
+      // Wobble-Daten (SPIELEN-Phase)
+      const wc = spielenWobbelCounts;
+      if (wc.length > 0) {
+        const totalW = wc.reduce(function(a, b) { return a + b; }, 0);
+        html += '<div style="text-align:center;">—— HIN & HER (Wobbles) ——</div>';
+        html += '<div>Total: ' + totalW + ' Richtungswechsel</div>';
+        html += '<div>\u00D8 ' + (totalW / wc.length).toFixed(1) + ' pro Kipp</div>';
+        html += '<div style="color:#cedb25;">Wobble-Wipp-Faktor: ' + berechneWobbleWippFaktor().toFixed(2) + '</div>';
+        html += '<div>Wipps: ' + spielenWippCount + '</div>';
+        html += '<div style="color:#ffa500;word-break:break-all;">';
+        for (let i = 0; i < wc.length; i++) {
+          html += wc[i];
+          if (i < wc.length - 1) html += ', ';
+          if ((i + 1) % 6 === 0) html += '<br>';
+        }
         html += '</div>';
       }
       
       // Schließen per Tap
+      // Effizienz (Kipps pro Runde)
+      if (spielenKippsPerRound.length > 0) {
+        html += '<br><div style="text-align:center;">—— Effizienz (Kipps/Runde) ——</div>';
+        html += '<div>\u00D8 ' + (spielenKippsPerRound.reduce(function(a,b){return a+b;},0)/spielenKippsPerRound.length).toFixed(1) + ' Kipps/Runde</div>';
+        html += '<div style="color:#cedb25;">Effizienz-Faktor: ' + berechneEffizienzFaktor().toFixed(2) + '</div>';
+        html += '<div style="color:#ffa500;">[' + spielenKippsPerRound.join(', ') + ']</div>';
+      }
+      
+      // Wipps
+      html += '<br><div>Wipps (Zurückfaller): <span style="color:#e07040;">' + spielenWippCount + '</span></div>';
+      
+      // Gesamt-Haltungsnote
+      html += '<br><div style="text-align:center;font-size:14px;color:#cedb25;font-weight:bold;">Haltungsnote: ' + 
+        (berechneZeitfaktor() * berechneWobbleWippFaktor() * berechneEffizienzFaktor() * 100).toFixed(0) + '%</div>';
+      
       html += '<div style="text-align:center;margin-top:12px;opacity:0.5;font-size:10px;">Tap zum Schlie\u00dfen</div>';
       
       mo.innerHTML = html;
@@ -1943,23 +1993,42 @@
       // Wie viele Treffer?
       const treffer = bereitsGetroffen.size;
       
-      // Zugfaktor berechnen
-      const Z = berechneZugfaktor();
+      // Haltungsnote berechnen (3 Teilfaktoren)
+      const zeitF = berechneZeitfaktor();
+      const wobWippF = berechneWobbleWippFaktor();
+      const effizienzF = berechneEffizienzFaktor();
+      const haltungsnote = zeitF * wobWippF * effizienzF;
+      
       const zeiten = spielenGesamtzeiten.length > 0 ? spielenGesamtzeiten : spielenLiegezeiten;
       const schwelle = spielenGesamtzeiten.length > 0 ? GESAMT_SCHWELLE : ZUEGIG_SCHWELLE;
       const zuegigPct = zeiten.length > 0 
         ? Math.round((zeiten.filter(t => t < schwelle).length / zeiten.length) * 100)
         : 100;
       
+      const totalWobbles = spielenWobbelCounts.reduce((a, b) => a + b, 0);
+      const totalKipps = spielenWobbelCounts.length;
+      const avgKippsPerRound = spielenKippsPerRound.length > 0
+        ? (spielenKippsPerRound.reduce((a, b) => a + b, 0) / spielenKippsPerRound.length)
+        : 0;
+      
       // Brain Score berechnen
-      const scoreValue = calculateBrainScore(treffer, kniffsCount, Z);
+      const scoreValue = calculateBrainScore(treffer, kniffsCount, zeitF, wobWippF, effizienzF);
       
       // Daten für Auswertung speichern
       window._brainScoreData = {
         score: scoreValue,
         hits: treffer,
         kniffs: kniffsCount,
-        zugfaktor: Z,
+        haltungsnote: haltungsnote,
+        zeitFaktor: zeitF,
+        wobbleWippFaktor: wobWippF,
+        effizienzFaktor: effizienzF,
+        totalWobbles: totalWobbles,
+        totalWipps: spielenWippCount,
+        totalKipps: totalKipps,
+        avgKippsPerRound: avgKippsPerRound,
+        kippsPerRound: spielenKippsPerRound.slice(),
+        wobbelCounts: spielenWobbelCounts.slice(),
         zuegigPct: zuegigPct,
         zoegerndPct: 100 - zuegigPct,
         liegezeiten: spielenLiegezeiten.slice(),
@@ -2126,8 +2195,8 @@
             '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
           '</div>' +
           '<div>' +
-            '<div style="font-size:28px;font-weight:bold;">\u26A1' + (d.zugfaktor * 6).toFixed(1) + '</div>' +
-            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">ZUGFAKTOR</div>' +
+            '<div style="font-size:28px;font-weight:bold;">' + (d.haltungsnote * 100).toFixed(0) + '<span style="font-size:17px;opacity:0.6;">%</span></div>' +
+            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">HALTUNG</div>' +
           '</div>' +
         '</div>' +
         
@@ -2138,10 +2207,26 @@
         '<div style="font-size:17px;font-weight:bold;letter-spacing:2.5px;margin-bottom:12px;">' + kippTitel + '</div>' +
         
         // Prozent-Zeilen linksbündig
-        '<div style="font-size:15px;line-height:1.7;margin-bottom:16px;">' +
+        '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
           '<span style="color:#cedb25;font-weight:bold;">' + d.zuegigPct + '%</span> entschlossen gekippt<br>' +
           '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
         '</div>' +
+        
+        // Richtungswechsel + Wipps (nur wenn auffällig)
+        ((d.totalWobbles > 0 || d.totalWipps > 0) ? 
+          '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
+            (d.totalWobbles > 0 ? '<span style="color:#e07040;font-weight:bold;">Richtungswechsel:</span> ' + d.totalWobbles + '<br>' : '') +
+            (d.totalWipps > 0 ? '<span style="color:#e07040;font-weight:bold;">Wipps:</span> ' + d.totalWipps + '<br>' : '') +
+            (d.avgKippsPerRound > 2 ? '\u00D8 ' + d.avgKippsPerRound.toFixed(1) + ' Kipps pro Ziel<br>' : '') +
+          '</div>' +
+          '<div style="font-size:12px;line-height:1.5;opacity:0.55;text-align:left;max-width:296px;margin-bottom:12px;font-style:italic;">' +
+            'Du wippst und wobbelst viel. Ein Treffer wird h\u00f6her bewertet, wenn du z\u00fcgig ohne Richtungswechsel kippst.' +
+          '</div>'
+        : (d.avgKippsPerRound > 2 ? 
+          '<div style="font-size:15px;line-height:1.7;margin-bottom:8px;">' +
+            '\u00D8 ' + d.avgKippsPerRound.toFixed(1) + ' Kipps pro Ziel' +
+          '</div>'
+        : '')) +
         
         // kippMsg als Blocktext linksbündig
         '<div style="font-size:14px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
@@ -2455,6 +2540,13 @@
     let lastAnyKippLandTime = null; // Letztes Kipp-Landing aller Phasen
     let dragStartTime = null;       // Zeitpunkt Drag-Beginn
     let currentKippLiegezeit = 0;   // Liegezeit des aktuellen Kipps (zwischengespeichert)
+    let dragPrevAngle = 0;          // Vorheriger Winkel für Wobble-Erkennung
+    let dragPrevDirection = 0;      // 1 = zur Zielseite, -1 = zurück, 0 = neutral
+    let dragWobbleCount = 0;        // Richtungswechsel im aktuellen Kipp
+    let spielenWobbelCounts = [];   // Wobble-Counts pro Kipp in SPIELEN
+    let spielenWippCount = 0;       // Wipps (gescheiterte Kipps/Zurückfaller) in SPIELEN
+    let spielenKippsPerRound = [];  // Kipp-Anzahl pro Kippziel-Runde
+    const WOBBLE_MIN_DELTA = 0.04;  // ~2.3° Mindestbewegung für Richtungserkennung
     let lastKippLandTime = null;    // Zeitpunkt des letzten Kipp-Landens in SPIELEN
 
     // UI für Demo-Phase initialisieren
@@ -2939,6 +3031,9 @@
       spielenKippdauern = [];
       spielenGesamtzeiten = [];
       currentKippLiegezeit = 0;
+      spielenWobbelCounts = [];
+      spielenWippCount = 0;
+      spielenKippsPerRound = [];
       lastKippLandTime = null;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
@@ -3338,6 +3433,9 @@
       alleLiegezeiten = [];
       lastAnyKippLandTime = null;
       currentKippLiegezeit = 0;
+      spielenWobbelCounts = [];
+      spielenWippCount = 0;
+      spielenKippsPerRound = [];
       lastKippLandTime = null;
       
       // Würfelzahlen neu mischen und Faces neu aufbauen
@@ -3803,6 +3901,9 @@
       if (!erstesKippziel || kippzielChecked) return;
       kippzielChecked = true;
       
+      // Kipps dieser Runde speichern (Haltungsnote)
+      spielenKippsPerRound.push(kippCount);
+      
       // Auto-Eval Timeout sicherheitshalber löschen
       if (autoEvalTimeout) {
         clearTimeout(autoEvalTimeout);
@@ -3815,13 +3916,7 @@
       // Timer stoppen
       stopCountdown();
       
-      // 6-Kipp-Regel: mehr als 6 = auto-miss
-      if (kippCount > 6) {
-        drawKippzielBorder(false);
-        return;
-      }
-      
-      // Treffer prüfen
+      // Treffer prüfen (kein Kipp-Limit mehr - Haltungsnote regelt Score)
       const faceOff = { f0: 0, f1: 4, f2: 8 };
       const off = faceOff[topFace];
       const visible = { S1: deck[off], S2: deck[off+1], S3: deck[off+2], S4: deck[off+3] };
@@ -4235,6 +4330,9 @@
       spielenKippdauern = [];
       spielenGesamtzeiten = [];
       currentKippLiegezeit = 0;
+      spielenWobbelCounts = [];
+      spielenWippCount = 0;
+      spielenKippsPerRound = [];
       lastKippLandTime = null;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
@@ -4486,6 +4584,9 @@
         dragActive = true;
         dragCurrentAngle = 0;
         dragStartTime = performance.now();
+        dragPrevAngle = 0;
+        dragPrevDirection = 0;
+        dragWobbleCount = 0;
 
         // Liegezeit für Messung (alle Phasen)
         if (lastAnyKippLandTime) {
@@ -4522,6 +4623,17 @@
       }
 
       dragCurrentAngle = angle;
+
+      // Wobble-Erkennung: Richtungswechsel während eines Kippzugs
+      const angleDelta = dragCurrentAngle - dragPrevAngle;
+      if (Math.abs(angleDelta) > WOBBLE_MIN_DELTA) {
+        const newDir = angleDelta > 0 ? 1 : -1;
+        if (dragPrevDirection !== 0 && newDir !== dragPrevDirection) {
+          dragWobbleCount++;
+        }
+        dragPrevDirection = newDir;
+        dragPrevAngle = dragCurrentAngle;
+      }
 
       if (dragAxis === 'x') {
         dragPivotGroup.rotation.x = dragCurrentAngle;
@@ -4587,8 +4699,12 @@
         targetAngle = dragTargetSign * Math.PI / 2; // Kippen
         finalQ = dragToQ;
       } else {
-        targetAngle = 0; // Zurückfallen
+        targetAngle = 0; // Zurückfallen = WIPP
         finalQ = currentQuadrant;
+        // Wipp zählen in SPIELEN (nur wenn merklich angehoben, >5°)
+        if (gamePhase === 'spielen' && absAngle > 0.09) {
+          spielenWippCount++;
+        }
       }
 
       // Schwerkraft-Fall-Animation
@@ -4655,6 +4771,8 @@
                 // Gesamtentscheidungszeit = Liegezeit + Kippdauer
                 spielenGesamtzeiten.push(currentKippLiegezeit + kippdauer);
               }
+              // Wobble-Count speichern
+              spielenWobbelCounts.push(dragWobbleCount);
               // Vorherigen Auto-Eval-Timer löschen
               if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
               // Liegezeit-Schwelle: wenn Würfel 1s liegt → Kippzug eingeloggt
