@@ -2636,6 +2636,7 @@
 
 
 
+      szText.scrollTop = 0;
       szText.style.display = 'block';
       
       // weiter-Button zentriert unter Text positionieren
@@ -3637,6 +3638,7 @@
       const tutBsp = window._tutBeispiel || { zahl: '?', farbe: '?' };
       const k2Text = T.k2.replace(/\{zahl\}/g, tutBsp.zahl).replace(/\{farbe\}/g, tutBsp.farbe);
       instrText.innerHTML = (T.k1 ? '<b>' + T.k1 + '</b><br>' : '') + k2Text;
+      instrText.scrollTop = 0;
       instrText.style.display = isReplay ? 'none' : 'block';
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
@@ -4408,7 +4410,9 @@
       stopCountdown();
       countdown.style.display = 'none';
       if (activeCardIdx === 0) {
-        document.getElementById('instructionText').style.display = 'block';
+        const iT = document.getElementById('instructionText');
+        iT.scrollTop = 0;
+        iT.style.display = 'block';
       }
       document.getElementById('tutorialText').style.display = 'none';
       
