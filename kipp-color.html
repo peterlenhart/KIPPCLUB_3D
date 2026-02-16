@@ -580,7 +580,7 @@
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
-  <div id="startOverlay">
+  <div id="startOverlay" style="display:none;">
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0.4">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0.4">TUTORIAL</button>
   </div>
@@ -1540,11 +1540,7 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
-        document.getElementById('btnSpielen').disabled = false;
-        document.getElementById('btnSpielen').style.opacity = '1';
-        document.getElementById('btnDemo').disabled = false;
-        document.getElementById('btnDemo').style.opacity = '1';
-        actionButton.disabled = false;
+        startKipp21();
       }
     }
 
@@ -1706,6 +1702,277 @@
       { name: 'gruen',   hex: '#00a652' },
       { name: 'orange',  hex: '#e67814' }
     ];
+    // =================================================================
+    // KIPP 21 - GAME LOGIC
+    // =================================================================
+    
+    // 12-state CW cycle: each entry = [quadrant, face]
+    const CW_CYCLE = [
+      [3,'f2'],[0,'f0'],[1,'f1'],[2,'f2'],
+      [3,'f0'],[0,'f1'],[1,'f2'],[2,'f0'],
+      [3,'f1'],[0,'f2'],[1,'f0'],[2,'f1']
+    ];
+    
+    function stateIndex(q, f) {
+      for (let i = 0; i < 12; i++) {
+        if (CW_CYCLE[i][0] === q && CW_CYCLE[i][1] === f) return i;
+      }
+      return -1;
+    }
+    
+    function minKippsFromTo(fromQ, fromF, toQ, toF) {
+      const fromIdx = stateIndex(fromQ, fromF);
+      const toIdx = stateIndex(toQ, toF);
+      if (fromIdx < 0 || toIdx < 0) return 99;
+      const cwDist = (toIdx - fromIdx + 12) % 12;
+      return Math.min(cwDist, 12 - cwDist);
+    }
+    
+    // KIPP 21 state
+    let kipp21Active = false;
+    let kipp21KippCount = 0;
+    let kipp21RoundKipps = 0;
+    let kipp21RoundTimerStart = null;
+    let kipp21TotalTime = 0;
+    let kipp21Done = 0;
+    let kipp21UsedDistances = [];
+    let kipp21CardStates = [];
+    let kipp21CardDistances = [];
+    let kipp21TimerRunning = false;
+    let kipp21TimerInterval = null;
+    
+    function startKipp21() {
+      // Hide old UI
+      document.getElementById('startOverlay').style.display = 'none';
+      ['instructionText','tutorialText','spielZielText','entscheidungText'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      ['eyeIcon','kippButtons','richtungButtons','jokerIconsRow','kippTarget','demoSubtitle'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
+      
+      verdecktesMesh.visible = false;
+      
+      // Show 6 verdeckte cards
+      for (let i = 0; i < 6; i++) {
+        const card = gameCards[i];
+        card.ctx.clearRect(0, 0, 85, 170);
+        if (leerImage) {
+          card.ctx.drawImage(leerImage, 0, 0, 85, 170);
+        }
+        card.texture.needsUpdate = true;
+        card.mesh.visible = true;
+        card.mesh.material.transparent = false;
+        card.mesh.material.opacity = 1;
+        card.mesh.material.needsUpdate = true;
+        card.mesh.scale.set(1, 1, 1);
+        card.zahl = null;
+        card.color = null;
+        card.isHit = false;
+        card.isMiss = false;
+      }
+      
+      kipp21Active = true;
+      kipp21KippCount = 0;
+      kipp21RoundKipps = 0;
+      kipp21TotalTime = 0;
+      kipp21Done = 0;
+      kipp21UsedDistances = [];
+      kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt'];
+      kipp21CardDistances = [0,0,0,0,0,0];
+      kipp21TimerRunning = false;
+      
+      gamePhase = 'kipp21';
+      currentMode = 'kanten';
+      
+      // Timer display (repurpose countdown)
+      countdown.textContent = '0:00';
+      countdown.style.display = 'block';
+      countdown.style.left = '180px';
+      
+      // Kipp count display
+      hintText.style.opacity = '1';
+      hintText.style.top = '510px';
+      hintText.style.fontSize = '28px';
+      hintText.innerHTML = '0 KIPPS';
+      
+      positionResetButton();
+    }
+    
+    function kipp21GenerateTarget(cardIdx) {
+      const available = [];
+      for (let d = 1; d <= 6; d++) {
+        if (!kipp21UsedDistances.includes(d)) available.push(d);
+      }
+      if (available.length === 0) return false;
+      
+      // Shuffle available distances for randomness
+      for (let i = available.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [available[i], available[j]] = [available[j], available[i]];
+      }
+      
+      const faceOff = { f0: 0, f1: 4, f2: 8 };
+      const slots = ['S1', 'S2', 'S3', 'S4'];
+      const currentFulfilled = getCurrentErfuellteKombis();
+      
+      // Try each available distance
+      for (const dist of available) {
+        const fromIdx = stateIndex(currentQuadrant, topFace);
+        const cwIdx = (fromIdx + dist) % 12;
+        const ccwIdx = (fromIdx - dist + 12) % 12;
+        const targetStates = [CW_CYCLE[cwIdx]];
+        if (cwIdx !== ccwIdx) targetStates.push(CW_CYCLE[ccwIdx]);
+        
+        const validCombos = [];
+        for (const [tQ, tF] of targetStates) {
+          const off = faceOff[tF];
+          slots.forEach((slot, i) => {
+            const zahl = deck[off + i];
+            const farbe = SLOT_NEIGHBOR_COLORS[tQ][slot];
+            const key = zahl + '_' + farbe;
+            if (!bereitsAusgegeben.has(key) && !currentFulfilled.has(key)) {
+              const colorObj = GAME_COLORS.find(c => c.name === farbe);
+              if (colorObj) validCombos.push({ zahl, color: colorObj, key });
+            }
+          });
+        }
+        
+        if (validCombos.length > 0) {
+          const pick = validCombos[Math.floor(Math.random() * validCombos.length)];
+          fillCardWithKombi(cardIdx, pick.zahl, pick.color);
+          bereitsAusgegeben.add(pick.key);
+          kipp21UsedDistances.push(dist);
+          kipp21CardDistances[cardIdx] = dist;
+          kipp21CardStates[cardIdx] = 'offen';
+          activeCardIdx = cardIdx;
+          kipp21RoundKipps = 0;
+          kipp21RoundTimerStart = null;
+          kipp21TimerRunning = false;
+          return true;
+        }
+      }
+      
+      console.warn('KIPP21: No valid target found!');
+      return false;
+    }
+    
+    function kipp21StartRoundTimer() {
+      if (kipp21TimerRunning) return;
+      kipp21RoundTimerStart = performance.now();
+      kipp21TimerRunning = true;
+      
+      if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
+      kipp21TimerInterval = setInterval(() => {
+        if (!kipp21TimerRunning) return;
+        const elapsed = kipp21TotalTime + (performance.now() - kipp21RoundTimerStart);
+        const secs = Math.floor(elapsed / 1000);
+        const mins = Math.floor(secs / 60);
+        const s = secs % 60;
+        countdown.textContent = mins + ':' + (s < 10 ? '0' : '') + s;
+      }, 100);
+    }
+    
+    function kipp21StopRoundTimer() {
+      if (!kipp21TimerRunning) return;
+      kipp21TotalTime += (performance.now() - kipp21RoundTimerStart);
+      kipp21TimerRunning = false;
+    }
+    
+    function kipp21OnCardTap(cardIdx) {
+      if (!kipp21Active) return;
+      if (cardIdx < 0 || cardIdx >= 6) return;
+      
+      const state = kipp21CardStates[cardIdx];
+      
+      if (state === 'verdeckt') {
+        // REVEAL
+        if (!kipp21GenerateTarget(cardIdx)) return;
+        // Pulse animation
+        const mesh = gameCards[cardIdx].mesh;
+        let pulseStart = performance.now();
+        function doPulse() {
+          const t = ((performance.now() - pulseStart) % 1500) / 1500;
+          const s = 1.0 + Math.sin(t * Math.PI * 2) * 0.06;
+          mesh.scale.set(s, s, s);
+          if (kipp21CardStates[cardIdx] === 'offen') requestAnimationFrame(doPulse);
+          else mesh.scale.set(1, 1, 1);
+        }
+        requestAnimationFrame(doPulse);
+        return;
+      }
+      
+      if (state === 'offen') {
+        // CONFIRM
+        kipp21StopRoundTimer();
+        
+        activeCardIdx = cardIdx;
+        const treffer = checkTreffer();
+        
+        if (treffer) {
+          kipp21CardStates[cardIdx] = 'erledigt';
+          drawGoldenBorder(gameCards[cardIdx]);
+          gameCards[cardIdx].mesh.scale.set(1, 1, 1);
+          kipp21Done++;
+          
+          // Fade card
+          const card = gameCards[cardIdx];
+          let fadeStart = performance.now();
+          function fadeOut() {
+            const t = Math.min((performance.now() - fadeStart) / 600, 1);
+            card.mesh.material.transparent = true;
+            card.mesh.material.opacity = 1 - t * 0.6;
+            card.mesh.material.needsUpdate = true;
+            if (t < 1) requestAnimationFrame(fadeOut);
+          }
+          requestAnimationFrame(fadeOut);
+          
+          hintText.innerHTML = kipp21KippCount + ' KIPPS';
+          
+          if (kipp21Done >= 6) {
+            kipp21Active = false;
+            gamePhase = 'ende';
+            if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
+            
+            const secs = Math.floor(kipp21TotalTime / 1000);
+            const mins = Math.floor(secs / 60);
+            const s = secs % 60;
+            
+            countdown.style.display = 'none';
+            hintText.style.fontSize = '22px';
+            hintText.innerHTML = 'GESCHAFFT!<br>' + kipp21KippCount + ' KIPPS<br>' + mins + ':' + (s < 10 ? '0' : '') + s;
+          }
+        } else {
+          // WRONG - red flash
+          const card = gameCards[cardIdx];
+          card.ctx.strokeStyle = '#ff3333';
+          card.ctx.lineWidth = 4;
+          card.ctx.strokeRect(2, 2, 81, 166);
+          card.texture.needsUpdate = true;
+          
+          setTimeout(() => {
+            if (kipp21CardStates[cardIdx] === 'offen') {
+              const img = colorTargetImages[card.color.name];
+              card.ctx.clearRect(0, 0, 85, 170);
+              card.ctx.drawImage(img, 0, 0, 85, 170);
+              const displayText = card.zahl + ((card.zahl === 6 || card.zahl === 9) ? '.' : '');
+              card.ctx.fillStyle = '#2a1810';
+              card.ctx.font = 'bold 56px Arial';
+              card.ctx.textAlign = 'center';
+              card.ctx.textBaseline = 'middle';
+              card.ctx.fillText(displayText, 42, 42);
+              card.texture.needsUpdate = true;
+            }
+          }, 600);
+          
+          // Timer läuft erst bei nächster Würfelberührung weiter
+        }
+      }
+    }
+
 
     // === Offene Kippziele: genau 2 von 6 haben eine Zahl, die in der aktuellen Ausgangslage sichtbar ist ===
     function pickTwoRandomPositions() {
@@ -3930,9 +4197,30 @@
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
+      // KIPP 21: Card tap detection
+      if (gamePhase === 'kipp21' && kipp21Active) {
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
     }, { passive: true });
     
     renderer.domElement.addEventListener('touchend', (e) => {
+      // KIPP 21: Card tap detection
+      if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
+        const rect2 = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rect2.left) / rect2.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        
+        for (let ci = 0; ci < 6; ci++) {
+          if (kipp21CardStates[ci] === 'erledigt') continue;
+          if (vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
+            kipp21OnCardTap(ci);
+            lastTouchPos = null;
+            return;
+          }
+        }
+      }
+      
       if (!verdecktesMesh.visible || !lastTouchPos) { lastTouchPos = null; return; }
       if (dragActive) { lastTouchPos = null; return; }
       
@@ -4670,9 +4958,9 @@
         pauseDragActive = true;
         return;
       }
-      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen')) {
+      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         if (isAnimating) return;
-        if (cubeLocked) return;  // Nach Auswertung gesperrt
+        if (cubeLocked && gamePhase !== 'kipp21') return;
         e.preventDefault();
         
         const touch = e.touches[0];
@@ -4715,7 +5003,7 @@
         pausePivotGroup.rotation.set(pauseAlpha, pauseBeta, 0, 'YXZ');
         return;
       }
-      if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen') || currentMode !== 'kanten') return;
+      if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -4762,6 +5050,10 @@
         dragCurrentAngle = 0;
         dragMaxAngle = 0;
         dragStartTime = performance.now();
+        // KIPP 21: Timer starten bei Würfelberührung
+        if (gamePhase === 'kipp21' && kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
+          kipp21StartRoundTimer();
+        }
         // Kippzug-Stoppuhr: Start bei erster Berührung nach Kippziel-Öffnung
         if (gamePhase === 'spielen' && kippzugStartTime === null) {
           kippzugStartTime = performance.now();
@@ -4960,7 +5252,7 @@
             lastAnyKippLandTime = performance.now();
             
             // topFace bei jedem Kipp aktualisieren (kippen + spielen)
-            if ((gamePhase === 'kippen' || gamePhase === 'spielen') && currentDragDir) {
+            if ((gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21') && currentDragDir) {
               const isCW = CW_DIRS.has(currentDragDir);
               kippDirection = isCW ? 'cw' : 'ccw';
               advanceTopFace();
@@ -5004,6 +5296,13 @@
               // Bestätigungs-Haken in Ecken zeigen
               showEckeHaken();
             }
+            // KIPP 21: Kipp zählen
+            if (gamePhase === 'kipp21' && kipp21Active) {
+              kipp21KippCount++;
+              kipp21RoundKipps++;
+              hintText.innerHTML = kipp21KippCount + ' KIPPS';
+            }
+
 
           }
           dragActive = false;
