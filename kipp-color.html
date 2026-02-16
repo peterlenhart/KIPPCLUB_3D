@@ -4795,8 +4795,8 @@
       } else {
         targetAngle = 0; // Zurückfallen = WIPP
         finalQ = currentQuadrant;
-        // Gewichteter Wipp in SPIELEN (nur wenn merklich angehoben, >5°)
-        if (gamePhase === 'spielen' && absAngle > 0.09) {
+        // Gewichteter Wipp in SPIELEN (nur wenn merklich angehoben, >5° Peak)
+        if (gamePhase === 'spielen' && dragMaxAngle > 0.09) {
           // Zurückfall-Wipp: Gewicht = Peak-Winkel ÷ 45°
           const fallBackWeight = Math.min(1.0, dragMaxAngle / (Math.PI / 4));
           spielenWipps += fallBackWeight;
