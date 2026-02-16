@@ -1748,11 +1748,18 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      ['eyeIcon','kippButtons','richtungButtons','jokerIconsRow','kippTarget','demoSubtitle'].forEach(id => {
+      ['eyeIcon','kippButtons','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
       document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
+      
+      // KIPP KNIFF Reihe einblenden (nur visuell, ohne Funktion)
+      showKniffIcons();
+      // Unterhalb von Timer/KippAnzahl (535px + 32px Schrift + Abstand)
+      document.getElementById('jokerIconsRow').style.top = '580px';
+      document.getElementById('jokerIconsRow').style.pointerEvents = 'none';
+      document.querySelectorAll('#jokerIconsRow img').forEach(img => img.style.pointerEvents = 'none');
       
       verdecktesMesh.visible = false;
       
