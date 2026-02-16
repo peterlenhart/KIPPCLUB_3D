@@ -251,12 +251,9 @@
       font-family: Arial, sans-serif;
       color: #d4b48c;
       text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-      pointer-events: auto;
+      pointer-events: none;
       line-height: 1.4;
       display: none;
-      max-height: 260px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
     
     
@@ -285,12 +282,9 @@
       font-family: Arial, sans-serif;
       color: #d4b48c;
       text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-      pointer-events: auto;
+      pointer-events: none;
       line-height: 1.4;
       display: none;
-      max-height: 260px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
     
     #verdecktesKippziel {
@@ -650,103 +644,103 @@
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     var T = {
       "de": {
-        s1:"SPIELZIEL", s2:"Kippe die Zahl zur<br>richtigen Farbe.<br><br>Wenn du auf<br>Leistung spielen willst,<br><br>dann kippe entschlossen<br>gezielt und schnell.<br><br>Merkf\u00e4higkeit trifft<br>Auf Logik.<br><br>Klicke unten auf das Auge.<br>Schau gut zu, wenn der<br><br>W\u00fcrfel kippt und wippt.<br><br>Welche Zahlen liegen<br>sich an den W\u00fcrfelkanten<br>gegen\u00fcber.<br><br>Merke dir so viele<br>wie m\u00f6glich.",
+        s1:"SPIEL ZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>\u2022 Nutze <b>SCHAU</b>-Sek. effektiv.",
         w:"weiter", n:"Neues Spiel",
         e1:"IMMER 2 OPTIONEN", e2:"Zuerst auf Augen-Icon \u2013 W\u00fcrfelschauen (empfohlen)", e3:"Gleich auf Kippziel \u2013 Kippzug machen",
-        k1:"", k2:"Klicke links auf das<br>verdeckte KIPP ZIEL.<br><br>Das KIPP ZIEL zeigt:<br><b>{zahl}</b> muss zu <b>{farbe}</b>.<br><br>Du kannst den W\u00fcrfel<br>in der Box nun mit dem<br><br>Finger von Ecke zu Ecke<br>kippen. Probier es hier<br><br>gleich aus. Die Richtung<br>ist egal. Du hast 15 Sek.<br><br>Sobald die <b>{zahl}</b> bei<br><b>{farbe}</b> liegt, klickst<br><br>du auf den Haken in der<br>Ecke, wo der W\u00fcrfel liegt.<br><br><b>KIPP TIPP:</b> Wenn die Kipprichtung<br>stimmt, brauchst du<br><br>immer nur max. 6 KIPPS.<br>Wenn du gar nicht wei\u00dft,<br><br>wo die Zahl am W\u00fcrfel<br>ist, nimmst du einen<br><br><b>KIPP KNIFF</b><br><br><b>KIPP-Bewertung:</b><br>W\u00e4hrend des Kippens<br><br>wird dein Kippverhalten<br>erfasst.<br><br>Ob entschlossen, zielgerichtet,<br>wissend, schnell<br><br>Oder z\u00f6gernd, schauend,<br>langsam, hin und her.<br><br>Das ergibt deinen<br><b>BRAIN SCORE</b> (0-100).<br><br><b>BRAIN SCORE 100</b><br>hast du mit<br><br>0 FAIL KIPPS (verfehlt)<br>0 SNAIL KIPPS (langsam)<br>0 ZIG ZAGS (hin &amp; her)<br>0 FLIP FLOPS (wippen)<br>1 KIPP KNIFF (Kipp-Hilfe)<br><br>Viel Spannung, Spa\u00df und<br>Kopfzerbrechen<br><br>Mit dem W\u00fcrfel in der Box.",
-        p1:"", p2:"",
+        k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit (Nutze SCHAU-Sek. effektiv).<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
+        p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
         bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} SCHAU-Sekunden", bw:"Best: 100% | Worst: 12%",
         ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
-        d1:["Schau gut zu, wenn der<br>W\u00fcrfel kippt und wippt.","Welche Zahlen liegen<br>einander gegen\u00fcber?"],
-        d1b:["Merke dir so viele<br>Zahlenpositionen wie m\u00f6glich.","Merke dir so viele<br>Zahlenpositionen wie m\u00f6glich.","Merke dir so viele<br>Zahlenpositionen wie m\u00f6glich.","Gleich geht's los!"],
-        d2:"Tippe auf das<br>verdeckte KIPP ZIEL.",
-        d3:["Das Kippziel zeigt:<br><b>{z}</b> muss zu <b>{f}</b>.","Kippe den W\u00fcrfel<br>von Ecke zu Ecke.","Wenn <b>{z}</b> bei <b>{f}</b> liegt,<br>tippe auf den Haken."],
+        d1:["Nach Klick aufs Auge<br>l\u00e4sst sich der W\u00fcrfel","mit dem Finger<br>durch die Box kippen."],
+        d1b:["Auf Kante wippen,<br>Zahlenpositionen merken.","Auf Kante wippen,<br>Zahlenpositionen merken.","Du hast 30 Sekunden.<br>(Siehe Counter, unten)","Fr\u00fcher abbrechen?<br>Auf W\u00fcrfel tippen."],
+        d2:"Klick dir dein KIPP ZIEL.",
+        d3:["Das Kippziel zeigt:<br>{z} muss zu {f}.","TIPPE 1 bis 6 mal<br>auf den W\u00fcrfel.","SCHUBSE ihn anschlie\u00dfend<br>in eine beliebige Richtung."],
         d4h:"GETROFFEN!", d4m:"KNAPP DANEBEN!",
-        d5a:"Tutorial wiederholen?<br>Oder die sechs", d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?", d5c:"Tippe auf den<br>Beginn-Button, unten links.",
+        d5a:"Tutorial wiederholen?<br>Oder die sechs", d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?", d5c:"Klick auf Beginn-Button,<br>unten links.",
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange"
       },
       "en": {
         s1:"OBJECTIVE", s2:"\u2022 Find the right number of tips and the correct direction so the cube hits the target. E.g. <b>{zahl}</b> to <b>{farbe}</b>.<br>It\u2019s never more than <b>6</b> tips if the direction is right.<br>\u2022 Use <b>LOOK</b> seconds efficiently.",
         w:"next", n:"New Game",
         e1:"ALWAYS 2 OPTIONS", e2:"First tap eye icon \u2013 look at the cube (recommended)", e3:"Go straight to target \u2013 make your tipping move",
-        k1:"", k2:"Tap the hidden<br>TIPPING TARGET on the left.<br><br>The TARGET shows:<br><b>{zahl}</b> must reach <b>{farbe}</b>.<br><br>You can now tip the cube<br>in the box with your<br><br>finger from corner to corner.<br>Try it right here.<br><br>The direction doesn\u2019t matter.<br>You have 15 seconds.<br><br>Once <b>{zahl}</b> is at<br><b>{farbe}</b>, tap the<br><br>checkmark in the corner<br>where the cube sits.<br><br><b>TIPPING TIP:</b> If the tipping<br>direction is right, you<br><br>only need max. 6 TIPPS.<br>If you have no idea where<br><br>the number is on the cube,<br>use a <b>KIPP KNIFF</b>.<br><br><b>TIPPING SCORE:</b><br>During tipping, your<br><br>tipping behavior is<br>measured.<br><br>Decisive, targeted,<br>knowing, fast<br><br>Or hesitant, peeking,<br>slow, back and forth.<br><br>This gives your<br><b>BRAIN SCORE</b> (0\u2013100).<br><br><b>BRAIN SCORE 100</b><br>means you had<br><br>0 FAIL KIPPS (missed)<br>0 SNAIL KIPPS (slow)<br>0 ZIG ZAGS (back &amp; forth)<br>0 FLIP FLOPS (wobbling)<br>1 KIPP KNIFF (tipping aid)<br><br>Have fun and enjoy<br>the challenge<br><br>with the cube in the box.",
-        p1:"", p2:"",
+        k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
+        p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
         bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} LOOK seconds", bw:"Best: 100% | Worst: 12%",
         ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIAL",
-        d1:["Watch closely as the<br>cube tips and tilts.","Which numbers are<br>opposite each other?"],
-        d1b:["Memorize as many<br>number positions as you can.","Memorize as many<br>number positions as you can.","Memorize as many<br>number positions as you can.","Here we go!"],
-        d2:"Tap the hidden<br>TIPPING TARGET.",
-        d3:["The target shows:<br><b>{z}</b> must reach <b>{f}</b>.","Tip the cube<br>from corner to corner.","When <b>{z}</b> is at <b>{f}</b>,<br>tap the checkmark."],
+        d1:["After clicking the eye<br>you can tip the cube","with your finger<br>through the box."],
+        d1b:["Tilt to the edge,<br>memorize number positions.","Tilt to the edge,<br>memorize number positions.","You have 30 seconds.<br>(See counter below)","Stop early?<br>Tap the cube."],
+        d2:"Click to reveal your TARGET.",
+        d3:["The target shows:<br>{z} must reach {f}.","TAP the cube<br>1 to 6 times.","Then PUSH it<br>in any direction."],
         d4h:"HIT!", d4m:"JUST MISSED!",
-        d5a:"Repeat tutorial?<br>Or discover the six", d5b:"TILT-TRICK JOKERS?", d5c:"Tap the Start button,<br>bottom left.",
+        d5a:"Repeat tutorial?<br>Or discover the six", d5b:"TILT-TRICK JOKERS?", d5c:"Click the Start button,<br>bottom left.",
         fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange"
       },
       "es": {
         s1:"OBJETIVO", s2:"\u2022 Encuentra el n\u00famero correcto de volcados y la direcci\u00f3n adecuada para que el cubo alcance el objetivo. P.ej. <b>{zahl}</b> a <b>{farbe}</b>.<br>Nunca son m\u00e1s de <b>6</b> volcados si la direcci\u00f3n es correcta.<br>\u2022 Usa los segundos de <b>MIRAR</b> eficientemente.",
         w:"siguiente", n:"Nuevo Juego",
         e1:"SIEMPRE 2 OPCIONES", e2:"Primero pulsa el icono del ojo \u2013 mirar el cubo (recomendado)", e3:"Directo al objetivo \u2013 hacer tu jugada",
-        k1:"", k2:"Toca el OBJETIVO<br>oculto a la izquierda.<br><br>El OBJETIVO muestra:<br><b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><br>Ahora puedes volcar el cubo<br>en la caja con el dedo<br><br>de esquina a esquina.<br>Pru\u00e9balo aqu\u00ed.<br><br>La direcci\u00f3n no importa.<br>Tienes 15 segundos.<br><br>Cuando <b>{zahl}</b> est\u00e9 en<br><b>{farbe}</b>, toca la<br><br>marca en la esquina<br>donde est\u00e1 el cubo.<br><br><b>CONSEJO:</b> Si la direcci\u00f3n<br>es correcta, solo necesitas<br><br>m\u00e1x. 6 VOLCADOS.<br>Si no sabes d\u00f3nde est\u00e1<br><br>el n\u00famero, usa un<br><b>KIPP KNIFF</b>.<br><br><b>BRAIN SCORE</b> (0\u2013100).<br><br>0 FAIL KIPPS (fallados)<br>0 SNAIL KIPPS (lentos)<br>0 ZIG ZAGS (ida y vuelta)<br>0 FLIP FLOPS (bamboleo)<br>1 KIPP KNIFF (ayuda)",
-        p1:"", p2:"",
+        k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
+        p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
         bs:"BRAIN SCORE", nh:"Sin acierto, sin puntos", st:"{t} ACIERTOS | {z} seg. de MIRAR", bw:"Mejor: 100% | Peor: 12%",
         ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIAL",
-        d1:["Observa bien cuando el<br>cubo se inclina y balancea.","¿Qu\u00e9 n\u00fameros est\u00e1n<br>uno frente al otro?"],
-        d1b:["Memoriza tantas posiciones<br>de n\u00fameros como puedas.","Memoriza tantas posiciones<br>de n\u00fameros como puedas.","Memoriza tantas posiciones<br>de n\u00fameros como puedas.","\u00a1Vamos!"],
-        d2:"Toca el OBJETIVO<br>oculto.",
-        d3:["El objetivo muestra:<br><b>{z}</b> debe llegar a <b>{f}</b>.","Volca el cubo<br>de esquina a esquina.","Cuando <b>{z}</b> est\u00e9 en <b>{f}</b>,<br>toca la marca."],
+        d1:["Tras pulsar el ojo<br>puedes volcar el cubo","con el dedo<br>por la caja."],
+        d1b:["Inclinar al borde,<br>memoriza las posiciones.","Inclinar al borde,<br>memoriza las posiciones.","Tienes 30 segundos.<br>(Ver contador abajo)","\u00bfTerminar antes?<br>Toca el cubo."],
+        d2:"Pulsa para ver tu OBJETIVO.",
+        d3:["El objetivo muestra:<br>{z} debe llegar a {f}.","TOCA el cubo<br>de 1 a 6 veces.","Luego EMP\u00daJALO<br>en cualquier direcci\u00f3n."],
         d4h:"\u00a1ACERTADO!", d4m:"\u00a1POR POCO!",
-        d5a:"\u00bfRepetir tutorial?<br>O conocer los seis", d5b:"JOKERS DE<br>TRUCO DE VUELCO?", d5c:"Toca el bot\u00f3n Inicio,<br>abajo a la izquierda.",
+        d5a:"\u00bfRepetir tutorial?<br>O conocer los seis", d5b:"JOKERS DE<br>TRUCO DE VUELCO?", d5c:"Pulsa el botón Inicio,<br>abajo a la izquierda.",
         fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja"
       },
       "fr": {
         s1:"OBJECTIF", s2:"\u2022 Trouve le bon nombre de basculements et la bonne direction pour que le cube atteigne la cible. Par ex. <b>{zahl}</b> \u00e0 <b>{farbe}</b>.<br>Jamais plus de <b>6</b> basculements si la direction est bonne.<br>\u2022 Utilise les secondes de <b>REGARD</b> efficacement.",
         w:"suivant", n:"Nouvelle Partie",
         e1:"TOUJOURS 2 OPTIONS", e2:"D\u2019abord l\u2019ic\u00f4ne \u0153il \u2013 regarder le cube (recommand\u00e9)", e3:"Directement \u00e0 la cible \u2013 faire ton coup",
-        k1:"", k2:"Touche la CIBLE<br>cach\u00e9e \u00e0 gauche.<br><br>La CIBLE indique :<br><b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><br>Tu peux maintenant basculer<br>le cube dans la bo\u00eete<br><br>avec le doigt de coin en coin.<br>Essaie ici.<br><br>La direction n\u2019a pas d\u2019importance.<br>Tu as 15 secondes.<br><br>Quand <b>{zahl}</b> est \u00e0<br><b>{farbe}</b>, touche le<br><br>crochet dans le coin<br>o\u00f9 se trouve le cube.<br><br><b>ASTUCE :</b> Si la direction<br>est bonne, max. 6 bascules.<br><br>Si tu ne sais pas, utilise<br>un <b>KIPP KNIFF</b>.<br><br><b>BRAIN SCORE</b> (0\u2013100).<br><br>0 FAIL KIPPS (rat\u00e9s)<br>0 SNAIL KIPPS (lents)<br>0 ZIG ZAGS (allers-retours)<br>0 FLIP FLOPS (oscillations)<br>1 KIPP KNIFF (aide)",
-        p1:"", p2:"",
+        k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
+        p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
         bs:"BRAIN SCORE", nh:"Aucun coup, aucun score", st:"{t} COUPS | {z} sec. de REGARD", bw:"Meilleur: 100% | Pire: 12%",
         ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIAL",
-        d1:["Observe bien quand le<br>cube bascule et oscille.","Quels chiffres sont<br>oppos\u00e9s l\u2019un \u00e0 l\u2019autre?"],
-        d1b:["M\u00e9morise autant de<br>positions que possible.","M\u00e9morise autant de<br>positions que possible.","M\u00e9morise autant de<br>positions que possible.","C\u2019est parti !"],
-        d2:"Touche la CIBLE<br>cach\u00e9e.",
-        d3:["La cible indique :<br><b>{z}</b> doit atteindre <b>{f}</b>.","Bascule le cube<br>de coin en coin.","Quand <b>{z}</b> est \u00e0 <b>{f}</b>,<br>touche le crochet."],
+        d1:["Apr\u00e8s clic sur l\u2019\u0153il<br>tu peux basculer le cube","avec le doigt<br>dans la bo\u00eete."],
+        d1b:["Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Tu as 30 secondes.<br>(Voir compteur ci-dessous)","Arr\u00eater plus t\u00f4t ?<br>Touche le cube."],
+        d2:"Clique pour r\u00e9v\u00e9ler ta CIBLE.",
+        d3:["La cible indique :<br>{z} doit atteindre {f}.","TAPE 1 \u00e0 6 fois<br>sur le cube.","Puis POUSSE-le<br>dans n\u2019importe quelle direction."],
         d4h:"TOUCH\u00c9 !", d4m:"TOUT PR\u00c8S !",
-        d5a:"R\u00e9p\u00e9ter le tutorial ?<br>Ou d\u00e9couvrir les six", d5b:"JOKERS DE<br>TRUC DE BASCULE ?", d5c:"Touche le bouton Début,<br>en bas à gauche.",
+        d5a:"R\u00e9p\u00e9ter le tutorial ?<br>Ou d\u00e9couvrir les six", d5b:"JOKERS DE<br>TRUC DE BASCULE ?", d5c:"Clique sur le bouton Début,<br>en bas à gauche.",
         fV:"Violet", fB:"Bleu", fG:"Vert", fO:"Orange"
       },
       "it": {
         s1:"OBIETTIVO", s2:"\u2022 Trova il numero giusto di ribaltamenti e la direzione corretta affinch\u00e9 il cubo raggiunga il bersaglio. Es. <b>{zahl}</b> a <b>{farbe}</b>.<br>Non sono mai pi\u00f9 di <b>6</b> ribaltamenti se la direzione \u00e8 giusta.<br>\u2022 Usa i secondi di <b>GUARDA</b> in modo efficiente.",
         w:"avanti", n:"Nuova Partita",
         e1:"SEMPRE 2 OPZIONI", e2:"Prima tocca l\u2019icona occhio \u2013 guardare il cubo (consigliato)", e3:"Diretto al bersaglio \u2013 fare la tua mossa",
-        k1:"", k2:"Tocca il BERSAGLIO<br>nascosto a sinistra.<br><br>Il BERSAGLIO mostra:<br><b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><br>Ora puoi ribaltare il cubo<br>nella scatola con il dito<br><br>da angolo ad angolo.<br>Prova qui.<br><br>La direzione non importa.<br>Hai 15 secondi.<br><br>Quando <b>{zahl}</b> \u00e8 a<br><b>{farbe}</b>, tocca il<br><br>segno di spunta nell\u2019angolo<br>dove si trova il cubo.<br><br><b>SUGGERIMENTO:</b> Se la direzione<br>\u00e8 giusta, max. 6 ribaltamenti.<br><br>Se non sai, usa un<br><b>KIPP KNIFF</b>.<br><br><b>BRAIN SCORE</b> (0\u2013100).<br><br>0 FAIL KIPPS (mancati)<br>0 SNAIL KIPPS (lenti)<br>0 ZIG ZAGS (avanti e indietro)<br>0 FLIP FLOPS (oscillazioni)<br>1 KIPP KNIFF (aiuto)",
-        p1:"", p2:"",
+        k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
+        p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
         bs:"BRAIN SCORE", nh:"Nessun colpo, nessun punteggio", st:"{t} COLPI | {z} sec. di GUARDA", bw:"Migliore: 100% | Peggiore: 12%",
         ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
-        d1:["Osserva bene quando il<br>cubo si inclina e oscilla.","Quali numeri sono<br>opposti tra loro?"],
-        d1b:["Memorizza pi\u00f9 posizioni<br>di numeri possibile.","Memorizza pi\u00f9 posizioni<br>di numeri possibile.","Memorizza pi\u00f9 posizioni<br>di numeri possibile.","Si parte!"],
-        d2:"Tocca il BERSAGLIO<br>nascosto.",
-        d3:["Il bersaglio mostra:<br><b>{z}</b> deve raggiungere <b>{f}</b>.","Ribalta il cubo<br>da angolo ad angolo.","Quando <b>{z}</b> \u00e8 a <b>{f}</b>,<br>tocca il segno di spunta."],
+        d1:["Dopo il clic sull\u2019occhio<br>puoi ribaltare il cubo","con il dito<br>nella scatola."],
+        d1b:["Inclinare sul bordo,<br>memorizza le posizioni.","Inclinare sul bordo,<br>memorizza le posizioni.","Hai 30 secondi.<br>(Vedi contatore sotto)","Terminare prima?<br>Tocca il cubo."],
+        d2:"Clicca per rivelare il BERSAGLIO.",
+        d3:["Il bersaglio mostra:<br>{z} deve raggiungere {f}.","TOCCA il cubo<br>da 1 a 6 volte.","Poi SPINGI<br>in qualsiasi direzione."],
         d4h:"COLPITO!", d4m:"QUASI PRESO!",
-        d5a:"Ripetere il tutorial?<br>O scoprire i sei", d5b:"JOKER DI<br>TRUCCO DI RIBALTAMENTO?", d5c:"Tocca il pulsante Inizio,<br>in basso a sinistra.",
+        d5a:"Ripetere il tutorial?<br>O scoprire i sei", d5b:"JOKER DI<br>TRUCCO DI RIBALTAMENTO?", d5c:"Clicca sul pulsante Inizio,<br>in basso a sinistra.",
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione"
       },
       "tr": {
         s1:"HEDEF", s2:"\u2022 K\u00fcp\u00fcn hedefe ula\u015fmas\u0131 i\u00e7in do\u011fru devrilme say\u0131s\u0131n\u0131 ve y\u00f6n\u00fcn\u00fc bul. \u00d6rn. <b>{zahl}</b> \u2192 <b>{farbe}</b>.<br>Y\u00f6n do\u011fruysa asla <b>6</b>\u2019dan fazla devrilme olmaz.<br>\u2022 <b>BAKMA</b> saniyelerini verimli kullan.",
         w:"devam", n:"Yeni Oyun",
         e1:"HER ZAMAN 2 SE\u00c7ENEK", e2:"\u00d6nce g\u00f6z ikonuna dokun \u2013 k\u00fcpe bak (\u00f6nerilen)", e3:"Do\u011frudan hedefe \u2013 hamle yap",
-        k1:"", k2:"Soldaki gizli<br>HEDEF\u0130 dokun.<br><br>HEDEF g\u00f6steriyor:<br><b>{zahl}</b>, <b>{farbe}</b> olmal\u0131.<br><br>\u015eimdi k\u00fcb\u00fc kutuda<br>parma\u011f\u0131nla k\u00f6\u015feden<br><br>k\u00f6\u015feye devirebilirsin.<br>Burada dene.<br><br>Y\u00f6n \u00f6nemli de\u011fil.<br>15 saniyen var.<br><br><b>{zahl}</b>, <b>{farbe}</b> konumunda<br>oldu\u011funda, k\u00fcb\u00fcn<br><br>bulundu\u011fu k\u00f6\u015fedeki<br>onay i\u015faretine dokun.<br><br><b>\u0130PUCU:</b> Y\u00f6n do\u011fruysa<br>maks. 6 devirme yeterli.<br><br>Bilmiyorsan bir<br><b>KIPP KNIFF</b> kullan.<br><br><b>BRAIN SCORE</b> (0\u2013100).<br><br>0 FAIL KIPPS (\u0131skalanm\u0131\u015f)<br>0 SNAIL KIPPS (yava\u015f)<br>0 ZIG ZAGS (ileri geri)<br>0 FLIP FLOPS (sallanma)<br>1 KIPP KNIFF (yard\u0131m)",
-        p1:"", p2:"",
+        k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
+        p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
         bs:"BRAIN SCORE", nh:"\u0130sabet yok, puan yok", st:"{t} \u0130SABET | {z} BAKMA saniyesi", bw:"En iyi: 100% | En k\u00f6t\u00fc: 12%",
         ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIAL",
-        d1:["K\u00fcp devrilirken ve<br>sallan\u0131rken iyi izle.","Hangi say\u0131lar birbirine<br>z\u0131t tarafta?"],
-        d1b:["M\u00fcmk\u00fcn oldu\u011funca \u00e7ok<br>say\u0131 pozisyonu ezberle.","M\u00fcmk\u00fcn oldu\u011funca \u00e7ok<br>say\u0131 pozisyonu ezberle.","M\u00fcmk\u00fcn oldu\u011funca \u00e7ok<br>say\u0131 pozisyonu ezberle.","Ba\u015fl\u0131yoruz!"],
-        d2:"Gizli HEDEF\u0130<br>dokun.",
-        d3:["Hedef g\u00f6steriyor:<br><b>{z}</b>, <b>{f}</b> olmal\u0131.","K\u00fcb\u00fc k\u00f6\u015feden<br>k\u00f6\u015feye devir.","<b>{z}</b>, <b>{f}</b> konumundayken<br>onay i\u015faretine dokun."],
+        d1:["G\u00f6ze t\u0131klad\u0131ktan sonra<br>k\u00fcp\u00fc parma\u011f\u0131nla","kutuda<br>devrilebilirsin."],
+        d1b:["Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","30 saniyen var.<br>(A\u015fa\u011f\u0131daki saya\u00e7a bak)","Erken bitirmek mi?<br>K\u00fcpe dokun."],
+        d2:"HEDEF\u0130NI a\u00e7mak i\u00e7in t\u0131kla.",
+        d3:["Hedef g\u00f6steriyor:<br>{z}, {f} olmal\u0131.","K\u00fcpe 1\u20136 kez<br>DOKUN.","Sonra \u0130T<br>herhangi bir y\u00f6ne."],
         d4h:"\u0130SABET!", d4m:"AZ KALDI!",
         d5a:"Tutorial\u0131 tekrarla?<br>Veya alt\u0131", d5b:"DEVIRME-TRICK<br>JOKER\u0130 ke\u015ffet?", d5c:"Sol alttaki Başla butonuna<br>tıkla.",
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu"
       }
     }[_digikippLang];
-    if(!T) T = {s1:"SPIELZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"",k2:"",p1:"",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"",bw:"",ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",d1:["",""],d1b:["","","",""],d2:"",d3:["","",""],d4h:"GETROFFEN!",d4m:"KNAPP DANEBEN!",d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Tippe auf den<br>Beginn-Button, unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
+    if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"{t} HITS | {z} SCHAU-Sekunden",bw:"Best: 100% | Worst: 12%",ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
 
@@ -2597,7 +2591,6 @@
       const beispielZahl = deck[8 + slotIdx]; // f2 offset = 8
       const beispielFarbe = SLOT_NEIGHBOR_COLORS[3][slotNames[slotIdx]]; // Q3
       const farbDisplay = FARB_DISPLAY[beispielFarbe] || beispielFarbe;
-      window._tutBeispiel = { zahl: beispielZahl, farbe: farbDisplay };
       
       // Beispiel-Kippziel auf verdecktesMesh zeichnen
       function drawBeispiel() {
@@ -2632,11 +2625,10 @@
       positionResetButton();
       
       const szText = document.getElementById('spielZielText');
-      szText.innerHTML = "<b>" + T.s1 + "</b><br><br>" + T.s2;
+      szText.innerHTML = "<b>" + T.s1 + "</b><br>" + T.s2.replace("{zahl}",beispielZahl).replace("{farbe}",farbDisplay);
 
 
 
-      szText.scrollTop = 0;
       szText.style.display = 'block';
       
       // weiter-Button zentriert unter Text positionieren
@@ -3276,7 +3268,7 @@
         }
         if (!autoDemoActive) return;
 
-        // Last d1b line
+        // Last d1b line: "Früher abbrechen? Auf Würfel tippen."
         // kippTarget entfernt in dieser Phase
 
         await showSubtitle(T.d1b[T.d1b.length - 1], 3500);
@@ -3635,10 +3627,7 @@
       document.getElementById('entscheidungText').style.display = 'none';
       
       const instrText = document.getElementById('instructionText');
-      const tutBsp = window._tutBeispiel || { zahl: '?', farbe: '?' };
-      const k2Text = T.k2.replace(/\{zahl\}/g, tutBsp.zahl).replace(/\{farbe\}/g, tutBsp.farbe);
-      instrText.innerHTML = (T.k1 ? '<b>' + T.k1 + '</b><br>' : '') + k2Text;
-      instrText.scrollTop = 0;
+      instrText.innerHTML = '<b>' + T.k1 + '</b><br>' + T.k2;
       instrText.style.display = isReplay ? 'none' : 'block';
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
@@ -4410,9 +4399,7 @@
       stopCountdown();
       countdown.style.display = 'none';
       if (activeCardIdx === 0) {
-        const iT = document.getElementById('instructionText');
-        iT.scrollTop = 0;
-        iT.style.display = 'block';
+        document.getElementById('instructionText').style.display = 'block';
       }
       document.getElementById('tutorialText').style.display = 'none';
       
