@@ -1939,7 +1939,15 @@
             const minsFinal = Math.floor(secsFinal / 60);
             const sFinal = secsFinal % 60;
             countdown.textContent = minsFinal + ':' + (sFinal < 10 ? '0' : '') + sFinal;
-            // Anzeige bleibt stehen: KippAnzahl links, Zeit rechts
+            
+            // "Neues Spiel" Button an Kärtchen-Position
+            const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
+            cardCenter3D.project(camera);
+            const btnScreenY = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
+            const abtn = document.getElementById('auswertungBtn');
+            abtn.textContent = 'NEUES SPIEL';
+            abtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%); top:' + btnScreenY + 'px; width:280px; height:49px; background:url(button_lang.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:150; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9);';
+            abtn.onclick = () => { location.reload(); };
           }
         } else {
           // WRONG - red flash
