@@ -1788,15 +1788,22 @@
       gamePhase = 'kipp21';
       currentMode = 'kanten';
       
-      // Timer display (repurpose countdown)
+      // Timer rechts
       countdown.textContent = '0:00';
       countdown.style.display = 'block';
-      countdown.style.left = '180px';
+      countdown.style.top = '535px';
+      countdown.style.left = 'auto';
+      countdown.style.right = '30px';
+      countdown.style.transform = 'none';
+      countdown.style.fontSize = '28px';
       
-      // Kipp count display
+      // KippAnzahl links
       hintText.style.opacity = '1';
-      hintText.style.top = '510px';
+      hintText.style.top = '535px';
+      hintText.style.left = '30px';
+      hintText.style.transform = 'none';
       hintText.style.fontSize = '28px';
+      hintText.style.textAlign = 'left';
       hintText.innerHTML = '0 KIPPS';
       
       positionResetButton();
@@ -1918,17 +1925,11 @@
           gameCards[cardIdx].mesh.scale.set(1, 1, 1);
           kipp21Done++;
           
-          // Fade card
+          // Card kurz golden zeigen, dann unsichtbar
           const card = gameCards[cardIdx];
-          let fadeStart = performance.now();
-          function fadeOut() {
-            const t = Math.min((performance.now() - fadeStart) / 600, 1);
-            card.mesh.material.transparent = true;
-            card.mesh.material.opacity = 1 - t * 0.6;
-            card.mesh.material.needsUpdate = true;
-            if (t < 1) requestAnimationFrame(fadeOut);
-          }
-          requestAnimationFrame(fadeOut);
+          setTimeout(() => {
+            card.mesh.visible = false;
+          }, 400);
           
           hintText.innerHTML = kipp21KippCount + ' KIPPS';
           
