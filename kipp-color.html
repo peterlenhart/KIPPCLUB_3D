@@ -2120,7 +2120,7 @@
           '<div>' +
             '<div style="font-size:28px;font-weight:bold;">' + d.kniffs + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
             '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
-            (d.kniffs > 0 ? '<div style="font-size:11px;color:#e07040;opacity:0.7;">\u2013' + (d.kniffs * 3) + '% BSc</div>' : '') +
+            '<div style="font-size:10px;color:#e07040;opacity:0.7;margin-top:2px;">1 KNIFF = -3% BSc</div>' +
           '</div>' +
         '</div>' +
         
@@ -2133,10 +2133,11 @@
           '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> geschaut &amp; gez\u00f6gert' +
         '</div>' +
         
-        // Hinweis-Text
+        // Hinweis-Text (nur ab 5% gezögert)
+        (d.zoegerndPct >= 5 ?
         '<div style="font-size:18px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
           'Je z\u00fcgiger du in eine Richtung kippst, ohne HIN&amp;HER-Wippen, desto h\u00f6her werden deine HITS bewertet.' +
-        '</div>' +
+        '</div>' : '') +
         
         // Trennlinie
         '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:0 0 24px;"></div>' +
@@ -3648,7 +3649,6 @@
       fillAllCards();
       
       setButtonsDisabled(false);
-      showKniffIcons();
     }
     
     // === Spielen-Phase für Runde 2+ (ohne Reset) ===
@@ -3711,7 +3711,6 @@
       }
       
       setButtonsDisabled(false);
-      showKniffIcons();
     }
 
     actionButton.addEventListener('click', () => {
@@ -3789,6 +3788,9 @@
       document.getElementById('eyeIcon').style.display = 'none';
       document.getElementById('skipEndBtn').style.display = 'none';
       document.getElementById('entscheidungText').style.display = 'none';
+      
+      // KNIFF-Icons sofort mit Kippziel zeigen
+      showKniffIcons();
       
       // Nach 1,5s Spielphase starten
       setTimeout(() => {
