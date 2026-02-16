@@ -2456,7 +2456,9 @@
     let dragPrevDirection = 0;      // 1 = zur Zielseite, -1 = zurück, 0 = neutral
     let dragWobbleCount = 0;        // Richtungswechsel im aktuellen Drag (= Wipps intra-Drag)
     let dragMaxAngle = 0;           // Höchster Kippwinkel im aktuellen Drag (Spionage-Erkennung)
-    let spielenWipps = 0;           // Wipps gesamt (Wobbles + Zurückfaller zusammen)
+    let dragLocalPeak = 0;          // Peak-Winkel seit letzter Richtungsumkehr (für gewichtete Wipps)
+    let dragWobbleWeight = 0;       // Gewichtete Wipp-Summe im aktuellen Drag (0.0 - n.n)
+    let spielenWipps = 0;           // Wipps gesamt (gewichtet, float)
     let spielenKippsPerRound = [];  // Kipp-Anzahl pro Kippziel-Runde
     let spielenKippRichtungen = []; // CW/CCW pro Kipp in SPIELEN (Zykluswechsel-Erkennung)
     let kippzugStartTime = null;    // Erste Würfelberührung nach Kippziel-Öffnung
@@ -4650,6 +4652,8 @@
         dragPrevAngle = 0;
         dragPrevDirection = 0;
         dragWobbleCount = 0;
+        dragLocalPeak = 0;
+        dragWobbleWeight = 0;
 
         // Liegezeit für Messung (alle Phasen)
         if (lastAnyKippLandTime) {
@@ -4689,12 +4693,21 @@
       const absA = Math.abs(dragCurrentAngle);
       if (absA > dragMaxAngle) dragMaxAngle = absA;
 
-      // Wobble-Erkennung: Richtungswechsel während eines Kippzugs
+      // Wobble/Wipp-Erkennung: Richtungswechsel während eines Kippzugs
+      // Graduiertes System: Wipp-Gewicht = Rückgang vom Peak ÷ 45° (Tipping-Point)
       const angleDelta = dragCurrentAngle - dragPrevAngle;
+      if (absA > dragLocalPeak) dragLocalPeak = absA; // Peak tracken
       if (Math.abs(angleDelta) > WOBBLE_MIN_DELTA) {
         const newDir = angleDelta > 0 ? 1 : -1;
         if (dragPrevDirection !== 0 && newDir !== dragPrevDirection) {
+          // Richtungsumkehr! Rückgang vom lokalen Peak messen
+          const dropAngle = dragLocalPeak - absA;
+          if (dropAngle >= 0.087) { // ≥5° Rückgang = echtes Wippen
+            const weight = Math.min(1.0, dropAngle / (Math.PI / 4)); // normiert auf 45°
+            dragWobbleWeight += weight;
+          }
           dragWobbleCount++;
+          dragLocalPeak = absA; // Peak für nächstes Segment zurücksetzen
         }
         dragPrevDirection = newDir;
         dragPrevAngle = dragCurrentAngle;
@@ -4766,10 +4779,15 @@
       } else {
         targetAngle = 0; // Zurückfallen = WIPP
         finalQ = currentQuadrant;
-        // Wipp zählen in SPIELEN (nur wenn merklich angehoben, >5°)
+        // Gewichteter Wipp in SPIELEN (nur wenn merklich angehoben, >5°)
         if (gamePhase === 'spielen' && absAngle > 0.09) {
-          spielenWipps++;
-          currentRoundWipps++;
+          // Zurückfall-Wipp: Gewicht = Peak-Winkel ÷ 45°
+          const fallBackWeight = Math.min(1.0, dragMaxAngle / (Math.PI / 4));
+          spielenWipps += fallBackWeight;
+          currentRoundWipps += fallBackWeight;
+          // Intra-Drag Wobble-Gewichte addieren
+          spielenWipps += dragWobbleWeight;
+          currentRoundWipps += dragWobbleWeight;
           // Spionage-Erkennung: ab 10° (0.175 rad) sieht man verdeckte Zahlen
           if (dragMaxAngle > 0.175) {
             currentRoundSpionage++;
@@ -4843,9 +4861,9 @@
                 // Gesamtentscheidungszeit = Liegezeit + Kippdauer
                 spielenGesamtzeiten.push(currentKippLiegezeit + kippdauer);
               }
-              // Wipps aus Wobbles addieren (Richtungswechsel im Drag)
-              spielenWipps += dragWobbleCount;
-              currentRoundWipps += dragWobbleCount;
+              // Gewichtete Wipps aus Wobbles addieren (Hin-Her im Drag)
+              spielenWipps += dragWobbleWeight;
+              currentRoundWipps += dragWobbleWeight;
               // Zyklusrichtung speichern (CW/CCW)
               spielenKippRichtungen.push(kippDirection);
               // Vorherigen Auto-Eval-Timer löschen
