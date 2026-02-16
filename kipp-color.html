@@ -2035,16 +2035,21 @@
       const kniffAbzug = kniffsCount * 3; // Prozent
       const scoreValue = Math.max(0, Math.round(scoreBeforeKniffs * (1 - kniffAbzug / 100)));
       
-      // Zügig/Zögernd per Runde: gezögert wenn Spionage ODER Wipps ODER langsame Kippzug-Dauer
+      // Zügig/Zögernd per Runde: gezögert wenn IRGENDEIN Zöger-Signal vorliegt
       let zuegigRounds = 0;
       for (let ri = 0; ri < spielenKippsPerRound.length; ri++) {
-        const rSp = spielenSpionagePerRound[ri] || 0;
-        const rW = spielenWippsPerRound[ri] || 0;
-        const rK = spielenKippsPerRound[ri] || 1;
+        const rSp = spielenSpionagePerRound[ri] || 0;   // Spionage-Wipps
+        const rW = spielenWippsPerRound[ri] || 0;        // normale Wipps
+        const rSlow = spielenSlowKippsPerRound[ri] || 0; // langsame Kipps (>700ms)
+        const rZW = spielenZyklusWPerRound[ri] || 0;     // Richtungswechsel
+        const rK = spielenKippsPerRound[ri] || 1;        // Kipp-Anzahl
         const rD = ri < spielenKippzugDauern.length ? spielenKippzugDauern[ri] : 0;
         const avgPerKipp = rK > 0 && rD > 0 ? rD / rK : 0;
-        // Zügig = keine Spionage, keine Wipps, und schnell genug
-        if (rSp === 0 && rW === 0 && (avgPerKipp === 0 || avgPerKipp < 1500)) zuegigRounds++;
+        const mehrAls6 = rK > 6 ? 1 : 0;                // zu viele Kipps
+        
+        // Zügig NUR wenn: kein einziges Zöger-Signal
+        const gezoegert = rSp > 0 || rW > 0 || rSlow > 0 || rZW > 0 || mehrAls6 > 0 || (avgPerKipp > 0 && avgPerKipp >= 1500);
+        if (!gezoegert) zuegigRounds++;
       }
       const totalRounds = spielenKippsPerRound.length;
       const zuegigPct = totalRounds > 0 ? Math.round((zuegigRounds / totalRounds) * 100) : 100;
@@ -2629,7 +2634,7 @@
     // === KNIFF ICONS: Show/Hide ===
     function showKniffIcons() {
       // Vertikale Position = gleiche Höhe wie eyeIcon
-      const eyeTop = parseInt(timerTopPos || '553') - 34;
+      const eyeTop = parseInt(timerTopPos || '553') - 34 + 30;
       jokerRow.style.top = eyeTop + 'px';
       
       // Horizontale Positionen = exakt wie die 6 Kippziel-Kärtchen
