@@ -165,6 +165,28 @@
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
+    .eckeHaken {
+      position: absolute;
+      width: 40px; height: 40px;
+      display: none;
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 55;
+      border-radius: 6px;
+      background: rgba(20,14,8,0.6);
+      border: 2px solid rgba(212,180,140,0.5);
+      color: #cedb25;
+      font-size: 24px;
+      font-weight: bold;
+      line-height: 36px;
+      text-align: center;
+      text-shadow: 0 0 8px rgba(206,219,37,0.6);
+      animation: hakenPulse 2s ease-in-out infinite;
+    }
+    @keyframes hakenPulse {
+      0%, 100% { border-color: rgba(212,180,140,0.5); transform: scale(1); }
+      50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
+    }
     #kippTarget {
       position: absolute;
       width: 21px;
@@ -577,6 +599,10 @@
     <div id="spielZielText"></div>
     <div id="entscheidungText"></div>
     <div id="kippTarget"></div>
+    <div class="eckeHaken" id="hakenQ0">✓</div>
+    <div class="eckeHaken" id="hakenQ1">✓</div>
+    <div class="eckeHaken" id="hakenQ2">✓</div>
+    <div class="eckeHaken" id="hakenQ3">✓</div>
     <button id="auswertungBtn">AUSWERTUNG</button>
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
@@ -2080,7 +2106,8 @@
         kniffsPerRound: spielenKniffsPerRound.slice(),
         zyklusWPerRound: spielenZyklusWPerRound.slice(),
         spionagePerRound: spielenSpionagePerRound.slice(),
-        slowKippsPerRound: spielenSlowKippsPerRound.slice()
+        slowKippsPerRound: spielenSlowKippsPerRound.slice(),
+        kippdauern: spielenKippdauern.slice()
       };
       
       // hintText verstecken
@@ -2158,8 +2185,10 @@
             ' Sp=' + (d.spionagePerRound ? d.spionagePerRound[i] : '?') +
             ' Slow=' + (d.slowKippsPerRound ? d.slowKippsPerRound[i] : '?') +
             ' ZW=' + (d.zyklusWPerRound ? d.zyklusWPerRound[i] : '?') +
-            ' K=' + (d.kippsPerRound ? d.kippsPerRound[i] : '?')
+            ' K=' + (d.kippsPerRound ? d.kippsPerRound[i] : '?') +
+            ' T=' + (d.kippzugDauern && d.kippzugDauern[i] ? (d.kippzugDauern[i]/1000).toFixed(1) + 's' : '?')
           ).join('<br>') +
+          '<br>Kippdauern: ' + (d.kippdauern ? d.kippdauern.map(k => k + 'ms').join(', ') : '?') +
         '</div>' +
         
         // Neues Spiel Button zentriert
@@ -2649,6 +2678,60 @@
     } catch(e) { console.error('Joker icon setup error:', e); }
 
     // === KNIFF ICONS: Show/Hide ===
+    // === ECKE-HAKEN: Bestätigungsbuttons in den 4 Rahmenecken ===
+    const hakenEls = [
+      document.getElementById('hakenQ0'),
+      document.getElementById('hakenQ1'),
+      document.getElementById('hakenQ2'),
+      document.getElementById('hakenQ3')
+    ];
+    // 3D-Positionen der 4 Rahmenecken (auf Rahmen-Oberkante)
+    const hakenPos3D = [
+      new THREE.Vector3(-0.546875, 0.479, -0.437500), // Q0 NW
+      new THREE.Vector3( 0.546875, 0.479, -0.437500), // Q1 NE
+      new THREE.Vector3( 0.546875, 0.479,  0.658000), // Q2 SE
+      new THREE.Vector3(-0.546875, 0.479,  0.658000)  // Q3 SW
+    ];
+    
+    function positionEckeHaken() {
+      for (let i = 0; i < 4; i++) {
+        const p = hakenPos3D[i].clone().project(camera);
+        const sx = (p.x * 0.5 + 0.5) * 360 - 20; // zentriert (40px breit)
+        const sy = (-p.y * 0.5 + 0.5) * 720 - 20; // zentriert (40px hoch)
+        hakenEls[i].style.left = sx + 'px';
+        hakenEls[i].style.top = sy + 'px';
+      }
+    }
+    
+    function showEckeHaken() {
+      positionEckeHaken();
+      hakenEls.forEach(el => { el.style.display = 'block'; });
+    }
+    
+    function hideEckeHaken() {
+      hakenEls.forEach(el => { el.style.display = 'none'; });
+    }
+    
+    // Click-Handler für alle 4 Haken
+    hakenEls.forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
+        if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
+        hideEckeHaken();
+        checkKippzielTap();
+      });
+      el.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
+        if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
+        hideEckeHaken();
+        checkKippzielTap();
+      });
+    });
+
     function showKniffIcons() {
       // Vertikale Position = gleiche Höhe wie eyeIcon
       const eyeTop = parseInt(timerTopPos || '553') - 34 + 30;
@@ -3670,6 +3753,11 @@
       }
       fillAllCards();
       
+      // Hinweis: Tippe auf Kippziel wenn fertig
+      const tut1 = document.getElementById('tutorialText');
+      tut1.innerHTML = '<span style="font-size:13px;color:#d4b48c;opacity:0.8;">Wenn du mit deinem Kippzug fertig bist, tippe auf dein Kippziel.</span>';
+      tut1.style.display = 'block';
+      
       setButtonsDisabled(false);
     }
     
@@ -3731,6 +3819,11 @@
       if (erstesKippziel) {
         fillCardWithKombi(activeCardIdx, erstesKippziel.zahl, erstesKippziel.color);
       }
+      
+      // Hinweis: Tippe auf Kippziel wenn fertig
+      const tut = document.getElementById('tutorialText');
+      tut.innerHTML = '<span style="font-size:13px;color:#d4b48c;opacity:0.8;">Wenn du mit deinem Kippzug fertig bist, tippe auf dein Kippziel.</span>';
+      tut.style.display = 'block';
       
       setButtonsDisabled(false);
     }
@@ -3858,6 +3951,10 @@
           }
         } else if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
           revealVerdecktesKippziel();
+        } else if (gamePhase === 'spielen' && !kippzielChecked && kippCount > 0) {
+          // Spieler bestätigt: "Mein Kippzug ist fertig"
+          if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
+          checkKippzielTap();
         }
       }
       lastTouchPos = null;
@@ -3880,11 +3977,14 @@
           }
         } else if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
           revealVerdecktesKippziel();
+        } else if (gamePhase === 'spielen' && !kippzielChecked && kippCount > 0) {
+          if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
+          checkKippzielTap();
         }
       }
     });
     
-    // (Spielen: Freies Kippen + 500ms Auto-Eval)
+    // (Spielen: Freies Kippen + Tap auf Kippziel zum Bestätigen)
     
     // Kippziel-Check bei Tap auf Würfel
     function checkKippzielTap() {
@@ -3892,6 +3992,7 @@
       kippzielChecked = true;
       cubeLocked = true;  // Würfel gesperrt bis nächstes Kippziel
       hideKniffIcons();
+      document.getElementById('tutorialText').style.display = 'none';
       
       // Kippzug-Dauer: erste Berührung bis letztes Kipp-Landing
       if (kippzugStartTime !== null && lastKippLandTime) {
@@ -4897,7 +4998,11 @@
                   checkKippzielTap();
                 }
               }
-              autoEvalTimeout = setTimeout(tryAutoEval, LIEGEZEIT_SCHWELLE);
+              // Kein Auto-Eval nach 1s mehr: Spieler tippt auf Haken wenn fertig
+              // Safety-Fallback: nach 30s trotzdem auswerten
+              autoEvalTimeout = setTimeout(tryAutoEval, 30000);
+              // Bestätigungs-Haken in Ecken zeigen
+              showEckeHaken();
             }
 
           }
