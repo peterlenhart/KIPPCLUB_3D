@@ -1911,6 +1911,8 @@
       kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt'];
       kipp21CardDistances = [0,0,0,0,0,0];
       kipp21TimerRunning = false;
+      kipp21WobbleUsed = 0;
+      kipp21EckblickUsed = 0;
       
       gamePhase = 'kipp21';
       currentMode = 'kanten';
@@ -2041,7 +2043,32 @@
     let kipp21KniffsUsed = 0;
     let kipp21PendingCardTap = -1;
     let kipp21KniffTimeout = null;
+    let kipp21WobbleUsed = 0;
+    let kipp21EckblickUsed = 0;
+    const KNIFF_MAX_USES = 2;
     const KNIFF_SHOW_DURATION = 12000; // 12 Sekunden Showzeit
+    
+    function refreshKniffIcons() {
+      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
+      if (kniffImgs[0]) {
+        if (kipp21WobbleUsed >= KNIFF_MAX_USES) {
+          kniffImgs[0].style.display = 'none';
+        } else {
+          kniffImgs[0].style.display = ''; kniffImgs[0].style.opacity = '1'; kniffImgs[0].style.pointerEvents = 'auto';
+        }
+      }
+      if (kniffImgs[1]) {
+        if (kipp21EckblickUsed >= KNIFF_MAX_USES) {
+          kniffImgs[1].style.display = 'none';
+        } else {
+          kniffImgs[1].style.display = ''; kniffImgs[1].style.opacity = '1'; kniffImgs[1].style.pointerEvents = 'auto';
+        }
+      }
+      // Ganze Reihe verstecken wenn beide verbraucht
+      if (kipp21WobbleUsed >= KNIFF_MAX_USES && kipp21EckblickUsed >= KNIFF_MAX_USES) {
+        document.getElementById('jokerIconsRow').style.display = 'none';
+      }
+    }
     
     function kipp21NextVerdeckt() {
       for (let i = 0; i < 6; i++) {
@@ -2061,6 +2088,7 @@
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff() {
       if (kipp21KniffActive || gamePhase !== 'kipp21') return;
+      if (kipp21WobbleUsed >= KNIFF_MAX_USES) return;
       if (kipp21NextVerdeckt() < 0) return; // Kein verdecktes Ziel mehr
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
@@ -2100,9 +2128,10 @@
       kippDirection = savedDir;
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
+      kipp21WobbleUsed++;
       
-      // Joker wieder aktivieren
-      kniffImgs.forEach(img => { img.style.opacity = '1'; img.style.pointerEvents = 'auto'; });
+      // Joker-Status aktualisieren
+      refreshKniffIcons();
       
       // Ausstehenden Card-Tap oder Auto-Open
       if (kipp21PendingCardTap >= 0) {
@@ -2121,6 +2150,7 @@
     
     async function runKipp21EckblickKniff() {
       if (kipp21KniffActive || gamePhase !== 'kipp21') return;
+      if (kipp21EckblickUsed >= KNIFF_MAX_USES) return;
       if (kipp21NextVerdeckt() < 0) return;
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
@@ -2158,6 +2188,9 @@
       const relativePos = cube.position.clone().normalize();
       const targetDir = new THREE.Vector3(0, 1, 0);
       const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(relativePos, targetDir);
+      // Extra-Neigung: Südfläche ~25° zum Boden kippen (um X-Achse)
+      const tiltQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.44);
+      aufEckeQuat.multiply(tiltQuat);
       
       // Animation: auf Ecke kippen
       await new Promise(resolve => {
@@ -2225,9 +2258,10 @@
       
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
+      kipp21EckblickUsed++;
       
-      // Joker wieder aktivieren
-      kniffImgs.forEach(img => { img.style.opacity = '1'; img.style.pointerEvents = 'auto'; });
+      // Joker-Status aktualisieren
+      refreshKniffIcons();
       
       // Ausstehenden Card-Tap oder Auto-Open
       if (kipp21PendingCardTap >= 0) {
