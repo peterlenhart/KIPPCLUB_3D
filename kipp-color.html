@@ -1876,14 +1876,9 @@
       document.getElementById('jokerIconsRow').style.pointerEvents = 'auto';
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach((img, i) => {
-        if (i === 0) {
-          img.style.pointerEvents = 'auto';
-          img.style.cursor = 'pointer';
-          img.style.opacity = '1';
-        } else {
-          img.style.pointerEvents = 'none';
-          img.style.opacity = '0.4';
-        }
+        img.style.pointerEvents = 'auto';
+        img.style.cursor = 'pointer';
+        img.style.opacity = '1';
       });
       
       verdecktesMesh.visible = false;
@@ -2040,21 +2035,40 @@
       document.body.appendChild(overlay);
     }
     
-    // === KIPP KNIFF 1: Wobble-Schau (joker2.webp - linker Joker) ===
+    // === KIPP KNIFF SYSTEM (beide Joker) ===
     let kipp21KniffActive = false;
     let kipp21KniffAbort = false;
     let kipp21KniffsUsed = 0;
     let kipp21PendingCardTap = -1;
+    let kipp21KniffTimeout = null;
+    const KNIFF_SHOW_DURATION = 12000; // 12 Sekunden Showzeit
     
+    function kipp21NextVerdeckt() {
+      for (let i = 0; i < 6; i++) {
+        if (kipp21CardStates[i] === 'verdeckt') return i;
+      }
+      return -1;
+    }
+    
+    function kipp21EndKniffAndOpenCard() {
+      if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+      const next = kipp21NextVerdeckt();
+      if (next >= 0) {
+        kipp21OnCardTap(next); // öffnet verdecktes Kippziel
+      }
+    }
+    
+    // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff() {
       if (kipp21KniffActive || gamePhase !== 'kipp21') return;
+      if (kipp21NextVerdeckt() < 0) return; // Kein verdecktes Ziel mehr
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Joker-Icon abdunkeln während aktiv
+      // Beide Joker abdunkeln
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      if (kniffImgs[0]) { kniffImgs[0].style.opacity = '0.3'; kniffImgs[0].style.pointerEvents = 'none'; }
+      kniffImgs.forEach(img => { img.style.opacity = '0.3'; img.style.pointerEvents = 'none'; });
       
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
@@ -2066,7 +2080,6 @@
       const savedDir = kippDirection;
       kippDirection = 'cw';
       
-      // 3 Wobble-Kipps im Uhrzeigersinn
       for (let hw = 0; hw < 3; hw++) {
         if (gamePhase !== 'kipp21' || kipp21KniffAbort) break;
         const wobbles = 3 - hw;
@@ -2075,7 +2088,6 @@
         if (hw < 2 && !kipp21KniffAbort) await sleep(200);
       }
       
-      // Optional Extra-Wobble (nur wenn kein Abort)
       if (!kipp21KniffAbort) {
         const extra = Math.floor(Math.random() * 3);
         if (extra === 1 && gamePhase === 'kipp21') {
@@ -2085,23 +2097,148 @@
         }
       }
       
-      // Kein Return! Würfel bleibt wo er hingefallen ist.
-      
       kippDirection = savedDir;
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       
       // Joker wieder aktivieren
-      if (kniffImgs[0]) { kniffImgs[0].style.opacity = '1'; kniffImgs[0].style.pointerEvents = 'auto'; }
+      kniffImgs.forEach(img => { img.style.opacity = '1'; img.style.pointerEvents = 'auto'; });
       
-      // Ausstehenden Card-Tap verarbeiten
+      // Ausstehenden Card-Tap oder Auto-Open
       if (kipp21PendingCardTap >= 0) {
         const pending = kipp21PendingCardTap;
         kipp21PendingCardTap = -1;
         kipp21KniffAbort = false;
         kipp21OnCardTap(pending);
+      } else {
+        kipp21KniffAbort = false;
+        kipp21EndKniffAndOpenCard();
       }
+    }
+    
+    // --- KNIFF 2: Eckblick (joker3, rechts) ---
+    let eckblickPivot = null;
+    
+    async function runKipp21EckblickKniff() {
+      if (kipp21KniffActive || gamePhase !== 'kipp21') return;
+      if (kipp21NextVerdeckt() < 0) return;
+      kipp21KniffActive = true;
       kipp21KniffAbort = false;
+      kipp21PendingCardTap = -1;
+      
+      // Beide Joker abdunkeln
+      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
+      kniffImgs.forEach(img => { img.style.opacity = '0.3'; img.style.pointerEvents = 'none'; });
+      
+      // Position merken für Rückkehr
+      const savedPos = cube.position.clone();
+      const savedQuat = cube.quaternion.clone();
+      const savedQ = currentQuadrant;
+      const savedF = topFace;
+      
+      // --- Auf Ecke stellen ---
+      const cornerPos = new THREE.Vector3(0, 0, 0.109375);
+      const aufEckeDur = 1200;
+      
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(cornerPos);
+      kipGroup.add(pivotGroup);
+      
+      cube.updateMatrixWorld();
+      const cubeWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(cubeWorldPos);
+      const cubeWorldQuat = new THREE.Quaternion();
+      cube.getWorldQuaternion(cubeWorldQuat);
+      
+      kipGroup.remove(cube);
+      cube.position.copy(cubeWorldPos.clone().sub(cornerPos));
+      cube.quaternion.copy(cubeWorldQuat);
+      pivotGroup.add(cube);
+      
+      const relativePos = cube.position.clone().normalize();
+      const targetDir = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(relativePos, targetDir);
+      
+      // Animation: auf Ecke kippen
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animate() {
+          const t = Math.min((performance.now() - startTime) / aufEckeDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, ease));
+          if (t < 1) requestAnimationFrame(animate);
+          else { pivotGroup.quaternion.copy(aufEckeQuat); resolve(); }
+        }
+        animate();
+      });
+      
+      eckblickPivot = pivotGroup;
+      
+      // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
+          // Abort-Check alle 100ms
+          const checkAbort = setInterval(() => {
+            if (kipp21KniffAbort) {
+              clearInterval(checkAbort);
+              clearTimeout(kipp21KniffTimeout);
+              kipp21KniffTimeout = null;
+              resolve();
+            }
+          }, 100);
+        });
+      }
+      
+      // --- Von Ecke zurückfallen lassen ---
+      const inverseQuat = aufEckeQuat.clone().invert();
+      const fallDur = 800;
+      
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animate() {
+          const t = Math.min((performance.now() - startTime) / fallDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(new THREE.Quaternion(), ease));
+          if (t < 1) requestAnimationFrame(animate);
+          else { pivotGroup.quaternion.set(0,0,0,1); resolve(); }
+        }
+        animate();
+      });
+      
+      // Cleanup: Cube zurück in kipGroup
+      cube.updateMatrixWorld();
+      const newWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(newWorldPos);
+      const newWorldQuat = new THREE.Quaternion();
+      cube.getWorldQuaternion(newWorldQuat);
+      
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      cube.position.copy(savedPos);
+      cube.quaternion.copy(savedQuat);
+      kipGroup.add(cube);
+      
+      currentQuadrant = savedQ;
+      topFace = savedF;
+      eckblickPivot = null;
+      
+      kipp21KniffActive = false;
+      kipp21KniffsUsed++;
+      
+      // Joker wieder aktivieren
+      kniffImgs.forEach(img => { img.style.opacity = '1'; img.style.pointerEvents = 'auto'; });
+      
+      // Ausstehenden Card-Tap oder Auto-Open
+      if (kipp21PendingCardTap >= 0) {
+        const pending = kipp21PendingCardTap;
+        kipp21PendingCardTap = -1;
+        kipp21KniffAbort = false;
+        kipp21OnCardTap(pending);
+      } else {
+        kipp21KniffAbort = false;
+        kipp21EndKniffAndOpenCard();
+      }
     }
     
     // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
@@ -3255,22 +3392,35 @@
       });
     } catch(e) { console.error('Joker icon setup error:', e); }
 
-    // Click-Handler für linken Joker (Wobble-Schau KNIFF)
+    // Click-Handler für beide Joker (Wobble + Eckblick)
     (function() {
       const kniffImgs = jokerRow.querySelectorAll('img');
+      // Linker Joker (index 0) = Wobble
       if (kniffImgs[0]) {
         let kniffTouchHandled = false;
         kniffImgs[0].addEventListener('touchend', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
+          e.stopPropagation(); e.preventDefault();
           kniffTouchHandled = true;
           runKipp21WobbleKniff();
           setTimeout(() => { kniffTouchHandled = false; }, 300);
         });
         kniffImgs[0].addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
+          e.stopPropagation(); e.preventDefault();
           if (!kniffTouchHandled) runKipp21WobbleKniff();
+        });
+      }
+      // Rechter Joker (index 1) = Eckblick
+      if (kniffImgs[1]) {
+        let eckTouchHandled = false;
+        kniffImgs[1].addEventListener('touchend', (e) => {
+          e.stopPropagation(); e.preventDefault();
+          eckTouchHandled = true;
+          runKipp21EckblickKniff();
+          setTimeout(() => { eckTouchHandled = false; }, 300);
+        });
+        kniffImgs[1].addEventListener('click', (e) => {
+          e.stopPropagation(); e.preventDefault();
+          if (!eckTouchHandled) runKipp21EckblickKniff();
         });
       }
     })();
