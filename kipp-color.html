@@ -1884,7 +1884,19 @@
     // Dump recording on game end or triple-tap bottom-right
     function dumpTapRecording() {
       console.log('=== RECORDED TAPS (' + kipp21RecordedTaps.length + ') ===');
-      console.log(JSON.stringify(kipp21RecordedTaps));
+      const json = JSON.stringify(kipp21RecordedTaps);
+      console.log(json);
+      
+      // Sichtbares Overlay mit kopierbarem Text
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:20px;';
+      overlay.innerHTML = '<div style="color:#cedb25;font-size:18px;font-weight:bold;margin-bottom:10px;">' + kipp21RecordedTaps.length + ' TAPS AUFGEZEICHNET</div>' +
+        '<textarea id="tapDataArea" style="width:320px;height:500px;font-size:10px;font-family:monospace;background:#111;color:#0f0;border:1px solid #333;padding:8px;" readonly>' + json + '</textarea>' +
+        '<div style="display:flex;gap:12px;margin-top:12px;">' +
+        '<button onclick="document.getElementById(\'tapDataArea\').select();document.execCommand(\'copy\');this.textContent=\'KOPIERT!\'" style="padding:10px 24px;font-size:16px;font-weight:bold;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;">KOPIEREN</button>' +
+        '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;font-size:16px;font-weight:bold;background:#555;color:#fff;border:none;border-radius:6px;cursor:pointer;">SCHLIEßEN</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
     }
     
     function kipp21GenerateTarget(cardIdx) {
