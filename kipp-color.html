@@ -1873,7 +1873,7 @@
       document.getElementById('jokerIconsRow').style.top = '580px';
       // Linker Joker (joker2) = Wobble-Schau KNIFF - klickbar
       // Rechter Joker (joker3) = noch nicht implementiert - nicht klickbar
-      document.getElementById('jokerIconsRow').style.pointerEvents = 'none';
+      document.getElementById('jokerIconsRow').style.pointerEvents = 'auto';
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach((img, i) => {
         if (i === 0) {
@@ -2116,25 +2116,7 @@
       topFace = 'f2';
     }
     
-    // Click-Handler für linken Joker (nur touchend auf mobil)
-    (function() {
-      const imgs = document.querySelectorAll('#jokerIconsRow img');
-      if (imgs[0]) {
-        let kniffTouchHandled = false;
-        imgs[0].addEventListener('touchend', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          kniffTouchHandled = true;
-          runKipp21WobbleKniff();
-          setTimeout(() => { kniffTouchHandled = false; }, 300);
-        });
-        imgs[0].addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          if (!kniffTouchHandled) runKipp21WobbleKniff();
-        });
-      }
-    })();
+    // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
     
     function kipp21GenerateTarget(cardIdx) {
       const available = [];
@@ -3277,6 +3259,26 @@
         jokerRow.appendChild(img);
       });
     } catch(e) { console.error('Joker icon setup error:', e); }
+
+    // Click-Handler für linken Joker (Wobble-Schau KNIFF)
+    (function() {
+      const kniffImgs = jokerRow.querySelectorAll('img');
+      if (kniffImgs[0]) {
+        let kniffTouchHandled = false;
+        kniffImgs[0].addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          kniffTouchHandled = true;
+          runKipp21WobbleKniff();
+          setTimeout(() => { kniffTouchHandled = false; }, 300);
+        });
+        kniffImgs[0].addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (!kniffTouchHandled) runKipp21WobbleKniff();
+        });
+      }
+    })();
 
     // === KNIFF ICONS: Show/Hide ===
     // === ECKE-HAKEN: Bestätigungsbuttons in den 4 Rahmenecken ===
