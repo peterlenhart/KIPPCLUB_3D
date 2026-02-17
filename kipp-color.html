@@ -580,7 +580,7 @@
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
-  <div id="startOverlay" style="display:none;">
+  <div id="startOverlay">
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0.4">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0.4">TUTORIAL</button>
   </div>
@@ -1540,7 +1540,10 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
-        startKipp21();
+        document.getElementById('btnSpielen').disabled = false;
+        document.getElementById('btnSpielen').style.opacity = '1';
+        document.getElementById('btnDemo').disabled = false;
+        document.getElementById('btnDemo').style.opacity = '1';
       }
     }
 
@@ -1741,7 +1744,48 @@
     let kipp21TimerRunning = false;
     let kipp21TimerInterval = null;
     
-    function startKipp21() {
+    let kipp21WithTutorial = false;
+    let kipp21TutorialTimeout = null;
+    let kipp21TutorialLineIdx = 0;
+    
+    const KIPP21_TUTORIAL_LINES = [
+      // Wird neu befüllt
+    ];
+    
+    function showKipp21TutorialLine() {
+      const tutEl = document.getElementById('tutorialText');
+      if (!tutEl) return;
+      if (kipp21TutorialLineIdx >= KIPP21_TUTORIAL_LINES.length) {
+        tutEl.style.display = 'none';
+        return;
+      }
+      let line = KIPP21_TUTORIAL_LINES[kipp21TutorialLineIdx];
+      
+      // Replace KIPPZIEL_EXAMPLE with actual example from card 1
+      if (line === 'KIPPZIEL_EXAMPLE' && gameCards[1] && gameCards[1].zahl) {
+        const FD = { 'violett': 'Violett', 'blau': 'Blau', 'gruen': 'Grün', 'orange': 'Orange' };
+        line = gameCards[1].zahl + ' | ' + (FD[gameCards[1].color.name] || gameCards[1].color.name);
+      }
+      
+      if (line === '') {
+        tutEl.innerHTML = '&nbsp;';
+      } else {
+        tutEl.innerHTML = '<b>' + line + '</b>';
+      }
+      tutEl.style.display = 'block';
+      kipp21TutorialLineIdx++;
+      const delay = line === '' ? 800 : 2200;
+      kipp21TutorialTimeout = setTimeout(showKipp21TutorialLine, delay);
+    }
+    
+    function stopKipp21Tutorial() {
+      if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
+      const tutEl = document.getElementById('tutorialText');
+      if (tutEl) tutEl.style.display = 'none';
+    }
+    
+    function startKipp21(withTutorial) {
+      kipp21WithTutorial = !!withTutorial;
       // Hide old UI
       document.getElementById('startOverlay').style.display = 'none';
       ['instructionText','tutorialText','spielZielText','entscheidungText'].forEach(id => {
@@ -1803,7 +1847,44 @@
       hintText.style.cssText = 'position:absolute; top:535px; left:30px; right:auto; transform:none; font-size:32px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; width:auto; overflow:visible; line-height:1.2;';
       hintText.innerHTML = '0 KIPPS';
       
+      // Tutorial starten wenn gewünscht
+      if (kipp21WithTutorial) {
+        kipp21TutorialLineIdx = 0;
+        showKipp21TutorialLine();
+      }
+      
       positionResetButton();
+    }
+    
+    // === TUTORIAL TAP RECORDER ===
+    let kipp21RecordedTaps = [];
+    let kipp21RecordStart = 0;
+    
+    // Record all touches during tutorial
+    document.addEventListener('touchstart', (e) => {
+      if (!kipp21WithTutorial || gamePhase !== 'kipp21') return;
+      const t = e.touches[0];
+      const rect = document.getElementById('container').getBoundingClientRect();
+      // Normalize to 360x720 design coords
+      const x = Math.round((t.clientX - rect.left) / rect.width * 360);
+      const y = Math.round((t.clientY - rect.top) / rect.height * 720);
+      if (!kipp21RecordStart) kipp21RecordStart = performance.now();
+      const ms = Math.round(performance.now() - kipp21RecordStart);
+      kipp21RecordedTaps.push({ x, y, ms });
+      console.log('TAP #' + kipp21RecordedTaps.length + ': x=' + x + ' y=' + y + ' ms=' + ms);
+      
+      // Visueller Feedback-Dot
+      const dot = document.createElement('div');
+      dot.style.cssText = 'position:absolute;left:' + (t.clientX - 6) + 'px;top:' + (t.clientY - 6) + 'px;width:12px;height:12px;border-radius:50%;background:red;opacity:0.8;pointer-events:none;z-index:9999;transition:opacity 0.4s;';
+      document.body.appendChild(dot);
+      setTimeout(() => { dot.style.opacity = '0'; }, 200);
+      setTimeout(() => { dot.remove(); }, 600);
+    }, { passive: true });
+    
+    // Dump recording on game end or triple-tap bottom-right
+    function dumpTapRecording() {
+      console.log('=== RECORDED TAPS (' + kipp21RecordedTaps.length + ') ===');
+      console.log(JSON.stringify(kipp21RecordedTaps));
     }
     
     function kipp21GenerateTarget(cardIdx) {
@@ -1948,6 +2029,9 @@
             abtn.textContent = 'NEUES SPIEL';
             abtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%); top:' + btnScreenY + 'px; width:280px; height:49px; background:url(button_lang.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:150; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9);';
             abtn.onclick = () => { location.reload(); };
+            
+            // Dump tap recording if tutorial mode
+            if (kipp21WithTutorial) dumpTapRecording();
           }
         } else {
           // WRONG - red flash
@@ -3708,12 +3792,12 @@
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (!texturesReady) return;
       document.getElementById('startOverlay').style.display = 'none';
-      isReplay = true;
-      initSpielzielPhase();
+      startKipp21(false);
     });
     document.getElementById('btnDemo').addEventListener('click', () => {
       if (!texturesReady) return;
-      runAutoDemo();
+      document.getElementById('startOverlay').style.display = 'none';
+      startKipp21(true);
     });
     
     
