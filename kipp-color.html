@@ -1752,6 +1752,75 @@
       // Wird neu befüllt
     ];
     
+    // === TUTORIAL HAND ANIMATION ===
+    const RECORDED_TAPS = [
+      {x:249,y:607,ms:0},{x:161,y:458,ms:9402},{x:153,y:326,ms:11591},
+      {x:118,y:171,ms:12812},{x:281,y:167,ms:13714},{x:283,y:321,ms:14761},
+      {x:160,y:473,ms:16342},{x:123,y:605,ms:20992},{x:41,y:467,ms:32737},
+      {x:99,y:307,ms:37697},{x:255,y:306,ms:38415},{x:274,y:178,ms:39178},
+      {x:48,y:447,ms:40203},{x:272,y:460,ms:42697},{x:102,y:192,ms:45107},
+      {x:269,y:170,ms:46416},{x:292,y:300,ms:47287},{x:121,y:326,ms:48243},
+      {x:113,y:174,ms:49420},{x:271,y:173,ms:50213},{x:284,y:305,ms:51133},
+      {x:284,y:461,ms:52832},{x:336,y:464,ms:55929},{x:124,y:328,ms:59473},
+      {x:106,y:180,ms:60284},{x:261,y:184,ms:61078},{x:287,y:312,ms:61839},
+      {x:139,y:335,ms:62633},{x:100,y:175,ms:63377},{x:335,y:464,ms:64608},
+      {x:115,y:605,ms:67661},{x:102,y:464,ms:78392},{x:271,y:167,ms:82642},
+      {x:99,y:464,ms:84135},{x:216,y:455,ms:86679},{x:260,y:343,ms:89064},
+      {x:266,y:176,ms:90451},{x:135,y:148,ms:91463},{x:98,y:319,ms:92618},
+      {x:274,y:321,ms:93737},{x:267,y:184,ms:94590},{x:131,y:170,ms:95687},
+      {x:104,y:324,ms:96915},{x:270,y:334,ms:97829},{x:276,y:188,ms:98747},
+      {x:222,y:465,ms:100478}
+    ];
+    
+    let handEl = null;
+    let handAnimTimeout = null;
+    
+    function initHandAnimation() {
+      if (!handEl) {
+        handEl = document.createElement('img');
+        handEl.src = 'handsilber.webp';
+        handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.15s ease;';
+        document.getElementById('uiOverlay').appendChild(handEl);
+      }
+    }
+    
+    function startHandAnimation() {
+      initHandAnimation();
+      let tapIdx = 0;
+      
+      function showNextTap() {
+        if (tapIdx >= RECORDED_TAPS.length) {
+          handEl.style.opacity = '0';
+          return;
+        }
+        
+        const tap = RECORDED_TAPS[tapIdx];
+        // Tap coords sind in 360x720 Design-Space, uiOverlay ist 360px breit
+        // Fingerspitze = oben links im Bild → left/top direkt auf tap coords
+        handEl.style.left = tap.x + 'px';
+        handEl.style.top = tap.y + 'px';
+        handEl.style.opacity = '0.85';
+        
+        const holdTime = 250;
+        setTimeout(() => {
+          handEl.style.opacity = '0';
+        }, holdTime);
+        
+        tapIdx++;
+        if (tapIdx < RECORDED_TAPS.length) {
+          const gap = RECORDED_TAPS[tapIdx].ms - tap.ms;
+          handAnimTimeout = setTimeout(showNextTap, gap);
+        }
+      }
+      
+      handAnimTimeout = setTimeout(showNextTap, 500);
+    }
+    
+    function stopHandAnimation() {
+      if (handAnimTimeout) { clearTimeout(handAnimTimeout); handAnimTimeout = null; }
+      if (handEl) handEl.style.opacity = '0';
+    }
+    
     function showKipp21TutorialLine() {
       const tutEl = document.getElementById('tutorialText');
       if (!tutEl) return;
@@ -1853,6 +1922,7 @@
         kipp21RecordedTaps = [];
         kipp21RecordStart = 0;
         showKipp21TutorialLine();
+        startHandAnimation();
         
         // Sichtbaren Export-Button einblenden
         let exportBtn = document.getElementById('tapExportBtn');
@@ -2041,6 +2111,7 @@
           if (kipp21Done >= 6) {
             kipp21Active = false;
             gamePhase = 'ende';
+            stopHandAnimation();
             if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
             // Finalen Timer-Wert anzeigen
             const secsFinal = Math.floor(kipp21TotalTime / 1000);
