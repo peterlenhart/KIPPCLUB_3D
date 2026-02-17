@@ -2933,7 +2933,6 @@
       "joker1.webp",
       "joker2.webp",
       "joker3.webp",
-      "joker4.webp",
       "joker5.webp",
       "joker6.webp"
     ];
@@ -3008,14 +3007,15 @@
       const eyeTop = parseInt(timerTopPos || '553') - 34 + 30;
       jokerRow.style.top = eyeTop + 'px';
       
-      // Horizontale Positionen = exakt wie die 6 Kippziel-Kärtchen
+      // 5 Icons gleichmäßig über 360px verteilen
       const icons = jokerRow.querySelectorAll('img');
-      for (let i = 0; i < 6; i++) {
-        const cx = cardStartX + i * (cardWidth + cardGap);
-        const p = new THREE.Vector3(cx, cardY, cardZ);
-        p.project(camera);
-        const screenX = (p.x * 0.5 + 0.5) * 360;
-        icons[i].style.left = Math.round(screenX) + 'px';
+      const iconCount = icons.length;
+      const totalWidth = 360;
+      const iconW = 58;
+      const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
+      for (let i = 0; i < iconCount; i++) {
+        const x = gap + i * (iconW + gap) + iconW / 2;
+        icons[i].style.left = Math.round(x) + 'px';
       }
       
       jokerRow.style.display = 'block';
