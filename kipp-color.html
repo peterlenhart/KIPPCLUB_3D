@@ -1850,7 +1850,21 @@
       // Tutorial starten wenn gewünscht
       if (kipp21WithTutorial) {
         kipp21TutorialLineIdx = 0;
+        kipp21RecordedTaps = [];
+        kipp21RecordStart = 0;
         showKipp21TutorialLine();
+        
+        // Sichtbaren Export-Button einblenden
+        let exportBtn = document.getElementById('tapExportBtn');
+        if (!exportBtn) {
+          exportBtn = document.createElement('button');
+          exportBtn.id = 'tapExportBtn';
+          exportBtn.textContent = 'DATEN';
+          exportBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:99999;padding:8px 16px;font-size:14px;font-weight:bold;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;pointer-events:auto;';
+          exportBtn.addEventListener('click', (e) => { e.stopPropagation(); dumpTapRecording(); });
+          document.body.appendChild(exportBtn);
+        }
+        exportBtn.style.display = 'block';
       }
       
       positionResetButton();
@@ -1863,6 +1877,7 @@
     // Record all touches during tutorial
     document.addEventListener('touchstart', (e) => {
       if (!kipp21WithTutorial || gamePhase !== 'kipp21') return;
+      if (e.target.id === 'tapExportBtn') return; // Export-Button nicht aufzeichnen
       const t = e.touches[0];
       const rect = document.getElementById('container').getBoundingClientRect();
       // Normalize to 360x720 design coords
