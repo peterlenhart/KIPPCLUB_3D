@@ -1772,7 +1772,7 @@
       if (handEl) return;
       handEl = document.createElement('img');
       handEl.src = 'handsilber.webp';
-      handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.15s ease;';
+      handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.3s ease;';
       document.getElementById('uiOverlay').appendChild(handEl);
     }
     
@@ -1805,9 +1805,9 @@
       handEl.style.left = (x - 22) + 'px';
       handEl.style.top = y + 'px';
       handEl.style.opacity = '0.85';
-      await sleep(300);
+      await sleep(700);
       handEl.style.opacity = '0';
-      await sleep(200);
+      await sleep(400);
     }
     
     // Hand-Swipe animieren (von→nach in durationMs)
@@ -1816,8 +1816,9 @@
       handEl.style.left = (fromX - 22) + 'px';
       handEl.style.top = fromY + 'px';
       handEl.style.opacity = '0.85';
-      await sleep(50);
+      await sleep(200);
       await moveHand(toX, toY, dur);
+      await sleep(150);
       handEl.style.opacity = '0';
     }
     
@@ -1921,12 +1922,12 @@
       
       // Karte 0 ist jetzt offen (durch KNIFF auto-open)
       dbgLog('Karte 0: state=' + kipp21CardStates[0] + ' dist=' + kipp21CardDistances[0]);
-      await sleep(1000);
+      await sleep(1800);
       
       // Kippen + Bestätigen für Karte 0
       await replayKippAndConfirm(0, dbgLog);
       if (!replayActive) return;
-      await sleep(1200);
+      await sleep(1800);
       
       // ============================================
       // KARTEN 1 + 2: Manuell aufdecken → kippen → bestätigen
@@ -1935,7 +1936,7 @@
         if (!replayActive) break;
         await replayRevealKippConfirm(ci, dbgLog);
         if (!replayActive) break;
-        await sleep(1200);
+        await sleep(1800);
       }
       
       // ============================================
@@ -1948,12 +1949,12 @@
       if (!replayActive) return;
       
       dbgLog('Karte 3: state=' + kipp21CardStates[3] + ' dist=' + kipp21CardDistances[3]);
-      await sleep(1000);
+      await sleep(1800);
       
       // Kippen + Bestätigen für Karte 3
       await replayKippAndConfirm(3, dbgLog);
       if (!replayActive) return;
-      await sleep(1200);
+      await sleep(1800);
       
       // ============================================
       // KARTEN 4 + 5: Manuell aufdecken → kippen → bestätigen
@@ -1962,7 +1963,7 @@
         if (!replayActive) break;
         await replayRevealKippConfirm(ci, dbgLog);
         if (!replayActive) break;
-        await sleep(1200);
+        await sleep(1800);
       }
       
       // Replay fertig
@@ -1989,7 +1990,7 @@
       }
       
       dbgLog('Karte ' + ci + ': dist=' + kipp21CardDistances[ci]);
-      await sleep(1500);
+      await sleep(2200);
       
       await replayKippAndConfirm(ci, dbgLog);
     }
@@ -2017,8 +2018,8 @@
         
         dbgLog('Kipp ' + (k+1) + '/' + dist + ' ' + kippDir + ' Q' + Q);
         
-        const swipeP = handSwipe(sw.fx, sw.fy, sw.tx, sw.ty, 250);
-        await performKipp(kippDir, 500);
+        const swipeP = handSwipe(sw.fx, sw.fy, sw.tx, sw.ty, 400);
+        await performKipp(kippDir, 600);
         advanceTopFace();
         await swipeP;
         
@@ -2029,11 +2030,11 @@
         const ht = document.getElementById('hintText');
         if (ht) ht.innerHTML = kipp21KippCount + ' KIPPS';
         
-        if (k < dist - 1) await sleep(350);
+        if (k < dist - 1) await sleep(500);
       }
       
       if (!replayActive) return;
-      await sleep(500);
+      await sleep(800);
       
       // Bestätigen
       const cx = cardScreenX(ci);
@@ -2041,7 +2042,7 @@
       await handTap(cx, CONFIRM_Y);
       kipp21OnCardTap(ci); // Confirm = checkTreffer
       
-      await sleep(600);
+      await sleep(1000);
     }
     
     function stopReplay() {
