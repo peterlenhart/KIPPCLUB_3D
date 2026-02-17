@@ -1408,9 +1408,9 @@
     function updateAllFaceTextures() {
       updateFaceSlots();
       if (cubeMaterial && cubeMaterial.length === 6) {
-        cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 0);
-        cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 0);
-        cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 0);
+        cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 1);
+        cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 1);
+        cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 1);
         cube.material = cubeMaterial;
       }
     }
@@ -1778,89 +1778,154 @@
       }
     }
     
-    function designToClient(x, y) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      return {
-        clientX: rect.left + (x / 360) * rect.width,
-        clientY: rect.top + (y / 720) * rect.height
-      };
-    }
-    
-    function dispatchSyntheticTouch(type, x, y) {
-      const coords = designToClient(x, y);
-      try {
-        const touch = new Touch({
-          identifier: 0,
-          target: renderer.domElement,
-          clientX: coords.clientX,
-          clientY: coords.clientY,
-          pageX: coords.clientX + window.scrollX,
-          pageY: coords.clientY + window.scrollY
-        });
-        const evt = new TouchEvent(type, {
-          touches: type === 'touchend' ? [] : [touch],
-          changedTouches: [touch],
-          targetTouches: type === 'touchend' ? [] : [touch],
-          bubbles: true,
-          cancelable: true
-        });
-        renderer.domElement.dispatchEvent(evt);
-      } catch(e) {
-        // Fallback: MouseEvent
-        const mType = { touchstart: 'mousedown', touchmove: 'mousemove', touchend: 'mouseup' }[type];
-        const mEvt = new MouseEvent(mType, {
-          clientX: coords.clientX, clientY: coords.clientY,
-          bubbles: true, cancelable: true
-        });
-        renderer.domElement.dispatchEvent(mEvt);
+    // Gesten aus rohen Touch-Events extrahieren
+    function parseGestures(events) {
+      const gestures = [];
+      let i = 0;
+      while (i < events.length) {
+        if (events[i].t === 's') {
+          const startEv = events[i];
+          const moveEvs = [];
+          let endEv = null;
+          let j = i + 1;
+          while (j < events.length && events[j].t !== 's') {
+            if (events[j].t === 'm') moveEvs.push(events[j]);
+            if (events[j].t === 'e') { endEv = events[j]; j++; break; }
+            j++;
+          }
+          const end = endEv || moveEvs[moveEvs.length - 1] || startEv;
+          const dx = Math.abs(end.x - startEv.x);
+          const dy = Math.abs(end.y - startEv.y);
+          const isTap = (moveEvs.length <= 2 && dx < 25 && dy < 25) || (!endEv && moveEvs.length === 0);
+          gestures.push({
+            type: isTap ? 'tap' : 'swipe',
+            x: startEv.x, y: startEv.y, ms: startEv.ms,
+            moves: moveEvs, end: endEv,
+            endX: end.x, endY: end.y, endMs: end.ms
+          });
+          i = j;
+        } else { i++; }
       }
+      return gestures;
     }
     
-    function startReplay() {
+    function classifySwipe(g) {
+      const dx = g.endX - g.x;
+      const dy = g.endY - g.y;
+      if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'east' : 'west';
+      return dy > 0 ? 'south' : 'north';
+    }
+    
+    function getKippDir(swipeDir) {
+      const Q = currentQuadrant;
+      if (swipeDir === 'north') return Q === 3 ? 'north' : Q === 2 ? 'north_from_q2' : null;
+      if (swipeDir === 'south') return Q === 0 ? 'south' : Q === 1 ? 'south_from_q1' : null;
+      if (swipeDir === 'east')  return Q === 0 ? 'east'  : Q === 3 ? 'east_from_q3' : null;
+      if (swipeDir === 'west')  return Q === 1 ? 'west'  : Q === 2 ? 'west_from_q2' : null;
+      return null;
+    }
+    
+    function cardIdxFromXY(x) {
+      // 6 Karten über 360px verteilt
+      const cw = 45, gap = (360 - 6*cw)/5;
+      for (let ci = 0; ci < 6; ci++) {
+        const cx = cw/2 + ci * (cw + gap);
+        if (Math.abs(x - cx) < (cw + gap)/2) return ci;
+      }
+      return 0;
+    }
+    
+    async function startReplay() {
       initHandEl();
       replayActive = true;
-      const events = REPLAY_DATA.events;
-      let hideTimeout = null;
+      const gestures = parseGestures(REPLAY_DATA.events);
       
-      // Pre-process: find touchstarts without a matching touchend and add one
-      const augmented = [];
-      for (let i = 0; i < events.length; i++) {
-        augmented.push(events[i]);
-        if (events[i].t === 's') {
-          // Check if next event for same "gesture" is a touchend or another touchstart
-          const next = events[i + 1];
-          if (!next || next.t === 's') {
-            // Isolated touchstart (card tap) — add synthetic touchend 60ms later
-            augmented.push({ t: 'e', x: events[i].x, y: events[i].y, ms: events[i].ms + 60 });
+      // Joker-Icons während Replay ausblenden
+      const jr = document.getElementById('jokerIconsRow');
+      if (jr) jr.style.display = 'none';
+      
+      let lastMs = 0;
+      
+      for (let gi = 0; gi < gestures.length; gi++) {
+        if (!replayActive) break;
+        const g = gestures[gi];
+        
+        // Warten bis Gesten-Zeitpunkt
+        const waitMs = g.ms - lastMs;
+        if (waitMs > 0) await sleep(waitMs);
+        lastMs = g.endMs || (g.ms + 200);
+        if (!replayActive) break;
+        
+        // Hand zeigen
+        handEl.style.left = (g.x - 22) + 'px';
+        handEl.style.top = g.y + 'px';
+        handEl.style.opacity = '0.85';
+        
+        if (g.type === 'tap') {
+          // --- TAP ---
+          if (g.y > 560) {
+            // Card-Bereich unten: Karte antippen (reveal)
+            const ci = cardIdxFromXY(g.x);
+            if (ci >= 0 && kipp21CardStates[ci] !== 'erledigt') {
+              kipp21OnCardTap(ci);
+            }
+          } else if (g.y > 400) {
+            // Bestätigungs-Tap auf offene Karte — nur wenn schon gekippt wurde
+            if (kipp21RoundKipps > 0) {
+              for (let ci = 0; ci < 6; ci++) {
+                if (kipp21CardStates[ci] === 'offen') {
+                  kipp21OnCardTap(ci);
+                  break;
+                }
+              }
+            }
           }
+          await sleep(250);
+          handEl.style.opacity = '0';
+          
+        } else {
+          // --- SWIPE mit Hand-Animation ---
+          const pts = [{x:g.x, y:g.y, ms:g.ms}, ...g.moves];
+          if (g.end) pts.push(g.end);
+          
+          for (let pi = 1; pi < pts.length; pi++) {
+            if (!replayActive) break;
+            const dt = pts[pi].ms - pts[pi-1].ms;
+            if (dt > 0) await sleep(dt);
+            handEl.style.left = (pts[pi].x - 22) + 'px';
+            handEl.style.top = pts[pi].y + 'px';
+          }
+          
+          // Kipp ausführen
+          const swDir = classifySwipe(g);
+          const kDir = getKippDir(swDir);
+          
+          if (kDir) {
+            const cwDirs = ['north','east','south_from_q1','west_from_q2'];
+            kippDirection = cwDirs.includes(kDir) ? 'cw' : 'ccw';
+            
+            await performKipp(kDir, 600);
+            advanceTopFace();
+            
+            if (kipp21Active) {
+              kipp21KippCount++;
+              if (kipp21CardStates.includes('offen')) {
+                kipp21RoundKipps++;
+                if (!kipp21TimerRunning) kipp21StartRoundTimer();
+              }
+              const ht = document.getElementById('hintText');
+              if (ht) ht.innerHTML = kipp21KippCount + ' KIPPS';
+            }
+          }
+          
+          await sleep(80);
+          handEl.style.opacity = '0';
         }
       }
       
-      augmented.forEach((ev, idx) => {
-        const tid = setTimeout(() => {
-          if (!replayActive) return;
-          
-          const eventType = { s: 'touchstart', m: 'touchmove', e: 'touchend' }[ev.t];
-          
-          // Hand anzeigen/bewegen (-22px west offset)
-          if (ev.t === 's' || ev.t === 'm') {
-            handEl.style.left = (ev.x - 22) + 'px';
-            handEl.style.top = ev.y + 'px';
-            handEl.style.opacity = '0.85';
-            if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
-          }
-          if (ev.t === 'e') {
-            handEl.style.left = (ev.x - 22) + 'px';
-            handEl.style.top = ev.y + 'px';
-            hideTimeout = setTimeout(() => { if (handEl) handEl.style.opacity = '0'; }, 600);
-          }
-          
-          // Touch-Event dispatchen
-          dispatchSyntheticTouch(eventType, ev.x, ev.y);
-          
-        }, ev.ms);
-        replayTimeouts.push(tid);
-      });
+      replayActive = false;
+      if (handEl) handEl.style.opacity = '0';
+      if (jr) jr.style.display = '';
     }
     
     function stopReplay() {
@@ -2385,7 +2450,7 @@
           if (kipp21Done >= 6) {
             kipp21Active = false;
             gamePhase = 'ende';
-            stopHandAnimation();
+            stopReplay();
             if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
             // Finalen Timer-Wert anzeigen
             const secsFinal = Math.floor(kipp21TotalTime / 1000);
@@ -2403,7 +2468,6 @@
             abtn.onclick = () => { location.reload(); };
             
             // Dump tap recording if tutorial mode
-            if (kipp21WithTutorial) dumpTapRecording();
           }
         } else {
           // WRONG - red flash
