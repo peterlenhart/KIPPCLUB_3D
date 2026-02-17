@@ -1405,6 +1405,16 @@
       faceSlots.f0.slotMap = { '2,0': { val: deck[0], rot: Math.PI/2 }, '1,0': { val: deck[1], rot: Math.PI/2 }, '0,1': { val: deck[2], rot: Math.PI }, '0,2': { val: deck[3], rot: Math.PI } };
     }
 
+    function updateAllFaceTextures() {
+      updateFaceSlots();
+      if (cubeMaterial && cubeMaterial.length === 6) {
+        cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 0);
+        cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 0);
+        cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 0);
+        cube.material = cubeMaterial;
+      }
+    }
+
     function rebuildFaceMat(faceKey, alpha) {
       const f = faceSlots[faceKey];
       const newMat = mat(f.slotMap, f.imgRot, alpha);
@@ -1752,72 +1762,111 @@
       // Wird neu befüllt
     ];
     
-    // === TUTORIAL HAND ANIMATION ===
-    const RECORDED_TAPS = [
-      {x:249,y:607,ms:0},{x:161,y:458,ms:9402},{x:153,y:326,ms:11591},
-      {x:118,y:171,ms:12812},{x:281,y:167,ms:13714},{x:283,y:321,ms:14761},
-      {x:160,y:473,ms:16342},{x:123,y:605,ms:20992},{x:41,y:467,ms:32737},
-      {x:99,y:307,ms:37697},{x:255,y:306,ms:38415},{x:274,y:178,ms:39178},
-      {x:48,y:447,ms:40203},{x:272,y:460,ms:42697},{x:102,y:192,ms:45107},
-      {x:269,y:170,ms:46416},{x:292,y:300,ms:47287},{x:121,y:326,ms:48243},
-      {x:113,y:174,ms:49420},{x:271,y:173,ms:50213},{x:284,y:305,ms:51133},
-      {x:284,y:461,ms:52832},{x:336,y:464,ms:55929},{x:124,y:328,ms:59473},
-      {x:106,y:180,ms:60284},{x:261,y:184,ms:61078},{x:287,y:312,ms:61839},
-      {x:139,y:335,ms:62633},{x:100,y:175,ms:63377},{x:335,y:464,ms:64608},
-      {x:115,y:605,ms:67661},{x:102,y:464,ms:78392},{x:271,y:167,ms:82642},
-      {x:99,y:464,ms:84135},{x:216,y:455,ms:86679},{x:260,y:343,ms:89064},
-      {x:266,y:176,ms:90451},{x:135,y:148,ms:91463},{x:98,y:319,ms:92618},
-      {x:274,y:321,ms:93737},{x:267,y:184,ms:94590},{x:131,y:170,ms:95687},
-      {x:104,y:324,ms:96915},{x:270,y:334,ms:97829},{x:276,y:188,ms:98747},
-      {x:222,y:465,ms:100478}
-    ];
+    // === TUTORIAL REPLAY SYSTEM ===
+    const REPLAY_DATA = {"deck":[3,5,7,4,1,11,6,12,2,8,9,10],"targets":[{"zahl":5,"colorName":"violett","dist":4},{"zahl":10,"colorName":"orange","dist":6},{"zahl":3,"colorName":"blau","dist":3},{"zahl":7,"colorName":"gruen","dist":1},{"zahl":9,"colorName":"blau","dist":2},{"zahl":12,"colorName":"gruen","dist":5}],"events":[{"t":"s","x":261,"y":612,"ms":0},{"t":"s","x":217,"y":462,"ms":12446},{"t":"e","x":217,"y":462,"ms":12510},{"t":"s","x":148,"y":332,"ms":18349},{"t":"m","x":148,"y":332,"ms":18370},{"t":"m","x":147,"y":328,"ms":18420},{"t":"m","x":142,"y":242,"ms":18470},{"t":"m","x":167,"y":113,"ms":18503},{"t":"m","x":279,"y":-37,"ms":18553},{"t":"e","x":279,"y":-37,"ms":18558},{"t":"s","x":224,"y":469,"ms":19695},{"t":"m","x":224,"y":469,"ms":19754},{"t":"e","x":224,"y":469,"ms":19755},{"t":"s","x":123,"y":611,"ms":24974},{"t":"s","x":159,"y":461,"ms":34603},{"t":"e","x":159,"y":461,"ms":34665},{"t":"s","x":117,"y":302,"ms":42431},{"t":"m","x":124,"y":299,"ms":42457},{"t":"m","x":172,"y":291,"ms":42492},{"t":"m","x":285,"y":282,"ms":42541},{"t":"m","x":369,"y":283,"ms":42585},{"t":"e","x":369,"y":283,"ms":42586},{"t":"s","x":277,"y":318,"ms":43174},{"t":"m","x":277,"y":318,"ms":43192},{"t":"m","x":273,"y":228,"ms":43277},{"t":"m","x":297,"y":108,"ms":43332},{"t":"m","x":330,"y":48,"ms":43370},{"t":"e","x":330,"y":48,"ms":43371},{"t":"s","x":285,"y":188,"ms":43874},{"t":"m","x":277,"y":187,"ms":43946},{"t":"m","x":221,"y":183,"ms":43999},{"t":"m","x":132,"y":187,"ms":44052},{"t":"m","x":60,"y":168,"ms":44108},{"t":"e","x":60,"y":168,"ms":44110},{"t":"s","x":170,"y":468,"ms":45104},{"t":"m","x":170,"y":468,"ms":45131},{"t":"m","x":170,"y":468,"ms":45168},{"t":"e","x":170,"y":468,"ms":45170},{"t":"s","x":116,"y":613,"ms":49019},{"t":"s","x":138,"y":175,"ms":85695},{"t":"m","x":140,"y":194,"ms":85747},{"t":"m","x":144,"y":294,"ms":85796},{"t":"e","x":151,"y":415,"ms":85826},{"t":"s","x":108,"y":290,"ms":86487},{"t":"m","x":162,"y":284,"ms":86581},{"t":"m","x":303,"y":274,"ms":86646},{"t":"m","x":362,"y":279,"ms":86687},{"t":"e","x":362,"y":279,"ms":86688},{"t":"s","x":274,"y":329,"ms":87257},{"t":"m","x":266,"y":280,"ms":87319},{"t":"m","x":323,"y":18,"ms":87438},{"t":"e","x":323,"y":18,"ms":87439},{"t":"s","x":298,"y":210,"ms":87983},{"t":"m","x":295,"y":209,"ms":88038},{"t":"m","x":206,"y":185,"ms":88124},{"t":"m","x":45,"y":182,"ms":88218},{"t":"e","x":45,"y":182,"ms":88221},{"t":"s","x":43,"y":466,"ms":89374},{"t":"e","x":43,"y":466,"ms":89438},{"t":"s","x":278,"y":472,"ms":95252},{"t":"m","x":278,"y":472,"ms":95308},{"t":"e","x":278,"y":472,"ms":95310},{"t":"s","x":141,"y":181,"ms":99955},{"t":"m","x":140,"y":197,"ms":99998},{"t":"m","x":134,"y":268,"ms":100048},{"t":"m","x":151,"y":414,"ms":100098},{"t":"e","x":165,"y":453,"ms":100109},{"t":"s","x":105,"y":315,"ms":101189},{"t":"m","x":105,"y":315,"ms":101219},{"t":"m","x":369,"y":320,"ms":101415},{"t":"e","x":369,"y":320,"ms":101417},{"t":"s","x":273,"y":316,"ms":102712},{"t":"m","x":268,"y":291,"ms":102750},{"t":"m","x":281,"y":192,"ms":102805},{"t":"m","x":300,"y":125,"ms":102836},{"t":"m","x":339,"y":41,"ms":102894},{"t":"e","x":339,"y":41,"ms":102895},{"t":"s","x":286,"y":193,"ms":103783},{"t":"m","x":286,"y":193,"ms":103794},{"t":"m","x":245,"y":185,"ms":103845},{"t":"m","x":199,"y":180,"ms":103878},{"t":"m","x":92,"y":170,"ms":103964},{"t":"e","x":92,"y":170,"ms":103966},{"t":"s","x":130,"y":160,"ms":105330},{"t":"m","x":128,"y":173,"ms":105367},{"t":"m","x":145,"y":424,"ms":105483},{"t":"e","x":145,"y":424,"ms":105491},{"t":"s","x":115,"y":299,"ms":106927},{"t":"m","x":350,"y":300,"ms":107044},{"t":"e","x":350,"y":300,"ms":107053},{"t":"s","x":263,"y":341,"ms":108131},{"t":"m","x":263,"y":307,"ms":108174},{"t":"m","x":300,"y":149,"ms":108244},{"t":"m","x":333,"y":68,"ms":108288},{"t":"e","x":333,"y":68,"ms":108289},{"t":"s","x":283,"y":184,"ms":109553},{"t":"m","x":241,"y":179,"ms":109599},{"t":"m","x":109,"y":160,"ms":109694},{"t":"e","x":109,"y":160,"ms":109696},{"t":"s","x":138,"y":161,"ms":110984},{"t":"m","x":127,"y":210,"ms":111044},{"t":"m","x":141,"y":429,"ms":111150},{"t":"e","x":141,"y":429,"ms":111151},{"t":"s","x":100,"y":315,"ms":112255},{"t":"m","x":106,"y":314,"ms":112281},{"t":"m","x":249,"y":298,"ms":112358},{"t":"m","x":361,"y":301,"ms":112411},{"t":"e","x":361,"y":301,"ms":112413},{"t":"s","x":281,"y":465,"ms":113413},{"t":"m","x":281,"y":465,"ms":113417},{"t":"e","x":281,"y":465,"ms":113483},{"t":"s","x":260,"y":614,"ms":116353},{"t":"s","x":265,"y":316,"ms":134530},{"t":"m","x":265,"y":316,"ms":134574},{"t":"m","x":252,"y":255,"ms":134623},{"t":"m","x":295,"y":55,"ms":134675},{"t":"e","x":295,"y":55,"ms":134675},{"t":"s","x":264,"y":201,"ms":135434},{"t":"m","x":195,"y":179,"ms":135489},{"t":"m","x":96,"y":173,"ms":135545},{"t":"e","x":96,"y":173,"ms":135560},{"t":"s","x":131,"y":157,"ms":136199},{"t":"m","x":111,"y":239,"ms":136279},{"t":"m","x":149,"y":421,"ms":136380},{"t":"e","x":149,"y":421,"ms":136381},{"t":"s","x":112,"y":303,"ms":137045},{"t":"m","x":120,"y":304,"ms":137098},{"t":"m","x":348,"y":325,"ms":137202},{"t":"e","x":348,"y":325,"ms":137203},{"t":"s","x":273,"y":312,"ms":137922},{"t":"m","x":273,"y":312,"ms":137933},{"t":"m","x":290,"y":117,"ms":138020},{"t":"m","x":330,"y":31,"ms":138120},{"t":"e","x":330,"y":31,"ms":138120},{"t":"s","x":279,"y":191,"ms":138726},{"t":"m","x":198,"y":174,"ms":138804},{"t":"m","x":92,"y":154,"ms":138906},{"t":"e","x":92,"y":154,"ms":138907},{"t":"s","x":105,"y":467,"ms":140096},{"t":"m","x":105,"y":467,"ms":140159},{"t":"e","x":105,"y":467,"ms":140179},{"t":"s","x":339,"y":464,"ms":142642},{"t":"m","x":339,"y":464,"ms":142720},{"t":"e","x":339,"y":464,"ms":142721},{"t":"s","x":92,"y":206,"ms":154409},{"t":"m","x":96,"y":206,"ms":154428},{"t":"m","x":172,"y":194,"ms":154479},{"t":"m","x":360,"y":201,"ms":154547},{"t":"m","x":369,"y":203,"ms":154596},{"t":"e","x":369,"y":203,"ms":154596},{"t":"s","x":263,"y":161,"ms":155451},{"t":"m","x":262,"y":191,"ms":155516},{"t":"m","x":295,"y":418,"ms":155633},{"t":"e","x":295,"y":418,"ms":155634},{"t":"s","x":297,"y":295,"ms":156933},{"t":"m","x":229,"y":311,"ms":157039},{"t":"m","x":150,"y":321,"ms":157084},{"t":"m","x":76,"y":323,"ms":157171},{"t":"e","x":76,"y":323,"ms":157172},{"t":"s","x":133,"y":341,"ms":157978},{"t":"m","x":126,"y":332,"ms":158040},{"t":"m","x":188,"y":52,"ms":158173},{"t":"e","x":204,"y":21,"ms":158196},{"t":"s","x":101,"y":184,"ms":159174},{"t":"m","x":119,"y":184,"ms":159219},{"t":"m","x":232,"y":178,"ms":159276},{"t":"m","x":363,"y":191,"ms":159344},{"t":"e","x":363,"y":191,"ms":159349},{"t":"s","x":336,"y":464,"ms":160864}]};
     
     let handEl = null;
-    let handAnimTimeout = null;
+    let replayTimeouts = [];
+    let replayActive = false;
     
-    function initHandAnimation() {
+    function initHandEl() {
       if (!handEl) {
         handEl = document.createElement('img');
         handEl.src = 'handsilber.webp';
-        handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.15s ease;';
+        handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.12s ease;';
         document.getElementById('uiOverlay').appendChild(handEl);
       }
     }
     
-    function startHandAnimation() {
-      initHandAnimation();
-      let tapIdx = 0;
+    function designToClient(x, y) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      return {
+        clientX: rect.left + (x / 360) * rect.width,
+        clientY: rect.top + (y / 720) * rect.height
+      };
+    }
+    
+    function dispatchSyntheticTouch(type, x, y) {
+      const coords = designToClient(x, y);
+      try {
+        const touch = new Touch({
+          identifier: 0,
+          target: renderer.domElement,
+          clientX: coords.clientX,
+          clientY: coords.clientY,
+          pageX: coords.clientX + window.scrollX,
+          pageY: coords.clientY + window.scrollY
+        });
+        const evt = new TouchEvent(type, {
+          touches: type === 'touchend' ? [] : [touch],
+          changedTouches: [touch],
+          targetTouches: type === 'touchend' ? [] : [touch],
+          bubbles: true,
+          cancelable: true
+        });
+        renderer.domElement.dispatchEvent(evt);
+      } catch(e) {
+        // Fallback: MouseEvent
+        const mType = { touchstart: 'mousedown', touchmove: 'mousemove', touchend: 'mouseup' }[type];
+        const mEvt = new MouseEvent(mType, {
+          clientX: coords.clientX, clientY: coords.clientY,
+          bubbles: true, cancelable: true
+        });
+        renderer.domElement.dispatchEvent(mEvt);
+      }
+    }
+    
+    function startReplay() {
+      initHandEl();
+      replayActive = true;
+      const events = REPLAY_DATA.events;
+      let hideTimeout = null;
       
-      function showNextTap() {
-        if (tapIdx >= RECORDED_TAPS.length) {
-          handEl.style.opacity = '0';
-          return;
-        }
-        
-        const tap = RECORDED_TAPS[tapIdx];
-        // Tap coords sind in 360x720 Design-Space, uiOverlay ist 360px breit
-        // Fingerspitze = oben links im Bild → left/top direkt auf tap coords
-        handEl.style.left = tap.x + 'px';
-        handEl.style.top = tap.y + 'px';
-        handEl.style.opacity = '0.85';
-        
-        const holdTime = 250;
-        setTimeout(() => {
-          handEl.style.opacity = '0';
-        }, holdTime);
-        
-        tapIdx++;
-        if (tapIdx < RECORDED_TAPS.length) {
-          const gap = RECORDED_TAPS[tapIdx].ms - tap.ms;
-          handAnimTimeout = setTimeout(showNextTap, gap);
+      // Pre-process: find touchstarts without a matching touchend and add one
+      const augmented = [];
+      for (let i = 0; i < events.length; i++) {
+        augmented.push(events[i]);
+        if (events[i].t === 's') {
+          // Check if next event for same "gesture" is a touchend or another touchstart
+          const next = events[i + 1];
+          if (!next || next.t === 's') {
+            // Isolated touchstart (card tap) — add synthetic touchend 60ms later
+            augmented.push({ t: 'e', x: events[i].x, y: events[i].y, ms: events[i].ms + 60 });
+          }
         }
       }
       
-      handAnimTimeout = setTimeout(showNextTap, 500);
+      augmented.forEach((ev, idx) => {
+        const tid = setTimeout(() => {
+          if (!replayActive) return;
+          
+          const eventType = { s: 'touchstart', m: 'touchmove', e: 'touchend' }[ev.t];
+          
+          // Hand anzeigen/bewegen (-22px west offset)
+          if (ev.t === 's' || ev.t === 'm') {
+            handEl.style.left = (ev.x - 22) + 'px';
+            handEl.style.top = ev.y + 'px';
+            handEl.style.opacity = '0.85';
+            if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+          }
+          if (ev.t === 'e') {
+            handEl.style.left = (ev.x - 22) + 'px';
+            handEl.style.top = ev.y + 'px';
+            hideTimeout = setTimeout(() => { if (handEl) handEl.style.opacity = '0'; }, 600);
+          }
+          
+          // Touch-Event dispatchen
+          dispatchSyntheticTouch(eventType, ev.x, ev.y);
+          
+        }, ev.ms);
+        replayTimeouts.push(tid);
+      });
     }
     
-    function stopHandAnimation() {
-      if (handAnimTimeout) { clearTimeout(handAnimTimeout); handAnimTimeout = null; }
+    function stopReplay() {
+      replayActive = false;
+      replayTimeouts.forEach(t => clearTimeout(t));
+      replayTimeouts = [];
       if (handEl) handEl.style.opacity = '0';
     }
     
@@ -1913,6 +1962,8 @@
       kipp21TimerRunning = false;
       kipp21WobbleUsed = 0;
       kipp21EckblickUsed = 0;
+      kipp21ReplayMode = false;
+      kipp21ReplayTargetIdx = 0;
       
       gamePhase = 'kipp21';
       currentMode = 'kanten';
@@ -1925,118 +1976,20 @@
       hintText.style.cssText = 'position:absolute; top:535px; left:30px; right:auto; transform:none; font-size:32px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; width:auto; overflow:visible; line-height:1.2;';
       hintText.innerHTML = '0 KIPPS';
       
-      // Tutorial starten wenn gewünscht
+      // Tutorial = Replay starten
       if (kipp21WithTutorial) {
-        kipp21TutorialLineIdx = 0;
-        kipp21RecordedEvents = [];
-        kipp21RecordStart = 0;
-        showKipp21TutorialLine();
-        // Hand-Animation erst im Replay-Modus, nicht während Aufnahme
-        
-        // Sichtbaren Export-Button einblenden
-        let exportBtn = document.getElementById('tapExportBtn');
-        if (!exportBtn) {
-          exportBtn = document.createElement('button');
-          exportBtn.id = 'tapExportBtn';
-          exportBtn.textContent = 'DATEN';
-          exportBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:99999;padding:8px 16px;font-size:14px;font-weight:bold;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;pointer-events:auto;';
-          exportBtn.addEventListener('click', (e) => { e.stopPropagation(); dumpTapRecording(); });
-          document.body.appendChild(exportBtn);
-        }
-        exportBtn.style.display = 'block';
+        deck = REPLAY_DATA.deck.slice();
+        updateAllFaceTextures();
+        kipp21ReplayMode = true;
+        kipp21ReplayTargetIdx = 0;
+        setTimeout(() => { startReplay(); }, 800);
       }
       
       positionResetButton();
     }
     
-    // === TUTORIAL TAP RECORDER ===
-    let kipp21RecordedTaps = [];
-    let kipp21RecordStart = 0;
-    let kipp21RecordedEvents = []; // ALL touch events
-    let kipp21RecordedDeck = null;
-    let kipp21RecordedTargets = null;
-    
-    // Record ALL touch events during tutorial
-    function recNorm(touch) {
-      const rect = document.getElementById('container').getBoundingClientRect();
-      return {
-        x: Math.round((touch.clientX - rect.left) / rect.width * 360),
-        y: Math.round((touch.clientY - rect.top) / rect.height * 720)
-      };
-    }
-    
-    document.addEventListener('touchstart', (e) => {
-      if (!kipp21WithTutorial || gamePhase !== 'kipp21') return;
-      if (e.target.id === 'tapExportBtn') return;
-      const p = recNorm(e.touches[0]);
-      if (!kipp21RecordStart) kipp21RecordStart = performance.now();
-      const ms = Math.round(performance.now() - kipp21RecordStart);
-      kipp21RecordedEvents.push({ t: 's', x: p.x, y: p.y, ms });
-      console.log('S #' + kipp21RecordedEvents.length + ': ' + p.x + ',' + p.y + ' @' + ms);
-    }, { passive: true });
-    
-    let lastMoveMs = 0;
-    document.addEventListener('touchmove', (e) => {
-      if (!kipp21WithTutorial || gamePhase !== 'kipp21' || !kipp21RecordStart) return;
-      const ms = Math.round(performance.now() - kipp21RecordStart);
-      if (ms - lastMoveMs < 30) return; // Throttle: max ~33fps
-      lastMoveMs = ms;
-      const p = recNorm(e.touches[0]);
-      kipp21RecordedEvents.push({ t: 'm', x: p.x, y: p.y, ms });
-    }, { passive: true });
-    
-    document.addEventListener('touchend', (e) => {
-      if (!kipp21WithTutorial || gamePhase !== 'kipp21' || !kipp21RecordStart) return;
-      const ms = Math.round(performance.now() - kipp21RecordStart);
-      // touchend has no touches, use changedTouches
-      if (e.changedTouches && e.changedTouches.length) {
-        const p = recNorm(e.changedTouches[0]);
-        kipp21RecordedEvents.push({ t: 'e', x: p.x, y: p.y, ms });
-      } else {
-        kipp21RecordedEvents.push({ t: 'e', x: 0, y: 0, ms });
-      }
-    }, { passive: true });
-    
-    function dumpTapRecording() {
-      // Save deck state
-      kipp21RecordedDeck = deck.slice();
-      
-      // Save card targets
-      kipp21RecordedTargets = [];
-      for (let i = 0; i < 6; i++) {
-        const c = gameCards[i];
-        kipp21RecordedTargets.push({
-          zahl: c.zahl,
-          colorName: c.color ? c.color.name : null,
-          dist: kipp21CardDistances[i],
-          state: kipp21CardStates[i]
-        });
-      }
-      
-      const recording = {
-        deck: kipp21RecordedDeck,
-        targets: kipp21RecordedTargets,
-        events: kipp21RecordedEvents
-      };
-      
-      const json = JSON.stringify(recording);
-      console.log('=== FULL RECORDING ===');
-      console.log(json);
-      
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:20px;';
-      overlay.innerHTML = '<div style="color:#cedb25;font-size:16px;font-weight:bold;margin-bottom:8px;">' + 
-        kipp21RecordedEvents.length + ' EVENTS | ' + 
-        kipp21RecordedEvents.filter(e=>e.t==='s').length + ' TAPS</div>' +
-        '<textarea id="tapDataArea" style="width:320px;height:480px;font-size:8px;font-family:monospace;background:#111;color:#0f0;border:1px solid #333;padding:8px;" readonly>' + json + '</textarea>' +
-        '<div style="display:flex;gap:12px;margin-top:12px;">' +
-        '<button onclick="document.getElementById(\'tapDataArea\').select();document.execCommand(\'copy\');this.textContent=\'KOPIERT!\'" style="padding:10px 16px;font-size:14px;font-weight:bold;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;">KOPIEREN</button>' +
-        '<button onclick="var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([document.getElementById(\'tapDataArea\').value],{type:\'application/json\'}));a.download=\'recording.json\';a.click();this.textContent=\'GELADEN!\'" style="padding:10px 16px;font-size:14px;font-weight:bold;background:#4a9;color:#000;border:none;border-radius:6px;cursor:pointer;">DOWNLOAD</button>' +
-        '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;font-size:16px;font-weight:bold;background:#555;color:#fff;border:none;border-radius:6px;cursor:pointer;">SCHLIEßEN</button>' +
-        '</div>';
-      document.body.appendChild(overlay);
-    }
-    
+    // (Recording-System entfernt, Replay-Daten sind in REPLAY_DATA)
+
     // === KIPP KNIFF SYSTEM (beide Joker) ===
     let kipp21KniffActive = false;
     let kipp21KniffAbort = false;
@@ -2277,7 +2230,28 @@
     
     // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
     
+    let kipp21ReplayMode = false;
+    let kipp21ReplayTargetIdx = 0;
+    
     function kipp21GenerateTarget(cardIdx) {
+      // Im Replay-Modus: voraufgezeichnete Targets verwenden
+      if (kipp21ReplayMode && kipp21ReplayTargetIdx < REPLAY_DATA.targets.length) {
+        const rt = REPLAY_DATA.targets[kipp21ReplayTargetIdx];
+        kipp21ReplayTargetIdx++;
+        const colorObj = GAME_COLORS.find(c => c.name === rt.colorName);
+        if (!colorObj) return false;
+        fillCardWithKombi(cardIdx, rt.zahl, colorObj);
+        bereitsAusgegeben.add(rt.zahl + '_' + rt.colorName);
+        kipp21UsedDistances.push(rt.dist);
+        kipp21CardDistances[cardIdx] = rt.dist;
+        kipp21CardStates[cardIdx] = 'offen';
+        activeCardIdx = cardIdx;
+        kipp21RoundKipps = 0;
+        kipp21RoundTimerStart = null;
+        kipp21TimerRunning = false;
+        return true;
+      }
+      
       const available = [];
       for (let d = 1; d <= 6; d++) {
         if (!kipp21UsedDistances.includes(d)) available.push(d);
@@ -2958,6 +2932,7 @@
       
       // Neues Spiel Button Handler
       document.getElementById('neuesSpielBtn').addEventListener('click', () => {
+        stopReplay();
         ov.remove();
         document.getElementById('auswertungBtn').style.display = 'none';
       const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
@@ -4770,6 +4745,17 @@
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       vkRaycaster.setFromCamera(vkMouse, camera);
+      
+      // KIPP 21: Card click detection (Desktop/Replay)
+      if (gamePhase === 'kipp21' && kipp21Active) {
+        for (let ci = 0; ci < 6; ci++) {
+          if (kipp21CardStates[ci] === 'erledigt') continue;
+          if (vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
+            kipp21OnCardTap(ci);
+            return;
+          }
+        }
+      }
       
       if (!verdecktesMesh.visible) return;
       if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
