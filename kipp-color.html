@@ -1871,8 +1871,20 @@
       showKniffIcons();
       // Unterhalb von Timer/KippAnzahl (535px + 32px Schrift + Abstand)
       document.getElementById('jokerIconsRow').style.top = '580px';
+      // Linker Joker (joker2) = Wobble-Schau KNIFF - klickbar
+      // Rechter Joker (joker3) = noch nicht implementiert - nicht klickbar
       document.getElementById('jokerIconsRow').style.pointerEvents = 'none';
-      document.querySelectorAll('#jokerIconsRow img').forEach(img => img.style.pointerEvents = 'none');
+      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
+      kniffImgs.forEach((img, i) => {
+        if (i === 0) {
+          img.style.pointerEvents = 'auto';
+          img.style.cursor = 'pointer';
+          img.style.opacity = '1';
+        } else {
+          img.style.pointerEvents = 'none';
+          img.style.opacity = '0.4';
+        }
+      });
       
       verdecktesMesh.visible = false;
       
@@ -1919,10 +1931,10 @@
       // Tutorial starten wenn gewünscht
       if (kipp21WithTutorial) {
         kipp21TutorialLineIdx = 0;
-        kipp21RecordedTaps = [];
+        kipp21RecordedEvents = [];
         kipp21RecordStart = 0;
         showKipp21TutorialLine();
-        startHandAnimation();
+        // Hand-Animation erst im Replay-Modus, nicht während Aufnahme
         
         // Sichtbaren Export-Button einblenden
         let exportBtn = document.getElementById('tapExportBtn');
@@ -1943,46 +1955,186 @@
     // === TUTORIAL TAP RECORDER ===
     let kipp21RecordedTaps = [];
     let kipp21RecordStart = 0;
+    let kipp21RecordedEvents = []; // ALL touch events
+    let kipp21RecordedDeck = null;
+    let kipp21RecordedTargets = null;
     
-    // Record all touches during tutorial
+    // Record ALL touch events during tutorial
+    function recNorm(touch) {
+      const rect = document.getElementById('container').getBoundingClientRect();
+      return {
+        x: Math.round((touch.clientX - rect.left) / rect.width * 360),
+        y: Math.round((touch.clientY - rect.top) / rect.height * 720)
+      };
+    }
+    
     document.addEventListener('touchstart', (e) => {
       if (!kipp21WithTutorial || gamePhase !== 'kipp21') return;
-      if (e.target.id === 'tapExportBtn') return; // Export-Button nicht aufzeichnen
-      const t = e.touches[0];
-      const rect = document.getElementById('container').getBoundingClientRect();
-      // Normalize to 360x720 design coords
-      const x = Math.round((t.clientX - rect.left) / rect.width * 360);
-      const y = Math.round((t.clientY - rect.top) / rect.height * 720);
+      if (e.target.id === 'tapExportBtn') return;
+      const p = recNorm(e.touches[0]);
       if (!kipp21RecordStart) kipp21RecordStart = performance.now();
       const ms = Math.round(performance.now() - kipp21RecordStart);
-      kipp21RecordedTaps.push({ x, y, ms });
-      console.log('TAP #' + kipp21RecordedTaps.length + ': x=' + x + ' y=' + y + ' ms=' + ms);
-      
-      // Visueller Feedback-Dot
-      const dot = document.createElement('div');
-      dot.style.cssText = 'position:absolute;left:' + (t.clientX - 6) + 'px;top:' + (t.clientY - 6) + 'px;width:12px;height:12px;border-radius:50%;background:red;opacity:0.8;pointer-events:none;z-index:9999;transition:opacity 0.4s;';
-      document.body.appendChild(dot);
-      setTimeout(() => { dot.style.opacity = '0'; }, 200);
-      setTimeout(() => { dot.remove(); }, 600);
+      kipp21RecordedEvents.push({ t: 's', x: p.x, y: p.y, ms });
+      console.log('S #' + kipp21RecordedEvents.length + ': ' + p.x + ',' + p.y + ' @' + ms);
     }, { passive: true });
     
-    // Dump recording on game end or triple-tap bottom-right
+    let lastMoveMs = 0;
+    document.addEventListener('touchmove', (e) => {
+      if (!kipp21WithTutorial || gamePhase !== 'kipp21' || !kipp21RecordStart) return;
+      const ms = Math.round(performance.now() - kipp21RecordStart);
+      if (ms - lastMoveMs < 30) return; // Throttle: max ~33fps
+      lastMoveMs = ms;
+      const p = recNorm(e.touches[0]);
+      kipp21RecordedEvents.push({ t: 'm', x: p.x, y: p.y, ms });
+    }, { passive: true });
+    
+    document.addEventListener('touchend', (e) => {
+      if (!kipp21WithTutorial || gamePhase !== 'kipp21' || !kipp21RecordStart) return;
+      const ms = Math.round(performance.now() - kipp21RecordStart);
+      // touchend has no touches, use changedTouches
+      if (e.changedTouches && e.changedTouches.length) {
+        const p = recNorm(e.changedTouches[0]);
+        kipp21RecordedEvents.push({ t: 'e', x: p.x, y: p.y, ms });
+      } else {
+        kipp21RecordedEvents.push({ t: 'e', x: 0, y: 0, ms });
+      }
+    }, { passive: true });
+    
     function dumpTapRecording() {
-      console.log('=== RECORDED TAPS (' + kipp21RecordedTaps.length + ') ===');
-      const json = JSON.stringify(kipp21RecordedTaps);
+      // Save deck state
+      kipp21RecordedDeck = deck.slice();
+      
+      // Save card targets
+      kipp21RecordedTargets = [];
+      for (let i = 0; i < 6; i++) {
+        const c = gameCards[i];
+        kipp21RecordedTargets.push({
+          zahl: c.zahl,
+          colorName: c.color ? c.color.name : null,
+          dist: kipp21CardDistances[i],
+          state: kipp21CardStates[i]
+        });
+      }
+      
+      const recording = {
+        deck: kipp21RecordedDeck,
+        targets: kipp21RecordedTargets,
+        events: kipp21RecordedEvents
+      };
+      
+      const json = JSON.stringify(recording);
+      console.log('=== FULL RECORDING ===');
       console.log(json);
       
-      // Sichtbares Overlay mit kopierbarem Text
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:20px;';
-      overlay.innerHTML = '<div style="color:#cedb25;font-size:18px;font-weight:bold;margin-bottom:10px;">' + kipp21RecordedTaps.length + ' TAPS AUFGEZEICHNET</div>' +
-        '<textarea id="tapDataArea" style="width:320px;height:500px;font-size:10px;font-family:monospace;background:#111;color:#0f0;border:1px solid #333;padding:8px;" readonly>' + json + '</textarea>' +
+      overlay.innerHTML = '<div style="color:#cedb25;font-size:16px;font-weight:bold;margin-bottom:8px;">' + 
+        kipp21RecordedEvents.length + ' EVENTS | ' + 
+        kipp21RecordedEvents.filter(e=>e.t==='s').length + ' TAPS</div>' +
+        '<textarea id="tapDataArea" style="width:320px;height:480px;font-size:8px;font-family:monospace;background:#111;color:#0f0;border:1px solid #333;padding:8px;" readonly>' + json + '</textarea>' +
         '<div style="display:flex;gap:12px;margin-top:12px;">' +
-        '<button onclick="document.getElementById(\'tapDataArea\').select();document.execCommand(\'copy\');this.textContent=\'KOPIERT!\'" style="padding:10px 24px;font-size:16px;font-weight:bold;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;">KOPIEREN</button>' +
+        '<button onclick="document.getElementById(\'tapDataArea\').select();document.execCommand(\'copy\');this.textContent=\'KOPIERT!\'" style="padding:10px 16px;font-size:14px;font-weight:bold;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;">KOPIEREN</button>' +
+        '<button onclick="var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([document.getElementById(\'tapDataArea\').value],{type:\'application/json\'}));a.download=\'recording.json\';a.click();this.textContent=\'GELADEN!\'" style="padding:10px 16px;font-size:14px;font-weight:bold;background:#4a9;color:#000;border:none;border-radius:6px;cursor:pointer;">DOWNLOAD</button>' +
         '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;font-size:16px;font-weight:bold;background:#555;color:#fff;border:none;border-radius:6px;cursor:pointer;">SCHLIEßEN</button>' +
         '</div>';
       document.body.appendChild(overlay);
     }
+    
+    // === KIPP KNIFF 1: Wobble-Schau (joker2.webp - linker Joker) ===
+    let kipp21KniffActive = false;
+    let kipp21KniffsUsed = 0;
+    
+    async function runKipp21WobbleKniff() {
+      if (kipp21KniffActive || gamePhase !== 'kipp21') return;
+      kipp21KniffActive = true;
+      
+      // Joker-Icon abdunkeln während aktiv
+      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
+      if (kniffImgs[0]) { kniffImgs[0].style.opacity = '0.3'; kniffImgs[0].style.pointerEvents = 'none'; }
+      
+      function nextCwDir() {
+        if (currentQuadrant === 3) return 'north';
+        if (currentQuadrant === 0) return 'east';
+        if (currentQuadrant === 1) return 'south_from_q1';
+        return 'west_from_q2';
+      }
+      
+      // 3 Wobble-Kipps im Uhrzeigersinn (wie runSchauenWobbles)
+      const savedDir = kippDirection;
+      kippDirection = 'cw';
+      
+      for (let hw = 0; hw < 3; hw++) {
+        if (gamePhase !== 'kipp21') break;
+        const wobbles = 3 - hw;
+        const pause = (hw < 2) ? 300 : 100;
+        await halfKippWithWobble(nextCwDir(), wobbles, pause);
+        if (hw < 2) await sleep(200);
+      }
+      
+      // Optional Extra-Wobble (zufällig)
+      const extra = Math.floor(Math.random() * 3);
+      if (extra === 1 && gamePhase === 'kipp21') {
+        kippDirection = 'cw';
+        await sleep(300);
+        await halfKippWithWobble(nextCwDir(), 2, 100);
+      }
+      
+      // Zurück zur Startposition Q3/f2
+      await sleep(200);
+      await kipp21ReturnToStart();
+      
+      kippDirection = savedDir;
+      kipp21KniffActive = false;
+      kipp21KniffsUsed++;
+      
+      // Joker wieder aktivieren (falls noch nicht alle verbraucht)
+      if (kniffImgs[0]) { kniffImgs[0].style.opacity = '1'; kniffImgs[0].style.pointerEvents = 'auto'; }
+    }
+    
+    // Accelerated return to Q3/f2 (like existing returnToQ3 pattern)
+    async function kipp21ReturnToStart() {
+      const cwDirs = { 0: 'east', 1: 'south_from_q1', 2: 'west_from_q2', 3: 'north' };
+      let maxKipps = 12;
+      let kippsDone = 0;
+      
+      while (kippsDone < maxKipps) {
+        if (currentQuadrant === 3 && topFace === 'f2') break;
+        const t = kippsDone / Math.max(1, maxKipps - 1);
+        const dur = Math.round(350 - 230 * t);
+        const pau = Math.round(80 - 60 * t);
+        await performKipp(cwDirs[currentQuadrant], dur);
+        advanceTopFace();
+        kippsDone++;
+        if (kippsDone < maxKipps) await sleep(pau);
+      }
+      
+      // Snap exakt
+      const offset = cubeSize / 2;
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+    }
+    
+    // Click-Handler für linken Joker (nur touchend auf mobil)
+    (function() {
+      const imgs = document.querySelectorAll('#jokerIconsRow img');
+      if (imgs[0]) {
+        let kniffTouchHandled = false;
+        imgs[0].addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          kniffTouchHandled = true;
+          runKipp21WobbleKniff();
+          setTimeout(() => { kniffTouchHandled = false; }, 300);
+        });
+        imgs[0].addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (!kniffTouchHandled) runKipp21WobbleKniff();
+        });
+      }
+    })();
     
     function kipp21GenerateTarget(cardIdx) {
       const available = [];
@@ -4388,7 +4540,7 @@
     
     renderer.domElement.addEventListener('touchend', (e) => {
       // KIPP 21: Card tap detection
-      if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
+      if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive && !kipp21KniffActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rect2.left) / rect2.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
@@ -5142,7 +5294,7 @@
         return;
       }
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
-        if (isAnimating) return;
+        if (isAnimating || kipp21KniffActive) return;
         if (cubeLocked && gamePhase !== 'kipp21') return;
         e.preventDefault();
         
