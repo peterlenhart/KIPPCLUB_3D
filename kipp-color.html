@@ -2042,11 +2042,15 @@
     
     // === KIPP KNIFF 1: Wobble-Schau (joker2.webp - linker Joker) ===
     let kipp21KniffActive = false;
+    let kipp21KniffAbort = false;
     let kipp21KniffsUsed = 0;
+    let kipp21PendingCardTap = -1;
     
     async function runKipp21WobbleKniff() {
       if (kipp21KniffActive || gamePhase !== 'kipp21') return;
       kipp21KniffActive = true;
+      kipp21KniffAbort = false;
+      kipp21PendingCardTap = -1;
       
       // Joker-Icon abdunkeln während aktiv
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
@@ -2059,61 +2063,45 @@
         return 'west_from_q2';
       }
       
-      // 3 Wobble-Kipps im Uhrzeigersinn (wie runSchauenWobbles)
       const savedDir = kippDirection;
       kippDirection = 'cw';
       
+      // 3 Wobble-Kipps im Uhrzeigersinn
       for (let hw = 0; hw < 3; hw++) {
-        if (gamePhase !== 'kipp21') break;
+        if (gamePhase !== 'kipp21' || kipp21KniffAbort) break;
         const wobbles = 3 - hw;
         const pause = (hw < 2) ? 300 : 100;
         await halfKippWithWobble(nextCwDir(), wobbles, pause);
-        if (hw < 2) await sleep(200);
+        if (hw < 2 && !kipp21KniffAbort) await sleep(200);
       }
       
-      // Optional Extra-Wobble (zufällig)
-      const extra = Math.floor(Math.random() * 3);
-      if (extra === 1 && gamePhase === 'kipp21') {
-        kippDirection = 'cw';
-        await sleep(300);
-        await halfKippWithWobble(nextCwDir(), 2, 100);
+      // Optional Extra-Wobble (nur wenn kein Abort)
+      if (!kipp21KniffAbort) {
+        const extra = Math.floor(Math.random() * 3);
+        if (extra === 1 && gamePhase === 'kipp21') {
+          kippDirection = 'cw';
+          await sleep(300);
+          if (!kipp21KniffAbort) await halfKippWithWobble(nextCwDir(), 2, 100);
+        }
       }
       
-      // Zurück zur Startposition Q3/f2
-      await sleep(200);
-      await kipp21ReturnToStart();
+      // Kein Return! Würfel bleibt wo er hingefallen ist.
       
       kippDirection = savedDir;
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       
-      // Joker wieder aktivieren (falls noch nicht alle verbraucht)
+      // Joker wieder aktivieren
       if (kniffImgs[0]) { kniffImgs[0].style.opacity = '1'; kniffImgs[0].style.pointerEvents = 'auto'; }
-    }
-    
-    // Accelerated return to Q3/f2 (like existing returnToQ3 pattern)
-    async function kipp21ReturnToStart() {
-      const cwDirs = { 0: 'east', 1: 'south_from_q1', 2: 'west_from_q2', 3: 'north' };
-      let maxKipps = 12;
-      let kippsDone = 0;
       
-      while (kippsDone < maxKipps) {
-        if (currentQuadrant === 3 && topFace === 'f2') break;
-        const t = kippsDone / Math.max(1, maxKipps - 1);
-        const dur = Math.round(350 - 230 * t);
-        const pau = Math.round(80 - 60 * t);
-        await performKipp(cwDirs[currentQuadrant], dur);
-        advanceTopFace();
-        kippsDone++;
-        if (kippsDone < maxKipps) await sleep(pau);
+      // Ausstehenden Card-Tap verarbeiten
+      if (kipp21PendingCardTap >= 0) {
+        const pending = kipp21PendingCardTap;
+        kipp21PendingCardTap = -1;
+        kipp21KniffAbort = false;
+        kipp21OnCardTap(pending);
       }
-      
-      // Snap exakt
-      const offset = cubeSize / 2;
-      cube.position.set(-offset, offset, 0.109375 + offset);
-      cube.quaternion.set(0, 0, 0, 1);
-      currentQuadrant = 3;
-      topFace = 'f2';
+      kipp21KniffAbort = false;
     }
     
     // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
@@ -2201,6 +2189,13 @@
     function kipp21OnCardTap(cardIdx) {
       if (!kipp21Active) return;
       if (cardIdx < 0 || cardIdx >= 6) return;
+      
+      // Wobble-KNIFF abbrechen wenn aktiv — Tap wird nach Fall verarbeitet
+      if (kipp21KniffActive) {
+        kipp21KniffAbort = true;
+        kipp21PendingCardTap = cardIdx;
+        return;
+      }
       
       const state = kipp21CardStates[cardIdx];
       
@@ -4542,7 +4537,7 @@
     
     renderer.domElement.addEventListener('touchend', (e) => {
       // KIPP 21: Card tap detection
-      if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive && !kipp21KniffActive) {
+      if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rect2.left) / rect2.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
