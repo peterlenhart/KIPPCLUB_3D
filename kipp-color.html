@@ -1881,7 +1881,6 @@
     async function startReplay() {
       initHandEl();
       replayActive = true;
-      console.log('[REPLAY] START');
       
       // Debug-Display
       let dbg = document.getElementById('replayDbg');
@@ -1893,90 +1892,156 @@
       }
       function dbgLog(msg) { console.log('[REPLAY] '+msg); if(dbg) dbg.textContent = msg; }
       
-      // Joker-Icons während Replay ausblenden
+      // Joker-Icons sichtbar aber nicht klickbar durch User
       const jr = document.getElementById('jokerIconsRow');
-      if (jr) jr.style.display = 'none';
+      if (jr) jr.style.pointerEvents = 'none';
       
-      // Initiale Wartezeit
-      dbgLog('Warte 1.2s...');
+      // KNIFF-Icon-Positionen berechnen (2 Icons in 360px)
+      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
+      const wobbleIconX = kniffImgs[0] ? parseInt(kniffImgs[0].style.left) : 110;
+      const eckblickIconX = kniffImgs[1] ? parseInt(kniffImgs[1].style.left) : 250;
+      const kniffIconY = 609; // Mitte der 58px-Icons bei top:580px
+      
+      await sleep(1200);
+      dbgLog('Eckblick KNIFF starten...');
+      
+      // ============================================
+      // PHASE 1: ECKBLICK KNIFF → öffnet Karte 0 automatisch
+      // ============================================
+      await handTap(eckblickIconX, kniffIconY);
+      const eckblickP = runKipp21EckblickKniff();
+      // Nach 5s abbrechen (statt volle 12s warten)
+      await sleep(5000);
+      if (replayActive) {
+        dbgLog('Eckblick abbrechen → Karte öffnet...');
+        kipp21KniffAbort = true;
+      }
+      await eckblickP;
+      if (!replayActive) return;
+      
+      // Karte 0 ist jetzt offen (durch KNIFF auto-open)
+      dbgLog('Karte 0: state=' + kipp21CardStates[0] + ' dist=' + kipp21CardDistances[0]);
+      await sleep(1000);
+      
+      // Kippen + Bestätigen für Karte 0
+      await replayKippAndConfirm(0, dbgLog);
+      if (!replayActive) return;
       await sleep(1200);
       
-      // 6 Karten durchspielen
-      for (let ci = 0; ci < 6; ci++) {
+      // ============================================
+      // KARTEN 1 + 2: Manuell aufdecken → kippen → bestätigen
+      // ============================================
+      for (let ci = 1; ci <= 2; ci++) {
         if (!replayActive) break;
-        console.log('[REPLAY] Card', ci, 'state:', kipp21CardStates[ci], 'kipp21Active:', kipp21Active);
-        dbgLog('Karte '+ci+' aufdecken...');
-        
-        // 1. KARTE AUFDECKEN — Hand tippt auf Karte
-        const cx = cardScreenX(ci);
-        await handTap(cx, CARD_Y);
-        kipp21OnCardTap(ci);  // Reveal
-        console.log('[REPLAY] After reveal ci='+ci, 'state:', kipp21CardStates[ci], 'dist:', kipp21CardDistances[ci]);
-        dbgLog('Karte '+ci+': state='+kipp21CardStates[ci]+' dist='+kipp21CardDistances[ci]);
+        await replayRevealKippConfirm(ci, dbgLog);
         if (!replayActive) break;
-        
-        // Kurze Denkpause
-        await sleep(1800);
+        await sleep(1200);
+      }
+      
+      // ============================================
+      // PHASE 2: WOBBLE KNIFF → öffnet Karte 3 automatisch
+      // ============================================
+      if (!replayActive) return;
+      dbgLog('Wobble KNIFF starten...');
+      await handTap(wobbleIconX, kniffIconY);
+      await runKipp21WobbleKniff(); // Wobble ist kürzer, kein Abort nötig
+      if (!replayActive) return;
+      
+      dbgLog('Karte 3: state=' + kipp21CardStates[3] + ' dist=' + kipp21CardDistances[3]);
+      await sleep(1000);
+      
+      // Kippen + Bestätigen für Karte 3
+      await replayKippAndConfirm(3, dbgLog);
+      if (!replayActive) return;
+      await sleep(1200);
+      
+      // ============================================
+      // KARTEN 4 + 5: Manuell aufdecken → kippen → bestätigen
+      // ============================================
+      for (let ci = 4; ci <= 5; ci++) {
         if (!replayActive) break;
-        
-        // 2. KIPPEN — Distanz und Richtung bestimmen
-        const dist = kipp21CardDistances[ci];
-        if (!dist || dist <= 0) {
-          console.warn('[REPLAY] No valid dist for card', ci, '— skipping');
-          continue;
-        }
-        const dir = findKippDir(dist);
-        console.log('[REPLAY] Kipping', dist, 'times dir='+dir, 'from Q'+currentQuadrant, topFace);
-        dbgLog('Karte '+ci+': '+dist+'x kippen '+dir+' ab Q'+currentQuadrant);
-        
-        for (let k = 0; k < dist; k++) {
-          if (!replayActive) break;
-          
-          const Q = currentQuadrant;
-          const kippDir = (dir === 'cw') ? CW_KIPP_DIR[Q] : CCW_KIPP_DIR[Q];
-          const sw = (dir === 'cw') ? CW_SWIPE[Q] : CCW_SWIPE[Q];
-          kippDirection = dir;
-          
-          // Hand-Swipe zeigen und gleichzeitig kippen
-          console.log('[REPLAY] Kipp', k+1, '/', dist, 'dir='+kippDir, 'Q='+Q, 'isAnimating='+isAnimating);
-          dbgLog('Kipp '+(k+1)+'/'+dist+' '+kippDir+' Q'+Q+' anim='+isAnimating);
-          const swipeP = handSwipe(sw.fx, sw.fy, sw.tx, sw.ty, 250);
-          await performKipp(kippDir, 500);
-          advanceTopFace();
-          await swipeP;
-          
-          // Kipp-Zähler aktualisieren
-          kipp21KippCount++;
-          kipp21RoundKipps++;
-          if (!kipp21TimerRunning) kipp21StartRoundTimer();
-          const ht = document.getElementById('hintText');
-          if (ht) ht.innerHTML = kipp21KippCount + ' KIPPS';
-          
-          // Kurze Pause zwischen Kipps
-          if (k < dist - 1) await sleep(400);
-        }
-        
+        await replayRevealKippConfirm(ci, dbgLog);
         if (!replayActive) break;
-        await sleep(600);
-        
-        // 3. BESTÄTIGEN — Hand tippt auf Karte (Confirm)
-        console.log('[REPLAY] Confirming card', ci, 'state:', kipp21CardStates[ci], 'Q='+currentQuadrant, topFace);
-        dbgLog('Karte '+ci+' bestätigen: state='+kipp21CardStates[ci]+' Q'+currentQuadrant+' '+topFace);
-        await handTap(cx, CONFIRM_Y);
-        kipp21OnCardTap(ci);  // Confirm = checkTreffer
-        if (!replayActive) break;
-        
-        // Warten bevor nächste Karte
-        await sleep(1500);
+        await sleep(1200);
       }
       
       // Replay fertig
       replayActive = false;
       if (handEl) handEl.style.opacity = '0';
-      if (jr) jr.style.display = '';
+      if (jr) jr.style.pointerEvents = 'auto';
       console.log('[REPLAY] DONE');
       if (dbg) dbg.textContent = 'Replay fertig!';
       setTimeout(() => { if(dbg) dbg.style.display = 'none'; }, 3000);
+    }
+    
+    // Hilfsfunktion: Karte manuell aufdecken → kippen → bestätigen
+    async function replayRevealKippConfirm(ci, dbgLog) {
+      if (!replayActive) return;
+      const cx = cardScreenX(ci);
+      
+      dbgLog('Karte ' + ci + ' aufdecken...');
+      await handTap(cx, CARD_Y);
+      kipp21OnCardTap(ci); // Reveal
+      
+      if (!replayActive || kipp21CardStates[ci] !== 'offen') {
+        dbgLog('Karte ' + ci + ': Reveal fehlgeschlagen, state=' + kipp21CardStates[ci]);
+        return;
+      }
+      
+      dbgLog('Karte ' + ci + ': dist=' + kipp21CardDistances[ci]);
+      await sleep(1500);
+      
+      await replayKippAndConfirm(ci, dbgLog);
+    }
+    
+    // Hilfsfunktion: Kippen + Bestätigen für eine offene Karte
+    async function replayKippAndConfirm(ci, dbgLog) {
+      if (!replayActive) return;
+      
+      const dist = kipp21CardDistances[ci];
+      if (!dist || dist <= 0) {
+        dbgLog('Karte ' + ci + ': keine Distanz!');
+        return;
+      }
+      
+      const dir = findKippDir(dist);
+      dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' ab Q' + currentQuadrant);
+      
+      for (let k = 0; k < dist; k++) {
+        if (!replayActive) break;
+        
+        const Q = currentQuadrant;
+        const kippDir = (dir === 'cw') ? CW_KIPP_DIR[Q] : CCW_KIPP_DIR[Q];
+        const sw = (dir === 'cw') ? CW_SWIPE[Q] : CCW_SWIPE[Q];
+        kippDirection = dir;
+        
+        dbgLog('Kipp ' + (k+1) + '/' + dist + ' ' + kippDir + ' Q' + Q);
+        
+        const swipeP = handSwipe(sw.fx, sw.fy, sw.tx, sw.ty, 250);
+        await performKipp(kippDir, 500);
+        advanceTopFace();
+        await swipeP;
+        
+        // Kipp-Zähler
+        kipp21KippCount++;
+        kipp21RoundKipps++;
+        if (!kipp21TimerRunning) kipp21StartRoundTimer();
+        const ht = document.getElementById('hintText');
+        if (ht) ht.innerHTML = kipp21KippCount + ' KIPPS';
+        
+        if (k < dist - 1) await sleep(350);
+      }
+      
+      if (!replayActive) return;
+      await sleep(500);
+      
+      // Bestätigen
+      const cx = cardScreenX(ci);
+      dbgLog('Karte ' + ci + ' bestätigen Q' + currentQuadrant + ' ' + topFace);
+      await handTap(cx, CONFIRM_Y);
+      kipp21OnCardTap(ci); // Confirm = checkTreffer
+      
+      await sleep(600);
     }
     
     function stopReplay() {
