@@ -163,6 +163,41 @@
       animation: eyePulse 1.5s ease-in-out infinite;
     }
     @keyframes eyePulse {
+
+    @keyframes splashPop {
+      0%   { transform: scale(0); opacity: 0; }
+      50%  { transform: scale(1.3); opacity: 1; }
+      70%  { transform: scale(0.9); }
+      85%  { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes splashSlam {
+      0%   { transform: translateY(-60px) scale(1.8); opacity: 0; }
+      60%  { transform: translateY(5px) scale(1); opacity: 1; }
+      80%  { transform: translateY(-3px); }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes splashGlow {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.8); }
+      50%      { text-shadow: 0 0 40px rgba(255,255,255,0.7), 0 0 80px rgba(200,220,255,0.3), 0 4px 8px rgba(0,0,0,0.8); }
+    }
+    @keyframes splashFadeUp {
+      0%   { transform: translateY(30px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    #introSplash {
+      position: absolute; top: 0; left: 0; width: 360px; height: 720px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 500; pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+    }
+    #introSplash .splash-line {
+      font-weight: 900; letter-spacing: 2px;
+      background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 30%, #b0b0b0 70%, #d0d0d0 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 15px rgba(255,255,255,0.2));
+      opacity: 0;
+    }
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
@@ -1942,7 +1977,7 @@
     // --- Kipp-Zähler aktualisieren ---
     function formatKipps(n) {
       const s = n < 10 ? '0' + n : '' + n;
-      return '<span style="font-size:28px">' + s + '</span> <span style="font-size:18px">K</span>';
+      return '<span style="font-size:28px;line-height:28px">' + s + '</span><span style="font-size:18px;vertical-align:baseline"> K</span>';
     }
     
     function replayUpdateKippCount() {
@@ -2406,10 +2441,10 @@
       
       // Timer mittig G|H
       countdown.textContent = '0:00';
-      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:1.0;';
+      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; height:28px; line-height:28px; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:1.0;';
       
       // KippAnzahl mittig A|B
-      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.0;';
+      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-weight:bold; height:28px; line-height:28px; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.0;';
       hintText.innerHTML = formatKipps(0);
       
       // Tutorial = Geskriptetes Demo starten
@@ -2616,9 +2651,12 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Beide Joker abdunkeln
+      // Nur das verwendete Icon ausblenden, andere bleiben
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      kniffImgs.forEach(img => { img.style.opacity = '0.3'; img.style.pointerEvents = 'none'; });
+      kniffImgs.forEach(img => {
+        img.style.pointerEvents = 'none';
+        if (img.dataset.kniffIdx === '0') img.style.opacity = '0';
+      });
       
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
@@ -2679,9 +2717,12 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Beide Joker abdunkeln
+      // Nur das verwendete Icon ausblenden, andere bleiben
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      kniffImgs.forEach(img => { img.style.opacity = '0.3'; img.style.pointerEvents = 'none'; });
+      kniffImgs.forEach(img => {
+        img.style.pointerEvents = 'none';
+        if (img.dataset.kniffIdx === '1') img.style.opacity = '0';
+      });
       
       // Position merken für Rückkehr
       const savedPos = cube.position.clone();
@@ -4381,6 +4422,76 @@
       card.mesh.visible = true;
     }
 
+    // === INTRO SPLASH: "21 KIPPS unter 21 Sek." ===
+    async function showIntroSplash() {
+      // 3D-Szene abdunkeln
+      renderer.domElement.style.transition = 'opacity 0.4s ease';
+      renderer.domElement.style.opacity = '0.5';
+      
+      // Splash erstellen
+      const splash = document.createElement('div');
+      splash.id = 'introSplash';
+      
+      const line1 = document.createElement('div');
+      line1.className = 'splash-line';
+      line1.style.fontSize = '120px';
+      line1.style.lineHeight = '1.0';
+      line1.textContent = '21';
+      
+      const line2 = document.createElement('div');
+      line2.className = 'splash-line';
+      line2.style.fontSize = '42px';
+      line2.style.marginTop = '-8px';
+      line2.style.letterSpacing = '8px';
+      line2.textContent = 'KIPPS';
+      
+      const line3 = document.createElement('div');
+      line3.className = 'splash-line';
+      line3.style.fontSize = '26px';
+      line3.style.marginTop = '24px';
+      line3.style.fontWeight = '400';
+      line3.style.letterSpacing = '4px';
+      line3.textContent = 'unter';
+      
+      const line4 = document.createElement('div');
+      line4.className = 'splash-line';
+      line4.style.fontSize = '72px';
+      line4.style.marginTop = '4px';
+      line4.textContent = '21 Sek.';
+      
+      splash.appendChild(line1);
+      splash.appendChild(line2);
+      splash.appendChild(line3);
+      splash.appendChild(line4);
+      document.getElementById('uiOverlay').appendChild(splash);
+      
+      // Sequenz: Zeile für Zeile reinknallen
+      await sleep(300);
+      line1.style.animation = 'splashPop 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      await sleep(600);
+      line1.style.animation = 'splashPop 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards, splashGlow 2s ease-in-out infinite';
+      
+      line2.style.animation = 'splashSlam 0.5s cubic-bezier(0.22,1,0.36,1) forwards';
+      await sleep(700);
+      
+      line3.style.animation = 'splashFadeUp 0.5s ease-out forwards';
+      await sleep(400);
+      
+      line4.style.animation = 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      await sleep(600);
+      line4.style.animation = 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards, splashGlow 2s ease-in-out infinite 0.3s';
+      
+      // Stehen lassen
+      await sleep(2200);
+      
+      // Ausblenden
+      splash.style.transition = 'opacity 0.6s ease';
+      splash.style.opacity = '0';
+      renderer.domElement.style.opacity = '1';
+      await sleep(700);
+      splash.remove();
+    }
+
     // === MAIN AUTO-DEMO ORCHESTRATOR ===
     async function runAutoDemo() {
       autoDemoActive = true;
@@ -4388,6 +4499,10 @@
 
       // Hide start overlay
       document.getElementById('startOverlay').style.display = 'none';
+
+      // === DRAMATIC INTRO SPLASH ===
+      await showIntroSplash();
+      if (!autoDemoActive) return;
 
       // Stop any lingering timers/animations from previous runs
       stopCountdown();
