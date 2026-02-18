@@ -1773,177 +1773,116 @@
     const CW_KIPP = {3:'north', 0:'east', 1:'south_from_q1', 2:'west_from_q2'};
     const CCW_KIPP = {3:'east_from_q3', 0:'south', 1:'west', 2:'north_from_q2'};
     
+    // 3D-Schatten für Hand (folgt der 2D-Hand-Position)
+    let handShadowMesh = null;
+    function initHandShadow() {
+      if (handShadowMesh) return;
+      const shGeo = new THREE.PlaneGeometry(0.22, 0.33);
+      const shMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false });
+      handShadowMesh = new THREE.Mesh(shGeo, shMat);
+      handShadowMesh.rotation.x = -Math.PI / 2;
+      handShadowMesh.renderOrder = 50;
+      scene.add(handShadowMesh);
+    }
+    function updateHandShadow(screenX, screenY, visible) {
+      if (!handShadowMesh) return;
+      if (!visible) { handShadowMesh.material.opacity = 0; return; }
+      // Screen → 3D auf Bodenhöhe (Y=0.002)
+      const ndc = new THREE.Vector3((screenX / 360) * 2 - 1, -(screenY / 720) * 2 + 1, 0.5);
+      ndc.unproject(camera);
+      const dir = ndc.sub(camera.position).normalize();
+      const t = (0.002 - camera.position.y) / dir.y;
+      const hit = camera.position.clone().add(dir.multiplyScalar(t));
+      handShadowMesh.position.set(hit.x, 0.002, hit.z);
+      handShadowMesh.material.opacity = 0.35;
+    }
+    
     function initHandEl() {
       if (handEl) return;
-      
-      // Textur laden
-      const handTex = new THREE.TextureLoader().load('handsilber.webp');
-      handTex.colorSpace = THREE.SRGBColorSpace;
-      
-      // PlaneGeometry (284x426 Aspekt = 1:1.5)
-      const handW = 0.28;
-      const handH = handW * 1.5;
-      const handGeo = new THREE.PlaneGeometry(handW, handH);
-      
-      // Material mit Transparenz
-      const handMat = new THREE.MeshStandardMaterial({
-        map: handTex,
-        transparent: true,
-        alphaTest: 0.1,
-        side: THREE.DoubleSide,
-        roughness: 0.5,
-        metalness: 0.3,
-        depthWrite: true
-      });
-      
-      handEl = new THREE.Mesh(handGeo, handMat);
-      handEl.castShadow = true;
-      handEl.receiveShadow = false;
-      
-      // Alpha-aware Shadow: Schlagschatten folgt der Handform
-      const depthMat = new THREE.MeshDepthMaterial({
-        depthPacking: THREE.RGBADepthPacking,
-        map: handTex,
-        alphaTest: 0.5
-      });
-      handEl.customDepthMaterial = depthMat;
-      
-      // Orientation: fast horizontal, 25° zur Kamera geneigt
-      // Fingerspitze zeigt Richtung -Z (Nord)
-      handEl.rotation.x = -Math.PI / 2 + 0.44;
-      
-      handEl.visible = false;
-      handEl.renderOrder = 100;
-      
-      // Fingerspitzen-Offset: Spitze ist am oberen Bildrand (image top)
-      // PlaneGeometry ist mittig → Spitze bei localY = +handH/2
-      // Wir verschieben die Geometrie so, dass die Fingerspitze am Pivot liegt
-      handGeo.translate(0, -handH / 2 + 0.04, 0); // Spitze ≈ am Pivot
-      
-      scene.add(handEl);
+      handEl = document.createElement('img');
+      handEl.src = 'handsilber.webp';
+      handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.25s ease;';
+      document.getElementById('uiOverlay').appendChild(handEl);
+      initHandShadow();
     }
     
-    // --- 3D Position setzen (Fingerspitze auf Zielposition) ---
-    function setHand3D(x, y, z) {
+    function setHandPos(x, y) {
       if (!handEl) return;
-      handEl.position.set(x, y, z);
+      handEl.style.left = Math.round(x - 23) + 'px';
+      handEl.style.top = Math.round(y) + 'px';
+      updateHandShadow(x, y, parseFloat(handEl.style.opacity) > 0);
     }
     
-    // --- Ein-/Ausblenden ---
-    function showHand3D() {
-      if (!handEl) return;
-      handEl.visible = true;
-    }
-    function hideHand3D() {
-      if (!handEl) return;
-      handEl.visible = false;
+    function dbgLog(msg) {
+      console.log('[REPLAY] ' + msg);
+      if (replayDbg) replayDbg.textContent = msg;
     }
     
-    // --- Smooth easeInOut 3D-Bewegung ---
-    function moveHand3D(target, durMs) {
+    // --- Smooth easeInOut Bewegung ---
+    function moveHandSmooth(toX, toY, durMs) {
       return new Promise(resolve => {
-        if (!handEl || !replayActive) { resolve(); return; }
-        const sx = handEl.position.x, sy = handEl.position.y, sz = handEl.position.z;
+        const sx = parseInt(handEl.style.left) + 23;
+        const sy = parseInt(handEl.style.top);
         const startT = performance.now();
         function tick() {
-          if (!replayActive) { setHand3D(target.x, target.y, target.z); resolve(); return; }
+          if (!replayActive) { setHandPos(toX, toY); resolve(); return; }
           const t = Math.min((performance.now() - startT) / durMs, 1);
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          setHand3D(
-            sx + (target.x - sx) * e,
-            sy + (target.y - sy) * e,
-            sz + (target.z - sz) * e
-          );
+          setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
           if (t < 1) requestAnimationFrame(tick);
-          else { setHand3D(target.x, target.y, target.z); resolve(); }
+          else { setHandPos(toX, toY); resolve(); }
         }
         requestAnimationFrame(tick);
       });
     }
     
-    // --- Screen-Koordinaten → 3D Punkt auf horizontaler Ebene bei planeY ---
-    function screenTo3D(screenX, screenY, planeY) {
-      const ndc = new THREE.Vector3(
-        (screenX / 360) * 2 - 1,
-        -(screenY / 720) * 2 + 1,
-        0.5
-      );
-      ndc.unproject(camera);
-      const dir = ndc.sub(camera.position).normalize();
-      const t = (planeY - camera.position.y) / dir.y;
-      return camera.position.clone().add(dir.multiplyScalar(t));
-    }
-    
-    // --- Würfel-Mitte (Fingerspitze setzt auf Mitte an) ---
-    function cubeTopPos() {
-      const pos = cube.position.clone();
-      pos.y += 0.05; // Knapp über Mitte (Hand schwebt minimal)
-      return pos;
-    }
-    
-    // --- Karten-3D-Position ---
-    function card3DPos(ci) {
-      const x = cardStartX + ci * (cardWidth + cardGap);
-      return new THREE.Vector3(x, cardY + 0.06, cardZ);
-    }
-    
-    // --- Kniff-Icon 3D-Position (aus Screen-Position ableiten) ---
-    function kniffIcon3DPos(type) {
-      const imgs = document.querySelectorAll('#jokerIconsRow img');
-      const idx = (type === 'wobble') ? 0 : 1;
-      const img = imgs[idx];
-      const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
-      const sx = img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250);
-      const sy = rowTop + 29;
-      return screenTo3D(sx, sy, cardY + 0.04);
-    }
-    
-    // --- Südlicher Einstiegspunkt (unterer Bildschirmrand → 3D) ---
-    function southEntry(targetX, targetY) {
-      // Untere Bildschirmmitte auf Tischhöhe projizieren
-      const bottom = screenTo3D(180, 710, targetY);
-      // X vom Ziel übernehmen, Z vom unteren Rand
-      return new THREE.Vector3(targetX, targetY, bottom.z);
-    }
-    
-    // --- Hand von Süd zu Ziel, halten, zurück ---
-    async function handTapFromSouth3D(target3D, holdMs) {
+    // --- Hand von Süd-Rand zu Ziel, halten, zurück ---
+    async function handTapFromSouth(tx, ty, holdMs) {
       if (!replayActive) return;
       holdMs = holdMs || 600;
-      const entry = southEntry(target3D.x, target3D.y);
-      setHand3D(entry.x, entry.y, entry.z);
-      showHand3D();
-      await moveHand3D(target3D, 400);
+      const SY = 740;
+      setHandPos(tx, SY);
+      handEl.style.opacity = '0.85';
+      updateHandShadow(tx, SY, true);
+      await moveHandSmooth(tx, ty, 400);
       await sleep(holdMs);
-      await moveHand3D(entry, 400);
-      hideHand3D();
+      await moveHandSmooth(tx, SY, 400);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
       await sleep(100);
     }
     
-    // --- 3D-Offset für Kipprichtung (eine Würfelkantenlänge) ---
-    function kipp3DOffset(dir) {
-      const s = 0.46875; // Würfelkantenlänge
-      if (dir.includes('north')) return new THREE.Vector3(0, 0, -s);
-      if (dir.includes('south')) return new THREE.Vector3(0, 0,  s);
-      if (dir.includes('east'))  return new THREE.Vector3( s, 0, 0);
-      if (dir.includes('west'))  return new THREE.Vector3(-s, 0, 0);
-      return new THREE.Vector3(0, 0, 0);
+    // --- Würfel-Mitte auf Screen projizieren ---
+    function cubeScreenXY() {
+      const pos = cube.position.clone();
+      pos.project(camera);
+      return {
+        x: Math.round((pos.x * 0.5 + 0.5) * 360),
+        y: Math.round((-pos.y * 0.5 + 0.5) * 720)
+      };
     }
     
-    // --- Hand-Kipp-Animation: über Würfelmitte → eine Kantenlänge mitbewegen ---
+    // --- Pixel-Offset für Kipprichtung (135px) ---
+    function kippPixelDir(dir) {
+      if (dir.includes('north')) return {dx: 0, dy: -135};
+      if (dir.includes('south')) return {dx: 0, dy: 135};
+      if (dir.includes('east'))  return {dx: 135, dy: 0};
+      if (dir.includes('west'))  return {dx: -135, dy: 0};
+      return {dx: 0, dy: 0};
+    }
+    
+    // --- Hand-Kipp-Animation: über Mitte → 135px mitbewegen ---
     async function handKippAnim(kippDir, kippDur) {
       if (!replayActive) return;
-      console.log('[REPLAY-KIPP] dir='+kippDir, 'Q='+currentQuadrant, 'F='+topFace, 'isAnim='+isAnimating);
-      const startPos = cubeTopPos();
-      const off = kipp3DOffset(kippDir);
-      const endPos = startPos.clone().add(off);
+      const c = cubeScreenXY();
+      const off = kippPixelDir(kippDir);
       
-      // Hand über Würfelmitte einblenden
-      setHand3D(startPos.x, startPos.y, startPos.z);
-      showHand3D();
+      setHandPos(c.x, c.y);
+      handEl.style.opacity = '0.85';
+      updateHandShadow(c.x, c.y, true);
       await sleep(200);
       
-      // Timer GO: Hand berührt Würfel → erster Kipp startet Timer
+      // Timer GO
       if (kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
         kipp21StartRoundTimer();
       }
@@ -1951,17 +1890,33 @@
       // Sicherstellen dass performKipp nicht blockiert wird
       isAnimating = false;
       
-      // Kantenlänge in Kipprichtung mitbewegen + gleichzeitig kippen
-      const moveP = moveHand3D(endPos, kippDur);
+      const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, kippDur);
       await performKipp(kippDir, kippDur);
       advanceTopFace();
       await moveP;
       
-      // Hand kurz ausblenden
-      hideHand3D();
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
       await sleep(60);
     }
-
+    
+    // --- Karten-Screen-Position ---
+    function cardScreenX(ci) {
+      const cw = 45, gap = (360 - 6 * cw) / 5;
+      return cw / 2 + ci * (cw + gap);
+    }
+    
+    // --- Kniff-Icon-Position (liest aus DOM) ---
+    function getKniffIconPos(type) {
+      const imgs = document.querySelectorAll('#jokerIconsRow img');
+      const idx = (type === 'wobble') ? 0 : 1;
+      const img = imgs[idx];
+      const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
+      return {
+        x: img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250),
+        y: rowTop + 29
+      };
+    }
     
     // --- Kipp-Zähler aktualisieren ---
     function replayUpdateKippCount() {
@@ -2004,7 +1959,7 @@
       const nextV = kipp21NextVerdeckt();
       if (nextV < 0) return;
       dbgLog('Karte ' + nextV + ' aufdecken');
-      await handTapFromSouth3D(card3DPos(nextV), 600);
+      await handTapFromSouth(cardScreenX(nextV), 612, 600);
       kipp21OnCardTap(nextV);
       await sleep(400);
     }
@@ -2042,14 +1997,14 @@
       kipp21OnCardTap(openIdx);
       
       // Danach visuell die Hand zeigen (Timer läuft nicht mehr)
-      await handTapFromSouth3D(card3DPos(openIdx), 400);
+      await handTapFromSouth(cardScreenX(openIdx), 465, 400);
       await sleep(300);
     }
     
     // --- KNIFF ausführen (öffnet automatisch nächste Karte) ---
     async function replayKniff(type) {
       if (!replayActive) return;
-      const iconPos3D = kniffIcon3DPos(type);
+      const iconPos = getKniffIconPos(type);
       
       // State vor Kniff loggen
       console.log('[REPLAY-KNIFF] PRE:', type, 
@@ -2057,24 +2012,29 @@
         'kniffActive='+kipp21KniffActive,
         'wobUsed='+kipp21WobbleUsed, 'eckUsed='+kipp21EckblickUsed,
         'nextV='+kipp21NextVerdeckt(),
-        'iconPos3D=', iconPos3D);
+        'iconPos=', iconPos.x, iconPos.y);
       dbgLog(type + ' KNIFF pre:' + gamePhase + ' v' + kipp21NextVerdeckt());
       
       // Merken welche Karte vorher offen war
       const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
       
       // Hand tippt auf Icon
-      await handTapFromSouth3D(iconPos3D, 700);
+      await handTapFromSouth(iconPos.x, iconPos.y, 700);
       
       try {
         if (type === 'eckblick') {
+          console.log('[REPLAY-KNIFF] calling runKipp21EckblickKniff...');
           const eckP = runKipp21EckblickKniff();
-          // Eckblick zeigt ~5s, dann abbrechen
+          console.log('[REPLAY-KNIFF] eckP=', typeof eckP);
           await sleep(5500);
+          console.log('[REPLAY-KNIFF] 5.5s done, setting abort...');
           if (replayActive) kipp21KniffAbort = true;
           await eckP;
+          console.log('[REPLAY-KNIFF] eckblick DONE');
         } else {
+          console.log('[REPLAY-KNIFF] calling runKipp21WobbleKniff...');
           await runKipp21WobbleKniff();
+          console.log('[REPLAY-KNIFF] wobble DONE');
         }
       } catch (err) {
         console.error('[REPLAY-KNIFF] ERROR:', type, err);
@@ -2094,7 +2054,7 @@
         dbgLog('KNIFF ' + type + ' → Fallback manuell');
         const nextV = kipp21NextVerdeckt();
         if (nextV >= 0) {
-          await handTapFromSouth3D(card3DPos(nextV), 600);
+          await handTapFromSouth(cardScreenX(nextV), 612, 600);
           kipp21OnCardTap(nextV);
         }
       } else {
@@ -2109,7 +2069,14 @@
     //  Kniff-Plan: 0=Eckblick, 2=Wobble, 3=Eckblick, 5=Wobble
     // ============================================================
     async function startPerfectReplay() {
-      initHandEl();
+      console.log('[REPLAY] === startPerfectReplay ENTER ===');
+      console.log('[REPLAY] gamePhase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'dragActive='+dragActive);
+      try {
+        initHandEl();
+        console.log('[REPLAY] handEl created:', !!handEl);
+      } catch(e) {
+        console.error('[REPLAY] initHandEl FAILED:', e);
+      }
       replayActive = true;
       
       if (!replayDbg) {
@@ -2128,18 +2095,27 @@
       
       await sleep(1200);
       dbgLog('Perfect Game Start');
-      console.log('[REPLAY] START phase='+gamePhase, 'active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
+      console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
+      
+      // Sichtbarer Schritt-Zähler oben im Bild
+      if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:#0f0;background:rgba(0,0,0,0.85);padding:4px 8px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
       
       for (let ci = 0; ci < 6; ci++) {
         if (!replayActive) break;
-        dbgLog('--- Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' ---');
-        console.log('[REPLAY] Runde', ci, 'states:', kipp21CardStates.slice(), 'dists:', kipp21CardDistances.slice());
+        dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
+        console.log('[REPLAY] === RUNDE', ci, '===');
+        console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
+        console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
         
         // === KARTE AUFDECKEN ===
+        dbgLog('R' + ci + ': Aufdecken...');
+        console.log('[REPLAY] R'+ci+': Aufdecken via', kniffPlan[ci] || 'manuell');
         if (kniffPlan[ci]) {
           await replayKniff(kniffPlan[ci]);
+          console.log('[REPLAY] R'+ci+': Kniff fertig');
         } else {
           await replayOpenCard(ci);
+          console.log('[REPLAY] R'+ci+': OpenCard fertig');
         }
         if (!replayActive) break;
         
@@ -2147,22 +2123,27 @@
         const openCheck = kipp21CardStates.indexOf('offen');
         if (openCheck < 0) {
           console.warn('[REPLAY] Runde ' + ci + ': Keine offene Karte nach Aufdecken!');
-          dbgLog('SKIP Runde ' + ci + ': keine offene Karte');
+          dbgLog('SKIP R' + ci + ': keine offene Karte');
           continue;
         }
-        dbgLog('Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
+        dbgLog('R' + ci + ': Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
         
         // Kurze Denkpause
         await sleep(500);
         
         // === KIPPEN ===
+        console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
+        dbgLog('R' + ci + ': Kippen...');
         const actualOpen = kipp21CardStates.indexOf('offen');
         await replayKippSequence(actualOpen >= 0 ? actualOpen : ci, KIPP_DUR);
+        console.log('[REPLAY] R'+ci+': Kippen fertig');
         if (!replayActive) break;
         
         // === BESTÄTIGEN ===
         await sleep(400);
+        dbgLog('R' + ci + ': Bestätigen...');
         await replayConfirm(ci);
+        console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
         await sleep(500);
       }
@@ -2236,7 +2217,7 @@
     // --- Aufräumen ---
     function replayCleanup(jr) {
       replayActive = false;
-      hideHand3D();
+      if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
       if (jr) jr.style.pointerEvents = 'auto';
       dbgLog('Replay fertig!');
       setTimeout(() => { if (replayDbg) replayDbg.style.display = 'none'; }, 3000);
@@ -2244,12 +2225,20 @@
     
     // --- Wrapper: Default = Perfect ---
     async function startReplay() {
-      await startPerfectReplay();
+      try {
+        await startPerfectReplay();
+      } catch(e) {
+        console.error('[startReplay] UNCAUGHT:', e);
+        const errDiv = document.createElement('div');
+        errDiv.style.cssText = 'position:absolute;top:100px;left:10px;right:10px;font:bold 11px monospace;color:#ff0;background:rgba(0,0,0,0.9);padding:8px;z-index:9999;word-break:break-all;';
+        errDiv.textContent = 'UNCAUGHT: ' + e.message + '\n' + (e.stack || '');
+        document.getElementById('uiOverlay').appendChild(errDiv);
+      }
     }
     
     function stopReplay() {
       replayActive = false;
-      hideHand3D();
+      if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
     }
 
 
@@ -2291,6 +2280,7 @@
       kipp21WithTutorial = !!withTutorial;
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
+      dragActive = false;     // Touch-Drag stoppen
       // Hide old UI
       document.getElementById('startOverlay').style.display = 'none';
       ['instructionText','tutorialText','spielZielText','entscheidungText'].forEach(id => {
@@ -2378,8 +2368,11 @@
         setTimeout(() => { 
           startReplay().catch(err => {
             console.error('[REPLAY] ERROR:', err);
-            const dbg = document.getElementById('replayDbg');
-            if (dbg) dbg.textContent = 'ERROR: ' + err.message;
+            // Fehler sichtbar auf Screen anzeigen
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = 'position:absolute;top:50px;left:10px;right:10px;font:bold 12px monospace;color:red;background:rgba(0,0,0,0.9);padding:8px;z-index:9999;word-break:break-all;';
+            errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
+            document.getElementById('uiOverlay').appendChild(errDiv);
           });
         }, 800);
       } else {
@@ -6344,6 +6337,7 @@
     });
     
     async function performKipp(direction, duration = 800) {
+      console.log('[KIPP] performKipp ENTER dir='+direction, 'dur='+duration, 'isAnim='+isAnimating);
       if (isAnimating) { console.warn('[KIPP] BLOCKED by isAnimating!'); return; }
       isAnimating = true;
       
@@ -6442,6 +6436,7 @@
     }
     
     function finalizeKipp(newQ, callback) {
+      console.log('[KIPP] finalizeKipp Q='+newQ);
       cube.updateMatrixWorld();
       const newWorldPos = new THREE.Vector3();
       cube.getWorldPosition(newWorldPos);
