@@ -163,44 +163,6 @@
       animation: eyePulse 1.5s ease-in-out infinite;
     }
     @keyframes eyePulse {
-
-    @keyframes splashPop {
-      0%   { transform: scale(0); opacity: 0; }
-      50%  { transform: scale(1.3); opacity: 1; }
-      70%  { transform: scale(0.9); }
-      85%  { transform: scale(1.08); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes splashSlam {
-      0%   { transform: translateY(-60px) scale(1.8); opacity: 0; }
-      60%  { transform: translateY(5px) scale(1); opacity: 1; }
-      80%  { transform: translateY(-3px); }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes splashGlow {
-      0%, 100% { text-shadow: 0 0 20px rgba(200,220,255,0.4), 0 0 40px rgba(150,180,255,0.2), 0 4px 8px rgba(0,0,0,0.9); }
-      50%      { text-shadow: 0 0 40px rgba(200,220,255,0.9), 0 0 80px rgba(150,180,255,0.5), 0 0 120px rgba(100,150,255,0.2), 0 4px 8px rgba(0,0,0,0.9); }
-    }
-    @keyframes splashFadeUp {
-      0%   { transform: translateY(30px); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-    #introSplash {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%; height: 100%;
-      z-index: 500; pointer-events: none;
-      background: rgba(0,0,0,0.6);
-    }
-    #introSplash .splash-line {
-      font-weight: 900; letter-spacing: 2px;
-      background: linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5);
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
-      opacity: 0;
-      text-align: center;
-      width: 100%;
-    }
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
@@ -1546,14 +1508,6 @@
     async function runLoadingAnimation() {
       const kd = 350; // Kipp-Dauer ms
       const fd = 500; // Fade-Dauer ms
-      
-      // Container halbtransparent + Splash parallel starten
-      document.getElementById('container').style.opacity = '0.5';
-      const splashP = showIntroSplash().catch(e => {
-        console.error('[SPLASH]', e);
-        const s = document.getElementById('introSplash'); if (s) s.remove();
-        cube.visible = true;
-      });
 
       // CW-Zyklus: Q3→Q0→Q1→Q2→Q3...
       const cwDirs = ['north', 'east', 'south_from_q1', 'west_from_q2'];
@@ -1592,12 +1546,6 @@
       rebuildFaceMat('f2', 1);
 
       loadingAnimDone = true;
-      
-      // Splash abwarten, dann Container zurück auf volle Sichtbarkeit
-      await splashP;
-      document.getElementById('container').style.transition = 'opacity 0.5s ease';
-      document.getElementById('container').style.opacity = '1';
-      
       checkEnableButtons();
     }
 
@@ -4449,69 +4397,6 @@
       card.mesh.material.opacity = 1;
       card.mesh.material.needsUpdate = true;
       card.mesh.visible = true;
-    }
-
-    // === INTRO SPLASH: "21 KIPPS unter 21 Sekunden." ===
-    async function showIntroSplash() {
-      const splash = document.createElement('div');
-      splash.id = 'introSplash';
-      
-      // Würfel unsichtbar
-      cube.visible = false;
-      
-      // Boxboden-Mitte Y projizieren
-      const bodenCenter = new THREE.Vector3(0, 0.001, 0.109375);
-      bodenCenter.project(camera);
-      const bodenScreenY = Math.round((-bodenCenter.y * 0.5 + 0.5) * 720);
-      
-      // Exakt gleicher Stil wie countdown/timer
-      const timerStyle = 'font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));';
-      
-      const line1 = document.createElement('div');
-      line1.textContent = '21 KIPPS';
-      line1.style.cssText = timerStyle + ' font-size:42px; line-height:1.1; letter-spacing:6px;';
-      
-      const line2 = document.createElement('div');
-      line2.textContent = 'unter 21 Sekunden.';
-      line2.style.cssText = timerStyle + ' font-size:16px; margin-top:8px; letter-spacing:2px;';
-      
-      const textBox = document.createElement('div');
-      textBox.style.cssText = 'position:absolute; top:' + bodenScreenY + 'px; left:0; right:0; display:flex; flex-direction:column; align-items:center; opacity:0; pointer-events:none;';
-      textBox.appendChild(line1);
-      textBox.appendChild(line2);
-      splash.appendChild(textBox);
-      
-      splash.style.opacity = '0';
-      document.body.appendChild(splash);
-      
-      // Einblenden
-      await sleep(50);
-      splash.style.opacity = '1';
-      await sleep(300);
-      textBox.style.transition = 'opacity 0.5s ease';
-      textBox.style.opacity = '1';
-      
-      // Pulsieren
-      let pulseUp = true;
-      const pulseInterval = setInterval(() => {
-        const f = pulseUp
-          ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.6))'
-          : 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
-        line1.style.filter = f;
-        line2.style.filter = f;
-        pulseUp = !pulseUp;
-      }, 800);
-      
-      // Stehen lassen
-      await sleep(4500);
-      
-      clearInterval(pulseInterval);
-      
-      // Ausblenden
-      splash.style.opacity = '0';
-      await sleep(700);
-      splash.remove();
-      cube.visible = true;
     }
 
     // === MAIN AUTO-DEMO ORCHESTRATOR ===
