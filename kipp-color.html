@@ -1714,31 +1714,32 @@
     }
 
     // Zielposition für Kippziel-Fluganimation bei Treffer
-    // Card (1×2 Zellen) landet halb auf Slot, halb auf Farbfeld am Wandrand
+    // Card (1×2 Zellen): Zahl-Hälfte auf Slot (innen), Farb-Hälfte auf Rahmen-Farbfeld (außen)
+    // rotZ: 0=Zahl→Nord, π=Zahl→Süd, -π/2=Zahl→Ost, π/2=Zahl→West
     const HIT_TARGETS = {
       0: { // Q0 (NW)
-        S1: { x: -0.46875, z:  0.03125,  rotZ: Math.PI/2 },   // West_6 (blau)
-        S2: { x: -0.46875, z: -0.125,    rotZ: Math.PI/2 },   // West_5 (violett)
-        S3: { x: -0.23438, z: -0.359375, rotZ: Math.PI },      // Nord_C (gruen)
-        S4: { x: -0.07813, z: -0.359375, rotZ: Math.PI }       // Nord_D (orange)
+        S1: { x: -0.46875, z:  0.03125,  rotZ: -Math.PI/2 },  // West_6 (blau) → Zahl→Ost(innen)
+        S2: { x: -0.46875, z: -0.125,    rotZ: -Math.PI/2 },  // West_5 (violett) → Zahl→Ost(innen)
+        S3: { x: -0.23438, z: -0.359375, rotZ: Math.PI },      // Nord_C (gruen) → Zahl→Süd(innen)
+        S4: { x: -0.07813, z: -0.359375, rotZ: Math.PI }       // Nord_D (orange) → Zahl→Süd(innen)
       },
       1: { // Q1 (NE)
-        S1: { x:  0.07813, z: -0.359375, rotZ: Math.PI },      // Nord_E (orange)
-        S2: { x:  0.23438, z: -0.359375, rotZ: Math.PI },      // Nord_F (blau)
-        S3: { x:  0.46875, z: -0.125,    rotZ: -Math.PI/2 },   // Ost_5 (violett)
-        S4: { x:  0.46875, z:  0.03125,  rotZ: -Math.PI/2 }    // Ost_6 (gruen)
+        S1: { x:  0.07813, z: -0.359375, rotZ: Math.PI },      // Nord_E (orange) → Zahl→Süd(innen)
+        S2: { x:  0.23438, z: -0.359375, rotZ: Math.PI },      // Nord_F (blau) → Zahl→Süd(innen)
+        S3: { x:  0.46875, z: -0.125,    rotZ: Math.PI/2 },    // Ost_5 (violett) → Zahl→West(innen)
+        S4: { x:  0.46875, z:  0.03125,  rotZ: Math.PI/2 }     // Ost_6 (gruen) → Zahl→West(innen)
       },
       2: { // Q2 (SE)
-        S1: { x:  0.46875, z:  0.1875,   rotZ: -Math.PI/2 },   // Ost_7 (gruen)
-        S2: { x:  0.46875, z:  0.34375,  rotZ: -Math.PI/2 },   // Ost_8 (orange)
-        S3: { x:  0.23438, z:  0.580375, rotZ: 0 },             // Süd_F (blau)
-        S4: { x:  0.07813, z:  0.580375, rotZ: 0 }              // Süd_E (violett)
+        S1: { x:  0.46875, z:  0.1875,   rotZ: Math.PI/2 },    // Ost_7 (gruen) → Zahl→West(innen)
+        S2: { x:  0.46875, z:  0.34375,  rotZ: Math.PI/2 },    // Ost_8 (orange) → Zahl→West(innen)
+        S3: { x:  0.23438, z:  0.580375, rotZ: 0 },             // Süd_F (blau) → Zahl→Nord(innen)
+        S4: { x:  0.07813, z:  0.580375, rotZ: 0 }              // Süd_E (violett) → Zahl→Nord(innen)
       },
       3: { // Q3 (SW)
-        S1: { x: -0.07813, z:  0.580375, rotZ: 0 },             // Süd_D (violett)
-        S2: { x: -0.23438, z:  0.580375, rotZ: 0 },             // Süd_C (gruen)
-        S3: { x: -0.46875, z:  0.34375,  rotZ: Math.PI/2 },    // West_8 (orange)
-        S4: { x: -0.46875, z:  0.1875,   rotZ: Math.PI/2 }     // West_7 (blau)
+        S1: { x: -0.07813, z:  0.580375, rotZ: 0 },             // Süd_D (violett) → Zahl→Nord(innen)
+        S2: { x: -0.23438, z:  0.580375, rotZ: 0 },             // Süd_C (gruen) → Zahl→Nord(innen)
+        S3: { x: -0.46875, z:  0.34375,  rotZ: -Math.PI/2 },   // West_8 (orange) → Zahl→Ost(innen)
+        S4: { x: -0.46875, z:  0.1875,   rotZ: -Math.PI/2 }    // West_7 (blau) → Zahl→Ost(innen)
       }
     };
 
@@ -1789,7 +1790,40 @@
           } else {
             mesh.position.set(endX, endY, endZ);
             mesh.rotation.z = endRotZ;
-            resolve();
+            
+            // Kurzer Puls am Ziel, dann vanish
+            const landTime = performance.now();
+            const pulseDur = 250;
+            const holdDur = 400;
+            const fadeDur = 300;
+            function landPulse(now) {
+              const elapsed = now - landTime;
+              if (elapsed < pulseDur) {
+                // Puls: 1→1.2→1
+                const pt = elapsed / pulseDur;
+                const s = 1 + Math.sin(pt * Math.PI) * 0.2;
+                mesh.scale.set(s, s, s);
+                requestAnimationFrame(landPulse);
+              } else if (elapsed < pulseDur + holdDur) {
+                // Kurz halten
+                mesh.scale.set(1, 1, 1);
+                requestAnimationFrame(landPulse);
+              } else if (elapsed < pulseDur + holdDur + fadeDur) {
+                // Ausblenden
+                const ft = (elapsed - pulseDur - holdDur) / fadeDur;
+                mesh.material.transparent = true;
+                mesh.material.opacity = 1 - ft;
+                mesh.material.needsUpdate = true;
+                requestAnimationFrame(landPulse);
+              } else {
+                mesh.visible = false;
+                mesh.material.opacity = 1;
+                mesh.material.transparent = false;
+                mesh.material.needsUpdate = true;
+                resolve();
+              }
+            }
+            requestAnimationFrame(landPulse);
           }
         }
         requestAnimationFrame(tick);
@@ -3062,9 +3096,7 @@
           
           // Card fliegt zum Treffer-Slot
           const card = gameCards[cardIdx];
-          animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-            // Nach Flug: Card bleibt am Ziel liegen (sichtbar mit goldenem Rahmen)
-          });
+          animateCardFly(card, treffer.quadrant, treffer.slot);
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
           
