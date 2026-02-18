@@ -1762,113 +1762,234 @@
       // Wird neu befüllt
     ];
     
-    // === TUTORIAL REPLAY SYSTEM (Hand folgt echten Touch-Pfaden) ===
+    // === TUTORIAL REPLAY SYSTEM (Prozedural: Perfect & Random) ===
     const REPLAY_DECK = [5,11,8,3,6,7,10,12,4,2,1,9];
-    const REPLAY_TARGETS = [
-      {zahl:8, colorName:'violett', dist:2},
-      {zahl:2, colorName:'blau', dist:3},
-      {zahl:8, colorName:'blau', dist:5},
-      {zahl:10, colorName:'violett', dist:1},
-      {zahl:9, colorName:'blau', dist:6},
-      {zahl:9, colorName:'gruen', dist:4}
-    ];
-    const REPLAY_EVENTS = [{"t":"s","x":254,"y":613,"ms":2797,"src":"kniff1"},{"t":"e","x":254,"y":613,"ms":2956},{"t":"s","x":156,"y":471,"ms":12960,"src":"canvas"},{"t":"e","x":156,"y":471,"ms":13041},{"t":"s","x":109,"y":302,"ms":19152,"src":"canvas"},{"t":"m","x":109,"y":302,"ms":19181},{"t":"m","x":109,"y":302,"ms":19193},{"t":"m","x":120,"y":302,"ms":19227},{"t":"m","x":134,"y":303,"ms":19262},{"t":"m","x":154,"y":307,"ms":19294},{"t":"m","x":180,"y":311,"ms":19330},{"t":"m","x":207,"y":313,"ms":19363},{"t":"m","x":227,"y":312,"ms":19395},{"t":"m","x":255,"y":309,"ms":19464},{"t":"m","x":267,"y":308,"ms":19494},{"t":"m","x":274,"y":308,"ms":19511},{"t":"m","x":296,"y":307,"ms":19563},{"t":"m","x":312,"y":310,"ms":19594},{"t":"e","x":312,"y":310,"ms":19599},{"t":"s","x":270,"y":318,"ms":20486,"src":"canvas"},{"t":"m","x":264,"y":307,"ms":20530},{"t":"m","x":262,"y":302,"ms":20549},{"t":"m","x":259,"y":296,"ms":20565},{"t":"m","x":257,"y":289,"ms":20582},{"t":"m","x":257,"y":258,"ms":20633},{"t":"m","x":257,"y":239,"ms":20665},{"t":"m","x":256,"y":221,"ms":20697},{"t":"m","x":256,"y":211,"ms":20716},{"t":"m","x":259,"y":193,"ms":20749},{"t":"m","x":266,"y":168,"ms":20788},{"t":"m","x":278,"y":145,"ms":20820},{"t":"m","x":280,"y":138,"ms":20834},{"t":"m","x":285,"y":120,"ms":20867},{"t":"m","x":287,"y":110,"ms":20885},{"t":"e","x":287,"y":110,"ms":20894},{"t":"s","x":270,"y":188,"ms":21943,"src":"canvas"},{"t":"m","x":268,"y":187,"ms":21985},{"t":"m","x":263,"y":187,"ms":22000},{"t":"m","x":258,"y":186,"ms":22017},{"t":"m","x":241,"y":188,"ms":22072},{"t":"m","x":233,"y":188,"ms":22089},{"t":"m","x":204,"y":188,"ms":22140},{"t":"m","x":176,"y":184,"ms":22185},{"t":"m","x":161,"y":183,"ms":22218},{"t":"m","x":154,"y":183,"ms":22240},{"t":"m","x":140,"y":183,"ms":22271},{"t":"m","x":134,"y":184,"ms":22289},{"t":"m","x":120,"y":184,"ms":22322},{"t":"m","x":95,"y":183,"ms":22389},{"t":"m","x":89,"y":186,"ms":22410},{"t":"e","x":89,"y":186,"ms":22417},{"t":"s","x":132,"y":179,"ms":23256,"src":"canvas"},{"t":"m","x":132,"y":179,"ms":23266},{"t":"m","x":132,"y":183,"ms":23292},{"t":"m","x":132,"y":210,"ms":23359},{"t":"m","x":132,"y":217,"ms":23376},{"t":"m","x":132,"y":225,"ms":23393},{"t":"m","x":132,"y":271,"ms":23468},{"t":"m","x":132,"y":287,"ms":23496},{"t":"m","x":132,"y":312,"ms":23530},{"t":"m","x":132,"y":316,"ms":23544},{"t":"m","x":132,"y":331,"ms":23577},{"t":"m","x":133,"y":338,"ms":23594},{"t":"m","x":137,"y":345,"ms":23622},{"t":"e","x":137,"y":345,"ms":23623},{"t":"s","x":114,"y":316,"ms":24450,"src":"canvas"},{"t":"m","x":114,"y":316,"ms":24463},{"t":"m","x":114,"y":316,"ms":24480},{"t":"m","x":129,"y":316,"ms":24529},{"t":"m","x":150,"y":315,"ms":24571},{"t":"m","x":156,"y":315,"ms":24581},{"t":"m","x":168,"y":315,"ms":24597},{"t":"m","x":206,"y":317,"ms":24648},{"t":"m","x":215,"y":316,"ms":24665},{"t":"m","x":238,"y":312,"ms":24714},{"t":"m","x":253,"y":311,"ms":24748},{"t":"m","x":274,"y":312,"ms":24784},{"t":"e","x":274,"y":312,"ms":24787},{"t":"s","x":159,"y":464,"ms":26224,"src":"canvas"},{"t":"m","x":159,"y":464,"ms":26314},{"t":"e","x":159,"y":464,"ms":26315},{"t":"s","x":114,"y":613,"ms":30473,"src":"kniff0"},{"t":"e","x":114,"y":613,"ms":30597},{"t":"s","x":90,"y":475,"ms":38132,"src":"canvas"},{"t":"e","x":90,"y":475,"ms":38232},{"t":"s","x":130,"y":179,"ms":45051,"src":"canvas"},{"t":"m","x":130,"y":179,"ms":45088},{"t":"m","x":130,"y":181,"ms":45154},{"t":"m","x":131,"y":197,"ms":45188},{"t":"m","x":131,"y":204,"ms":45205},{"t":"m","x":131,"y":222,"ms":45238},{"t":"m","x":135,"y":242,"ms":45272},{"t":"m","x":139,"y":263,"ms":45306},{"t":"m","x":144,"y":285,"ms":45339},{"t":"m","x":147,"y":319,"ms":45407},{"t":"m","x":147,"y":322,"ms":45416},{"t":"e","x":147,"y":322,"ms":45417},{"t":"s","x":121,"y":313,"ms":46166,"src":"canvas"},{"t":"m","x":121,"y":313,"ms":46191},{"t":"m","x":121,"y":313,"ms":46232},{"t":"m","x":152,"y":313,"ms":46325},{"t":"m","x":167,"y":314,"ms":46365},{"t":"m","x":178,"y":315,"ms":46398},{"t":"m","x":180,"y":315,"ms":46409},{"t":"m","x":190,"y":315,"ms":46443},{"t":"m","x":195,"y":316,"ms":46460},{"t":"m","x":209,"y":315,"ms":46526},{"t":"m","x":211,"y":315,"ms":46557},{"t":"m","x":215,"y":315,"ms":46617},{"t":"m","x":217,"y":315,"ms":46626},{"t":"m","x":220,"y":316,"ms":46642},{"t":"m","x":221,"y":316,"ms":46660},{"t":"m","x":224,"y":316,"ms":46712},{"t":"m","x":224,"y":316,"ms":46744},{"t":"m","x":224,"y":316,"ms":46754},{"t":"e","x":224,"y":316,"ms":46755},{"t":"s","x":264,"y":313,"ms":47576,"src":"canvas"},{"t":"m","x":264,"y":313,"ms":47597},{"t":"m","x":260,"y":283,"ms":47664},{"t":"m","x":262,"y":267,"ms":47686},{"t":"m","x":265,"y":235,"ms":47750},{"t":"m","x":266,"y":225,"ms":47763},{"t":"m","x":266,"y":215,"ms":47782},{"t":"m","x":267,"y":206,"ms":47798},{"t":"m","x":269,"y":189,"ms":47831},{"t":"m","x":270,"y":183,"ms":47849},{"t":"m","x":271,"y":171,"ms":47899},{"t":"m","x":275,"y":162,"ms":47943},{"t":"e","x":275,"y":162,"ms":47944},{"t":"s","x":99,"y":464,"ms":49644,"src":"canvas"},{"t":"m","x":99,"y":464,"ms":49672},{"t":"m","x":99,"y":464,"ms":49748},{"t":"e","x":99,"y":464,"ms":49749},{"t":"s","x":265,"y":468,"ms":56084,"src":"canvas"},{"t":"m","x":265,"y":468,"ms":56094},{"t":"m","x":265,"y":468,"ms":56127},{"t":"m","x":265,"y":468,"ms":56161},{"t":"m","x":265,"y":468,"ms":56194},{"t":"m","x":265,"y":468,"ms":56207},{"t":"e","x":265,"y":468,"ms":56208},{"t":"s","x":249,"y":167,"ms":59755,"src":"canvas"},{"t":"m","x":249,"y":167,"ms":59791},{"t":"m","x":249,"y":167,"ms":59857},{"t":"m","x":249,"y":178,"ms":59891},{"t":"m","x":250,"y":192,"ms":59925},{"t":"m","x":249,"y":209,"ms":59958},{"t":"m","x":249,"y":228,"ms":59991},{"t":"m","x":251,"y":250,"ms":60026},{"t":"m","x":256,"y":270,"ms":60059},{"t":"m","x":262,"y":284,"ms":60086},{"t":"e","x":262,"y":284,"ms":60087},{"t":"s","x":254,"y":309,"ms":60899,"src":"canvas"},{"t":"m","x":254,"y":309,"ms":60907},{"t":"m","x":254,"y":309,"ms":60928},{"t":"m","x":254,"y":309,"ms":60945},{"t":"m","x":230,"y":305,"ms":61012},{"t":"m","x":210,"y":306,"ms":61049},{"t":"m","x":174,"y":304,"ms":61084},{"t":"m","x":166,"y":303,"ms":61096},{"t":"m","x":142,"y":303,"ms":61129},{"t":"m","x":133,"y":303,"ms":61146},{"t":"m","x":108,"y":308,"ms":61213},{"t":"m","x":100,"y":310,"ms":61243},{"t":"e","x":100,"y":310,"ms":61249},{"t":"s","x":132,"y":322,"ms":62053,"src":"canvas"},{"t":"m","x":132,"y":300,"ms":62149},{"t":"m","x":132,"y":291,"ms":62166},{"t":"m","x":132,"y":247,"ms":62217},{"t":"m","x":132,"y":233,"ms":62235},{"t":"m","x":135,"y":197,"ms":62283},{"t":"m","x":139,"y":178,"ms":62304},{"t":"e","x":139,"y":178,"ms":62306},{"t":"s","x":110,"y":183,"ms":63133,"src":"canvas"},{"t":"m","x":110,"y":183,"ms":63152},{"t":"m","x":122,"y":185,"ms":63220},{"t":"m","x":130,"y":187,"ms":63237},{"t":"m","x":163,"y":190,"ms":63287},{"t":"m","x":193,"y":194,"ms":63320},{"t":"m","x":205,"y":194,"ms":63336},{"t":"m","x":239,"y":197,"ms":63403},{"t":"m","x":256,"y":200,"ms":63446},{"t":"m","x":262,"y":200,"ms":63464},{"t":"e","x":262,"y":200,"ms":63465},{"t":"s","x":264,"y":166,"ms":64136,"src":"canvas"},{"t":"m","x":258,"y":183,"ms":64208},{"t":"m","x":257,"y":215,"ms":64256},{"t":"m","x":257,"y":243,"ms":64289},{"t":"m","x":257,"y":257,"ms":64307},{"t":"m","x":256,"y":280,"ms":64339},{"t":"m","x":257,"y":285,"ms":64352},{"t":"e","x":257,"y":285,"ms":64353},{"t":"s","x":255,"y":302,"ms":65098,"src":"canvas"},{"t":"m","x":255,"y":302,"ms":65143},{"t":"m","x":252,"y":302,"ms":65161},{"t":"m","x":222,"y":297,"ms":65211},{"t":"m","x":179,"y":294,"ms":65258},{"t":"m","x":153,"y":292,"ms":65291},{"t":"m","x":143,"y":292,"ms":65311},{"t":"m","x":127,"y":295,"ms":65344},{"t":"m","x":114,"y":298,"ms":65381},{"t":"e","x":114,"y":298,"ms":65383},{"t":"s","x":271,"y":466,"ms":66854,"src":"canvas"},{"t":"m","x":271,"y":466,"ms":66865},{"t":"m","x":271,"y":466,"ms":66950},{"t":"m","x":271,"y":466,"ms":66997},{"t":"e","x":271,"y":466,"ms":66998},{"t":"s","x":256,"y":614,"ms":69090,"src":"kniff1"},{"t":"e","x":256,"y":614,"ms":69195},{"t":"s","x":111,"y":308,"ms":102094,"src":"canvas"},{"t":"m","x":111,"y":308,"ms":102160},{"t":"m","x":111,"y":308,"ms":102194},{"t":"m","x":111,"y":308,"ms":102227},{"t":"m","x":128,"y":310,"ms":102261},{"t":"m","x":145,"y":313,"ms":102294},{"t":"m","x":166,"y":315,"ms":102328},{"t":"m","x":191,"y":316,"ms":102362},{"t":"m","x":218,"y":316,"ms":102395},{"t":"m","x":238,"y":316,"ms":102428},{"t":"m","x":268,"y":318,"ms":102489},{"t":"e","x":268,"y":318,"ms":102490},{"t":"s","x":262,"y":318,"ms":103118,"src":"canvas"},{"t":"m","x":262,"y":318,"ms":103131},{"t":"m","x":262,"y":318,"ms":103147},{"t":"m","x":260,"y":310,"ms":103181},{"t":"m","x":259,"y":284,"ms":103229},{"t":"m","x":262,"y":263,"ms":103266},{"t":"m","x":263,"y":252,"ms":103281},{"t":"m","x":266,"y":232,"ms":103314},{"t":"m","x":274,"y":198,"ms":103361},{"t":"m","x":277,"y":187,"ms":103382},{"t":"m","x":284,"y":170,"ms":103402},{"t":"m","x":286,"y":164,"ms":103414},{"t":"m","x":297,"y":121,"ms":103477},{"t":"e","x":297,"y":121,"ms":103478},{"t":"s","x":38,"y":468,"ms":104815,"src":"canvas"},{"t":"m","x":38,"y":468,"ms":104856},{"t":"m","x":38,"y":468,"ms":104939},{"t":"e","x":38,"y":468,"ms":104940},{"t":"s","x":117,"y":608,"ms":109384,"src":"kniff0"},{"t":"e","x":117,"y":608,"ms":109475},{"t":"s","x":112,"y":181,"ms":125676,"src":"canvas"},{"t":"m","x":112,"y":181,"ms":125729},{"t":"m","x":112,"y":181,"ms":125796},{"t":"m","x":123,"y":181,"ms":125829},{"t":"m","x":149,"y":184,"ms":125863},{"t":"m","x":183,"y":189,"ms":125896},{"t":"m","x":225,"y":193,"ms":125947},{"t":"m","x":245,"y":199,"ms":125980},{"t":"e","x":245,"y":199,"ms":125985},{"t":"s","x":217,"y":469,"ms":127141,"src":"canvas"},{"t":"e","x":217,"y":469,"ms":127227},{"t":"s","x":328,"y":469,"ms":129338,"src":"canvas"},{"t":"m","x":328,"y":469,"ms":129376},{"t":"m","x":328,"y":469,"ms":129470},{"t":"e","x":328,"y":469,"ms":129471},{"t":"s","x":247,"y":175,"ms":140496,"src":"canvas"},{"t":"m","x":247,"y":175,"ms":140528},{"t":"m","x":247,"y":175,"ms":140549},{"t":"m","x":244,"y":181,"ms":140583},{"t":"m","x":238,"y":202,"ms":140634},{"t":"m","x":237,"y":211,"ms":140650},{"t":"m","x":238,"y":249,"ms":140700},{"t":"m","x":240,"y":273,"ms":140733},{"t":"m","x":244,"y":300,"ms":140767},{"t":"m","x":250,"y":323,"ms":140800},{"t":"m","x":256,"y":336,"ms":140827},{"t":"e","x":256,"y":336,"ms":140828},{"t":"s","x":257,"y":308,"ms":141432,"src":"canvas"},{"t":"m","x":257,"y":308,"ms":141448},{"t":"m","x":243,"y":301,"ms":141501},{"t":"m","x":238,"y":299,"ms":141519},{"t":"m","x":208,"y":294,"ms":141583},{"t":"m","x":198,"y":294,"ms":141598},{"t":"m","x":186,"y":293,"ms":141621},{"t":"m","x":174,"y":293,"ms":141636},{"t":"m","x":133,"y":296,"ms":141703},{"t":"m","x":126,"y":298,"ms":141720},{"t":"m","x":100,"y":306,"ms":141783},{"t":"e","x":100,"y":306,"ms":141790},{"t":"s","x":143,"y":312,"ms":142318,"src":"canvas"},{"t":"m","x":138,"y":297,"ms":142372},{"t":"m","x":130,"y":268,"ms":142419},{"t":"m","x":128,"y":249,"ms":142448},{"t":"m","x":127,"y":244,"ms":142456},{"t":"m","x":128,"y":216,"ms":142506},{"t":"m","x":130,"y":206,"ms":142523},{"t":"m","x":134,"y":178,"ms":142573},{"t":"m","x":135,"y":162,"ms":142615},{"t":"m","x":138,"y":154,"ms":142647},{"t":"e","x":138,"y":154,"ms":142651},{"t":"s","x":111,"y":186,"ms":143283,"src":"canvas"},{"t":"m","x":111,"y":186,"ms":143309},{"t":"m","x":134,"y":189,"ms":143359},{"t":"m","x":146,"y":191,"ms":143376},{"t":"m","x":161,"y":192,"ms":143394},{"t":"m","x":222,"y":195,"ms":143463},{"t":"m","x":229,"y":195,"ms":143476},{"t":"m","x":282,"y":200,"ms":143559},{"t":"e","x":282,"y":200,"ms":143567},{"t":"s","x":337,"y":475,"ms":144813,"src":"canvas"},{"t":"m","x":337,"y":475,"ms":144882},{"t":"e","x":337,"y":475,"ms":144923}];
     
     let handEl = null;
     let replayActive = false;
+    let replayDbg = null;
+    
+    // Kipp-Richtungs-Maps pro Quadrant
+    const CW_KIPP = {3:'north', 0:'east', 1:'south_from_q1', 2:'west_from_q2'};
+    const CCW_KIPP = {3:'east_from_q3', 0:'south', 1:'west', 2:'north_from_q2'};
     
     function initHandEl() {
       if (handEl) return;
       handEl = document.createElement('img');
       handEl.src = 'handsilber.webp';
-      handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.3s ease;';
+      handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.25s ease;';
       document.getElementById('uiOverlay').appendChild(handEl);
     }
     
     function setHandPos(x, y) {
       if (!handEl) return;
-      handEl.style.left = (x - 23) + 'px';
-      handEl.style.top = y + 'px';
+      handEl.style.left = Math.round(x - 23) + 'px';
+      handEl.style.top = Math.round(y) + 'px';
     }
     
-    // Gesten aus Events parsen
-    function parseReplayGestures() {
-      const gestures = [];
-      let i = 0;
-      while (i < REPLAY_EVENTS.length) {
-        if (REPLAY_EVENTS[i].t === 's') {
-          const s = REPLAY_EVENTS[i];
-          const moves = [];
-          let end = null;
-          let j = i + 1;
-          while (j < REPLAY_EVENTS.length && REPLAY_EVENTS[j].t !== 's') {
-            if (REPLAY_EVENTS[j].t === 'm') moves.push(REPLAY_EVENTS[j]);
-            if (REPLAY_EVENTS[j].t === 'e') { end = REPLAY_EVENTS[j]; j++; break; }
-            j++;
-          }
-          const e = end || moves[moves.length-1] || s;
-          const dx = e.x - s.x, dy = e.y - s.y;
-          const isTap = moves.length <= 2 && Math.abs(dx) < 25 && Math.abs(dy) < 25;
-          
-          let action;
-          if (s.src === 'kniff1') { action = 'eckblick'; }
-          else if (s.src === 'kniff0') { action = 'wobble'; }
-          else if (isTap) {
-            action = s.y > 560 ? 'card_tap' : 'confirm';
-          } else {
-            action = 'swipe_' + (Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : (dy > 0 ? 'south' : 'north'));
-          }
-          
-          gestures.push({
-            action, x: s.x, y: s.y, ms: s.ms,
-            endMs: e.ms || s.ms + 200,
-            allPts: [{x:s.x, y:s.y, ms:s.ms}, ...moves, ...(end ? [{x:e.x, y:e.y, ms:end.ms}] : [])]
-          });
-          i = j;
-        } else i++;
-      }
-      return gestures;
-    }
-    
-    // Hand entlang aufgezeichnetem Pfad animieren
-    async function handTracePath(pts) {
-      if (!replayActive || pts.length === 0) return;
-      setHandPos(pts[0].x, pts[0].y);
-      handEl.style.opacity = '0.85';
-      for (let p = 1; p < pts.length; p++) {
-        if (!replayActive) return;
-        const dt = pts[p].ms - pts[p-1].ms;
-        if (dt > 0) await sleep(dt);
-        setHandPos(pts[p].x, pts[p].y);
-      }
-    }
-    
-    // Hand auf Position halten
-    async function handShowAt(x, y, holdMs) {
-      if (!replayActive) return;
-      setHandPos(x, y);
-      handEl.style.opacity = '0.85';
-      await sleep(holdMs);
-    }
-    
-    // Kipp-Richtung aus Swipe + Quadrant
-    function swipeToKippDir(swipeDir) {
-      const Q = currentQuadrant;
-      if (swipeDir === 'north') return Q === 3 ? 'north' : Q === 2 ? 'north_from_q2' : null;
-      if (swipeDir === 'south') return Q === 0 ? 'south' : Q === 1 ? 'south_from_q1' : null;
-      if (swipeDir === 'east')  return Q === 0 ? 'east'  : Q === 3 ? 'east_from_q3' : null;
-      if (swipeDir === 'west')  return Q === 1 ? 'west'  : Q === 2 ? 'west_from_q2' : null;
-      return null;
-    }
-    
-    // Debug-Display
-    let replayDbg = null;
     function dbgLog(msg) {
       console.log('[REPLAY] ' + msg);
       if (replayDbg) replayDbg.textContent = msg;
     }
     
-    async function startReplay() {
+    // --- Smooth easeInOut Bewegung ---
+    function moveHandSmooth(toX, toY, durMs) {
+      return new Promise(resolve => {
+        const sx = parseInt(handEl.style.left) + 23;
+        const sy = parseInt(handEl.style.top);
+        const startT = performance.now();
+        function tick() {
+          if (!replayActive) { setHandPos(toX, toY); resolve(); return; }
+          const t = Math.min((performance.now() - startT) / durMs, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; // easeInOut
+          setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
+          if (t < 1) requestAnimationFrame(tick);
+          else { setHandPos(toX, toY); resolve(); }
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+    
+    // --- Hand von Süd-Rand zu Ziel, halten, zurück ---
+    async function handTapFromSouth(tx, ty, holdMs) {
+      if (!replayActive) return;
+      holdMs = holdMs || 600;
+      const SY = 740; // Südl. Displayrand
+      setHandPos(tx, SY);
+      handEl.style.opacity = '0.85';
+      await moveHandSmooth(tx, ty, 400);
+      await sleep(holdMs);
+      await moveHandSmooth(tx, SY, 400);
+      handEl.style.opacity = '0';
+      await sleep(100);
+    }
+    
+    // --- Würfel-Zentrum auf Screen projizieren ---
+    function cubeScreenXY() {
+      const pos = cube.position.clone();
+      pos.project(camera);
+      return {
+        x: Math.round((pos.x * 0.5 + 0.5) * 360),
+        y: Math.round((-pos.y * 0.5 + 0.5) * 720)
+      };
+    }
+    
+    // --- Pixel-Offset für Kipprichtung (135px) ---
+    function kippPixelDir(dir) {
+      if (dir.includes('north')) return {dx: 0, dy: -135};
+      if (dir.includes('south')) return {dx: 0, dy: 135};
+      if (dir.includes('east'))  return {dx: 135, dy: 0};
+      if (dir.includes('west'))  return {dx: -135, dy: 0};
+      return {dx: 0, dy: 0};
+    }
+    
+    // --- Hand-Kipp-Animation: über Mitte → 135px mitbewegen ---
+    async function handKippAnim(kippDir, kippDur) {
+      if (!replayActive) return;
+      const c = cubeScreenXY();
+      const off = kippPixelDir(kippDir);
+      
+      // Hand über Würfelmitte einblenden
+      setHandPos(c.x, c.y);
+      handEl.style.opacity = '0.85';
+      await sleep(350);
+      
+      // 135px in Kipprichtung mitbewegen + gleichzeitig kippen
+      const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, kippDur);
+      await performKipp(kippDir, kippDur);
+      advanceTopFace();
+      await moveP;
+      
+      // Hand kurz ausblenden
+      handEl.style.opacity = '0';
+      await sleep(80);
+    }
+    
+    // --- Kipp-Zähler aktualisieren ---
+    function replayUpdateKippCount() {
+      kipp21KippCount++;
+      kipp21RoundKipps++;
+      if (!kipp21TimerRunning) kipp21StartRoundTimer();
+      const ht = document.getElementById('hintText');
+      if (ht) ht.innerHTML = kipp21KippCount + ' KIPPS';
+    }
+    
+    // --- Karten-Screen-Position ---
+    function cardScreenX(ci) {
+      const cw = 45, gap = (360 - 6 * cw) / 5;
+      return cw / 2 + ci * (cw + gap);
+    }
+    
+    // --- Kniff-Icon-Position (liest aus DOM) ---
+    function getKniffIconPos(type) {
+      const imgs = document.querySelectorAll('#jokerIconsRow img');
+      const idx = (type === 'wobble') ? 0 : 1;
+      const img = imgs[idx];
+      const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
+      return {
+        x: img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250),
+        y: rowTop + 29
+      };
+    }
+    
+    // --- Treffer-Richtung berechnen: CW oder CCW? ---
+    function findHitDirection(cardIdx) {
+      const card = gameCards[cardIdx];
+      const dist = kipp21CardDistances[cardIdx];
+      if (!card || !card.color || !dist) return 'cw';
+      
+      const fromIdx = stateIndex(currentQuadrant, topFace);
+      const faceOff = {f0: 0, f1: 4, f2: 8};
+      const slots = ['S1', 'S2', 'S3', 'S4'];
+      
+      // CW zuerst probieren, dann CCW
+      for (const dir of ['cw', 'ccw']) {
+        const delta = (dir === 'cw') ? dist : -dist;
+        const toIdx = ((fromIdx + delta) % 12 + 12) % 12;
+        const [tQ, tF] = CW_CYCLE[toIdx];
+        const off = faceOff[tF];
+        
+        for (let s = 0; s < 4; s++) {
+          if (deck[off + s] === card.zahl) {
+            const nColor = SLOT_NEIGHBOR_COLORS[tQ][slots[s]];
+            if (nColor === card.color.name) return dir;
+          }
+        }
+      }
+      return 'cw'; // Fallback
+    }
+    
+    // --- Karte aufdecken (manuell per Tap) ---
+    async function replayOpenCard(ci) {
+      if (!replayActive) return;
+      const nextV = kipp21NextVerdeckt();
+      if (nextV < 0) return;
+      dbgLog('Karte ' + nextV + ' aufdecken');
+      await handTapFromSouth(cardScreenX(nextV), 612, 600);
+      kipp21OnCardTap(nextV);
+      await sleep(400);
+    }
+    
+    // --- Kippen für offene Karte ---
+    async function replayKippSequence(ci, kippDur) {
+      if (!replayActive) return;
+      const dist = kipp21CardDistances[ci];
+      if (!dist || dist <= 0) return;
+      
+      const dir = findHitDirection(ci);
+      dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' Q' + currentQuadrant + ' ' + topFace);
+      
+      for (let k = 0; k < dist; k++) {
+        if (!replayActive) break;
+        const Q = currentQuadrant;
+        const kDir = (dir === 'cw') ? CW_KIPP[Q] : CCW_KIPP[Q];
+        kippDirection = dir;
+        
+        await handKippAnim(kDir, kippDur);
+        replayUpdateKippCount();
+        
+        if (k < dist - 1) await sleep(80);
+      }
+    }
+    
+    // --- Bestätigen (offene Karte antippen) ---
+    async function replayConfirm(ci) {
+      if (!replayActive) return;
+      const openIdx = kipp21CardStates.indexOf('offen');
+      if (openIdx < 0 || kipp21RoundKipps <= 0) return;
+      dbgLog('Bestätigen Karte ' + openIdx);
+      await handTapFromSouth(cardScreenX(openIdx), 465, 500);
+      kipp21OnCardTap(openIdx);
+      await sleep(600);
+    }
+    
+    // --- KNIFF ausführen (öffnet automatisch nächste Karte) ---
+    async function replayKniff(type) {
+      if (!replayActive) return;
+      const iconPos = getKniffIconPos(type);
+      dbgLog(type + ' KNIFF');
+      
+      // Hand tippt auf Icon
+      await handTapFromSouth(iconPos.x, iconPos.y, 700);
+      
+      if (type === 'eckblick') {
+        const eckP = runKipp21EckblickKniff();
+        // Eckblick zeigt 5s, dann abbrechen
+        await sleep(5500);
+        if (replayActive) kipp21KniffAbort = true;
+        await eckP;
+      } else {
+        await runKipp21WobbleKniff();
+      }
+      // KNIFF hat automatisch nächste Karte geöffnet
+      await sleep(400);
+    }
+    
+    // ============================================================
+    //  PERFECT GAME: alle 6 Treffer, optimale Richtungen
+    //  Kniff-Plan: 0=Eckblick, 2=Wobble, 3=Eckblick, 5=Wobble
+    // ============================================================
+    async function startPerfectReplay() {
       initHandEl();
       replayActive = true;
       
@@ -1882,142 +2003,124 @@
       const jr = document.getElementById('jokerIconsRow');
       if (jr) jr.style.pointerEvents = 'none';
       
-      const gestures = parseReplayGestures();
-      dbgLog('Replay: ' + gestures.length + ' Gesten');
+      // Kniff-Plan: 1. Eckblick, danach gleichmäßig verteilt
+      const kniffPlan = {0: 'eckblick', 2: 'wobble', 3: 'eckblick', 5: 'wobble'};
+      const KIPP_DUR = 420;
       
-      await sleep(800);
+      await sleep(1200);
+      dbgLog('Perfect Game Start');
       
-      let lastEndMs = 0;
-      
-      for (let gi = 0; gi < gestures.length; gi++) {
-        if (!replayActive) break;
-        const g = gestures[gi];
-        
-        // Pause zwischen Gesten (echtes Timing, max 12s)
-        const waitMs = g.ms - lastEndMs;
-        if (waitMs > 200) {
-          handEl.style.opacity = '0';
-          await sleep(Math.min(waitMs, 12000));
-        }
-        lastEndMs = g.endMs;
+      for (let ci = 0; ci < 6; ci++) {
         if (!replayActive) break;
         
-        // === ECKBLICK KNIFF ===
-        if (g.action === 'eckblick') {
-          dbgLog('Eckblick KNIFF');
-          await handShowAt(g.x, g.y, 700);
-          handEl.style.opacity = '0';
-          // Eckblick starten — blockiert bis Animation fertig + Karte offen
-          await runKipp21EckblickKniff();
-          if (!replayActive) break;
-          dbgLog('Eckblick fertig');
-          continue;
+        // === KARTE AUFDECKEN ===
+        if (kniffPlan[ci]) {
+          await replayKniff(kniffPlan[ci]);
+        } else {
+          await replayOpenCard(ci);
         }
+        if (!replayActive) break;
         
-        // === WOBBLE KNIFF ===
-        if (g.action === 'wobble') {
-          dbgLog('Wobble KNIFF');
-          await handShowAt(g.x, g.y, 700);
-          handEl.style.opacity = '0';
-          await runKipp21WobbleKniff();
-          if (!replayActive) break;
-          dbgLog('Wobble fertig');
-          continue;
-        }
+        // Kurze Denkpause
+        await sleep(500);
         
-        // === KARTEN-TAP ===
-        if (g.action === 'card_tap') {
-          const nextV = kipp21NextVerdeckt();
-          dbgLog('Karte ' + nextV + ' aufdecken');
-          await handShowAt(g.x, g.y, 600);
-          if (nextV >= 0) kipp21OnCardTap(nextV);
-          await sleep(200);
-          handEl.style.opacity = '0';
-          continue;
-        }
+        // === KIPPEN ===
+        await replayKippSequence(ci, KIPP_DUR);
+        if (!replayActive) break;
         
         // === BESTÄTIGEN ===
-        if (g.action === 'confirm') {
-          // Finde offene Karte — nur bestätigen wenn schon gekippt wurde
-          let openIdx = -1;
-          for (let ci = 0; ci < 6; ci++) {
-            if (kipp21CardStates[ci] === 'offen') { openIdx = ci; break; }
-          }
-          if (openIdx >= 0 && kipp21RoundKipps > 0) {
-            dbgLog('Bestätigen Karte ' + openIdx + ' Q' + currentQuadrant + ' ' + topFace);
-            await handShowAt(g.x, g.y, 500);
-            kipp21OnCardTap(openIdx);
-          } else {
-            dbgLog('Tap (noch nicht gekippt oder keine offene Karte)');
-            await handShowAt(g.x, g.y, 300);
-          }
-          await sleep(200);
-          handEl.style.opacity = '0';
-          continue;
-        }
+        await sleep(400);
+        await replayConfirm(ci);
         
-        // === SWIPE (Kippen) ===
-        if (g.action.startsWith('swipe_')) {
-          const lastPt = g.allPts[g.allPts.length - 1];
-          const firstPt = g.allPts[0];
-          const totalDist = Math.abs(lastPt.x - firstPt.x) + Math.abs(lastPt.y - firstPt.y);
-          
-          // Nur kippen wenn Swipe lang genug (>50px Displacement)
-          if (totalDist < 50) {
-            dbgLog('Swipe zu kurz (' + totalDist + 'px) — ignoriert');
-            await handShowAt(g.x, g.y, 200);
-            handEl.style.opacity = '0';
-            continue;
-          }
-          
-          const swDir = g.action.replace('swipe_', '');
-          const kDir = swipeToKippDir(swDir);
-          
-          dbgLog('Swipe ' + swDir + (kDir ? ' → ' + kDir + ' Q' + currentQuadrant : ' BLOCKED'));
-          
-          const pathP = handTracePath(g.allPts);
-          
-          if (kDir) {
-            const cwDirs = ['north','east','south_from_q1','west_from_q2'];
-            kippDirection = cwDirs.includes(kDir) ? 'cw' : 'ccw';
-            
-            await performKipp(kDir, 600);
-            advanceTopFace();
-            
-            if (kipp21Active) {
-              kipp21KippCount++;
-              if (kipp21CardStates.includes('offen')) {
-                kipp21RoundKipps++;
-                if (!kipp21TimerRunning) kipp21StartRoundTimer();
-              }
-              const ht = document.getElementById('hintText');
-              if (ht) ht.innerHTML = kipp21KippCount + ' KIPPS';
-            }
-          }
-          
-          await pathP;
-          await sleep(80);
-          handEl.style.opacity = '0';
-          continue;
-        }
-        
-        // Unbekannt — Hand kurz zeigen
-        await handShowAt(g.x, g.y, 400);
-        handEl.style.opacity = '0';
+        await sleep(500);
       }
       
-      // Replay fertig
+      replayCleanup(jr);
+    }
+    
+    // ============================================================
+    //  RANDOM GAME: zufällige Richtungen, keine KNIFFs,
+    //  längere Denkpausen, zögerlicheres Kippen
+    // ============================================================
+    async function startRandomReplay() {
+      initHandEl();
+      replayActive = true;
+      
+      if (!replayDbg) {
+        replayDbg = document.createElement('div');
+        replayDbg.id = 'replayDbg';
+        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:#0f0;background:rgba(0,0,0,0.7);padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
+        document.getElementById('uiOverlay').appendChild(replayDbg);
+      }
+      
+      const jr = document.getElementById('jokerIconsRow');
+      if (jr) jr.style.pointerEvents = 'none';
+      
+      const KIPP_DUR = 550;
+      
+      await sleep(1500);
+      dbgLog('Random Game Start');
+      
+      for (let ci = 0; ci < 6; ci++) {
+        if (!replayActive) break;
+        
+        // === KARTE AUFDECKEN (immer manuell) ===
+        await replayOpenCard(ci);
+        if (!replayActive) break;
+        
+        // Denkpause (zufällig 1.5–4s)
+        await sleep(1500 + Math.random() * 2500);
+        
+        // === KIPPEN (zufällige Richtung) ===
+        const dist = kipp21CardDistances[ci];
+        if (!dist || dist <= 0) continue;
+        
+        const dir = Math.random() < 0.5 ? 'cw' : 'ccw';
+        dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' (zufällig)');
+        
+        for (let k = 0; k < dist; k++) {
+          if (!replayActive) break;
+          const Q = currentQuadrant;
+          const kDir = (dir === 'cw') ? CW_KIPP[Q] : CCW_KIPP[Q];
+          kippDirection = dir;
+          
+          await handKippAnim(kDir, KIPP_DUR);
+          replayUpdateKippCount();
+          
+          if (k < dist - 1) await sleep(200 + Math.random() * 400);
+        }
+        if (!replayActive) break;
+        
+        // === BESTÄTIGEN ===
+        await sleep(600 + Math.random() * 800);
+        await replayConfirm(ci);
+        
+        await sleep(1000);
+      }
+      
+      replayCleanup(jr);
+    }
+    
+    // --- Aufräumen ---
+    function replayCleanup(jr) {
       replayActive = false;
       if (handEl) handEl.style.opacity = '0';
       if (jr) jr.style.pointerEvents = 'auto';
       dbgLog('Replay fertig!');
-      setTimeout(() => { if(replayDbg) replayDbg.style.display = 'none'; }, 3000);
+      setTimeout(() => { if (replayDbg) replayDbg.style.display = 'none'; }, 3000);
+    }
+    
+    // --- Wrapper: Default = Perfect ---
+    async function startReplay() {
+      await startPerfectReplay();
     }
     
     function stopReplay() {
       replayActive = false;
       if (handEl) handEl.style.opacity = '0';
     }
+
+
 
 
         function showKipp21TutorialLine() {
@@ -2521,25 +2624,6 @@
     
     function kipp21GenerateTarget(cardIdx) {
       console.log('[GENTARGET] cardIdx='+cardIdx, 'usedDists:', kipp21UsedDistances);
-      
-      // Im Tutorial-Modus: aufgezeichnete Targets verwenden
-      if (kipp21WithTutorial && REPLAY_TARGETS && REPLAY_TARGETS[cardIdx]) {
-        const rt = REPLAY_TARGETS[cardIdx];
-        const colorObj = GAME_COLORS.find(c => c.name === rt.colorName);
-        if (colorObj) {
-          console.log('[GENTARGET] REPLAY: zahl='+rt.zahl, 'color='+rt.colorName, 'dist='+rt.dist);
-          fillCardWithKombi(cardIdx, rt.zahl, colorObj);
-          bereitsAusgegeben.add(rt.zahl + '_' + rt.colorName);
-          kipp21UsedDistances.push(rt.dist);
-          kipp21CardDistances[cardIdx] = rt.dist;
-          kipp21CardStates[cardIdx] = 'offen';
-          activeCardIdx = cardIdx;
-          kipp21RoundKipps = 0;
-          kipp21RoundTimerStart = null;
-          kipp21TimerRunning = false;
-          return true;
-        }
-      }
       
       const available = [];
       for (let d = 1; d <= 6; d++) {
