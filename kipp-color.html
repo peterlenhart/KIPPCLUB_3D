@@ -178,25 +178,27 @@
       100% { transform: translateY(0); opacity: 1; }
     }
     @keyframes splashGlow {
-      0%, 100% { text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.8); }
-      50%      { text-shadow: 0 0 40px rgba(255,255,255,0.7), 0 0 80px rgba(200,220,255,0.3), 0 4px 8px rgba(0,0,0,0.8); }
+      0%, 100% { text-shadow: 0 0 20px rgba(200,220,255,0.4), 0 0 40px rgba(150,180,255,0.2), 0 4px 8px rgba(0,0,0,0.9); }
+      50%      { text-shadow: 0 0 40px rgba(200,220,255,0.9), 0 0 80px rgba(150,180,255,0.5), 0 0 120px rgba(100,150,255,0.2), 0 4px 8px rgba(0,0,0,0.9); }
     }
     @keyframes splashFadeUp {
       0%   { transform: translateY(30px); opacity: 0; }
       100% { transform: translateY(0); opacity: 1; }
     }
     #introSplash {
-      position: absolute; top: 0; left: 0; width: 360px; height: 720px;
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 360px; height: 720px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 500; pointer-events: none;
-      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+      z-index: 250; pointer-events: none;
+      background: rgba(0,0,0,0.6);
     }
     #introSplash .splash-line {
       font-weight: 900; letter-spacing: 2px;
-      background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 30%, #b0b0b0 70%, #d0d0d0 100%);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 15px rgba(255,255,255,0.2));
+      color: #ffffff;
+      text-shadow: 0 0 30px rgba(200,220,255,0.6), 0 0 60px rgba(150,180,255,0.3), 0 4px 8px rgba(0,0,0,0.9);
       opacity: 0;
+      text-align: center;
+      width: 100%;
     }
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
@@ -1543,6 +1545,13 @@
     async function runLoadingAnimation() {
       const kd = 350; // Kipp-Dauer ms
       const fd = 500; // Fade-Dauer ms
+      
+      // Container halbtransparent + Splash parallel starten
+      document.getElementById('container').style.opacity = '0.5';
+      const splashP = showIntroSplash().catch(e => {
+        console.error('[SPLASH]', e);
+        const s = document.getElementById('introSplash'); if (s) s.remove();
+      });
 
       // CW-Zyklus: Q3→Q0→Q1→Q2→Q3...
       const cwDirs = ['north', 'east', 'south_from_q1', 'west_from_q2'];
@@ -1581,6 +1590,12 @@
       rebuildFaceMat('f2', 1);
 
       loadingAnimDone = true;
+      
+      // Splash abwarten, dann Container zurück auf volle Sichtbarkeit
+      await splashP;
+      document.getElementById('container').style.transition = 'opacity 0.5s ease';
+      document.getElementById('container').style.opacity = '1';
+      
       checkEnableButtons();
     }
 
@@ -2651,11 +2666,17 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Nur das verwendete Icon ausblenden, andere bleiben
+      // Nur das verwendete Icon-Layer ausblenden
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach(img => {
         img.style.pointerEvents = 'none';
-        if (img.dataset.kniffIdx === '0') img.style.opacity = '0';
+        if (img.dataset.kniffIdx === '0') {
+          if (img.dataset.layer === 'overlay') {
+            img.style.opacity = '0'; // Overlay immer weg
+          } else if (kipp21WobbleUsed >= 1) {
+            img.style.opacity = '0'; // Base nur bei 2. Nutzung
+          }
+        }
       });
       
       function nextCwDir() {
@@ -2717,11 +2738,17 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Nur das verwendete Icon ausblenden, andere bleiben
+      // Nur das verwendete Icon-Layer ausblenden
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach(img => {
         img.style.pointerEvents = 'none';
-        if (img.dataset.kniffIdx === '1') img.style.opacity = '0';
+        if (img.dataset.kniffIdx === '1') {
+          if (img.dataset.layer === 'overlay') {
+            img.style.opacity = '0'; // Overlay immer weg
+          } else if (kipp21EckblickUsed >= 1) {
+            img.style.opacity = '0'; // Base nur bei 2. Nutzung
+          }
+        }
       });
       
       // Position merken für Rückkehr
@@ -4424,70 +4451,81 @@
 
     // === INTRO SPLASH: "21 KIPPS unter 21 Sek." ===
     async function showIntroSplash() {
-      // 3D-Szene abdunkeln
-      renderer.domElement.style.transition = 'opacity 0.4s ease';
-      renderer.domElement.style.opacity = '0.5';
-      
       // Splash erstellen
       const splash = document.createElement('div');
       splash.id = 'introSplash';
       
-      const line1 = document.createElement('div');
-      line1.className = 'splash-line';
-      line1.style.fontSize = '120px';
-      line1.style.lineHeight = '1.0';
-      line1.textContent = '21';
+      function mkGroup(lines, extra) {
+        const g = document.createElement('div');
+        g.style.cssText = 'text-align:center; width:100%; opacity:0; transform:scale(0); transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;';
+        if (extra) Object.assign(g.style, extra);
+        lines.forEach(l => {
+          const d = document.createElement('div');
+          d.className = 'splash-line';
+          d.textContent = l.text;
+          d.style.cssText = 'font-size:' + l.size + 'px; opacity:1; text-align:center; width:100%;';
+          if (l.extra) Object.assign(d.style, l.extra);
+          g.appendChild(d);
+        });
+        splash.appendChild(g);
+        return g;
+      }
       
-      const line2 = document.createElement('div');
-      line2.className = 'splash-line';
-      line2.style.fontSize = '42px';
-      line2.style.marginTop = '-8px';
-      line2.style.letterSpacing = '8px';
-      line2.textContent = 'KIPPS';
+      const group1 = mkGroup([
+        {text: '21', size: 120, extra: {lineHeight:'1.0'}},
+        {text: 'KIPPS', size: 42, extra: {marginTop:'-8px', letterSpacing:'8px'}}
+      ]);
       
-      const line3 = document.createElement('div');
-      line3.className = 'splash-line';
-      line3.style.fontSize = '26px';
-      line3.style.marginTop = '24px';
-      line3.style.fontWeight = '400';
-      line3.style.letterSpacing = '4px';
-      line3.textContent = 'unter';
+      const group2 = mkGroup([
+        {text: 'unter', size: 26, extra: {fontWeight:'400', letterSpacing:'4px'}},
+        {text: '21 Sek.', size: 72, extra: {marginTop:'4px'}}
+      ], {marginTop: '24px'});
       
-      const line4 = document.createElement('div');
-      line4.className = 'splash-line';
-      line4.style.fontSize = '72px';
-      line4.style.marginTop = '4px';
-      line4.textContent = '21 Sek.';
+      // Splash einblenden — auf body damit über startOverlay (z-300)
+      splash.style.opacity = '0';
+      splash.style.transition = 'opacity 0.4s ease';
+      document.body.appendChild(splash);
+      await sleep(50);
+      splash.style.opacity = '1';
       
-      splash.appendChild(line1);
-      splash.appendChild(line2);
-      splash.appendChild(line3);
-      splash.appendChild(line4);
-      document.getElementById('uiOverlay').appendChild(splash);
+      function popIn(el) {
+        el.style.opacity = '1';
+        el.style.transform = 'scale(1)';
+      }
+      function fadeOut(el) {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '0';
+      }
       
-      // Sequenz: Zeile für Zeile reinknallen
+      // Block 1: "21 KIPPS" alleine
       await sleep(300);
-      line1.style.animation = 'splashPop 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards';
-      await sleep(600);
-      line1.style.animation = 'splashPop 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards, splashGlow 2s ease-in-out infinite';
+      popIn(group1);
+      await sleep(2200);
+      fadeOut(group1);
+      await sleep(500);
       
-      line2.style.animation = 'splashSlam 0.5s cubic-bezier(0.22,1,0.36,1) forwards';
-      await sleep(700);
-      
-      line3.style.animation = 'splashFadeUp 0.5s ease-out forwards';
-      await sleep(400);
-      
-      line4.style.animation = 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards';
-      await sleep(600);
-      line4.style.animation = 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards, splashGlow 2s ease-in-out infinite 0.3s';
-      
-      // Stehen lassen
+      // Block 2: "unter 21 Sek." alleine
+      popIn(group2);
       await sleep(2200);
       
+      // Glow-Puls auf Block 2
+      const glowEls = group2.querySelectorAll('.splash-line');
+      let glowOn = true;
+      const glowInterval = setInterval(() => {
+        const sh = glowOn 
+          ? '0 0 40px rgba(200,220,255,0.9), 0 0 80px rgba(150,180,255,0.5), 0 4px 8px rgba(0,0,0,0.9)'
+          : '0 0 20px rgba(200,220,255,0.4), 0 0 40px rgba(150,180,255,0.2), 0 4px 8px rgba(0,0,0,0.9)';
+        glowEls.forEach(el => { el.style.textShadow = sh; });
+        glowOn = !glowOn;
+      }, 800);
+      
+      // Stehen lassen
+      await sleep(2500);
+      
+      clearInterval(glowInterval);
+      
       // Ausblenden
-      splash.style.transition = 'opacity 0.6s ease';
       splash.style.opacity = '0';
-      renderer.domElement.style.opacity = '1';
       await sleep(700);
       splash.remove();
     }
@@ -4499,10 +4537,6 @@
 
       // Hide start overlay
       document.getElementById('startOverlay').style.display = 'none';
-
-      // === DRAMATIC INTRO SPLASH ===
-      await showIntroSplash();
-      if (!autoDemoActive) return;
 
       // Stop any lingering timers/animations from previous runs
       stopCountdown();
