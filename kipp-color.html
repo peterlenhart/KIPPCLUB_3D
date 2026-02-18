@@ -2148,8 +2148,7 @@
     
     function recTouch(type, touch, src) {
       if (!recActive) return;
-      const container = document.getElementById('gameContainer');
-      const rect = container.getBoundingClientRect();
+      const rect = renderer.domElement.getBoundingClientRect();
       const x = Math.round((touch.clientX - rect.left) / rect.width * 360);
       const y = Math.round((touch.clientY - rect.top) / rect.height * 720);
       const ms = Math.round(performance.now() - recStartTime);
