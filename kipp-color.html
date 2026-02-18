@@ -2175,12 +2175,98 @@
             if (dbg) dbg.textContent = 'ERROR: ' + err.message;
           });
         }, 800);
+      } else {
+        // Normales Spiel: Recording starten
+        startRecording();
       }
       
       positionResetButton();
     }
     
-    // (Recording-System entfernt, Replay-Daten sind in REPLAY_DATA)
+    // === RECORDING SYSTEM (für neues Replay aufnehmen) ===
+    let recEvents = [];
+    let recStartTime = 0;
+    let recActive = false;
+    
+    function startRecording() {
+      recEvents = [];
+      recStartTime = performance.now();
+      recActive = true;
+      console.log('[REC] Recording gestartet');
+    }
+    
+    function recTouch(type, touch) {
+      if (!recActive) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = Math.round((touch.clientX - rect.left) / rect.width * 360);
+      const y = Math.round((touch.clientY - rect.top) / rect.height * 720);
+      const ms = Math.round(performance.now() - recStartTime);
+      const t = {touchstart:'s', touchmove:'m', touchend:'e'}[type] || type;
+      recEvents.push({t, x, y, ms});
+    }
+    
+    // Touch-Listener fürs Recording (parallel zu bestehenden Handlern)
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      if (recActive && e.touches[0]) recTouch('touchstart', e.touches[0]);
+    }, {passive: true});
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (recActive && e.touches[0]) recTouch('touchmove', e.touches[0]);
+    }, {passive: true});
+    renderer.domElement.addEventListener('touchend', (e) => {
+      if (recActive && e.changedTouches[0]) recTouch('touchend', e.changedTouches[0]);
+    }, {passive: true});
+    
+    function stopRecording() {
+      recActive = false;
+      console.log('[REC] Recording gestoppt:', recEvents.length, 'Events');
+    }
+    
+    function dumpRecording() {
+      stopRecording();
+      const data = {
+        deck: deck.slice(),
+        targets: kipp21CardDistances.map((dist, i) => ({
+          zahl: gameCards[i].zahl,
+          colorName: gameCards[i].color ? gameCards[i].color.name : null,
+          dist: dist
+        })),
+        events: recEvents
+      };
+      const json = JSON.stringify(data);
+      
+      // Export-Overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;';
+      
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      ta.style.cssText = 'width:95%;height:60%;font:10px monospace;color:#0f0;background:#111;border:1px solid #0f0;padding:8px;';
+      
+      const info = document.createElement('div');
+      info.style.cssText = 'color:#fff;font:14px Arial;margin:10px;text-align:center;';
+      info.textContent = recEvents.length + ' Events, ' + Math.round(recEvents[recEvents.length-1]?.ms/1000 || 0) + 's — Text kopieren und senden!';
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'KOPIEREN';
+      copyBtn.style.cssText = 'margin:10px;padding:12px 30px;font:bold 16px Arial;background:#0a0;color:#fff;border:none;border-radius:8px;cursor:pointer;';
+      copyBtn.onclick = () => {
+        ta.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'KOPIERT ✓';
+        copyBtn.style.background = '#080';
+      };
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = 'SCHLIEßEN';
+      closeBtn.style.cssText = 'margin:5px;padding:8px 20px;font:13px Arial;background:#333;color:#fff;border:none;border-radius:5px;cursor:pointer;';
+      closeBtn.onclick = () => overlay.remove();
+      
+      overlay.appendChild(info);
+      overlay.appendChild(ta);
+      overlay.appendChild(copyBtn);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+    }
 
     // === KIPP KNIFF SYSTEM (beide Joker) ===
     let kipp21KniffActive = false;
@@ -2579,7 +2665,10 @@
             abtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%); top:' + btnScreenY + 'px; width:280px; height:49px; background:url(button_lang.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:150; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9);';
             abtn.onclick = () => { location.reload(); };
             
-            // Dump tap recording if tutorial mode
+            // Recording-Daten exportieren wenn aufgenommen
+            if (recActive) {
+              setTimeout(() => dumpRecording(), 1500);
+            }
           }
         } else {
           // WRONG - red flash
