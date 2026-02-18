@@ -186,9 +186,9 @@
       100% { transform: translateY(0); opacity: 1; }
     }
     #introSplash {
-      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-      width: 360px; height: 720px;
-      z-index: 250; pointer-events: none;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%;
+      z-index: 500; pointer-events: none;
       background: rgba(0,0,0,0.6);
     }
     #introSplash .splash-line {
@@ -4459,54 +4459,46 @@
       // Würfel unsichtbar
       cube.visible = false;
       
-      // Boxboden-Mitte projizieren
+      // Boxboden-Mitte Y projizieren
       const bodenCenter = new THREE.Vector3(0, 0.001, 0.109375);
       bodenCenter.project(camera);
-      const bodenScreenX = Math.round((bodenCenter.x * 0.5 + 0.5) * 360);
       const bodenScreenY = Math.round((-bodenCenter.y * 0.5 + 0.5) * 720);
       
-      // Alles in einem Block, zentriert über Boxboden
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'position:absolute; left:' + bodenScreenX + 'px; top:' + bodenScreenY + 'px; transform:translate(-50%,-50%);';
-      
-      const block = document.createElement('div');
-      block.style.cssText = 'text-align:center; opacity:0; transform:scale(0); transition:transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;';
+      // Exakt gleicher Stil wie countdown/timer
+      const timerStyle = 'font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));';
       
       const line1 = document.createElement('div');
-      line1.className = 'splash-line';
       line1.textContent = '21 KIPPS';
-      line1.style.cssText = 'font-size:42px; opacity:1; text-align:center; width:100%; line-height:1.1; letter-spacing:6px;';
+      line1.style.cssText = timerStyle + ' font-size:42px; line-height:1.1; letter-spacing:6px;';
       
       const line2 = document.createElement('div');
-      line2.className = 'splash-line';
       line2.textContent = 'unter 21 Sekunden.';
-      line2.style.cssText = 'font-size:16px; opacity:1; text-align:center; width:100%; margin-top:8px; letter-spacing:2px;';
+      line2.style.cssText = timerStyle + ' font-size:16px; margin-top:8px; letter-spacing:2px;';
       
-      block.appendChild(line1);
-      block.appendChild(line2);
-      wrap.appendChild(block);
-      splash.appendChild(wrap);
+      const textBox = document.createElement('div');
+      textBox.style.cssText = 'position:absolute; top:' + bodenScreenY + 'px; left:0; right:0; display:flex; flex-direction:column; align-items:center; opacity:0; pointer-events:none;';
+      textBox.appendChild(line1);
+      textBox.appendChild(line2);
+      splash.appendChild(textBox);
       
       splash.style.opacity = '0';
-      splash.style.transition = 'opacity 0.4s ease';
       document.body.appendChild(splash);
+      
+      // Einblenden
       await sleep(50);
       splash.style.opacity = '1';
-      
-      // Aufblähen
       await sleep(300);
-      block.style.opacity = '1';
-      block.style.transform = 'scale(1)';
+      textBox.style.transition = 'opacity 0.5s ease';
+      textBox.style.opacity = '1';
       
       // Pulsieren
       let pulseUp = true;
       const pulseInterval = setInterval(() => {
-        block.style.transition = 'transform 0.8s ease-in-out';
-        block.style.transform = pulseUp ? 'scale(1.08)' : 'scale(1)';
         const f = pulseUp
           ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.6))'
           : 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
-        block.style.filter = f;
+        line1.style.filter = f;
+        line2.style.filter = f;
         pulseUp = !pulseUp;
       }, 800);
       
