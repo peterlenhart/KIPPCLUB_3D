@@ -1927,18 +1927,16 @@
     
     // --- Kniff-Icon-Position (liest aus DOM) ---
     function getKniffIconPos(type) {
-      // Direkte Berechnung wie showKniffIcons (statt DOM lesen)
-      const icons = document.querySelectorAll('#jokerIconsRow img');
-      const iconCount = icons.length; // immer 2
+      // 2 logische Icons (je base+overlay), Mitte des Paars anzielen
+      const iconCount = 2; // logisch
       const totalWidth = 360, iconW = 58;
       const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
       const idx = (type === 'wobble') ? 0 : 1;
-      const cx = Math.round(gap + idx * (iconW + gap) + iconW / 2);
-      const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
-      const cy = rowTop + 29;
-      console.log('[KNIFF-POS] type='+type, 'idx='+idx, 'calc_cx='+cx, 'cy='+cy, 
-        'dom_left='+(icons[idx]?icons[idx].style.left:'?'));
-      return { x: cx, y: cy };
+      const centerX = gap + idx * (iconW + gap) + iconW / 2;
+      const pairCenter = Math.round(centerX - 4); // Mitte zwischen base(-8) und overlay(0)
+      const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '523');
+      console.log('[KNIFF-POS] type='+type, 'pairCenter='+pairCenter, 'rowTop='+rowTop);
+      return { x: pairCenter, y: rowTop + 29 };
     }
     
     // --- Kipp-Zähler aktualisieren ---
@@ -2565,21 +2563,28 @@
     const KNIFF_SHOW_DURATION = 12000; // 12 Sekunden Showzeit
     
     function refreshKniffIcons() {
-      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      if (kniffImgs[0]) {
-        if (kipp21WobbleUsed >= KNIFF_MAX_USES) {
-          kniffImgs[0].style.display = 'none';
+      const allImgs = document.querySelectorAll('#jokerIconsRow img');
+      allImgs.forEach(img => {
+        const idx = parseInt(img.dataset.kniffIdx);
+        const isOverlay = img.dataset.layer === 'overlay';
+        const used = idx === 0 ? kipp21WobbleUsed : kipp21EckblickUsed;
+        
+        if (isOverlay) {
+          // Overlay verschwindet nach 1. Nutzung
+          if (used >= 1) {
+            img.style.display = 'none';
+          } else {
+            img.style.display = ''; img.style.opacity = '1'; img.style.pointerEvents = 'auto';
+          }
         } else {
-          kniffImgs[0].style.display = ''; kniffImgs[0].style.opacity = '1'; kniffImgs[0].style.pointerEvents = 'auto';
+          // Base verschwindet nach 2. Nutzung
+          if (used >= KNIFF_MAX_USES) {
+            img.style.display = 'none';
+          } else {
+            img.style.display = ''; img.style.opacity = '1'; img.style.pointerEvents = 'auto';
+          }
         }
-      }
-      if (kniffImgs[1]) {
-        if (kipp21EckblickUsed >= KNIFF_MAX_USES) {
-          kniffImgs[1].style.display = 'none';
-        } else {
-          kniffImgs[1].style.display = ''; kniffImgs[1].style.opacity = '1'; kniffImgs[1].style.pointerEvents = 'auto';
-        }
-      }
+      });
       // Ganze Reihe verstecken wenn beide verbraucht
       if (kipp21WobbleUsed >= KNIFF_MAX_USES && kipp21EckblickUsed >= KNIFF_MAX_USES) {
         document.getElementById('jokerIconsRow').style.display = 'none';
@@ -3958,47 +3963,46 @@
       "joker3.webp"
     ];
 
-    // Populate jokerIconsRow
+    // Populate jokerIconsRow (base + overlay for 2-use indication)
     try {
       KNIFF_ICONS.forEach((src, i) => {
+        // Base icon (unterer, wird 8px westlicher)
         const img = document.createElement('img');
         img.src = src;
         img.dataset.kniffIdx = i;
+        img.dataset.layer = 'base';
         jokerRow.appendChild(img);
+        
+        // Overlay icon (oberer, 8px östlicher)
+        const ov = document.createElement('img');
+        ov.src = src;
+        ov.dataset.kniffIdx = i;
+        ov.dataset.layer = 'overlay';
+        ov.style.zIndex = '2';
+        jokerRow.appendChild(ov);
       });
     } catch(e) { console.error('Joker icon setup error:', e); }
 
-    // Click-Handler für beide Joker (Wobble + Eckblick)
+    // Click-Handler für alle Joker-Icons (base + overlay)
     (function() {
-      const kniffImgs = jokerRow.querySelectorAll('img');
-      // Linker Joker (index 0) = Wobble
-      if (kniffImgs[0]) {
-        let kniffTouchHandled = false;
-        kniffImgs[0].addEventListener('touchend', (e) => {
+      let kniffTouchHandled = false;
+      jokerRow.querySelectorAll('img').forEach(img => {
+        img.addEventListener('touchend', (e) => {
           e.stopPropagation(); e.preventDefault();
+          const idx = parseInt(img.dataset.kniffIdx);
           kniffTouchHandled = true;
-          runKipp21WobbleKniff();
+          if (idx === 0) runKipp21WobbleKniff();
+          else runKipp21EckblickKniff();
           setTimeout(() => { kniffTouchHandled = false; }, 300);
         });
-        kniffImgs[0].addEventListener('click', (e) => {
+        img.addEventListener('click', (e) => {
           e.stopPropagation(); e.preventDefault();
-          if (!kniffTouchHandled) runKipp21WobbleKniff();
+          if (kniffTouchHandled) return;
+          const idx = parseInt(img.dataset.kniffIdx);
+          if (idx === 0) runKipp21WobbleKniff();
+          else runKipp21EckblickKniff();
         });
-      }
-      // Rechter Joker (index 1) = Eckblick
-      if (kniffImgs[1]) {
-        let eckTouchHandled = false;
-        kniffImgs[1].addEventListener('touchend', (e) => {
-          e.stopPropagation(); e.preventDefault();
-          eckTouchHandled = true;
-          runKipp21EckblickKniff();
-          setTimeout(() => { eckTouchHandled = false; }, 300);
-        });
-        kniffImgs[1].addEventListener('click', (e) => {
-          e.stopPropagation(); e.preventDefault();
-          if (!eckTouchHandled) runKipp21EckblickKniff();
-        });
-      }
+      });
     })();
 
     // === KNIFF ICONS: Show/Hide ===
@@ -4060,15 +4064,18 @@
       // Kniff Icons 12px nördlich der alten Position
       jokerRow.style.top = '523px';
       
-      // Icons gleichmäßig über 360px verteilen
-      const icons = jokerRow.querySelectorAll('img');
-      const iconCount = icons.length;
-      const totalWidth = 360;
-      const iconW = 58;
+      // 2 logische Icons, je base+overlay = 4 img Elemente
+      const allImgs = jokerRow.querySelectorAll('img');
+      const totalWidth = 360, iconW = 58;
+      const iconCount = 2; // logisch 2 Icons
       const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
-      for (let i = 0; i < iconCount; i++) {
-        const x = gap + i * (iconW + gap) + iconW / 2;
-        icons[i].style.left = Math.round(x) + 'px';
+      
+      for (let i = 0; i < allImgs.length; i++) {
+        const kniffIdx = parseInt(allImgs[i].dataset.kniffIdx);
+        const isOverlay = allImgs[i].dataset.layer === 'overlay';
+        const centerX = gap + kniffIdx * (iconW + gap) + iconW / 2;
+        // Base: 8px westlicher, Overlay: auf Originalposition
+        allImgs[i].style.left = Math.round(centerX + (isOverlay ? 0 : -8)) + 'px';
       }
       
       jokerRow.style.display = 'block';
