@@ -1552,6 +1552,7 @@
       const splashP = showIntroSplash().catch(e => {
         console.error('[SPLASH]', e);
         const s = document.getElementById('introSplash'); if (s) s.remove();
+        cube.visible = true;
       });
 
       // CW-Zyklus: Q3→Q0→Q1→Q2→Q3...
@@ -4455,14 +4456,21 @@
       const splash = document.createElement('div');
       splash.id = 'introSplash';
       
-      // Box-Oberkante (Nordrahmen oben) projizieren
-      const northTop = new THREE.Vector3(0, 0.48, -0.44);
-      northTop.project(camera);
-      const boxTopY = Math.round((-northTop.y * 0.5 + 0.5) * 720);
+      // Würfel unsichtbar
+      cube.visible = false;
       
-      // Alles in einem Block
+      // Boxboden-Mitte projizieren
+      const bodenCenter = new THREE.Vector3(0, 0.001, 0.109375);
+      bodenCenter.project(camera);
+      const bodenScreenX = Math.round((bodenCenter.x * 0.5 + 0.5) * 360);
+      const bodenScreenY = Math.round((-bodenCenter.y * 0.5 + 0.5) * 720);
+      
+      // Alles in einem Block, zentriert über Boxboden
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:absolute; left:' + bodenScreenX + 'px; top:' + bodenScreenY + 'px; transform:translate(-50%,-50%);';
+      
       const block = document.createElement('div');
-      block.style.cssText = 'text-align:center; width:100%; opacity:0; transform:scale(0); transition:transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease; position:absolute; left:0; bottom:' + (720 - boxTopY + 10) + 'px;';
+      block.style.cssText = 'text-align:center; opacity:0; transform:scale(0); transition:transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;';
       
       const line1 = document.createElement('div');
       line1.className = 'splash-line';
@@ -4476,7 +4484,8 @@
       
       block.appendChild(line1);
       block.appendChild(line2);
-      splash.appendChild(block);
+      wrap.appendChild(block);
+      splash.appendChild(wrap);
       
       splash.style.opacity = '0';
       splash.style.transition = 'opacity 0.4s ease';
@@ -4510,6 +4519,7 @@
       splash.style.opacity = '0';
       await sleep(700);
       splash.remove();
+      cube.visible = true;
     }
 
     // === MAIN AUTO-DEMO ORCHESTRATOR ===
