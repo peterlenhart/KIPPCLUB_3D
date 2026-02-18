@@ -2275,9 +2275,9 @@
       
       // Kniff-Plan: 1. Eckblick, danach gleichmäßig verteilt
       const kniffPlan = {0: 'eckblick', 2: 'wobble', 3: 'eckblick', 5: 'wobble'};
-      const KIPP_DUR = 450; // Ziel: ~19s Gesamtzeit
+      const KIPP_DUR = 450; // Original-Geschwindigkeit
       
-      await sleep(1200);
+      await sleep(2000);
       dbgLog('Perfect Game Start');
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
       
@@ -2300,11 +2300,11 @@
         
         // Tutorial-Text vor Aktion
         if (useKniff) {
-          setTutText('Nimm einen', 'WÜRFEL-BLICK nehmen');
+          setTutText('WÜRFEL-BLICK nehmen');
         } else {
           setTutText('KIPP ZIEL öffnen');
         }
-        await sleep(800);
+        await sleep(1500);
         
         console.log('[REPLAY] R'+ci+': Aufdecken via', useKniff || 'manuell');
         if (useKniff) {
@@ -2328,7 +2328,7 @@
         
         // Kurze Denkpause + Text
         setTutText('KIPP ZIEL erkippen');
-        await sleep(500);
+        await sleep(1200);
         
         // === KIPPEN ===
         console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
@@ -2340,12 +2340,12 @@
         
         // === BESTÄTIGEN ===
         setTutText('Treffer einloggen');
-        await sleep(400);
+        await sleep(800);
         dbgLog('R' + ci + ': Bestätigen...');
         await replayConfirm(ci);
         console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
-        await sleep(500);
+        await sleep(1000);
       }
       
       // === ERGEBNIS ===
