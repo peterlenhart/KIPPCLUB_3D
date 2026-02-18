@@ -1763,7 +1763,7 @@
     ];
     
     // === TUTORIAL REPLAY SYSTEM (Geskriptetes Demo) ===
-    const REPLAY_DECK = [3,5,7,4,1,11,6,12,2,8,9,10];
+    const REPLAY_DECK = [12,2,4,3,7,1,8,6,9,10,5,11];
     
     let handEl = null;
     let replayActive = false;
@@ -2433,13 +2433,18 @@
       cube.quaternion.copy(cubeWorldQuat);
       pivotGroup.add(cube);
       
-      const relativePos = cube.position.clone().normalize();
+      // Exakter analytischer Vektor Ecke→Würfelmitte (Körperdiagonale)
+      // Jeder Quadrant hat eine der 4 Raumdiagonalen
+      const o = 0.234375; // offset = halbe Kantenlänge
+      const diagVectors = {
+        0: new THREE.Vector3(-o,  o, -o), // Q0 NW
+        1: new THREE.Vector3( o,  o, -o), // Q1 NE
+        2: new THREE.Vector3( o,  o,  o), // Q2 SE
+        3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
+      };
+      const diag = diagVectors[currentQuadrant].clone().normalize();
       const targetDir = new THREE.Vector3(0, 1, 0);
-      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(relativePos, targetDir);
-      // Y-Rotation für optimale Kamera-Ansicht (alle 3 Flächen gleichmäßig sichtbar)
-      // Die Kamera schaut von Nord-oben nach Süd-unten, ~30° dreht die Flächen optimal ein
-      const yRotQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 6);
-      aufEckeQuat.multiply(yRotQuat);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
       
       // Animation: auf Ecke kippen
       await new Promise(resolve => {
@@ -3384,8 +3389,16 @@
       cube.quaternion.copy(cubeWorldQuat);
       pivotGroup.add(cube);
 
-      // Ziel-Rotation: Vektor von Ecke zum Würfelmittelpunkt soll nach +Y zeigen
-      const relativePos = cube.position.clone().normalize();
+      // Ziel-Rotation: Körperdiagonale senkrecht zu π1
+      // Exakter analytischer Vektor statt cube.position (Gleitkomma-Drift vermeiden)
+      const o = 0.234375;
+      const diagVecs = {
+        0: new THREE.Vector3(-o, o, -o),
+        1: new THREE.Vector3( o, o, -o),
+        2: new THREE.Vector3( o, o,  o),
+        3: new THREE.Vector3(-o, o,  o)
+      };
+      const relativePos = diagVecs[currentQuadrant].clone().normalize();
       const targetDir = new THREE.Vector3(0, 1, 0);
       const targetQuat = new THREE.Quaternion().setFromUnitVectors(relativePos, targetDir);
       aufEckeTargetQuat = targetQuat.clone();
