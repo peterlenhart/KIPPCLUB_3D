@@ -2770,12 +2770,12 @@
       });
       
       // Auge-Icon über Boxmitte
-      const wobEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0.109375);
+      const wobEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0);
       wobEyePos.project(camera);
       const wobEyeX = (wobEyePos.x * 0.5 + 0.5) * 360;
       const wobEyeY = (-wobEyePos.y * 0.5 + 0.5) * 720;
       const wobEye = document.getElementById('eyeIcon');
-      wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:80px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:200px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
       
       function nextCwDir() {
@@ -2906,12 +2906,12 @@
       eckblickPivot = pivotGroup;
       
       // Auge-Icon über Boxmitte (3.5 Zellen über π1)
-      const eckEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0.109375);
+      const eckEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0);
       eckEyePos.project(camera);
       const eckEyeScreenX = (eckEyePos.x * 0.5 + 0.5) * 360;
       const eckEyeScreenY = (-eckEyePos.y * 0.5 + 0.5) * 720;
       const eckEye = document.getElementById('eyeIcon');
-      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:80px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:200px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
       
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
