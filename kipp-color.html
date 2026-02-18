@@ -2146,26 +2146,39 @@
       recDot.style.display = 'block';
     }
     
-    function recTouch(type, touch) {
+    function recTouch(type, touch, src) {
       if (!recActive) return;
-      const rect = renderer.domElement.getBoundingClientRect();
+      const container = document.getElementById('gameContainer');
+      const rect = container.getBoundingClientRect();
       const x = Math.round((touch.clientX - rect.left) / rect.width * 360);
       const y = Math.round((touch.clientY - rect.top) / rect.height * 720);
       const ms = Math.round(performance.now() - recStartTime);
       const t = {touchstart:'s', touchmove:'m', touchend:'e'}[type] || type;
-      recEvents.push({t, x, y, ms});
+      const ev = {t, x, y, ms};
+      if (src) ev.src = src;
+      recEvents.push(ev);
     }
     
-    // Touch-Listener fürs Recording (parallel zu bestehenden Handlern)
-    renderer.domElement.addEventListener('touchstart', (e) => {
-      if (recActive && e.touches[0]) recTouch('touchstart', e.touches[0]);
-    }, {passive: true});
-    renderer.domElement.addEventListener('touchmove', (e) => {
+    // Touch-Listener auf DOCUMENT-Level (fängt ALLES ein: Canvas, Joker-Icons, Overlay)
+    document.addEventListener('touchstart', (e) => {
+      if (!recActive || !e.touches[0]) return;
+      // Quelle identifizieren
+      let src = 'canvas';
+      const el = e.target;
+      if (el.closest('#jokerIconsRow')) {
+        const img = el.closest('img');
+        src = img ? 'kniff' + img.dataset.kniffIdx : 'kniff';
+      } else if (el.id === 'auswertungBtn' || el.id === 'actionButton') {
+        src = 'button';
+      }
+      recTouch('touchstart', e.touches[0], src);
+    }, {capture: true, passive: true});
+    document.addEventListener('touchmove', (e) => {
       if (recActive && e.touches[0]) recTouch('touchmove', e.touches[0]);
-    }, {passive: true});
-    renderer.domElement.addEventListener('touchend', (e) => {
+    }, {capture: true, passive: true});
+    document.addEventListener('touchend', (e) => {
       if (recActive && e.changedTouches[0]) recTouch('touchend', e.changedTouches[0]);
-    }, {passive: true});
+    }, {capture: true, passive: true});
     
     function stopRecording() {
       recActive = false;
@@ -2181,8 +2194,11 @@
         targets: kipp21CardDistances.map((dist, i) => ({
           zahl: gameCards[i].zahl,
           colorName: gameCards[i].color ? gameCards[i].color.name : null,
-          dist: dist
+          dist: dist,
+          state: kipp21CardStates[i]
         })),
+        kniffs: {wobbleUsed: kipp21WobbleUsed, eckblickUsed: kipp21EckblickUsed},
+        kipps: kipp21KippCount,
         events: recEvents
       };
       const json = JSON.stringify(data);
