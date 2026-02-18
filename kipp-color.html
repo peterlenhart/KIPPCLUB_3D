@@ -1843,25 +1843,12 @@
       if (!replayActive) return;
       holdMs = holdMs || 600;
       const SY = 740;
-      // Debug-Punkt an Zielposition
-      let dot = document.getElementById('_dbgDot');
-      if (!dot) {
-        dot = document.createElement('div');
-        dot.id = '_dbgDot';
-        dot.style.cssText = 'position:absolute;width:8px;height:8px;background:red;border-radius:50%;z-index:999;pointer-events:none;opacity:0;';
-        document.getElementById('uiOverlay').appendChild(dot);
-      }
-      dot.style.left = (tx - 4) + 'px';
-      dot.style.top = (ty - 4) + 'px';
-      dot.style.opacity = '1';
-      console.log('[HAND-TAP] target x='+tx, 'y='+ty, 'holdMs='+holdMs);
       
       setHandPos(tx, SY);
       handEl.style.opacity = '0.85';
       updateHandShadow(tx, SY, true);
       await moveHandSmooth(tx, ty, 400);
       await sleep(holdMs);
-      dot.style.opacity = '0';
       await moveHandSmooth(tx, SY, 400);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
@@ -2044,8 +2031,7 @@
     async function replayKniff(type) {
       if (!replayActive) return;
       
-      // Icons sicherstellen: sichtbar + korrekt positioniert
-      showKniffIcons();
+      // Icons sicherstellen: sichtbar + korrekt
       refreshKniffIcons();
       await sleep(50); // Layout-Reflow abwarten
       
@@ -2343,12 +2329,8 @@
       });
       document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
       
-      // KIPP KNIFF Reihe einblenden (nur visuell, ohne Funktion)
+      // KIPP KNIFF Reihe einblenden
       showKniffIcons();
-      // Unterhalb von Timer/KippAnzahl (535px + 32px Schrift + Abstand)
-      document.getElementById('jokerIconsRow').style.top = '580px';
-      // Linker Joker (joker2) = Wobble-Schau KNIFF - klickbar
-      // Rechter Joker (joker3) = noch nicht implementiert - nicht klickbar
       document.getElementById('jokerIconsRow').style.pointerEvents = 'auto';
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach((img, i) => {
@@ -2403,12 +2385,18 @@
       gamePhase = 'kipp21';
       currentMode = 'kanten';
       
-      // Timer rechts - Original countdown Layout
-      countdown.textContent = '0:00';
-      countdown.style.cssText = 'position:absolute; top:535px; right:30px; left:auto; transform:none; font-size:32px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block;';
+      // Timer und KippAnzahl in 3D-Rasterzeile 10 projizieren
+      const row10Z = 0.658; // Zeile 10 Z-Position (Süd-Rahmen)
+      const row10Pt = new THREE.Vector3(0, 0.002, row10Z);
+      row10Pt.project(camera);
+      const row10Y = Math.round((-row10Pt.y * 0.5 + 0.5) * 720);
       
-      // KippAnzahl links - exakt selbes countdown Layout
-      hintText.style.cssText = 'position:absolute; top:535px; left:30px; right:auto; transform:none; font-size:32px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; width:auto; overflow:visible; line-height:1.2;';
+      // Timer rechts auf Spalten G-H
+      countdown.textContent = '0:00';
+      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; right:5px; left:auto; transform:none; width:85px; text-align:right; font-size:18px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:1.2;';
+      
+      // KippAnzahl links auf Spalten A-B
+      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:5px; right:auto; transform:none; width:85px; text-align:left; font-size:18px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.2;';
       hintText.innerHTML = '0 KIPPS';
       
       // Tutorial = Geskriptetes Demo starten
@@ -4054,11 +4042,10 @@
     });
 
     function showKniffIcons() {
-      // Vertikale Position = gleiche Höhe wie eyeIcon
-      const eyeTop = parseInt(timerTopPos || '553') - 34 + 30;
-      jokerRow.style.top = eyeTop + 'px';
+      // Kniff Icons auf alte Timer/Kipp-Position (535px)
+      jokerRow.style.top = '535px';
       
-      // 5 Icons gleichmäßig über 360px verteilen
+      // Icons gleichmäßig über 360px verteilen
       const icons = jokerRow.querySelectorAll('img');
       const iconCount = icons.length;
       const totalWidth = 360;
