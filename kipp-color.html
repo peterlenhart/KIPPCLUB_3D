@@ -1912,8 +1912,9 @@
       const idx = (type === 'wobble') ? 0 : 1;
       const img = imgs[idx];
       const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
+      const imgLeft = img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250);
       return {
-        x: img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250),
+        x: imgLeft + (type === 'wobble' ? 22 : 0),  // Wobble: ½ Zelle östlicher
         y: rowTop + 29
       };
     }
@@ -1986,18 +1987,21 @@
       }
     }
     
-    // --- Bestätigen: Timer SOFORT stoppen, dann Hand animieren ---
+    // --- Bestätigen: Timer SOFORT stoppen, dann Hand animieren, dann CardTap ---
     async function replayConfirm(ci) {
       if (!replayActive) return;
       const openIdx = kipp21CardStates.indexOf('offen');
       if (openIdx < 0 || kipp21RoundKipps <= 0) return;
       dbgLog('Bestätigen Karte ' + openIdx);
       
-      // Timer sofort stoppen durch CardTap BEVOR Hand animiert
-      kipp21OnCardTap(openIdx);
+      // Timer sofort stoppen (ohne CardTap auszulösen)
+      kipp21StopRoundTimer();
       
-      // Danach visuell die Hand zeigen (Timer läuft nicht mehr)
-      await handTapFromSouth(cardScreenX(openIdx), 465, 400);
+      // Hand sichtbar auf Karte tippen
+      await handTapFromSouth(cardScreenX(openIdx), 465, 700);
+      
+      // DANN erst Karte verarbeiten (Treffer-Check etc.)
+      kipp21OnCardTap(openIdx);
       await sleep(300);
     }
     
