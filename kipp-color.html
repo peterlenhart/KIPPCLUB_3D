@@ -2769,6 +2769,15 @@
         }
       });
       
+      // Auge-Icon über Boxmitte
+      const wobEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0.109375);
+      wobEyePos.project(camera);
+      const wobEyeX = (wobEyePos.x * 0.5 + 0.5) * 360;
+      const wobEyeY = (-wobEyePos.y * 0.5 + 0.5) * 720;
+      const wobEye = document.getElementById('eyeIcon');
+      wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:80px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
+      
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
         if (currentQuadrant === 0) return 'east';
@@ -2797,9 +2806,11 @@
       }
       
       kippDirection = savedDir;
+      wobEye.style.opacity = '0';
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21WobbleUsed++;
+      setTimeout(() => { wobEye.style.display = 'none'; }, 400);
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
@@ -2894,6 +2905,15 @@
       
       eckblickPivot = pivotGroup;
       
+      // Auge-Icon über Boxmitte (3.5 Zellen über π1)
+      const eckEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0.109375);
+      eckEyePos.project(camera);
+      const eckEyeScreenX = (eckEyePos.x * 0.5 + 0.5) * 360;
+      const eckEyeScreenY = (-eckEyePos.y * 0.5 + 0.5) * 720;
+      const eckEye = document.getElementById('eyeIcon');
+      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:80px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
+      
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
@@ -2909,6 +2929,9 @@
           }, 100);
         });
       }
+      
+      // Auge-Icon ausblenden
+      eckEye.style.opacity = '0';
       
       // --- Von Ecke zurückfallen lassen ---
       const inverseQuat = aufEckeQuat.clone().invert();
@@ -2946,6 +2969,7 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
+      eckEye.style.display = 'none';
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
@@ -3888,7 +3912,7 @@
         if (currentPulse >= pulseCount) {
           // Flug zum Treffer-Slot
           animateCardFly(card, hitInfo.quadrant, hitInfo.slot).then(() => {
-            onRunde();
+            setTimeout(() => onRunde(), 600);
           });
           return;
         }
