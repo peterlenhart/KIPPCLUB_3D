@@ -1912,11 +1912,10 @@
       const idx = (type === 'wobble') ? 0 : 1;
       const img = imgs[idx];
       const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
-      const imgLeft = img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250);
-      return {
-        x: imgLeft + (type === 'wobble' ? 22 : 0),  // Wobble: ½ Zelle östlicher
-        y: rowTop + 29
-      };
+      // style.left = Icon-Mitte (CSS translateX(-50%) verschiebt visuell)
+      const cx = img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250);
+      console.log('[KNIFF-POS] type='+type, 'idx='+idx, 'left='+cx, 'rowTop='+rowTop);
+      return { x: cx, y: rowTop + 29 };
     }
     
     // --- Kipp-Zähler aktualisieren ---
