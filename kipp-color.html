@@ -1709,7 +1709,91 @@
 
       // Nachbarfarbe prüfen
       const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
-      return neighborColor === card.color.name;
+      if (neighborColor !== card.color.name) return false;
+      return { slot: hitSlot, quadrant: currentQuadrant };
+    }
+
+    // Zielposition für Kippziel-Fluganimation bei Treffer
+    // Card (1×2 Zellen) landet halb auf Slot, halb auf Farbfeld am Wandrand
+    const HIT_TARGETS = {
+      0: { // Q0 (NW)
+        S1: { x: -0.46875, z:  0.03125,  rotZ: Math.PI/2 },   // West_6 (blau)
+        S2: { x: -0.46875, z: -0.125,    rotZ: Math.PI/2 },   // West_5 (violett)
+        S3: { x: -0.23438, z: -0.359375, rotZ: Math.PI },      // Nord_C (gruen)
+        S4: { x: -0.07813, z: -0.359375, rotZ: Math.PI }       // Nord_D (orange)
+      },
+      1: { // Q1 (NE)
+        S1: { x:  0.07813, z: -0.359375, rotZ: Math.PI },      // Nord_E (orange)
+        S2: { x:  0.23438, z: -0.359375, rotZ: Math.PI },      // Nord_F (blau)
+        S3: { x:  0.46875, z: -0.125,    rotZ: -Math.PI/2 },   // Ost_5 (violett)
+        S4: { x:  0.46875, z:  0.03125,  rotZ: -Math.PI/2 }    // Ost_6 (gruen)
+      },
+      2: { // Q2 (SE)
+        S1: { x:  0.46875, z:  0.1875,   rotZ: -Math.PI/2 },   // Ost_7 (gruen)
+        S2: { x:  0.46875, z:  0.34375,  rotZ: -Math.PI/2 },   // Ost_8 (orange)
+        S3: { x:  0.23438, z:  0.580375, rotZ: 0 },             // Süd_F (blau)
+        S4: { x:  0.07813, z:  0.580375, rotZ: 0 }              // Süd_E (violett)
+      },
+      3: { // Q3 (SW)
+        S1: { x: -0.07813, z:  0.580375, rotZ: 0 },             // Süd_D (violett)
+        S2: { x: -0.23438, z:  0.580375, rotZ: 0 },             // Süd_C (gruen)
+        S3: { x: -0.46875, z:  0.34375,  rotZ: Math.PI/2 },    // West_8 (orange)
+        S4: { x: -0.46875, z:  0.1875,   rotZ: Math.PI/2 }     // West_7 (blau)
+      }
+    };
+
+    // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
+    function animateCardFly(card, quadrant, slot) {
+      return new Promise(resolve => {
+        const target = HIT_TARGETS[quadrant][slot];
+        const mesh = card.mesh;
+        
+        // Start-Werte
+        const startX = mesh.position.x;
+        const startY = mesh.position.y;
+        const startZ = mesh.position.z;
+        const startRotZ = mesh.rotation.z || 0;
+        
+        // Ziel-Werte
+        const endX = target.x;
+        const endY = 0.48;       // Rahmen-Oberkante
+        const endZ = target.z;
+        const endRotZ = target.rotZ;
+        
+        // Flughöhe (Bogen über die Box)
+        const peakY = 0.75;
+        
+        const duration = 800; // ms
+        const startTime = performance.now();
+        
+        function tick(now) {
+          const elapsed = now - startTime;
+          const t = Math.min(elapsed / duration, 1);
+          // Ease: schnell abheben, sanft landen
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          
+          // XZ: linear interpoliert
+          mesh.position.x = startX + (endX - startX) * ease;
+          mesh.position.z = startZ + (endZ - startZ) * ease;
+          
+          // Y: parabolischer Bogen (hoch in der Mitte)
+          const arc = 4 * t * (1 - t); // 0→1→0 Parabel
+          const baseY = startY + (endY - startY) * ease;
+          mesh.position.y = baseY + (peakY - Math.max(startY, endY)) * arc;
+          
+          // Rotation: interpoliert
+          mesh.rotation.z = startRotZ + (endRotZ - startRotZ) * ease;
+          
+          if (t < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            mesh.position.set(endX, endY, endZ);
+            mesh.rotation.z = endRotZ;
+            resolve();
+          }
+        }
+        requestAnimationFrame(tick);
+      });
     }
 
     // Generische Animation eines Wertes über Zeit
@@ -2376,6 +2460,9 @@
         card.mesh.material.opacity = 1;
         card.mesh.material.needsUpdate = true;
         card.mesh.scale.set(1, 1, 1);
+        // Position + Rotation zurücksetzen (nach Fluganimation)
+        card.mesh.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
+        card.mesh.rotation.set(-Math.PI / 2, 0, 0);
         card.zahl = null;
         card.color = null;
         card.isHit = false;
@@ -2973,11 +3060,11 @@
           gameCards[cardIdx].mesh.scale.set(1, 1, 1);
           kipp21Done++;
           
-          // Card kurz golden zeigen, dann unsichtbar
+          // Card fliegt zum Treffer-Slot
           const card = gameCards[cardIdx];
-          setTimeout(() => {
-            card.mesh.visible = false;
-          }, 400);
+          animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
+            // Nach Flug: Card bleibt am Ziel liegen (sichtbar mit goldenem Rahmen)
+          });
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
           
@@ -3753,26 +3840,27 @@
       });
     }
 
-    function animateTreffer() {
+    function animateTreffer(hitInfo) {
       const card = gameCards[activeCardIdx];
       const mesh = card.mesh;
       
-      // Kurze Puls-Animation (3 Pulse)
-      const pulseDuration = 200; // ms pro Puls
-      const pulseCount = 3;
+      // Goldenen Rahmen sofort zeichnen
+      drawGoldenBorder(card);
+      
+      // Kurze Puls-Animation (2 Pulse), dann Flug
+      const pulseDuration = 180;
+      const pulseCount = 2;
       let currentPulse = 0;
       
       function doPulse() {
         if (currentPulse >= pulseCount) {
-          // Animation fertig - Rahmen hinzufügen
-          drawGoldenBorder(card);
-          
-          // Weiter zur nächsten Runde (onRunde erhöht activeCardIdx und generiert nächstes Kärtchen)
-          onRunde();
+          // Flug zum Treffer-Slot
+          animateCardFly(card, hitInfo.quadrant, hitInfo.slot).then(() => {
+            onRunde();
+          });
           return;
         }
         
-        // Puls: 1.0 → 1.15 → 1.0
         const startTime = performance.now();
         function animatePulse(now) {
           const t = Math.min((now - startTime) / pulseDuration, 1);
@@ -3784,7 +3872,7 @@
           } else {
             mesh.scale.set(1, 1, 1);
             currentPulse++;
-            setTimeout(doPulse, 100); // Kurze Pause zwischen Pulsen
+            setTimeout(doPulse, 80);
           }
         }
         requestAnimationFrame(animatePulse);
@@ -6785,7 +6873,7 @@
       const treffer = checkTreffer();
       if (treffer) {
         bereitsGetroffen.add(card.zahl + '_' + card.color.name);
-        animateTreffer();
+        animateTreffer(treffer);
       } else {
         animateNichtTreffer();
       }
