@@ -47,6 +47,7 @@
       height: 100vh;
       pointer-events: none;
       z-index: 100;
+      overflow: hidden;
     }
 
     #hintText {
@@ -1766,6 +1767,7 @@
     const REPLAY_DECK = [5,11,8,3,6,7,10,12,4,2,1,9];
     
     let handEl = null;
+    let _handX = 0, _handY = 0;
     let replayActive = false;
     let replayDbg = null;
     
@@ -1801,15 +1803,15 @@
       if (handEl) return;
       handEl = document.createElement('img');
       handEl.src = 'handsilber.webp';
-      handEl.style.cssText = 'position:absolute;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.25s ease;';
+      handEl.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
       document.getElementById('uiOverlay').appendChild(handEl);
       initHandShadow();
     }
     
     function setHandPos(x, y) {
       if (!handEl) return;
-      handEl.style.left = Math.round(x - 23) + 'px';
-      handEl.style.top = Math.round(y) + 'px';
+      handEl.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
+      _handX = x; _handY = y;
       updateHandShadow(x, y, parseFloat(handEl.style.opacity) > 0);
     }
     
@@ -1821,8 +1823,8 @@
     // --- Smooth easeInOut Bewegung ---
     function moveHandSmooth(toX, toY, durMs) {
       return new Promise(resolve => {
-        const sx = parseInt(handEl.style.left) + 23;
-        const sy = parseInt(handEl.style.top);
+        const sx = _handX;
+        const sy = _handY;
         const startT = performance.now();
         function tick() {
           if (!replayActive) { setHandPos(toX, toY); resolve(); return; }
@@ -1841,11 +1843,25 @@
       if (!replayActive) return;
       holdMs = holdMs || 600;
       const SY = 740;
+      // Debug-Punkt an Zielposition
+      let dot = document.getElementById('_dbgDot');
+      if (!dot) {
+        dot = document.createElement('div');
+        dot.id = '_dbgDot';
+        dot.style.cssText = 'position:absolute;width:8px;height:8px;background:red;border-radius:50%;z-index:999;pointer-events:none;opacity:0;';
+        document.getElementById('uiOverlay').appendChild(dot);
+      }
+      dot.style.left = (tx - 4) + 'px';
+      dot.style.top = (ty - 4) + 'px';
+      dot.style.opacity = '1';
+      console.log('[HAND-TAP] target x='+tx, 'y='+ty, 'holdMs='+holdMs);
+      
       setHandPos(tx, SY);
       handEl.style.opacity = '0.85';
       updateHandShadow(tx, SY, true);
       await moveHandSmooth(tx, ty, 400);
       await sleep(holdMs);
+      dot.style.opacity = '0';
       await moveHandSmooth(tx, SY, 400);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
@@ -1902,20 +1918,40 @@
     
     // --- Karten-Screen-Position ---
     function cardScreenX(ci) {
+      // 3D-Projektion der tatsächlichen Kartenposition
+      if (gameCards && gameCards[ci] && gameCards[ci].mesh) {
+        const pos = gameCards[ci].mesh.position.clone();
+        pos.project(camera);
+        return Math.round((pos.x * 0.5 + 0.5) * 360);
+      }
+      // Fallback: flache Berechnung
       const cw = 45, gap = (360 - 6 * cw) / 5;
       return cw / 2 + ci * (cw + gap);
     }
     
+    function cardScreenY(ci) {
+      if (gameCards && gameCards[ci] && gameCards[ci].mesh) {
+        const pos = gameCards[ci].mesh.position.clone();
+        pos.project(camera);
+        return Math.round((-pos.y * 0.5 + 0.5) * 720);
+      }
+      return 612; // Fallback
+    }
+    
     // --- Kniff-Icon-Position (liest aus DOM) ---
     function getKniffIconPos(type) {
-      const imgs = document.querySelectorAll('#jokerIconsRow img');
+      // Direkte Berechnung wie showKniffIcons (statt DOM lesen)
+      const icons = document.querySelectorAll('#jokerIconsRow img');
+      const iconCount = icons.length; // immer 2
+      const totalWidth = 360, iconW = 58;
+      const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
       const idx = (type === 'wobble') ? 0 : 1;
-      const img = imgs[idx];
+      const cx = Math.round(gap + idx * (iconW + gap) + iconW / 2);
       const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '580');
-      // style.left = Icon-Mitte (CSS translateX(-50%) verschiebt visuell)
-      const cx = img ? parseInt(img.style.left) : (idx === 0 ? 110 : 250);
-      console.log('[KNIFF-POS] type='+type, 'idx='+idx, 'left='+cx, 'rowTop='+rowTop);
-      return { x: cx, y: rowTop + 29 };
+      const cy = rowTop + 29;
+      console.log('[KNIFF-POS] type='+type, 'idx='+idx, 'calc_cx='+cx, 'cy='+cy, 
+        'dom_left='+(icons[idx]?icons[idx].style.left:'?'));
+      return { x: cx, y: cy };
     }
     
     // --- Kipp-Zähler aktualisieren ---
@@ -1959,7 +1995,7 @@
       const nextV = kipp21NextVerdeckt();
       if (nextV < 0) return;
       dbgLog('Karte ' + nextV + ' aufdecken');
-      await handTapFromSouth(cardScreenX(nextV), 612, 600);
+      await handTapFromSouth(cardScreenX(nextV), cardScreenY(nextV), 600);
       kipp21OnCardTap(nextV);
       await sleep(400);
     }
@@ -1997,7 +2033,7 @@
       kipp21StopRoundTimer();
       
       // Hand sichtbar auf Karte tippen
-      await handTapFromSouth(cardScreenX(openIdx), 465, 700);
+      await handTapFromSouth(cardScreenX(openIdx), cardScreenY(openIdx), 700);
       
       // DANN erst Karte verarbeiten (Treffer-Check etc.)
       kipp21OnCardTap(openIdx);
@@ -2007,6 +2043,12 @@
     // --- KNIFF ausführen (öffnet automatisch nächste Karte) ---
     async function replayKniff(type) {
       if (!replayActive) return;
+      
+      // Icons sicherstellen: sichtbar + korrekt positioniert
+      showKniffIcons();
+      refreshKniffIcons();
+      await sleep(50); // Layout-Reflow abwarten
+      
       const iconPos = getKniffIconPos(type);
       
       // State vor Kniff loggen
@@ -2057,7 +2099,7 @@
         dbgLog('KNIFF ' + type + ' → Fallback manuell');
         const nextV = kipp21NextVerdeckt();
         if (nextV >= 0) {
-          await handTapFromSouth(cardScreenX(nextV), 612, 600);
+          await handTapFromSouth(cardScreenX(nextV), cardScreenY(nextV), 600);
           kipp21OnCardTap(nextV);
         }
       } else {
@@ -2112,9 +2154,14 @@
         
         // === KARTE AUFDECKEN ===
         dbgLog('R' + ci + ': Aufdecken...');
-        console.log('[REPLAY] R'+ci+': Aufdecken via', kniffPlan[ci] || 'manuell');
-        if (kniffPlan[ci]) {
-          await replayKniff(kniffPlan[ci]);
+        let useKniff = kniffPlan[ci] || null;
+        // Prüfen ob geplanter KNIFF noch verfügbar
+        if (useKniff === 'eckblick' && kipp21EckblickUsed >= KNIFF_MAX_USES) useKniff = null;
+        if (useKniff === 'wobble' && kipp21WobbleUsed >= KNIFF_MAX_USES) useKniff = null;
+        
+        console.log('[REPLAY] R'+ci+': Aufdecken via', useKniff || 'manuell');
+        if (useKniff) {
+          await replayKniff(useKniff);
           console.log('[REPLAY] R'+ci+': Kniff fertig');
         } else {
           await replayOpenCard(ci);
