@@ -188,8 +188,6 @@
     #introSplash {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%);
       width: 360px; height: 720px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding-top: 180px; box-sizing: border-box;
       z-index: 250; pointer-events: none;
       background: rgba(0,0,0,0.6);
     }
@@ -4452,79 +4450,61 @@
       card.mesh.visible = true;
     }
 
-    // === INTRO SPLASH: "21 KIPPS unter 21 Sek." ===
+    // === INTRO SPLASH: "21 KIPPS unter 21 Sekunden." ===
     async function showIntroSplash() {
-      // Splash erstellen
       const splash = document.createElement('div');
       splash.id = 'introSplash';
       
-      function mkGroup(lines, extra) {
-        const g = document.createElement('div');
-        g.style.cssText = 'text-align:center; width:100%; opacity:0; transform:scale(0); transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;';
-        if (extra) Object.assign(g.style, extra);
-        lines.forEach(l => {
-          const d = document.createElement('div');
-          d.className = 'splash-line';
-          d.textContent = l.text;
-          d.style.cssText = 'font-size:' + l.size + 'px; opacity:1; text-align:center; width:100%;';
-          if (l.extra) Object.assign(d.style, l.extra);
-          g.appendChild(d);
-        });
-        splash.appendChild(g);
-        return g;
-      }
+      // Box-Oberkante (Nordrahmen oben) projizieren
+      const northTop = new THREE.Vector3(0, 0.48, -0.44);
+      northTop.project(camera);
+      const boxTopY = Math.round((-northTop.y * 0.5 + 0.5) * 720);
       
-      const group1 = mkGroup([
-        {text: '21', size: 120, extra: {lineHeight:'1.0'}},
-        {text: 'KIPPS', size: 42, extra: {marginTop:'-8px', letterSpacing:'8px'}}
-      ]);
+      // Alles in einem Block
+      const block = document.createElement('div');
+      block.style.cssText = 'text-align:center; width:100%; opacity:0; transform:scale(0); transition:transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease; position:absolute; left:0; bottom:' + (720 - boxTopY + 10) + 'px;';
       
-      const group2 = mkGroup([
-        {text: 'unter', size: 26, extra: {fontWeight:'400', letterSpacing:'4px'}},
-        {text: '21 Sek.', size: 72, extra: {marginTop:'4px'}}
-      ], {marginTop: '24px'});
+      const line1 = document.createElement('div');
+      line1.className = 'splash-line';
+      line1.textContent = '21 KIPPS';
+      line1.style.cssText = 'font-size:42px; opacity:1; text-align:center; width:100%; line-height:1.1; letter-spacing:6px;';
       
-      // Splash einblenden — auf body damit über startOverlay (z-300)
+      const line2 = document.createElement('div');
+      line2.className = 'splash-line';
+      line2.textContent = 'unter 21 Sekunden.';
+      line2.style.cssText = 'font-size:16px; opacity:1; text-align:center; width:100%; margin-top:8px; letter-spacing:2px;';
+      
+      block.appendChild(line1);
+      block.appendChild(line2);
+      splash.appendChild(block);
+      
       splash.style.opacity = '0';
       splash.style.transition = 'opacity 0.4s ease';
       document.body.appendChild(splash);
       await sleep(50);
       splash.style.opacity = '1';
       
-      function popIn(el) {
-        el.style.opacity = '1';
-        el.style.transform = 'scale(1)';
-      }
-      function fadeOut(el) {
-        el.style.transition = 'opacity 0.4s ease';
-        el.style.opacity = '0';
-      }
-      
-      // Block 1: "21 KIPPS" alleine
+      // Aufblähen
       await sleep(300);
-      popIn(group1);
-      await sleep(2200);
-      fadeOut(group1);
-      await sleep(500);
+      block.style.opacity = '1';
+      block.style.transform = 'scale(1)';
       
-      // Block 2: "unter 21 Sek." alleine
-      popIn(group2);
-      await sleep(2200);
-      
-      // Glow-Puls auf Block 2
-      let glowOn = true;
-      const glowInterval = setInterval(() => {
-        const f = glowOn 
+      // Pulsieren
+      let pulseUp = true;
+      const pulseInterval = setInterval(() => {
+        block.style.transition = 'transform 0.8s ease-in-out';
+        block.style.transform = pulseUp ? 'scale(1.08)' : 'scale(1)';
+        const f = pulseUp
           ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.6))'
           : 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
-        group2.style.filter = f;
-        glowOn = !glowOn;
+        block.style.filter = f;
+        pulseUp = !pulseUp;
       }, 800);
       
       // Stehen lassen
-      await sleep(2500);
+      await sleep(4500);
       
-      clearInterval(glowInterval);
+      clearInterval(pulseInterval);
       
       // Ausblenden
       splash.style.opacity = '0';
