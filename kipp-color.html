@@ -1444,10 +1444,14 @@
     function loadingKipp(direction, duration) {
       return new Promise(resolve => {
         const pivotDefs = {
-          'north':         { pivot: [-offset, 0, 0.109375],        axis: [1,0,0], angle: -Math.PI/2 },
-          'east':          { pivot: [0, 0, 0.109375 + cubeSize],   axis: [0,0,1], angle: -Math.PI/2 },
-          'south_from_q1': { pivot: [offset, 0, 0.109375],         axis: [1,0,0], angle: Math.PI/2 },
-          'west_from_q2':  { pivot: [0, 0, 0.109375 + cubeSize],   axis: [0,0,1], angle: Math.PI/2 }
+          'north':         { pivot: [-offset, 0, 0.109375],         axis: [1,0,0], angle: -Math.PI/2 },
+          'south':         { pivot: [-offset, 0, 0.109375],         axis: [1,0,0], angle:  Math.PI/2 },
+          'east':          { pivot: [0, 0, 0.109375 + offset],      axis: [0,0,1], angle: -Math.PI/2 },
+          'west':          { pivot: [0, 0, 0.109375 + offset],      axis: [0,0,1], angle:  Math.PI/2 },
+          'south_from_q1': { pivot: [offset, 0, 0.109375],          axis: [1,0,0], angle:  Math.PI/2 },
+          'north_from_q2': { pivot: [offset, 0, 0.109375],          axis: [1,0,0], angle: -Math.PI/2 },
+          'west_from_q2':  { pivot: [0, 0, 0.109375 + offset],      axis: [0,0,1], angle:  Math.PI/2 },
+          'east_from_q3':  { pivot: [0, 0, 0.109375 + offset],      axis: [0,0,1], angle: -Math.PI/2 }
         };
         const def = pivotDefs[direction];
         const pivotPoint = new THREE.Vector3(def.pivot[0], def.pivot[1], def.pivot[2]);
@@ -1506,41 +1510,56 @@
     let loadingAnimDone = false;
 
     async function runLoadingAnimation() {
-      const kd = 350; // Kipp-Dauer ms
-      const fd = 500; // Fade-Dauer ms
+      const fd = 400; // Fade-Dauer ms
 
-      // CW-Zyklus: Q3→Q0→Q1→Q2→Q3...
-      const cwDirs = ['north', 'east', 'south_from_q1', 'west_from_q2'];
+      // 21 KIPPS: 3cw, 5ccw, 2cw, 1ccw, 6cw, 4ccw
+      const CW = {3:'north', 0:'east', 1:'south_from_q1', 2:'west_from_q2'};
+      const CCW = {3:'east_from_q3', 0:'south', 1:'west', 2:'north_from_q2'};
+      const CW_Q = {3:0, 0:1, 1:2, 2:3};
+      const CCW_Q = {3:2, 2:1, 1:0, 0:3};
 
-      // 1) f2 obenauf in Q3 – Zahlen einfaden
+      const segments = [
+        {n:3, d:'cw'}, {n:5, d:'ccw'}, {n:2, d:'cw'},
+        {n:1, d:'ccw'}, {n:6, d:'cw'}, {n:4, d:'ccw'}
+      ];
+
+      // Kipp-Richtungen vorberechnen
+      const dirs = [];
+      let q = 3;
+      for (const seg of segments) {
+        for (let i = 0; i < seg.n; i++) {
+          dirs.push(seg.d === 'cw' ? CW[q] : CCW[q]);
+          q = seg.d === 'cw' ? CW_Q[q] : CCW_Q[q];
+        }
+      }
+      // dirs.length === 21
+
+      // 1) f2 obenauf in Q3 – einfaden
       await fadeInFace('f2', fd);
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 150));
 
-      // 2) Kipp 1 → Q0, f0 obenauf – einfaden
-      await loadingKipp('north', kd);
+      // 2) Kipp 1 + f0 einfaden
+      await loadingKipp(dirs[0], 300);
       await fadeInFace('f0', fd);
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 150));
 
-      // 3) Kipp 2 → Q1, f1 obenauf – einfaden
-      await loadingKipp('east', kd);
+      // 3) Kipp 2 + f1 einfaden
+      await loadingKipp(dirs[1], 300);
       await fadeInFace('f1', fd);
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 150));
 
-      // 4) Kipps 3-12 zurück nach Q3 (10 weitere Kipps im CW-Zyklus)
-      // Kontinuierlich schneller werdend: 350ms → 120ms
-      const remaining = ['south_from_q1','west_from_q2','north','east','south_from_q1','west_from_q2','north','east','south_from_q1','west_from_q2'];
-      for (let ri = 0; ri < remaining.length; ri++) {
-        const t = ri / (remaining.length - 1); // 0 → 1
-        const kipDur = Math.round(350 - 230 * t); // 350 → 120
-        const pauseDur = Math.round(80 - 60 * t); // 80 → 20
-        await loadingKipp(remaining[ri], kipDur);
-        await new Promise(r => setTimeout(r, pauseDur));
+      // 4) Kipps 3–21: beschleunigend 250ms→90ms
+      for (let i = 2; i < 21; i++) {
+        const t = (i - 2) / 18; // 0 → 1
+        const kipDur = Math.round(250 - 160 * t); // 250 → 90
+        const pauseDur = Math.round(30 - 20 * t); // 30 → 10
+        await loadingKipp(dirs[i], kipDur);
+        if (i < 20) await new Promise(r => setTimeout(r, pauseDur));
       }
 
-      // Sicherstellen: Würfel liegt exakt in Q3, f2 obenauf
+      // Reset: Würfel exakt in Q3, f2 obenauf
       cube.position.set(-offset, offset, 0.109375 + offset);
       cube.quaternion.set(0, 0, 0, 1);
-      // Alle Faces auf volle Sichtbarkeit
       rebuildFaceMat('f0', 1);
       rebuildFaceMat('f1', 1);
       rebuildFaceMat('f2', 1);
@@ -2406,10 +2425,10 @@
       
       // Timer mittig G|H
       countdown.textContent = '0:00';
-      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; height:28px; line-height:28px; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:1.0;';
+      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:1.0;';
       
       // KippAnzahl mittig A|B
-      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-weight:bold; height:28px; line-height:28px; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.0;';
+      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.0;';
       hintText.innerHTML = formatKipps(0);
       
       // Tutorial = Geskriptetes Demo starten
