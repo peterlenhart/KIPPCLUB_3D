@@ -1512,50 +1512,38 @@
     async function runLoadingAnimation() {
       const fd = 400; // Fade-Dauer ms
 
-      // 21 KIPPS: 3cw, 5ccw, 2cw, 1ccw, 6cw, 4ccw
-      const CW = {3:'north', 0:'east', 1:'south_from_q1', 2:'west_from_q2'};
-      const CCW = {3:'east_from_q3', 0:'south', 1:'west', 2:'north_from_q2'};
-      const CW_Q = {3:0, 0:1, 1:2, 2:3};
-      const CCW_Q = {3:2, 2:1, 1:0, 0:3};
-
-      const segments = [
-        {n:3, d:'cw'}, {n:5, d:'ccw'}, {n:2, d:'cw'},
-        {n:1, d:'ccw'}, {n:6, d:'cw'}, {n:4, d:'ccw'}
-      ];
-
-      // Kipp-Richtungen vorberechnen
-      const dirs = [];
-      let q = 3;
-      for (const seg of segments) {
-        for (let i = 0; i < seg.n; i++) {
-          dirs.push(seg.d === 'cw' ? CW[q] : CCW[q]);
-          q = seg.d === 'cw' ? CW_Q[q] : CCW_Q[q];
-        }
-      }
-      // dirs.length === 21
+      // 4 CW: Q3→Q0→Q1→Q2→Q3, dann 4 CCW: Q3→Q2→Q1→Q0→Q3
+      const cwDirs = ['north', 'east', 'south_from_q1', 'west_from_q2'];
+      const ccwDirs = ['east_from_q3', 'north_from_q2', 'west', 'south'];
 
       // 1) f2 obenauf in Q3 – einfaden
       await fadeInFace('f2', fd);
       await new Promise(r => setTimeout(r, 150));
 
-      // 2) Kipp 1 + f0 einfaden
-      await loadingKipp(dirs[0], 300);
+      // 2) Kipp 1 CW + f0 einfaden
+      await loadingKipp(cwDirs[0], 500);
       await fadeInFace('f0', fd);
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 200));
 
-      // 3) Kipp 2 + f1 einfaden
-      await loadingKipp(dirs[1], 300);
+      // 3) Kipp 2 CW + f1 einfaden
+      await loadingKipp(cwDirs[1], 500);
       await fadeInFace('f1', fd);
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 200));
 
-      // 4) Kipps 3–21: beschleunigend 250ms→90ms
-      for (let i = 2; i < 21; i++) {
-        const t = (i - 2) / 18; // 0 → 1
-        const kipDur = Math.round(250 - 160 * t); // 250 → 90
-        const pauseDur = Math.round(30 - 20 * t); // 30 → 10
-        await loadingKipp(dirs[i], kipDur);
-        if (i < 20) await new Promise(r => setTimeout(r, pauseDur));
-      }
+      // 4) Kipps 3-4 CW
+      await loadingKipp(cwDirs[2], 450);
+      await new Promise(r => setTimeout(r, 150));
+      await loadingKipp(cwDirs[3], 450);
+      await new Promise(r => setTimeout(r, 250));
+
+      // 5) Kipps 5-8 CCW (leicht beschleunigend)
+      await loadingKipp(ccwDirs[0], 400);
+      await new Promise(r => setTimeout(r, 100));
+      await loadingKipp(ccwDirs[1], 350);
+      await new Promise(r => setTimeout(r, 80));
+      await loadingKipp(ccwDirs[2], 300);
+      await new Promise(r => setTimeout(r, 60));
+      await loadingKipp(ccwDirs[3], 250);
 
       // Reset: Würfel exakt in Q3, f2 obenauf
       cube.position.set(-offset, offset, 0.109375 + offset);
@@ -2770,12 +2758,12 @@
       });
       
       // Auge-Icon über Boxmitte
-      const wobEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0);
+      const wobEyePos = new THREE.Vector3(0, 7 * 0.15625, 0.109375);
       wobEyePos.project(camera);
       const wobEyeX = (wobEyePos.x * 0.5 + 0.5) * 360;
       const wobEyeY = (-wobEyePos.y * 0.5 + 0.5) * 720;
       const wobEye = document.getElementById('eyeIcon');
-      wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:200px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
       
       function nextCwDir() {
@@ -2906,12 +2894,12 @@
       eckblickPivot = pivotGroup;
       
       // Auge-Icon über Boxmitte (3.5 Zellen über π1)
-      const eckEyePos = new THREE.Vector3(0, 3.5 * 0.15625, 0);
+      const eckEyePos = new THREE.Vector3(0, 7 * 0.15625, 0.109375);
       eckEyePos.project(camera);
       const eckEyeScreenX = (eckEyePos.x * 0.5 + 0.5) * 360;
       const eckEyeScreenY = (-eckEyePos.y * 0.5 + 0.5) * 720;
       const eckEye = document.getElementById('eyeIcon');
-      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:200px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
       
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
