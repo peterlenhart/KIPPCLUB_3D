@@ -2134,9 +2134,11 @@
       const iconCount = 2; // logisch
       const totalWidth = 360, iconW = 58;
       const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
+      const edgeShift = 45;
       const idx = (type === 'wobble') ? 0 : 1;
       const centerX = gap + idx * (iconW + gap) + iconW / 2;
-      const pairCenter = Math.round(centerX - 4); // Mitte zwischen base(-8) und overlay(0)
+      const shifted = centerX + (idx === 0 ? -edgeShift : edgeShift);
+      const pairCenter = Math.round(shifted - 4); // Mitte zwischen base(-8) und overlay(0)
       const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '523');
       console.log('[KNIFF-POS] type='+type, 'pairCenter='+pairCenter, 'rowTop='+rowTop);
       return { x: pairCenter, y: rowTop + 29 };
@@ -4382,14 +4384,27 @@
       const totalWidth = 360, iconW = 58;
       const iconCount = 2; // logisch 2 Icons
       const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
+      const edgeShift = 45; // je 45px weiter zum Bildschirmrand
       
       for (let i = 0; i < allImgs.length; i++) {
         const kniffIdx = parseInt(allImgs[i].dataset.kniffIdx);
         const isOverlay = allImgs[i].dataset.layer === 'overlay';
         const centerX = gap + kniffIdx * (iconW + gap) + iconW / 2;
+        const shifted = centerX + (kniffIdx === 0 ? -edgeShift : edgeShift);
         // Base: 8px westlicher, Overlay: auf Originalposition
-        allImgs[i].style.left = Math.round(centerX + (isOverlay ? 0 : -8)) + 'px';
+        allImgs[i].style.left = Math.round(shifted + (isOverlay ? 0 : -8)) + 'px';
       }
+      
+      // "Je 2 Joker" Text zwischen den Icons
+      let jLabel = jokerRow.querySelector('.jokerLabel');
+      if (!jLabel) {
+        jLabel = document.createElement('div');
+        jLabel.className = 'jokerLabel';
+        jLabel.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Arial,sans-serif; font-size:14px; font-weight:bold; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9); white-space:nowrap; pointer-events:none;';
+        jLabel.textContent = 'Je 2 Joker';
+        jokerRow.appendChild(jLabel);
+      }
+      jLabel.style.display = 'block';
       
       jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
