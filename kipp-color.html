@@ -2390,18 +2390,23 @@
       const rightPos = getKniffIconPos('eckblick');
       const SY = 740;
       
-      // Pulse-Hilfsfunktion: Joker-Paar kurz aufblitzen
+      // Pulse-Hilfsfunktion: NUR Overlay pulsiert, Base komplett versteckt
       function pulseJoker(kniffIdx) {
         const overlay = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="overlay"]');
         const base = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="base"]');
         if (!overlay) return;
-        if (base) base.style.opacity = '0';
-        overlay.style.transition = 'transform 0.15s ease-out';
-        overlay.style.transform = 'translateX(-50%) scale(1.25)';
+        // Base komplett unsichtbar (visibility + opacity)
+        if (base) { base.style.visibility = 'hidden'; base.style.opacity = '0'; }
+        overlay.style.transition = 'transform 0.18s ease-out';
+        overlay.style.transform = 'translateX(-50%) scale(1.3)';
         setTimeout(() => {
           overlay.style.transform = 'translateX(-50%) scale(1)';
-          if (base) setTimeout(() => { base.style.opacity = '1'; }, 150);
-        }, 150);
+          // Base erst zurück wenn Overlay komplett zurückgeschrumpft
+          setTimeout(() => {
+            if (base) { base.style.visibility = 'visible'; base.style.opacity = '1'; }
+            overlay.style.transition = '';
+          }, 250);
+        }, 180);
       }
       
       setHandPos(leftPos.x, SY);
@@ -2747,7 +2752,7 @@
       const pgtH = document.getElementById('pgtHead');
       const pgtS = document.getElementById('pgtSub');
       pgtH.textContent = '6 HITS mit 21 KIPPS';
-      pgtS.textContent = 'Bestzeit = unter 21 Sek.';
+      pgtS.textContent = 'Bestzeit = 21 Sek.';
       pgtH.style.animation = 'none'; pgtH.style.opacity = '0'; pgtH.style.transform = 'scale(0.6)';
       pgtS.style.animation = 'none'; pgtS.style.opacity = '0'; pgtS.style.transform = 'scale(0.6)';
       pgt.style.display = 'block';
