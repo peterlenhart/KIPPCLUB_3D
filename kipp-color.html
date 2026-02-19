@@ -2795,10 +2795,7 @@
       pgt.style.display = 'block';
       pgt.style.opacity = '1';
       
-      // Inflate-Sequenz starten
-      let pgtStep = 0;
-      let pgtRunning = true;
-      let pgtTimer = null;
+      // Inflate-Sequenz: Head → weg → Sub → 1 Puls → Kreuzblende
       function pgtShow(el, other) {
         other.style.animation = 'none'; other.style.opacity = '0'; other.style.transform = 'scale(0.6)';
         el.style.animation = 'none'; el.style.opacity = '0'; el.style.transform = 'scale(0.6)';
@@ -2809,18 +2806,67 @@
         el.style.animation = 'none'; void el.offsetWidth;
         el.style.animation = 'sctDeflate 0.4s ease-in forwards';
       }
-      function pgtTick() {
-        if (!pgtRunning) return;
-        if (pgtStep >= 3) return; // Head zeigen, Head weg, Sub zeigen → fertig
-        const phase = pgtStep;
-        if (phase === 0) pgtShow(pgtH, pgtS);
-        else if (phase === 1) pgtHide(pgtH);
-        else if (phase === 2) pgtShow(pgtS, pgtH);
-        pgtStep++;
-        const delay = (phase === 0 || phase === 2) ? 1400 : 400;
-        if (pgtStep < 3) pgtTimer = setTimeout(pgtTick, delay);
-      }
-      pgtTick();
+      
+      // 0ms: "6 HITS..." inflate
+      pgtShow(pgtH, pgtS);
+      
+      // 1400ms: "6 HITS..." deflate
+      setTimeout(() => { pgtHide(pgtH); }, 1400);
+      
+      // 1800ms: "Bestzeit..." inflate (1 Puls)
+      setTimeout(() => { pgtShow(pgtS, pgtH); }, 1800);
+      
+      // 3500ms: "Bestzeit..." steht → Kreuzblende starten
+      setTimeout(() => {
+        // Karten + Jokers vorbereiten (opacity 0)
+        for (let i = 0; i < 6; i++) {
+          const m = gameCards[i].mesh;
+          m.visible = true;
+          m.material.transparent = true;
+          m.material.opacity = 0;
+          m.material.needsUpdate = true;
+        }
+        showKniffIcons();
+        const jr2 = document.getElementById('jokerIconsRow');
+        jr2.style.opacity = '0';
+        jr2.style.pointerEvents = 'auto';
+        document.querySelectorAll('#jokerIconsRow img').forEach(img => {
+          img.style.pointerEvents = 'auto';
+          img.style.cursor = 'pointer';
+        });
+        countdown.style.display = 'block'; countdown.style.opacity = '0';
+        hintText.style.display = 'block'; hintText.style.opacity = '0';
+        
+        // Kreuzblende: Text raus, UIs rein – 800ms synchron
+        const xfStart = performance.now();
+        const xfDur = 800;
+        function xfTick(now) {
+          const t = Math.min((now - xfStart) / xfDur, 1);
+          const e = t * t * (3 - 2 * t); // smoothstep
+          // Text raus
+          pgt.style.opacity = (1 - e);
+          // Karten rein
+          for (let i = 0; i < 6; i++) {
+            gameCards[i].mesh.material.opacity = e;
+            gameCards[i].mesh.material.needsUpdate = true;
+          }
+          jr2.style.opacity = e;
+          countdown.style.opacity = e;
+          hintText.style.opacity = e;
+          
+          if (t < 1) {
+            requestAnimationFrame(xfTick);
+          } else {
+            pgt.style.display = 'none';
+            for (let i = 0; i < 6; i++) {
+              gameCards[i].mesh.material.opacity = 1;
+              gameCards[i].mesh.material.transparent = false;
+              gameCards[i].mesh.material.needsUpdate = true;
+            }
+          }
+        }
+        requestAnimationFrame(xfTick);
+      }, 3500);
       
       // Joker-Icons und Karten erst nach Delay
       const jr = document.getElementById('jokerIconsRow');
@@ -2910,58 +2956,6 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Nach 3.5s: Wie Intro – Sub breathen, dann ausfaden, UI 700ms versetzt einfaden
-      setTimeout(() => {
-        pgtRunning = false;
-        if (pgtTimer) { clearTimeout(pgtTimer); pgtTimer = null; }
-        
-        // Head immer verstecken
-        pgtH.style.animation = 'none';
-        pgtH.style.opacity = '0';
-        
-        // Sub: wenn schon sichtbar, nicht nochmal inflaten
-        const pgtSubVisible = parseFloat(getComputedStyle(pgtS).opacity) > 0.5;
-        
-        if (pgtSubVisible) {
-          pgtS.style.animation = 'none';
-          pgtS.style.opacity = '1';
-          pgtS.style.transform = 'scale(1)';
-          requestAnimationFrame(() => {
-            pgtS.style.animation = 'sctBreathe 1.6s ease-in-out';
-          });
-        } else {
-          pgtS.style.animation = 'none';
-          pgtS.style.opacity = '0';
-          pgtS.style.transform = 'scale(0.6)';
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              pgtS.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
-            });
-          });
-        }
-        
-        // Nach Halten: Container ausfaden, UI 700ms versetzt einfaden (exakt wie Intro)
-        const pgtFadeDelay = pgtSubVisible ? 1600 : 2800;
-        setTimeout(() => {
-          pgt.style.opacity = '0';
-          setTimeout(() => { pgt.style.display = 'none'; }, 1300);
-          setTimeout(() => {
-            // Karten sichtbar machen
-            for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
-            // Jokers einfaden
-            showKniffIcons();
-            const jr2 = document.getElementById('jokerIconsRow');
-            jr2.style.pointerEvents = 'auto';
-            document.querySelectorAll('#jokerIconsRow img').forEach(img => {
-              img.style.pointerEvents = 'auto';
-              img.style.cursor = 'pointer';
-            });
-            countdown.style.display = 'block';
-            hintText.style.display = 'block';
-          }, 700);
-        }, pgtFadeDelay);
-      }, 3500);
-      
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
         deck = REPLAY_DECK.slice();
@@ -2975,10 +2969,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 7000);
+        }, 5000);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 5800);
+        setTimeout(() => { startRecording(); }, 4300);
       }
       
       positionResetButton();
