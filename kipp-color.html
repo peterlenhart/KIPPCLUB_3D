@@ -150,19 +150,21 @@
     }
     #perfektGameText {
       position: absolute;
-      top: 596px;
+      top: 475px;
       left: 0;
       width: 360px;
       text-align: center;
       font-family: Arial, sans-serif;
-      font-size: 21px;
+      font-size: 19px;
       font-weight: bold;
-      color: #c0c0c0;
-      line-height: 1.5;
+      color: #e0d0b8;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
+      line-height: 1.6;
       white-space: nowrap;
       pointer-events: none;
       display: none;
       z-index: 130;
+      transition: opacity 0.4s ease;
     }
     #eyeIcon {
       position: absolute;
@@ -625,8 +627,9 @@
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
     <div id="perfektGameText">
-      <div>PERFEKT GAME</div>
-      <div>21 KIPPS unter 21 Sek.</div>
+      <div>CHALLENGE:</div>
+      <div>6 HITS mit 21 KIPPS.</div>
+      <div>Wer kann, unter 21 Sekunden.</div>
     </div>
     <div id="tutEndButtons" style="display:none; position:absolute; top:650px; left:0; width:360px; text-align:center; z-index:131;">
       <button id="btnNochmal" style="font:bold 16px Arial; color:#c0c0c0; background:rgba(40,40,40,0.8); border:1px solid #606060; border-radius:8px; padding:8px 20px; margin:0 8px; pointer-events:auto; cursor:pointer;">NOCHMAL</button>
@@ -2203,7 +2206,6 @@
       
       // Hand tippt auf Icon
       await handTapFromSouth(iconPos.x, iconPos.y, 700);
-      setTutText('Zahlen merken');
       
       try {
         if (type === 'eckblick') {
@@ -2299,11 +2301,6 @@
         if (useKniff === 'wobble' && kipp21WobbleUsed >= KNIFF_MAX_USES) useKniff = null;
         
         // Tutorial-Text vor Aktion
-        if (useKniff) {
-          setTutText('WÜRFEL-BLICK nehmen');
-        } else {
-          setTutText('KIPP ZIEL öffnen');
-        }
         await sleep(1500);
         
         console.log('[REPLAY] R'+ci+': Aufdecken via', useKniff || 'manuell');
@@ -2326,8 +2323,7 @@
         }
         dbgLog('R' + ci + ': Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
         
-        // Kurze Denkpause + Text
-        setTutText('KIPP ZIEL erkippen');
+        // Kurze Denkpause
         await sleep(1200);
         
         // === KIPPEN ===
@@ -2339,7 +2335,6 @@
         if (!replayActive) break;
         
         // === BESTÄTIGEN ===
-        setTutText('Treffer einloggen');
         await sleep(800);
         dbgLog('R' + ci + ': Bestätigen...');
         await replayConfirm(ci);
@@ -2527,15 +2522,17 @@
       });
       document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
       
-      // KIPP KNIFF Reihe einblenden
-      showKniffIcons();
-      document.getElementById('jokerIconsRow').style.pointerEvents = 'auto';
-      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      kniffImgs.forEach((img, i) => {
-        img.style.pointerEvents = 'auto';
-        img.style.cursor = 'pointer';
-        img.style.opacity = '1';
-      });
+      // === CHALLENGE TEXT zuerst zeigen ===
+      const pgt = document.getElementById('perfektGameText');
+      pgt.innerHTML = '<div>CHALLENGE:</div><div>6 HITS mit 21 KIPPS.</div><div>Wer kann, unter 21 Sekunden.</div>';
+      pgt.style.display = 'block';
+      pgt.style.opacity = '1';
+      
+      // Joker-Icons und Karten erst nach Delay
+      const jr = document.getElementById('jokerIconsRow');
+      jr.style.display = 'none';
+      jr.style.opacity = '0';
+      for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = false;
       
       verdecktesMesh.visible = false;
       
@@ -2609,9 +2606,31 @@
       // KippAnzahl mittig A|B
       hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.0;';
       hintText.innerHTML = formatKipps(0);
-      const pgt = document.getElementById('perfektGameText');
-      pgt.innerHTML = '<div>PERFEKT GAME</div><div>21 KIPPS unter 21 Sek.</div>';
-      pgt.style.display = 'block';
+      
+      // Karten nach Setup wieder verstecken (werden nach Challenge-Text gezeigt)
+      for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = false;
+      countdown.style.display = 'none';
+      hintText.style.display = 'none';
+      
+      // Nach 3s: Challenge-Text ausblenden, Karten + Jokers + Timer einblenden
+      setTimeout(() => {
+        pgt.style.opacity = '0';
+        setTimeout(() => { pgt.style.display = 'none'; }, 400);
+        // Karten einblenden
+        for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
+        // Joker-Icons einblenden
+        showKniffIcons();
+        const jr2 = document.getElementById('jokerIconsRow');
+        jr2.style.pointerEvents = 'auto';
+        document.querySelectorAll('#jokerIconsRow img').forEach(img => {
+          img.style.pointerEvents = 'auto';
+          img.style.cursor = 'pointer';
+          img.style.opacity = '1';
+        });
+        // Timer + KippAnzahl einblenden
+        countdown.style.display = 'block';
+        hintText.style.display = 'block';
+      }, 3000);
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
@@ -2626,10 +2645,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 800);
+        }, 3800);
       } else {
-        // Normales Spiel: Recording starten
-        startRecording();
+        // Normales Spiel: Recording starten nach Challenge-Text
+        setTimeout(() => { startRecording(); }, 3000);
       }
       
       positionResetButton();
@@ -5998,7 +6017,6 @@
       document.getElementById('perfektGameText').style.display = 'none';
       countdown.style.display = 'none';
       hintText.style.display = 'none';
-      setTutText('PERFEKT GAME', '21 KIPPS unter 21 Sek.');
       startKipp21(true);
     });
     document.getElementById('btnSpielenEnd').addEventListener('click', () => {
