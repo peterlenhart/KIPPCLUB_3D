@@ -190,7 +190,7 @@
       pointer-events: none;
       z-index: 10;
       animation: challengePulse 2s ease-in-out infinite;
-      transition: opacity 0.8s ease;
+      transition: opacity 1.5s ease-in-out;
     }
     #startChallengeText .challengeHead {
       font-size: 26px;
@@ -199,9 +199,12 @@
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.4);
       margin-bottom: 2px;
     }
+    #startChallengeText .challengeSub {
+      font-size: 21px;
+    }
     @keyframes challengePulse {
-      0%, 100% { opacity: 1; filter: brightness(1); }
-      50% { opacity: 0.7; filter: brightness(1.2); }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
     }
     #eyeIcon {
       position: absolute;
@@ -598,7 +601,7 @@
       height: 42px;
       cursor: pointer;
       pointer-events: auto;
-      transition: opacity 0.8s ease;
+      transition: opacity 1.2s ease-in-out;
       border: none;
       border-radius: 6px;
       background: transparent;
@@ -640,7 +643,7 @@
   <div id="startOverlay">
     <div id="startChallengeText">
       <div class="challengeHead">CHALLENGE</div>
-      <div>6 HITS mit 21 KIPPS.</div>
+      <div class="challengeSub">6 HITS mit 21 KIPPS.</div>
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
@@ -1626,14 +1629,17 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
-        document.getElementById('btnSpielen').disabled = false;
-        document.getElementById('btnSpielen').style.opacity = '1';
-        document.getElementById('btnDemo').disabled = false;
-        document.getElementById('btnDemo').style.opacity = '1';
-        // Challenge-Text ausblenden wenn Buttons aktiv
+        // Challenge-Text sanft ausblenden (1.5s ease-in-out)
         const sct = document.getElementById('startChallengeText');
         sct.style.opacity = '0';
-        setTimeout(() => { sct.style.display = 'none'; }, 800);
+        setTimeout(() => { sct.style.display = 'none'; }, 1600);
+        // Buttons sanft einblenden mit Überlappung (1.2s ease-in-out)
+        setTimeout(() => {
+          document.getElementById('btnSpielen').disabled = false;
+          document.getElementById('btnSpielen').style.opacity = '1';
+          document.getElementById('btnDemo').disabled = false;
+          document.getElementById('btnDemo').style.opacity = '1';
+        }, 700);
       }
     }
 
