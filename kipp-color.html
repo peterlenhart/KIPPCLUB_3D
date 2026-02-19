@@ -1979,6 +1979,8 @@
     
     function flyCountersBack() {
       if (!counterOrigPos) return;
+      // Spielende: Anzeigen in der Mitte stehen lassen
+      if (gamePhase === 'ende') return;
       const ht = document.getElementById('hintText');
       const cd = document.getElementById('countdown');
       const saved = counterOrigPos;
@@ -2878,6 +2880,7 @@
           document.getElementById('perfektGameText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
+          counterOrigPos = null;
           startKipp21(true);
         };
         
@@ -2895,7 +2898,8 @@
           document.getElementById('perfektGameText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
-          isReplay = true;
+          // Counter zurück an Originalposition falls noch in Mitte
+          counterOrigPos = null;
           startKipp21(false);
         };
       } else {
@@ -2910,6 +2914,7 @@
           document.getElementById('perfektGameText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
+          counterOrigPos = null;
           startKipp21(false);
         };
       }
@@ -2968,6 +2973,12 @@
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
       dragActive = false;     // Touch-Drag stoppen
+      counterOrigPos = null;  // Counter-Fly-State zurücksetzen
+      // Counter-Transitions komplett clearen
+      countdown.style.transition = 'none';
+      hintText.style.transition = 'none';
+      void countdown.offsetWidth;
+      void hintText.offsetWidth;
       // Hide old UI
       document.getElementById('startOverlay').style.display = 'none';
       // tutEndButtons entfernt - Buttons werden dynamisch erzeugt
