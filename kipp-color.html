@@ -2385,16 +2385,16 @@
       // Merken welche Karte vorher offen war
       const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
       
-      // Hand wandert zwischen Jokern, dann tippt auf gewählten
+      // Erstes Mal: zwischen Jokern pendeln. Danach: direkt zum Icon.
       const leftPos = getKniffIconPos('wobble');
       const rightPos = getKniffIconPos('eckblick');
       const SY = 740;
+      const isFirstKniff = (kipp21WobbleUsed + kipp21EckblickUsed === 0);
       
       // Pulse-Hilfsfunktion: oberstes sichtbares Icon pulsiert
       function pulseJoker(kniffIdx) {
         const top = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="top"]');
         const bot = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="bottom"]');
-        // Oberstes sichtbares wählen
         const target = (top && parseFloat(getComputedStyle(top).opacity) > 0.5) ? top : bot;
         if (!target) return;
         target.style.transition = 'transform 0.18s ease-out';
@@ -2405,21 +2405,29 @@
         }, 180);
       }
       
-      setHandPos(leftPos.x, SY);
-      handEl.style.opacity = '1';
-      updateHandShadow(leftPos.x, SY, true);
-      // Zu links fahren
-      await moveHandSmooth(leftPos.x, leftPos.y, 700);
-      await sleep(400);
-      // Nach rechts
-      await moveHandSmooth(rightPos.x, rightPos.y, 650);
-      await sleep(400);
-      // Wieder links
-      await moveHandSmooth(leftPos.x, leftPos.y, 650);
-      await sleep(350);
-      // Wieder rechts und klicken
-      await moveHandSmooth(iconPos.x, iconPos.y, 600);
+      if (isFirstKniff) {
+        // Pendeln: links → rechts → links → rechts (klick)
+        setHandPos(leftPos.x, SY);
+        handEl.style.opacity = '1';
+        updateHandShadow(leftPos.x, SY, true);
+        await moveHandSmooth(leftPos.x, leftPos.y, 700);
+        await sleep(400);
+        await moveHandSmooth(rightPos.x, rightPos.y, 650);
+        await sleep(400);
+        await moveHandSmooth(leftPos.x, leftPos.y, 650);
+        await sleep(350);
+        await moveHandSmooth(iconPos.x, iconPos.y, 600);
+      } else {
+        // Direkt zum Icon
+        setHandPos(iconPos.x, SY);
+        handEl.style.opacity = '1';
+        updateHandShadow(iconPos.x, SY, true);
+        await moveHandSmooth(iconPos.x, iconPos.y, 600);
+      }
       pulseJoker(type === 'eckblick' ? 1 : 0);
+      // "Joker wählen" ausblenden
+      const jLabel = document.querySelector('#jokerIconsRow .jokerLabel');
+      if (jLabel) jLabel.style.display = 'none';
       await sleep(700);
       // Zurück nach Süden
       await moveHandSmooth(iconPos.x, SY, 600);
@@ -3465,21 +3473,18 @@
       if (state === 'verdeckt') {
         // REVEAL
         if (!kipp21GenerateTarget(cardIdx)) return;
-        // Pulse animation
+        // Einmaliges Pulse
         const mesh = gameCards[cardIdx].mesh;
-        let pulseStart = performance.now();
-        function doPulse() {
-          const t = ((performance.now() - pulseStart) % 1500) / 1500;
-          const s = 1.0 + Math.sin(t * Math.PI * 2) * 0.06;
-          mesh.scale.set(s, s, s);
-          if (kipp21CardStates[cardIdx] === 'offen') requestAnimationFrame(doPulse);
-          else mesh.scale.set(1, 1, 1);
-        }
-        requestAnimationFrame(doPulse);
+        mesh.scale.set(1.15, 1.15, 1.15);
+        setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
         return;
       }
       
       if (state === 'offen') {
+        // Einmaliges Pulse beim Bestätigen
+        const cmesh = gameCards[cardIdx].mesh;
+        cmesh.scale.set(1.15, 1.15, 1.15);
+        setTimeout(() => { cmesh.scale.set(1, 1, 1); }, 180);
         // CONFIRM
         kipp21StopRoundTimer();
         
@@ -4639,7 +4644,7 @@
         allImgs[i].style.visibility = 'visible';
       }
       
-      // "Je 2 Joker" Text zwischen den Icons
+      // "Joker wählen" nur vor erster Wahl zeigen
       let jLabel = jokerRow.querySelector('.jokerLabel');
       if (!jLabel) {
         jLabel = document.createElement('div');
@@ -4648,7 +4653,8 @@
         jLabel.textContent = 'Joker w\u00e4hlen';
         jokerRow.appendChild(jLabel);
       }
-      jLabel.style.display = 'block';
+      const jokerUsed = kipp21WobbleUsed + kipp21EckblickUsed;
+      jLabel.style.display = jokerUsed > 0 ? 'none' : 'block';
       
       jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
