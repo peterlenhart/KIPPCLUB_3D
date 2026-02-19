@@ -1968,7 +1968,8 @@
           // Text + Größe ändern
           ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + kipp21KippCount + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
           const secs = Math.floor(kipp21TotalTime / 1000);
-          cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secs + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
+          const secsStr = secs < 10 ? '0' + secs : '' + secs;
+          cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secsStr + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
           
           // Einfaden
           ht.style.transition = 'opacity 0.4s ease-in';
@@ -1983,38 +1984,35 @@
       if (!counterOrigPos) return;
       const ht = document.getElementById('hintText');
       const cd = document.getElementById('countdown');
+      const saved = counterOrigPos;
+      counterOrigPos = null;
       
-      // Erst Text sanft ausblenden
-      ht.style.transition = 'opacity 0.25s ease-out';
-      cd.style.transition = 'opacity 0.25s ease-out';
-      ht.style.opacity = '0';
-      cd.style.opacity = '0';
+      // Alle vorherigen transitions killen
+      ht.style.transition = 'none';
+      cd.style.transition = 'none';
+      void ht.offsetWidth; // Force reflow
+      
+      // Text sofort zurück zu kompakt
+      ht.innerHTML = formatKipps(kipp21KippCount);
+      const curSecs = Math.floor(kipp21TotalTime / 1000);
+      const curMins = Math.floor(curSecs / 60);
+      const curS = curSecs % 60;
+      cd.textContent = curMins + ':' + (curS < 10 ? '0' : '') + curS;
+      ht.style.opacity = '1';
+      cd.style.opacity = '1';
+      
+      // Zurückfliegen
+      ht.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out';
+      cd.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out';
+      ht.style.left = saved.htLeft;
+      ht.style.top = saved.htTop;
+      cd.style.left = saved.cdLeft;
+      cd.style.top = saved.cdTop;
       
       setTimeout(() => {
-        // Text zurück zu kompakt
-        ht.innerHTML = formatKipps(kipp21KippCount);
-        const curSecs = Math.floor(kipp21TotalTime / 1000);
-        const curMins = Math.floor(curSecs / 60);
-        const curS = curSecs % 60;
-        cd.textContent = curMins + ':' + (curS < 10 ? '0' : '') + curS;
-        
-        // Einfaden + gleichzeitig zurückfliegen
-        ht.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.4s ease-in';
-        cd.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.4s ease-in';
-        ht.style.opacity = '1';
-        cd.style.opacity = '1';
-        ht.style.left = counterOrigPos.htLeft;
-        ht.style.top = counterOrigPos.htTop;
-        cd.style.left = counterOrigPos.cdLeft;
-        cd.style.top = counterOrigPos.cdTop;
-        
-        setTimeout(() => {
-          ht.style.transition = '';
-          cd.style.transition = '';
-        }, 550);
-      }, 280);
-      
-      counterOrigPos = null;
+        ht.style.transition = '';
+        cd.style.transition = '';
+      }, 550);
     }
 
     function animateCardFly(card, quadrant, slot) {
@@ -2097,7 +2095,7 @@
                 mesh.material.transparent = false;
                 mesh.material.needsUpdate = true;
                 // Zähler 2s halten, dann zurückfliegen
-                setTimeout(() => { flyCountersBack(); }, 2000);
+                setTimeout(() => { flyCountersBack(); }, 1000);
                 resolve();
               }
             }
