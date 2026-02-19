@@ -128,6 +128,27 @@
       cursor: pointer;
       transform: translateX(-50%);
     }
+    #zumSpielBtn {
+      position: absolute;
+      top: 611px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 42px;
+      background: url(button_kurz.webp) center/contain no-repeat;
+      border: none;
+      cursor: pointer;
+      pointer-events: auto;
+      z-index: 131;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+      color: #d0d0d0;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
+      padding-top: 2px;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
     #perfektGameText {
       position: absolute;
       top: 465px;
@@ -682,6 +703,7 @@
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
+    <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     <div id="perfektGameText">
       <div class="pgtLine pgtHead" id="pgtHead">SPIEL ZIEL</div>
       <div class="pgtLine pgtSub" id="pgtSub">6 HITS mit 21 KIPPS.</div>
@@ -3067,6 +3089,8 @@
           jr2.style.transition = 'none';
           jr2.style.opacity = '0';
           jr2.style.pointerEvents = 'auto';
+          const zsb2 = document.getElementById('zumSpielBtn');
+          if (zsb2) { zsb2.style.transition = 'none'; zsb2.style.opacity = '0'; }
           document.querySelectorAll('#jokerIconsRow img').forEach(img => {
             img.style.pointerEvents = 'auto';
             img.style.cursor = 'pointer';
@@ -3084,6 +3108,7 @@
               gameCards[i].mesh.material.needsUpdate = true;
             }
             jr2.style.opacity = String(e);
+            if (zsb2) zsb2.style.opacity = String(e);
             countdown.style.opacity = String(e);
             hintText.style.opacity = String(e);
             if (t < 1) {
@@ -3094,6 +3119,7 @@
                 gameCards[i].mesh.material.transparent = false;
                 gameCards[i].mesh.material.needsUpdate = true;
               }
+              if (zsb2) zsb2.style.transition = '';
               resolve();
             }
           }
@@ -3117,6 +3143,8 @@
       const jr = document.getElementById('jokerIconsRow');
       jr.style.display = 'none';
       jr.style.opacity = '0';
+      document.getElementById('zumSpielBtn').style.display = 'none';
+      document.getElementById('zumSpielBtn').style.opacity = '0';
       for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = false;
       
       verdecktesMesh.visible = false;
@@ -3267,6 +3295,7 @@
       // Ganze Reihe verstecken wenn beide verbraucht
       if (kipp21WobbleUsed >= KNIFF_MAX_USES && kipp21EckblickUsed >= KNIFF_MAX_USES) {
         document.getElementById('jokerIconsRow').style.display = 'none';
+        document.getElementById('zumSpielBtn').style.display = 'none';
       }
     }
     
@@ -3631,15 +3660,26 @@
     }
     
     function show60SecTimeout() {
-      // Joker verstecken
+      // ALLES STOPPEN — Standbild
       hideKniffIcons();
+      stopReplay();
+      kipp21KniffActive = false;
+      kipp21KniffAbort = true;
+      isAnimating = false;
+      dragActive = false;
+      if (handEl) { handEl.style.opacity = '0'; handEl.style.transition = 'none'; }
       
-      // "60 S" fliegt in die Mitte wie ein HIT
-      const centerX = 180, centerY = 360;
+      // Achsmittelpunkt → Screen projizieren
+      const axisCenter = new THREE.Vector3(0, 0.234375, 0.109375);
+      axisCenter.project(camera);
+      const acX = Math.round((axisCenter.x * 0.5 + 0.5) * 360);
+      const acY = Math.round((-axisCenter.y * 0.5 + 0.5) * 720);
+      
+      // "60 S" fliegt zum Achsmittelpunkt wie ein HIT
       const flyEl = document.createElement('div');
       flyEl.textContent = '60 S';
       flyEl.style.cssText = 'position:absolute;' +
-        'left:' + centerX + 'px; top:' + centerY + 'px;' +
+        'left:' + acX + 'px; top:' + acY + 'px;' +
         'transform:translate(-50%,-50%) scale(0.3);' +
         'font:bold 42px Arial; color:#cedb25;' +
         'text-shadow:0 2px 6px rgba(0,0,0,0.8);' +
@@ -3652,9 +3692,9 @@
         flyEl.style.opacity = '1';
       });
       
-      // Nach Fly-in: Kippziele + Joker ausblenden, Text + Button zeigen
+      // Nach Fly-in: Kippziele ausblenden, Text + Button zeigen
       setTimeout(() => {
-        // Alle Kippziele verschwinden lassen
+        // Alle nicht-erledigten Kippziele ausblenden
         for (let i = 0; i < 6; i++) {
           if (kipp21CardStates[i] !== 'erledigt') {
             const m = gameCards[i].mesh;
@@ -3662,18 +3702,20 @@
             m.material.needsUpdate = true;
             const startOp = m.material.opacity;
             const startT = performance.now();
-            function fadeTick() {
-              const t = Math.min((performance.now() - startT) / 400, 1);
-              m.material.opacity = startOp * (1 - t);
-              m.material.needsUpdate = true;
-              if (t < 1) requestAnimationFrame(fadeTick);
-              else m.visible = false;
-            }
-            requestAnimationFrame(fadeTick);
+            (function fadeCard(mesh, sOp, sT) {
+              function fadeTick() {
+                const t = Math.min((performance.now() - sT) / 400, 1);
+                mesh.material.opacity = sOp * (1 - t);
+                mesh.material.needsUpdate = true;
+                if (t < 1) requestAnimationFrame(fadeTick);
+                else mesh.visible = false;
+              }
+              requestAnimationFrame(fadeTick);
+            })(m, startOp, startT);
           }
         }
         
-        // "60 S" durch mehrzeiligen Text ersetzen
+        // "60 S" → mehrzeiliger Text über Achsmitte
         flyEl.innerHTML = '60 Sek.<br>\u00fcberschritten';
         flyEl.style.fontSize = '30px';
         flyEl.style.textAlign = 'center';
@@ -3683,12 +3725,17 @@
         hitTextEls.forEach(el => el.remove());
         hitTextEls.length = 0;
         
+        // Countdown + Hint ausblenden
+        countdown.style.display = 'none';
+        hintText.style.display = 'none';
+        
         // NEUES SPIEL Button an Stelle der Kippziele
         const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
         cardCenter3D.project(camera);
         const btnY = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
         
         const neuesBtn = document.createElement('button');
+        neuesBtn.id = 'timeoutNeuesSpielBtn';
         neuesBtn.textContent = 'NEUES SPIEL';
         neuesBtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%);' +
           ' top:' + btnY + 'px; width:280px; height:49px;' +
@@ -3700,13 +3747,11 @@
           ' opacity:0; transition:opacity 0.4s ease;';
         document.getElementById('uiOverlay').appendChild(neuesBtn);
         
-        // Button einblenden
         requestAnimationFrame(() => { neuesBtn.style.opacity = '1'; });
         
-        neuesBtn.onclick = () => {
+        function doRestart() {
           flyEl.remove();
           neuesBtn.remove();
-          // auswertungBtn verstecken falls sichtbar
           const abtn = document.getElementById('auswertungBtn');
           if (abtn) abtn.style.display = 'none';
           const esb = document.getElementById('endSpielenBtn');
@@ -3716,11 +3761,17 @@
           hintText.style.display = 'none';
           counterOrigPos = null;
           startKipp21(false);
-        };
+        }
         
-        neuesBtn.addEventListener('touchend', (e) => {
+        neuesBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
           e.preventDefault();
-          neuesBtn.onclick();
+          doRestart();
+        });
+        neuesBtn.addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          doRestart();
         });
       }, 800);
     }
@@ -3987,6 +4038,7 @@
       document.getElementById('eyeIcon').style.display = 'none';
       const jr1 = document.getElementById('jokerIconsRow');
       if (jr1) { jr1.style.display = 'none'; jr1.style.opacity = '0'; }
+      document.getElementById('zumSpielBtn').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
       countdown.style.display = 'none';
       
@@ -4557,28 +4609,11 @@
       const jokerUsed = kipp21WobbleUsed + kipp21EckblickUsed;
       jLabel.style.display = jokerUsed > 0 ? 'none' : 'block';
       
-      // "zum SPIEL" Button zwischen Jokern nach erster Nutzung
-      let zumSpielBtn = jokerRow.querySelector('.zumSpielBtn');
-      if (jokerUsed > 0 && !(kipp21WobbleUsed >= KNIFF_MAX_USES && kipp21EckblickUsed >= KNIFF_MAX_USES)) {
-        if (!zumSpielBtn) {
-          zumSpielBtn = document.createElement('button');
-          zumSpielBtn.className = 'zumSpielBtn';
-          zumSpielBtn.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:140px; height:42px; background:url(button_kurz.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:10; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6); padding-top:2px;';
-          zumSpielBtn.textContent = 'zum SPIEL';
-          zumSpielBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            hideKniffIcons();
-          });
-          zumSpielBtn.addEventListener('touchend', (e) => {
-            e.stopPropagation(); e.preventDefault();
-            hideKniffIcons();
-          });
-          jokerRow.appendChild(zumSpielBtn);
-        }
-        zumSpielBtn.style.display = 'block';
-      } else if (zumSpielBtn) {
-        zumSpielBtn.style.display = 'none';
-      }
+      // "zum SPIEL" Button unterhalb der Joker — Position nachführen
+      const zsb = document.getElementById('zumSpielBtn');
+      zsb.style.top = (parseInt(jokerRow.style.top || '523') + 58 + 30) + 'px';
+      zsb.style.display = 'block';
+      zsb.style.opacity = '1';
       
       jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
@@ -4586,7 +4621,12 @@
     
     function hideKniffIcons() {
       jokerRow.style.opacity = '0';
-      setTimeout(() => { jokerRow.style.display = 'none'; }, 350);
+      const zsb = document.getElementById('zumSpielBtn');
+      if (zsb) { zsb.style.opacity = '0'; }
+      setTimeout(() => {
+        jokerRow.style.display = 'none';
+        if (zsb) zsb.style.display = 'none';
+      }, 350);
     }
     
     // Kniff-Icon Klick: ausblenden (Funktionen folgen später)
@@ -4596,6 +4636,23 @@
       e.stopPropagation();
       hideKniffIcons();
     });
+    
+    // "zum SPIEL" Button: Joker-Reihe schließen
+    (function() {
+      const zsBtn = document.getElementById('zumSpielBtn');
+      let zsTouchHandled = false;
+      zsBtn.addEventListener('touchend', (e) => {
+        e.stopPropagation(); e.preventDefault();
+        zsTouchHandled = true;
+        hideKniffIcons();
+        setTimeout(() => { zsTouchHandled = false; }, 300);
+      });
+      zsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (zsTouchHandled) return;
+        hideKniffIcons();
+      });
+    })();
 
     async function showSubtitle(text, duration) {
       duration = duration || 2000;
@@ -4933,6 +4990,7 @@
       document.getElementById('kippTarget').style.display = 'none';
       const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
       jokerRow.style.display = 'none'; jokerRow.style.opacity = '0'; // reset for demo
+      document.getElementById('zumSpielBtn').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
@@ -6200,6 +6258,7 @@
       document.getElementById('entscheidungText').style.display = 'none';
       const jr2 = document.getElementById('jokerIconsRow');
       if (jr2) { jr2.style.display = 'none'; jr2.style.opacity = '0'; }
+      document.getElementById('zumSpielBtn').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
       // tutEndButtons entfernt - Buttons werden dynamisch erzeugt
       hintText.style.display = 'none';
