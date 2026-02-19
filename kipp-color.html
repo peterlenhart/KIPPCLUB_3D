@@ -551,7 +551,7 @@
       width: 360px;
       height: 720px;
       pointer-events: none;
-      z-index: 310;
+      z-index: 10000;
     }
     #resetButton {
       display: none;
@@ -4610,11 +4610,15 @@
       const jokerUsed = kipp21WobbleUsed + kipp21EckblickUsed;
       jLabel.style.display = jokerUsed > 0 ? 'none' : 'block';
       
-      // "zum SPIEL" Button unterhalb der Joker — Position nachführen
+      // "zum SPIEL" Button unterhalb der Joker — NUR im echten Spiel zeigen
       const zsb = document.getElementById('zumSpielBtn');
-      zsb.style.top = (parseInt(jokerRow.style.top || '523') + 58 + 30) + 'px';
-      zsb.style.display = 'block';
-      zsb.style.opacity = '1';
+      if (replayActive) {
+        zsb.style.display = 'none';
+      } else {
+        zsb.style.top = (parseInt(jokerRow.style.top || '523') + 58 + 30) + 'px';
+        zsb.style.display = 'block';
+        zsb.style.opacity = '1';
+      }
       
       jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
@@ -6246,6 +6250,20 @@
       countdown.style.display = 'none';
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
+      
+      // KIPP21 / Replay stoppen
+      if (replayActive || kipp21Active) {
+        stopReplay();
+        kipp21Active = false;
+        if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
+        kipp21TimerRunning = false;
+        kipp21KniffActive = false;
+        kipp21KniffAbort = true;
+      }
+      // Dynamische End-Buttons entfernen
+      document.querySelectorAll('.end-btn-dynamic').forEach(el => el.remove());
+      hitTextEls.forEach(el => el.remove());
+      hitTextEls.length = 0;
       
 
       
