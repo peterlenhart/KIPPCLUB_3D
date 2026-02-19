@@ -2794,79 +2794,103 @@
       pgtS.style.animation = 'none'; pgtS.style.opacity = '0'; pgtS.style.transform = 'scale(0.6)';
       pgt.style.display = 'block';
       pgt.style.opacity = '1';
+      pgt.style.transition = 'none'; // Kein CSS transition – alles manuell
       
-      // Inflate-Sequenz: Head → weg → Sub → 1 Puls → Kreuzblende
-      function pgtShow(el, other) {
-        other.style.animation = 'none'; other.style.opacity = '0'; other.style.transform = 'scale(0.6)';
-        el.style.animation = 'none'; el.style.opacity = '0'; el.style.transform = 'scale(0.6)';
-        void el.offsetWidth;
-        el.style.animation = 'sctInflate 1.2s ease-out forwards';
-      }
-      function pgtHide(el) {
-        el.style.animation = 'none'; void el.offsetWidth;
-        el.style.animation = 'sctDeflate 0.4s ease-in forwards';
-      }
+      // Hilfsfunktionen mit Promise – nächster Schritt startet erst wenn FERTIG
+      function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
       
-      // 0ms: "6 HITS..." inflate
-      pgtShow(pgtH, pgtS);
-      
-      // 1400ms: "6 HITS..." deflate
-      setTimeout(() => { pgtHide(pgtH); }, 1400);
-      
-      // 1800ms: "Bestzeit..." inflate (1 Puls)
-      setTimeout(() => { pgtShow(pgtS, pgtH); }, 1800);
-      
-      // 2800ms: Kreuzblende starten (1s nach Bestzeit)
-      setTimeout(() => {
-        // Karten + Jokers vorbereiten (opacity 0)
-        for (let i = 0; i < 6; i++) {
-          const m = gameCards[i].mesh;
-          m.visible = true;
-          m.material.transparent = true;
-          m.material.opacity = 0;
-          m.material.needsUpdate = true;
-        }
-        showKniffIcons();
-        const jr2 = document.getElementById('jokerIconsRow');
-        jr2.style.opacity = '0';
-        jr2.style.pointerEvents = 'auto';
-        document.querySelectorAll('#jokerIconsRow img').forEach(img => {
-          img.style.pointerEvents = 'auto';
-          img.style.cursor = 'pointer';
+      function pgtInflate(el, other) {
+        return new Promise(resolve => {
+          other.style.animation = 'none'; other.style.opacity = '0'; other.style.transform = 'scale(0.6)';
+          el.style.animation = 'none'; el.style.opacity = '0'; el.style.transform = 'scale(0.6)';
+          void el.offsetWidth;
+          el.style.animation = 'sctInflate 1.2s ease-out forwards';
+          el.addEventListener('animationend', resolve, { once: true });
         });
-        countdown.style.display = 'block'; countdown.style.opacity = '0';
-        hintText.style.display = 'block'; hintText.style.opacity = '0';
-        
-        // Kreuzblende: Text raus, UIs rein – 800ms synchron
-        const xfStart = performance.now();
-        const xfDur = 800;
-        function xfTick(now) {
-          const t = Math.min((now - xfStart) / xfDur, 1);
-          const e = t * t * (3 - 2 * t); // smoothstep
-          // Text raus
-          pgt.style.opacity = (1 - e);
-          // Karten rein
-          for (let i = 0; i < 6; i++) {
-            gameCards[i].mesh.material.opacity = e;
-            gameCards[i].mesh.material.needsUpdate = true;
+      }
+      
+      function pgtDeflate(el) {
+        return new Promise(resolve => {
+          el.style.animation = 'none'; void el.offsetWidth;
+          el.style.animation = 'sctDeflate 0.4s ease-in forwards';
+          el.addEventListener('animationend', resolve, { once: true });
+        });
+      }
+      
+      function fadeOutText() {
+        return new Promise(resolve => {
+          const start = performance.now();
+          const dur = 600;
+          function tick(now) {
+            const t = Math.min((now - start) / dur, 1);
+            pgt.style.opacity = String(1 - t);
+            if (t < 1) requestAnimationFrame(tick);
+            else { pgt.style.display = 'none'; resolve(); }
           }
-          jr2.style.opacity = e;
-          countdown.style.opacity = e;
-          hintText.style.opacity = e;
+          requestAnimationFrame(tick);
+        });
+      }
+      
+      function fadeInUIs() {
+        return new Promise(resolve => {
+          // Alles auf opacity 0 vorbereiten
+          for (let i = 0; i < 6; i++) {
+            const m = gameCards[i].mesh;
+            m.visible = true;
+            m.material.transparent = true;
+            m.material.opacity = 0;
+            m.material.needsUpdate = true;
+          }
+          showKniffIcons();
+          const jr2 = document.getElementById('jokerIconsRow');
+          jr2.style.transition = 'none';
+          jr2.style.opacity = '0';
+          jr2.style.pointerEvents = 'auto';
+          document.querySelectorAll('#jokerIconsRow img').forEach(img => {
+            img.style.pointerEvents = 'auto';
+            img.style.cursor = 'pointer';
+          });
+          countdown.style.display = 'block'; countdown.style.opacity = '0';
+          hintText.style.display = 'block'; hintText.style.opacity = '0';
           
-          if (t < 1) {
-            requestAnimationFrame(xfTick);
-          } else {
-            pgt.style.display = 'none';
+          const start = performance.now();
+          const dur = 600;
+          function tick(now) {
+            const t = Math.min((now - start) / dur, 1);
+            const e = t * t * (3 - 2 * t);
             for (let i = 0; i < 6; i++) {
-              gameCards[i].mesh.material.opacity = 1;
-              gameCards[i].mesh.material.transparent = false;
+              gameCards[i].mesh.material.opacity = e;
               gameCards[i].mesh.material.needsUpdate = true;
             }
+            jr2.style.opacity = String(e);
+            countdown.style.opacity = String(e);
+            hintText.style.opacity = String(e);
+            if (t < 1) {
+              requestAnimationFrame(tick);
+            } else {
+              for (let i = 0; i < 6; i++) {
+                gameCards[i].mesh.material.opacity = 1;
+                gameCards[i].mesh.material.transparent = false;
+                gameCards[i].mesh.material.needsUpdate = true;
+              }
+              resolve();
+            }
           }
-        }
-        requestAnimationFrame(xfTick);
-      }, 2800);
+          requestAnimationFrame(tick);
+        });
+      }
+      
+      // SEQUENZ: Jeder Schritt wartet auf den vorherigen
+      (async () => {
+        await pgtInflate(pgtH, pgtS);    // "6 HITS..." erscheint
+        await wait(200);                  // kurz stehen lassen
+        await pgtDeflate(pgtH);           // "6 HITS..." weg
+        await pgtInflate(pgtS, pgtH);     // "Bestzeit..." erscheint
+        await wait(800);                  // 0.8s stehen lassen
+        await fadeOutText();              // Text KOMPLETT weg
+        await wait(100);                  // Sicherheitspause
+        await fadeInUIs();                // ERST JETZT UIs rein
+      })();
       
       // Joker-Icons und Karten erst nach Delay
       const jr = document.getElementById('jokerIconsRow');
@@ -2969,10 +2993,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 4300);
+        }, 5500);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 3600);
+        setTimeout(() => { startRecording(); }, 5100);
       }
       
       positionResetButton();
