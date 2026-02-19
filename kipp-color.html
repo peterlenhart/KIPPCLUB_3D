@@ -4721,6 +4721,7 @@
       jokerRow.querySelectorAll('img').forEach(img => {
         img.addEventListener('touchend', (e) => {
           e.stopPropagation(); e.preventDefault();
+          if (replayActive) return; // Tutorial: keine Interaktion
           const idx = parseInt(img.dataset.kniffIdx);
           kniffTouchHandled = true;
           if (idx === 0) runKipp21WobbleKniff();
@@ -4729,7 +4730,7 @@
         });
         img.addEventListener('click', (e) => {
           e.stopPropagation(); e.preventDefault();
-          if (kniffTouchHandled) return;
+          if (replayActive || kniffTouchHandled) return;
           const idx = parseInt(img.dataset.kniffIdx);
           if (idx === 0) runKipp21WobbleKniff();
           else runKipp21EckblickKniff();
@@ -5652,6 +5653,7 @@
     eyeEl.addEventListener('touchend', (e) => {
       e.stopPropagation();
       e.preventDefault();
+      if (replayActive) return; // Tutorial: keine Interaktion
       if (gamePhase === 'entscheidung') {
         if (activeCardIdx === 0) {
           spielzielToDemoPhase();
@@ -6009,6 +6011,7 @@
     let lastTouchPos = null;
     
     renderer.domElement.addEventListener('touchstart', (e) => {
+      if (replayActive) return; // Tutorial: keine Interaktion
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
@@ -6019,6 +6022,7 @@
     }, { passive: true });
     
     renderer.domElement.addEventListener('touchend', (e) => {
+      if (replayActive) return; // Tutorial: keine Interaktion
       // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
@@ -6065,6 +6069,7 @@
     
     // Desktop-Klick: Kippziel aufdecken (kippen) oder Schauen starten (entscheidung)
     renderer.domElement.addEventListener('click', (e) => {
+      if (replayActive) return; // Tutorial: keine Interaktion
       const rect = renderer.domElement.getBoundingClientRect();
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -6791,6 +6796,8 @@
       if (gamePhase === 'start') return;
       // Demo-Phase: KEINE Touch-Interaktion (Demo läuft automatisch)
       if (gamePhase === 'demo') return;
+      // Tutorial: KEINE Interaktion
+      if (replayActive) return;
       
       if (gamePhase === 'pause' && pausePivotGroup) {
         e.preventDefault();
