@@ -2937,7 +2937,7 @@
         });
         countdown.style.display = 'block';
         hintText.style.display = 'block';
-      }, 4800);
+      }, 5800);
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
@@ -2952,10 +2952,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 5800);
+        }, 6800);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 4800);
+        setTimeout(() => { startRecording(); }, 5800);
       }
       
       positionResetButton();
