@@ -2245,7 +2245,7 @@
     
     // --- Kniff-Icon-Position (liest aus DOM) ---
     function getKniffIconPos(type) {
-      // 2 logische Icons (je base+overlay), Mitte des Paars anzielen
+      // 2 logische Icons (je bottom+top), Mitte des Paars anzielen
       const iconCount = 2; // logisch
       const totalWidth = 360, iconW = 58;
       const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
@@ -2253,7 +2253,7 @@
       const idx = (type === 'wobble') ? 0 : 1;
       const centerX = gap + idx * (iconW + gap) + iconW / 2;
       const shifted = centerX + (idx === 0 ? -edgeShift : edgeShift);
-      const pairCenter = Math.round(shifted - 4); // Mitte zwischen base(-8) und overlay(0)
+      const pairCenter = Math.round(shifted - 4); // Mitte zwischen bottom(-8) und top(0)
       const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '523');
       console.log('[KNIFF-POS] type='+type, 'pairCenter='+pairCenter, 'rowTop='+rowTop);
       return { x: pairCenter, y: rowTop + 29 };
@@ -2390,22 +2390,18 @@
       const rightPos = getKniffIconPos('eckblick');
       const SY = 740;
       
-      // Pulse-Hilfsfunktion: NUR Overlay pulsiert, Base komplett versteckt
+      // Pulse-Hilfsfunktion: oberstes sichtbares Icon pulsiert
       function pulseJoker(kniffIdx) {
-        const overlay = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="overlay"]');
-        const base = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="base"]');
-        if (!overlay) return;
-        // Base komplett unsichtbar (visibility + opacity)
-        if (base) { base.style.visibility = 'hidden'; base.style.opacity = '0'; }
-        overlay.style.transition = 'transform 0.18s ease-out';
-        overlay.style.transform = 'translateX(-50%) scale(1.3)';
+        const top = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="top"]');
+        const bot = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="bottom"]');
+        // Oberstes sichtbares wählen
+        const target = (top && parseFloat(getComputedStyle(top).opacity) > 0.5) ? top : bot;
+        if (!target) return;
+        target.style.transition = 'transform 0.18s ease-out';
+        target.style.transform = 'translateX(-50%) scale(1.3)';
         setTimeout(() => {
-          overlay.style.transform = 'translateX(-50%) scale(1)';
-          // Base erst zurück wenn Overlay komplett zurückgeschrumpft
-          setTimeout(() => {
-            if (base) { base.style.visibility = 'visible'; base.style.opacity = '1'; }
-            overlay.style.transition = '';
-          }, 250);
+          target.style.transform = 'translateX(-50%) scale(1)';
+          setTimeout(() => { target.style.transition = ''; }, 200);
         }, 180);
       }
       
@@ -2753,6 +2749,10 @@
       const pgtS = document.getElementById('pgtSub');
       pgtH.textContent = '6 HITS mit 21 KIPPS';
       pgtS.textContent = 'Bestzeit = 21 Sek.';
+      // Beide Zeilen im Sub-Stil (21px, normal)
+      pgtH.style.fontSize = '21px';
+      pgtH.style.letterSpacing = '0';
+      pgtH.style.color = '';
       pgtH.style.animation = 'none'; pgtH.style.opacity = '0'; pgtH.style.transform = 'scale(0.6)';
       pgtS.style.animation = 'none'; pgtS.style.opacity = '0'; pgtS.style.transform = 'scale(0.6)';
       pgt.style.display = 'block';
@@ -2774,13 +2774,14 @@
       }
       function pgtTick() {
         if (!pgtRunning) return;
-        const phase = pgtStep % 4;
+        if (pgtStep >= 3) return; // Head zeigen, Head weg, Sub zeigen → fertig
+        const phase = pgtStep;
         if (phase === 0) pgtShow(pgtH, pgtS);
         else if (phase === 1) pgtHide(pgtH);
         else if (phase === 2) pgtShow(pgtS, pgtH);
-        else if (phase === 3) pgtHide(pgtS);
         pgtStep++;
-        pgtTimer = setTimeout(pgtTick, (phase === 0 || phase === 2) ? 1400 : 400);
+        const delay = (phase === 0 || phase === 2) ? 1400 : 400;
+        if (pgtStep < 3) pgtTimer = setTimeout(pgtTick, delay);
       }
       pgtTick();
       
@@ -3068,18 +3069,18 @@
       const allImgs = document.querySelectorAll('#jokerIconsRow img');
       allImgs.forEach(img => {
         const idx = parseInt(img.dataset.kniffIdx);
-        const isOverlay = img.dataset.layer === 'overlay';
+        const isTop = img.dataset.layer === 'top';
         const used = idx === 0 ? kipp21WobbleUsed : kipp21EckblickUsed;
         
-        if (isOverlay) {
-          // Overlay verschwindet nach 1. Nutzung
+        if (isTop) {
+          // Top verschwindet nach 1. Nutzung
           if (used >= 1) {
             img.style.display = 'none';
           } else {
             img.style.display = ''; img.style.opacity = '1'; img.style.pointerEvents = 'auto';
           }
         } else {
-          // Base verschwindet nach 2. Nutzung
+          // Bottom verschwindet nach 2. Nutzung
           if (used >= KNIFF_MAX_USES) {
             img.style.display = 'none';
           } else {
@@ -3118,15 +3119,21 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Nur das verwendete Icon-Layer ausblenden
+      // Icon-Layer mit Pulse ausblenden
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach(img => {
         img.style.pointerEvents = 'none';
         if (img.dataset.kniffIdx === '0') {
-          if (img.dataset.layer === 'overlay') {
-            img.style.opacity = '0'; // Overlay immer weg
-          } else if (kipp21WobbleUsed >= 1) {
-            img.style.opacity = '0'; // Base nur bei 2. Nutzung
+          // 1. Nutzung: top verschwindet, 2. Nutzung: bottom verschwindet
+          const targetLayer = (kipp21WobbleUsed === 0) ? 'top' : 'bottom';
+          if (img.dataset.layer === targetLayer) {
+            img.style.transition = 'transform 0.18s ease-out';
+            img.style.transform = 'translateX(-50%) scale(1.3)';
+            setTimeout(() => {
+              img.style.transform = 'translateX(-50%) scale(0.5)';
+              img.style.opacity = '0';
+              setTimeout(() => { img.style.transition = ''; }, 200);
+            }, 180);
           }
         }
       });
@@ -3201,15 +3208,20 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
-      // Nur das verwendete Icon-Layer ausblenden
+      // Icon-Layer mit Pulse ausblenden
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach(img => {
         img.style.pointerEvents = 'none';
         if (img.dataset.kniffIdx === '1') {
-          if (img.dataset.layer === 'overlay') {
-            img.style.opacity = '0'; // Overlay immer weg
-          } else if (kipp21EckblickUsed >= 1) {
-            img.style.opacity = '0'; // Base nur bei 2. Nutzung
+          const targetLayer = (kipp21EckblickUsed === 0) ? 'top' : 'bottom';
+          if (img.dataset.layer === targetLayer) {
+            img.style.transition = 'transform 0.18s ease-out';
+            img.style.transform = 'translateX(-50%) scale(1.3)';
+            setTimeout(() => {
+              img.style.transform = 'translateX(-50%) scale(0.5)';
+              img.style.opacity = '0';
+              setTimeout(() => { img.style.transition = ''; }, 200);
+            }, 180);
           }
         }
       });
@@ -4507,27 +4519,28 @@
       "joker3.webp"
     ];
 
-    // Populate jokerIconsRow (base + overlay for 2-use indication)
+    // Populate jokerIconsRow: je 2 unabhängige Bilder übereinander (bottom + top)
     try {
       KNIFF_ICONS.forEach((src, i) => {
-        // Base icon (unterer, wird 8px westlicher)
-        const img = document.createElement('img');
-        img.src = src;
-        img.dataset.kniffIdx = i;
-        img.dataset.layer = 'base';
-        jokerRow.appendChild(img);
+        // Bottom icon (unterer, 8px westlicher versetzt)
+        const bot = document.createElement('img');
+        bot.src = src;
+        bot.dataset.kniffIdx = i;
+        bot.dataset.layer = 'bottom';
+        bot.style.zIndex = '1';
+        jokerRow.appendChild(bot);
         
-        // Overlay icon (oberer, 8px östlicher)
-        const ov = document.createElement('img');
-        ov.src = src;
-        ov.dataset.kniffIdx = i;
-        ov.dataset.layer = 'overlay';
-        ov.style.zIndex = '2';
-        jokerRow.appendChild(ov);
+        // Top icon (oberer, auf Originalposition)
+        const top = document.createElement('img');
+        top.src = src;
+        top.dataset.kniffIdx = i;
+        top.dataset.layer = 'top';
+        top.style.zIndex = '2';
+        jokerRow.appendChild(top);
       });
     } catch(e) { console.error('Joker icon setup error:', e); }
 
-    // Click-Handler für alle Joker-Icons (base + overlay)
+    // Click-Handler für alle Joker-Icons (bottom + top)
     (function() {
       let kniffTouchHandled = false;
       jokerRow.querySelectorAll('img').forEach(img => {
@@ -4608,7 +4621,7 @@
       // Kniff Icons 12px nördlich der alten Position
       jokerRow.style.top = '523px';
       
-      // 2 logische Icons, je base+overlay = 4 img Elemente
+      // 2 logische Icons, je bottom+top = 4 img Elemente
       const allImgs = jokerRow.querySelectorAll('img');
       const totalWidth = 360, iconW = 58;
       const iconCount = 2; // logisch 2 Icons
@@ -4617,11 +4630,13 @@
       
       for (let i = 0; i < allImgs.length; i++) {
         const kniffIdx = parseInt(allImgs[i].dataset.kniffIdx);
-        const isOverlay = allImgs[i].dataset.layer === 'overlay';
+        const isTop = allImgs[i].dataset.layer === 'top';
         const centerX = gap + kniffIdx * (iconW + gap) + iconW / 2;
         const shifted = centerX + (kniffIdx === 0 ? -edgeShift : edgeShift);
-        // Base: 8px westlicher, Overlay: auf Originalposition
-        allImgs[i].style.left = Math.round(shifted + (isOverlay ? 0 : -8)) + 'px';
+        // Bottom: 8px westlicher, Top: auf Originalposition
+        allImgs[i].style.left = Math.round(shifted + (isTop ? 0 : -8)) + 'px';
+        allImgs[i].style.opacity = '1';
+        allImgs[i].style.visibility = 'visible';
       }
       
       // "Je 2 Joker" Text zwischen den Icons
