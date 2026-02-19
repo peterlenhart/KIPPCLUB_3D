@@ -1926,7 +1926,7 @@
 
     // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
     // Zähler-Flug: in die würfelfreie Boxhälfte
-    let counterOrigPos = null; // gespeicherte Originalpositionen
+    let counterOrigPos = null;
     
     function flyCountersToBox() {
       const ht = document.getElementById('hintText');
@@ -1935,38 +1935,36 @@
       // Originalpositionen merken
       counterOrigPos = {
         htLeft: ht.style.left, htTop: ht.style.top,
-        cdLeft: cd.style.left, cdTop: cd.style.top,
-        htHTML: ht.innerHTML, cdHTML: cd.innerHTML
+        cdLeft: cd.style.left, cdTop: cd.style.top
       };
       
-      // Würfelfreie Boxhälfte bestimmen (Nord oder Süd)
+      // Würfelfreie Boxhälfte bestimmen
       const cubeInNorth = (currentQuadrant === 0 || currentQuadrant === 1);
       const targetZ = cubeInNorth
-        ? 0.1105 + 0.234375  // Südhälfte
-        : 0.1105 - 0.234375; // Nordhälfte
+        ? 0.1105 + 0.234375
+        : 0.1105 - 0.234375;
       const target3D = new THREE.Vector3(0, 0.234375, targetZ);
       target3D.project(camera);
       const targetX = Math.round((target3D.x * 0.5 + 0.5) * 360);
       const targetY = Math.round((-target3D.y * 0.5 + 0.5) * 720);
       
-      // "xx K" → "xx KIPPS" (+4pt)
-      const n = kipp21KippCount;
-      const s = n < 10 ? '0' + n : '' + n;
-      ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + s + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
-      
-      // Timer "x:xx" → "xx Sek." (+4pt)
-      const secs = Math.floor(kipp21TotalTime / 1000);
-      cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secs + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
-      
-      // Beide auf transition setzen und fliegen
+      // Phase 1: Fliegen (mit Original-Text)
       ht.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
       cd.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
-      
-      // Kipps: links vom Zentrum, Timer: rechts
-      ht.style.left = (targetX - 45) + 'px';
+      ht.style.left = (targetX - 55) + 'px';
       ht.style.top = targetY + 'px';
-      cd.style.left = (targetX + 45) + 'px';
+      cd.style.left = (targetX + 55) + 'px';
       cd.style.top = targetY + 'px';
+      
+      // Phase 2: Am Ziel angekommen → Text + Größe ändern
+      setTimeout(() => {
+        const n = kipp21KippCount;
+        const s = n < 10 ? '0' + n : '' + n;
+        ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + s + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
+        
+        const secs = Math.floor(kipp21TotalTime / 1000);
+        cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secs + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
+      }, 620);
     }
     
     function flyCountersBack() {
@@ -2931,7 +2929,7 @@
           hintText.style.display = 'block'; hintText.style.opacity = '0';
           
           const start = performance.now();
-          const dur = 600;
+          const dur = 1200;
           function tick(now) {
             const t = Math.min((now - start) / dur, 1);
             const e = t * t * (3 - 2 * t);
@@ -3046,10 +3044,10 @@
       
       // Timer mittig G|H
       countdown.textContent = '0:00';
-      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:1.0;';
+      countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:28px;';
       
       // KippAnzahl mittig A|B
-      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:1.0;';
+      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; opacity:1; overflow:visible; line-height:28px;';
       hintText.innerHTML = formatKipps(0);
       
       // Karten nach Setup wieder verstecken (werden nach Challenge-Text gezeigt)
