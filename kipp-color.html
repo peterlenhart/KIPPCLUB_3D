@@ -1966,10 +1966,10 @@
         
         setTimeout(() => {
           // Text + Größe ändern
-          ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + kipp21KippCount + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
+          ht.innerHTML = '<span style="white-space:nowrap"><span style="font-size:32px;line-height:32px">' + kipp21KippCount + '</span><span style="font-size:22px"> KIPPS</span></span>';
           const secs = Math.floor(kipp21TotalTime / 1000);
           const secsStr = secs < 10 ? '0' + secs : '' + secs;
-          cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secsStr + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
+          cd.innerHTML = '<span style="white-space:nowrap"><span style="font-size:32px;line-height:32px">' + secsStr + '</span><span style="font-size:22px"> Sek.</span></span>';
           
           // Einfaden
           ht.style.transition = 'opacity 0.4s ease-in';
@@ -2256,7 +2256,7 @@
     
     function dbgLog(msg) {
       console.log('[REPLAY] ' + msg);
-      if (replayDbg) replayDbg.textContent = msg;
+      if (replayDbg) replayDbg.textContent = '';
     }
     
     // --- Smooth easeInOut Bewegung ---
@@ -2382,12 +2382,12 @@
     
     // --- Kipp-Zähler aktualisieren ---
     function formatKipps(n) {
-      return '<span style="font-size:28px;line-height:28px">' + n + '</span><span style="font-size:18px;vertical-align:baseline"> K</span>';
+      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + n + '</span><span style="font-size:18px"> K</span></span>';
     }
     
     function formatTimer(totalMs) {
       const secs = Math.floor(totalMs / 1000);
-      return '<span style="font-size:28px;line-height:28px;display:inline">' + (secs < 10 ? '0' : '') + secs + '</span><span style="font-size:18px;display:inline"> S</span>';
+      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + (secs < 10 ? '0' : '') + secs + '</span><span style="font-size:18px"> S</span></span>';
     }
     
     function replayUpdateKippCount() {
@@ -2465,7 +2465,7 @@
         await handKippAnim(kDir, kippDur);
         replayUpdateKippCount();
         
-        if (k < dist - 1) await sleep(80);
+        if (k < dist - 1) await sleep(40);
       }
     }
     
@@ -2622,7 +2622,7 @@
       if (!replayDbg) {
         replayDbg = document.createElement('div');
         replayDbg.id = 'replayDbg';
-        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:#0f0;background:rgba(0,0,0,0.7);padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
+        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:transparent;background:transparent;padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
         document.getElementById('uiOverlay').appendChild(replayDbg);
       }
       
@@ -2631,14 +2631,14 @@
       
       // Kniff-Plan: 1. Eckblick, danach gleichmäßig verteilt
       const kniffPlan = {0: 'eckblick', 2: 'wobble', 3: 'eckblick', 5: 'wobble'};
-      const KIPP_DUR = 450; // Original-Geschwindigkeit
+      const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
       
       await sleep(2000);
       dbgLog('Perfect Game Start');
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
       
       // Sichtbarer Schritt-Zähler oben im Bild
-      if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:#0f0;background:rgba(0,0,0,0.85);padding:4px 8px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
+      if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
       
       for (let ci = 0; ci < 6; ci++) {
         if (!replayActive) break;
@@ -2733,7 +2733,7 @@
       if (!replayDbg) {
         replayDbg = document.createElement('div');
         replayDbg.id = 'replayDbg';
-        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:#0f0;background:rgba(0,0,0,0.7);padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
+        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:transparent;background:transparent;padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
         document.getElementById('uiOverlay').appendChild(replayDbg);
       }
       
@@ -2881,7 +2881,7 @@
       const pgtH = document.getElementById('pgtHead');
       const pgtS = document.getElementById('pgtSub');
       pgtH.textContent = '6 HITS mit 21 KIPPS';
-      pgtS.textContent = 'Bestzeit = 21 Sek.';
+      pgtS.textContent = 'Mastermind = unter 21 Sek.';
       // Beide Zeilen im Sub-Stil (21px, normal)
       pgtH.style.fontSize = '21px';
       pgtH.style.letterSpacing = '0';
@@ -3663,14 +3663,33 @@
             // Finalen Timer-Wert anzeigen
             countdown.innerHTML = formatTimer(kipp21TotalTime);
             
-            // "Neues Spiel" Button an Kärtchen-Position
+            // Zwei Buttons wie auf Intro-Seite
             const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
             cardCenter3D.project(camera);
-            const btnScreenY = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
+            const btnBaseY = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
+            
+            // NOCHMAL button
             const abtn = document.getElementById('auswertungBtn');
-            abtn.textContent = 'NEUES SPIEL';
-            abtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%); top:' + btnScreenY + 'px; width:280px; height:49px; background:url(button_lang.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:150; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9);';
+            abtn.textContent = 'NOCHMAL';
+            abtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%); top:' + btnBaseY + 'px; width:280px; height:49px; background:url(button_lang.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:150; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; letter-spacing:2px; padding-top:4px; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);';
             abtn.onclick = () => { location.reload(); };
+            
+            // SPIELEN button
+            let spielenBtn = document.getElementById('endSpielenBtn');
+            if (!spielenBtn) {
+              spielenBtn = document.createElement('button');
+              spielenBtn.id = 'endSpielenBtn';
+              document.getElementById('uiOverlay').appendChild(spielenBtn);
+            }
+            spielenBtn.textContent = 'SPIELEN';
+            spielenBtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%); top:' + (btnBaseY + 68) + 'px; width:280px; height:49px; background:url(button_lang.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:150; font-family:Arial,sans-serif; font-size:18px; font-weight:bold; letter-spacing:2.5px; padding-top:4px; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);';
+            spielenBtn.onclick = () => {
+              stopReplay();
+              spielenBtn.style.display = 'none';
+              abtn.style.display = 'none';
+              isReplay = true;
+              resetButton.click();
+            };
             
             // Recording-Daten exportieren (normales Spiel)
             if (!kipp21WithTutorial && recEvents.length > 0) {
@@ -4208,6 +4227,7 @@
         stopReplay();
         ov.remove();
         document.getElementById('auswertungBtn').style.display = 'none';
+      const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
       const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
         isReplay = true;
         resetButton.click();
@@ -5182,6 +5202,7 @@
       document.getElementById('skipEndBtn').style.display = 'none';
       document.getElementById('kippTarget').style.display = 'none';
       document.getElementById('auswertungBtn').style.display = 'none';
+      const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
       const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
       jokerRow.style.display = 'none'; jokerRow.style.opacity = '0'; // reset for demo
       document.getElementById('perfektGameText').style.display = 'none';
@@ -5520,6 +5541,7 @@
       document.getElementById('skipEndBtn').style.display = 'none';
       document.getElementById('kippTarget').style.display = 'none';
       document.getElementById('auswertungBtn').style.display = 'none';
+      const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
       const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
