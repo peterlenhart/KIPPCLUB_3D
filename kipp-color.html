@@ -73,26 +73,6 @@
     }
     
 
-    #auswertungBtn {
-      position: absolute;
-      display: none;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 49px;
-      background: url('button_kurz.webp') center/contain no-repeat;
-      border: none;
-      cursor: pointer;
-      pointer-events: auto;
-      z-index: 150;
-      font-family: Arial, sans-serif;
-      font-size: 15px;
-      font-weight: bold;
-      letter-spacing: 1.5px;
-      color: #e0d0b8;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-    }
-
     #countdown {
       position: absolute;
       top: 475px;
@@ -699,7 +679,6 @@
     <div class="eckeHaken" id="hakenQ1">✓</div>
     <div class="eckeHaken" id="hakenQ2">✓</div>
     <div class="eckeHaken" id="hakenQ3">✓</div>
-    <button id="auswertungBtn">AUSWERTUNG</button>
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
@@ -745,20 +724,16 @@
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     var T = {
       "de": {
-        s1:"SPIEL ZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>\u2022 Nutze <b>SCHAU</b>-Sek. effektiv.",
+        s1:"SPIEL ZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>",
         w:"weiter", n:"Neues Spiel",
         e1:"IMMER 2 OPTIONEN", e2:"Zuerst auf Augen-Icon \u2013 W\u00fcrfelschauen (empfohlen)", e3:"Gleich auf Kippziel \u2013 Kippzug machen",
-        k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit (Nutze SCHAU-Sek. effektiv).<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
+        k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit.<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
-        bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} SCHAU-Sekunden", bw:"Best: 100% | Worst: 12%",
         ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
         wh:"WIEDERHOLEN", nm:"NOCHMAL",
         ch1:"6 HITS mit 21 KIPPS", ch2:"Mastermind = unter 21 Sek.",
         jw:"Joker w\u00e4hlen",
         erg:"Ergebnis: {k} KIPPS | {z}", best21:"BEST: 21 KIPPS unter 21 Sek.",
-        ek:"entschlossen gekippt", gz:"geschaut & gez\u00f6gert",
-        wipptip:"Je z\u00fcgiger du in eine Richtung kippst, ohne HIN&HER-Wippen, desto h\u00f6her werden deine HITS bewertet.",
-        kniffCost:"1 KNIFF = -3% BSc",
         d1:["Nach Klick aufs Auge<br>l\u00e4sst sich der W\u00fcrfel","mit dem Finger<br>durch die Box kippen."],
         d1b:["Auf Kante wippen,<br>Zahlenpositionen merken.","Auf Kante wippen,<br>Zahlenpositionen merken.","Du hast 30 Sekunden.<br>(Siehe Counter, unten)","Fr\u00fcher abbrechen?<br>Auf W\u00fcrfel tippen."],
         d2:"Klick dir dein KIPP ZIEL.",
@@ -773,15 +748,11 @@
         e1:"ALWAYS 2 OPTIONS", e2:"First tap eye icon \u2013 look at the cube (recommended)", e3:"Go straight to target \u2013 make your tipping move",
         k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
         p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
-        bs:"BRAIN SCORE", nh:"No Hit, no Score", st:"{t} HITS | {z} LOOK seconds", bw:"Best: 100% | Worst: 12%",
         ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIAL",
         wh:"REPEAT", nm:"AGAIN",
         ch1:"6 HITS with 21 TIPS", ch2:"Mastermind = under 21 sec.",
         jw:"Choose Joker",
         erg:"Result: {k} TIPS | {z}", best21:"BEST: 21 TIPS under 21 sec.",
-        ek:"tipped decisively", gz:"looked & hesitated",
-        wipptip:"The more decisively you tip in one direction without wobbling back and forth, the higher your HITS are scored.",
-        kniffCost:"1 TRICK = -3% BSc",
         d1:["After clicking the eye<br>you can tip the cube","with your finger<br>through the box."],
         d1b:["Tilt to the edge,<br>memorize number positions.","Tilt to the edge,<br>memorize number positions.","You have 30 seconds.<br>(See counter below)","Stop early?<br>Tap the cube."],
         d2:"Click to reveal your TARGET.",
@@ -796,15 +767,11 @@
         e1:"SIEMPRE 2 OPCIONES", e2:"Primero pulsa el icono del ojo \u2013 mirar el cubo (recomendado)", e3:"Directo al objetivo \u2013 hacer tu jugada",
         k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
         p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
-        bs:"BRAIN SCORE", nh:"Sin acierto, sin puntos", st:"{t} ACIERTOS | {z} seg. de MIRAR", bw:"Mejor: 100% | Peor: 12%",
         ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIAL",
         wh:"REPETIR", nm:"OTRA VEZ",
         ch1:"6 ACIERTOS con 21 VOLCADOS", ch2:"Mastermind = menos de 21 seg.",
         jw:"Elegir Joker",
         erg:"Resultado: {k} VOLCADOS | {z}", best21:"MEJOR: 21 VOLCADOS en menos de 21 seg.",
-        ek:"volcado con decisi\u00f3n", gz:"mirado y dudado",
-        wipptip:"Cuanto m\u00e1s decididamente vuelques en una direcci\u00f3n, sin vacilar, m\u00e1s altos ser\u00e1n tus ACIERTOS.",
-        kniffCost:"1 TRUCO = -3% BSc",
         d1:["Tras pulsar el ojo<br>puedes volcar el cubo","con el dedo<br>por la caja."],
         d1b:["Inclinar al borde,<br>memoriza las posiciones.","Inclinar al borde,<br>memoriza las posiciones.","Tienes 30 segundos.<br>(Ver contador abajo)","\u00bfTerminar antes?<br>Toca el cubo."],
         d2:"Pulsa para ver tu OBJETIVO.",
@@ -819,15 +786,11 @@
         e1:"TOUJOURS 2 OPTIONS", e2:"D\u2019abord l\u2019ic\u00f4ne \u0153il \u2013 regarder le cube (recommand\u00e9)", e3:"Directement \u00e0 la cible \u2013 faire ton coup",
         k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
         p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
-        bs:"BRAIN SCORE", nh:"Aucun coup, aucun score", st:"{t} COUPS | {z} sec. de REGARD", bw:"Meilleur: 100% | Pire: 12%",
         ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIAL",
         wh:"R\u00c9P\u00c9TER", nm:"ENCORE",
         ch1:"6 COUPS avec 21 BASCULES", ch2:"Mastermind = moins de 21 sec.",
         jw:"Choisir Joker",
         erg:"R\u00e9sultat : {k} BASCULES | {z}", best21:"MEILLEUR : 21 BASCULES en moins de 21 sec.",
-        ek:"bascul\u00e9 avec d\u00e9cision", gz:"regard\u00e9 & h\u00e9sit\u00e9",
-        wipptip:"Plus tu bascules de mani\u00e8re d\u00e9cid\u00e9e dans une direction, sans vaciller, plus tes COUPS seront valoris\u00e9s.",
-        kniffCost:"1 TRUC = -3% BSc",
         d1:["Apr\u00e8s clic sur l\u2019\u0153il<br>tu peux basculer le cube","avec le doigt<br>dans la bo\u00eete."],
         d1b:["Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Tu as 30 secondes.<br>(Voir compteur ci-dessous)","Arr\u00eater plus t\u00f4t ?<br>Touche le cube."],
         d2:"Clique pour r\u00e9v\u00e9ler ta CIBLE.",
@@ -842,15 +805,11 @@
         e1:"SEMPRE 2 OPZIONI", e2:"Prima tocca l\u2019icona occhio \u2013 guardare il cubo (consigliato)", e3:"Diretto al bersaglio \u2013 fare la tua mossa",
         k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
         p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
-        bs:"BRAIN SCORE", nh:"Nessun colpo, nessun punteggio", st:"{t} COLPI | {z} sec. di GUARDA", bw:"Migliore: 100% | Peggiore: 12%",
         ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
         wh:"RIPETERE", nm:"ANCORA",
         ch1:"6 COLPI con 21 RIBALTAMENTI", ch2:"Mastermind = sotto 21 sec.",
         jw:"Scegli Joker",
         erg:"Risultato: {k} RIBALTAMENTI | {z}", best21:"MIGLIORE: 21 RIBALTAMENTI sotto 21 sec.",
-        ek:"ribaltato con decisione", gz:"guardato & esitato",
-        wipptip:"Pi\u00f9 decisamente ribalti in una direzione senza oscillare, pi\u00f9 alti saranno i tuoi COLPI.",
-        kniffCost:"1 TRUCCO = -3% BSc",
         d1:["Dopo il clic sull\u2019occhio<br>puoi ribaltare il cubo","con il dito<br>nella scatola."],
         d1b:["Inclinare sul bordo,<br>memorizza le posizioni.","Inclinare sul bordo,<br>memorizza le posizioni.","Hai 30 secondi.<br>(Vedi contatore sotto)","Terminare prima?<br>Tocca il cubo."],
         d2:"Clicca per rivelare il BERSAGLIO.",
@@ -865,15 +824,11 @@
         e1:"HER ZAMAN 2 SE\u00c7ENEK", e2:"\u00d6nce g\u00f6z ikonuna dokun \u2013 k\u00fcpe bak (\u00f6nerilen)", e3:"Do\u011frudan hedefe \u2013 hamle yap",
         k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
         p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
-        bs:"BRAIN SCORE", nh:"\u0130sabet yok, puan yok", st:"{t} \u0130SABET | {z} BAKMA saniyesi", bw:"En iyi: 100% | En k\u00f6t\u00fc: 12%",
         ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIAL",
         wh:"TEKRAR", nm:"B\u0130R DAHA",
         ch1:"6 \u0130SABET ve 21 DEVIRME", ch2:"Mastermind = 21 sn. alt\u0131nda",
         jw:"Joker se\u00e7",
         erg:"Sonu\u00e7: {k} DEVIRME | {z}", best21:"EN \u0130Y\u0130: 21 DEVIRME, 21 sn. alt\u0131nda",
-        ek:"kararl\u0131 devrildi", gz:"bak\u0131ld\u0131 & teredd\u00fct edildi",
-        wipptip:"Bir y\u00f6ne ne kadar kararl\u0131 devirirsen, ileri geri sallanmadan, \u0130SABET\u2019lerin o kadar y\u00fcksek puanlan\u0131r.",
-        kniffCost:"1 H\u0130LE = -%3 BSc",
         d1:["G\u00f6ze t\u0131klad\u0131ktan sonra<br>k\u00fcp\u00fc parma\u011f\u0131nla","kutuda<br>devrilebilirsin."],
         d1b:["Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","30 saniyen var.<br>(A\u015fa\u011f\u0131daki saya\u00e7a bak)","Erken bitirmek mi?<br>K\u00fcpe dokun."],
         d2:"HEDEF\u0130NI a\u00e7mak i\u00e7in t\u0131kla.",
@@ -883,7 +838,9 @@
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu"
       }
     }[_digikippLang];
-    if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",bs:"BRAIN SCORE",nh:"No Hit, no Score",st:"{t} HITS | {z} SCHAU-Sekunden",bw:"Best: 100% | Worst: 12%",ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NOCHMAL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"Joker w\u00e4hlen",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",ek:"entschlossen gekippt",gz:"geschaut & gez\u00f6gert",wipptip:"Je z\u00fcgiger du in eine Richtung kippst, ohne HIN&HER-Wippen, desto h\u00f6her werden deine HITS bewertet.",kniffCost:"1 KNIFF = -3% BSc",d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
+    if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NOCHMAL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"Joker w\u00e4hlen",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
     document.getElementById("sctHead").textContent = T.s1;
@@ -2677,7 +2634,6 @@
       if (jr) jr.style.pointerEvents = 'none';
       const _eyeR1 = document.getElementById('eyeIcon');
       if (_eyeR1) _eyeR1.style.pointerEvents = 'none';
-      document.getElementById('auswertungBtn').style.pointerEvents = 'none';
       const kniffPlan = {0: 'eckblick', 2: 'wobble', 3: 'eckblick', 5: 'wobble'};
       const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
       
@@ -2791,8 +2747,6 @@
       if (jr) jr.style.pointerEvents = 'none';
       const _eyeR2 = document.getElementById('eyeIcon');
       if (_eyeR2) _eyeR2.style.pointerEvents = 'none';
-      document.getElementById('auswertungBtn').style.pointerEvents = 'none';
-      
       const KIPP_DUR = 550;
       
       await sleep(1500);
@@ -2975,11 +2929,8 @@
       if (_jr) _jr.style.pointerEvents = 'auto';
       const _eye = document.getElementById('eyeIcon');
       if (_eye) _eye.style.pointerEvents = 'auto';
-      document.getElementById('auswertungBtn').style.pointerEvents = 'auto';
       if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
     }
-
-
 
 
         function showKipp21TutorialLine() {
@@ -3274,129 +3225,11 @@
         // Normales Spiel: Deck neu mischen, Faces neu bauen, Recording starten
         deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
         updateAllFaceTextures();
-        setTimeout(() => { startRecording(); }, 5100);
       }
       
       positionResetButton();
     }
     
-    // === RECORDING SYSTEM (für neues Replay aufnehmen) ===
-    let recEvents = [];
-    let recStartTime = 0;
-    let recActive = false;
-    
-    function startRecording() {
-      recEvents = [];
-      recStartTime = performance.now();
-      recActive = true;
-      console.log('[REC] Recording gestartet');
-      // Rotes REC-Symbol oben rechts
-      let recDot = document.getElementById('recDot');
-      if (!recDot) {
-        recDot = document.createElement('div');
-        recDot.id = 'recDot';
-        recDot.style.cssText = 'position:absolute;top:4px;right:4px;width:10px;height:10px;background:#f00;border-radius:50%;z-index:999;pointer-events:none;display:none;';
-        document.getElementById('uiOverlay').appendChild(recDot);
-        if (!document.getElementById('recBlinkStyle')) {
-          const st = document.createElement('style');
-          st.id = 'recBlinkStyle';
-          st.textContent = '@keyframes recBlink{0%,100%{opacity:1}50%{opacity:0.3}}';
-          document.head.appendChild(st);
-        }
-      }
-      // recDot.style.display = 'block'; // Recording-Punkt deaktiviert
-    }
-    
-    function recTouch(type, touch, src) {
-      if (!recActive) return;
-      const rect = renderer.domElement.getBoundingClientRect();
-      const x = Math.round((touch.clientX - rect.left) / rect.width * 360);
-      const y = Math.round((touch.clientY - rect.top) / rect.height * 720);
-      const ms = Math.round(performance.now() - recStartTime);
-      const t = {touchstart:'s', touchmove:'m', touchend:'e'}[type] || type;
-      const ev = {t, x, y, ms};
-      if (src) ev.src = src;
-      recEvents.push(ev);
-    }
-    
-    // Touch-Listener auf DOCUMENT-Level (fängt ALLES ein: Canvas, Joker-Icons, Overlay)
-    document.addEventListener('touchstart', (e) => {
-      if (!recActive || !e.touches[0]) return;
-      // Quelle identifizieren
-      let src = 'canvas';
-      const el = e.target;
-      if (el.closest('#jokerIconsRow')) {
-        const img = el.closest('img');
-        src = img ? 'kniff' + img.dataset.kniffIdx : 'kniff';
-      } else if (el.id === 'auswertungBtn' || el.id === 'actionButton') {
-        src = 'button';
-      }
-      recTouch('touchstart', e.touches[0], src);
-    }, {capture: true, passive: true});
-    document.addEventListener('touchmove', (e) => {
-      if (recActive && e.touches[0]) recTouch('touchmove', e.touches[0]);
-    }, {capture: true, passive: true});
-    document.addEventListener('touchend', (e) => {
-      if (recActive && e.changedTouches[0]) recTouch('touchend', e.changedTouches[0]);
-    }, {capture: true, passive: true});
-    
-    function stopRecording() {
-      recActive = false;
-      console.log('[REC] Recording gestoppt:', recEvents.length, 'Events');
-      const recDot = document.getElementById('recDot');
-      if (recDot) recDot.style.display = 'none';
-    }
-    
-    function dumpRecording() {
-      stopRecording();
-      const data = {
-        deck: deck.slice(),
-        targets: kipp21CardDistances.map((dist, i) => ({
-          zahl: gameCards[i].zahl,
-          colorName: gameCards[i].color ? gameCards[i].color.name : null,
-          dist: dist,
-          state: kipp21CardStates[i]
-        })),
-        kniffs: {wobbleUsed: kipp21WobbleUsed, eckblickUsed: kipp21EckblickUsed},
-        kipps: kipp21KippCount,
-        events: recEvents
-      };
-      const json = JSON.stringify(data);
-      
-      // Export-Overlay
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;';
-      
-      const ta = document.createElement('textarea');
-      ta.value = json;
-      ta.style.cssText = 'width:95%;height:60%;font:10px monospace;color:#0f0;background:#111;border:1px solid #0f0;padding:8px;';
-      
-      const info = document.createElement('div');
-      info.style.cssText = 'color:#fff;font:14px Arial;margin:10px;text-align:center;';
-      info.textContent = recEvents.length + ' Events, ' + Math.round(recEvents[recEvents.length-1]?.ms/1000 || 0) + 's — Text kopieren und senden!';
-      
-      const copyBtn = document.createElement('button');
-      copyBtn.textContent = 'KOPIEREN';
-      copyBtn.style.cssText = 'margin:10px;padding:12px 30px;font:bold 16px Arial;background:#0a0;color:#fff;border:none;border-radius:8px;cursor:pointer;';
-      copyBtn.onclick = () => {
-        ta.select();
-        document.execCommand('copy');
-        copyBtn.textContent = 'KOPIERT ✓';
-        copyBtn.style.background = '#080';
-      };
-      
-      const closeBtn = document.createElement('button');
-      closeBtn.textContent = 'SCHLIEßEN';
-      closeBtn.style.cssText = 'margin:5px;padding:8px 20px;font:13px Arial;background:#333;color:#fff;border:none;border-radius:5px;cursor:pointer;';
-      closeBtn.onclick = () => overlay.remove();
-      
-      overlay.appendChild(info);
-      overlay.appendChild(ta);
-      overlay.appendChild(copyBtn);
-      overlay.appendChild(closeBtn);
-      document.body.appendChild(overlay);
-    }
-
     // === KIPP KNIFF SYSTEM (beide Joker) ===
     let kipp21KniffActive = false;
     let kipp21KniffAbort = false;
@@ -3779,6 +3612,15 @@
         if (!kipp21TimerRunning) return;
         const elapsed = kipp21TotalTime + (performance.now() - kipp21RoundTimerStart);
         countdown.innerHTML = formatTimer(elapsed);
+        // 60 Sekunden überschritten → Spiel beenden
+        if (elapsed >= 60000 && kipp21Active) {
+          kipp21StopRoundTimer();
+          kipp21Active = false;
+          gamePhase = 'ende';
+          if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
+          countdown.innerHTML = formatTimer(kipp21TotalTime);
+          show60SecTimeout();
+        }
       }, 100);
     }
     
@@ -3786,6 +3628,101 @@
       if (!kipp21TimerRunning) return;
       kipp21TotalTime += (performance.now() - kipp21RoundTimerStart);
       kipp21TimerRunning = false;
+    }
+    
+    function show60SecTimeout() {
+      // Joker verstecken
+      hideKniffIcons();
+      
+      // "60 S" fliegt in die Mitte wie ein HIT
+      const centerX = 180, centerY = 360;
+      const flyEl = document.createElement('div');
+      flyEl.textContent = '60 S';
+      flyEl.style.cssText = 'position:absolute;' +
+        'left:' + centerX + 'px; top:' + centerY + 'px;' +
+        'transform:translate(-50%,-50%) scale(0.3);' +
+        'font:bold 42px Arial; color:#cedb25;' +
+        'text-shadow:0 2px 6px rgba(0,0,0,0.8);' +
+        'pointer-events:none; opacity:0;' +
+        'transition:transform 0.4s ease-out, opacity 0.3s ease-out;';
+      document.getElementById('uiOverlay').appendChild(flyEl);
+      
+      requestAnimationFrame(() => {
+        flyEl.style.transform = 'translate(-50%,-50%) scale(1)';
+        flyEl.style.opacity = '1';
+      });
+      
+      // Nach Fly-in: Kippziele + Joker ausblenden, Text + Button zeigen
+      setTimeout(() => {
+        // Alle Kippziele verschwinden lassen
+        for (let i = 0; i < 6; i++) {
+          if (kipp21CardStates[i] !== 'erledigt') {
+            const m = gameCards[i].mesh;
+            m.material.transparent = true;
+            m.material.needsUpdate = true;
+            const startOp = m.material.opacity;
+            const startT = performance.now();
+            function fadeTick() {
+              const t = Math.min((performance.now() - startT) / 400, 1);
+              m.material.opacity = startOp * (1 - t);
+              m.material.needsUpdate = true;
+              if (t < 1) requestAnimationFrame(fadeTick);
+              else m.visible = false;
+            }
+            requestAnimationFrame(fadeTick);
+          }
+        }
+        
+        // "60 S" durch mehrzeiligen Text ersetzen
+        flyEl.innerHTML = '60 Sek.<br>\u00fcberschritten';
+        flyEl.style.fontSize = '30px';
+        flyEl.style.textAlign = 'center';
+        flyEl.style.lineHeight = '1.3';
+        
+        // HIT-Texte entfernen
+        hitTextEls.forEach(el => el.remove());
+        hitTextEls.length = 0;
+        
+        // NEUES SPIEL Button an Stelle der Kippziele
+        const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
+        cardCenter3D.project(camera);
+        const btnY = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
+        
+        const neuesBtn = document.createElement('button');
+        neuesBtn.textContent = 'NEUES SPIEL';
+        neuesBtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%);' +
+          ' top:' + btnY + 'px; width:280px; height:49px;' +
+          ' background:url(button_lang.webp) center/contain no-repeat;' +
+          ' border:none; cursor:pointer; pointer-events:auto; z-index:150;' +
+          ' font-family:Arial,sans-serif; font-size:18px; font-weight:bold;' +
+          ' letter-spacing:2.5px; padding-top:4px;' +
+          ' color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);' +
+          ' opacity:0; transition:opacity 0.4s ease;';
+        document.getElementById('uiOverlay').appendChild(neuesBtn);
+        
+        // Button einblenden
+        requestAnimationFrame(() => { neuesBtn.style.opacity = '1'; });
+        
+        neuesBtn.onclick = () => {
+          flyEl.remove();
+          neuesBtn.remove();
+          // auswertungBtn verstecken falls sichtbar
+          const abtn = document.getElementById('auswertungBtn');
+          if (abtn) abtn.style.display = 'none';
+          const esb = document.getElementById('endSpielenBtn');
+          if (esb) esb.style.display = 'none';
+          document.getElementById('perfektGameText').style.display = 'none';
+          countdown.style.display = 'none';
+          hintText.style.display = 'none';
+          counterOrigPos = null;
+          startKipp21(false);
+        };
+        
+        neuesBtn.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          neuesBtn.onclick();
+        });
+      }, 800);
     }
     
     function kipp21OnCardTap(cardIdx, _fromReplay) {
@@ -3805,6 +3742,8 @@
       const state = kipp21CardStates[cardIdx];
       
       if (state === 'verdeckt') {
+        // GUARD: Nie 2 Kippziele gleichzeitig offen
+        if (kipp21CardStates.indexOf('offen') >= 0) return;
         // REVEAL
         if (!kipp21GenerateTarget(cardIdx)) return;
         // Einmaliges Pulse
@@ -3849,10 +3788,6 @@
             
             // End-Buttons zeigen
             showEndButtons(false);
-            
-            // Recording-Daten exportieren (normales Spiel)
-            if (!kipp21WithTutorial && recEvents.length > 0) {
-              setTimeout(() => { try { dumpRecording(); } catch(e) { console.error('Dump error:', e); } }, 1500);
             }
           }
         } else {
@@ -3881,7 +3816,6 @@
           // Timer läuft erst bei nächster Würfelberührung weiter
         }
       }
-    }
 
 
     // === Offene Kippziele: genau 2 von 6 haben eine Zahl, die in der aktuellen Ausgangslage sichtbar ist ===
@@ -4036,181 +3970,13 @@
       setButtonsDisabled(false);
     }
     
-    function calculateBrainScore(hits, kniffs, zeitFaktor, wobbleWippFaktor, effizienzFaktor) {
-      // BRAIN SCORE = 100 * H^0.75 * e^(-0.55*K) * Haltungsnote
-      // Haltungsnote = Zeitfaktor * Wobble-Wipp-Faktor * Effizienz-Faktor
-      
-      if (hits === 0) return 0;
-      
-      const H = hits / 6;
-      const K = kniffs / 6;
-      
-      const hitFactor = Math.pow(H, 0.75);
-      const kniffFactor = Math.exp(-0.55 * K);
-      const haltungsnote = zeitFaktor * wobbleWippFaktor * effizienzFaktor;
-      
-      return Math.round(100 * hitFactor * kniffFactor * haltungsnote);
-    }
-    
-    function berechneZeitfaktor() {
-      // Gesamtentscheidungszeit -> kubische Strafe
-      const zeiten = spielenGesamtzeiten.length > 0 ? spielenGesamtzeiten : spielenLiegezeiten;
-      if (zeiten.length === 0) return 1.0;
-      const schwelle = spielenGesamtzeiten.length > 0 ? GESAMT_SCHWELLE : ZUEGIG_SCHWELLE;
-      const Z = zeiten.filter(t => t < schwelle).length / zeiten.length;
-      return 1 - (5/6) * Math.pow(1 - Z, 3);
-    }
-    
-    function zaehlZykluswechsel() {
-      let wechsel = 0;
-      for (let i = 1; i < spielenKippRichtungen.length; i++) {
-        if (spielenKippRichtungen[i] !== spielenKippRichtungen[i-1]) wechsel++;
-      }
-      return wechsel;
-    }
-    
-    function berechneWobbleWippFaktor() {
-      // e^(-0.3 * (Wipps + 1.5×Zykluswechsel) / totalKipps)
-      // Wipps = alle Richtungswechsel + Zurückfaller zusammen
-      const totalKipps = spielenKippRichtungen.length;
-      if (totalKipps === 0) return 1.0;
-      const zyklusW = zaehlZykluswechsel();
-      const belastung = (spielenWipps + 1.5 * zyklusW) / totalKipps;
-      return Math.exp(-0.3 * belastung);
-    }
-    
-    function berechneEffizienzFaktor() {
-      // e^(-0.15 * max(0, avgKippsPerRound - 1))
-      // 1 Kipp/Runde -> 1.0, 4 -> 0.64, 6 -> 0.47, 12 -> 0.19
-      if (spielenKippsPerRound.length === 0) return 1.0;
-      const avgKipps = spielenKippsPerRound.reduce((a, b) => a + b, 0) / spielenKippsPerRound.length;
-      return Math.exp(-0.15 * Math.max(0, avgKipps - 1));
-    }
-    
-    // === MESSUNG OVERLAY (wie KIPP COLOR) ===
-    function showMessung() {
-      // Vorheriges Overlay entfernen
-      const old = document.getElementById('messungOverlay');
-      if (old) { old.remove(); return; } // Toggle
-      
-      const kd = alleKippdauern;
-      const lz = alleLiegezeiten;
-      const totalKipps = kd.length;
-      
-      const avg = arr => arr.length ? Math.round(arr.reduce((a,b) => a+b, 0) / arr.length) : 0;
-      const min = arr => arr.length ? Math.min(...arr) : 0;
-      const max = arr => arr.length ? Math.max(...arr) : 0;
-      
-      const mo = document.createElement('div');
-      mo.id = 'messungOverlay';
-      mo.style.cssText = 'position:absolute;top:50px;left:20px;right:20px;' +
-        'background:rgba(0,0,0,0.92);z-index:400;padding:16px;box-sizing:border-box;' +
-        'font-family:monospace;font-size:12px;color:#00ff00;border:1px solid #00ff00;' +
-        'border-radius:8px;pointer-events:auto;max-height:620px;overflow-y:auto;';
-      
-      let html = '<div style="text-align:center;font-size:14px;margin-bottom:8px;">== MESSUNG ==</div>';
-      html += '<div style="color:#ffa500;">' + totalKipps + ' Kipps gemessen</div><br>';
-      
-      html += '<div style="text-align:center;">—— Kippdauer (Ecke\u2192Ecke) ——</div>';
-      html += '<div>\u00D8 ' + avg(kd) + 'ms</div>';
-      html += '<div style="color:#ffa500;">Min ' + min(kd) + '   Max ' + max(kd) + '</div><br>';
-      
-      html += '<div style="text-align:center;">—— Liegezeit ——</div>';
-      html += '<div>\u00D8 ' + avg(lz) + 'ms</div>';
-      html += '<div style="color:#ffa500;">Min ' + min(lz) + '   Max ' + max(lz) + '</div><br>';
-      
-      // Gesamtzeiten (SPIELEN-Phase)
-      const gz = spielenGesamtzeiten;
-      if (gz.length > 0) {
-        html += '<div style="text-align:center;">\u2014\u2014 Gesamtzeit (Liege+Kipp) \u2014\u2014</div>';
-        html += '<div>\u00D8 ' + avg(gz) + 'ms (Schwelle: ' + GESAMT_SCHWELLE + 'ms)</div>';
-        html += '<div style="color:#ffa500;">Min ' + min(gz) + '   Max ' + max(gz) + '</div>';
-        const zuegigCount = gz.filter(function(t) { return t < GESAMT_SCHWELLE; }).length;
-        html += '<div style="color:#cedb25;">' + zuegigCount + '/' + gz.length + ' z\u00fcgig (' + Math.round(zuegigCount/gz.length*100) + '%)</div><br>';
-      }
-      
-      if (kd.length > 0) {
-        html += '<div style="text-align:center;">—— Alle Kippdauern ——</div>';
-        html += '<div style="color:#ffa500;word-break:break-all;">';
-        for (let i = 0; i < kd.length; i++) {
-          html += kd[i];
-          if (i < kd.length - 1) html += ', ';
-          if ((i + 1) % 6 === 0) html += '<br>';
-        }
-        html += '</div><br>';
-      }
-      
-      if (lz.length > 0) {
-        html += '<div style="text-align:center;">—— Alle Liegezeiten ——</div>';
-        html += '<div style="color:#ffa500;word-break:break-all;">';
-        for (let i = 0; i < lz.length; i++) {
-          html += lz[i];
-          if (i < lz.length - 1) html += ', ';
-          if ((i + 1) % 6 === 0) html += '<br>';
-        }
-        html += '</div><br>';
-      }
-      
-      // Kippverhalten (SPIELEN-Phase)
-      const totalKippsM = spielenKippRichtungen.length;
-      if (totalKippsM > 0) {
-        const zykW = zaehlZykluswechsel();
-        html += '<div style="text-align:center;">—— KIPPVERHALTEN ——</div>';
-        html += '<div style="color:#e07040;font-weight:bold;">Zykluswechsel (CW\u2194CCW): ' + zykW + '</div>';
-        html += '<div style="color:#e07040;">Wipps: ' + spielenWipps + '</div>';
-        html += '<div style="color:#cedb25;">Kippverhalten-Faktor: ' + berechneWobbleWippFaktor().toFixed(2) + '</div>';
-        html += '<div style="font-size:10px;opacity:0.5;">Richtungen: [' + spielenKippRichtungen.join(',') + ']</div>';
-      }
-      
-      // Effizienz (Kipps pro Runde)
-      if (spielenKippsPerRound.length > 0) {
-        html += '<br><div style="text-align:center;">—— Effizienz (Kipps/Runde) ——</div>';
-        html += '<div>\u00D8 ' + (spielenKippsPerRound.reduce(function(a,b){return a+b;},0)/spielenKippsPerRound.length).toFixed(1) + ' Kipps/Runde</div>';
-        html += '<div style="color:#cedb25;">Effizienz-Faktor: ' + berechneEffizienzFaktor().toFixed(2) + '</div>';
-        html += '<div style="color:#ffa500;">[' + spielenKippsPerRound.join(', ') + ']</div>';
-      }
-      
-      // Gesamt-Haltungsnote (Legacy)
-      html += '<br><div style="text-align:center;font-size:14px;color:#cedb25;font-weight:bold;">Haltungsnote (Legacy): ' + 
-        (berechneZeitfaktor() * berechneWobbleWippFaktor() * berechneEffizienzFaktor() * 100).toFixed(0) + '%</div>';
-      
-      // Per-Hit Scoring
-      html += '<br><div style="text-align:center;color:#00ff00;">—— PER-HIT SCORING ——</div>';
-      html += '<div>Rundenwertungen: [' + spielenRundenScores.map(s => s.toFixed(1)).join(', ') + ']</div>';
-      html += '<div style="color:#cedb25;">BSc (Summe): ' + Math.round(spielenRundenScores.reduce((a, b) => a + b, 0)) + '</div>';
-      html += '<div style="color:#ffa500;">SCHAU-Sek: ' + totalObservationTime + 's → Faktor: ' + (Math.exp(-0.015 * Math.max(0, totalObservationTime - 20))).toFixed(2) + '</div>';
-      html += '<div style="color:#cedb25;font-weight:bold;">BSc (final): ' + Math.round(spielenRundenScores.reduce((a, b) => a + b, 0) * Math.exp(-0.015 * Math.max(0, totalObservationTime - 20))) + '</div>';
-      html += '<div>Spionage/Runde: [' + spielenSpionagePerRound.join(', ') + ']</div>';
-      html += '<div>Slow Kipps/Runde: [' + spielenSlowKippsPerRound.join(', ') + ']</div>';
-      html += '<div>ZyklusW/Runde: [' + spielenZyklusWPerRound.join(', ') + ']</div>';
-      html += '<div>Wipps/Runde: [' + spielenWippsPerRound.join(', ') + ']</div>';
-      html += '<div>Kniffs/Runde: [' + spielenKniffsPerRound.join(', ') + ']</div>';
-      html += '<div>Kippzug-Dauern: [' + spielenKippzugDauern.map(d => d + 'ms').join(', ') + ']</div>';
-      
-      html += '<div style="text-align:center;margin-top:12px;opacity:0.5;font-size:10px;">Tap zum Schlie\u00dfen</div>';
-      
-      mo.innerHTML = html;
-      mo.addEventListener('click', () => mo.remove());
-      document.getElementById('uiOverlay').appendChild(mo);
-    }
-    
-    // Mess-Button (📊) oben rechts
-    const messBtn = document.createElement('div');
-    messBtn.id = 'messBtn';
-    messBtn.textContent = '\uD83D\uDCCA';
-    messBtn.style.cssText = 'position:absolute;top:8px;right:8px;font-size:20px;' +
-      'pointer-events:auto;cursor:pointer;z-index:250;opacity:0.4;display:none;';
-    messBtn.addEventListener('click', (e) => { e.stopPropagation(); showMessung(); });
-    document.getElementById('uiOverlay').appendChild(messBtn);
 
     function showGameEnd() {
       gamePhase = 'ende';
       hideKniffIcons();
-      messBtn.style.display = 'block';  // Mess-Button erst am Ende zeigen
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
       stopCountdown();
-      if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
       setButtonsDisabled(true);
       document.getElementById('richtungButtons').classList.add('hidden');
       kippButtons.classList.add('hidden');
@@ -4224,176 +3990,17 @@
       document.getElementById('perfektGameText').style.display = 'none';
       countdown.style.display = 'none';
       
-      // Wie viele Treffer?
-      const treffer = bereitsGetroffen.size;
-      
-      // Brain Score = Summe der Rundenwertungen × SCHAU-Faktor
-      const rawScore = spielenRundenScores.reduce((a, b) => a + b, 0);
-      // SCHAU-Sekunden: Frei bis 20s, danach exponentielle Strafe
-      const FREE_SCHAU = 20;
-      const excessSchau = Math.max(0, totalObservationTime - FREE_SCHAU);
-      const schauFaktor = Math.exp(-0.015 * excessSchau);
-      // 20s→1.0, 40s→0.74, 60s→0.55, 80s→0.41, 120s→0.22
-      const scoreBeforeKniffs = Math.round(rawScore * schauFaktor);
-      // KNIFF-Penalty: 1 KNIFF = -3% vom BSc
-      const kniffAbzug = kniffsCount * 3; // Prozent
-      const scoreValue = Math.max(0, Math.round(scoreBeforeKniffs * (1 - kniffAbzug / 100)));
-      
-      // Zügig/Zögernd per Runde: gezögert wenn IRGENDEIN Zöger-Signal vorliegt
-      let zuegigRounds = 0;
-      for (let ri = 0; ri < spielenKippsPerRound.length; ri++) {
-        const rSp = spielenSpionagePerRound[ri] || 0;   // Spionage-Wipps
-        const rW = spielenWippsPerRound[ri] || 0;        // normale Wipps
-        const rSlow = spielenSlowKippsPerRound[ri] || 0; // langsame Kipps (>700ms)
-        const rZW = spielenZyklusWPerRound[ri] || 0;     // Richtungswechsel
-        const rK = spielenKippsPerRound[ri] || 1;        // Kipp-Anzahl
-        const rD = ri < spielenKippzugDauern.length ? spielenKippzugDauern[ri] : 0;
-        const avgPerKipp = rK > 0 && rD > 0 ? rD / rK : 0;
-        const mehrAls6 = rK > 6 ? 1 : 0;                // zu viele Kipps
-        
-        // Zügig NUR wenn: kein einziges Zöger-Signal
-        const gezoegert = rSp > 0 || rW > 0 || rSlow > 0 || rZW > 0 || mehrAls6 > 0 || (avgPerKipp > 0 && avgPerKipp >= 1500);
-        console.log('[ZUEGIG R' + ri + '] Sp=' + rSp + ' W=' + (typeof rW === 'number' ? rW.toFixed(2) : rW) + ' Slow=' + rSlow + ' ZW=' + rZW + ' K=' + rK + ' >6=' + mehrAls6 + ' avg=' + Math.round(avgPerKipp) + 'ms → ' + (gezoegert ? 'GEZÖGERT' : 'ZÜGIG'));
-        if (!gezoegert) zuegigRounds++;
-      }
-      const totalRounds = spielenKippsPerRound.length;
-      const zuegigPct = totalRounds > 0 ? Math.round((zuegigRounds / totalRounds) * 100) : 100;
-      
-      const totalKipps = spielenKippRichtungen.length;
-      const zykluswechsel = zaehlZykluswechsel();
-      const mehrAls6 = spielenKippsPerRound.filter(k => k > 6).length;
-      
-      // Daten für Auswertung speichern
-      window._brainScoreData = {
-        score: scoreValue,
-        rawScore: Math.round(rawScore),
-        schauFaktor: schauFaktor,
-        schauSekunden: totalObservationTime,
-        hits: treffer,
-        kniffs: kniffsCount,
-        wipps: spielenWipps,
-        zykluswechsel: zykluswechsel,
-        totalKipps: totalKipps,
-        mehrAls6: mehrAls6,
-        kippsPerRound: spielenKippsPerRound.slice(),
-        rundenScores: spielenRundenScores.slice(),
-        zuegigPct: zuegigPct,
-        zoegerndPct: 100 - zuegigPct,
-        kippzugDauern: spielenKippzugDauern.slice(),
-        wippsPerRound: spielenWippsPerRound.slice(),
-        kniffsPerRound: spielenKniffsPerRound.slice(),
-        zyklusWPerRound: spielenZyklusWPerRound.slice(),
-        spionagePerRound: spielenSpionagePerRound.slice(),
-        slowKippsPerRound: spielenSlowKippsPerRound.slice(),
-        kippdauern: spielenKippdauern.slice()
-      };
-      
       // hintText verstecken
       hintText.style.display = 'none';
       
       // actionButton verstecken
       actionButton.style.display = 'none';
 
-      // Auswertung-Button anzeigen
-      const cardBottomZ = cardZ + 0.3125 / 2 + 0.15625;
-      const abPos = new THREE.Vector3(0, cardY, cardBottomZ);
-      abPos.project(camera);
-      const abScreenY = (-abPos.y * 0.5 + 0.5) * 720;
-      const auswBtn = document.getElementById('auswertungBtn');
-      auswBtn.style.top = Math.round(abScreenY) + 'px';
-      auswBtn.style.display = 'block';
+      // End-Buttons zeigen (NOCHMAL)
+      showEndButtons(false);
     }
     
     // === AUSWERTUNG Overlay ===
-    function showAuswertung() {
-      const d = window._brainScoreData;
-      if (!d) return;
-      
-      // Overlay erstellen (Layout nach Entwurf: linksbündig)
-      const ov = document.createElement('div');
-      ov.id = 'auswertungOverlay';
-      ov.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
-        'background:rgba(20,12,8,0.95);z-index:300;display:flex;flex-direction:column;' +
-        'align-items:flex-start;justify-content:flex-start;font-family:Arial,sans-serif;' +
-        'color:#d4b48c;pointer-events:auto;padding:0 32px;box-sizing:border-box;';
-      
-      ov.innerHTML = 
-        // BRAIN SCORE + Zahl auf einer Zeile
-        '<div style="margin-top:100px;margin-bottom:6px;display:flex;align-items:baseline;gap:14px;">' +
-          '<div style="font-size:22px;font-weight:bold;letter-spacing:3px;">' + T.bs + '</div>' +
-          '<div style="font-size:48px;font-weight:bold;text-shadow:0 0 25px rgba(212,180,140,0.4);">' + d.score + '<span style="font-size:28px;opacity:0.6;">/100</span></div>' +
-        '</div>' +
-        
-        // HITS und KNIFFS
-        '<div style="display:flex;gap:24px;margin-bottom:6px;">' +
-          '<div>' +
-            '<div style="font-size:28px;font-weight:bold;">' + d.hits + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
-            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">HITS</div>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:28px;font-weight:bold;">' + d.kniffs + '<span style="font-size:17px;opacity:0.6;">/6</span></div>' +
-            '<div style="font-size:12px;letter-spacing:1px;opacity:0.5;">KNIFFS</div>' +
-            '<div style="font-size:10px;color:#e07040;opacity:0.7;margin-top:2px;">' + T.kniffCost + '</div>' +
-          '</div>' +
-        '</div>' +
-        
-        // Trennlinie
-        '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:12px 0 16px;"></div>' +
-        
-        // Prozent-Zeilen (17px)
-        '<div style="font-size:17px;line-height:1.7;margin-bottom:12px;">' +
-          '<span style="color:#cedb25;font-weight:bold;">' + d.zuegigPct + '%</span> ' + T.ek + '<br>' +
-          '<span style="color:#e07040;font-weight:bold;">' + d.zoegerndPct + '%</span> ' + T.gz +
-        '</div>' +
-        
-        // Hinweis-Text (nur ab 5% gezögert)
-        (d.zoegerndPct >= 5 ?
-        '<div style="font-size:18px;line-height:1.6;opacity:0.8;text-align:left;max-width:296px;margin-bottom:16px;">' +
-          T.wipptip +
-        '</div>' : '') +
-        
-        // Trennlinie
-        '<div style="width:100%;height:1px;background:rgba(212,180,140,0.25);margin:0 0 24px;"></div>' +
-        
-        // DEBUG: Per-Runde Werte (temporär)
-        '<div style="font-size:10px;color:#888;line-height:1.5;margin-bottom:12px;font-family:monospace;">' +
-          'DEBUG per Runde:<br>' +
-          d.wippsPerRound.map((w, i) => 
-            'R' + i + ': W=' + (typeof w === 'number' ? w.toFixed(2) : w) + 
-            ' Sp=' + (d.spionagePerRound ? d.spionagePerRound[i] : '?') +
-            ' Slow=' + (d.slowKippsPerRound ? d.slowKippsPerRound[i] : '?') +
-            ' ZW=' + (d.zyklusWPerRound ? d.zyklusWPerRound[i] : '?') +
-            ' K=' + (d.kippsPerRound ? d.kippsPerRound[i] : '?') +
-            ' T=' + (d.kippzugDauern && d.kippzugDauern[i] ? (d.kippzugDauern[i]/1000).toFixed(1) + 's' : '?')
-          ).join('<br>') +
-          '<br>Kippdauern: ' + (d.kippdauern ? d.kippdauern.map(k => k + 'ms').join(', ') : '?') +
-        '</div>' +
-        
-        // Neues Spiel Button zentriert
-        '<div style="width:100%;display:flex;justify-content:center;">' +
-          '<button id="neuesSpielBtn" style="width:280px;height:49px;' +
-            'background:url(\'button_lang.webp\') center/contain no-repeat;' +
-            'border:none;cursor:pointer;font-family:Arial,sans-serif;' +
-            'font-size:20px;font-weight:bold;letter-spacing:2.5px;' +
-            'color:#d0d0d0;text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);">' +
-            T.n + '</button>' +
-        '</div>';
-      
-      document.getElementById('uiOverlay').appendChild(ov);
-      
-      // Neues Spiel Button Handler
-      document.getElementById('neuesSpielBtn').addEventListener('click', () => {
-        stopReplay();
-        ov.remove();
-        document.getElementById('auswertungBtn').style.display = 'none';
-      const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
-      const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
-        isReplay = true;
-        resetButton.click();
-      });
-    }
-
-
     // Array zum Speichern der ursprünglichen opacity-Werte
     const savedCardOpacities = [];
 
@@ -4673,42 +4280,9 @@
     let kippCount = 0;
     let liegeZeiten = [];
     let liegeStartTime = null;
-    let autoEvalTimeout = null;
     let countdownTimer = null;
     
-    // === BRAIN SCORE Tracking ===
-    let kniffsCount = 0;            // Wie oft Schauen-Demo genutzt
-    let spielenLiegezeiten = [];    // Alle Liegezeiten in SPIELEN (ms)
-    let spielenKippdauern = [];     // Alle Kippdauern Ecke→Ecke in SPIELEN (ms)
-    let spielenGesamtzeiten = [];   // Liegezeit + Kippdauer pro Kipp in SPIELEN
-    let alleKippdauern = [];        // Alle Kippdauern über alle Phasen (für Messung)
-    let alleLiegezeiten = [];       // Alle Liegezeiten über alle Phasen (für Messung)
-    let lastAnyKippLandTime = null; // Letztes Kipp-Landing aller Phasen
-    let dragStartTime = null;       // Zeitpunkt Drag-Beginn
-    let currentKippLiegezeit = 0;   // Liegezeit des aktuellen Kipps (zwischengespeichert)
-    let dragPrevAngle = 0;          // Vorheriger Winkel für Wipp-Erkennung
-    let dragPrevDirection = 0;      // 1 = zur Zielseite, -1 = zurück, 0 = neutral
-    let dragWobbleCount = 0;        // Richtungswechsel im aktuellen Drag (= Wipps intra-Drag)
-    let dragMaxAngle = 0;           // Höchster Kippwinkel im aktuellen Drag (Spionage-Erkennung)
-    let dragLocalPeak = 0;          // Peak-Winkel seit letzter Richtungsumkehr (für gewichtete Wipps)
-    let dragWobbleWeight = 0;       // Gewichtete Wipp-Summe im aktuellen Drag (0.0 - n.n)
-    let spielenWipps = 0;           // Wipps gesamt (gewichtet, float)
-    let spielenKippsPerRound = [];  // Kipp-Anzahl pro Kippziel-Runde
-    let spielenKippRichtungen = []; // CW/CCW pro Kipp in SPIELEN (Zykluswechsel-Erkennung)
-    let kippzugStartTime = null;    // Erste Würfelberührung nach Kippziel-Öffnung
-    let spielenKippzugDauern = [];  // Kippzug-Gesamtdauer pro Runde (Touch→Landed)
-    let currentRoundWipps = 0;      // Wipps in aktueller Kippziel-Runde
-    let spielenWippsPerRound = [];  // Wipps pro Runde
-    let currentRoundSpionage = 0;   // Spionage-Wipps (>10° + Zurückfall) in aktueller Runde
-    let spielenSpionagePerRound = []; // Spionage-Wipps pro Runde
-    let currentRoundSlowKipps = 0;  // Langsame Kipps (>700ms) in aktueller Runde
-    let spielenSlowKippsPerRound = []; // Langsame Kipps pro Runde
-    let currentRoundKniffs = 0;     // Kniffs in aktueller Kippziel-Runde
-    let spielenKniffsPerRound = []; // Kniffs pro Runde
-    let spielenRundenScores = [];   // Per-Hit Score pro Runde (0 bei Miss)
-    let spielenZyklusWPerRound = []; // Zykluswechsel pro Runde
-    const WOBBLE_MIN_DELTA = 0.04;  // ~2.3° Mindestbewegung für Richtungserkennung
-    let lastKippLandTime = null;    // Zeitpunkt des letzten Kipp-Landens in SPIELEN
+
 
     // UI für Demo-Phase initialisieren
     hintText.textContent = ''; // Leer lassen - Text-Sequenz übernimmt
@@ -4718,6 +4292,7 @@
     // Flag um Demo-Animation abbrechen zu können
     let isDemoAnimating = false;
     let schauenWobbleActive = false;
+    let schauenFromSpielen = false;
     
     function startCountdown(onFinish, maxTime) {
       let timeRemaining = maxTime;
@@ -4727,7 +4302,6 @@
       
       countdownTimer = setInterval(() => {
         timeRemaining--;
-        totalObservationTime++;
         countdown.textContent = timeRemaining;
         if (timeRemaining <= 0) {
           stopCountdown();
@@ -4816,7 +4390,6 @@
       
       const szText = document.getElementById('spielZielText');
       szText.innerHTML = "<b>" + T.s1 + "</b><br>" + T.s2.replace("{zahl}",beispielZahl).replace("{farbe}",farbDisplay);
-
 
 
       szText.style.display = 'block';
@@ -4938,7 +4511,6 @@
         e.stopPropagation();
         e.preventDefault();
         if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
         hideEckeHaken();
         checkKippzielTap();
       });
@@ -4946,7 +4518,6 @@
         e.stopPropagation();
         e.preventDefault();
         if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
         hideEckeHaken();
         checkKippzielTap();
       });
@@ -4986,6 +4557,29 @@
       const jokerUsed = kipp21WobbleUsed + kipp21EckblickUsed;
       jLabel.style.display = jokerUsed > 0 ? 'none' : 'block';
       
+      // "zum SPIEL" Button zwischen Jokern nach erster Nutzung
+      let zumSpielBtn = jokerRow.querySelector('.zumSpielBtn');
+      if (jokerUsed > 0 && !(kipp21WobbleUsed >= KNIFF_MAX_USES && kipp21EckblickUsed >= KNIFF_MAX_USES)) {
+        if (!zumSpielBtn) {
+          zumSpielBtn = document.createElement('button');
+          zumSpielBtn.className = 'zumSpielBtn';
+          zumSpielBtn.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:140px; height:42px; background:url(button_kurz.webp) center/contain no-repeat; border:none; cursor:pointer; pointer-events:auto; z-index:10; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6); padding-top:2px;';
+          zumSpielBtn.textContent = 'zum SPIEL';
+          zumSpielBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideKniffIcons();
+          });
+          zumSpielBtn.addEventListener('touchend', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            hideKniffIcons();
+          });
+          jokerRow.appendChild(zumSpielBtn);
+        }
+        zumSpielBtn.style.display = 'block';
+      } else if (zumSpielBtn) {
+        zumSpielBtn.style.display = 'none';
+      }
+      
       jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
     }
@@ -4998,7 +4592,7 @@
     // Kniff-Icon Klick: ausblenden (Funktionen folgen später)
     jokerRow.addEventListener('click', (e) => {
       const img = e.target.closest('img');
-      if (!img || gamePhase !== 'spielen') return;
+      if (!img || (gamePhase !== 'spielen' && gamePhase !== 'kipp21')) return;
       e.stopPropagation();
       hideKniffIcons();
     });
@@ -5299,7 +4893,6 @@
 
       // Stop any lingering timers/animations from previous runs
       stopCountdown();
-      if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
 
@@ -5320,31 +4913,8 @@
       erstesKippziel = null;
       tapCount = 0;
       kippCount = 0;
-      totalObservationTime = 0;
       lockedKippDir = null;
       currentDragDir = null;
-      schauenFromSpielen = false;
-      kniffsCount = 0;
-      spielenLiegezeiten = [];
-      spielenKippdauern = [];
-      spielenGesamtzeiten = [];
-      currentKippLiegezeit = 0;
-      spielenWipps = 0;
-      spielenKippsPerRound = [];
-      spielenKippRichtungen = [];
-      kippzugStartTime = null;
-      spielenKippzugDauern = [];
-      currentRoundWipps = 0;
-      spielenWippsPerRound = [];
-      currentRoundKniffs = 0;
-      spielenKniffsPerRound = [];
-      spielenRundenScores = [];
-      currentRoundSpionage = 0;
-      spielenSpionagePerRound = [];
-      currentRoundSlowKipps = 0;
-      spielenSlowKippsPerRound = [];
-      spielenZyklusWPerRound = [];
-      lastKippLandTime = null;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
       timerStarted = false;
@@ -5361,9 +4931,7 @@
       document.getElementById('eyeIcon').style.display = 'none';
       document.getElementById('skipEndBtn').style.display = 'none';
       document.getElementById('kippTarget').style.display = 'none';
-      document.getElementById('auswertungBtn').style.display = 'none';
       const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
-      const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
       jokerRow.style.display = 'none'; jokerRow.style.opacity = '0'; // reset for demo
       document.getElementById('perfektGameText').style.display = 'none';
       actionButton.style.display = 'none';
@@ -5692,7 +5260,6 @@
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
-      messBtn.style.display = 'none';
       document.getElementById('spielZielText').style.display = 'none';
       document.getElementById('instructionText').style.display = 'none';
       document.getElementById('tutorialText').style.display = 'none';
@@ -5700,9 +5267,7 @@
       document.getElementById('eyeIcon').style.display = 'none';
       document.getElementById('skipEndBtn').style.display = 'none';
       document.getElementById('kippTarget').style.display = 'none';
-      document.getElementById('auswertungBtn').style.display = 'none';
       const esb = document.getElementById('endSpielenBtn'); if (esb) esb.style.display = 'none';
-      const aov = document.getElementById('auswertungOverlay'); if (aov) aov.remove();
       actionButton.style.display = 'none';
       countdown.style.display = 'none';
       hideSubtitle();
@@ -5721,31 +5286,6 @@
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       activeCardIdx = 0;
-      kniffsCount = 0;
-      spielenLiegezeiten = [];
-      spielenKippdauern = [];
-      spielenGesamtzeiten = [];
-      alleKippdauern = [];
-      alleLiegezeiten = [];
-      lastAnyKippLandTime = null;
-      currentKippLiegezeit = 0;
-      spielenWipps = 0;
-      spielenKippsPerRound = [];
-      spielenKippRichtungen = [];
-      kippzugStartTime = null;
-      spielenKippzugDauern = [];
-      currentRoundWipps = 0;
-      spielenWippsPerRound = [];
-      currentRoundKniffs = 0;
-      spielenKniffsPerRound = [];
-      spielenRundenScores = [];
-      currentRoundSpionage = 0;
-      spielenSpionagePerRound = [];
-      currentRoundSlowKipps = 0;
-      spielenSlowKippsPerRound = [];
-      spielenZyklusWPerRound = [];
-      lastKippLandTime = null;
-      
       // Würfelzahlen neu mischen und Faces neu aufbauen
       deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
       updateFaceSlots();
@@ -5855,15 +5395,11 @@
       if (texturesReady) runAutoDemo();
     });
     
-    // Auswertung-Button → Detail-Overlay
-    document.getElementById('auswertungBtn').addEventListener('click', () => {
-      if (gamePhase === 'ende') showAuswertung();
-    });
+
     
     // Spielziel → Demo Übergang (jetzt von Entscheidung aufgerufen)
     function spielzielToDemoPhase() {
       gamePhase = 'demo';
-      schauenFromSpielen = false;
       schauenWobbleActive = false;
       
       document.getElementById('eyeIcon').style.display = 'none';
@@ -5934,8 +5470,6 @@
       
       // kippCount zurücksetzen für Kipp-Regel
       kippCount = 0;
-      autoEvalTimeout = null;
-      
       // Tap-Counter nicht mehr nötig
       tapCount = 0;
       tapIndicatorA.mesh.visible = false;
@@ -5947,8 +5481,6 @@
       // Liegezeit-Tracking (erste Liegezeit = Denkzeit, kein Auto-Eval)
       liegeZeiten = [];
       liegeStartTime = performance.now();
-      lastKippLandTime = null;
-
       // Kärtchen werden in fillAllCards() sichtbar gemacht - NICHT hier
 
       // Kärtchen befüllen: Nur das erste (Index 0) initial generieren
@@ -6046,8 +5578,6 @@
       
       // kippCount zurücksetzen
       kippCount = 0;
-      autoEvalTimeout = null;
-      
       // Tap-Counter nicht mehr nötig
       tapCount = 0;
       tapIndicatorA.mesh.visible = false;
@@ -6056,8 +5586,6 @@
       // Liegezeit-Tracking
       liegeZeiten = [];
       liegeStartTime = performance.now();
-      lastKippLandTime = null;
-      
       // Aktuelles Kärtchen mit dem generierten Kippziel befüllen
       if (erstesKippziel) {
         fillCardWithKombi(activeCardIdx, erstesKippziel.zahl, erstesKippziel.color);
@@ -6219,7 +5747,6 @@
           revealVerdecktesKippziel();
         } else if (gamePhase === 'spielen' && !kippzielChecked && kippCount > 0) {
           // Spieler bestätigt: "Mein Kippzug ist fertig"
-          if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
           checkKippzielTap();
         }
       }
@@ -6256,7 +5783,6 @@
         } else if (gamePhase === 'kippen' && !verdecktesMesh.userData.revealed) {
           revealVerdecktesKippziel();
         } else if (gamePhase === 'spielen' && !kippzielChecked && kippCount > 0) {
-          if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
           checkKippzielTap();
         }
       }
@@ -6272,38 +5798,13 @@
       hideKniffIcons();
       document.getElementById('tutorialText').style.display = 'none';
       
-      // Kippzug-Dauer: erste Berührung bis letztes Kipp-Landing
-      if (kippzugStartTime !== null && lastKippLandTime) {
-        const kippzugDauer = Math.round(lastKippLandTime - kippzugStartTime);
-        spielenKippzugDauern.push(kippzugDauer);
-      }
-      kippzugStartTime = null; // Reset für nächste Runde
-      spielenWippsPerRound.push(currentRoundWipps);
-      console.log('[DEBUG R' + activeCardIdx + '] Wipps=' + currentRoundWipps.toFixed(2) + ' Spionage=' + currentRoundSpionage + ' SlowKipps=' + currentRoundSlowKipps + ' Kipps=' + kippCount);
-      spielenKniffsPerRound.push(currentRoundKniffs);
-      spielenSpionagePerRound.push(currentRoundSpionage);
-      spielenSlowKippsPerRound.push(currentRoundSlowKipps);
-      currentRoundWipps = 0;
-      currentRoundKniffs = 0;
-      currentRoundSpionage = 0;
-      currentRoundSlowKipps = 0;
-      
-      // Kipps dieser Runde speichern (Haltungsnote)
-      spielenKippsPerRound.push(kippCount);
-      
-      // Auto-Eval Timeout sicherheitshalber löschen
-      if (autoEvalTimeout) {
-        clearTimeout(autoEvalTimeout);
-        autoEvalTimeout = null;
-      }
-      
       // Eye-Icon ausblenden bei Wertung
       document.getElementById('eyeIcon').style.display = 'none';
       
       // Timer stoppen
       stopCountdown();
       
-      // Treffer prüfen (kein Kipp-Limit mehr - Haltungsnote regelt Score)
+      // Treffer prüfen
       // Physische Verifikation: topFace + Quadrant aus 3D-State ableiten (Drift-Schutz)
       const physFace = getPhysicalTopFace();
       if (physFace !== topFace) {
@@ -6331,42 +5832,6 @@
       if (hitSlot) {
         const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
         isHit = (neighborColor === erstesKippziel.color.name);
-      }
-      
-      // === Per-Hit Bewertung ===
-      const rIdx = spielenKippsPerRound.length - 1;
-      const rKipps = spielenKippsPerRound[rIdx] || 1;
-      const rWipps = spielenWippsPerRound[rIdx] || 0;
-      const rKniffs = spielenKniffsPerRound[rIdx] || 0;
-      const rSpionage = spielenSpionagePerRound[rIdx] || 0;
-      const rSlow = spielenSlowKippsPerRound[rIdx] || 0;
-      const rDauer = rIdx < spielenKippzugDauern.length ? spielenKippzugDauern[rIdx] : 0;
-      // Zykluswechsel in dieser Runde
-      let rZyklusW = 0;
-      const rStart = spielenKippRichtungen.length - rKipps;
-      for (let ri = rStart + 1; ri < spielenKippRichtungen.length; ri++) {
-        if (spielenKippRichtungen[ri] !== spielenKippRichtungen[ri - 1]) rZyklusW++;
-      }
-      spielenZyklusWPerRound.push(rZyklusW);
-      if (isHit) {
-        const MAX_HIT = 100 / 6; // 16.667
-        let penalty = 0;
-        // Spionage-Wipps: härtester Abzug (Würfel anheben >10° und zurückfallen lassen)
-        penalty += rSpionage * 0.40;
-        // Normale Wipps (ohne Spionage-Schwelle): leichterer Abzug
-        const normalWipps = Math.max(0, rWipps - rSpionage);
-        penalty += normalWipps * 0.10;
-        // Langsame Einzelkipps (>700ms = geschaut beim Durchkippen)
-        penalty += rSlow * 0.15;
-        // Kniffs (nachschauen per Demo)
-        penalty += rKniffs * 0.30;
-        // Zykluswechsel = Richtungsumkehr = Suchen statt Planen
-        penalty += rZyklusW * 0.35;
-        // Extra-Kipps über 6
-        if (rKipps > 6) penalty += (rKipps - 6) * 0.08;
-        spielenRundenScores.push(Math.max(2, MAX_HIT * (1 - Math.min(penalty, 0.88))));
-      } else {
-        spielenRundenScores.push(0);
       }
       
       drawKippzielBorder(isHit);
@@ -6544,11 +6009,6 @@
       // Würfel bleibt wo er ist - KEIN Reset!
     }
 
-    // === 650ms Liegezeit-Schwelle für Auto-Eval ===
-    const LIEGEZEIT_SCHWELLE = 1000; // ms – 1 Sek = Kippzug eingeloggt
-    const ZUEGIG_SCHWELLE = 500;     // ms – Liegezeit darunter = zügig (Legacy)
-    const GESAMT_SCHWELLE = 1000;    // ms – Liegezeit + Kippdauer darunter = entschlossen
-    let schauenFromSpielen = false; // Flag: Demo wurde aus SPIELEN gestartet
 
     // === Schauen aus SPIELEN (Auge-Klick) ===
 
@@ -6630,13 +6090,9 @@
     }
 
     function startSchauenDemo() {
-      kniffsCount++;
-      currentRoundKniffs++;
       hideKniffIcons();
-      if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
-      
-      schauenFromSpielen = true;
       gamePhase = 'demo';
+      schauenFromSpielen = true;
       schauenWobbleActive = false;
       
       document.getElementById('eyeIcon').style.display = 'none';
@@ -6667,11 +6123,9 @@
     
     backButton.addEventListener('click', () => {
       if (gamePhase !== 'kippen' && gamePhase !== 'spielen') return;
-      schauenFromSpielen = false;
       gamePhase = 'kippen'; // Zurück zu Phase 2
       currentMode = 'kanten';
       kippCount = 0;
-      if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
       
       // UI zurücksetzen zu Phase 2
       hintText.style.display = 'none';
@@ -6728,11 +6182,7 @@
       
       // Abort auto-demo if active
       autoDemoActive = false;
-      schauenFromSpielen = false;
-      const aovReset = document.getElementById('auswertungOverlay'); if (aovReset) aovReset.remove();
-      
       stopCountdown();
-      if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
       countdown.style.display = 'none';
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
@@ -6766,32 +6216,9 @@
       kippCount = 0;
       lockedKippDir = null;
       currentDragDir = null;
-      schauenFromSpielen = false;
       erstesKippziel = null;
       kippzielChecked = false;
       cubeLocked = false;
-      totalObservationTime = 0;
-      kniffsCount = 0;
-      spielenLiegezeiten = [];
-      spielenKippdauern = [];
-      spielenGesamtzeiten = [];
-      currentKippLiegezeit = 0;
-      spielenWipps = 0;
-      spielenKippsPerRound = [];
-      spielenKippRichtungen = [];
-      kippzugStartTime = null;
-      spielenKippzugDauern = [];
-      currentRoundWipps = 0;
-      spielenWippsPerRound = [];
-      currentRoundKniffs = 0;
-      spielenKniffsPerRound = [];
-      spielenRundenScores = [];
-      currentRoundSpionage = 0;
-      spielenSpionagePerRound = [];
-      currentRoundSlowKipps = 0;
-      spielenSlowKippsPerRound = [];
-      spielenZyklusWPerRound = [];
-      lastKippLandTime = null;
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       activeCardIdx = 0;
@@ -6898,7 +6325,6 @@
     let pauseDragStartAlpha = 0;
     let pauseDragStartBeta  = 0;
     const PAUSE_SENSITIVITY = 200; // px für ~30°
-    let totalObservationTime = 0; // Sekunden für Brain Score Berechnung
 
     function getKippConfig(direction) {
       const configs = {
@@ -7019,11 +6445,6 @@
         // → durchfallen lassen zu normalem Drag-Code
         
         // Auto-Eval-Timer bei neuem Kipp abbrechen
-        if (gamePhase === 'spielen' && autoEvalTimeout) {
-          clearTimeout(autoEvalTimeout);
-          autoEvalTimeout = null;
-        }
-        
         // Manueller Drag
         currentDragDir = direction;
 
@@ -7046,40 +6467,11 @@
 
         dragActive = true;
         dragCurrentAngle = 0;
-        dragMaxAngle = 0;
-        dragStartTime = performance.now();
         // KIPP 21: Timer starten bei Würfelberührung
         if (gamePhase === 'kipp21' && kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
           kipp21StartRoundTimer();
         }
-        // Kippzug-Stoppuhr: Start bei erster Berührung nach Kippziel-Öffnung
-        if (gamePhase === 'spielen' && kippzugStartTime === null) {
-          kippzugStartTime = performance.now();
-        }
-        dragPrevAngle = 0;
-        dragPrevDirection = 0;
-        dragWobbleCount = 0;
-        dragLocalPeak = 0;
-        dragWobbleWeight = 0;
 
-        // Liegezeit für Messung (alle Phasen)
-        if (lastAnyKippLandTime) {
-          alleLiegezeiten.push(Math.round(performance.now() - lastAnyKippLandTime));
-        }
-
-        // SPIELEN: Liegezeit tracken (für Zugfaktor)
-        if (gamePhase === 'spielen' && lastKippLandTime) {
-          const liege = performance.now() - lastKippLandTime;
-          spielenLiegezeiten.push(Math.round(liege));
-          currentKippLiegezeit = Math.round(liege);
-        } else {
-          currentKippLiegezeit = 0; // Erster Kipp = keine Liegezeit
-        }
-        // SPIELEN: Auto-Eval-Timer abbrechen bei neuem Kipp-Start
-        if (gamePhase === 'spielen' && autoEvalTimeout) {
-          clearTimeout(autoEvalTimeout);
-          autoEvalTimeout = null;
-        }
 
       }
 
@@ -7097,28 +6489,6 @@
       }
 
       dragCurrentAngle = angle;
-      const absA = Math.abs(dragCurrentAngle);
-      if (absA > dragMaxAngle) dragMaxAngle = absA;
-
-      // Wobble/Wipp-Erkennung: Richtungswechsel während eines Kippzugs
-      // Graduiertes System: Wipp-Gewicht = Rückgang vom Peak ÷ 45° (Tipping-Point)
-      const angleDelta = dragCurrentAngle - dragPrevAngle;
-      if (absA > dragLocalPeak) dragLocalPeak = absA; // Peak tracken
-      if (Math.abs(angleDelta) > WOBBLE_MIN_DELTA) {
-        const newDir = angleDelta > 0 ? 1 : -1;
-        if (dragPrevDirection !== 0 && newDir !== dragPrevDirection) {
-          // Richtungsumkehr! Rückgang vom lokalen Peak messen
-          const dropAngle = dragLocalPeak - absA;
-          if (dropAngle >= 0.087) { // ≥5° Rückgang = echtes Wippen
-            const weight = Math.min(1.0, dropAngle / (Math.PI / 4)); // normiert auf 45°
-            dragWobbleWeight += weight;
-          }
-          dragWobbleCount++;
-          dragLocalPeak = absA; // Peak für nächstes Segment zurücksetzen
-        }
-        dragPrevDirection = newDir;
-        dragPrevAngle = dragCurrentAngle;
-      }
 
       if (dragAxis === 'x') {
         dragPivotGroup.rotation.x = dragCurrentAngle;
@@ -7185,23 +6555,8 @@
         targetAngle = dragTargetSign * Math.PI / 2; // Kippen
         finalQ = dragToQ;
       } else {
-        targetAngle = 0; // Zurückfallen = WIPP
+        targetAngle = 0; // Zurückfallen
         finalQ = currentQuadrant;
-        // Gewichteter Wipp in SPIELEN (nur wenn merklich angehoben, >5° Peak)
-        if (gamePhase === 'spielen' && dragMaxAngle > 0.09) {
-          // Zurückfall-Wipp: Gewicht = Peak-Winkel ÷ 45°
-          const fallBackWeight = Math.min(1.0, dragMaxAngle / (Math.PI / 4));
-          spielenWipps += fallBackWeight;
-          currentRoundWipps += fallBackWeight;
-          // Intra-Drag Wobble-Gewichte addieren
-          spielenWipps += dragWobbleWeight;
-          currentRoundWipps += dragWobbleWeight;
-          console.log('[WIPP-ZURÜCKFALL] phase=' + gamePhase + ' maxAngle=' + (dragMaxAngle*180/Math.PI).toFixed(1) + '° fallBack=' + fallBackWeight.toFixed(2) + ' wobbleW=' + dragWobbleWeight.toFixed(2) + ' roundWipps=' + currentRoundWipps.toFixed(2));
-          // Spionage-Erkennung: ab 10° (0.175 rad) sieht man verdeckte Zahlen
-          if (dragMaxAngle > 0.175) {
-            currentRoundSpionage++;
-          }
-        }
       }
 
       // Schwerkraft-Fall-Animation
@@ -7243,13 +6598,6 @@
           } else {
             // Gekippt: finalisieren
             finalizeKipp(finalQ, null);
-            
-            // Kippdauer Ecke→Ecke für Messung (alle Phasen)
-            if (dragStartTime) {
-              alleKippdauern.push(Math.round(performance.now() - dragStartTime));
-            }
-            lastAnyKippLandTime = performance.now();
-            
             // topFace bei jedem Kipp aktualisieren (kippen + spielen)
             if ((gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21') && currentDragDir) {
               const isCW = CW_DIRS.has(currentDragDir);
@@ -7257,41 +6605,9 @@
               advanceTopFace();
             }
 
-            // SPIELEN: kippCount erhöhen + Auto-Eval-Timer
+            // SPIELEN: kippCount erhöhen
             if (gamePhase === 'spielen' && !kippzielChecked) {
               kippCount++;
-              lastKippLandTime = performance.now();
-              // Kippdauer Ecke→Ecke tracken
-              if (dragStartTime) {
-                const kippdauer = Math.round(performance.now() - dragStartTime);
-                spielenKippdauern.push(kippdauer);
-                // Langsamer Kipp = geschaut (zügig wäre 250-400ms)
-                if (kippdauer > 700) currentRoundSlowKipps++;
-                // Gesamtentscheidungszeit = Liegezeit + Kippdauer
-                spielenGesamtzeiten.push(currentKippLiegezeit + kippdauer);
-              }
-              // Gewichtete Wipps aus Wobbles addieren (Hin-Her im Drag)
-              if (dragWobbleWeight > 0) console.log('[WIPP-IM-KIPP] wobbleW=' + dragWobbleWeight.toFixed(2) + ' wobbleCount=' + dragWobbleCount + ' maxAngle=' + (dragMaxAngle*180/Math.PI).toFixed(1) + '° roundWipps=' + (currentRoundWipps+dragWobbleWeight).toFixed(2));
-              spielenWipps += dragWobbleWeight;
-              currentRoundWipps += dragWobbleWeight;
-              // Zyklusrichtung speichern (CW/CCW)
-              spielenKippRichtungen.push(kippDirection);
-              // Vorherigen Auto-Eval-Timer löschen
-              if (autoEvalTimeout) { clearTimeout(autoEvalTimeout); autoEvalTimeout = null; }
-              // Liegezeit-Schwelle: wenn Würfel 1s liegt → Kippzug eingeloggt
-              function tryAutoEval() {
-                if (gamePhase !== 'spielen' || kippzielChecked) return;
-                if (isAnimating || dragActive) {
-                  // Bedingung nicht erfüllt → 200ms später nochmal prüfen
-                  autoEvalTimeout = setTimeout(tryAutoEval, 200);
-                } else {
-                  autoEvalTimeout = null;
-                  checkKippzielTap();
-                }
-              }
-              // Kein Auto-Eval nach 1s mehr: Spieler tippt auf Haken wenn fertig
-              // Safety-Fallback: nach 30s trotzdem auswerten
-              autoEvalTimeout = setTimeout(tryAutoEval, 30000);
               // Bestätigungs-Haken in Ecken zeigen
               showEckeHaken();
             }
