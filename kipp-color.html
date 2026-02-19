@@ -1956,14 +1956,26 @@
       cd.style.left = (targetX + 55) + 'px';
       cd.style.top = targetY + 'px';
       
-      // Phase 2: Am Ziel angekommen → Text + Größe ändern
+      // Phase 2: Am Ziel angekommen → sanft zu neuem Text morphen
       setTimeout(() => {
-        const n = kipp21KippCount;
-        const s = n < 10 ? '0' + n : '' + n;
-        ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + s + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
+        // Kurz ausblenden
+        ht.style.transition = 'opacity 0.25s ease-out';
+        cd.style.transition = 'opacity 0.25s ease-out';
+        ht.style.opacity = '0';
+        cd.style.opacity = '0';
         
-        const secs = Math.floor(kipp21TotalTime / 1000);
-        cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secs + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
+        setTimeout(() => {
+          // Text + Größe ändern
+          ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + kipp21KippCount + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
+          const secs = Math.floor(kipp21TotalTime / 1000);
+          cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secs + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
+          
+          // Einfaden
+          ht.style.transition = 'opacity 0.4s ease-in';
+          cd.style.transition = 'opacity 0.4s ease-in';
+          ht.style.opacity = '1';
+          cd.style.opacity = '1';
+        }, 280);
       }, 620);
     }
     
@@ -1972,25 +1984,35 @@
       const ht = document.getElementById('hintText');
       const cd = document.getElementById('countdown');
       
-      ht.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out';
-      cd.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out';
-      
-      ht.style.left = counterOrigPos.htLeft;
-      ht.style.top = counterOrigPos.htTop;
-      cd.style.left = counterOrigPos.cdLeft;
-      cd.style.top = counterOrigPos.cdTop;
-      
-      // Zurück zu "xx K" und Timer-Format
-      ht.innerHTML = formatKipps(kipp21KippCount);
-      const curSecs = Math.floor(kipp21TotalTime / 1000);
-      const curMins = Math.floor(curSecs / 60);
-      const curS = curSecs % 60;
-      cd.textContent = curMins + ':' + (curS < 10 ? '0' : '') + curS;
+      // Erst Text sanft ausblenden
+      ht.style.transition = 'opacity 0.25s ease-out';
+      cd.style.transition = 'opacity 0.25s ease-out';
+      ht.style.opacity = '0';
+      cd.style.opacity = '0';
       
       setTimeout(() => {
-        ht.style.transition = '';
-        cd.style.transition = '';
-      }, 550);
+        // Text zurück zu kompakt
+        ht.innerHTML = formatKipps(kipp21KippCount);
+        const curSecs = Math.floor(kipp21TotalTime / 1000);
+        const curMins = Math.floor(curSecs / 60);
+        const curS = curSecs % 60;
+        cd.textContent = curMins + ':' + (curS < 10 ? '0' : '') + curS;
+        
+        // Einfaden + gleichzeitig zurückfliegen
+        ht.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.4s ease-in';
+        cd.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.4s ease-in';
+        ht.style.opacity = '1';
+        cd.style.opacity = '1';
+        ht.style.left = counterOrigPos.htLeft;
+        ht.style.top = counterOrigPos.htTop;
+        cd.style.left = counterOrigPos.cdLeft;
+        cd.style.top = counterOrigPos.cdTop;
+        
+        setTimeout(() => {
+          ht.style.transition = '';
+          cd.style.transition = '';
+        }, 550);
+      }, 280);
       
       counterOrigPos = null;
     }
@@ -2365,8 +2387,7 @@
     
     // --- Kipp-Zähler aktualisieren ---
     function formatKipps(n) {
-      const s = n < 10 ? '0' + n : '' + n;
-      return '<span style="font-size:28px;line-height:28px">' + s + '</span><span style="font-size:18px;vertical-align:baseline"> K</span>';
+      return '<span style="font-size:28px;line-height:28px">' + n + '</span><span style="font-size:18px;vertical-align:baseline"> K</span>';
     }
     
     function replayUpdateKippCount() {
@@ -3068,7 +3089,7 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 5500);
+        }, 4500);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
         setTimeout(() => { startRecording(); }, 5100);
