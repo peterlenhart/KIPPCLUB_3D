@@ -150,7 +150,33 @@
     }
     #perfektGameText {
       position: absolute;
-      top: 475px;
+      top: 465px;
+      left: 0;
+      width: 360px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-size: 17px;
+      font-weight: bold;
+      color: #e0d0b8;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
+      line-height: 1.5;
+      white-space: nowrap;
+      pointer-events: none;
+      display: none;
+      z-index: 130;
+      transition: opacity 0.4s ease;
+      animation: challengePulse 2s ease-in-out infinite;
+    }
+    #perfektGameText .challengeHead {
+      font-size: 26px;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.4);
+      margin-bottom: 2px;
+    }
+    #startChallengeText {
+      position: absolute;
+      top: 372px;
       left: 0;
       width: 360px;
       text-align: center;
@@ -159,12 +185,23 @@
       font-weight: bold;
       color: #e0d0b8;
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
-      line-height: 1.6;
+      line-height: 1.5;
       white-space: nowrap;
       pointer-events: none;
-      display: none;
-      z-index: 130;
-      transition: opacity 0.4s ease;
+      z-index: 10;
+      animation: challengePulse 2s ease-in-out infinite;
+      transition: opacity 0.8s ease;
+    }
+    #startChallengeText .challengeHead {
+      font-size: 26px;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.4);
+      margin-bottom: 2px;
+    }
+    @keyframes challengePulse {
+      0%, 100% { opacity: 1; filter: brightness(1); }
+      50% { opacity: 0.7; filter: brightness(1.2); }
     }
     #eyeIcon {
       position: absolute;
@@ -561,6 +598,7 @@
       height: 42px;
       cursor: pointer;
       pointer-events: auto;
+      transition: opacity 0.8s ease;
       border: none;
       border-radius: 6px;
       background: transparent;
@@ -600,6 +638,10 @@
   
   <!-- START-OVERLAY -->
   <div id="startOverlay">
+    <div id="startChallengeText">
+      <div class="challengeHead">CHALLENGE</div>
+      <div>6 HITS mit 21 KIPPS.</div>
+    </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0.4">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0.4">TUTORIAL</button>
   </div>
@@ -627,9 +669,8 @@
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
     <div id="perfektGameText">
-      <div>CHALLENGE:</div>
+      <div class="challengeHead">CHALLENGE</div>
       <div>6 HITS mit 21 KIPPS.</div>
-      <div>Wer kann, unter 21 Sekunden.</div>
     </div>
     <div id="tutEndButtons" style="display:none; position:absolute; top:650px; left:0; width:360px; text-align:center; z-index:131;">
       <button id="btnNochmal" style="font:bold 16px Arial; color:#c0c0c0; background:rgba(40,40,40,0.8); border:1px solid #606060; border-radius:8px; padding:8px 20px; margin:0 8px; pointer-events:auto; cursor:pointer;">NOCHMAL</button>
@@ -1589,6 +1630,10 @@
         document.getElementById('btnSpielen').style.opacity = '1';
         document.getElementById('btnDemo').disabled = false;
         document.getElementById('btnDemo').style.opacity = '1';
+        // Challenge-Text ausblenden wenn Buttons aktiv
+        const sct = document.getElementById('startChallengeText');
+        sct.style.opacity = '0';
+        setTimeout(() => { sct.style.display = 'none'; }, 800);
       }
     }
 
@@ -2524,7 +2569,7 @@
       
       // === CHALLENGE TEXT zuerst zeigen ===
       const pgt = document.getElementById('perfektGameText');
-      pgt.innerHTML = '<div>CHALLENGE:</div><div>6 HITS mit 21 KIPPS.</div><div>Wer kann, unter 21 Sekunden.</div>';
+      pgt.innerHTML = '<div class="challengeHead">CHALLENGE</div><div>6 HITS mit 21 KIPPS.</div>';
       pgt.style.display = 'block';
       pgt.style.opacity = '1';
       
@@ -2612,7 +2657,7 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Nach 3s: Challenge-Text ausblenden, Karten + Jokers + Timer einblenden
+      // Nach 5s: Challenge-Text ausblenden, Karten + Jokers + Timer einblenden
       setTimeout(() => {
         pgt.style.opacity = '0';
         setTimeout(() => { pgt.style.display = 'none'; }, 400);
@@ -2630,7 +2675,7 @@
         // Timer + KippAnzahl einblenden
         countdown.style.display = 'block';
         hintText.style.display = 'block';
-      }, 3000);
+      }, 5000);
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
@@ -2645,10 +2690,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 3800);
+        }, 5800);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 3000);
+        setTimeout(() => { startRecording(); }, 5000);
       }
       
       positionResetButton();
