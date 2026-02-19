@@ -2257,8 +2257,31 @@
       // Merken welche Karte vorher offen war
       const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
       
-      // Hand tippt auf Icon
-      await handTapFromSouth(iconPos.x, iconPos.y, 700);
+      // Hand wandert zwischen Jokern, dann tippt auf gewählten
+      const leftPos = getKniffIconPos('wobble');
+      const rightPos = getKniffIconPos('eckblick');
+      const SY = 740;
+      
+      setHandPos(rightPos.x, SY);
+      handEl.style.opacity = '1';
+      updateHandShadow(rightPos.x, SY, true);
+      // Zu links fahren
+      await moveHandSmooth(leftPos.x, leftPos.y, 500);
+      await sleep(250);
+      // Nach rechts
+      await moveHandSmooth(rightPos.x, rightPos.y, 450);
+      await sleep(250);
+      // Wieder links
+      await moveHandSmooth(leftPos.x, leftPos.y, 450);
+      await sleep(200);
+      // Wieder rechts und klicken
+      await moveHandSmooth(iconPos.x, iconPos.y, 450);
+      await sleep(700);
+      // Zurück nach Süden
+      await moveHandSmooth(iconPos.x, SY, 600);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      await sleep(100);
       
       try {
         if (type === 'eckblick') {
@@ -2665,7 +2688,7 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Nach 5s: Challenge-Text ausblenden, Karten + Jokers + Timer einblenden
+      // Nach 4.5s: Challenge-Text ausblenden, Karten + Jokers + Timer einblenden
       setTimeout(() => {
         pgt.style.opacity = '0';
         setTimeout(() => { pgt.style.display = 'none'; }, 400);
@@ -2683,7 +2706,7 @@
         // Timer + KippAnzahl einblenden
         countdown.style.display = 'block';
         hintText.style.display = 'block';
-      }, 5000);
+      }, 4500);
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
@@ -2698,10 +2721,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 5800);
+        }, 5300);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 5000);
+        setTimeout(() => { startRecording(); }, 4500);
       }
       
       positionResetButton();
@@ -4400,8 +4423,8 @@
       if (!jLabel) {
         jLabel = document.createElement('div');
         jLabel.className = 'jokerLabel';
-        jLabel.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Arial,sans-serif; font-size:14px; font-weight:bold; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9); white-space:nowrap; pointer-events:none;';
-        jLabel.textContent = 'Je 2 Joker';
+        jLabel.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Arial,sans-serif; font-size:16px; font-weight:bold; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9); white-space:nowrap; pointer-events:none;';
+        jLabel.textContent = 'Joker w\u00e4hlen';
         jokerRow.appendChild(jLabel);
       }
       jLabel.style.display = 'block';
