@@ -120,52 +120,7 @@
       transition: opacity 0.35s ease;
     }
 
-    #transportBar {
-      position: absolute;
-      top: 601px;
-      left: 0;
-      width: 360px;
-      height: 45px;
-      display: none;
-      z-index: 10001;
-      pointer-events: auto;
-      opacity: 0;
-      transition: opacity 0.35s ease;
-      justify-content: center;
-      align-items: center;
-      gap: 3px;
-    }
-    #transportBar .transport-btn {
-      width: 40px;
-      height: 40px;
-      background: #000;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: auto;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    #transportBar .transport-btn img {
-      width: 34px;
-      height: 34px;
-      object-fit: contain;
-      pointer-events: none;
-      opacity: 0.9;
-      transition: opacity 0.15s, transform 0.12s;
-    }
-    #transportBar .transport-btn:active img {
-      transform: scale(0.85);
-      opacity: 1;
-    }
-    #transportBar .transport-btn.transport-active {
-      background: #333;
-    }
-    #transportBar .transport-btn.transport-active img {
-      opacity: 1;
-      filter: brightness(1.3);
-    }
+
     #jokerIconsRow img {
       position: absolute;
       width: 58px;
@@ -609,7 +564,6 @@
       border: none;
       cursor: pointer;
       pointer-events: auto;
-      z-index: 10002;
       padding: 0;
     }
 
@@ -750,15 +704,6 @@
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
-    <div id="transportBar">
-      <div class="transport-btn" data-transport="skipBegin"><img src="skipend_rw.webp" alt="Skip Begin"></div>
-      <div class="transport-btn" data-transport="frw"><img src="frw.webp" alt="Fast Rewind"></div>
-      <div class="transport-btn" data-transport="rw"><img src="rw.webp" alt="Rewind"></div>
-      <div class="transport-btn" data-transport="play"><img src="fw.webp" alt="Play"></div>
-      <div class="transport-btn" data-transport="pause"><img src="pause.webp" alt="Pause"></div>
-      <div class="transport-btn" data-transport="ffw"><img src="ffw.webp" alt="Fast Forward"></div>
-      <div class="transport-btn" data-transport="skipEnd"><img src="skipend_fw.webp" alt="Skip End"></div>
-    </div>
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     <div id="perfektGameText">
       <div class="pgtLine pgtHead" id="pgtHead">SPIEL ZIEL</div>
@@ -2288,282 +2233,6 @@
     let handEl = null;
     let _handX = 0, _handY = 0;
     let replayActive = false;
-    
-    // === TRANSPORT CONTROL STATE ===
-    let replayPaused = false;
-    let replayResumeResolve = null;
-    let replaySpeedMult = 1;    // 1=normal, 0.25=4x fast
-    let replayAbortJump = -1;   // checkpoint index to jump to, -1=none
-    const replayCheckpoints = [];
-    let currentReplayRound = 0;
-    
-    function _isReplayJump(e) { return e && e._replayJump === true; }
-    function ReplayJump(target) { return { _replayJump: true, target: target }; }
-    
-    // Pausable, speed-adjustable, abortable sleep
-    async function replaySleep(ms) {
-      // Check abort
-      if (replayAbortJump >= 0) throw ReplayJump(replayAbortJump);
-      if (!replayActive) return;
-      // Wait if paused
-      while (replayPaused && replayActive && replayAbortJump < 0) {
-        await new Promise(r => { replayResumeResolve = r; });
-      }
-      if (replayAbortJump >= 0) throw ReplayJump(replayAbortJump);
-      if (!replayActive) return;
-      // Sleep with speed multiplier
-      const actualMs = Math.max(Math.round(ms * replaySpeedMult), 5);
-      await new Promise(r => setTimeout(r, actualMs));
-      // Check after sleep
-      if (replayAbortJump >= 0) throw ReplayJump(replayAbortJump);
-    }
-    
-    // === CHECKPOINT SAVE/RESTORE ===
-    function saveReplayCheckpoint(roundIdx) {
-      // Ensure cube is in kipGroup before save
-      if (cube.parent !== kipGroup) {
-        cube.updateMatrixWorld();
-        const wp = new THREE.Vector3(); cube.getWorldPosition(wp);
-        const wq = new THREE.Quaternion(); cube.getWorldQuaternion(wq);
-        const oldP = cube.parent;
-        if (oldP) { oldP.remove(cube); if (oldP.parent) oldP.parent.remove(oldP); }
-        cube.position.copy(wp); cube.quaternion.copy(wq);
-        kipGroup.add(cube);
-      }
-      const cp = {
-        round: roundIdx,
-        cubePos: cube.position.clone(),
-        cubeQuat: cube.quaternion.clone(),
-        quadrant: currentQuadrant,
-        topFace: topFace,
-        kippDir: kippDirection,
-        cardStates: [...kipp21CardStates],
-        cardDistances: [...kipp21CardDistances],
-        kippCount: kipp21KippCount,
-        roundKipps: kipp21RoundKipps,
-        done: kipp21Done,
-        totalTime: kipp21TotalTime,
-        wobbleUsed: kipp21WobbleUsed,
-        eckblickUsed: kipp21EckblickUsed,
-        usedDistances: [...kipp21UsedDistances],
-        getroffen: new Set(bereitsGetroffen),
-        ausgegeben: new Set(bereitsAusgegeben),
-        offeneVergeben: offeneKippzieleVergeben,
-        // Canvas snapshots
-        cardImages: gameCards.map(c => c.ctx.getImageData(0, 0, 85, 170)),
-        cardVisible: gameCards.map(c => c.mesh.visible),
-        cardOpacity: gameCards.map(c => c.mesh.material.opacity),
-        cardPositions: gameCards.map(c => c.mesh.position.clone()),
-        cardRotations: gameCards.map(c => c.mesh.rotation.clone()),
-        cardScales: gameCards.map(c => c.mesh.scale.clone()),
-        cardZahl: gameCards.map(c => c.zahl),
-        cardColor: gameCards.map(c => c.color),
-        cardIsHit: gameCards.map(c => c.isHit),
-        // UI
-        countdownHTML: countdown.innerHTML,
-        hintHTML: hintText.innerHTML,
-      };
-      // Overwrite if same round, else push
-      const existing = replayCheckpoints.findIndex(c => c.round === roundIdx);
-      if (existing >= 0) replayCheckpoints[existing] = cp;
-      else replayCheckpoints.push(cp);
-      currentReplayRound = roundIdx;
-      updateTransportHighlight();
-    }
-    
-    function restoreReplayCheckpoint(roundIdx) {
-      const cp = replayCheckpoints.find(c => c.round === roundIdx);
-      if (!cp) { console.warn('[TRANSPORT] No checkpoint for round', roundIdx); return; }
-      
-      // Cube sicher zurück in kipGroup
-      if (cube.parent !== kipGroup) {
-        const oldP = cube.parent;
-        if (oldP) { oldP.remove(cube); if (oldP.parent) oldP.parent.remove(oldP); }
-        kipGroup.add(cube);
-      }
-      cube.position.copy(cp.cubePos);
-      cube.quaternion.copy(cp.cubeQuat);
-      currentQuadrant = cp.quadrant;
-      topFace = cp.topFace;
-      kippDirection = cp.kippDir;
-      isAnimating = false;
-      dragActive = false;
-      
-      kipp21CardStates = [...cp.cardStates];
-      kipp21CardDistances = [...cp.cardDistances];
-      kipp21KippCount = cp.kippCount;
-      kipp21RoundKipps = cp.roundKipps;
-      kipp21Done = cp.done;
-      kipp21TotalTime = cp.totalTime;
-      kipp21WobbleUsed = cp.wobbleUsed;
-      kipp21EckblickUsed = cp.eckblickUsed;
-      kipp21UsedDistances = [...cp.usedDistances];
-      bereitsGetroffen.clear(); cp.getroffen.forEach(v => bereitsGetroffen.add(v));
-      bereitsAusgegeben.clear(); cp.ausgegeben.forEach(v => bereitsAusgegeben.add(v));
-      offeneKippzieleVergeben = cp.offeneVergeben;
-      kipp21KniffActive = false;
-      kipp21KniffAbort = false;
-      kipp21PendingCardTap = -1;
-      
-      // Restore cards
-      for (let i = 0; i < 6; i++) {
-        gameCards[i].ctx.putImageData(cp.cardImages[i], 0, 0);
-        gameCards[i].texture.needsUpdate = true;
-        gameCards[i].mesh.visible = cp.cardVisible[i];
-        gameCards[i].mesh.material.opacity = cp.cardOpacity[i];
-        gameCards[i].mesh.material.transparent = cp.cardOpacity[i] < 1;
-        gameCards[i].mesh.material.needsUpdate = true;
-        gameCards[i].mesh.position.copy(cp.cardPositions[i]);
-        gameCards[i].mesh.rotation.copy(cp.cardRotations[i]);
-        gameCards[i].mesh.scale.copy(cp.cardScales[i]);
-        gameCards[i].zahl = cp.cardZahl[i];
-        gameCards[i].color = cp.cardColor[i];
-        gameCards[i].isHit = cp.cardIsHit[i];
-      }
-      
-      // HIT-Texte entfernen
-      hitTextEls.forEach(el => el.remove());
-      hitTextEls.length = 0;
-      // HIT-Texte für erledigte Karten neu erzeugen
-      for (let i = 0; i < 6; i++) {
-        if (cp.cardStates[i] === 'erledigt') showHitText(i);
-      }
-      
-      // Hand verstecken
-      if (handEl) { handEl.style.opacity = '0'; }
-      
-      // Eye-Icon verstecken
-      const wobEye = document.getElementById('eyeIcon');
-      if (wobEye) { wobEye.style.opacity = '0'; wobEye.style.display = 'none'; }
-      
-      // UI
-      countdown.innerHTML = cp.countdownHTML;
-      hintText.innerHTML = cp.hintHTML;
-      hintText.innerHTML = formatKipps(cp.kippCount);
-      
-      // Kniff Icons aktualisieren
-      refreshKniffIcons();
-      
-      currentReplayRound = roundIdx;
-      updateTransportHighlight();
-      console.log('[TRANSPORT] Restored checkpoint round', roundIdx);
-    }
-    
-    // === TRANSPORT UI HELPERS ===
-    function showTransportBar() {
-      const tb = document.getElementById('transportBar');
-      if (!tb) return;
-      // Position: 20px below jokerRow
-      const jrTop = parseInt(document.getElementById('jokerIconsRow').style.top || '523');
-      tb.style.top = (jrTop + 58 + 20) + 'px';
-      tb.style.display = 'flex';
-      requestAnimationFrame(() => { tb.style.opacity = '1'; });
-      // Play is active by default
-      updateTransportHighlight();
-    }
-    
-    function hideTransportBar() {
-      const tb = document.getElementById('transportBar');
-      if (!tb) return;
-      tb.style.opacity = '0';
-      setTimeout(() => { tb.style.display = 'none'; }, 350);
-    }
-    
-    function updateTransportHighlight() {
-      const tb = document.getElementById('transportBar');
-      if (!tb) return;
-      tb.querySelectorAll('.transport-btn').forEach(btn => {
-        btn.classList.remove('transport-active');
-        const action = btn.dataset.transport;
-        if (action === 'play' && !replayPaused) btn.classList.add('transport-active');
-        if (action === 'pause' && replayPaused) btn.classList.add('transport-active');
-        if (action === 'ffw' && replaySpeedMult < 0.5) btn.classList.add('transport-active');
-      });
-    }
-    
-    // === TRANSPORT BUTTON HANDLERS ===
-    function transportPlay() {
-      if (replayPaused) {
-        replayPaused = false;
-        replaySpeedMult = 1;
-        if (replayResumeResolve) { replayResumeResolve(); replayResumeResolve = null; }
-        updateTransportHighlight();
-      }
-    }
-    
-    function transportPause() {
-      if (!replayPaused && replayActive) {
-        replayPaused = true;
-        replaySpeedMult = 1;
-        updateTransportHighlight();
-      }
-    }
-    
-    function transportRW() {
-      if (!replayActive) return;
-      const targetRound = Math.max(0, currentReplayRound - 1);
-      if (targetRound === currentReplayRound && currentReplayRound === 0) return;
-      replayAbortJump = targetRound;
-      // Unpause to let abort propagate
-      if (replayPaused && replayResumeResolve) {
-        replayResumeResolve(); replayResumeResolve = null;
-      }
-    }
-    
-    function transportFW() {
-      if (!replayActive) return;
-      const maxRound = replayCheckpoints.length - 1;
-      const targetRound = Math.min(maxRound, currentReplayRound + 1);
-      if (targetRound <= currentReplayRound) return;
-      replayAbortJump = targetRound;
-      if (replayPaused && replayResumeResolve) {
-        replayResumeResolve(); replayResumeResolve = null;
-      }
-    }
-    
-    function transportFFW() {
-      if (replayActive) {
-        replaySpeedMult = 0.15; // ~7x speed
-        if (replayPaused) {
-          replayPaused = false;
-          if (replayResumeResolve) { replayResumeResolve(); replayResumeResolve = null; }
-        }
-        updateTransportHighlight();
-      }
-    }
-    
-    function transportFFWRelease() {
-      if (replaySpeedMult < 0.5) {
-        replaySpeedMult = 1;
-        updateTransportHighlight();
-      }
-    }
-    
-    let frwInterval = null;
-    function transportFRWStart() {
-      transportRW(); // Sofort einen Schritt
-      frwInterval = setInterval(() => { transportRW(); }, 400);
-    }
-    function transportFRWStop() {
-      if (frwInterval) { clearInterval(frwInterval); frwInterval = null; }
-    }
-    
-    function transportSkipBegin() {
-      if (!replayActive) return;
-      replayAbortJump = 0;
-      if (replayPaused && replayResumeResolve) {
-        replayResumeResolve(); replayResumeResolve = null;
-      }
-    }
-    
-    function transportSkipEnd() {
-      if (!replayActive) return;
-      // Stop replay entirely
-      replayActive = false;
-      replayPaused = false;
-      if (replayResumeResolve) { replayResumeResolve(); replayResumeResolve = null; }
-      hideTransportBar();
-    }
     let replayDbg = null;
     
     // Kipp-Richtungs-Maps pro Quadrant
@@ -2620,10 +2289,9 @@
       return new Promise(resolve => {
         const sx = _handX;
         const sy = _handY;
-        const actualDur = replayActive ? Math.max(durMs * replaySpeedMult, 30) : durMs;
         const startT = performance.now();
         function tick() {
-          if (!replayActive || replayAbortJump >= 0) { setHandPos(toX, toY); resolve(); return; }
+          if (!replayActive) { setHandPos(toX, toY); resolve(); return; }
           const t = Math.min((performance.now() - startT) / durMs, 1);
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
@@ -2975,10 +2643,6 @@
         console.error('[REPLAY] initHandEl FAILED:', e);
       }
       replayActive = true;
-      replayPaused = false;
-      replaySpeedMult = 1;
-      replayAbortJump = -1;
-      replayCheckpoints.length = 0;
       enableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'none'; // Canvas komplett blocken
       
@@ -3003,80 +2667,62 @@
       // Sichtbarer Schritt-Zähler oben im Bild
       if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
       
-      // === TRANSPORT: while-Loop mit Checkpoint + Jump-Support ===
-      replayCheckpoints.length = 0;
-      replayAbortJump = -1;
-      replayPaused = false;
-      replaySpeedMult = 1;
-      showTransportBar();
-      
-      let ci = 0;
-      while (ci < 6 && replayActive) {
-        try {
-          saveReplayCheckpoint(ci);
-          
-          dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
-          console.log('[REPLAY] === RUNDE', ci, '===');
-          console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
-          console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
-          
-          // === KARTE AUFDECKEN ===
-          dbgLog('R' + ci + ': Aufdecken...');
-          let useKniff = kniffPlan[ci] || null;
-          if (useKniff === 'eckblick' && kipp21EckblickUsed >= KNIFF_MAX_USES) useKniff = null;
-          if (useKniff === 'wobble' && kipp21WobbleUsed >= KNIFF_MAX_USES) useKniff = null;
-          
-          await sleep(1500);
-          
-          console.log('[REPLAY] R'+ci+': Aufdecken via', useKniff || 'manuell');
-          if (useKniff) {
-            await replayKniff(useKniff);
-            console.log('[REPLAY] R'+ci+': Kniff fertig');
-          } else {
-            await replayOpenCard(ci);
-            console.log('[REPLAY] R'+ci+': OpenCard fertig');
-          }
-          if (!replayActive) break;
-          
-          const openCheck = kipp21CardStates.indexOf('offen');
-          if (openCheck < 0) {
-            console.warn('[REPLAY] Runde ' + ci + ': Keine offene Karte nach Aufdecken!');
-            dbgLog('SKIP R' + ci + ': keine offene Karte');
-            ci++; continue;
-          }
-          dbgLog('R' + ci + ': Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
-          
-          await sleep(2200);
-          
-          console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
-          dbgLog('R' + ci + ': Kippen...');
-          const actualOpen = kipp21CardStates.indexOf('offen');
-          await replayKippSequence(actualOpen >= 0 ? actualOpen : ci, KIPP_DUR);
-          console.log('[REPLAY] R'+ci+': Kippen fertig');
-          if (!replayActive) break;
-          
-          await sleep(800);
-          dbgLog('R' + ci + ': Bestätigen...');
-          await replayConfirm(ci);
-          console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
-          
-          await sleep(4500);
-          ci++;
-        } catch(e) {
-          if (_isReplayJump(e)) {
-            const target = Math.max(0, Math.min(e.target, replayCheckpoints.length - 1));
-            console.log('[TRANSPORT] Jump to round', target);
-            restoreReplayCheckpoint(target);
-            ci = target;
-            replayAbortJump = -1;
-            // If was paused before jump, stay paused
-            continue;
-          }
-          throw e;
+      for (let ci = 0; ci < 6; ci++) {
+        if (!replayActive) break;
+        dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
+        console.log('[REPLAY] === RUNDE', ci, '===');
+        console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
+        console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
+        
+        // === KARTE AUFDECKEN ===
+        dbgLog('R' + ci + ': Aufdecken...');
+        let useKniff = kniffPlan[ci] || null;
+        // Prüfen ob geplanter KNIFF noch verfügbar
+        if (useKniff === 'eckblick' && kipp21EckblickUsed >= KNIFF_MAX_USES) useKniff = null;
+        if (useKniff === 'wobble' && kipp21WobbleUsed >= KNIFF_MAX_USES) useKniff = null;
+        
+        // Tutorial-Text vor Aktion
+        await sleep(1500);
+        
+        console.log('[REPLAY] R'+ci+': Aufdecken via', useKniff || 'manuell');
+        if (useKniff) {
+          // Text während Kniff → "Zahlen merken" (wird in replayKniff gesetzt)
+          await replayKniff(useKniff);
+          console.log('[REPLAY] R'+ci+': Kniff fertig');
+        } else {
+          await replayOpenCard(ci);
+          console.log('[REPLAY] R'+ci+': OpenCard fertig');
         }
+        if (!replayActive) break;
+        
+        // Prüfen ob eine Karte offen ist
+        const openCheck = kipp21CardStates.indexOf('offen');
+        if (openCheck < 0) {
+          console.warn('[REPLAY] Runde ' + ci + ': Keine offene Karte nach Aufdecken!');
+          dbgLog('SKIP R' + ci + ': keine offene Karte');
+          continue;
+        }
+        dbgLog('R' + ci + ': Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
+        
+        // Denkpause nach Aufdecken
+        await sleep(2200);
+        
+        // === KIPPEN ===
+        console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
+        dbgLog('R' + ci + ': Kippen...');
+        const actualOpen = kipp21CardStates.indexOf('offen');
+        await replayKippSequence(actualOpen >= 0 ? actualOpen : ci, KIPP_DUR);
+        console.log('[REPLAY] R'+ci+': Kippen fertig');
+        if (!replayActive) break;
+        
+        // === BESTÄTIGEN ===
+        await sleep(800);
+        dbgLog('R' + ci + ': Bestätigen...');
+        await replayConfirm(ci);
+        console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
+        
+        await sleep(4500); // Warten bis Anzeigen zurückgeflogen sind
       }
-      
-      hideTransportBar();
       
       // === ERGEBNIS ===
       // KniffIcons und Karten ausblenden
@@ -3172,10 +2818,6 @@
     // --- Aufräumen ---
     function replayCleanup(jr) {
       replayActive = false;
-      replayPaused = false;
-      replaySpeedMult = 1;
-      replayAbortJump = -1;
-      hideTransportBar();
       disableReplayBlocker();
       if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
       if (jr) jr.style.pointerEvents = 'auto';
@@ -4988,46 +4630,6 @@
       }, 350);
     }
     
-    // === TRANSPORT BAR EVENT HANDLERS ===
-    (function() {
-      const tb = document.getElementById('transportBar');
-      if (!tb) return;
-      
-      let touchHandled = false;
-      tb.querySelectorAll('.transport-btn').forEach(btn => {
-        const action = btn.dataset.transport;
-        
-        // FFW + FRW: press-and-hold
-        if (action === 'ffw') {
-          btn.addEventListener('mousedown', (e) => { e.stopPropagation(); transportFFW(); });
-          btn.addEventListener('mouseup', () => { transportFFWRelease(); });
-          btn.addEventListener('mouseleave', () => { transportFFWRelease(); });
-          btn.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); transportFFW(); touchHandled = true; }, {passive: false});
-          btn.addEventListener('touchend', (e) => { e.stopPropagation(); e.preventDefault(); transportFFWRelease(); setTimeout(() => touchHandled = false, 100); });
-          return;
-        }
-        if (action === 'frw') {
-          btn.addEventListener('mousedown', (e) => { e.stopPropagation(); transportFRWStart(); });
-          btn.addEventListener('mouseup', () => { transportFRWStop(); });
-          btn.addEventListener('mouseleave', () => { transportFRWStop(); });
-          btn.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); transportFRWStart(); touchHandled = true; }, {passive: false});
-          btn.addEventListener('touchend', (e) => { e.stopPropagation(); e.preventDefault(); transportFRWStop(); setTimeout(() => touchHandled = false, 100); });
-          return;
-        }
-        
-        // All others: simple click/tap
-        function doAction(e) {
-          e.stopPropagation(); e.preventDefault();
-          if (action === 'play') transportPlay();
-          else if (action === 'pause') transportPause();
-          else if (action === 'rw') transportRW();
-          else if (action === 'skipBegin') transportSkipBegin();
-          else if (action === 'skipEnd') transportSkipEnd();
-        }
-        btn.addEventListener('touchend', (e) => { doAction(e); touchHandled = true; setTimeout(() => touchHandled = false, 200); });
-        btn.addEventListener('click', (e) => { if (!touchHandled) doAction(e); });
-      });
-    })();
     
     // Kniff-Icon Klick: ausblenden (Funktionen folgen später)
     jokerRow.addEventListener('click', (e) => {
@@ -6579,25 +6181,8 @@
 
     // Tutorial-Ende Buttons → werden jetzt in showEndButtons() dynamisch erzeugt
     
-    // === zumSpielBtn: Joker-Panel schließen, zurück zum Spielfeld ===
-    document.getElementById('zumSpielBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      hideKniffIcons();
-    });
-    document.getElementById('zumSpielBtn').addEventListener('touchend', (e) => {
-      e.stopPropagation(); e.preventDefault();
-      hideKniffIcons();
-    });
-    
     backButton.addEventListener('click', () => {
-      if (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') return;
-      
-      // In kipp21: zurück zum Start-Overlay (wie resetButton)
-      if (gamePhase === 'kipp21' || gamePhase === 'ende') {
-        resetButton.click();
-        return;
-      }
-      
+      if (gamePhase !== 'kippen' && gamePhase !== 'spielen') return;
       gamePhase = 'kippen'; // Zurück zu Phase 2
       currentMode = 'kanten';
       kippCount = 0;
@@ -6662,21 +6247,7 @@
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
       
-      // KIPP21 / Replay komplett stoppen
-      kipp21Active = false;
-      replayActive = false;
-      replayPaused = false;
-      replaySpeedMult = 1;
-      replayAbortJump = -1;
-      if (replayResumeResolve) { replayResumeResolve(); replayResumeResolve = null; }
-      if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
-      kipp21TimerRunning = false;
-      kipp21KniffActive = false;
-      kipp21KniffAbort = true;
-      hideTransportBar();
-      disableReplayBlocker();
-      if (handEl) { handEl.style.opacity = '0'; }
-      renderer.domElement.style.pointerEvents = 'auto';
+
       
       // Cube sicher zurück in kipGroup
       if (cube.parent !== kipGroup) {
@@ -6693,12 +6264,6 @@
       if (jr2) { jr2.style.display = 'none'; jr2.style.opacity = '0'; }
       document.getElementById('zumSpielBtn').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
-      document.getElementById('transportBar').style.display = 'none';
-      // hitTextEls aufräumen
-      hitTextEls.forEach(el => el.remove());
-      hitTextEls.length = 0;
-      // Dynamische End-Buttons entfernen
-      document.querySelectorAll('.end-btn-dynamic').forEach(el => el.remove());
       // tutEndButtons entfernt - Buttons werden dynamisch erzeugt
       hintText.style.display = 'none';
       actionButton.style.display = 'none';
@@ -7221,7 +6786,7 @@
             pivotGroup.rotation.z = eased * targetRotation;
           }
           
-          if (progress < 1 && replayAbortJump < 0) {
+          if (progress < 1) {
             requestAnimationFrame(animate);
           } else {
             finalizeKipp(toQ, resolve);
@@ -7258,7 +6823,6 @@
     // KIPP-SEQUENZ mit 2D-Timing
     // =========================
     function sleep(ms) {
-      if (replayActive) return replaySleep(ms);
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
