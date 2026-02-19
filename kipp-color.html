@@ -1936,7 +1936,7 @@
       counterOrigPos = {
         htLeft: ht.style.left, htTop: ht.style.top,
         cdLeft: cd.style.left, cdTop: cd.style.top,
-        htHTML: ht.innerHTML
+        htHTML: ht.innerHTML, cdHTML: cd.innerHTML
       };
       
       // Würfelfreie Boxhälfte bestimmen (Nord oder Süd)
@@ -1949,10 +1949,14 @@
       const targetX = Math.round((target3D.x * 0.5 + 0.5) * 360);
       const targetY = Math.round((-target3D.y * 0.5 + 0.5) * 720);
       
-      // "xx K" → "xx KIPPS"
+      // "xx K" → "xx KIPPS" (+4pt)
       const n = kipp21KippCount;
       const s = n < 10 ? '0' + n : '' + n;
-      ht.innerHTML = '<span style="font-size:40px;line-height:40px">' + s + '</span><span style="font-size:24px;vertical-align:baseline"> KIPPS</span>';
+      ht.innerHTML = '<span style="font-size:32px;line-height:32px">' + s + '</span><span style="font-size:22px;vertical-align:baseline"> KIPPS</span>';
+      
+      // Timer "x:xx" → "xx Sek." (+4pt)
+      const secs = Math.floor(kipp21TotalTime / 1000);
+      cd.innerHTML = '<span style="font-size:32px;line-height:32px">' + secs + '</span><span style="font-size:22px;vertical-align:baseline"> Sek.</span>';
       
       // Beide auf transition setzen und fliegen
       ht.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
@@ -1978,8 +1982,12 @@
       cd.style.left = counterOrigPos.cdLeft;
       cd.style.top = counterOrigPos.cdTop;
       
-      // Zurück zu "xx K" Format
+      // Zurück zu "xx K" und Timer-Format
       ht.innerHTML = formatKipps(kipp21KippCount);
+      const curSecs = Math.floor(kipp21TotalTime / 1000);
+      const curMins = Math.floor(curSecs / 60);
+      const curS = curSecs % 60;
+      cd.textContent = curMins + ':' + (curS < 10 ? '0' : '') + curS;
       
       setTimeout(() => {
         ht.style.transition = '';
@@ -2068,8 +2076,8 @@
                 mesh.material.opacity = 1;
                 mesh.material.transparent = false;
                 mesh.material.needsUpdate = true;
-                // Zähler zurückfliegen
-                flyCountersBack();
+                // Zähler 2s halten, dann zurückfliegen
+                setTimeout(() => { flyCountersBack(); }, 2000);
                 resolve();
               }
             }
