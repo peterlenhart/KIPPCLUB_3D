@@ -155,24 +155,30 @@
       width: 360px;
       text-align: center;
       font-family: Arial, sans-serif;
-      font-size: 17px;
       font-weight: bold;
       color: #e0d0b8;
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
-      line-height: 1.5;
       white-space: nowrap;
       pointer-events: none;
       display: none;
       z-index: 130;
-      transition: opacity 0.4s ease;
-      animation: challengePulse 2s ease-in-out infinite;
+      transition: opacity 1.2s ease-in-out;
     }
-    #perfektGameText .challengeHead {
+    #perfektGameText .pgtLine {
+      position: absolute;
+      top: 0; left: 0; width: 100%;
+      text-align: center;
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    #perfektGameText .pgtHead {
       font-size: 26px;
       letter-spacing: 3px;
       color: #ffffff;
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.4);
-      margin-bottom: 2px;
+    }
+    #perfektGameText .pgtSub {
+      font-size: 21px;
     }
     #startChallengeText {
       position: absolute;
@@ -220,7 +226,13 @@
     }
     @keyframes sctDeflate {
       0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(0.6); opacity: 0; }
+    }
+    @keyframes sctBreathe {
+      0% { transform: scale(1); opacity: 1; }
+      40% { transform: scale(1.06); opacity: 1; }
+      70% { transform: scale(0.97); opacity: 0.85; }
+      100% { transform: scale(1); opacity: 0.7; }
     }
     @keyframes challengePulse {
       0%, 100% { opacity: 1; }
@@ -692,8 +704,8 @@
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
     <div id="perfektGameText">
-      <div class="challengeHead">SPIEL ZIEL</div>
-      <div>6 HITS mit 21 KIPPS.</div>
+      <div class="pgtLine pgtHead" id="pgtHead">SPIEL ZIEL</div>
+      <div class="pgtLine pgtSub" id="pgtSub">6 HITS mit 21 KIPPS.</div>
     </div>
     <div id="tutEndButtons" style="display:none; position:absolute; top:650px; left:0; width:360px; text-align:center; z-index:131;">
       <button id="btnNochmal" style="font:bold 16px Arial; color:#c0c0c0; background:rgba(40,40,40,0.8); border:1px solid #606060; border-radius:8px; padding:8px 20px; margin:0 8px; pointer-events:auto; cursor:pointer;">NOCHMAL</button>
@@ -1658,29 +1670,30 @@
       let step = 0;
       
       function showLine(el, otherEl) {
-        otherEl.className = otherEl.className.replace(' inflating','').replace(' deflating','');
+        otherEl.style.animation = 'none';
         otherEl.style.opacity = '0';
         otherEl.style.transform = 'scale(0.6)';
-        el.className = el.className.replace(' inflating','').replace(' deflating','');
-        void el.offsetWidth; // reflow
-        el.classList.add('inflating');
+        el.style.animation = 'none';
+        el.style.opacity = '0';
+        el.style.transform = 'scale(0.6)';
+        void el.offsetWidth;
+        el.style.animation = 'sctInflate 1.2s ease-out forwards';
       }
       
       function hideLine(el) {
-        el.classList.remove('inflating');
+        el.style.animation = 'none';
         void el.offsetWidth;
-        el.classList.add('deflating');
+        el.style.animation = 'sctDeflate 0.4s ease-in forwards';
       }
       
       function tick() {
         if (!sctRunning) return;
         const phase = step % 4;
-        if (phase === 0) { showLine(head, sub); }      // head inflate
-        else if (phase === 1) { hideLine(head); }       // head deflate
-        else if (phase === 2) { showLine(sub, head); }  // sub inflate
-        else if (phase === 3) { hideLine(sub); }         // sub deflate
+        if (phase === 0) { showLine(head, sub); }
+        else if (phase === 1) { hideLine(head); }
+        else if (phase === 2) { showLine(sub, head); }
+        else if (phase === 3) { hideLine(sub); }
         step++;
-        // Timing: inflate zeigen 1.4s, deflate 0.4s
         const delay = (phase === 0 || phase === 2) ? 1400 : 400;
         sctTimerId = setTimeout(tick, delay);
       }
@@ -1704,15 +1717,35 @@
         const head = document.getElementById('sctHead');
         const sub = document.getElementById('sctSub');
         
-        // Sicherstellen: "6 HITS..." als letztes zeigen
-        head.className = 'sctLine sctHead';
+        // Head immer verstecken
+        head.style.animation = 'none';
         head.style.opacity = '0';
-        head.style.transform = 'scale(0.6)';
-        sub.className = 'sctLine sctSub';
-        void sub.offsetWidth;
-        sub.classList.add('inflating');
         
-        // Nach kurzem Halten: Container ausfaden, Buttons rein
+        // Sub: wenn schon sichtbar (opacity > 0.5), nicht nochmal inflaten
+        const subVisible = parseFloat(getComputedStyle(sub).opacity) > 0.5;
+        
+        if (subVisible) {
+          pgt.style.animation = 'none';
+          sub.style.animation = 'none';
+          sub.style.opacity = '1';
+          sub.style.transform = 'scale(1)';
+          // Sanftes Nachpulsieren vor Fade
+          requestAnimationFrame(() => {
+            sub.style.animation = 'sctBreathe 1.6s ease-in-out';
+          });
+        } else {
+          sub.style.animation = 'none';
+          sub.style.opacity = '0';
+          sub.style.transform = 'scale(0.6)';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              sub.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
+            });
+          });
+        }
+        
+        // Nach Halten: Container ausfaden, Buttons rein
+        const fadeDelay = subVisible ? 1600 : 2800;
         setTimeout(() => {
           sct.style.opacity = '0';
           setTimeout(() => { sct.style.display = 'none'; }, 1300);
@@ -1722,7 +1755,7 @@
             document.getElementById('btnDemo').disabled = false;
             document.getElementById('btnDemo').style.opacity = '1';
           }, 700);
-        }, 1200);
+        }, fadeDelay);
       }
     }
 
@@ -2268,12 +2301,24 @@
     }
     
     // --- Karte aufdecken (manuell per Tap) ---
+    // --- Kippziel-Karte kurz pulsieren bei Klick ---
+    function pulseCard(ci) {
+      const mesh = gameCards[ci]?.mesh;
+      if (!mesh) return;
+      const origScale = { x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z };
+      mesh.scale.set(origScale.x * 1.2, origScale.y * 1.2, origScale.z * 1.2);
+      setTimeout(() => {
+        mesh.scale.set(origScale.x, origScale.y, origScale.z);
+      }, 150);
+    }
+    
     async function replayOpenCard(ci) {
       if (!replayActive) return;
       const nextV = kipp21NextVerdeckt();
       if (nextV < 0) return;
       dbgLog('Karte ' + nextV + ' aufdecken');
       await handTapFromSouth(cardScreenX(nextV), cardScreenY(nextV), 600);
+      pulseCard(nextV);
       kipp21OnCardTap(nextV);
       await sleep(400);
     }
@@ -2312,6 +2357,7 @@
       
       // Hand sichtbar auf Karte tippen
       await handTapFromSouth(cardScreenX(openIdx), cardScreenY(openIdx), 700);
+      pulseCard(openIdx);
       
       // DANN erst Karte verarbeiten (Treffer-Check etc.)
       kipp21OnCardTap(openIdx);
@@ -2347,14 +2393,16 @@
       
       // Pulse-Hilfsfunktion: Joker-Paar kurz aufblitzen
       function pulseJoker(kniffIdx) {
-        const imgs = document.querySelectorAll('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"]');
-        imgs.forEach(img => {
-          img.style.transition = 'transform 0.15s ease-out';
-          img.style.transform = 'translateX(-50%) scale(1.25)';
-          setTimeout(() => {
-            img.style.transform = 'translateX(-50%) scale(1)';
-          }, 150);
-        });
+        const overlay = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="overlay"]');
+        const base = document.querySelector('#jokerIconsRow img[data-kniff-idx="' + kniffIdx + '"][data-layer="base"]');
+        if (!overlay) return;
+        if (base) base.style.opacity = '0';
+        overlay.style.transition = 'transform 0.15s ease-out';
+        overlay.style.transform = 'translateX(-50%) scale(1.25)';
+        setTimeout(() => {
+          overlay.style.transform = 'translateX(-50%) scale(1)';
+          if (base) setTimeout(() => { base.style.opacity = '1'; }, 150);
+        }, 150);
       }
       
       setHandPos(leftPos.x, SY);
@@ -2413,6 +2461,7 @@
         const nextV = kipp21NextVerdeckt();
         if (nextV >= 0) {
           await handTapFromSouth(cardScreenX(nextV), cardScreenY(nextV), 600);
+          pulseCard(nextV);
           kipp21OnCardTap(nextV);
         }
       } else {
@@ -2694,11 +2743,40 @@
       });
       document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
       
-      // === CHALLENGE TEXT zuerst zeigen ===
+      // === CHALLENGE TEXT zuerst zeigen (Inflate-Sequenz) ===
       const pgt = document.getElementById('perfektGameText');
-      pgt.innerHTML = '<div class="challengeHead">SPIEL ZIEL</div><div>6 HITS mit 21 KIPPS.</div>';
+      const pgtH = document.getElementById('pgtHead');
+      const pgtS = document.getElementById('pgtSub');
+      pgtH.style.animation = 'none'; pgtH.style.opacity = '0'; pgtH.style.transform = 'scale(0.6)';
+      pgtS.style.animation = 'none'; pgtS.style.opacity = '0'; pgtS.style.transform = 'scale(0.6)';
       pgt.style.display = 'block';
       pgt.style.opacity = '1';
+      
+      // Inflate-Sequenz starten
+      let pgtStep = 0;
+      let pgtRunning = true;
+      let pgtTimer = null;
+      function pgtShow(el, other) {
+        other.style.animation = 'none'; other.style.opacity = '0'; other.style.transform = 'scale(0.6)';
+        el.style.animation = 'none'; el.style.opacity = '0'; el.style.transform = 'scale(0.6)';
+        void el.offsetWidth;
+        el.style.animation = 'sctInflate 1.2s ease-out forwards';
+      }
+      function pgtHide(el) {
+        el.style.animation = 'none'; void el.offsetWidth;
+        el.style.animation = 'sctDeflate 0.4s ease-in forwards';
+      }
+      function pgtTick() {
+        if (!pgtRunning) return;
+        const phase = pgtStep % 4;
+        if (phase === 0) pgtShow(pgtH, pgtS);
+        else if (phase === 1) pgtHide(pgtH);
+        else if (phase === 2) pgtShow(pgtS, pgtH);
+        else if (phase === 3) pgtHide(pgtS);
+        pgtStep++;
+        pgtTimer = setTimeout(pgtTick, (phase === 0 || phase === 2) ? 1400 : 400);
+      }
+      pgtTick();
       
       // Joker-Icons und Karten erst nach Delay
       const jr = document.getElementById('jokerIconsRow');
@@ -2784,24 +2862,50 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Nach 4.5s: Challenge-Text ausblenden, Karten + Jokers + Timer einblenden
+      // Nach 4.5s: Sequenz stoppen, "6 HITS..." zeigen, dann ausblenden
       setTimeout(() => {
-        pgt.style.opacity = '0';
-        setTimeout(() => { pgt.style.display = 'none'; }, 400);
-        // Karten einblenden
-        for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
-        // Joker-Icons einblenden
-        showKniffIcons();
-        const jr2 = document.getElementById('jokerIconsRow');
-        jr2.style.pointerEvents = 'auto';
-        document.querySelectorAll('#jokerIconsRow img').forEach(img => {
-          img.style.pointerEvents = 'auto';
-          img.style.cursor = 'pointer';
-          img.style.opacity = '1';
-        });
-        // Timer + KippAnzahl einblenden
-        countdown.style.display = 'block';
-        hintText.style.display = 'block';
+        pgtRunning = false;
+        if (pgtTimer) { clearTimeout(pgtTimer); pgtTimer = null; }
+        
+        pgtH.style.animation = 'none';
+        pgtH.style.opacity = '0';
+        
+        const pgtSubVisible = parseFloat(getComputedStyle(pgtS).opacity) > 0.5;
+        
+        if (pgtSubVisible) {
+          pgtS.style.animation = 'none';
+          pgtS.style.opacity = '1';
+          pgtS.style.transform = 'scale(1)';
+          requestAnimationFrame(() => {
+            pgtS.style.animation = 'sctBreathe 1.6s ease-in-out';
+          });
+        } else {
+          pgtS.style.animation = 'none';
+          pgtS.style.opacity = '0';
+          pgtS.style.transform = 'scale(0.6)';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              pgtS.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
+            });
+          });
+        }
+        
+        const pgtFadeDelay = pgtSubVisible ? 1600 : 2800;
+        setTimeout(() => {
+          pgt.style.opacity = '0';
+          setTimeout(() => { pgt.style.display = 'none'; }, 1300);
+          for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
+          showKniffIcons();
+          const jr2 = document.getElementById('jokerIconsRow');
+          jr2.style.pointerEvents = 'auto';
+          document.querySelectorAll('#jokerIconsRow img').forEach(img => {
+            img.style.pointerEvents = 'auto';
+            img.style.cursor = 'pointer';
+            img.style.opacity = '1';
+          });
+          countdown.style.display = 'block';
+          hintText.style.display = 'block';
+        }, pgtFadeDelay);
       }, 4500);
       
       // Tutorial = Geskriptetes Demo starten
@@ -2817,10 +2921,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 5300);
+        }, 6500);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 4500);
+        setTimeout(() => { startRecording(); }, 5700);
       }
       
       positionResetButton();
@@ -4519,7 +4623,7 @@
       if (!jLabel) {
         jLabel = document.createElement('div');
         jLabel.className = 'jokerLabel';
-        jLabel.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Arial,sans-serif; font-size:18px; font-weight:bold; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9); white-space:nowrap; pointer-events:none;';
+        jLabel.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Arial,sans-serif; font-size:20px; font-weight:bold; color:#e0d0b8; text-shadow:0 1px 3px rgba(0,0,0,0.9); white-space:nowrap; pointer-events:none;';
         jLabel.textContent = 'Joker w\u00e4hlen';
         jokerRow.appendChild(jLabel);
       }
