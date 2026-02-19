@@ -2910,19 +2910,22 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Nach 4.5s: Sequenz stoppen, "6 HITS..." zeigen, dann ausblenden
+      // Nach 3.5s: Sequenz stoppen, Text ausfaden
       setTimeout(() => {
         pgtRunning = false;
         if (pgtTimer) { clearTimeout(pgtTimer); pgtTimer = null; }
         
         pgtH.style.animation = 'none';
         pgtH.style.opacity = '0';
+        pgtS.style.animation = 'none';
+        pgtS.style.opacity = '0';
         
-        // Text sofort ausfaden (kein Breathe, kein Warten)
         pgt.style.opacity = '0';
-        setTimeout(() => { pgt.style.display = 'none'; }, 1300);
-        
-        // Karten + Jokers sofort einblenden
+        setTimeout(() => { pgt.style.display = 'none'; }, 1000);
+      }, 3500);
+      
+      // Nach 4.8s: Text ist weg → Karten + Jokers einblenden
+      setTimeout(() => {
         for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
         showKniffIcons();
         const jr2 = document.getElementById('jokerIconsRow');
@@ -2934,7 +2937,7 @@
         });
         countdown.style.display = 'block';
         hintText.style.display = 'block';
-      }, 3500);
+      }, 4800);
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
@@ -2949,10 +2952,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 4500);
+        }, 5800);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 3500);
+        setTimeout(() => { startRecording(); }, 4800);
       }
       
       positionResetButton();
