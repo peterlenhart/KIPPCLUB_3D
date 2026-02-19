@@ -1997,7 +1997,7 @@
       const curSecs = Math.floor(kipp21TotalTime / 1000);
       const curMins = Math.floor(curSecs / 60);
       const curS = curSecs % 60;
-      cd.textContent = curMins + ':' + (curS < 10 ? '0' : '') + curS;
+      cd.textContent = (curSecs < 10 ? '0' : '') + curSecs;
       ht.style.opacity = '1';
       cd.style.opacity = '1';
       
@@ -3062,7 +3062,7 @@
       const ghX = Math.round((ghPt.x * 0.5 + 0.5) * 360);
       
       // Timer mittig G|H
-      countdown.textContent = '0:00';
+      countdown.textContent = '00';
       countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:block; line-height:28px;';
       
       // KippAnzahl mittig A|B
@@ -3597,7 +3597,7 @@
         const secs = Math.floor(elapsed / 1000);
         const mins = Math.floor(secs / 60);
         const s = secs % 60;
-        countdown.textContent = mins + ':' + (s < 10 ? '0' : '') + s;
+        countdown.textContent = (secs < 10 ? '0' : '') + secs;
       }, 100);
     }
     
@@ -3665,7 +3665,7 @@
             const secsFinal = Math.floor(kipp21TotalTime / 1000);
             const minsFinal = Math.floor(secsFinal / 60);
             const sFinal = secsFinal % 60;
-            countdown.textContent = minsFinal + ':' + (sFinal < 10 ? '0' : '') + sFinal;
+            countdown.textContent = (secsFinal < 10 ? '0' : '') + secsFinal;
             
             // "Neues Spiel" Button an Kärtchen-Position
             const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
