@@ -2816,7 +2816,7 @@
       // 1800ms: "Bestzeit..." inflate (1 Puls)
       setTimeout(() => { pgtShow(pgtS, pgtH); }, 1800);
       
-      // 3500ms: "Bestzeit..." steht → Kreuzblende starten
+      // 2800ms: Kreuzblende starten (1s nach Bestzeit)
       setTimeout(() => {
         // Karten + Jokers vorbereiten (opacity 0)
         for (let i = 0; i < 6; i++) {
@@ -2866,7 +2866,7 @@
           }
         }
         requestAnimationFrame(xfTick);
-      }, 3500);
+      }, 2800);
       
       // Joker-Icons und Karten erst nach Delay
       const jr = document.getElementById('jokerIconsRow');
@@ -2969,10 +2969,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 5000);
+        }, 4300);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 4300);
+        setTimeout(() => { startRecording(); }, 3600);
       }
       
       positionResetButton();
