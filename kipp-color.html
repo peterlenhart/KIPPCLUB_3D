@@ -6891,6 +6891,8 @@
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         if (isAnimating || kipp21KniffActive) return;
         if (cubeLocked && gamePhase !== 'kipp21') return;
+        // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
+        if (gamePhase === 'kipp21' && kipp21CardStates.indexOf('offen') < 0) return;
         e.preventDefault();
         
         const touch = e.touches[0];
