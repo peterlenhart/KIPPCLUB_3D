@@ -2910,7 +2910,7 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Nach 3.5s: Sequenz stoppen, Text ausfaden
+      // Nach 3.5s: Überblendung – Text ausfaden + Karten gleichzeitig einfaden
       setTimeout(() => {
         pgtRunning = false;
         if (pgtTimer) { clearTimeout(pgtTimer); pgtTimer = null; }
@@ -2920,24 +2920,60 @@
         pgtS.style.animation = 'none';
         pgtS.style.opacity = '0';
         
+        // Text sanft ausfaden (1.2s CSS transition)
         pgt.style.opacity = '0';
-        setTimeout(() => { pgt.style.display = 'none'; }, 1000);
-      }, 3500);
-      
-      // Nach 4.8s: Text ist weg → Karten + Jokers einblenden
-      setTimeout(() => {
-        for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
-        showKniffIcons();
+        setTimeout(() => { pgt.style.display = 'none'; }, 1300);
+        
+        // Karten gleichzeitig einfaden (opacity 0→1 über 1.2s)
+        for (let i = 0; i < 6; i++) {
+          const m = gameCards[i].mesh;
+          m.visible = true;
+          m.material.transparent = true;
+          m.material.opacity = 0;
+          m.material.needsUpdate = true;
+        }
+        const fadeStart = performance.now();
+        const fadeDur = 1200;
+        function fadeCards(now) {
+          const t = Math.min((now - fadeStart) / fadeDur, 1);
+          const e = t * t * (3 - 2 * t); // smoothstep
+          for (let i = 0; i < 6; i++) {
+            gameCards[i].mesh.material.opacity = e;
+            gameCards[i].mesh.material.needsUpdate = true;
+          }
+          if (t < 1) requestAnimationFrame(fadeCards);
+          else {
+            for (let i = 0; i < 6; i++) {
+              gameCards[i].mesh.material.opacity = 1;
+              gameCards[i].mesh.material.transparent = false;
+              gameCards[i].mesh.material.needsUpdate = true;
+            }
+          }
+        }
+        requestAnimationFrame(fadeCards);
+        
+        // Jokers + UI gleichzeitig einfaden
         const jr2 = document.getElementById('jokerIconsRow');
+        showKniffIcons();
+        jr2.style.opacity = '0';
+        jr2.style.transition = 'opacity 1.2s ease-in-out';
         jr2.style.pointerEvents = 'auto';
         document.querySelectorAll('#jokerIconsRow img').forEach(img => {
           img.style.pointerEvents = 'auto';
           img.style.cursor = 'pointer';
-          img.style.opacity = '1';
         });
+        requestAnimationFrame(() => { jr2.style.opacity = '1'; });
+        
         countdown.style.display = 'block';
+        countdown.style.opacity = '0';
+        countdown.style.transition = 'opacity 1.2s ease-in-out';
+        requestAnimationFrame(() => { countdown.style.opacity = '1'; });
+        
         hintText.style.display = 'block';
-      }, 5800);
+        hintText.style.opacity = '0';
+        hintText.style.transition = 'opacity 1.2s ease-in-out';
+        requestAnimationFrame(() => { hintText.style.opacity = '1'; });
+      }, 3500);
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
@@ -2952,10 +2988,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 6800);
+        }, 6000);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 5800);
+        setTimeout(() => { startRecording(); }, 4700);
       }
       
       positionResetButton();
