@@ -2011,57 +2011,33 @@
       });
     }
 
-    // "HIT"-Text an Karten-Position anzeigen (von Osten lesbar)
-    const hitTextMeshes = [];
+    // "HIT"-Text an Karten-Position anzeigen (HTML-Overlay, von Osten lesbar)
+    const hitTextEls = [];
     function showHitText(cardIdx) {
       const cx = cardStartX + cardIdx * (cardWidth + cardGap);
+      // 3D→Screen Projektion der Kartenmitte
+      const pos3D = new THREE.Vector3(cx, cardY, cardZ);
+      pos3D.project(camera);
+      const sx = Math.round((pos3D.x * 0.5 + 0.5) * 360);
+      const sy = Math.round((-pos3D.y * 0.5 + 0.5) * 720);
       
-      // Canvas: 85×170 (wie Karte), Text 90° gedreht → von Osten lesbar
-      const cvs = document.createElement('canvas');
-      cvs.width = 85; cvs.height = 170;
-      const ctx = cvs.getContext('2d');
+      const el = document.createElement('div');
+      el.textContent = 'HIT';
+      el.style.cssText = 'position:absolute;' +
+        'left:' + sx + 'px; top:' + sy + 'px;' +
+        'transform:translate(-50%,-50%) rotate(-90deg) scale(0.3);' +
+        'font:bold 28px Arial; color:#cedb25;' +
+        'text-shadow:0 1px 4px rgba(0,0,0,0.7);' +
+        'pointer-events:none; opacity:0;' +
+        'transition:transform 0.3s ease-out, opacity 0.3s ease-out;';
+      document.getElementById('uiOverlay').appendChild(el);
+      hitTextEls.push(el);
       
-      // Transparent, dann goldener Text
-      ctx.clearRect(0, 0, 85, 170);
-      ctx.save();
-      ctx.translate(85/2, 170/2);
-      ctx.rotate(Math.PI / 2); // 90° → von rechts lesbar
-      ctx.font = 'bold 62px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      // Goldener Schatten
-      ctx.shadowColor = 'rgba(0,0,0,0.6)';
-      ctx.shadowBlur = 4;
-      ctx.shadowOffsetY = 2;
-      ctx.fillStyle = '#cedb25'; // Gold (CMYK 18/20/85/3)
-      ctx.fillText('HIT', 0, 0);
-      ctx.restore();
-      
-      const tex = new THREE.CanvasTexture(cvs);
-      tex.minFilter = THREE.LinearFilter;
-      const geo = new THREE.PlaneGeometry(cardWidth, cardHeight);
-      const mat = new THREE.MeshBasicMaterial({ 
-        map: tex, transparent: true, depthTest: false 
+      // Einblenden
+      requestAnimationFrame(() => {
+        el.style.transform = 'translate(-50%,-50%) rotate(-90deg) scale(1)';
+        el.style.opacity = '1';
       });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = -Math.PI / 2;
-      mesh.position.set(cx, cardY + 0.002, cardZ);
-      
-      // Einblend-Animation: scale 0→1
-      mesh.scale.set(0.3, 0.3, 0.3);
-      mesh.material.opacity = 0;
-      scene.add(mesh);
-      hitTextMeshes.push(mesh);
-      
-      const t0 = performance.now();
-      function fadeIn(now) {
-        const t = Math.min((now - t0) / 300, 1);
-        const e = 1 - Math.pow(1 - t, 3); // easeOut
-        mesh.scale.set(0.3 + 0.7 * e, 0.3 + 0.7 * e, 0.3 + 0.7 * e);
-        mesh.material.opacity = e;
-        if (t < 1) requestAnimationFrame(fadeIn);
-      }
-      requestAnimationFrame(fadeIn);
     }
 
     // Generische Animation eines Wertes über Zeit
@@ -2877,8 +2853,8 @@
       }
       
       // HIT-Texte aus vorherigem Spiel entfernen
-      hitTextMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
-      hitTextMeshes.length = 0;
+      hitTextEls.forEach(el => el.remove());
+      hitTextEls.length = 0;
       
       kipp21Active = true;
       kipp21KippCount = 0;
@@ -2942,42 +2918,22 @@
         pgtH.style.animation = 'none';
         pgtH.style.opacity = '0';
         
-        const pgtSubVisible = parseFloat(getComputedStyle(pgtS).opacity) > 0.5;
+        // Text sofort ausfaden (kein Breathe, kein Warten)
+        pgt.style.opacity = '0';
+        setTimeout(() => { pgt.style.display = 'none'; }, 1300);
         
-        if (pgtSubVisible) {
-          pgtS.style.animation = 'none';
-          pgtS.style.opacity = '1';
-          pgtS.style.transform = 'scale(1)';
-          requestAnimationFrame(() => {
-            pgtS.style.animation = 'sctBreathe 1.6s ease-in-out';
-          });
-        } else {
-          pgtS.style.animation = 'none';
-          pgtS.style.opacity = '0';
-          pgtS.style.transform = 'scale(0.6)';
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              pgtS.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
-            });
-          });
-        }
-        
-        const pgtFadeDelay = pgtSubVisible ? 1600 : 2800;
-        setTimeout(() => {
-          pgt.style.opacity = '0';
-          setTimeout(() => { pgt.style.display = 'none'; }, 1300);
-          for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
-          showKniffIcons();
-          const jr2 = document.getElementById('jokerIconsRow');
-          jr2.style.pointerEvents = 'auto';
-          document.querySelectorAll('#jokerIconsRow img').forEach(img => {
-            img.style.pointerEvents = 'auto';
-            img.style.cursor = 'pointer';
-            img.style.opacity = '1';
-          });
-          countdown.style.display = 'block';
-          hintText.style.display = 'block';
-        }, pgtFadeDelay);
+        // Karten + Jokers sofort einblenden
+        for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = true;
+        showKniffIcons();
+        const jr2 = document.getElementById('jokerIconsRow');
+        jr2.style.pointerEvents = 'auto';
+        document.querySelectorAll('#jokerIconsRow img').forEach(img => {
+          img.style.pointerEvents = 'auto';
+          img.style.cursor = 'pointer';
+          img.style.opacity = '1';
+        });
+        countdown.style.display = 'block';
+        hintText.style.display = 'block';
       }, 3500);
       
       // Tutorial = Geskriptetes Demo starten
@@ -2993,10 +2949,10 @@
             errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
             document.getElementById('uiOverlay').appendChild(errDiv);
           });
-        }, 6000);
+        }, 4500);
       } else {
         // Normales Spiel: Recording starten nach Challenge-Text
-        setTimeout(() => { startRecording(); }, 4700);
+        setTimeout(() => { startRecording(); }, 3500);
       }
       
       positionResetButton();
