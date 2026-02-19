@@ -2387,9 +2387,7 @@
     
     function formatTimer(totalMs) {
       const secs = Math.floor(totalMs / 1000);
-      const mins = Math.floor(secs / 60);
-      const s = secs % 60;
-      return '<span style="font-size:28px;line-height:28px">' + mins + ':' + (s < 10 ? '0' : '') + s + '</span><span style="font-size:18px;vertical-align:baseline"> S</span>';
+      return '<span style="font-size:28px;line-height:28px">' + (secs < 10 ? '0' : '') + secs + '</span><span style="font-size:18px;vertical-align:baseline"> S</span>';
     }
     
     function replayUpdateKippCount() {
@@ -2696,7 +2694,7 @@
         await replayConfirm(ci);
         console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
-        await sleep(1000);
+        await sleep(4500); // Warten bis Anzeigen zurückgeflogen sind
       }
       
       // === ERGEBNIS ===
