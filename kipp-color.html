@@ -2140,6 +2140,7 @@
       
       const el = document.createElement('div');
       el.textContent = 'HIT';
+      el.className = 'hit-text-el';
       el.style.cssText = 'position:absolute;' +
         'left:' + sx + 'px; top:' + sy + 'px;' +
         'transform:translate(-50%,-50%) rotate(-90deg) scale(0.3);' +
@@ -2819,8 +2820,11 @@
     function replayCleanup(jr) {
       replayActive = false;
       disableReplayBlocker();
+      renderer.domElement.style.pointerEvents = 'auto';
       if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
       if (jr) jr.style.pointerEvents = 'auto';
+      const _eye = document.getElementById('eyeIcon');
+      if (_eye) _eye.style.pointerEvents = 'auto';
       dbgLog('Replay fertig!');
       setTimeout(() => { if (replayDbg) replayDbg.style.display = 'none'; }, 3000);
     }
@@ -2876,6 +2880,8 @@
       // HIT-Texte entfernen
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
+      // Auch verspätete HIT-Texte abfangen
+      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
       
       // Position berechnen (Kärtchen-Reihe)
       const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
@@ -2890,7 +2896,13 @@
         ' letter-spacing:' + ls + 'px; padding-top:4px;' +
         ' color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);';
       
-      const abtn = document.getElementById('auswertungBtn');
+      let abtn = document.getElementById('auswertungBtn');
+      if (!abtn) {
+        abtn = document.createElement('button');
+        abtn.id = 'auswertungBtn';
+        abtn.className = 'end-btn-dynamic';
+        document.getElementById('uiOverlay').appendChild(abtn);
+      }
       
       if (isTutorial) {
         // Tutorial-Ende: WIEDERHOLEN + SPIELEN
@@ -2911,6 +2923,7 @@
         if (!spielenBtn) {
           spielenBtn = document.createElement('button');
           spielenBtn.id = 'endSpielenBtn';
+          spielenBtn.className = 'end-btn-dynamic';
           document.getElementById('uiOverlay').appendChild(spielenBtn);
         }
         spielenBtn.textContent = T.sp;
@@ -6264,6 +6277,7 @@
       document.querySelectorAll('.end-btn-dynamic').forEach(el => el.remove());
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
+      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
       
 
       
