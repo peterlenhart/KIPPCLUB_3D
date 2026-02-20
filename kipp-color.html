@@ -2856,6 +2856,11 @@
       try {
         await startPerfectReplay();
       } catch(e) {
+        if (e instanceof ReplayAbort) {
+          console.log('[startReplay] Aborted (Reset)');
+          replayCleanup(document.getElementById('jokerIconsRow'));
+          return;
+        }
         console.error('[startReplay] UNCAUGHT:', e);
         const errDiv = document.createElement('div');
         errDiv.style.cssText = 'position:absolute;top:100px;left:10px;right:10px;font:bold 11px monospace;color:#ff0;background:rgba(0,0,0,0.9);padding:8px;z-index:9999;word-break:break-all;';
@@ -3303,15 +3308,12 @@
       if (kipp21WithTutorial) {
         deck = REPLAY_DECK.slice();
         updateAllFaceTextures();
+        const replayStartGen = kipp21Generation;
         setTimeout(() => { 
-          if (gamePhase !== 'kipp21') return; // Reset wurde gedrückt
+          if (kipp21Generation !== replayStartGen) return; // Reset/Neustart
           startReplay().catch(err => {
+            if (err instanceof ReplayAbort) return;
             console.error('[REPLAY] ERROR:', err);
-            // Fehler sichtbar auf Screen anzeigen
-            const errDiv = document.createElement('div');
-            errDiv.style.cssText = 'position:absolute;top:50px;left:10px;right:10px;font:bold 12px monospace;color:red;background:rgba(0,0,0,0.9);padding:8px;z-index:9999;word-break:break-all;';
-            errDiv.textContent = 'REPLAY ERROR: ' + err.message + '\n' + err.stack;
-            document.getElementById('uiOverlay').appendChild(errDiv);
           });
         }, 4500);
       } else {
@@ -3845,6 +3847,8 @@
       console.log('[CARDTAP] idx='+cardIdx, 'active='+kipp21Active, 'state='+kipp21CardStates[cardIdx], 'kniffActive='+kipp21KniffActive);
       // Tutorial läuft: NUR Replay-Code darf Karten öffnen
       if (replayActive && !_fromReplay) return;
+      // Alte Replay-Generation: ignorieren
+      if (_fromReplay && replayGeneration !== kipp21Generation) return;
       if (!kipp21Active) return;
       if (cardIdx < 0 || cardIdx >= 6) return;
       
@@ -6918,8 +6922,19 @@
     // =========================
     // KIPP-SEQUENZ mit 2D-Timing
     // =========================
+    // ReplayAbort: Spezielle Error-Klasse für sauberen Abbruch
+    class ReplayAbort extends Error { constructor() { super('ReplayAbort'); } }
+    
     function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
+      const gen = kipp21Generation;
+      const wasReplay = replayActive;
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Nur während Replay: Generation-Check → Abbruch
+          if (wasReplay && kipp21Generation !== gen) reject(new ReplayAbort());
+          else resolve();
+        }, ms);
+      });
     }
 
     async function runKippSequence(steps) {
