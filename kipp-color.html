@@ -4870,22 +4870,22 @@
       if (!lblLeft) {
         lblLeft = document.createElement('div');
         lblLeft.className = 'kniffLabelLeft';
-        lblLeft.style.cssText = 'position:absolute; bottom:2px; font-family:Arial,sans-serif; font-size:9px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
+        lblLeft.style.cssText = 'position:absolute; top:70px; font-family:Arial,sans-serif; font-size:11px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
         lblLeft.textContent = T.kb || 'KIPPBLICK';
         jokerRow.appendChild(lblLeft);
       }
       if (!lblRight) {
         lblRight = document.createElement('div');
         lblRight.className = 'kniffLabelRight';
-        lblRight.style.cssText = 'position:absolute; bottom:2px; font-family:Arial,sans-serif; font-size:9px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
+        lblRight.style.cssText = 'position:absolute; top:70px; font-family:Arial,sans-serif; font-size:11px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
         lblRight.textContent = T.eb || 'ECKBLICK';
         jokerRow.appendChild(lblRight);
       }
-      // Labels unter den Icons positionieren (gleiche X wie Top-Layer Icons)
-      const leftTopImg = jokerRow.querySelector('img[data-kniff-idx="0"][data-layer="top"]');
-      const rightTopImg = jokerRow.querySelector('img[data-kniff-idx="1"][data-layer="top"]');
-      if (leftTopImg) { lblLeft.style.left = leftTopImg.style.left; }
-      if (rightTopImg) { lblRight.style.left = rightTopImg.style.left; }
+      // Labels unter den Icons positionieren (gleiche X wie Bottom-Layer Icons)
+      const leftBotImg = jokerRow.querySelector('img[data-kniff-idx="0"][data-layer="bottom"]');
+      const rightBotImg = jokerRow.querySelector('img[data-kniff-idx="1"][data-layer="bottom"]');
+      if (leftBotImg) { lblLeft.style.left = leftBotImg.style.left; }
+      if (rightBotImg) { lblRight.style.left = rightBotImg.style.left; }
       lblLeft.style.transform = 'translateX(-50%)';
       lblRight.style.transform = 'translateX(-50%)';
       
