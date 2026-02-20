@@ -3901,6 +3901,14 @@
             if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
             // Finalen Timer-Wert anzeigen
             countdown.innerHTML = formatTimer(kipp21TotalTime);
+            // Joker-Reihe ausblenden
+            hideKniffIcons();
+            // HIT-Texte auch verzögert nochmal räumen (letzter HIT entsteht parallel)
+            setTimeout(() => {
+              hitTextEls.forEach(el => el.remove());
+              hitTextEls.length = 0;
+              document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+            }, 400);
             
             // End-Buttons zeigen
             showEndButtons(false);
