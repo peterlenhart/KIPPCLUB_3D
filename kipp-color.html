@@ -3141,6 +3141,10 @@
         });
       }
       
+      // gamePhase SOFORT setzen, BEVOR async Sequenz startet (die prüft darauf)
+      gamePhase = 'kipp21';
+      currentMode = 'kanten';
+      
       // SEQUENZ: Jeder Schritt wartet auf den vorherigen
       // Prüft gamePhase — Reset setzt 'start' und bricht die Sequenz ab
       (async () => {
@@ -3225,9 +3229,6 @@
       openKippzielPositions = pickTwoRandomPositions();
       activeCardIdx = 0;
       kipp21TutorialLineIdx = 0;
-      
-      gamePhase = 'kipp21';
-      currentMode = 'kanten';
       
       // Timer und KippAnzahl in 3D-Rasterzeile 10 projizieren (Rahmenoberkante)
       const row10Z = 0.658; // Zeile 10 Z-Position (Süd-Rahmen Farbfelder)
