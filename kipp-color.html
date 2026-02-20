@@ -593,8 +593,7 @@
       padding: 0;
     }
     #soundToggle img {
-      position: absolute;
-      top: 0; left: 0;
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: contain;
@@ -712,10 +711,7 @@
   <!-- RESET-BUTTON (Body-Ebene, z-index über startOverlay) -->
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.png" alt="Zurück"></button>
-    <button id="soundToggle">
-      <img id="soundOnImg" src="tonein.webp" alt="Sound On">
-      <img id="soundOffImg" src="tonaus.webp" alt="Sound Off" style="display:none;">
-    </button>
+    <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
   </div>
   
   <div id="uiOverlay">
@@ -1850,18 +1846,11 @@
     
     // === SOUND TOGGLE ===
     const soundToggle = document.getElementById('soundToggle');
-    const soundOnImg = document.getElementById('soundOnImg');
-    const soundOffImg = document.getElementById('soundOffImg');
+    const soundImg = document.getElementById('soundImg');
     let soundEnabled = localStorage.getItem('digikipp_sound') !== 'off';
     
     function updateSoundIcon() {
-      if (soundEnabled) {
-        soundOnImg.style.display = 'block';
-        soundOffImg.style.display = 'none';
-      } else {
-        soundOnImg.style.display = 'none';
-        soundOffImg.style.display = 'block';
-      }
+      soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
     }
     updateSoundIcon();
     
