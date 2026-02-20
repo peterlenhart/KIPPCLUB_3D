@@ -579,6 +579,28 @@
       pointer-events: none;
     }
 
+    #soundToggle {
+      display: none;
+      position: absolute;
+      right: -13.5px;
+      top: -19.5px;
+      width: 117px;
+      height: 117px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      pointer-events: auto;
+      padding: 0;
+    }
+    #soundToggle img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
     #backButton {
       display: none;
       position: absolute;
@@ -690,6 +712,10 @@
   <!-- RESET-BUTTON (Body-Ebene, z-index über startOverlay) -->
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.png" alt="Zurück"></button>
+    <button id="soundToggle">
+      <img id="soundOnImg" src="tonein.webp" alt="Sound On">
+      <img id="soundOffImg" src="tonaus.webp" alt="Sound Off" style="display:none;">
+    </button>
   </div>
   
   <div id="uiOverlay">
@@ -1822,9 +1848,46 @@
     const resetButton = document.getElementById('resetButton');
     const kippButtons = document.getElementById('kippButtons');
     
+    // === SOUND TOGGLE ===
+    const soundToggle = document.getElementById('soundToggle');
+    const soundOnImg = document.getElementById('soundOnImg');
+    const soundOffImg = document.getElementById('soundOffImg');
+    let soundEnabled = localStorage.getItem('digikipp_sound') !== 'off';
+    
+    function updateSoundIcon() {
+      if (soundEnabled) {
+        soundOnImg.style.display = 'block';
+        soundOffImg.style.display = 'none';
+      } else {
+        soundOnImg.style.display = 'none';
+        soundOffImg.style.display = 'block';
+      }
+    }
+    updateSoundIcon();
+    
+    function positionSoundToggle() {
+      soundToggle.style.display = 'block';
+    }
+    
+    soundToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('digikipp_sound', soundEnabled ? 'on' : 'off');
+      updateSoundIcon();
+    });
+    // Touchend für Mobile
+    soundToggle.addEventListener('touchend', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('digikipp_sound', soundEnabled ? 'on' : 'off');
+      updateSoundIcon();
+    });
+    
     // resetButton anzeigen (feste Position A-B, Zeile 1-2, 6px südlich)
     function positionResetButton() {
-      resetButton.style.display = 'block';
+      resetButton.style.display = 'block'; soundToggle.style.display = 'block';
+      positionSoundToggle();
     }
     
     // WICHTIG: Button disabled bis Texturen geladen sind
@@ -5607,7 +5670,7 @@
       cubeLocked = false;
       
       // resetButton sichtbar halten in Spielen-Phase
-      resetButton.style.display = 'block';
+      resetButton.style.display = 'block'; soundToggle.style.display = 'block';
       
       // Würfel bleibt wo er in SCHAUEN war (kein Reset!)
       // topFace und currentQuadrant sind korrekt getrackt
@@ -5716,7 +5779,7 @@
       cubeLocked = false;
       
       // resetButton sichtbar halten
-      resetButton.style.display = 'block';
+      resetButton.style.display = 'block'; soundToggle.style.display = 'block';
       
       // Countdown STOPPEN
       stopCountdown();
