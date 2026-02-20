@@ -6707,6 +6707,7 @@
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
         if (isAnimating || kipp21KniffActive) return;
+        if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
         if (cubeLocked && gamePhase !== 'kipp21') return;
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
         if (gamePhase === 'kipp21' && kipp21CardStates.indexOf('offen') < 0) return;
