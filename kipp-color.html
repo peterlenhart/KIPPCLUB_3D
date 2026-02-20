@@ -1892,7 +1892,7 @@
     function initAudioContext() {
       if (audioCtx) return;
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      fetch('KlackCrop.wav')
+      fetch('KippKlack.wav')
         .then(r => r.arrayBuffer())
         .then(buf => audioCtx.decodeAudioData(buf))
         .then(decoded => { klackBuffer = decoded; })
@@ -7033,6 +7033,7 @@
       pivotGroup.add(cube);
       
       const startTime = Date.now();
+      let klackFired = false;
       
       return new Promise((resolve) => {
         function animate() {
@@ -7047,6 +7048,12 @@
             pivotGroup.rotation.x = eased * targetRotation;
           } else {
             pivotGroup.rotation.z = eased * targetRotation;
+          }
+          
+          // Klack kurz VOR dem Aufsetzen (eased > 0.95 ≈ letzten 5% der Bewegung)
+          if (!klackFired && eased > 0.95) {
+            klackFired = true;
+            playKlack();
           }
           
           if (progress < 1) {
@@ -7079,7 +7086,6 @@
       
       currentQuadrant = newQ;
       isAnimating = false;
-      playKlack(); // Würfel liegt satt auf dem Boden
       if (callback) callback();
     }
 
