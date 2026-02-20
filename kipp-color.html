@@ -2726,6 +2726,11 @@
       }
       
       // === ERGEBNIS ===
+      // Abbruch? Dann kein End-UI zeigen
+      if (!replayActive || gamePhase === 'start') {
+        replayCleanup(jr);
+        return;
+      }
       // KniffIcons und Karten ausblenden
       hideKniffIcons();
       countdown.style.display = 'none';
@@ -2877,6 +2882,8 @@
 
     // === END-BUTTONS (WIEDERHOLEN + SPIELEN) ===
     function showEndButtons(isTutorial) {
+      // Guard: Reset wurde gedrückt, wir sind schon am Start-Screen
+      if (gamePhase === 'start') return;
       // HIT-Texte entfernen
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
