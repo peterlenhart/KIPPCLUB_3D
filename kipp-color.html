@@ -2209,6 +2209,8 @@
     
     // KIPP 21 state
     let kipp21Active = false;
+    let kipp21Generation = 0; // Incrementiert bei jedem startKipp21, alte Async-Chains prüfen dagegen
+    let replayGeneration = 0; // Wird bei Replay-Start auf kipp21Generation gesetzt
     let kipp21KippCount = 0;
     let kipp21RoundKipps = 0;
     let kipp21RoundTimerStart = null;
@@ -2497,7 +2499,7 @@
     
     // --- Bestätigen: Timer SOFORT stoppen, dann Hand animieren, dann CardTap ---
     async function replayConfirm(ci) {
-      if (!replayActive) return;
+      if (!replayActive || replayGeneration !== kipp21Generation) return;
       const openIdx = kipp21CardStates.indexOf('offen');
       if (openIdx < 0 || kipp21RoundKipps <= 0) return;
       dbgLog('Bestätigen Karte ' + openIdx);
@@ -2507,6 +2509,7 @@
       
       // Hand sichtbar auf Karte tippen
       await handTapFromSouth(cardScreenX(openIdx), cardScreenY(openIdx), 700);
+      if (replayGeneration !== kipp21Generation) return; // Abgebrochen
       pulseCard(openIdx);
       
       // DANN erst Karte verarbeiten (Treffer-Check etc.)
@@ -2516,7 +2519,7 @@
     
     // --- KNIFF ausführen (öffnet automatisch nächste Karte) ---
     async function replayKniff(type) {
-      if (!replayActive) return;
+      if (!replayActive || replayGeneration !== kipp21Generation) return;
       
       // Icons sicherstellen: sichtbar + korrekt
       refreshKniffIcons();
@@ -2635,7 +2638,9 @@
     //  Kniff-Plan: 0=Eckblick, 2=Wobble, 3=Eckblick, 5=Wobble
     // ============================================================
     async function startPerfectReplay() {
-      console.log('[REPLAY] === startPerfectReplay ENTER ===');
+      const myGen = kipp21Generation; // Meine Generation merken
+      replayGeneration = myGen;
+      console.log('[REPLAY] === startPerfectReplay ENTER === gen='+myGen);
       console.log('[REPLAY] gamePhase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'dragActive='+dragActive);
       try {
         initHandEl();
@@ -2662,6 +2667,7 @@
       const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
       
       await sleep(2000);
+      if (myGen !== kipp21Generation) return; // Abgebrochen
       dbgLog('Perfect Game Start');
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
       
@@ -2669,7 +2675,7 @@
       if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
       
       for (let ci = 0; ci < 6; ci++) {
-        if (!replayActive) break;
+        if (!replayActive || myGen !== kipp21Generation) break;
         dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
         console.log('[REPLAY] === RUNDE', ci, '===');
         console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
@@ -2694,7 +2700,7 @@
           await replayOpenCard(ci);
           console.log('[REPLAY] R'+ci+': OpenCard fertig');
         }
-        if (!replayActive) break;
+        if (!replayActive || myGen !== kipp21Generation) break;
         
         // Prüfen ob eine Karte offen ist
         const openCheck = kipp21CardStates.indexOf('offen');
@@ -2714,7 +2720,7 @@
         const actualOpen = kipp21CardStates.indexOf('offen');
         await replayKippSequence(actualOpen >= 0 ? actualOpen : ci, KIPP_DUR);
         console.log('[REPLAY] R'+ci+': Kippen fertig');
-        if (!replayActive) break;
+        if (!replayActive || myGen !== kipp21Generation) break;
         
         // === BESTÄTIGEN ===
         await sleep(800);
@@ -2727,7 +2733,7 @@
       
       // === ERGEBNIS ===
       // Abbruch? Dann kein End-UI zeigen
-      if (!replayActive || gamePhase === 'start') {
+      if (!replayActive || gamePhase === 'start' || myGen !== kipp21Generation) {
         replayCleanup(jr);
         return;
       }
@@ -3009,6 +3015,33 @@
     }
     
     function startKipp21(withTutorial) {
+      // ===== HARTER CLEANUP: Alles aus vorherigem Tutorial/Spiel killen =====
+      kipp21Generation++; // Alte Async-Chains werden ungültig
+      // Replay/Async stoppen
+      replayActive = false;
+      kipp21Active = false;
+      disableReplayBlocker();
+      renderer.domElement.style.pointerEvents = 'auto';
+      // Alle Timer/Timeouts/Intervals clearen
+      if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
+      if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+      if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
+      stopCountdown();
+      // Dynamische Elemente entfernen
+      ['auswertungBtn', 'endSpielenBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      });
+      document.querySelectorAll('.end-btn-dynamic, .hit-text-el').forEach(el => el.remove());
+      hitTextEls.length = 0;
+      // Hand ausblenden
+      if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
+      // Kniff-State zurücksetzen
+      kipp21KniffActive = false;
+      kipp21KniffAbort = false;
+      kipp21PendingCardTap = -1;
+      // ===== CLEANUP ENDE =====
+      
       kipp21WithTutorial = !!withTutorial;
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
