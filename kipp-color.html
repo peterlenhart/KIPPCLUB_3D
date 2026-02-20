@@ -3142,14 +3142,23 @@
       }
       
       // SEQUENZ: Jeder Schritt wartet auf den vorherigen
+      // Prüft gamePhase — Reset setzt 'start' und bricht die Sequenz ab
       (async () => {
+        if (gamePhase !== 'kipp21') return;
         await pgtInflate(pgtH, pgtS);    // "6 HITS..." erscheint
+        if (gamePhase !== 'kipp21') return;
         await wait(200);                  // kurz stehen lassen
+        if (gamePhase !== 'kipp21') return;
         await pgtDeflate(pgtH);           // "6 HITS..." weg
+        if (gamePhase !== 'kipp21') return;
         await pgtInflate(pgtS, pgtH);     // "Bestzeit..." erscheint
+        if (gamePhase !== 'kipp21') return;
         await wait(800);                  // 0.8s stehen lassen
+        if (gamePhase !== 'kipp21') return;
         await fadeOutText();              // Text KOMPLETT weg
+        if (gamePhase !== 'kipp21') return;
         await wait(100);                  // Sicherheitspause
+        if (gamePhase !== 'kipp21') return;
         await fadeInUIs();                // ERST JETZT UIs rein
       })();
       
@@ -3254,6 +3263,7 @@
         deck = REPLAY_DECK.slice();
         updateAllFaceTextures();
         setTimeout(() => { 
+          if (gamePhase !== 'kipp21') return; // Reset wurde gedrückt
           startReplay().catch(err => {
             console.error('[REPLAY] ERROR:', err);
             // Fehler sichtbar auf Screen anzeigen
@@ -6252,58 +6262,65 @@
     // - In allen anderen Phasen → Reset + zurück zum Start-Overlay
     resetButton.addEventListener('click', () => {
       if (gamePhase === 'start') {
-        // Auf Start-Overlay → zurück zum Hauptmenü
         window.location.href = 'index.html';
         return;
       }
       
-      // Abort auto-demo if active
+      // ===== NUKLEARER CLEANUP =====
+      // 1. Alles stoppen
+      gamePhase = 'start';
       autoDemoActive = false;
+      replayActive = false;
+      kipp21Active = false;
+      kipp21TimerRunning = false;
+      kipp21KniffActive = false;
+      kipp21KniffAbort = true;
+      schauenWobbleActive = false;
+      isDemoAnimating = false;
+      isAnimating = false;
+      dragActive = false;
+      if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
       stopCountdown();
-      countdown.style.display = 'none';
-      schauenWobbleActive = false; isDemoAnimating = false;
-      handDemo.visible = false;
+      disableReplayBlocker();
+      renderer.domElement.style.pointerEvents = 'auto';
       
-      // KIPP21 / Replay stoppen
-      if (replayActive || kipp21Active) {
-        stopReplay();
-        kipp21Active = false;
-        if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
-        kipp21TimerRunning = false;
-        kipp21KniffActive = false;
-        kipp21KniffAbort = true;
-      }
-      // Dynamische End-Buttons entfernen
-      document.querySelectorAll('.end-btn-dynamic').forEach(el => el.remove());
-      hitTextEls.forEach(el => el.remove());
+      // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
+      ['auswertungBtn', 'endSpielenBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      });
+      document.querySelectorAll('.end-btn-dynamic, .hit-text-el').forEach(el => el.remove());
       hitTextEls.length = 0;
-      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
       
-
+      // 3. Hand/Demo ausblenden
+      handDemo.visible = false;
+      if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
       
-      // Cube sicher zurück in kipGroup
-      if (cube.parent !== kipGroup) {
-        const oldP = cube.parent;
-        if (oldP) oldP.remove(cube);
-        kipGroup.add(cube);
-      }
-      
-      document.getElementById('instructionText').style.display = 'none';
-      document.getElementById('tutorialText').style.display = 'none';
-      document.getElementById('eyeIcon').style.display = 'none';
-      document.getElementById('entscheidungText').style.display = 'none';
+      // 4. ALLE UI-Elemente verstecken
+      ['instructionText','tutorialText','eyeIcon','entscheidungText',
+       'zumSpielBtn','perfektGameText','spielZielText','skipEndBtn',
+       'kippTarget','demoSubtitle'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
       const jr2 = document.getElementById('jokerIconsRow');
       if (jr2) { jr2.style.display = 'none'; jr2.style.opacity = '0'; }
-      document.getElementById('zumSpielBtn').style.display = 'none';
-      document.getElementById('perfektGameText').style.display = 'none';
-      // tutEndButtons entfernt - Buttons werden dynamisch erzeugt
+      countdown.style.display = 'none';
       hintText.style.display = 'none';
       actionButton.style.display = 'none';
       kippButtons.classList.add('hidden');
       document.getElementById('richtungButtons').classList.add('hidden');
       
+      // 5. 3D zurücksetzen
+      if (cube.parent !== kipGroup) {
+        const oldP = cube.parent;
+        if (oldP) oldP.remove(cube);
+        kipGroup.add(cube);
+      }
       gameCards.forEach(c => c.mesh.visible = false);
-      
+      verdecktesMesh.visible = false;
+      tapIndicatorA.mesh.visible = false;
+      tapIndicatorB.mesh.visible = false;
       cube.quaternion.set(0, 0, 0, 1);
       cube.position.set(-offset, offset, 0.109375 + offset);
       currentQuadrant = 3;
@@ -6315,14 +6332,14 @@
       kippzielChecked = false;
       cubeLocked = false;
       tapCount = 0;
-      tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       activeCardIdx = 0;
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
+      counterOrigPos = null;
       
-      gamePhase = 'start';
+      // 6. Start-Overlay zeigen
       backToStartScreen();
     });
 
