@@ -4625,6 +4625,7 @@
         const shifted = centerX + (kniffIdx === 0 ? -edgeShift : edgeShift);
         // Bottom: 8px westlicher, Top: auf Originalposition
         allImgs[i].style.left = Math.round(shifted + (isTop ? 0 : -8)) + 'px';
+        allImgs[i].style.display = '';
         allImgs[i].style.opacity = '1';
         allImgs[i].style.visibility = 'visible';
       }
@@ -4641,15 +4642,9 @@
       const jokerUsed = kipp21WobbleUsed + kipp21EckblickUsed;
       jLabel.style.display = jokerUsed > 0 ? 'none' : 'block';
       
-      // "zum SPIEL" Button unterhalb der Joker — NUR im echten Spiel zeigen
+      // "zum SPIEL" Button nicht mehr zeigen
       const zsb = document.getElementById('zumSpielBtn');
-      if (replayActive) {
-        zsb.style.display = 'none';
-      } else {
-        zsb.style.top = (parseInt(jokerRow.style.top || '523') + 58 + 30) + 'px';
-        zsb.style.display = 'block';
-        zsb.style.opacity = '1';
-      }
+      zsb.style.display = 'none';
       
       jokerRow.style.display = 'block';
       jokerRow.style.opacity = '1';
