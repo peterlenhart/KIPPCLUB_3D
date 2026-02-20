@@ -241,6 +241,10 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.55; }
     }
+    @keyframes kippenPulse {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+      50% { transform: translate(-50%,-50%) scale(1.15); opacity: 0.5; }
+    }
     #eyeIcon {
       position: absolute;
       top: 475px;
@@ -755,7 +759,7 @@
         ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
         wh:"WIEDERHOLEN", nm:"NOCHMAL",
         ch1:"6 HITS mit 21 KIPPS", ch2:"Mastermind = unter 21 Sek.",
-        jw:"Joker w\u00e4hlen",
+        jw:"Joker w\u00e4hlen",kp:"Kippen!",
         erg:"Ergebnis: {k} KIPPS | {z}", best21:"BEST: 21 KIPPS unter 21 Sek.",
         d1:["Nach Klick aufs Auge<br>l\u00e4sst sich der W\u00fcrfel","mit dem Finger<br>durch die Box kippen."],
         d1b:["Auf Kante wippen,<br>Zahlenpositionen merken.","Auf Kante wippen,<br>Zahlenpositionen merken.","Du hast 30 Sekunden.<br>(Siehe Counter, unten)","Fr\u00fcher abbrechen?<br>Auf W\u00fcrfel tippen."],
@@ -774,7 +778,7 @@
         ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIAL",
         wh:"REPEAT", nm:"AGAIN",
         ch1:"6 HITS with 21 TIPS", ch2:"Mastermind = under 21 sec.",
-        jw:"Choose Joker",
+        jw:"Choose Joker",kp:"Tip first!",
         erg:"Result: {k} TIPS | {z}", best21:"BEST: 21 TIPS under 21 sec.",
         d1:["After clicking the eye<br>you can tip the cube","with your finger<br>through the box."],
         d1b:["Tilt to the edge,<br>memorize number positions.","Tilt to the edge,<br>memorize number positions.","You have 30 seconds.<br>(See counter below)","Stop early?<br>Tap the cube."],
@@ -793,7 +797,7 @@
         ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIAL",
         wh:"REPETIR", nm:"OTRA VEZ",
         ch1:"6 ACIERTOS con 21 VOLCADOS", ch2:"Mastermind = menos de 21 seg.",
-        jw:"Elegir Joker",
+        jw:"Elegir Joker",kp:"\u00a1Vuelca!",
         erg:"Resultado: {k} VOLCADOS | {z}", best21:"MEJOR: 21 VOLCADOS en menos de 21 seg.",
         d1:["Tras pulsar el ojo<br>puedes volcar el cubo","con el dedo<br>por la caja."],
         d1b:["Inclinar al borde,<br>memoriza las posiciones.","Inclinar al borde,<br>memoriza las posiciones.","Tienes 30 segundos.<br>(Ver contador abajo)","\u00bfTerminar antes?<br>Toca el cubo."],
@@ -812,7 +816,7 @@
         ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIAL",
         wh:"R\u00c9P\u00c9TER", nm:"ENCORE",
         ch1:"6 COUPS avec 21 BASCULES", ch2:"Mastermind = moins de 21 sec.",
-        jw:"Choisir Joker",
+        jw:"Choisir Joker",kp:"Bascule !",
         erg:"R\u00e9sultat : {k} BASCULES | {z}", best21:"MEILLEUR : 21 BASCULES en moins de 21 sec.",
         d1:["Apr\u00e8s clic sur l\u2019\u0153il<br>tu peux basculer le cube","avec le doigt<br>dans la bo\u00eete."],
         d1b:["Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Basculer sur l\u2019ar\u00eate,<br>m\u00e9morise les positions.","Tu as 30 secondes.<br>(Voir compteur ci-dessous)","Arr\u00eater plus t\u00f4t ?<br>Touche le cube."],
@@ -831,7 +835,7 @@
         ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
         wh:"RIPETERE", nm:"ANCORA",
         ch1:"6 COLPI con 21 RIBALTAMENTI", ch2:"Mastermind = sotto 21 sec.",
-        jw:"Scegli Joker",
+        jw:"Scegli Joker",kp:"Ribalta!",
         erg:"Risultato: {k} RIBALTAMENTI | {z}", best21:"MIGLIORE: 21 RIBALTAMENTI sotto 21 sec.",
         d1:["Dopo il clic sull\u2019occhio<br>puoi ribaltare il cubo","con il dito<br>nella scatola."],
         d1b:["Inclinare sul bordo,<br>memorizza le posizioni.","Inclinare sul bordo,<br>memorizza le posizioni.","Hai 30 secondi.<br>(Vedi contatore sotto)","Terminare prima?<br>Tocca il cubo."],
@@ -850,7 +854,7 @@
         ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIAL",
         wh:"TEKRAR", nm:"B\u0130R DAHA",
         ch1:"6 \u0130SABET ve 21 DEVIRME", ch2:"Mastermind = 21 sn. alt\u0131nda",
-        jw:"Joker se\u00e7",
+        jw:"Joker se\u00e7",kp:"Devir!",
         erg:"Sonu\u00e7: {k} DEVIRME | {z}", best21:"EN \u0130Y\u0130: 21 DEVIRME, 21 sn. alt\u0131nda",
         d1:["G\u00f6ze t\u0131klad\u0131ktan sonra<br>k\u00fcp\u00fc parma\u011f\u0131nla","kutuda<br>devrilebilirsin."],
         d1b:["Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","Kenara yat\u0131r,<br>pozisyonlar\u0131 ezberle.","30 saniyen var.<br>(A\u015fa\u011f\u0131daki saya\u00e7a bak)","Erken bitirmek mi?<br>K\u00fcpe dokun."],
@@ -862,7 +866,7 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
-        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NOCHMAL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"Joker w\u00e4hlen",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NOCHMAL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"Joker w\u00e4hlen",kp:"Kippen!",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
@@ -3045,6 +3049,7 @@
       kipp21KniffActive = false;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
+      kippenWarningActive = false;
       // ===== CLEANUP ENDE =====
       
       kipp21WithTutorial = !!withTutorial;
@@ -3381,12 +3386,39 @@
       }
     }
     
+    // --- "Kippen!" Warnung wenn Joker bei offenem Kippziel gedrückt ---
+    let kippenWarningActive = false;
+    function showKippenWarning() {
+      const jLabel = jokerRow.querySelector('.jokerLabel');
+      if (!jLabel) return;
+      jLabel.textContent = T.kp || 'Kippen!';
+      jLabel.style.display = 'block';
+      jLabel.style.animation = 'none';
+      void jLabel.offsetWidth;
+      jLabel.style.animation = 'kippenPulse 0.6s ease-in-out 3';
+      kippenWarningActive = true;
+      jLabel.addEventListener('animationend', () => {
+        if (kippenWarningActive) {
+          jLabel.style.opacity = '0';
+          setTimeout(() => { jLabel.style.display = 'none'; kippenWarningActive = false; }, 300);
+        }
+      }, { once: true });
+    }
+    function dismissKippenWarning() {
+      if (!kippenWarningActive) return;
+      kippenWarningActive = false;
+      const jLabel = jokerRow.querySelector('.jokerLabel');
+      if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
+    }
+    
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff() {
       console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
       if (kipp21KniffActive || gamePhase !== 'kipp21') { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
       if (kipp21WobbleUsed >= KNIFF_MAX_USES) { console.warn('[WOBBLE] BLOCKED: max uses'); return false; }
       if (kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
+      // Kippziel offen? Erst kippen!
+      if (kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -3476,6 +3508,8 @@
       if (kipp21KniffActive || gamePhase !== 'kipp21') { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
       if (kipp21EckblickUsed >= KNIFF_MAX_USES) { console.warn('[ECKBLICK] BLOCKED: max uses'); return false; }
       if (kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
+      // Kippziel offen? Erst kippen!
+      if (kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -5842,6 +5876,7 @@
       }
       // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active) {
+        dismissKippenWarning();
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     }, { passive: true });
@@ -6544,6 +6579,7 @@
         return;
       }
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
+        dismissKippenWarning();
         if (isAnimating || kipp21KniffActive) return;
         if (cubeLocked && gamePhase !== 'kipp21') return;
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
