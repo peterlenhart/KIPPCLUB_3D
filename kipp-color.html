@@ -1863,6 +1863,7 @@
       soundEnabled = !soundEnabled;
       localStorage.setItem('digikipp_sound', soundEnabled ? 'on' : 'off');
       updateSoundIcon();
+      onSoundToggle();
     });
     // Touchend für Mobile
     soundToggle.addEventListener('touchend', (e) => {
@@ -1871,6 +1872,7 @@
       soundEnabled = !soundEnabled;
       localStorage.setItem('digikipp_sound', soundEnabled ? 'on' : 'off');
       updateSoundIcon();
+      onSoundToggle();
     });
     
     // resetButton anzeigen (feste Position A-B, Zeile 1-2, 6px südlich)
@@ -1878,6 +1880,67 @@
       resetButton.style.display = 'block'; soundToggle.style.display = 'block';
       positionSoundToggle();
     }
+    
+    // === AUDIO ENGINE ===
+    const bgMusic = new Audio('colorloop.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.35;
+    
+    // KlackCrop als AudioBuffer für präzises Timing (kein Latenz-Delay)
+    let klackBuffer = null;
+    let audioCtx = null;
+    function initAudioContext() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      fetch('KlackCrop.wav')
+        .then(r => r.arrayBuffer())
+        .then(buf => audioCtx.decodeAudioData(buf))
+        .then(decoded => { klackBuffer = decoded; })
+        .catch(e => console.warn('KlackCrop load failed:', e));
+    }
+    
+    function playKlack() {
+      if (!soundEnabled || !audioCtx || !klackBuffer) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = klackBuffer;
+      src.connect(audioCtx.destination);
+      src.start(0);
+    }
+    
+    function startBgMusic() {
+      if (!soundEnabled) return;
+      initAudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      bgMusic.currentTime = 0;
+      bgMusic.play().catch(() => {});
+    }
+    
+    function stopBgMusic() {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+    }
+    
+    // Sound-Toggle: Musik sofort starten/stoppen
+    function onSoundToggle() {
+      if (soundEnabled) {
+        initAudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        // Nur starten wenn Spiel/Tutorial aktiv
+        if (gamePhase === 'kipp21') bgMusic.play().catch(() => {});
+      } else {
+        bgMusic.pause();
+      }
+    }
+    
+    // Erster User-Touch: AudioContext initialisieren (Browser-Policy)
+    document.addEventListener('touchstart', function initOnTouch() {
+      initAudioContext();
+      document.removeEventListener('touchstart', initOnTouch);
+    }, { once: true });
+    document.addEventListener('click', function initOnClick() {
+      initAudioContext();
+      document.removeEventListener('click', initOnClick);
+    }, { once: true });
     
     // WICHTIG: Button disabled bis Texturen geladen sind
     actionButton.disabled = true;
@@ -2990,6 +3053,7 @@
           countdown.style.display = 'none';
           hintText.style.display = 'none';
           counterOrigPos = null;
+          if (soundEnabled) { bgMusic.currentTime = 0; bgMusic.play().catch(() => {}); }
           startKipp21(true);
         };
         
@@ -3010,6 +3074,7 @@
           hintText.style.display = 'none';
           // Counter zurück an Originalposition falls noch in Mitte
           counterOrigPos = null;
+          if (soundEnabled) { bgMusic.currentTime = 0; bgMusic.play().catch(() => {}); }
           startKipp21(false);
         };
       } else {
@@ -3025,6 +3090,7 @@
           countdown.style.display = 'none';
           hintText.style.display = 'none';
           counterOrigPos = null;
+          if (soundEnabled) { bgMusic.currentTime = 0; bgMusic.play().catch(() => {}); }
           startKipp21(false);
         };
       }
@@ -3266,6 +3332,8 @@
         await wait(100);                  // Sicherheitspause
         if (gamePhase !== 'kipp21') return;
         await fadeInUIs();                // ERST JETZT UIs rein
+        // JETZT erst Input freigeben
+        kipp21Active = true;
       })();
       
       // Joker-Icons und Karten erst nach Delay
@@ -3304,7 +3372,7 @@
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
       
-      kipp21Active = true;
+      kipp21Active = false; // Wird erst nach fadeInUIs() aktiviert
       kipp21KippCount = 0;
       
       // Würfel zurück in Startposition (Q3, f2)
@@ -3798,7 +3866,7 @@
         if (elapsed >= 60000 && kipp21Active) {
           kipp21StopRoundTimer();
           kipp21Active = false;
-          gamePhase = 'ende';
+          gamePhase = 'ende'; stopBgMusic();
           if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
           countdown.innerHTML = formatTimer(kipp21TotalTime);
           show60SecTimeout();
@@ -3913,6 +3981,7 @@
           countdown.style.display = 'none';
           hintText.style.display = 'none';
           counterOrigPos = null;
+          if (soundEnabled) { bgMusic.currentTime = 0; bgMusic.play().catch(() => {}); }
           startKipp21(false);
         }
         
@@ -3986,7 +4055,7 @@
           
           if (kipp21Done >= 6) {
             kipp21Active = false;
-            gamePhase = 'ende';
+            gamePhase = 'ende'; stopBgMusic();
             stopReplay();
             if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
             // Finalen Timer-Wert anzeigen
@@ -4186,7 +4255,7 @@
     
 
     function showGameEnd() {
-      gamePhase = 'ende';
+      gamePhase = 'ende'; stopBgMusic();
       hideKniffIcons();
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
@@ -5472,11 +5541,15 @@
     // =========================
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (!texturesReady) return;
+      initAudioContext();
+      if (soundEnabled) { bgMusic.play().catch(() => {}); }
       document.getElementById('startOverlay').style.display = 'none';
       startKipp21(false);
     });
     document.getElementById('btnDemo').addEventListener('click', () => {
       if (!texturesReady) return;
+      initAudioContext();
+      if (soundEnabled) { bgMusic.play().catch(() => {}); }
       document.getElementById('startOverlay').style.display = 'none';
       startKipp21(true);
     });
@@ -6407,6 +6480,7 @@
       // ===== NUKLEARER CLEANUP =====
       // 1. Alles stoppen
       gamePhase = 'start';
+      stopBgMusic();
       autoDemoActive = false;
       replayActive = false;
       kipp21Active = false;
@@ -7004,6 +7078,7 @@
       
       currentQuadrant = newQ;
       isAnimating = false;
+      playKlack(); // Würfel liegt satt auf dem Boden
       if (callback) callback();
     }
 
