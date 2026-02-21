@@ -4321,8 +4321,9 @@
           
           // Card fliegt zum Treffer-Slot
           const card = gameCards[cardIdx];
+          const isLastHit = (kipp21Done >= 6);
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-            showHitText(cardIdx);
+            if (!isLastHit) showHitText(cardIdx);
           });
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
