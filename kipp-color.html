@@ -793,16 +793,7 @@
     /* === ZURUECK-BUTTON (zur Startseite) === */
     /* Progress Dots - 6 Kreise für Fortschritt */
     #progressDots {
-      position: absolute;
-      top: 450px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: none;
-      gap: 12px;
-      z-index: 120;
-      pointer-events: none;
-      justify-content: center;
-      align-items: center;
+      display: none !important;
     }
     .pdot {
       width: 12px; height: 12px;
@@ -823,37 +814,6 @@
     @keyframes dotPulse {
       0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
-    }
-    /* Near-Miss Flash */
-    #nearMissFlash {
-      position: absolute;
-      top: 395px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-      font-weight: bold;
-      color: #d4a843;
-      text-shadow: 0 0 12px rgba(212,168,67,0.9), 0 2px 4px rgba(0,0,0,0.7);
-      letter-spacing: 3px;
-      pointer-events: none;
-      z-index: 160;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      white-space: nowrap;
-    }
-    #nearMissFlash.show {
-      opacity: 1;
-    }
-    @keyframes nearMissCardPulse {
-      0% { transform: scale(1); }
-      30% { transform: scale(1.25); }
-      100% { transform: scale(1); }
-    }
-    .pdot.nearMiss {
-      border-color: #d4a843 !important;
-      background: rgba(212,168,67,0.6) !important;
-      box-shadow: 0 0 14px rgba(212,168,67,0.9) !important;
     }
   </style>
 </head>
@@ -891,7 +851,6 @@
   
   <div id="uiOverlay">
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
-    <div id="nearMissFlash"></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
     <div id="instructionText"></div>
@@ -2209,16 +2168,7 @@
       return false;
     }
     
-    function updateProgressDots(done, activeIdx) {
-      const pd = document.getElementById('progressDots');
-      if (!pd) return;
-      const dots = pd.querySelectorAll('.pdot');
-      dots.forEach((d, i) => {
-        d.classList.remove('hit', 'active');
-        if (i < done) d.classList.add('hit');
-        else if (i === activeIdx) d.classList.add('active');
-      });
-    }
+    function updateProgressDots() { /* disabled */ }
     
     function updateSoundIcon() {
       soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
@@ -2450,85 +2400,28 @@
     }
 
     // =========================
-    // NEAR-MISS System
+    // ON-TARGET Pulse: Kippziel-Karte pulsiert wenn Würfel richtig liegt
     // =========================
-    const NEAR_MISS_TEXT = {
-      de: 'SO NAH!', en: 'SO CLOSE!', es: '¡TAN CERCA!',
-      fr: 'SI PROCHE !', it: 'COSÌ VICINO!', tr: 'ÇOK YAKIN!'
-    };
-    let nearMissTimeout = null;
-    let nearMissWasOnTarget = false; // Track: war der Würfel VOR dem Kipp auf Treffer?
-
-    function checkNearMissBeforeKipp() {
-      nearMissWasOnTarget = false;
+    function checkOnTargetAfterKipp() {
       if (gamePhase !== 'kipp21' || !kipp21Active || replayActive) return;
       if (!kipp21CardStates.includes('offen')) return;
-      // checkTreffer prüft aktuelle Position — VOR dem Kipp
       const result = checkTreffer();
-      if (result) nearMissWasOnTarget = true;
-    }
-
-    function checkNearMissAfterKipp() {
-      if (!nearMissWasOnTarget) return;
-      nearMissWasOnTarget = false;
-      // Jetzt NACH dem Kipp — ist es immer noch ein Treffer?
-      const stillHit = checkTreffer();
-      if (stillHit) return; // Immer noch drauf → kein Near Miss
-      // War drauf, jetzt nicht mehr → NEAR MISS!
-      showNearMiss();
-    }
-
-    function showNearMiss() {
-      const flash = document.getElementById('nearMissFlash');
-      if (!flash) return;
-      flash.textContent = NEAR_MISS_TEXT[_digikippLang] || NEAR_MISS_TEXT.de;
-
-      // Text einblenden
-      if (nearMissTimeout) clearTimeout(nearMissTimeout);
-      flash.classList.add('show');
-      nearMissTimeout = setTimeout(() => {
-        flash.classList.remove('show');
-      }, 1400);
-
-      // Aktive Karte im 3D pulsieren
+      if (!result) return;
+      // Würfel liegt richtig → Karte pulsieren!
       const openIdx = kipp21CardStates.indexOf('offen');
       if (openIdx >= 0 && gameCards[openIdx]?.mesh) {
         const mesh = gameCards[openIdx].mesh;
         const orig = { x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z };
-        mesh.scale.set(orig.x * 1.3, orig.y * 1.3, orig.z * 1.3);
-        setTimeout(() => mesh.scale.set(orig.x, orig.y, orig.z), 300);
+        // 2x Pulse
+        mesh.scale.set(orig.x * 1.35, orig.y * 1.35, orig.z * 1.35);
+        setTimeout(() => {
+          mesh.scale.set(orig.x, orig.y, orig.z);
+          setTimeout(() => {
+            mesh.scale.set(orig.x * 1.25, orig.y * 1.25, orig.z * 1.25);
+            setTimeout(() => mesh.scale.set(orig.x, orig.y, orig.z), 200);
+          }, 150);
+        }, 200);
       }
-
-      // Progress-Dot pulsieren
-      const pd = document.getElementById('progressDots');
-      if (pd) {
-        const dots = pd.querySelectorAll('.pdot');
-        const activeDotIdx = kipp21CardStates.indexOf('offen');
-        if (activeDotIdx >= 0 && dots[activeDotIdx]) {
-          dots[activeDotIdx].classList.add('nearMiss');
-          setTimeout(() => dots[activeDotIdx].classList.remove('nearMiss'), 1200);
-        }
-      }
-
-      // Kurzer Warn-Ton (absteigend)
-      playNearMissSound();
-    }
-
-    function playNearMissSound() {
-      if (!audioCtx || !soundEnabled) return;
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.25);
     }
 
     // Zielposition für Kippziel-Fluganimation bei Treffer
@@ -3629,7 +3522,7 @@
         if (kipp21KippCount > 21) {
           motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
           motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
-            ' top:' + (btnBaseY - 30) + 'px; width:280px; text-align:center;' +
+            ' top:' + (btnBaseY - 60) + 'px; width:280px; text-align:center;' +
             ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
             ' color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.6);' +
             ' pointer-events:none; z-index:150; letter-spacing:0.5px;';
@@ -3980,9 +3873,6 @@
       kipp21RoundKipps = 0;
       kipp21TotalTime = 0;
       kipp21Done = 0;
-      nearMissWasOnTarget = false;
-      const nmf = document.getElementById('nearMissFlash');
-      if (nmf) nmf.classList.remove('show');
       kipp21UsedDistances = [];
       kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt'];
       kipp21CardDistances = [0,0,0,0,0,0];
@@ -7561,8 +7451,6 @@
             cube.quaternion.copy(newQuat);
             kipGroup.add(cube);
           } else {
-            // Near-Miss: Zustand VOR dem Kipp merken
-            checkNearMissBeforeKipp();
             // Gekippt: finalisieren
             finalizeKipp(finalQ, null);
             // topFace bei jedem Kipp aktualisieren (kippen + spielen)
@@ -7578,12 +7466,12 @@
               // Bestätigungs-Haken in Ecken zeigen
               showEckeHaken();
             }
-            // KIPP 21: Kipp zählen + Near-Miss prüfen
+            // KIPP 21: Kipp zählen + On-Target prüfen
             if (gamePhase === 'kipp21' && kipp21Active) {
               kipp21KippCount++;
               kipp21RoundKipps++;
               hintText.innerHTML = formatKipps(kipp21KippCount);
-              checkNearMissAfterKipp();
+              checkOnTargetAfterKipp();
             }
 
 
