@@ -737,7 +737,6 @@
       line-height: 1.6;
     }
     #kippTippOverlay .ktBtn {
-      display: none;
       margin-top: 30px;
       width: 200px; height: 44px;
       background: url(button_kurz.webp) center/contain no-repeat;
@@ -747,6 +746,8 @@
       color: #d0d0d0;
       text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
       letter-spacing: 1px;
+      opacity: 0;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -1041,7 +1042,7 @@
     // TISCH (π1 Ebene)
     // =========================
     // Boxboden (6x6 Zellen, zentriert um Achsenmittelpunkt)
-    const boxbodenTexture = new THREE.TextureLoader().load('Boxboden.webp');
+    const boxbodenTexture = new THREE.TextureLoader().load('Boxboden.png');
     const boxbodenSize = 6 * 0.15625; // 0.9375
     const boxbodenGeometry = new THREE.PlaneGeometry(boxbodenSize, boxbodenSize);
     const boxbodenMaterial = new THREE.MeshStandardMaterial({ 
@@ -1923,22 +1924,20 @@
       soundToggle.style.display = 'block';
     }
     
-    soundToggle.addEventListener('click', (e) => {
+    let soundToggleBusy = false;
+    function handleSoundToggle(e) {
       e.stopPropagation();
+      if (e.type === 'touchend') e.preventDefault();
+      if (soundToggleBusy) return;
+      soundToggleBusy = true;
+      setTimeout(() => { soundToggleBusy = false; }, 300);
       soundEnabled = !soundEnabled;
       localStorage.setItem('digikipp_sound', soundEnabled ? 'on' : 'off');
       updateSoundIcon();
       onSoundToggle();
-    });
-    // Touchend für Mobile
-    soundToggle.addEventListener('touchend', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      soundEnabled = !soundEnabled;
-      localStorage.setItem('digikipp_sound', soundEnabled ? 'on' : 'off');
-      updateSoundIcon();
-      onSoundToggle();
-    });
+    }
+    soundToggle.addEventListener('click', handleSoundToggle);
+    soundToggle.addEventListener('touchend', handleSoundToggle, { passive: false });
     
     // resetButton anzeigen (feste Position A-B, Zeile 1-2, 6px südlich)
     function positionResetButton() {
@@ -1951,7 +1950,21 @@
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
-    let bgMusicUnlocked = false; // Wurde play() schon mal erfolgreich aufgerufen?
+    let bgMusicUnlocked = false;
+    
+    bgMusic.addEventListener('error', () => {
+      console.warn('[AUDIO] colorloop.mp3 konnte nicht geladen werden!');
+    });
+    
+    // Sofort versuchen — klappt oft weil User per Tap von index.html kam
+    if (soundEnabled) {
+      bgMusic.play().then(() => {
+        bgMusicUnlocked = true;
+        console.log('[AUDIO] bgMusic autoplay success');
+      }).catch(() => {
+        console.log('[AUDIO] bgMusic autoplay blocked — waiting for touch');
+      });
+    }
     
     // KlackCrop als AudioBuffer für präzises Timing (kein Latenz-Delay)
     let klackBuffer = null;
@@ -1990,8 +2003,10 @@
     // Sound-Toggle: Musik sofort starten/stoppen
     function onSoundToggle() {
       if (soundEnabled) {
+        // Wie unlockAndPlayBgMusic — AudioContext + Play
         initAudioContext();
         if (audioCtx.state === 'suspended') audioCtx.resume();
+        bgMusicUnlocked = true;
         bgMusic.play().catch(() => {});
       } else {
         bgMusic.pause();
@@ -2006,24 +2021,33 @@
       bgMusicUnlocked = true;
       bgMusic.play().then(() => {
         console.log('[AUDIO] bgMusic playing');
-      }).catch(() => {
-        console.log('[AUDIO] bgMusic deferred — waiting for load');
+      }).catch((err) => {
+        console.log('[AUDIO] bgMusic deferred:', err.message);
+        // Retry nach kurzem Delay
+        setTimeout(() => {
+          if (soundEnabled && bgMusic.paused && bgMusicUnlocked) {
+            bgMusic.play().catch(() => {});
+          }
+        }, 500);
       });
     }
     // Falls play() fehlschlug weil Datei noch lädt
     bgMusic.addEventListener('canplaythrough', () => {
-      if (bgMusicUnlocked && soundEnabled && bgMusic.paused) {
-        bgMusic.play().catch(() => {});
+      if (soundEnabled && bgMusic.paused) {
+        bgMusic.play().then(() => {
+          bgMusicUnlocked = true;
+        }).catch(() => {});
       }
     });
+    // Erster Touch IRGENDWO: Audio unlocken (capture=true, damit stopPropagation nicht blockiert)
     document.addEventListener('touchstart', function initOnTouch() {
       unlockAndPlayBgMusic();
-      document.removeEventListener('touchstart', initOnTouch);
-    }, { once: true });
+      document.removeEventListener('touchstart', initOnTouch, true);
+    }, { once: true, capture: true });
     document.addEventListener('click', function initOnClick() {
       unlockAndPlayBgMusic();
-      document.removeEventListener('click', initOnClick);
-    }, { once: true });
+      document.removeEventListener('click', initOnClick, true);
+    }, { once: true, capture: true });
     
     // =========================
     // KIPP-TIPP System
@@ -2113,7 +2137,10 @@
       const btn = document.getElementById('ktBtn');
       
       textEl.innerHTML = getKippTippText(idx);
-      btn.style.display = 'none';
+      btn.style.display = 'inline-block';
+      btn.style.opacity = '0';
+      btn.style.pointerEvents = 'none';
+      btn.style.transition = 'opacity 0.4s ease';
       content.classList.remove('show');
       overlay.style.display = 'block';
       
@@ -2122,9 +2149,10 @@
         content.classList.add('show');
       });
       
-      // Button nach 4 Sek
+      // Button nach 4 Sek einblenden (kein Layout-Shift, nur Opacity)
       setTimeout(() => {
-        btn.style.display = 'inline-block';
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
       }, 4000);
       
       // Button-Handler
@@ -5841,20 +5869,23 @@
     // =========================
     // BUTTON EVENT LISTENERS
     // =========================
-    document.getElementById('btnSpielen').addEventListener('click', () => {
-      if (!texturesReady) return;
-      initAudioContext();
-      if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
+    let startBtnFired = false;
+    function handleStartBtn(withTutorial) {
+      if (!texturesReady || startBtnFired) return;
+      startBtnFired = true;
+      setTimeout(() => { startBtnFired = false; }, 500);
+      unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      startKipp21(false);
-    });
-    document.getElementById('btnDemo').addEventListener('click', () => {
-      if (!texturesReady) return;
-      initAudioContext();
-      if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
-      document.getElementById('startOverlay').style.display = 'none';
-      startKipp21(true);
-    });
+      startKipp21(withTutorial);
+    }
+    document.getElementById('btnSpielen').addEventListener('click', () => handleStartBtn(false));
+    document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
+      e.preventDefault(); handleStartBtn(false);
+    }, { passive: false });
+    document.getElementById('btnDemo').addEventListener('click', () => handleStartBtn(true));
+    document.getElementById('btnDemo').addEventListener('touchend', (e) => {
+      e.preventDefault(); handleStartBtn(true);
+    }, { passive: false });
     
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
