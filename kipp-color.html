@@ -3614,16 +3614,18 @@
           startKipp21(false);
         };
       } else {
-        // Spiel-Ende: SPIELEN + KIPP PRINZIP
+        // Spiel-Ende: NOCHMAL + SCORE STATISTIK
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
+        const ekpb = document.getElementById('endKippPrinzipBtn');
+        if (ekpb) ekpb.style.display = 'none';
         
-        abtn.textContent = T.sp;
+        abtn.textContent = T.nm;
         abtn.style.cssText = btnCSS(btnBaseY, 18, 2.5);
         abtn.onclick = () => {
           abtn.style.display = 'none';
-          const ekpb = document.getElementById('endKippPrinzipBtn');
-          if (ekpb) ekpb.style.display = 'none';
+          const esb2 = document.getElementById('endScoreBtn');
+          if (esb2) esb2.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
@@ -3632,17 +3634,18 @@
           startKipp21(false);
         };
         
-        let kpBtn = document.getElementById('endKippPrinzipBtn');
-        if (!kpBtn) {
-          kpBtn = document.createElement('button');
-          kpBtn.id = 'endKippPrinzipBtn';
-          kpBtn.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(kpBtn);
+        let scoreBtn = document.getElementById('endScoreBtn');
+        if (!scoreBtn) {
+          scoreBtn = document.createElement('button');
+          scoreBtn.id = 'endScoreBtn';
+          scoreBtn.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(scoreBtn);
         }
-        kpBtn.textContent = KIPP_PRINZIP[currentLang].btn;
-        kpBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
-        kpBtn.onclick = () => {
-          showKippPrinzip();
+        scoreBtn.textContent = 'SCORE STATISTIK';
+        scoreBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
+        scoreBtn.style.display = 'block';
+        scoreBtn.onclick = () => {
+          // TODO: Score Statistik Overlay
         };
       }
     }
@@ -3706,7 +3709,7 @@
       if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
       stopCountdown();
       // Dynamische Elemente entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
@@ -7067,7 +7070,7 @@
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
