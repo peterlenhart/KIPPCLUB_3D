@@ -824,6 +824,37 @@
       0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
+    /* Near-Miss Flash */
+    #nearMissFlash {
+      position: absolute;
+      top: 395px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Arial, sans-serif;
+      font-size: 20px;
+      font-weight: bold;
+      color: #d4a843;
+      text-shadow: 0 0 12px rgba(212,168,67,0.9), 0 2px 4px rgba(0,0,0,0.7);
+      letter-spacing: 3px;
+      pointer-events: none;
+      z-index: 160;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      white-space: nowrap;
+    }
+    #nearMissFlash.show {
+      opacity: 1;
+    }
+    @keyframes nearMissCardPulse {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+    .pdot.nearMiss {
+      border-color: #d4a843 !important;
+      background: rgba(212,168,67,0.6) !important;
+      box-shadow: 0 0 14px rgba(212,168,67,0.9) !important;
+    }
   </style>
 </head>
 <body>
@@ -860,6 +891,7 @@
   
   <div id="uiOverlay">
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
+    <div id="nearMissFlash"></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
     <div id="instructionText"></div>
@@ -2159,12 +2191,20 @@
     let personalBestGames = parseInt(localStorage.getItem('digikipp_games') || '0');
     
     function updatePersonalBest(kipps) {
-      personalBestGames++;
-      localStorage.setItem('digikipp_games', personalBestGames);
-      if (personalBestKipps === 0 || kipps < personalBestKipps) {
-        personalBestKipps = kipps;
-        localStorage.setItem('digikipp_bestKipps', personalBestKipps);
-        return true; // new record!
+      try {
+        personalBestGames++;
+        localStorage.setItem('digikipp_games', personalBestGames);
+        if (personalBestKipps === 0 || kipps < personalBestKipps) {
+          personalBestKipps = kipps;
+          localStorage.setItem('digikipp_bestKipps', personalBestKipps);
+          return true; // new record!
+        }
+      } catch(e) {
+        console.warn('[PB] localStorage failed:', e);
+        if (personalBestKipps === 0 || kipps < personalBestKipps) {
+          personalBestKipps = kipps;
+          return true;
+        }
       }
       return false;
     }
@@ -2407,6 +2447,88 @@
       const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
       if (neighborColor !== card.color.name) return false;
       return { slot: hitSlot, quadrant: currentQuadrant };
+    }
+
+    // =========================
+    // NEAR-MISS System
+    // =========================
+    const NEAR_MISS_TEXT = {
+      de: 'SO NAH!', en: 'SO CLOSE!', es: '¡TAN CERCA!',
+      fr: 'SI PROCHE !', it: 'COSÌ VICINO!', tr: 'ÇOK YAKIN!'
+    };
+    let nearMissTimeout = null;
+    let nearMissWasOnTarget = false; // Track: war der Würfel VOR dem Kipp auf Treffer?
+
+    function checkNearMissBeforeKipp() {
+      nearMissWasOnTarget = false;
+      if (gamePhase !== 'kipp21' || !kipp21Active || replayActive) return;
+      if (!kipp21CardStates.includes('offen')) return;
+      // checkTreffer prüft aktuelle Position — VOR dem Kipp
+      const result = checkTreffer();
+      if (result) nearMissWasOnTarget = true;
+    }
+
+    function checkNearMissAfterKipp() {
+      if (!nearMissWasOnTarget) return;
+      nearMissWasOnTarget = false;
+      // Jetzt NACH dem Kipp — ist es immer noch ein Treffer?
+      const stillHit = checkTreffer();
+      if (stillHit) return; // Immer noch drauf → kein Near Miss
+      // War drauf, jetzt nicht mehr → NEAR MISS!
+      showNearMiss();
+    }
+
+    function showNearMiss() {
+      const flash = document.getElementById('nearMissFlash');
+      if (!flash) return;
+      flash.textContent = NEAR_MISS_TEXT[_digikippLang] || NEAR_MISS_TEXT.de;
+
+      // Text einblenden
+      if (nearMissTimeout) clearTimeout(nearMissTimeout);
+      flash.classList.add('show');
+      nearMissTimeout = setTimeout(() => {
+        flash.classList.remove('show');
+      }, 1400);
+
+      // Aktive Karte im 3D pulsieren
+      const openIdx = kipp21CardStates.indexOf('offen');
+      if (openIdx >= 0 && gameCards[openIdx]?.mesh) {
+        const mesh = gameCards[openIdx].mesh;
+        const orig = { x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z };
+        mesh.scale.set(orig.x * 1.3, orig.y * 1.3, orig.z * 1.3);
+        setTimeout(() => mesh.scale.set(orig.x, orig.y, orig.z), 300);
+      }
+
+      // Progress-Dot pulsieren
+      const pd = document.getElementById('progressDots');
+      if (pd) {
+        const dots = pd.querySelectorAll('.pdot');
+        const activeDotIdx = kipp21CardStates.indexOf('offen');
+        if (activeDotIdx >= 0 && dots[activeDotIdx]) {
+          dots[activeDotIdx].classList.add('nearMiss');
+          setTimeout(() => dots[activeDotIdx].classList.remove('nearMiss'), 1200);
+        }
+      }
+
+      // Kurzer Warn-Ton (absteigend)
+      playNearMissSound();
+    }
+
+    function playNearMissSound() {
+      if (!audioCtx || !soundEnabled) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
     }
 
     // Zielposition für Kippziel-Fluganimation bei Treffer
@@ -3384,6 +3506,9 @@
     function showEndButtons(isTutorial, isNewRecord) {
       // Guard: Reset wurde gedrückt, wir sind schon am Start-Screen
       if (gamePhase === 'start') return;
+      // DEBUG
+      let dbg = document.getElementById('endDebug');
+      if (dbg) dbg.textContent += ' | sEB(tut='+isTutorial+',rec='+isNewRecord+')';
       // HIT-Texte entfernen
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
@@ -3449,6 +3574,8 @@
         };
       } else {
         // Spiel-Ende: NEUES SPIEL + KIPP PRINZIP (+ Motivationstext bei >21 Kipps)
+        try {
+        console.log('[END] showEndButtons game-end, kipps='+kipp21KippCount, 'btnBaseY='+btnBaseY);
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
         
@@ -3479,6 +3606,8 @@
           ? '<span style="color:#d4a843">' + (NR_END[lang] || NR_END.de) + ' ' + kipp21KippCount + ' KIPPS</span>'
           : '<span style="color:#a0a0a0;font-size:16px">' + (PB_END[lang] || PB_END.de).replace('{k}', personalBestKipps) + '</span>';
         setTutText(resultLine, bestLine);
+        const pgt = document.getElementById('perfektGameText');
+        if (pgt) { pgt.style.display = 'block'; pgt.style.opacity = '1'; }
         
         // Motivationstext bei >21 Kipps
         const MOTIV_21 = {
@@ -3498,7 +3627,7 @@
           document.getElementById('uiOverlay').appendChild(motivEl);
         }
         if (kipp21KippCount > 21) {
-          motivEl.textContent = MOTIV_21[_digikippLang] || MOTIV_21.de;
+          motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
           motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
             ' top:' + (btnBaseY - 30) + 'px; width:280px; text-align:center;' +
             ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
@@ -3531,12 +3660,22 @@
           kpBtn.className = 'end-btn-dynamic';
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
-        kpBtn.textContent = KIPP_PRINZIP[_digikippLang].btn;
+        kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
         kpBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => {
           showKippPrinzip();
         };
+        console.log('[END] Buttons created successfully');
+        if (dbg) dbg.textContent += ' | OK abtn='+abtn.style.display+' kp='+kpBtn.style.display+' Y='+btnBaseY;
+        } catch(e) {
+          console.error('[showEndButtons] CRASH:', e);
+          let dbg2 = document.getElementById('endDebug');
+          if (dbg2) dbg2.textContent += ' | CRASH:'+e.message;
+          abtn.textContent = T.nm || 'NEUES SPIEL';
+          abtn.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);top:500px;width:280px;height:49px;background:#333;border:2px solid #d4a843;border-radius:8px;cursor:pointer;pointer-events:auto;z-index:9999;font:bold 18px Arial;color:#d4a843;text-align:center;line-height:45px;';
+          abtn.onclick = () => { abtn.style.display='none'; startKipp21(false); };
+        }
       }
     }
     
@@ -3841,6 +3980,9 @@
       kipp21RoundKipps = 0;
       kipp21TotalTime = 0;
       kipp21Done = 0;
+      nearMissWasOnTarget = false;
+      const nmf = document.getElementById('nearMissFlash');
+      if (nmf) nmf.classList.remove('show');
       kipp21UsedDistances = [];
       kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt'];
       kipp21CardDistances = [0,0,0,0,0,0];
@@ -4512,27 +4654,43 @@
           hintText.innerHTML = formatKipps(kipp21KippCount);
           
           if (kipp21Done >= 6) {
-            kipp21Active = false;
-            gamePhase = 'ende';
-            stopReplay();
-            if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
-            // Progress dots ausblenden
-            const pd = document.getElementById('progressDots');
-            if (pd) pd.style.display = 'none';
-            // Personal Best aktualisieren
-            const isNewRecord = updatePersonalBest(kipp21KippCount);
-            // Finalen Timer-Wert anzeigen
-            countdown.innerHTML = formatTimer(kipp21TotalTime);
-            // Joker-Reihe ausblenden
-            hideKniffIcons();
-            // HIT-Texte auch verzögert nochmal räumen (letzter HIT entsteht nach 800ms Fly)
-            setTimeout(() => {
-              hitTextEls.forEach(el => el.remove());
-              hitTextEls.length = 0;
-              document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-            }, 1200);
-            
-            // End-Buttons zeigen
+            console.log('[END] kipp21Done='+kipp21Done+', calling showEndButtons');
+            // DEBUG: Sichtbarer Status am Spielende
+            let dbg = document.getElementById('endDebug');
+            if (!dbg) {
+              dbg = document.createElement('div');
+              dbg.id = 'endDebug';
+              dbg.style.cssText = 'position:absolute;bottom:4px;left:4px;font:bold 10px monospace;color:#0f0;background:rgba(0,0,0,0.85);padding:3px 6px;z-index:99999;pointer-events:none;max-width:350px;word-wrap:break-word;';
+              document.getElementById('uiOverlay').appendChild(dbg);
+            }
+            dbg.textContent = 'END: done='+kipp21Done+' kipps='+kipp21KippCount+' phase='+gamePhase;
+            let isNewRecord = false;
+            try {
+              kipp21Active = false;
+              gamePhase = 'ende';
+              stopReplay();
+              if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
+              // Progress dots ausblenden
+              const pd = document.getElementById('progressDots');
+              if (pd) pd.style.display = 'none';
+              // Personal Best aktualisieren
+              isNewRecord = updatePersonalBest(kipp21KippCount);
+              // Finalen Timer-Wert anzeigen
+              countdown.innerHTML = formatTimer(kipp21TotalTime);
+              // Joker-Reihe ausblenden
+              hideKniffIcons();
+              // HIT-Texte auch verzögert nochmal räumen (letzter HIT entsteht nach 800ms Fly)
+              setTimeout(() => {
+                hitTextEls.forEach(el => el.remove());
+                hitTextEls.length = 0;
+                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+              }, 1200);
+            } catch(e) {
+              console.error('[END] Pre-button error:', e);
+              gamePhase = 'ende';
+              kipp21Active = false;
+            }
+            // End-Buttons zeigen — IMMER, auch nach Fehler
             showEndButtons(false, isNewRecord);
             }
           }
@@ -4719,38 +4877,34 @@
 
     function showGameEnd() {
       gamePhase = 'ende';
-      hideKniffIcons();
-      schauenWobbleActive = false; isDemoAnimating = false;
-      handDemo.visible = false;
-      stopCountdown();
-      setButtonsDisabled(true);
-      document.getElementById('richtungButtons').classList.add('hidden');
-      kippButtons.classList.add('hidden');
-      document.getElementById('kippTarget').style.display = 'none';
-      document.getElementById('tutorialText').style.display = 'none';
-      document.getElementById('instructionText').style.display = 'none';
-      document.getElementById('entscheidungText').style.display = 'none';
-      document.getElementById('eyeIcon').style.display = 'none';
-      const jr1 = document.getElementById('jokerIconsRow');
-      if (jr1) { jr1.style.display = 'none'; jr1.style.opacity = '0'; }
-      document.getElementById('zumSpielBtn').style.display = 'none';
-      document.getElementById('perfektGameText').style.display = 'none';
-      countdown.style.display = 'none';
-      
-      // hintText verstecken
-      hintText.style.display = 'none';
-      
-      // Progress dots verstecken
-      const _pd2 = document.getElementById('progressDots');
-      if (_pd2) _pd2.style.display = 'none';
-      
-      // Personal Best aktualisieren
-      const isNewRec = updatePersonalBest(kipp21KippCount);
-      
-      // actionButton verstecken
-      actionButton.style.display = 'none';
-
-      // End-Buttons zeigen
+      let isNewRec = false;
+      try {
+        hideKniffIcons();
+        schauenWobbleActive = false; isDemoAnimating = false;
+        handDemo.visible = false;
+        stopCountdown();
+        setButtonsDisabled(true);
+        document.getElementById('richtungButtons').classList.add('hidden');
+        kippButtons.classList.add('hidden');
+        document.getElementById('kippTarget').style.display = 'none';
+        document.getElementById('tutorialText').style.display = 'none';
+        document.getElementById('instructionText').style.display = 'none';
+        document.getElementById('entscheidungText').style.display = 'none';
+        document.getElementById('eyeIcon').style.display = 'none';
+        const jr1 = document.getElementById('jokerIconsRow');
+        if (jr1) { jr1.style.display = 'none'; jr1.style.opacity = '0'; }
+        document.getElementById('zumSpielBtn').style.display = 'none';
+        document.getElementById('perfektGameText').style.display = 'none';
+        countdown.style.display = 'none';
+        hintText.style.display = 'none';
+        const _pd2 = document.getElementById('progressDots');
+        if (_pd2) _pd2.style.display = 'none';
+        isNewRec = updatePersonalBest(kipp21KippCount);
+        actionButton.style.display = 'none';
+      } catch(e) {
+        console.error('[showGameEnd] cleanup error:', e);
+      }
+      // End-Buttons zeigen — IMMER
       showEndButtons(false, isNewRec);
     }
     
@@ -7407,6 +7561,8 @@
             cube.quaternion.copy(newQuat);
             kipGroup.add(cube);
           } else {
+            // Near-Miss: Zustand VOR dem Kipp merken
+            checkNearMissBeforeKipp();
             // Gekippt: finalisieren
             finalizeKipp(finalQ, null);
             // topFace bei jedem Kipp aktualisieren (kippen + spielen)
@@ -7422,11 +7578,12 @@
               // Bestätigungs-Haken in Ecken zeigen
               showEckeHaken();
             }
-            // KIPP 21: Kipp zählen
+            // KIPP 21: Kipp zählen + Near-Miss prüfen
             if (gamePhase === 'kipp21' && kipp21Active) {
               kipp21KippCount++;
               kipp21RoundKipps++;
               hintText.innerHTML = formatKipps(kipp21KippCount);
+              checkNearMissAfterKipp();
             }
 
 
