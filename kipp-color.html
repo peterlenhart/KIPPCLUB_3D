@@ -791,6 +791,39 @@
     }
 
     /* === ZURUECK-BUTTON (zur Startseite) === */
+    /* Progress Dots - 6 Kreise für Fortschritt */
+    #progressDots {
+      position: absolute;
+      top: 450px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 12px;
+      z-index: 120;
+      pointer-events: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .pdot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid rgba(212,168,67,0.6);
+      background: transparent;
+      transition: all 0.4s ease;
+    }
+    .pdot.hit {
+      background: #d4a843;
+      border-color: #d4a843;
+      box-shadow: 0 0 8px rgba(212,168,67,0.7);
+    }
+    .pdot.active {
+      border-color: #ffffff;
+      animation: dotPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
+      50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
+    }
   </style>
 </head>
 <body>
@@ -801,6 +834,7 @@
     <div id="startChallengeText">
       <div class="sctLine sctHead" id="sctHead">SPIEL ZIEL</div>
       <div class="sctLine sctSub" id="sctSub">6 HITS mit 21 KIPPS.</div>
+      <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
@@ -825,6 +859,7 @@
   </div>
   
   <div id="uiOverlay">
+    <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
     <div id="instructionText"></div>
@@ -1958,16 +1993,36 @@
     function startChallengeSequence() {
       const head = document.getElementById('sctHead');
       const sub = document.getElementById('sctSub');
+      const best = document.getElementById('sctBest');
       sctRunning = true;
       let step = 0;
       
-      function showLine(el, otherEl) {
-        otherEl.style.animation = 'none';
-        otherEl.style.opacity = '0';
-        otherEl.style.transform = 'scale(0.6)';
-        el.style.animation = 'none';
-        el.style.opacity = '0';
-        el.style.transform = 'scale(0.6)';
+      // Personal Best Text
+      const PB_TEXT = {
+        de: 'DEIN BESTER: {k} KIPPS',
+        en: 'YOUR BEST: {k} TILTS',
+        es: 'TU MEJOR: {k} VOLCADOS',
+        fr: 'TON MEILLEUR : {k} BASCULES',
+        it: 'IL TUO MIGLIORE: {k} RIBALTAMENTI',
+        tr: 'EN İYİN: {k} DEVİRME'
+      };
+      const hasBest = personalBestKipps > 0;
+      if (hasBest) {
+        const lang = _digikippLang || 'de';
+        best.textContent = (PB_TEXT[lang] || PB_TEXT.de).replace('{k}', personalBestKipps);
+      }
+      const totalPhases = hasBest ? 6 : 4;
+      
+      function hideAll() {
+        [head, sub, best].forEach(el => {
+          el.style.animation = 'none';
+          el.style.opacity = '0';
+          el.style.transform = 'scale(0.6)';
+        });
+      }
+      
+      function showLine(el) {
+        hideAll();
         void el.offsetWidth;
         el.style.animation = 'sctInflate 1.2s ease-out forwards';
       }
@@ -1980,13 +2035,16 @@
       
       function tick() {
         if (!sctRunning) return;
-        const phase = step % 4;
-        if (phase === 0) { showLine(head, sub); }
+        const phase = step % totalPhases;
+        if (phase === 0) { showLine(head); }
         else if (phase === 1) { hideLine(head); }
-        else if (phase === 2) { showLine(sub, head); }
+        else if (phase === 2) { showLine(sub); }
         else if (phase === 3) { hideLine(sub); }
+        else if (phase === 4) { showLine(best); }
+        else if (phase === 5) { hideLine(best); }
         step++;
-        const delay = (phase === 0 || phase === 2) ? 1400 : 400;
+        const isShow = (phase % 2 === 0);
+        const delay = isShow ? 1400 : 400;
         sctTimerId = setTimeout(tick, delay);
       }
       tick();
@@ -2008,10 +2066,12 @@
         const sct = document.getElementById('startChallengeText');
         const head = document.getElementById('sctHead');
         const sub = document.getElementById('sctSub');
+        const best = document.getElementById('sctBest');
         
-        // Head immer verstecken
+        // Head und Best immer verstecken
         head.style.animation = 'none';
         head.style.opacity = '0';
+        if (best) { best.style.animation = 'none'; best.style.opacity = '0'; }
         
         // Sub: wenn schon sichtbar (opacity > 0.5), nicht nochmal inflaten
         const subVisible = parseFloat(getComputedStyle(sub).opacity) > 0.5;
@@ -2093,6 +2153,32 @@
     const soundToggle = document.getElementById('soundToggle');
     const soundImg = document.getElementById('soundImg');
     let soundEnabled = localStorage.getItem('digikipp_sound') !== 'off';
+    
+    // Personal Best
+    let personalBestKipps = parseInt(localStorage.getItem('digikipp_bestKipps') || '0');
+    let personalBestGames = parseInt(localStorage.getItem('digikipp_games') || '0');
+    
+    function updatePersonalBest(kipps) {
+      personalBestGames++;
+      localStorage.setItem('digikipp_games', personalBestGames);
+      if (personalBestKipps === 0 || kipps < personalBestKipps) {
+        personalBestKipps = kipps;
+        localStorage.setItem('digikipp_bestKipps', personalBestKipps);
+        return true; // new record!
+      }
+      return false;
+    }
+    
+    function updateProgressDots(done, activeIdx) {
+      const pd = document.getElementById('progressDots');
+      if (!pd) return;
+      const dots = pd.querySelectorAll('.pdot');
+      dots.forEach((d, i) => {
+        d.classList.remove('hit', 'active');
+        if (i < done) d.classList.add('hit');
+        else if (i === activeIdx) d.classList.add('active');
+      });
+    }
     
     function updateSoundIcon() {
       soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
@@ -3295,7 +3381,7 @@
     }
 
     // === END-BUTTONS (WIEDERHOLEN + SPIELEN) ===
-    function showEndButtons(isTutorial) {
+    function showEndButtons(isTutorial, isNewRecord) {
       // Guard: Reset wurde gedrückt, wir sind schon am Start-Screen
       if (gamePhase === 'start') return;
       // HIT-Texte entfernen
@@ -3366,6 +3452,34 @@
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
         
+        // Ergebnis-Text anzeigen
+        const totalSec = Math.floor((kipp21TotalTime || 0) / 1000);
+        const zeitStr = totalSec + ' Sek.';
+        const resultLine = T.erg.replace('{k}', kipp21KippCount).replace('{z}', zeitStr);
+        
+        // Personal Best Zeile
+        const PB_END = {
+          de: 'DEIN BESTER: {k} KIPPS',
+          en: 'YOUR BEST: {k} TILTS',
+          es: 'TU MEJOR: {k} VOLCADOS',
+          fr: 'TON MEILLEUR : {k} BASCULES',
+          it: 'IL TUO MIGLIORE: {k} RIBALTAMENTI',
+          tr: 'EN İYİN: {k} DEVİRME'
+        };
+        const NR_END = {
+          de: 'NEUER REKORD!',
+          en: 'NEW RECORD!',
+          es: '¡NUEVO RÉCORD!',
+          fr: 'NOUVEAU RECORD !',
+          it: 'NUOVO RECORD!',
+          tr: 'YENİ REKOR!'
+        };
+        const lang = _digikippLang || 'de';
+        const bestLine = isNewRecord 
+          ? '<span style="color:#d4a843">' + (NR_END[lang] || NR_END.de) + ' ' + kipp21KippCount + ' KIPPS</span>'
+          : '<span style="color:#a0a0a0;font-size:16px">' + (PB_END[lang] || PB_END.de).replace('{k}', personalBestKipps) + '</span>';
+        setTutText(resultLine, bestLine);
+        
         // Motivationstext bei >21 Kipps
         const MOTIV_21 = {
           de: '21 KIPPS sind möglich. Jedes Mal.',
@@ -3384,7 +3498,7 @@
           document.getElementById('uiOverlay').appendChild(motivEl);
         }
         if (kipp21KippCount > 21) {
-          motivEl.textContent = MOTIV_21[currentLang] || MOTIV_21.de;
+          motivEl.textContent = MOTIV_21[_digikippLang] || MOTIV_21.de;
           motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
             ' top:' + (btnBaseY - 30) + 'px; width:280px; text-align:center;' +
             ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
@@ -3417,7 +3531,7 @@
           kpBtn.className = 'end-btn-dynamic';
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
-        kpBtn.textContent = KIPP_PRINZIP[currentLang].btn;
+        kpBtn.textContent = KIPP_PRINZIP[_digikippLang].btn;
         kpBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => {
@@ -3485,12 +3599,15 @@
       if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
       stopCountdown();
       // Dynamische Elemente entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
       document.querySelectorAll('.end-btn-dynamic, .hit-text-el').forEach(el => el.remove());
       hitTextEls.length = 0;
+      // Progress dots verstecken
+      const _pd = document.getElementById('progressDots');
+      if (_pd) _pd.style.display = 'none';
       // Hand ausblenden
       if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
       // Kniff-State zurücksetzen
@@ -3609,6 +3726,13 @@
           });
           countdown.style.display = 'block'; countdown.style.opacity = '0';
           hintText.style.display = 'block'; hintText.style.opacity = '0';
+          const pd = document.getElementById('progressDots');
+          if (!kipp21WithTutorial) {
+            pd.style.display = 'flex'; pd.style.opacity = '0';
+            updateProgressDots(kipp21Done, -1);
+          } else {
+            pd.style.display = 'none';
+          }
           
           const start = performance.now();
           const dur = 1200;
@@ -3623,6 +3747,7 @@
             if (zsb2) zsb2.style.opacity = String(e);
             countdown.style.opacity = String(e);
             hintText.style.opacity = String(e);
+            if (pd.style.display !== 'none') pd.style.opacity = String(e);
             if (t < 1) {
               requestAnimationFrame(tick);
             } else {
@@ -4180,6 +4305,7 @@
           kipp21CardDistances[cardIdx] = dist;
           kipp21CardStates[cardIdx] = 'offen';
           activeCardIdx = cardIdx;
+          updateProgressDots(kipp21Done, cardIdx);
           kipp21RoundKipps = 0;
           kipp21RoundTimerStart = null;
           kipp21TimerRunning = false;
@@ -4374,6 +4500,7 @@
           drawGoldenBorder(gameCards[cardIdx]);
           gameCards[cardIdx].mesh.scale.set(1, 1, 1);
           kipp21Done++;
+          updateProgressDots(kipp21Done, -1);
           
           // Card fliegt zum Treffer-Slot
           const card = gameCards[cardIdx];
@@ -4389,6 +4516,11 @@
             gamePhase = 'ende';
             stopReplay();
             if (kipp21TimerInterval) clearInterval(kipp21TimerInterval);
+            // Progress dots ausblenden
+            const pd = document.getElementById('progressDots');
+            if (pd) pd.style.display = 'none';
+            // Personal Best aktualisieren
+            const isNewRecord = updatePersonalBest(kipp21KippCount);
             // Finalen Timer-Wert anzeigen
             countdown.innerHTML = formatTimer(kipp21TotalTime);
             // Joker-Reihe ausblenden
@@ -4401,7 +4533,7 @@
             }, 1200);
             
             // End-Buttons zeigen
-            showEndButtons(false);
+            showEndButtons(false, isNewRecord);
             }
           }
         } else {
@@ -4608,11 +4740,18 @@
       // hintText verstecken
       hintText.style.display = 'none';
       
+      // Progress dots verstecken
+      const _pd2 = document.getElementById('progressDots');
+      if (_pd2) _pd2.style.display = 'none';
+      
+      // Personal Best aktualisieren
+      const isNewRec = updatePersonalBest(kipp21KippCount);
+      
       // actionButton verstecken
       actionButton.style.display = 'none';
 
-      // End-Buttons zeigen (NOCHMAL)
-      showEndButtons(false);
+      // End-Buttons zeigen
+      showEndButtons(false, isNewRec);
     }
     
     // === AUSWERTUNG Overlay ===
@@ -6841,7 +6980,7 @@
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
