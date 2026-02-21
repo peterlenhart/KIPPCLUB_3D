@@ -791,62 +791,6 @@
     }
 
     /* === ZURUECK-BUTTON (zur Startseite) === */
-    /* KIPP-TIPP Overlay */
-    #kippTippOverlay {
-      position: absolute;
-      left: 0; top: 0;
-      width: 360px; height: 720px;
-      z-index: 9000;
-      display: none;
-      pointer-events: auto;
-    }
-    #kippTippOverlay .ktBg {
-      position: absolute;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background: rgba(40, 20, 10, 0.82);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    #kippTippOverlay .ktContent {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      width: 300px;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-    #kippTippOverlay .ktContent.show { opacity: 1; }
-    #kippTippOverlay .ktTitle {
-      font-family: Arial, sans-serif;
-      font-size: 24px;
-      font-weight: bold;
-      color: #d4a843;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
-      margin-bottom: 20px;
-      letter-spacing: 2px;
-    }
-    #kippTippOverlay .ktText {
-      font-family: Arial, sans-serif;
-      font-size: 16px;
-      color: #ead7be;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-      line-height: 1.6;
-    }
-    #kippTippOverlay .ktBtn {
-      margin-top: 30px;
-      width: 200px; height: 44px;
-      background: url(button_kurz.webp) center/contain no-repeat;
-      border: none; cursor: pointer;
-      font-family: Arial, sans-serif;
-      font-size: 16px; font-weight: bold;
-      color: #d0d0d0;
-      text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
-      letter-spacing: 1px;
-      opacity: 0;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body>
@@ -899,14 +843,6 @@
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     
     <!-- KIPP-TIPP Overlay -->
-    <div id="kippTippOverlay">
-      <div class="ktBg"></div>
-      <div class="ktContent">
-        <div class="ktTitle">KIPP TIPP</div>
-        <div class="ktText" id="ktText"></div>
-        <button class="ktBtn" id="ktBtn">OK</button>
-      </div>
-    </div>
     <div id="perfektGameText">
       <div class="pgtLine pgtHead" id="pgtHead">SPIEL ZIEL</div>
       <div class="pgtLine pgtSub" id="pgtSub">6 HITS mit 21 KIPPS.</div>
@@ -955,7 +891,7 @@
         k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit.<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
         ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
-        wh:"WIEDERHOLEN", nm:"NOCHMAL",
+        wh:"WIEDERHOLEN", nm:"NEUES SPIEL",
         ch1:"6 HITS mit 21 KIPPS", ch2:"Mastermind = unter 21 Sek.",
         jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",
         erg:"Ergebnis: {k} KIPPS | {z}", best21:"BEST: 21 KIPPS unter 21 Sek.",
@@ -974,7 +910,7 @@
         k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
         p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
         ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIAL",
-        wh:"REPEAT", nm:"AGAIN",
+        wh:"REPEAT", nm:"NEW GAME",
         ch1:"6 HITS with 21 TIPS", ch2:"Mastermind = under 21 sec.",
         jw:"Cube Insight<br>choose",kp:"Tip first!",kb:"TILT VIEW",eb:"CORNER VIEW",
         erg:"Result: {k} TIPS | {z}", best21:"BEST: 21 TIPS under 21 sec.",
@@ -993,7 +929,7 @@
         k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
         p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
         ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIAL",
-        wh:"REPETIR", nm:"OTRA VEZ",
+        wh:"REPETIR", nm:"NUEVO JUEGO",
         ch1:"6 ACIERTOS con 21 VOLCADOS", ch2:"Mastermind = menos de 21 seg.",
         jw:"Vista del cubo<br>elegir",kp:"\u00a1Vuelca!",kb:"VISTA GIRO",eb:"VISTA ESQUINA",
         erg:"Resultado: {k} VOLCADOS | {z}", best21:"MEJOR: 21 VOLCADOS en menos de 21 seg.",
@@ -1012,7 +948,7 @@
         k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
         p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
         ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIAL",
-        wh:"R\u00c9P\u00c9TER", nm:"ENCORE",
+        wh:"R\u00c9P\u00c9TER", nm:"NOUVEAU JEU",
         ch1:"6 COUPS avec 21 BASCULES", ch2:"Mastermind = moins de 21 sec.",
         jw:"Aper\u00e7u du cube<br>choisir",kp:"Bascule !",kb:"VUE BASCULE",eb:"VUE COIN",
         erg:"R\u00e9sultat : {k} BASCULES | {z}", best21:"MEILLEUR : 21 BASCULES en moins de 21 sec.",
@@ -1031,7 +967,7 @@
         k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
         p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
         ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
-        wh:"RIPETERE", nm:"ANCORA",
+        wh:"RIPETERE", nm:"NUOVO GIOCO",
         ch1:"6 COLPI con 21 RIBALTAMENTI", ch2:"Mastermind = sotto 21 sec.",
         jw:"Vista del cubo<br>scegli",kp:"Ribalta!",kb:"VISTA KIPP",eb:"VISTA ANGOLO",
         erg:"Risultato: {k} RIBALTAMENTI | {z}", best21:"MIGLIORE: 21 RIBALTAMENTI sotto 21 sec.",
@@ -1050,7 +986,7 @@
         k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
         p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
         ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIAL",
-        wh:"TEKRAR", nm:"B\u0130R DAHA",
+        wh:"TEKRAR", nm:"YEN\u0130 OYUN",
         ch1:"6 \u0130SABET ve 21 DEVIRME", ch2:"Mastermind = 21 sn. alt\u0131nda",
         jw:"K\u00fcp g\u00f6r\u00fcn\u00fcm\u00fc<br>se\u00e7",kp:"Devir!",kb:"DEV\u0130R G\u00d6R\u00dc\u015e",eb:"K\u00d6\u015eE G\u00d6R\u00dc\u015e",
         erg:"Sonu\u00e7: {k} DEVIRME | {z}", best21:"EN \u0130Y\u0130: 21 DEVIRME, 21 sn. alt\u0131nda",
@@ -1064,7 +1000,7 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
-        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NOCHMAL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
@@ -2293,194 +2229,6 @@
       document.removeEventListener('click', initOnClick, true);
     }, { once: true, capture: true });
     
-    // =========================
-    // KIPP-TIPP System
-    // =========================
-    const KIPP_TIPP_TEXTS = {
-      de: [
-        'Jedes Kippziel ist mit max.<br><b>6 Kipps</b> zu erreichen.<br>Entscheidend ist nur die Richtung.<br>Im oder gegen den Uhrzeigersinn.<br><b>50:50 Chance.</b>',
-        'Sobald deine Zielzahl am Würfel<br>sichtbar ist, können es nur<br><b>3 oder 6 Kipps</b> zum HIT sein.<br>Überlege. Mehr wird nicht verraten.',
-        'Denke in Uhrzeigern.<br>11 Kipps in eine Richtung =<br>1 Kipp in die andere.<br>8 = 4 Gegenrichtung.<br><b>12 Kipps</b> = zurück am Start.<br>Wer das verinnerlicht,<br>kippt nie wieder planlos.',
-        '<b>KIPPBLICK</b> und <b>ECKBLICK</b> zeigen dir<br>die verdeckten Würfelflächen.<br>Nutze sie klug.',
-        'Merke dir die <b>Zahlenpaare</b>,<br>die sich an den Kanten<br>gegenüberliegen.',
-        'Warum 21 KIPPS?<br>Der Algo wählt die 6 Kippziele so,<br>dass eines mit <b>1</b> Kipp erzielbar ist,<br>eines mit <b>2</b>, eines mit <b>3</b>,<br><b>4</b>, <b>5</b> und eines mit <b>6</b>.<br><b>1+2+3+4+5+6 = 21</b><br><br>Warum 21 Sekunden?<br>Weil ein gezielter, entschlossener<br>Kipp ca. 1 Sek. dauert.<br>Wer schaut, probiert und hin<br>und her kippt, schafft es nicht.'
-      ],
-      en: [
-        '48 combinations of number and colour.<br>Each reachable in <b>6 tips max</b>.<br>Clockwise or counter-clockwise.<br>50:50 chance — or pure knowledge.',
-        'Once your target number is visible<br>on the cube, it can only be<br><b>3 or 6 tips</b> to the HIT.<br>Think about it. No more clues.',
-        'Think in clock hands.<br>11 tips one way =<br>1 tip the other way.<br>8 = 4 opposite direction.<br><b>12 tips</b> = back to start.<br>Master this,<br>and you\'ll never tip blindly again.',
-        '<b>TILT VIEW</b> and <b>CORNER VIEW</b> reveal<br>the hidden cube faces.<br>Use them wisely.<br>This knowledge shortens<br>your tipping paths drastically.',
-        'Remember the <b>number pairs</b><br>that sit opposite each other<br>at the edges.<br>Know one pair,<br>know the tipping path.',
-        'No coincidence: The 6 targets need<br><b>1+2+3+4+5+6 = 21 tips</b>.<br>One tip per second.<br>Not a speed test — a thinking test.<br><b>Difficult. But doable.</b>'
-      ],
-      es: [
-        '48 combinaciones de número y color.<br>Cada una alcanzable en <b>6 volcados máx</b>.<br>Horario o antihorario.<br>50:50 — o conocimiento puro.',
-        'Cuando tu número objetivo es visible<br>en el cubo, solo pueden ser<br><b>3 o 6 volcados</b> al HIT.<br>Piénsalo. No digo más.',
-        'Piensa en las agujas del reloj.<br>11 volcados en una dirección =<br>1 volcado en la otra.<br>8 = 4 en dirección contraria.<br><b>12 volcados</b> = vuelta al inicio.<br>Domina esto y nunca<br>volcarás a ciegas.',
-        '<b>VISTA GIRO</b> y <b>VISTA ESQUINA</b><br>revelan las caras ocultas del cubo.<br>Úsalos con inteligencia.<br>Este conocimiento acorta<br>tus caminos drásticamente.',
-        'Recuerda los <b>pares de números</b><br>que están en lados opuestos<br>en las aristas.<br>Conoce un par,<br>conoce el camino.',
-        'No es casualidad: Los 6 objetivos<br>necesitan <b>1+2+3+4+5+6 = 21</b>.<br>Un volcado por segundo.<br>No es velocidad — es pensar.<br><b>Difícil. Pero posible.</b>'
-      ],
-      fr: [
-        '48 combinaisons de chiffre et couleur.<br>Chacune atteignable en <b>6 bascules max</b>.<br>Sens horaire ou antihoraire.<br>50:50 — ou pur savoir.',
-        'Dès que ton nombre cible est visible<br>sur le cube, ce ne peut être que<br><b>3 ou 6 bascules</b> pour le HIT.<br>Réfléchis. Pas d\'autre indice.',
-        'Pense en aiguilles d\'horloge.<br>11 bascules dans un sens =<br>1 bascule dans l\'autre.<br>8 = 4 en sens inverse.<br><b>12 bascules</b> = retour au départ.<br>Maîtrise cela et tu ne<br>basculeras plus au hasard.',
-        '<b>VUE BASCULE</b> et <b>VUE COIN</b><br>révèlent les faces cachées du cube.<br>Utilise-les avec intelligence.<br>Ce savoir raccourcit<br>tes chemins drastiquement.',
-        'Retiens les <b>paires de chiffres</b><br>qui se trouvent sur les côtés<br>opposés aux arêtes.<br>Connais une paire,<br>connais le chemin.',
-        'Pas un hasard : Les 6 cibles<br>nécessitent <b>1+2+3+4+5+6 = 21</b>.<br>Une bascule par seconde.<br>Pas un test de vitesse — de réflexion.<br><b>Difficile. Mais faisable.</b>'
-      ],
-      it: [
-        '48 combinazioni di numero e colore.<br>Ognuna raggiungibile in <b>6 ribaltamenti max</b>.<br>Orario o antiorario.<br>50:50 — o pura conoscenza.',
-        'Quando il tuo numero bersaglio è visibile<br>sul cubo, possono essere solo<br><b>3 o 6 ribaltamenti</b> al HIT.<br>Pensaci. Non dico altro.',
-        'Pensa alle lancette dell\'orologio.<br>11 ribaltamenti in una direzione =<br>1 nell\'altra.<br>8 = 4 in direzione opposta.<br><b>12 ribaltamenti</b> = ritorno al via.<br>Padroneggia questo e non<br>ribalterai mai più alla cieca.',
-        '<b>VISTA KIPP</b> e <b>VISTA ANGOLO</b><br>rivelano le facce nascoste del cubo.<br>Usali con intelligenza.<br>Questa conoscenza accorcia<br>drasticamente i tuoi percorsi.',
-        'Ricorda le <b>coppie di numeri</b><br>che si trovano sui lati opposti<br>agli spigoli.<br>Conosci una coppia,<br>conosci il percorso.',
-        'Non è un caso: I 6 bersagli<br>richiedono <b>1+2+3+4+5+6 = 21</b>.<br>Un ribaltamento al secondo.<br>Non velocità — ragionamento.<br><b>Difficile. Ma fattibile.</b>'
-      ],
-      tr: [
-        '48 sayı-renk kombinasyonu.<br>Her biri en fazla <b>6 devirme</b> ile<br>ulaşılabilir. Saat yönünde veya tersine.<br>50:50 şans — ya da saf bilgi.',
-        'Hedef sayın küpte görünür olduğunda<br>HIT\'e sadece <b>3 veya 6 devirme</b><br>olabilir.<br>Düşün. Daha fazla ipucu yok.',
-        'Saat ibrelerini düşün.<br>11 devirme bir yönde =<br>1 devirme diğer yönde.<br>8 = 4 ters yönde.<br><b>12 devirme</b> = başa dönüş.<br>Bunu kavra ve bir daha<br>körlemesine devirme.',
-        '<b>DEVİR GÖRÜŞ</b> ve <b>KÖŞE GÖRÜŞ</b><br>küpün gizli yüzlerini gösterir.<br>Akıllıca kullan.<br>Bu bilgi devirme yollarını<br>büyük ölçüde kısaltır.',
-        'Kenarlarda karşılıklı duran<br><b>sayı çiftlerini</b> hatırla.<br>Bir çifti bil,<br>devirme yolunu bil.',
-        'Tesadüf değil: 6 hedef<br><b>1+2+3+4+5+6 = 21 devirme</b> gerektirir.<br>Saniyede bir devirme.<br>Hız testi değil — düşünme testi.<br><b>Zor. Ama yapılabilir.</b>'
-      ]
-    };
-    
-    // KIPP-TIPP State
-    const ktShown = [];
-    for (let i = 0; i < 6; i++) {
-      ktShown[i] = localStorage.getItem('kippTipp_' + i + '_shown') === 'true';
-    }
-    let ktGamesCompleted = parseInt(localStorage.getItem('kippTipp_gamesCompleted') || '0');
-    let ktTippShownThisGame = false;
-    let ktRoundsOver6 = 0; // Wie oft >6 Kipps pro Ziel in diesem Spiel
-    let ktTippOverlayActive = false;
-    
-    function getKippTippText(idx) {
-      const lang = _digikippLang || 'de';
-      const texts = KIPP_TIPP_TEXTS[lang] || KIPP_TIPP_TEXTS['de'];
-      return texts[idx];
-    }
-    
-    function showKippTipp(idx) {
-      if (ktShown[idx] || ktTippShownThisGame || ktTippOverlayActive) return;
-      if (replayActive) return; // Nie während Tutorial
-      
-      ktShown[idx] = true;
-      ktTippShownThisGame = true;
-      ktTippOverlayActive = true;
-      localStorage.setItem('kippTipp_' + idx + '_shown', 'true');
-      
-      // Spiel pausieren
-      kipp21Active = false;
-      
-      const overlay = document.getElementById('kippTippOverlay');
-      const content = overlay.querySelector('.ktContent');
-      const textEl = document.getElementById('ktText');
-      const btn = document.getElementById('ktBtn');
-      
-      textEl.innerHTML = getKippTippText(idx);
-      btn.style.display = 'inline-block';
-      btn.style.opacity = '0';
-      btn.style.pointerEvents = 'none';
-      btn.style.transition = 'opacity 0.4s ease';
-      content.classList.remove('show');
-      overlay.style.display = 'block';
-      
-      // Fade in
-      requestAnimationFrame(() => {
-        content.classList.add('show');
-      });
-      
-      // Button nach 4 Sek einblenden (kein Layout-Shift, nur Opacity)
-      setTimeout(() => {
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'auto';
-      }, 4000);
-      
-      // Button-Handler
-      btn.onclick = () => {
-        content.classList.remove('show');
-        setTimeout(() => {
-          overlay.style.display = 'none';
-          ktTippOverlayActive = false;
-          kipp21Active = true;
-          // Timer weiterlaufen lassen
-          if (kipp21TimerRunning) {
-            kipp21RoundTimerStart = performance.now();
-          }
-        }, 400);
-      };
-    }
-    
-    // Check nach jedem Kipp (Tipps 1-3)
-    function checkKippTippMidGame() {
-      if (ktTippShownThisGame || gamePhase !== 'kipp21' || replayActive) return;
-      
-      // TIPP 1: >12 Kipps für ein Ziel
-      if (!ktShown[0] && kipp21RoundKipps > 8) {
-        showKippTipp(0);
-        return;
-      }
-      
-      // TIPP 2: Zielzahl sichtbar, aber >6 Kipps
-      if (!ktShown[1] && kipp21RoundKipps > 6) {
-        const openIdx = kipp21CardStates.indexOf('offen');
-        if (openIdx >= 0) {
-          const targetZahl = gameCards[openIdx].zahl;
-          const faceOffset = { f0: 0, f1: 4, f2: 8 };
-          const off = faceOffset[topFace];
-          const visibleNums = [deck[off], deck[off+1], deck[off+2], deck[off+3]];
-          if (visibleNums.includes(targetZahl)) {
-            showKippTipp(1);
-            return;
-          }
-        }
-      }
-      
-      // TIPP 3: 3+ Ziele mit >6 Kipps (falsche Richtung)
-      if (!ktShown[2] && ktRoundsOver6 >= 3) {
-        showKippTipp(2);
-        return;
-      }
-    }
-    
-    // Check nach Spielende (Tipps 4-6)
-    function checkKippTippEndGame() {
-      if (replayActive) return;
-      
-      ktGamesCompleted++;
-      localStorage.setItem('kippTipp_gamesCompleted', ktGamesCompleted);
-      
-      const totalBlicke = kipp21WobbleUsed + kipp21EckblickUsed;
-      
-      // TIPP 4: Keine Würfelblicke benutzt & >35 Kipps
-      if (!ktShown[3] && totalBlicke === 0 && kipp21KippCount > 35) {
-        // Verzögert zeigen (nach Ergebnis-Anzeige)
-        setTimeout(() => { showKippTipp(3); }, 2500);
-        return;
-      }
-      
-      // TIPP 5: Blicke benutzt, aber Durchschnitt >6 pro Ziel
-      if (!ktShown[4] && totalBlicke > 0 && (kipp21KippCount / 6) > 6) {
-        setTimeout(() => { showKippTipp(4); }, 2500);
-        return;
-      }
-      
-      // TIPP 6: 4+ Spiele abgeschlossen
-      if (!ktShown[5] && ktGamesCompleted >= 4) {
-        setTimeout(() => { showKippTipp(5); }, 2500);
-        return;
-      }
-    }
-    
-    // Reset pro Spiel
-    function resetKippTippForGame() {
-      ktTippShownThisGame = false;
-      ktRoundsOver6 = 0;
-    }
-
     // WICHTIG: Button disabled bis Texturen geladen sind
     actionButton.disabled = true;
 
@@ -3614,18 +3362,46 @@
           startKipp21(false);
         };
       } else {
-        // Spiel-Ende: NOCHMAL + SCORE STATISTIK
+        // Spiel-Ende: NEUES SPIEL + KIPP PRINZIP (+ Motivationstext bei >21 Kipps)
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
-        const ekpb = document.getElementById('endKippPrinzipBtn');
-        if (ekpb) ekpb.style.display = 'none';
+        
+        // Motivationstext bei >21 Kipps
+        const MOTIV_21 = {
+          de: '21 KIPPS sind möglich. Jedes Mal.',
+          en: '21 TILTS are possible. Every time.',
+          es: '21 VOLCADOS son posibles. Cada vez.',
+          fr: '21 BASCULES sont possibles. À chaque fois.',
+          it: '21 RIBALTAMENTI sono possibili. Ogni volta.',
+          tr: '21 DEVİRME mümkün. Her seferinde.'
+        };
+        
+        let motivEl = document.getElementById('endMotivText');
+        if (!motivEl) {
+          motivEl = document.createElement('div');
+          motivEl.id = 'endMotivText';
+          motivEl.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(motivEl);
+        }
+        if (kipp21KippCount > 21) {
+          motivEl.textContent = MOTIV_21[currentLang] || MOTIV_21.de;
+          motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
+            ' top:' + (btnBaseY - 30) + 'px; width:280px; text-align:center;' +
+            ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
+            ' color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.6);' +
+            ' pointer-events:none; z-index:150; letter-spacing:0.5px;';
+          motivEl.style.display = 'block';
+        } else {
+          motivEl.style.display = 'none';
+        }
         
         abtn.textContent = T.nm;
         abtn.style.cssText = btnCSS(btnBaseY, 18, 2.5);
         abtn.onclick = () => {
           abtn.style.display = 'none';
-          const esb2 = document.getElementById('endScoreBtn');
-          if (esb2) esb2.style.display = 'none';
+          const ekpb = document.getElementById('endKippPrinzipBtn');
+          if (ekpb) ekpb.style.display = 'none';
+          if (motivEl) motivEl.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
@@ -3634,18 +3410,18 @@
           startKipp21(false);
         };
         
-        let scoreBtn = document.getElementById('endScoreBtn');
-        if (!scoreBtn) {
-          scoreBtn = document.createElement('button');
-          scoreBtn.id = 'endScoreBtn';
-          scoreBtn.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(scoreBtn);
+        let kpBtn = document.getElementById('endKippPrinzipBtn');
+        if (!kpBtn) {
+          kpBtn = document.createElement('button');
+          kpBtn.id = 'endKippPrinzipBtn';
+          kpBtn.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(kpBtn);
         }
-        scoreBtn.textContent = 'SCORE STATISTIK';
-        scoreBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
-        scoreBtn.style.display = 'block';
-        scoreBtn.onclick = () => {
-          // TODO: Score Statistik Overlay
+        kpBtn.textContent = KIPP_PRINZIP[currentLang].btn;
+        kpBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
+        kpBtn.style.display = 'block';
+        kpBtn.onclick = () => {
+          showKippPrinzip();
         };
       }
     }
@@ -3723,7 +3499,6 @@
       kipp21PendingCardTap = -1;
       kippenWarningActive = false;
       // ===== CLEANUP ENDE =====
-      resetKippTippForGame();
       
       kipp21WithTutorial = !!withTutorial;
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
@@ -4590,7 +4365,6 @@
         setTimeout(() => { cmesh.scale.set(1, 1, 1); }, 180);
         // CONFIRM
         kipp21StopRoundTimer();
-        if (kipp21RoundKipps > 6) ktRoundsOver6++;
         
         activeCardIdx = cardIdx;
         const treffer = checkTreffer();
@@ -4628,7 +4402,6 @@
             
             // End-Buttons zeigen
             showEndButtons(false);
-            checkKippTippEndGame();
             }
           }
         } else {
@@ -6120,8 +5893,6 @@
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
       // KIPP-TIPP Overlay schließen falls offen
-      document.getElementById('kippTippOverlay').style.display = 'none';
-      ktTippOverlayActive = false;
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
       disableReplayBlocker();
       replayActive = false;
@@ -7517,7 +7288,6 @@
               kipp21KippCount++;
               kipp21RoundKipps++;
               hintText.innerHTML = formatKipps(kipp21KippCount);
-              checkKippTippMidGame();
             }
 
 
