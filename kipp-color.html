@@ -4336,12 +4336,12 @@
             countdown.innerHTML = formatTimer(kipp21TotalTime);
             // Joker-Reihe ausblenden
             hideKniffIcons();
-            // HIT-Texte auch verzögert nochmal räumen (letzter HIT entsteht parallel)
+            // HIT-Texte auch verzögert nochmal räumen (letzter HIT entsteht nach 800ms Fly)
             setTimeout(() => {
               hitTextEls.forEach(el => el.remove());
               hitTextEls.length = 0;
               document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-            }, 400);
+            }, 1200);
             
             // End-Buttons zeigen
             showEndButtons(false);
@@ -5127,14 +5127,14 @@
       if (!lblLeft) {
         lblLeft = document.createElement('div');
         lblLeft.className = 'kniffLabelLeft';
-        lblLeft.style.cssText = 'position:absolute; top:70px; font-family:Arial,sans-serif; font-size:11px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
+        lblLeft.style.cssText = 'position:absolute; top:70px; font-family:Arial,sans-serif; font-size:12px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
         lblLeft.textContent = T.kb || 'KIPPBLICK';
         jokerRow.appendChild(lblLeft);
       }
       if (!lblRight) {
         lblRight = document.createElement('div');
         lblRight.className = 'kniffLabelRight';
-        lblRight.style.cssText = 'position:absolute; top:70px; font-family:Arial,sans-serif; font-size:11px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
+        lblRight.style.cssText = 'position:absolute; top:70px; font-family:Arial,sans-serif; font-size:12px; font-weight:bold; color:#c0b098; text-shadow:0 1px 2px rgba(0,0,0,0.8); text-align:center; pointer-events:none; letter-spacing:0.5px;';
         lblRight.textContent = T.eb || 'ECKBLICK';
         jokerRow.appendChild(lblRight);
       }
