@@ -691,6 +691,104 @@
     }
     #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 519px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnKippPrinzip { top: 570px; padding-top: 4px; font-size: 13px; letter-spacing: 1.5px; }
+
+    /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
+    #kippPrinzipOverlay {
+      position: absolute;
+      left: 0; top: 0;
+      width: 360px; height: 720px;
+      z-index: 9500;
+      display: none;
+      pointer-events: auto;
+    }
+    #kippPrinzipOverlay .kpBg {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(30, 15, 5, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    #kippPrinzipOverlay .kpScroll {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 40px 30px 80px;
+    }
+    #kippPrinzipOverlay .kpTitle {
+      font-family: Arial, sans-serif;
+      font-size: 22px;
+      font-weight: bold;
+      color: #d4a843;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      margin-bottom: 6px;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+    #kippPrinzipOverlay .kpSubtitle {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-style: italic;
+      color: #c0a888;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    #kippPrinzipOverlay .kpSection {
+      margin-bottom: 22px;
+    }
+    #kippPrinzipOverlay .kpSectionTitle {
+      font-family: Arial, sans-serif;
+      font-size: 17px;
+      font-weight: bold;
+      color: #e8c870;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    #kippPrinzipOverlay .kpSectionText {
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      color: #ead7be;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      line-height: 1.65;
+    }
+    #kippPrinzipOverlay .kpSectionText b {
+      color: #f0d898;
+    }
+    #kippPrinzipOverlay .kpDivider {
+      width: 60%;
+      height: 1px;
+      background: rgba(212,168,67,0.3);
+      margin: 18px auto;
+    }
+    #kippPrinzipOverlay .kpFooter {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-style: italic;
+      color: #c0a888;
+      text-align: center;
+      margin-top: 24px;
+      line-height: 1.5;
+    }
+    #kippPrinzipOverlay .kpCloseBtn {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px; height: 44px;
+      background: url(button_kurz.webp) center/contain no-repeat;
+      border: none; cursor: pointer;
+      font-family: Arial, sans-serif;
+      font-size: 16px; font-weight: bold;
+      color: #d0d0d0;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
+      letter-spacing: 1px;
+      z-index: 9501;
+      pointer-events: auto;
+    }
 
     /* === ZURUECK-BUTTON (zur Startseite) === */
     /* KIPP-TIPP Overlay */
@@ -762,6 +860,18 @@
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
+    <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">Das KIPP-Prinzip</button>
+  </div>
+  
+  <!-- KIPP-PRINZIP Overlay -->
+  <div id="kippPrinzipOverlay">
+    <div class="kpBg"></div>
+    <div class="kpScroll">
+      <div class="kpTitle" id="kpTitle">DAS KIPP-PRINZIP</div>
+      <div class="kpSubtitle" id="kpSubtitle"></div>
+      <div id="kpBody"></div>
+      <button class="kpCloseBtn" id="kpCloseBtn">OK</button>
+    </div>
   </div>
   
   <!-- RESET-BUTTON (Body-Ebene, z-index über startOverlay) -->
@@ -958,6 +1068,137 @@
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
+    
+    // Kipp-Prinzip Button Text & Overlay Content
+    const KIPP_PRINZIP = {
+      de: {
+        btn: "Das KIPP-Prinzip",
+        title: "DAS KIPP-PRINZIP",
+        subtitle: "F\u00fcr Supert\u00fcftler",
+        sections: [
+          { t: "Der W\u00fcrfel in der Box", p: "Ein W\u00fcrfel mit drei sichtbaren Seiten, best\u00fcckt mit je vier Zahlen. Er kippt im Kreis \u2013 im oder gegen den Uhrzeigersinn. Das klingt simpel. Ist es nicht." },
+          { t: "48 Kombinationen. Maximal 6 Kipps.", p: "Es gibt genau <b>48 verschiedene Kombinationen</b> aus W\u00fcrfelzahl und Rahmenfarbe. Jede einzelne davon l\u00e4sst sich mit <b>h\u00f6chstens 6 Kipps</b> erreichen. Immer. Die entscheidende Frage ist nur: <b>Im oder gegen den Uhrzeigersinn?</b><br><br>Wer die richtige Richtung w\u00e4hlt, braucht nie mehr als 6 Kipps. 50:50 Chance \u2013 oder pures Wissen." },
+          { t: "Der Logikkipp", p: "Dein Kippziel ist <b>5 an Blau</b> \u2013 und die 5 ist bereits sichtbar auf dem W\u00fcrfel? Dann brauchst du exakt <b>3 oder 6 Kipps</b>. Nicht 1, nicht 2. Das ist kein Zufall, das ist Mathematik. Wer versteht warum, hat einen entscheidenden Vorteil. Mehr wird nicht verraten." },
+          { t: "Denke in Uhrzeigern", p: "Stell dir eine Uhr vor. Du kannst den Stundenzeiger <b>11 Stunden vorstellen</b> \u2013 oder <b>1 Stunde zur\u00fcck</b>. Du landest auf derselben Stunde.<br><br>Genau so funktioniert der W\u00fcrfel:<br>\u2022 <b>11 Kipps</b> im Uhrzeigersinn = <b>1 Kipp</b> gegen den Uhrzeigersinn<br>\u2022 <b>8 Kipps</b> in eine Richtung = <b>4 Kipps</b> in die Gegenrichtung<br>\u2022 <b>6 Kipps</b> im UZS = <b>6 Kipps</b> gegen UZS \u2013 Richtung egal<br>\u2022 <b>12 Kipps</b> in beliebige Richtung: Wieder wie am Anfang<br><br>Wer das verinnerlicht, kippt nie wieder planlos." },
+          { t: "Joker nutzen \u2013 Zahlenpaare merken", p: "Mit den Jokern erh\u00e4ltst du Einblick in die verdeckten W\u00fcrfelfl\u00e4chen. Nutze sie klug. Merke dir besonders die <b>Zahlenpaare, die sich an den Kanten gegen\u00fcberliegen</b>. Dieses Wissen verk\u00fcrzt deine Kippwege drastisch." },
+          { t: "Warum 21 Kipps?", p: "Kein Zufall. Der Algorithmus erzeugt sechs Kippziele: eines erreichbar mit 1 Kipp, eines mit 2, eines mit 3, eines mit 4, eines mit 5, eines mit 6.<br><br><b>1 + 2 + 3 + 4 + 5 + 6 = 21</b><br><br>Wer immer die richtige Richtung erwischt, bleibt immer unter 7 Kipps pro Ziel." },
+          { t: "Warum 21 Sekunden?", p: "Weil ein Kipp locker in einer Sekunde gelingt. Kein Speedtest \u2013 sondern ein Denktest. Was du brauchst: keinen Kipp zu viel. Immer wissen, in welche Richtung es maximal 6 Kipps sind. W\u00fcrfelfl\u00e4chen lesen, Zahlenpaare merken, Kipplogik durchschauen.<br><br><b>Schwierig. Aber machbar.</b>" }
+        ],
+        footer: "Viel Spannung, Spa\u00df und Kopfzerbrechen\nmit dem W\u00fcrfel in der Box."
+      },
+      en: {
+        btn: "The TILT Principle",
+        title: "THE TILT PRINCIPLE",
+        subtitle: "For Super Puzzlers",
+        sections: [
+          { t: "The Cube in the Box", p: "A cube with three visible faces, each bearing four numbers. It tilts in a circle \u2013 clockwise or counter-clockwise. Sounds simple. It isn\u2019t." },
+          { t: "48 Combinations. Maximum 6 Tilts.", p: "There are exactly <b>48 different combinations</b> of cube number and frame colour. Every single one can be reached in <b>at most 6 tilts</b>. Always. The only question is: <b>Clockwise or counter-clockwise?</b><br><br>Choose the right direction and you\u2019ll never need more than 6 tilts. 50:50 chance \u2013 or pure knowledge." },
+          { t: "The Logic Tilt", p: "Your target is <b>5 at Blue</b> \u2013 and the 5 is already visible on the cube? Then you need exactly <b>3 or 6 tilts</b>. Not 1, not 2. That\u2019s not coincidence, that\u2019s mathematics. Understand why and you gain a crucial advantage. No more clues." },
+          { t: "Think in Clock Hands", p: "Imagine a clock. You can move the hour hand <b>11 hours forward</b> \u2013 or <b>1 hour back</b>. Same position.<br><br>The cube works exactly the same way:<br>\u2022 <b>11 tilts</b> clockwise = <b>1 tilt</b> counter-clockwise<br>\u2022 <b>8 tilts</b> one way = <b>4 tilts</b> the other<br>\u2022 <b>6 tilts</b> CW = <b>6 tilts</b> CCW \u2013 direction doesn\u2019t matter<br>\u2022 <b>12 tilts</b> in any direction: Back to start<br><br>Master this and you\u2019ll never tilt aimlessly again." },
+          { t: "Use Jokers \u2013 Remember Number Pairs", p: "The jokers give you a peek at the hidden cube faces. Use them wisely. Pay special attention to the <b>number pairs that sit opposite each other at the edges</b>. This knowledge drastically shortens your tilting paths." },
+          { t: "Why 21 Tilts?", p: "No coincidence. The algorithm generates six targets: one reachable in 1 tilt, one in 2, one in 3, one in 4, one in 5, one in 6.<br><br><b>1 + 2 + 3 + 4 + 5 + 6 = 21</b><br><br>Always pick the right direction and you\u2019ll stay under 7 tilts per target." },
+          { t: "Why 21 Seconds?", p: "Because one deliberate tilt takes about one second. Not a speed test \u2013 a thinking test. What you need: no unnecessary tilts. Always know which direction needs at most 6 tilts. Read the cube faces, remember number pairs, understand the tilt logic.<br><br><b>Difficult. But doable.</b>" }
+        ],
+        footer: "Lots of suspense, fun and brainwork\nwith the cube in the box."
+      },
+      es: {
+        btn: "El Principio VOLCADO",
+        title: "EL PRINCIPIO VOLCADO",
+        subtitle: "Para Superingeniosos",
+        sections: [
+          { t: "El Cubo en la Caja", p: "Un cubo con tres caras visibles, cada una con cuatro n\u00fameros. Se vuelca en c\u00edrculo \u2013 en sentido horario o antihorario. Suena simple. No lo es." },
+          { t: "48 Combinaciones. M\u00e1ximo 6 Volcados.", p: "Hay exactamente <b>48 combinaciones diferentes</b> de n\u00famero y color del marco. Cada una se puede alcanzar con <b>m\u00e1ximo 6 volcados</b>. Siempre. La \u00fanica pregunta es: <b>\u00bfHorario o antihorario?</b><br><br>Quien elige la direcci\u00f3n correcta nunca necesita m\u00e1s de 6 volcados. 50:50 \u2013 o puro conocimiento." },
+          { t: "El Volcado L\u00f3gico", p: "Tu objetivo es <b>5 en Azul</b> \u2013 \u00bfy el 5 ya es visible en el cubo? Entonces necesitas exactamente <b>3 o 6 volcados</b>. No 1, no 2. Eso no es casualidad, es matem\u00e1ticas. Quien entiende por qu\u00e9, tiene una ventaja decisiva. No se dice m\u00e1s." },
+          { t: "Piensa en Agujas de Reloj", p: "Imagina un reloj. Puedes adelantar la manecilla <b>11 horas</b> \u2013 o retroceder <b>1 hora</b>. Misma posici\u00f3n.<br><br>El cubo funciona exactamente igual:<br>\u2022 <b>11 volcados</b> horario = <b>1 volcado</b> antihorario<br>\u2022 <b>8 volcados</b> en una direcci\u00f3n = <b>4</b> en la contraria<br>\u2022 <b>6 volcados</b> horario = <b>6</b> antihorario \u2013 da igual<br>\u2022 <b>12 volcados</b>: De vuelta al inicio<br><br>Quien interioriza esto, nunca m\u00e1s volcar\u00e1 sin rumbo." },
+          { t: "Usa Jokers \u2013 Recuerda los Pares", p: "Los jokers te dan un vistazo a las caras ocultas del cubo. \u00dasalos con inteligencia. Recuerda especialmente los <b>pares de n\u00fameros opuestos en las aristas</b>. Este conocimiento acorta dr\u00e1sticamente tus caminos." },
+          { t: "\u00bfPor qu\u00e9 21 Volcados?", p: "No es casualidad. El algoritmo genera seis objetivos: uno alcanzable con 1, con 2, con 3, con 4, con 5 y con 6 volcados.<br><br><b>1 + 2 + 3 + 4 + 5 + 6 = 21</b><br><br>Quien siempre elige bien, nunca supera los 7 volcados por objetivo." },
+          { t: "\u00bfPor qu\u00e9 21 Segundos?", p: "Porque un volcado decidido toma aproximadamente un segundo. No es un test de velocidad \u2013 es un test de pensamiento. Lo que necesitas: ning\u00fan volcado de m\u00e1s. Saber siempre la direcci\u00f3n correcta. Leer las caras, recordar pares, entender la l\u00f3gica.<br><br><b>Dif\u00edcil. Pero posible.</b>" }
+        ],
+        footer: "Mucha tensi\u00f3n, diversi\u00f3n y rompecabezas\ncon el cubo en la caja."
+      },
+      fr: {
+        btn: "Le Principe BASCULE",
+        title: "LE PRINCIPE BASCULE",
+        subtitle: "Pour Super Casse-t\u00eates",
+        sections: [
+          { t: "Le Cube dans la Bo\u00eete", p: "Un cube avec trois faces visibles, chacune portant quatre chiffres. Il bascule en cercle \u2013 dans le sens horaire ou antihoraire. \u00c7a semble simple. \u00c7a ne l\u2019est pas." },
+          { t: "48 Combinaisons. Maximum 6 Bascules.", p: "Il existe exactement <b>48 combinaisons diff\u00e9rentes</b> de chiffre et couleur de cadre. Chacune est atteignable en <b>6 bascules maximum</b>. Toujours. La seule question : <b>Sens horaire ou antihoraire ?</b><br><br>Qui choisit la bonne direction n\u2019a jamais besoin de plus de 6 bascules. 50:50 \u2013 ou pur savoir." },
+          { t: "La Bascule Logique", p: "Ta cible est <b>5 au Bleu</b> \u2013 et le 5 est d\u00e9j\u00e0 visible sur le cube ? Alors il te faut exactement <b>3 ou 6 bascules</b>. Pas 1, pas 2. Ce n\u2019est pas un hasard, c\u2019est des math\u00e9matiques. Qui comprend pourquoi a un avantage d\u00e9cisif. Pas d\u2019autre indice." },
+          { t: "Pense en Aiguilles d\u2019Horloge", p: "Imagine une horloge. Tu peux avancer l\u2019aiguille de <b>11 heures</b> \u2013 ou reculer d\u2019<b>1 heure</b>. M\u00eame position.<br><br>Le cube fonctionne exactement pareil :<br>\u2022 <b>11 bascules</b> horaire = <b>1 bascule</b> antihoraire<br>\u2022 <b>8 bascules</b> dans un sens = <b>4</b> dans l\u2019autre<br>\u2022 <b>6 bascules</b> horaire = <b>6</b> antihoraire \u2013 peu importe<br>\u2022 <b>12 bascules</b> : Retour au d\u00e9part<br><br>Ma\u00eetrise cela et tu ne basculeras plus jamais au hasard." },
+          { t: "Utilise les Jokers \u2013 Retiens les Paires", p: "Les jokers te r\u00e9v\u00e8lent les faces cach\u00e9es du cube. Utilise-les avec intelligence. Retiens surtout les <b>paires de chiffres oppos\u00e9es aux ar\u00eates</b>. Ce savoir raccourcit drastiquement tes chemins." },
+          { t: "Pourquoi 21 Bascules ?", p: "Pas un hasard. L\u2019algorithme g\u00e9n\u00e8re six cibles : une atteignable en 1, en 2, en 3, en 4, en 5 et en 6 bascules.<br><br><b>1 + 2 + 3 + 4 + 5 + 6 = 21</b><br><br>Qui choisit toujours bien ne d\u00e9passe jamais 7 bascules par cible." },
+          { t: "Pourquoi 21 Secondes ?", p: "Parce qu\u2019une bascule d\u00e9lib\u00e9r\u00e9e prend environ une seconde. Pas un test de vitesse \u2013 un test de r\u00e9flexion. Ce qu\u2019il faut : aucune bascule de trop. Toujours conna\u00eetre la bonne direction. Lire les faces, retenir les paires, comprendre la logique.<br><br><b>Difficile. Mais faisable.</b>" }
+        ],
+        footer: "Beaucoup de suspense, de plaisir\net de casse-t\u00eate avec le cube dans la bo\u00eete."
+      },
+      it: {
+        btn: "Il Principio RIBALTAMENTO",
+        title: "IL PRINCIPIO RIBALTAMENTO",
+        subtitle: "Per Super Rompicapi",
+        sections: [
+          { t: "Il Cubo nella Scatola", p: "Un cubo con tre facce visibili, ciascuna con quattro numeri. Si ribalta in cerchio \u2013 in senso orario o antiorario. Sembra semplice. Non lo \u00e8." },
+          { t: "48 Combinazioni. Massimo 6 Ribaltamenti.", p: "Esistono esattamente <b>48 combinazioni diverse</b> di numero e colore del bordo. Ognuna \u00e8 raggiungibile con <b>massimo 6 ribaltamenti</b>. Sempre. L\u2019unica domanda: <b>Orario o antiorario?</b><br><br>Chi sceglie la direzione giusta non ha mai bisogno di pi\u00f9 di 6 ribaltamenti. 50:50 \u2013 o pura conoscenza." },
+          { t: "Il Ribaltamento Logico", p: "Il tuo obiettivo \u00e8 <b>5 al Blu</b> \u2013 e il 5 \u00e8 gi\u00e0 visibile sul cubo? Allora ti servono esattamente <b>3 o 6 ribaltamenti</b>. Non 1, non 2. Non \u00e8 un caso, \u00e8 matematica. Chi capisce perch\u00e9 ha un vantaggio decisivo. Nessun altro indizio." },
+          { t: "Pensa alle Lancette", p: "Immagina un orologio. Puoi spostare la lancetta avanti di <b>11 ore</b> \u2013 o indietro di <b>1 ora</b>. Stessa posizione.<br><br>Il cubo funziona esattamente cos\u00ec:<br>\u2022 <b>11 ribaltamenti</b> orario = <b>1</b> antiorario<br>\u2022 <b>8 ribaltamenti</b> in una direzione = <b>4</b> nell\u2019altra<br>\u2022 <b>6 ribaltamenti</b> orario = <b>6</b> antiorario \u2013 indifferente<br>\u2022 <b>12 ribaltamenti</b>: Ritorno al via<br><br>Padroneggia questo e non ribalterai mai pi\u00f9 alla cieca." },
+          { t: "Usa i Joker \u2013 Ricorda le Coppie", p: "I joker ti rivelano le facce nascoste del cubo. Usali con intelligenza. Ricorda soprattutto le <b>coppie di numeri opposti agli spigoli</b>. Questa conoscenza accorcia drasticamente i tuoi percorsi." },
+          { t: "Perch\u00e9 21 Ribaltamenti?", p: "Nessun caso. L\u2019algoritmo genera sei bersagli: uno raggiungibile con 1, con 2, con 3, con 4, con 5 e con 6 ribaltamenti.<br><br><b>1 + 2 + 3 + 4 + 5 + 6 = 21</b><br><br>Chi sceglie sempre bene non supera mai i 7 ribaltamenti per bersaglio." },
+          { t: "Perch\u00e9 21 Secondi?", p: "Perch\u00e9 un ribaltamento deciso richiede circa un secondo. Non un test di velocit\u00e0 \u2013 un test di pensiero. Servono: nessun ribaltamento di troppo. Sempre sapere la direzione giusta. Leggere le facce, ricordare le coppie, capire la logica.<br><br><b>Difficile. Ma fattibile.</b>" }
+        ],
+        footer: "Tanta suspense, divertimento e rompicapi\ncon il cubo nella scatola."
+      },
+      tr: {
+        btn: "DEVIRME Prensibi",
+        title: "DEVIRME PRENSIBI",
+        subtitle: "S\u00fcper Bulmacacılar İ\u00e7in",
+        sections: [
+          { t: "Kutudaki K\u00fcp", p: "Her biri d\u00f6rt say\u0131 ta\u015f\u0131yan \u00fc\u00e7 g\u00f6r\u00fcn\u00fcr y\u00fcz\u00fc olan bir k\u00fcp. Daire i\u00e7inde devrilir \u2013 saat y\u00f6n\u00fcnde veya tersine. Basit g\u00f6r\u00fcn\u00fcr. De\u011fildir." },
+          { t: "48 Kombinasyon. Maksimum 6 Devirme.", p: "Tam olarak <b>48 farkl\u0131 kombinasyon</b> vard\u0131r. Her biri <b>en fazla 6 devirme</b> ile ula\u015f\u0131labilir. Her zaman. Tek soru: <b>Saat y\u00f6n\u00fcnde mi, tersine mi?</b><br><br>Do\u011fru y\u00f6n\u00fc se\u00e7en asla 6\u2019dan fazlas\u0131na ihtiya\u00e7 duymaz. 50:50 \u015fans \u2013 ya da saf bilgi." },
+          { t: "Mant\u0131k Devirmesi", p: "Hedefin <b>5, Mavi\u2019de</b> \u2013 ve 5 zaten k\u00fcp\u00fcn \u00fczerinde g\u00f6r\u00fcn\u00fcyor mu? O zaman tam olarak <b>3 veya 6 devirme</b> gerekir. 1 de\u011fil, 2 de\u011fil. Tesad\u00fcf de\u011fil, matematik. Nedenini anlayan, belirleyici avantaja sahip olur. Daha fazla ipucu yok." },
+          { t: "Saat \u0130breleriyle D\u00fc\u015f\u00fcn", p: "Bir saat hayal et. Akrebi <b>11 saat ileri</b> veya <b>1 saat geri</b> alabilirsin. Ayn\u0131 konum.<br><br>K\u00fcp tam olarak b\u00f6yle \u00e7al\u0131\u015f\u0131r:<br>\u2022 <b>11 devirme</b> saat y\u00f6n\u00fcnde = <b>1 devirme</b> tersine<br>\u2022 <b>8 devirme</b> bir y\u00f6nde = <b>4</b> ters y\u00f6nde<br>\u2022 <b>6 devirme</b> SY = <b>6</b> ters \u2013 fark etmez<br>\u2022 <b>12 devirme</b>: Ba\u015fa d\u00f6n\u00fc\u015f<br><br>Bunu kavra ve bir daha asla k\u00f6rlemesine devirme." },
+          { t: "Joker Kullan \u2013 \u00c7iftleri Hat\u0131rla", p: "Jokerler sana k\u00fcp\u00fcn gizli y\u00fczlerini g\u00f6sterir. Ak\u0131ll\u0131ca kullan. \u00d6zellikle <b>kenarlarda kar\u015f\u0131l\u0131kl\u0131 duran say\u0131 \u00e7iftlerini</b> hat\u0131rla. Bu bilgi devirme yollar\u0131n\u0131 b\u00fcy\u00fck \u00f6l\u00e7\u00fcde k\u0131salt\u0131r." },
+          { t: "Neden 21 Devirme?", p: "Tesad\u00fcf de\u011fil. Algoritma alt\u0131 hedef \u00fcretir: biri 1, biri 2, biri 3, biri 4, biri 5, biri 6 devirme ile ula\u015f\u0131labilir.<br><br><b>1 + 2 + 3 + 4 + 5 + 6 = 21</b><br><br>Her zaman do\u011fru y\u00f6n\u00fc se\u00e7en, hedef ba\u015f\u0131na asla 7\u2019yi ge\u00e7mez." },
+          { t: "Neden 21 Saniye?", p: "Kararlı bir devirme yakla\u015f\u0131k bir saniye s\u00fcrer. H\u0131z testi de\u011fil \u2013 d\u00fc\u015f\u00fcnme testi. Gerekli olan: fazladan devirme yok. Her zaman do\u011fru y\u00f6n\u00fc bilmek. Y\u00fczleri okumak, \u00e7iftleri hat\u0131rlamak, mant\u0131\u011f\u0131 kavramak.<br><br><b>Zor. Ama yap\u0131labilir.</b>" }
+        ],
+        footer: "Kutudaki k\u00fcple bol gerilim,\ne\u011flence ve kafa patlatma."
+      }
+    };
+    
+    // Button-Text setzen
+    const kpLang = KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de'];
+    document.getElementById("btnKippPrinzip").textContent = kpLang.btn;
+    
+    // Kipp-Prinzip Overlay befüllen und öffnen
+    function showKippPrinzip() {
+      const kp = KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de'];
+      document.getElementById('kpTitle').textContent = kp.title;
+      document.getElementById('kpSubtitle').textContent = kp.subtitle;
+      
+      let html = '';
+      kp.sections.forEach((s, i) => {
+        if (i > 0) html += '<div class="kpDivider"></div>';
+        html += '<div class="kpSection">';
+        html += '<div class="kpSectionTitle">' + s.t + '</div>';
+        html += '<div class="kpSectionText">' + s.p + '</div>';
+        html += '</div>';
+      });
+      html += '<div class="kpDivider"></div>';
+      html += '<div class="kpFooter">' + kp.footer.replace(/\n/g, '<br>') + '</div>';
+      
+      document.getElementById('kpBody').innerHTML = html;
+      document.getElementById('kippPrinzipOverlay').style.display = 'block';
+    }
+    
+    function hideKippPrinzip() {
+      document.getElementById('kippPrinzipOverlay').style.display = 'none';
+    }
+    
+    document.getElementById('btnKippPrinzip').addEventListener('click', () => {
+      showKippPrinzip();
+    });
+    
+    document.getElementById('kpCloseBtn').addEventListener('click', () => {
+      hideKippPrinzip();
+    });
     document.getElementById("sctHead").textContent = T.s1;
     document.getElementById("sctSub").textContent = T.ch1 + '.';
     document.getElementById("pgtHead").textContent = T.s1;
@@ -1868,6 +2109,8 @@
             document.getElementById('btnSpielen').style.opacity = '1';
             document.getElementById('btnDemo').disabled = false;
             document.getElementById('btnDemo').style.opacity = '1';
+            document.getElementById('btnKippPrinzip').disabled = false;
+            document.getElementById('btnKippPrinzip').style.opacity = '1';
           }, 700);
         }, fadeDelay);
       }
@@ -3838,6 +4081,10 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       
+      // "Würfel-Einblick wählen" sofort ausblenden
+      const jLabelWob = document.querySelector('#jokerIconsRow .jokerLabel');
+      if (jLabelWob) jLabelWob.style.display = 'none';
+      
       // Icon-Layer mit Pulse ausblenden
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
       kniffImgs.forEach(img => {
@@ -3928,6 +4175,10 @@
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
+      
+      // "Würfel-Einblick wählen" sofort ausblenden
+      const jLabelEck = document.querySelector('#jokerIconsRow .jokerLabel');
+      if (jLabelEck) jLabelEck.style.display = 'none';
       
       // Icon-Layer mit Pulse ausblenden
       const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
