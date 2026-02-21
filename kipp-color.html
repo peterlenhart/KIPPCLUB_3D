@@ -2147,7 +2147,7 @@
       if (ktTippShownThisGame || gamePhase !== 'kipp21' || replayActive) return;
       
       // TIPP 1: >12 Kipps für ein Ziel
-      if (!ktShown[0] && kipp21RoundKipps > 12) {
+      if (!ktShown[0] && kipp21RoundKipps > 8) {
         showKippTipp(0);
         return;
       }
@@ -2360,10 +2360,10 @@
       // Phase 1: Fliegen (mit Original-Text)
       ht.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
       cd.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
-      ht.style.left = (targetX - 55) + 'px';
-      ht.style.top = targetY + 'px';
-      cd.style.left = (targetX + 55) + 'px';
-      cd.style.top = targetY + 'px';
+      ht.style.left = targetX + 'px';
+      ht.style.top = (targetY - 20) + 'px';
+      cd.style.left = targetX + 'px';
+      cd.style.top = (targetY + 20) + 'px';
       
       // Phase 2: Am Ziel angekommen → sanft zu neuem Text morphen
       setTimeout(() => {
@@ -2376,9 +2376,17 @@
         setTimeout(() => {
           // Text + Größe ändern
           ht.innerHTML = '<span style="white-space:nowrap"><span style="font-size:32px;line-height:32px">' + kipp21KippCount + '</span><span style="font-size:22px"> KIPPS</span></span>';
-          const secs = Math.floor(kipp21TotalTime / 1000);
-          const secsStr = secs < 10 ? '0' + secs : '' + secs;
-          cd.innerHTML = '<span style="white-space:nowrap"><span style="font-size:32px;line-height:32px">' + secsStr + '</span><span style="font-size:22px"> Sek.</span></span>';
+          const totalSecs = Math.floor(kipp21TotalTime / 1000);
+          let zeitDisplay;
+          if (totalSecs < 60) {
+            const secsStr = totalSecs < 10 ? '0' + totalSecs : '' + totalSecs;
+            zeitDisplay = '<span style="font-size:32px;line-height:32px">' + secsStr + '</span><span style="font-size:22px"> Sek.</span>';
+          } else {
+            const mins = Math.floor(totalSecs / 60);
+            const secs = totalSecs % 60;
+            zeitDisplay = '<span style="font-size:32px;line-height:32px">' + mins + ':' + (secs < 10 ? '0' : '') + secs + '</span><span style="font-size:22px"> Min</span>';
+          }
+          cd.innerHTML = '<span style="white-space:nowrap">' + zeitDisplay + '</span>';
           
           // Einfaden
           ht.style.transition = 'opacity 0.4s ease-in';
@@ -2800,8 +2808,13 @@
     }
     
     function formatTimer(totalMs) {
-      const secs = Math.floor(totalMs / 1000);
-      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + (secs < 10 ? '0' : '') + secs + '</span><span style="font-size:18px"> S</span></span>';
+      const totalSecs = Math.floor(totalMs / 1000);
+      if (totalSecs < 60) {
+        return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + (totalSecs < 10 ? '0' : '') + totalSecs + '</span><span style="font-size:18px"> S</span></span>';
+      }
+      const mins = Math.floor(totalSecs / 60);
+      const secs = totalSecs % 60;
+      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + mins + ':' + (secs < 10 ? '0' : '') + secs + '</span><span style="font-size:18px"> Min</span></span>';
     }
     
     function replayUpdateKippCount() {
@@ -4131,15 +4144,6 @@
         if (!kipp21TimerRunning) return;
         const elapsed = kipp21TotalTime + (performance.now() - kipp21RoundTimerStart);
         countdown.innerHTML = formatTimer(elapsed);
-        // 60 Sekunden überschritten → Spiel beenden
-        if (elapsed >= 60000 && kipp21Active) {
-          kipp21StopRoundTimer();
-          kipp21Active = false;
-          gamePhase = 'ende';
-          if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
-          countdown.innerHTML = formatTimer(kipp21TotalTime);
-          show60SecTimeout();
-        }
       }, 100);
     }
     
