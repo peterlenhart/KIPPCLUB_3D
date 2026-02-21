@@ -690,8 +690,8 @@
       filter: brightness(0.85);
     }
     #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 519px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
-    #btnKippPrinzip { top: 570px; padding-top: 4px; font-size: 13px; letter-spacing: 1.5px; }
+    #btnDemo     { top: 510px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnKippPrinzip { top: 569px; padding-top: 4px; font-size: 13px; letter-spacing: 1.5px; }
 
     /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
     #kippPrinzipOverlay {
@@ -860,7 +860,7 @@
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
-    <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">Das KIPP-Prinzip</button>
+    <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">KIPP Prinzip</button>
   </div>
   
   <!-- KIPP-PRINZIP Overlay -->
@@ -1072,7 +1072,7 @@
     // Kipp-Prinzip Button Text & Overlay Content
     const KIPP_PRINZIP = {
       de: {
-        btn: "Das KIPP-Prinzip",
+        btn: "KIPP Prinzip",
         title: "DAS KIPP-PRINZIP",
         subtitle: "F\u00fcr Supert\u00fcftler",
         sections: [
@@ -1087,7 +1087,7 @@
         footer: "Viel Spannung, Spa\u00df und Kopfzerbrechen\nmit dem W\u00fcrfel in der Box."
       },
       en: {
-        btn: "The TILT Principle",
+        btn: "TILT Principle",
         title: "THE TILT PRINCIPLE",
         subtitle: "For Super Puzzlers",
         sections: [
@@ -1102,7 +1102,7 @@
         footer: "Lots of suspense, fun and brainwork\nwith the cube in the box."
       },
       es: {
-        btn: "El Principio VOLCADO",
+        btn: "Principio VOLCADO",
         title: "EL PRINCIPIO VOLCADO",
         subtitle: "Para Superingeniosos",
         sections: [
@@ -1117,7 +1117,7 @@
         footer: "Mucha tensi\u00f3n, diversi\u00f3n y rompecabezas\ncon el cubo en la caja."
       },
       fr: {
-        btn: "Le Principe BASCULE",
+        btn: "Principe BASCULE",
         title: "LE PRINCIPE BASCULE",
         subtitle: "Pour Super Casse-t\u00eates",
         sections: [
@@ -1132,7 +1132,7 @@
         footer: "Beaucoup de suspense, de plaisir\net de casse-t\u00eate avec le cube dans la bo\u00eete."
       },
       it: {
-        btn: "Il Principio RIBALTAMENTO",
+        btn: "Principio RIBALTAMENTO",
         title: "IL PRINCIPIO RIBALTAMENTO",
         subtitle: "Per Super Rompicapi",
         sections: [
@@ -7464,6 +7464,8 @@
         if (progress < 1) {
           requestAnimationFrame(animateFall);
         } else {
+          // Klack beim Aufsetzen (wie im Tutorial)
+          playKlack();
           if (targetAngle === 0) {
             // Zurückgefallen: Würfel zurück in kipGroup
             cube.updateMatrixWorld();
