@@ -689,9 +689,9 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnSpielen  { top: 401px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 460px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
-    #btnKippPrinzip { top: 519px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnSpielen  { top: 421px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 480px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
 
     /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
     #kippPrinzipOverlay {
@@ -3614,20 +3614,35 @@
           startKipp21(false);
         };
       } else {
-        // Spiel-Ende: nur NOCHMAL
+        // Spiel-Ende: SPIELEN + KIPP PRINZIP
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
         
-        abtn.textContent = T.nm;
+        abtn.textContent = T.sp;
         abtn.style.cssText = btnCSS(btnBaseY, 18, 2.5);
         abtn.onclick = () => {
           abtn.style.display = 'none';
+          const ekpb = document.getElementById('endKippPrinzipBtn');
+          if (ekpb) ekpb.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
           counterOrigPos = null;
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
           startKipp21(false);
+        };
+        
+        let kpBtn = document.getElementById('endKippPrinzipBtn');
+        if (!kpBtn) {
+          kpBtn = document.createElement('button');
+          kpBtn.id = 'endKippPrinzipBtn';
+          kpBtn.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(kpBtn);
+        }
+        kpBtn.textContent = KIPP_PRINZIP[currentLang].btn;
+        kpBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
+        kpBtn.onclick = () => {
+          showKippPrinzip();
         };
       }
     }
