@@ -2998,7 +2998,7 @@
     async function handTapFromSouth(tx, ty, holdMs) {
       if (!replayActive) return;
       holdMs = holdMs || 600;
-      const SY = 680;
+      const SY = 740;
       
       setHandPos(tx, SY);
       handEl.style.opacity = '1';
@@ -3041,13 +3041,13 @@
       updateHandShadow(c.x, c.y, true);
       await sleep(350);
       
-      // Sicherstellen dass performKipp nicht blockiert wird
-      isAnimating = false;
-      
-      // Timer GO — erst bei Würfelberührung (=Kipp-Start)
+      // Timer GO
       if (kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
         kipp21StartRoundTimer();
       }
+      
+      // Sicherstellen dass performKipp nicht blockiert wird
+      isAnimating = false;
       
       const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, kippDur);
       await performKipp(kippDir, kippDur);
@@ -3163,7 +3163,7 @@
       const hasIcon = CARD_BLICK_MAP[nextV] !== null;
       const tx = cardScreenX(nextV);
       const ty = cardScreenY(nextV) + 15;
-      const SY = 680;
+      const SY = 740;
       
       if (!hasIcon) {
         // Kein Blick-Icon → Hand hinfliegen, sofort beim Kontakt pulsen+öffnen
@@ -4178,53 +4178,56 @@
       if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
     }
     
-    // --- Pause-Button als 3D-Mesh auf Rasterfeld 9B, Rahmenhöhe (Y=0.46875) ---
-    const pauseBtnGeo = new THREE.PlaneGeometry(0.15625, 0.15625); // 1 Rasterzelle
-    const pauseBtnMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
+    // --- Pause-Button als 2D-Overlay unter Kärtchen-Reihe ---
+    const pauseBtnGeo = new THREE.PlaneGeometry(0.01, 0.01); // Dummy für Kompatibilität
+    const pauseBtnMat = new THREE.MeshBasicMaterial({ visible: false });
     const pauseBtnMesh = new THREE.Mesh(pauseBtnGeo, pauseBtnMat);
-    pauseBtnMesh.rotation.x = -Math.PI / 2;
-    // Zelle 9B: Spalte B (idx 1), Zeile 9
-    // X = colX(B) = -0.39063
-    // Z = rowZ(9) = 0.50000
-    pauseBtnMesh.position.set(0, 0.004, 1.177); // Zeile unter Kippzielen, mittig, Tischebene
-    pauseBtnMesh.visible = false;
     scene.add(pauseBtnMesh);
+    pauseBtnMesh.visible = false;
     
-    // Textur laden
-    const pauseImg = new Image();
-    pauseImg.onload = function() {
-      const tex = new THREE.Texture(pauseImg);
-      tex.needsUpdate = true;
-      pauseBtnMat.map = tex;
-      pauseBtnMat.needsUpdate = true;
-    };
-    pauseImg.src = 'pause.webp';
+    // 2D Pause-Button
+    const pauseBtn2D = document.createElement('img');
+    pauseBtn2D.id = 'pauseBtn2D';
+    pauseBtn2D.style.cssText = 'position:absolute; width:45px; height:45px; left:50%; transform:translateX(-50%); pointer-events:auto; cursor:pointer; display:none; z-index:150;';
+    pauseBtn2D.src = 'pause.webp';
+    document.getElementById('uiOverlay').appendChild(pauseBtn2D);
+    
+    // Position: unter Kippziel-Reihe, mittig
+    function updatePauseBtnPos() {
+      // cardScreenY gibt die Kartenmitte. Karten sind ~90px hoch auf Screen.
+      const cy = cardScreenY(0);
+      pauseBtn2D.style.top = Math.min(cy + 55, 670) + 'px';
+    }
     
     let blickPauseTimeout = null;
     
     function scheduleBlickPause() {
       clearBlickPause();
-      pauseBtnMesh.visible = true;
+      updatePauseBtnPos();
+      pauseBtn2D.style.display = 'block';
     }
     
     function clearBlickPause() {
       if (blickPauseTimeout) { clearTimeout(blickPauseTimeout); blickPauseTimeout = null; }
-      pauseBtnMesh.visible = false;
+      pauseBtn2D.style.display = 'none';
     }
     
-    // Pause-Klick per Raycaster (in touchend/click Handler integriert)
+    // Pause-Klick per DOM-Event
+    pauseBtn2D.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      kipp21KniffAbort = true;
+      clearBlickPause();
+    });
+    pauseBtn2D.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      kipp21KniffAbort = true;
+      clearBlickPause();
+    });
+    
+    // Legacy-Kompatibilität: checkPauseBtnTap gibt jetzt immer false (2D handled es selbst)
     function checkPauseBtnTap(x, y, rect) {
-      if (!pauseBtnMesh.visible) return false;
-      const mouse = new THREE.Vector2();
-      mouse.x = ((x - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((y - rect.top) / rect.height) * 2 + 1;
-      const rc = new THREE.Raycaster();
-      rc.setFromCamera(mouse, camera);
-      if (rc.intersectObject(pauseBtnMesh).length > 0) {
-        kipp21KniffAbort = true;
-        clearBlickPause();
-        return true;
-      }
       return false;
     }
     
