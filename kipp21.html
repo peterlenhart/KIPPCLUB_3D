@@ -3315,6 +3315,8 @@
         
         if (k < dist - 1) await sleep(40);
       }
+      // Nach letztem Kipp: Auto-Confirm wenn HIT (Kippziel fliegt selbstständig)
+      checkOnTargetAfterKipp();
     }
     
     // --- Bestätigen: Timer SOFORT stoppen, dann Hand animieren, dann CardTap ---
@@ -3429,8 +3431,13 @@
         
         // === BESTÄTIGEN ===
         await sleep(800);
-        dbgLog('R' + ci + ': Bestätigen...');
-        await replayConfirm(ci);
+        // Wenn checkOnTargetAfterKipp bereits auto-confirmed hat → überspringen
+        if (kipp21CardStates[ci] === 'erledigt' || !kipp21CardStates.includes('offen')) {
+          console.log('[REPLAY] R'+ci+': Auto-confirmed by checkOnTarget, skip hand confirm');
+        } else {
+          dbgLog('R' + ci + ': Bestätigen...');
+          await replayConfirm(ci);
+        }
         console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
         await sleep(4500); // Warten bis Anzeigen zurückgeflogen sind
