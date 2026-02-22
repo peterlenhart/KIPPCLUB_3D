@@ -704,30 +704,40 @@
     }
     #bestScoresBoard {
       position: absolute;
-      left: 50%; top: 45%; transform: translate(-50%,-50%);
-      width: 300px; height: 506px;
+      left: 50%; top: 46%; transform: translate(-50%,-50%);
+      width: 360px; height: 565px;
     }
     #bestScoresBoard img {
       width: 100%; height: 100%;
     }
-    #bestScoresBoard .bsTitle {
-      position: absolute;
-      left: 0; right: 0; top: 4.44%;
-      text-align: center;
-      font: bold 12px Arial, sans-serif;
-      color: #a09080;
-      letter-spacing: 3px;
-      pointer-events: none;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    }
     .bsRow {
       position: absolute;
-      left: 12%; right: 6%;
+      left: 24%; right: 6%;
       text-align: center;
       font: bold 13px Arial, sans-serif;
       color: #c8c0b0;
       text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
       letter-spacing: 1px;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+    .bsNum {
+      position: absolute;
+      left: 10.5%;
+      font: bold 13px Arial, sans-serif;
+      color: #c8c0b0;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+    }
+    .bsTitle {
+      position: absolute;
+      left: 0; right: 0; top: 15.28%;
+      text-align: center;
+      font: bold 13px Arial, sans-serif;
+      color: #c8c0b0;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
+      letter-spacing: 2px;
       pointer-events: none;
       transform: translateY(-50%);
     }
@@ -906,19 +916,29 @@
   <div id="bestScoresOverlay">
     <div id="bestScoresBoard">
       <img src="scoretafel.png" alt="Best Scores">
-      <div class="bsTitle">BEST SCORES</div>
-      <div class="bsRow" style="top:12.30%" id="bsRow1"></div>
-      <div class="bsRow" style="top:19.53%" id="bsRow2"></div>
-      <div class="bsRow" style="top:26.34%" id="bsRow3"></div>
-      <div class="bsRow" style="top:32.33%" id="bsRow4"></div>
-      <div class="bsRow" style="top:38.29%" id="bsRow5"></div>
-      <div class="bsRow" style="top:44.28%" id="bsRow6"></div>
-      <div class="bsRow" style="top:50.27%" id="bsRow7"></div>
-      <div class="bsRow" style="top:56.26%" id="bsRow8"></div>
-      <div class="bsRow" style="top:62.24%" id="bsRow9"></div>
-      <div class="bsRow" style="top:68.19%" id="bsRow10"></div>
-      <div class="bsRow" style="top:74.14%" id="bsRow11"></div>
-      <div class="bsRow" style="top:81.19%" id="bsRow12"></div>
+      <div class="bsTitle" id="bsTitleText">BEST SCORES</div>
+      <span class="bsNum" style="top:23.69%">1.</span>
+      <span class="bsNum" style="top:30.69%">2.</span>
+      <span class="bsNum" style="top:37.69%">3.</span>
+      <span class="bsNum" style="top:44.64%">4.</span>
+      <span class="bsNum" style="top:51.77%">5.</span>
+      <span class="bsNum" style="top:58.94%">6.</span>
+      <span class="bsNum" style="top:66.12%">7.</span>
+      <span class="bsNum" style="top:73.25%">8.</span>
+      <span class="bsNum" style="top:80.16%">9.</span>
+      <span class="bsNum" style="top:87.07%">10.</span>
+      <span class="bsNum" style="top:93.85%">11.</span>
+      <div class="bsRow" style="top:23.69%" id="bsRow1"></div>
+      <div class="bsRow" style="top:30.69%" id="bsRow2"></div>
+      <div class="bsRow" style="top:37.69%" id="bsRow3"></div>
+      <div class="bsRow" style="top:44.64%" id="bsRow4"></div>
+      <div class="bsRow" style="top:51.77%" id="bsRow5"></div>
+      <div class="bsRow" style="top:58.94%" id="bsRow6"></div>
+      <div class="bsRow" style="top:66.12%" id="bsRow7"></div>
+      <div class="bsRow" style="top:73.25%" id="bsRow8"></div>
+      <div class="bsRow" style="top:80.16%" id="bsRow9"></div>
+      <div class="bsRow" style="top:87.07%" id="bsRow10"></div>
+      <div class="bsRow" style="top:93.85%" id="bsRow11"></div>
     </div>
     <button id="bestScoresClose">OK</button>
   </div>
@@ -1009,7 +1029,7 @@
         k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit.<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
         ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
-        wh:"WIEDERHOLEN", nm:"NEUES SPIEL",
+        wh:"WIEDERHOLEN", nm:"NEUES SPIEL", bs:"BESTE ERGEBNISSE",
         ch1:"6 HITS mit 21 KIPPS", ch2:"Mastermind = unter 21 Sek.",
         jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",
         erg:"Ergebnis: {k} KIPPS | {z}", best21:"BEST: 21 KIPPS unter 21 Sek.",
@@ -1028,7 +1048,7 @@
         k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
         p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
         ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIAL",
-        wh:"REPEAT", nm:"NEW GAME",
+        wh:"REPEAT", nm:"NEW GAME", bs:"BEST SCORES",
         ch1:"6 HITS with 21 TIPS", ch2:"Mastermind = under 21 sec.",
         jw:"Cube Insight<br>choose",kp:"Tip first!",kb:"TILT VIEW",eb:"CORNER VIEW",
         erg:"Result: {k} TIPS | {z}", best21:"BEST: 21 TIPS under 21 sec.",
@@ -1047,7 +1067,7 @@
         k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
         p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
         ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIAL",
-        wh:"REPETIR", nm:"NUEVO JUEGO",
+        wh:"REPETIR", nm:"NUEVO JUEGO", bs:"MEJORES PUNTUACIONES",
         ch1:"6 ACIERTOS con 21 VOLCADOS", ch2:"Mastermind = menos de 21 seg.",
         jw:"Vista del cubo<br>elegir",kp:"\u00a1Vuelca!",kb:"VISTA GIRO",eb:"VISTA ESQUINA",
         erg:"Resultado: {k} VOLCADOS | {z}", best21:"MEJOR: 21 VOLCADOS en menos de 21 seg.",
@@ -1066,7 +1086,7 @@
         k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
         p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
         ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIAL",
-        wh:"R\u00c9P\u00c9TER", nm:"NOUVEAU JEU",
+        wh:"R\u00c9P\u00c9TER", nm:"NOUVEAU JEU", bs:"MEILLEURS SCORES",
         ch1:"6 COUPS avec 21 BASCULES", ch2:"Mastermind = moins de 21 sec.",
         jw:"Aper\u00e7u du cube<br>choisir",kp:"Bascule !",kb:"VUE BASCULE",eb:"VUE COIN",
         erg:"R\u00e9sultat : {k} BASCULES | {z}", best21:"MEILLEUR : 21 BASCULES en moins de 21 sec.",
@@ -1085,7 +1105,7 @@
         k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
         p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
         ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
-        wh:"RIPETERE", nm:"NUOVO GIOCO",
+        wh:"RIPETERE", nm:"NUOVO GIOCO", bs:"MIGLIORI PUNTEGGI",
         ch1:"6 COLPI con 21 RIBALTAMENTI", ch2:"Mastermind = sotto 21 sec.",
         jw:"Vista del cubo<br>scegli",kp:"Ribalta!",kb:"VISTA KIPP",eb:"VISTA ANGOLO",
         erg:"Risultato: {k} RIBALTAMENTI | {z}", best21:"MIGLIORE: 21 RIBALTAMENTI sotto 21 sec.",
@@ -1104,7 +1124,7 @@
         k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
         p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
         ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIAL",
-        wh:"TEKRAR", nm:"YEN\u0130 OYUN",
+        wh:"TEKRAR", nm:"YEN\u0130 OYUN", bs:"EN \u0130Y\u0130 SKORLAR",
         ch1:"6 \u0130SABET ve 21 DEVIRME", ch2:"Mastermind = 21 sn. alt\u0131nda",
         jw:"K\u00fcp g\u00f6r\u00fcn\u00fcm\u00fc<br>se\u00e7",kp:"Devir!",kb:"DEV\u0130R G\u00d6R\u00dc\u015e",eb:"K\u00d6\u015eE G\u00d6R\u00dc\u015e",
         erg:"Sonu\u00e7: {k} DEVIRME | {z}", best21:"EN \u0130Y\u0130: 21 DEVIRME, 21 sn. alt\u0131nda",
@@ -1118,7 +1138,7 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
-        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"BESTE ERGEBNISSE",ch1:"6 HITS mit 21 KIPPS",ch2:"Mastermind = unter 21 Sek.",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
@@ -2313,77 +2333,70 @@
       } catch(e) {}
       return [];
     }
-    
-    function loadTutorialScore() {
-      try {
-        const raw = localStorage.getItem('digikipp_tutorialscore');
-        if (raw) return JSON.parse(raw);
-      } catch(e) {}
-      return null;
-    }
-    
+
     function saveTutorialScore(kipps, secs) {
       try {
-        // Nur einmal speichern — bleibt für immer
         if (localStorage.getItem('digikipp_tutorialscore')) return;
-        localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: kipps, secs: secs, date: Date.now() }));
+        localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: kipps, secs: secs }));
+        // Ins Ranking einfügen
+        const scores = loadBestScores();
+        scores.push({ kipps: kipps, secs: secs, tutorial: true });
+        scores.sort((a, b) => a.kipps - b.kipps || a.secs - b.secs);
+        localStorage.setItem('digikipp_bestscores', JSON.stringify(scores.slice(0, 11)));
       } catch(e) {}
     }
-    
+
     function saveBestScore(kipps, secs) {
       try {
         const scores = loadBestScores();
-        scores.push({ kipps: kipps, secs: secs, date: Date.now() });
-        // Sort: fewer kipps = better, then fewer secs
+        scores.push({ kipps: kipps, secs: secs });
         scores.sort((a, b) => a.kipps - b.kipps || a.secs - b.secs);
-        // Keep only top 11 (row 1 = tutorial, rows 2-12 = player)
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_bestscores', JSON.stringify(top11));
         return top11;
       } catch(e) {
-        console.warn('[BS] localStorage failed:', e);
         return [];
       }
     }
-    
-    function fmtScoreDate(ts) {
-      const d = new Date(ts);
-      const dd = String(d.getDate()).padStart(2,'0');
-      const mm = String(d.getMonth()+1).padStart(2,'0');
-      const yy = String(d.getFullYear()).slice(-2);
-      return dd + '.' + mm + '.' + yy;
-    }
-    
+
     function renderBestScores() {
-      // Row 1: Tutorial score
-      const tutScore = loadTutorialScore();
-      const el1 = document.getElementById('bsRow1');
-      if (el1) {
-        if (tutScore) {
-          const kStr = String(tutScore.kipps).padStart(2, '0');
-          const zStr = String(tutScore.secs).padStart(3, ' ');
-          const dt = tutScore.date ? fmtScoreDate(tutScore.date) + '  ' : '';
-          el1.textContent = 'TUTORIAL  ' + dt + kStr + ' KIPPS  |  ' + zStr + ' Sek.';
-        } else {
-          el1.textContent = 'TUTORIAL  —';
-        }
-      }
-      // Rows 2-12: Player scores (top 11)
+      const titleEl = document.getElementById('bsTitleText');
+      if (titleEl) titleEl.textContent = T.bs || 'BEST SCORES';
       const scores = loadBestScores();
       for (let i = 0; i < 11; i++) {
-        const el = document.getElementById('bsRow' + (i + 2));
+        const el = document.getElementById('bsRow' + (i + 1));
         if (!el) continue;
         if (i < scores.length) {
           const s = scores[i];
-          const kStr = String(s.kipps).padStart(2, '0');
-          const zStr = String(s.secs).padStart(3, ' ');
-          const dt = s.date ? fmtScoreDate(s.date) : '';
-          el.textContent = dt + '  |  ' + kStr + ' KIPPS  |  ' + zStr + ' Sek.';
+          const prefix = s.tutorial ? 'TUTORIAL  ' : '';
+          el.textContent = prefix + s.kipps + ' KIPPS  |  ' + s.secs + ' Sek.';
         } else {
           el.textContent = '';
         }
       }
     }
+
+    // Fantasy test data
+    (function initFantasyScores() {
+      try {
+        if (!localStorage.getItem('digikipp_bestscores')) {
+          localStorage.setItem('digikipp_bestscores', JSON.stringify([
+            { kipps: 21, secs: 8 },
+            { kipps: 21, secs: 12 },
+            { kipps: 21, secs: 25, tutorial: true },
+            { kipps: 22, secs: 9 },
+            { kipps: 23, secs: 11 },
+            { kipps: 24, secs: 10 },
+            { kipps: 25, secs: 14 },
+            { kipps: 27, secs: 13 },
+            { kipps: 28, secs: 18 },
+            { kipps: 30, secs: 15 },
+            { kipps: 33, secs: 22 }
+          ]));
+          localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: 21, secs: 25 }));
+        }
+      } catch(e) {}
+    })();
     
     function showBestScores() {
       renderBestScores();
@@ -3734,7 +3747,7 @@
           bsBtn.className = 'end-btn-dynamic';
           document.getElementById('uiOverlay').appendChild(bsBtn);
         }
-        bsBtn.textContent = 'BEST SCORES';
+        bsBtn.textContent = T.bs || 'BEST SCORES';
         bsBtn.style.cssText = btnCSS(480, 16, 2);
         bsBtn.style.display = 'block';
         bsBtn.onclick = () => { showBestScores(); };
