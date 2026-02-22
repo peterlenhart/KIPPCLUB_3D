@@ -743,7 +743,7 @@
     }
     #bestScoresClose {
       position: absolute;
-      bottom: 69px; left: 50%; transform: translateX(-50%);
+      bottom: 63px; left: 50%; transform: translateX(-50%);
       background: url(button_lang.webp) center/contain no-repeat;
       width: 280px; height: 49px; border: none; cursor: pointer;
       font: bold 16px Arial; color: #d0d0d0; letter-spacing: 2px;
@@ -2336,10 +2336,9 @@
 
     function saveTutorialScore(kipps, secs) {
       try {
-        if (localStorage.getItem('digikipp_tutorialscore')) return;
         localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: kipps, secs: secs }));
-        // Ins Ranking einfügen
-        const scores = loadBestScores();
+        // Alten Tutorial-Eintrag aus Ranking entfernen, neuen einfügen
+        const scores = loadBestScores().filter(s => !s.tutorial);
         scores.push({ kipps: kipps, secs: secs, tutorial: true });
         scores.sort((a, b) => a.kipps - b.kipps || a.secs - b.secs);
         localStorage.setItem('digikipp_bestscores', JSON.stringify(scores.slice(0, 11)));
@@ -2380,27 +2379,15 @@
       }
     }
 
-    // Fantasy test data
-    (function initFantasyScores() {
-      try {
-        if (!localStorage.getItem('digikipp_bestscores')) {
-          localStorage.setItem('digikipp_bestscores', JSON.stringify([
-            { kipps: 21, secs: 8 },
-            { kipps: 21, secs: 12 },
-            { kipps: 21, secs: 25, tutorial: true },
-            { kipps: 22, secs: 9 },
-            { kipps: 23, secs: 11 },
-            { kipps: 24, secs: 10 },
-            { kipps: 25, secs: 14 },
-            { kipps: 27, secs: 13 },
-            { kipps: 28, secs: 18 },
-            { kipps: 30, secs: 15 },
-            { kipps: 33, secs: 22 }
-          ]));
-          localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: 21, secs: 25 }));
-        }
-      } catch(e) {}
-    })();
+    // No fantasy data — real scores only
+    // Einmalig alte Testdaten löschen
+    try {
+      if (localStorage.getItem('digikipp_fantasy_cleared') !== '1') {
+        localStorage.removeItem('digikipp_bestscores');
+        localStorage.removeItem('digikipp_tutorialscore');
+        localStorage.setItem('digikipp_fantasy_cleared', '1');
+      }
+    } catch(e) {}
     
     function showBestScores() {
       renderBestScores();
