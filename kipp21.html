@@ -694,7 +694,7 @@
     #btnSpielen  { top: 421px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 480px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
-    #btnBestScores { top: 598px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnBestScores { /* trophy icon — styled inline */ }
     
     /* Best Scores Overlay */
     #bestScoresOverlay {
@@ -909,7 +909,7 @@
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">KIPP Prinzip</button>
-    <button class="startClickZone" id="btnBestScores" disabled style="opacity:0">HIGHSCORES</button>
+    <div id="btnBestScores" style="position:absolute; top:18px; right:18px; width:40px; height:40px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:flex; align-items:center; justify-content:center; font-size:28px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🏆</div>
   </div>
   
   <!-- BEST SCORES Overlay -->
@@ -2251,7 +2251,6 @@
             document.getElementById('btnDemo').style.opacity = '1';
             document.getElementById('btnKippPrinzip').disabled = false;
             document.getElementById('btnKippPrinzip').style.opacity = '1';
-            document.getElementById('btnBestScores').disabled = false;
             document.getElementById('btnBestScores').style.opacity = '1';
           }, 700);
         }, fadeDelay);
@@ -2397,6 +2396,9 @@
     document.getElementById('btnBestScores').addEventListener('click', () => {
       showBestScores();
     });
+    document.getElementById('btnBestScores').addEventListener('touchend', (e) => {
+      e.preventDefault(); showBestScores();
+    }, { passive: false });
     
     function updateSoundIcon() {
       soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
@@ -2698,6 +2700,7 @@
     // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
     // Zähler-Flug: in die würfelfreie Boxhälfte
     let counterOrigPos = null;
+    let lastCounterTarget = { x: 180, y: 300 }; // Fallback
     
     function flyCountersToBox() {
       const ht = document.getElementById('hintText');
@@ -2717,7 +2720,8 @@
       const target3D = new THREE.Vector3(0, 0.234375, targetZ);
       target3D.project(camera);
       const targetX = Math.round((target3D.x * 0.5 + 0.5) * 360);
-      const targetY = Math.round((-target3D.y * 0.5 + 0.5) * 720);
+      const targetY = Math.round((-target3D.y * 0.5 + 0.5) * 720) - 8;
+      lastCounterTarget = { x: targetX, y: targetY };
       
       // Phase 1: Fliegen (mit Original-Text)
       ht.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
@@ -3722,18 +3726,28 @@
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
         
-        // gameEndText — Oberkante Zeile 11 (2D: 10×45 = 450px)
+        // gameEndText NICHT mehr auf 450px — Motivtext kommt in die würfelfreie Hälfte
         const geText = document.getElementById('gameEndText');
-        geText.style.top = '450px';
+        geText.style.display = 'none';
+        
+        // Motivationstext unter Score-Countern in der Box-Hälfte
+        if (!motivEl) {
+          motivEl = document.createElement('div');
+          motivEl.id = 'endMotivText';
+          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:13px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:130; transform:translateX(-50%);';
+          document.getElementById('uiOverlay').appendChild(motivEl);
+        }
+        motivEl.style.left = lastCounterTarget.x + 'px';
+        motivEl.style.top = (lastCounterTarget.y + 52) + 'px';
         
         if (kipp21KippCount > 21) {
-          geText.textContent = MOTIV_21[lang] || MOTIV_21.de;
-          geText.style.color = '#d4a843';
+          motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
+          motivEl.style.color = '#d4a843';
+          motivEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
         } else {
-          geText.textContent = kipp21KippCount + ' KIPPS | ' + zeitStr;
-          geText.style.color = '#e0d0b8';
+          motivEl.textContent = '';
         }
-        geText.style.display = 'block';
+        motivEl.style.display = 'block';
         
         // Funktion zum Aufräumen aller End-Buttons
         function hideAllEndBtns() {
@@ -3759,7 +3773,7 @@
           document.getElementById('uiOverlay').appendChild(bsBtn);
         }
         bsBtn.textContent = T.bs || 'HIGHSCORES';
-        bsBtn.style.cssText = btnCSS(480, 16, 2);
+        bsBtn.style.cssText = btnCSS(421, 16, 2);
         bsBtn.style.display = 'block';
         bsBtn.onclick = () => { showBestScores(); };
         
@@ -3772,13 +3786,13 @@
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
         kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
-        kpBtn.style.cssText = btnCSS(539, 16, 2);
+        kpBtn.style.cssText = btnCSS(480, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => { showKippPrinzip(); };
         
         // Button 3: NEUES SPIEL (598px — wie btnBestScores auf Intro)
         abtn.textContent = T.nm;
-        abtn.style.cssText = btnCSS(598, 18, 2.5);
+        abtn.style.cssText = btnCSS(539, 18, 2.5);
         abtn.onclick = () => {
           hideAllEndBtns();
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
