@@ -891,7 +891,7 @@
   <!-- BEST SCORES Overlay -->
   <div id="bestScoresOverlay">
     <div id="bestScoresBoard">
-      <img src="bestscores.webp" alt="Best Scores">
+      <img src="scoretafel.png" alt="Best Scores">
       <div class="bsRow" style="top:18.75%" id="bsRow1"></div>
       <div class="bsRow" style="top:27.7%" id="bsRow2"></div>
       <div class="bsRow" style="top:36.7%" id="bsRow3"></div>
@@ -3170,7 +3170,7 @@
         setHandPos(tx, SY);
         handEl.style.opacity = '1';
         updateHandShadow(tx, SY, true);
-        await moveHandSmooth(tx, ty, 800);
+        await moveHandSmooth(tx, ty, 600);
         // Sofort bei Kontakt: Pulse + Open
         pulseCard(nextV);
         kipp21OnCardTap(nextV, true);
@@ -3230,9 +3230,9 @@
         const rightX = cardScreenX(5);
         const targetX = cardScreenX(targetCard);
         
-        setHandPos(leftX, 680);
+        setHandPos(leftX, 740);
         handEl.style.opacity = '1';
-        updateHandShadow(leftX, 680, true);
+        updateHandShadow(leftX, 740, true);
         // Hoch zur Kartenreihe
         await moveHandSmooth(leftX, cardY_screen, 800);
         await sleep(200);
@@ -3247,9 +3247,9 @@
       } else {
         // Direkt zur Zielkarte
         const targetX = cardScreenX(targetCard);
-        setHandPos(targetX, 680);
+        setHandPos(targetX, 740);
         handEl.style.opacity = '1';
-        updateHandShadow(targetX, 680, true);
+        updateHandShadow(targetX, 740, true);
         await moveHandSmooth(targetX, cardY_screen, 900);
       }
       
@@ -3258,7 +3258,7 @@
       await sleep(300);
       
       // Hand weg
-      await moveHandSmooth(cardScreenX(targetCard), 680, 500);
+      await moveHandSmooth(cardScreenX(targetCard), 740, 500);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(100);
@@ -3315,8 +3315,6 @@
         
         if (k < dist - 1) await sleep(40);
       }
-      // Nach letztem Kipp: Auto-Confirm wenn HIT (Kippziel fliegt selbstständig)
-      checkOnTargetAfterKipp();
     }
     
     // --- Bestätigen: Timer SOFORT stoppen, dann Hand animieren, dann CardTap ---
@@ -3370,9 +3368,9 @@
       const _eyeR1 = document.getElementById('eyeIcon');
       if (_eyeR1) _eyeR1.style.pointerEvents = 'none';
       const kniffPlan = {}; // Nicht mehr gebraucht, Blick-Typ kommt aus cardIdx % 2
-      const KIPP_DUR = 850; // Knapp unter 1 Sek pro Kipp
+      const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
       
-      await sleep(1000);
+      await sleep(2000);
       if (myGen !== kipp21Generation) return; // Abgebrochen
       dbgLog('Perfect Game Start');
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
@@ -3431,13 +3429,8 @@
         
         // === BESTÄTIGEN ===
         await sleep(800);
-        // Wenn checkOnTargetAfterKipp bereits auto-confirmed hat → überspringen
-        if (kipp21CardStates[ci] === 'erledigt' || !kipp21CardStates.includes('offen')) {
-          console.log('[REPLAY] R'+ci+': Auto-confirmed by checkOnTarget, skip hand confirm');
-        } else {
-          dbgLog('R' + ci + ': Bestätigen...');
-          await replayConfirm(ci);
-        }
+        dbgLog('R' + ci + ': Bestätigen...');
+        await replayConfirm(ci);
         console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
         await sleep(4500); // Warten bis Anzeigen zurückgeflogen sind
