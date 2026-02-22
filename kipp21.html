@@ -2926,10 +2926,12 @@
       const c = cubeScreenXY();
       const off = kippPixelDir(kippDir);
       
-      setHandPos(c.x, c.y);
+      // Hand gleitet von unten zum Würfel (nicht abrupt erscheinen)
+      setHandPos(c.x, c.y + 80);
       handEl.style.opacity = '1';
-      updateHandShadow(c.x, c.y, true);
-      await sleep(350);
+      updateHandShadow(c.x, c.y + 80, true);
+      await moveHandSmooth(c.x, c.y, 400);
+      await sleep(200);
       
       // Timer GO
       if (kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
@@ -3100,7 +3102,7 @@
         handEl.style.opacity = '1';
         updateHandShadow(leftX, 680, true);
         // Hoch zur Kartenreihe
-        await moveHandSmooth(leftX, cardY_screen, 500);
+        await moveHandSmooth(leftX, cardY_screen, 800);
         await sleep(200);
         // Nach rechts suchen
         await moveHandSmooth(rightX, cardY_screen, 1400);
@@ -3116,7 +3118,7 @@
         setHandPos(targetX, 680);
         handEl.style.opacity = '1';
         updateHandShadow(targetX, 680, true);
-        await moveHandSmooth(targetX, cardY_screen, 600);
+        await moveHandSmooth(targetX, cardY_screen, 900);
       }
       
       // Karte pulsieren ("klick")
