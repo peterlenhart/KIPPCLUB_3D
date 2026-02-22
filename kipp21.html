@@ -3382,7 +3382,7 @@
       const _eyeR1 = document.getElementById('eyeIcon');
       if (_eyeR1) _eyeR1.style.pointerEvents = 'none';
       const kniffPlan = {}; // Nicht mehr gebraucht, Blick-Typ kommt aus cardIdx % 2
-      const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
+      const KIPP_DUR = 850; // Knapp unter 1 Sek pro Kipp
       
       await sleep(1000);
       if (myGen !== kipp21Generation) return; // Abgebrochen
@@ -3485,74 +3485,6 @@
     //  RANDOM GAME: zufällige Richtungen, keine KNIFFs,
     //  längere Denkpausen, zögerlicheres Kippen
     // ============================================================
-    async function startRandomReplay() {
-      initHandEl();
-      replayActive = true;
-      enableReplayBlocker();
-      renderer.domElement.style.pointerEvents = 'none'; // Canvas komplett blocken
-      
-      if (!replayDbg) {
-        replayDbg = document.createElement('div');
-        replayDbg.id = 'replayDbg';
-        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:transparent;background:transparent;padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
-        document.getElementById('uiOverlay').appendChild(replayDbg);
-      }
-      
-      const jr = document.getElementById('jokerIconsRow');
-      if (jr) jr.style.pointerEvents = 'none';
-      const _eyeR2 = document.getElementById('eyeIcon');
-      if (_eyeR2) _eyeR2.style.pointerEvents = 'none';
-      const KIPP_DUR = 550;
-      
-      await sleep(1500);
-      dbgLog('Random Game Start');
-      
-      for (let ci = 0; ci < 6; ci++) {
-        if (!replayActive) break;
-        
-        // === KARTE AUFDECKEN (immer manuell) ===
-        await replayOpenCard(ci);
-        if (!replayActive) break;
-        
-        // Denkpause (zufällig 1.5–4s)
-        await sleep(1500 + Math.random() * 2500);
-        
-        // === KIPPEN (zufällige Richtung) ===
-        const dist = kipp21CardDistances[ci];
-        if (!dist || dist <= 0) continue;
-        
-        const dir = Math.random() < 0.5 ? 'cw' : 'ccw';
-        dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' (zufällig)');
-        
-        for (let k = 0; k < dist; k++) {
-          if (!replayActive) break;
-          const Q = currentQuadrant;
-          const kDir = (dir === 'cw') ? CW_KIPP[Q] : CCW_KIPP[Q];
-          kippDirection = dir;
-          
-          await handKippAnim(kDir, KIPP_DUR);
-          replayUpdateKippCount();
-          
-          if (k < dist - 1) await sleep(200 + Math.random() * 400);
-        }
-        if (!replayActive) break;
-        // Auto-Confirm wenn HIT
-        checkOnTargetAfterKipp();
-        
-        // === BESTÄTIGEN ===
-        await sleep(600 + Math.random() * 800);
-        if (kipp21CardStates[ci] === 'erledigt' || !kipp21CardStates.includes('offen')) {
-          console.log('[REPLAY-RND] R'+ci+': Auto-confirmed, skip hand');
-        } else {
-          await replayConfirm(ci);
-        }
-        
-        await sleep(1000);
-      }
-      
-      replayCleanup(jr);
-    }
-    
     // --- Aufräumen ---
     function replayCleanup(jr) {
       replayActive = false;
