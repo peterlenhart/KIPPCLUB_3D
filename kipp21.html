@@ -4555,8 +4555,8 @@
       console.log('[CARDTAP] idx='+cardIdx, 'active='+kipp21Active, 'state='+kipp21CardStates[cardIdx], 'kniffActive='+kipp21KniffActive);
       // Tutorial läuft: NUR Replay-Code darf Karten öffnen
       if (replayActive && !_fromReplay) return;
-      // Alte Replay-Generation: ignorieren
-      if (_fromReplay && replayGeneration !== kipp21Generation) return;
+      // Alte Replay-Generation: ignorieren (nur wenn Replay tatsächlich läuft)
+      if (_fromReplay && replayActive && replayGeneration !== kipp21Generation) return;
       if (!kipp21Active) return;
       if (cardIdx < 0 || cardIdx >= 6) return;
       
