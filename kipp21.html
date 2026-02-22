@@ -158,7 +158,9 @@
       width: 360px;
       text-align: center;
       font-family: Arial, sans-serif;
+      font-size: 16px;
       font-weight: bold;
+      line-height: 1.4;
       color: #e0d0b8;
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
       white-space: nowrap;
@@ -717,6 +719,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding: 40px 30px 80px;
+      box-sizing: border-box;
     }
     #kippPrinzipOverlay .kpTitle {
       font-family: Arial, sans-serif;
@@ -3345,7 +3348,7 @@
       const el = document.getElementById('perfektGameText');
       if (!el) return;
       if (line2) {
-        el.innerHTML = '<div>' + line1 + '</div><div>' + line2 + '</div>';
+        el.innerHTML = '<div style="line-height:1.5">' + line1 + '</div><div style="margin-top:4px;line-height:1.5">' + line2 + '</div>';
       } else {
         el.innerHTML = '<div>' + line1 + '</div>';
       }
@@ -3471,9 +3474,15 @@
         // Ergebnis-Text anzeigen
         const totalSec = Math.floor((kipp21TotalTime || 0) / 1000);
         const zeitStr = totalSec + ' Sek.';
-        const resultLine = T.erg.replace('{k}', kipp21KippCount).replace('{z}', zeitStr);
+        const TUEFTLER = {
+          de: '6 TÜFTLER TIPPS:', en: '6 PUZZLE TIPS:', es: '6 CONSEJOS:',
+          fr: '6 ASTUCES :', it: '6 CONSIGLI:', tr: '6 İPUCU:'
+        };
+        const lang = _digikippLang || 'de';
+        const resultLine = (TUEFTLER[lang] || TUEFTLER.de);
         
-        // Personal Best Zeile
+        // Zweite Zeile: Ergebnis + Personal Best
+        const resultInfo = kipp21KippCount + ' KIPPS | ' + zeitStr;
         const PB_END = {
           de: 'DEIN BESTER: {k} KIPPS',
           en: 'YOUR BEST: {k} TILTS',
@@ -3490,10 +3499,9 @@
           it: 'NUOVO RECORD!',
           tr: 'YENİ REKOR!'
         };
-        const lang = _digikippLang || 'de';
         const bestLine = isNewRecord 
           ? '<span style="color:#d4a843">' + (NR_END[lang] || NR_END.de) + ' ' + kipp21KippCount + ' KIPPS</span>'
-          : '<span style="color:#a0a0a0;font-size:16px">' + (PB_END[lang] || PB_END.de).replace('{k}', personalBestKipps) + '</span>';
+          : '<span style="color:#a0a0a0;font-size:14px">' + resultInfo + '</span>';
         setTutText(resultLine, bestLine);
         const pgt = document.getElementById('perfektGameText');
         if (pgt) { pgt.style.display = 'block'; pgt.style.opacity = '1'; }
@@ -3518,7 +3526,7 @@
         if (kipp21KippCount > 21) {
           motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
           motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
-            ' top:' + (btnBaseY - 60) + 'px; width:280px; text-align:center;' +
+            ' top:416px; width:280px; text-align:center;' +
             ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
             ' line-height:1.5;' +
             ' color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.6);' +
