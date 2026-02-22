@@ -698,7 +698,7 @@
     
     /* Best Scores Overlay */
     #bestScoresOverlay {
-      position: absolute; top: 0; left: 0; width: 360px; height: 720px;
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 360px; height: 720px;
       background: rgba(0,0,0,0.85);
       display: none; z-index: 300;
     }
@@ -733,8 +733,10 @@
 
     /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
     #kippPrinzipOverlay {
-      position: absolute;
-      left: 0; top: 0;
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
       width: 360px; height: 720px;
       z-index: 9500;
       display: none;
@@ -786,6 +788,7 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.6);
       margin-bottom: 8px;
       line-height: 1.3;
+      text-align: center;
     }
     #kippPrinzipOverlay .kpSectionText {
       font-family: Arial, sans-serif;
@@ -793,6 +796,7 @@
       color: #ead7be;
       text-shadow: 0 1px 2px rgba(0,0,0,0.5);
       line-height: 1.65;
+      text-align: center;
     }
     #kippPrinzipOverlay .kpSectionText b {
       color: #f0d898;
