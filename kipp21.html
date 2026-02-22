@@ -584,7 +584,7 @@
     #soundToggle {
       display: none;
       position: absolute;
-      right: 10px;
+      left: 60px;
       top: 10px;
       width: 45px;
       height: 45px;
@@ -909,7 +909,7 @@
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">KIPP Prinzip</button>
-    <div id="btnBestScores" style="position:absolute; top:18px; right:18px; width:40px; height:40px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:flex; align-items:center; justify-content:center; font-size:28px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🏆</div>
+    <div id="btnBestScores" style="position:absolute; right:10px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:none;"><img src="pokal.png" style="width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));"></div>
   </div>
   
   <!-- BEST SCORES Overlay -->
@@ -2252,6 +2252,7 @@
             document.getElementById('btnKippPrinzip').disabled = false;
             document.getElementById('btnKippPrinzip').style.opacity = '1';
             document.getElementById('btnBestScores').style.opacity = '1';
+            document.getElementById('btnBestScores').style.display = 'block';
           }, 700);
         }, fadeDelay);
       }
@@ -2727,11 +2728,11 @@
       ht.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
       cd.style.transition = 'left 0.6s ease-in-out, top 0.6s ease-in-out';
       ht.style.left = targetX + 'px';
-      ht.style.top = (targetY - 20) + 'px';
+      ht.style.top = targetY + 'px';
       cd.style.left = targetX + 'px';
-      cd.style.top = (targetY + 20) + 'px';
+      cd.style.top = targetY + 'px';
       
-      // Phase 2: Am Ziel angekommen → sanft zu neuem Text morphen
+      // Phase 2: Am Ziel angekommen → zu einzeiliger Anzeige morphen
       setTimeout(() => {
         // Kurz ausblenden
         ht.style.transition = 'opacity 0.25s ease-out';
@@ -2740,17 +2741,15 @@
         cd.style.opacity = '0';
         
         setTimeout(() => {
-          // Text + Größe ändern
-          ht.innerHTML = '<span style="white-space:nowrap"><span style="font-size:32px;line-height:32px">' + kipp21KippCount + '</span><span style="font-size:22px"> KIPPS</span></span>';
+          // Einzeilig: "51 KIPPS | 042 Sek."
           const totalSecs = Math.floor(kipp21TotalTime / 1000);
           const s = totalSecs < 10 ? '00' + totalSecs : totalSecs < 100 ? '0' + totalSecs : '' + totalSecs;
-          cd.innerHTML = '<span style="white-space:nowrap"><span style="font-size:32px;line-height:32px">' + s + '</span><span style="font-size:22px"> Sek.</span></span>';
+          ht.innerHTML = '<span style="white-space:nowrap"><span style="font-size:26px;line-height:26px">' + kipp21KippCount + '</span><span style="font-size:17px"> KIPPS</span><span style="font-size:15px;opacity:0.5"> | </span><span style="font-size:26px;line-height:26px">' + s + '</span><span style="font-size:17px"> Sek.</span></span>';
+          cd.style.display = 'none';
           
           // Einfaden
           ht.style.transition = 'opacity 0.4s ease-in';
-          cd.style.transition = 'opacity 0.4s ease-in';
           ht.style.opacity = '1';
-          cd.style.opacity = '1';
         }, 280);
       }, 620);
     }
@@ -2772,6 +2771,7 @@
       // Text sofort zurück zu kompakt
       ht.innerHTML = formatKipps(kipp21KippCount);
       cd.innerHTML = formatTimer(kipp21TotalTime);
+      cd.style.display = 'block';
       ht.style.opacity = '1';
       cd.style.opacity = '1';
       
@@ -3734,11 +3734,11 @@
         if (!motivEl) {
           motivEl = document.createElement('div');
           motivEl.id = 'endMotivText';
-          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:13px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:130; transform:translateX(-50%);';
+          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:130; transform:translateX(-50%);';
           document.getElementById('uiOverlay').appendChild(motivEl);
         }
         motivEl.style.left = lastCounterTarget.x + 'px';
-        motivEl.style.top = (lastCounterTarget.y + 52) + 'px';
+        motivEl.style.top = (lastCounterTarget.y + 40) + 'px';
         
         if (kipp21KippCount > 21) {
           motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
