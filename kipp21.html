@@ -3523,6 +3523,12 @@
       const zeitStr = totalSec + ' Sek.';
       // Score steht schon in der Box-Hälfte — kein Extra-Text nötig
       document.getElementById('perfektGameText').style.display = 'none';
+      document.getElementById('gameEndText').style.display = 'none';
+      countdown.style.display = 'none';
+      hintText.style.display = 'none';
+      // Subtitle auch weg
+      const subEl = document.getElementById('subtitleText');
+      if (subEl) subEl.style.display = 'none';
       
       // Tutorial-Score speichern
       saveTutorialScore(totalKipps, totalSec);
@@ -3636,7 +3642,7 @@
       }
       
       if (isTutorial) {
-        // Tutorial-Ende: WIEDERHOLEN + SPIELEN + BEST SCORES (wie Intro-Positionen)
+        // Tutorial-Ende: WIEDERHOLEN + SPIELEN + HIGHSCORES (Intro-Abstände: 421, 480, 539)
         abtn.textContent = T.wh;
         abtn.style.cssText = btnCSS(421, 16, 2);
         abtn.onclick = () => {
@@ -3676,7 +3682,7 @@
           startKipp21(false);
         };
         
-        // Button 3: BEST SCORES (598px — wie Intro)
+        // Button 3: HIGHSCORES (539px — wie btnKippPrinzip auf Intro)
         let ebsBtn = document.getElementById('endBestScoresBtn');
         if (!ebsBtn) {
           ebsBtn = document.createElement('button');
@@ -3685,7 +3691,7 @@
           document.getElementById('uiOverlay').appendChild(ebsBtn);
         }
         ebsBtn.textContent = T.bs || 'HIGHSCORES';
-        ebsBtn.style.cssText = btnCSS(598, 16, 2);
+        ebsBtn.style.cssText = btnCSS(539, 16, 2);
         ebsBtn.style.display = 'block';
         ebsBtn.onclick = () => { showBestScores(); };
       } else {
@@ -4812,6 +4818,11 @@
           hintText.innerHTML = formatKipps(kipp21KippCount);
           
           if (kipp21Done >= 6) {
+            // Bei Tutorial: der Replay-Code handelt das Ende selbst
+            if (kipp21WithTutorial) {
+              console.log('[END] Tutorial done=6, skip game-end (replay handles it)');
+              return;
+            }
             console.log('[END] kipp21Done='+kipp21Done+', calling showEndButtons');
             // DEBUG: Sichtbarer Status am Spielende
             let dbg = document.getElementById('endDebug');
@@ -5034,6 +5045,8 @@
     
 
     function showGameEnd() {
+      // Tutorial: Replay-Code handelt das Ende selbst
+      if (kipp21WithTutorial) { console.log('[showGameEnd] skip — tutorial'); return; }
       gamePhase = 'ende';
       let isNewRec = false;
       try {
