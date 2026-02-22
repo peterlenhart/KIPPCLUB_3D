@@ -2026,11 +2026,11 @@
       function tick() {
         if (!sctRunning) return;
         const phase = step % totalPhases;
-        if (phase === 0) { showLine(head); }
+        if (phase === 0) { showLine(head); playKlack(); }
         else if (phase === 1) { hideLine(head); }
-        else if (phase === 2) { showLine(sub); }
+        else if (phase === 2) { showLine(sub); playKlack(); }
         else if (phase === 3) { hideLine(sub); }
-        else if (phase === 4) { showLine(best); }
+        else if (phase === 4) { showLine(best); playKlack(); }
         else if (phase === 5) { hideLine(best); }
         step++;
         const isShow = (phase % 2 === 0);
@@ -2406,7 +2406,7 @@
       if (!kipp21CardStates.includes('offen')) return;
       const result = checkTreffer();
       if (!result) return;
-      // Würfel liegt richtig → Karte pulsieren!
+      // Würfel liegt richtig → Karte pulsieren, dann AUTO-CONFIRM
       const openIdx = kipp21CardStates.indexOf('offen');
       if (openIdx >= 0 && gameCards[openIdx]?.mesh) {
         const mesh = gameCards[openIdx].mesh;
@@ -2417,7 +2417,13 @@
           mesh.scale.set(orig.x, orig.y, orig.z);
           setTimeout(() => {
             mesh.scale.set(orig.x * 1.25, orig.y * 1.25, orig.z * 1.25);
-            setTimeout(() => mesh.scale.set(orig.x, orig.y, orig.z), 200);
+            setTimeout(() => {
+              mesh.scale.set(orig.x, orig.y, orig.z);
+              // Nach Pulse: automatisch Treffer bestätigen
+              if (kipp21CardStates[openIdx] === 'offen') {
+                kipp21OnCardTap(openIdx);
+              }
+            }, 200);
           }, 150);
         }, 200);
       }
@@ -3354,6 +3360,14 @@
       }
     }
     
+    function setTutText3(line1, line2, line3) {
+      const el = document.getElementById('perfektGameText');
+      if (!el) return;
+      el.innerHTML = '<div style="line-height:1.5">' + line1 + '</div>' +
+        '<div style="margin-top:3px;line-height:1.5">' + line2 + '</div>' +
+        '<div style="margin-top:3px;line-height:1.5">' + line3 + '</div>';
+    }
+    
     // --- Wrapper: Default = Perfect ---
     async function startReplay() {
       try {
@@ -3502,11 +3516,8 @@
         const bestLine = isNewRecord 
           ? '<span style="color:#d4a843">' + (NR_END[lang] || NR_END.de) + ' ' + kipp21KippCount + ' KIPPS</span>'
           : '<span style="color:#a0a0a0;font-size:14px">' + resultInfo + '</span>';
-        setTutText(resultLine, bestLine);
-        const pgt = document.getElementById('perfektGameText');
-        if (pgt) { pgt.style.display = 'block'; pgt.style.opacity = '1'; }
         
-        // Motivationstext bei >21 Kipps
+        // Motivationstext bei >21 Kipps → als erste Zeile VOR dem Ergebnis
         const MOTIV_21 = {
           de: '21 KIPPS sind möglich. Jedes Mal.',
           en: '21 TILTS are possible. Every time.',
@@ -3516,25 +3527,18 @@
           tr: '21 DEVİRME mümkün. Her seferinde.'
         };
         
-        let motivEl = document.getElementById('endMotivText');
-        if (!motivEl) {
-          motivEl = document.createElement('div');
-          motivEl.id = 'endMotivText';
-          motivEl.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(motivEl);
-        }
         if (kipp21KippCount > 21) {
-          motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
-          motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
-            ' top:416px; width:280px; text-align:center;' +
-            ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
-            ' line-height:1.5;' +
-            ' color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.6);' +
-            ' pointer-events:none; z-index:150; letter-spacing:0.5px;';
-          motivEl.style.display = 'block';
+          const motivLine = '<span style="color:#d4a843;font-size:14px">' + (MOTIV_21[lang] || MOTIV_21.de) + '</span>';
+          setTutText3(motivLine, resultLine, bestLine);
         } else {
-          motivEl.style.display = 'none';
+          setTutText(resultLine, bestLine);
         }
+        // motivEl nicht mehr nötig
+        let motivEl = document.getElementById('endMotivText');
+        if (motivEl) motivEl.style.display = 'none';
+        
+        const pgt = document.getElementById('perfektGameText');
+        if (pgt) { pgt.style.display = 'block'; pgt.style.opacity = '1'; }
         
         abtn.textContent = T.nm;
         abtn.style.cssText = btnCSS(btnBaseY, 18, 2.5);
