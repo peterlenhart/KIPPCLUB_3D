@@ -712,8 +712,8 @@
     }
     .bsRow {
       position: absolute;
-      left: 24%; right: 6%;
-      text-align: center;
+      left: 140px; right: 6%;
+      text-align: left;
       font: bold 15px Arial, sans-serif;
       color: #c8c0b0;
       text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
@@ -2368,7 +2368,7 @@
         if (!el) continue;
         if (i < scores.length) {
           const s = scores[i];
-          const prefix = s.tutorial ? 'TUTORIAL  ' : '';
+          const prefix = s.tutorial ? 'TUTORIAL  |  ' : '';
           el.textContent = prefix + s.kipps + ' KIPPS  |  ' + s.secs + ' Sek.';
         } else {
           el.textContent = '';
