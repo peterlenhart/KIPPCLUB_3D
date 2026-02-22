@@ -3031,26 +3031,15 @@
     }
     
     // --- Hand-Kipp-Animation: über Mitte → 135px mitbewegen ---
-    let lastKippTime = 0;
     async function handKippAnim(kippDir, kippDur) {
       if (!replayActive) return;
       const c = cubeScreenXY();
       const off = kippPixelDir(kippDir);
       
-      // Erste Berührung: Hand gleitet sanft zum Würfel
-      // Folge-Kipps (<500ms): Hand erscheint direkt
-      const now = performance.now();
-      if (now - lastKippTime > 500) {
-        setHandPos(c.x, c.y + 80);
-        handEl.style.opacity = '1';
-        updateHandShadow(c.x, c.y + 80, true);
-        await moveHandSmooth(c.x, c.y, 400);
-        await sleep(150);
-      } else {
-        setHandPos(c.x, c.y);
-        handEl.style.opacity = '1';
-        updateHandShadow(c.x, c.y, true);
-      }
+      setHandPos(c.x, c.y);
+      handEl.style.opacity = '1';
+      updateHandShadow(c.x, c.y, true);
+      await sleep(350);
       
       // Sicherstellen dass performKipp nicht blockiert wird
       isAnimating = false;
@@ -3065,7 +3054,6 @@
       advanceTopFace();
       await moveP;
       
-      lastKippTime = performance.now();
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(60);
@@ -4198,7 +4186,7 @@
     // Zelle 9B: Spalte B (idx 1), Zeile 9
     // X = colX(B) = -0.39063
     // Z = rowZ(9) = 0.50000
-    pauseBtnMesh.position.set(-0.39063, 0.48, 0.50000); // knapp über Rahmenhöhe
+    pauseBtnMesh.position.set(0, 0.004, 1.177); // Zeile unter Kippzielen, mittig, Tischebene
     pauseBtnMesh.visible = false;
     scene.add(pauseBtnMesh);
     
