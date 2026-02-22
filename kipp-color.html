@@ -1997,11 +1997,7 @@
         it: 'IL TUO MIGLIORE: {k} RIBALTAMENTI',
         tr: 'EN İYİN: {k} DEVİRME'
       };
-      const hasBest = personalBestKipps > 0;
-      if (hasBest) {
-        const lang = _digikippLang || 'de';
-        best.textContent = (PB_TEXT[lang] || PB_TEXT.de).replace('{k}', personalBestKipps);
-      }
+      const hasBest = false; // Personal Best auf Intro deaktiviert
       const totalPhases = hasBest ? 6 : 4;
       
       function hideAll() {
@@ -3524,6 +3520,7 @@
           motivEl.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%);' +
             ' top:' + (btnBaseY - 60) + 'px; width:280px; text-align:center;' +
             ' font-family:Arial,sans-serif; font-size:14px; font-weight:bold;' +
+            ' line-height:1.5;' +
             ' color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.6);' +
             ' pointer-events:none; z-index:150; letter-spacing:0.5px;';
           motivEl.style.display = 'block';
