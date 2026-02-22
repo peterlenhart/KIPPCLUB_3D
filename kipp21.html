@@ -909,7 +909,6 @@
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">KIPP Prinzip</button>
-    <div id="btnBestScores" style="position:absolute; right:3px; top:19px; width:59px; height:59px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:none;"><img src="pokal.png" style="width:59px;height:59px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <!-- BEST SCORES Overlay -->
@@ -958,6 +957,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
+    <div id="btnBestScores" style="position:absolute; right:10px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:none;"><img src="pokal.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -2253,6 +2253,7 @@
             document.getElementById('btnKippPrinzip').style.opacity = '1';
             document.getElementById('btnBestScores').style.opacity = '1';
             document.getElementById('btnBestScores').style.display = 'block';
+           
           }, 700);
         }, fadeDelay);
       }
