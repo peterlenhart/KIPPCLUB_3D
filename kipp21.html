@@ -797,10 +797,10 @@
     /* Progress Dots - 6 Kreise für Fortschritt */
     #gameEndText {
       position: absolute;
-      top: 466px;
       left: 0;
       width: 360px;
       text-align: center;
+      transform: translateY(-50%);
       font-family: Arial, sans-serif;
       font-size: 14px;
       font-weight: bold;
@@ -3515,8 +3515,14 @@
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
         
-        // Eigenes Spielende-Element (Mitte Zeile 11)
+        // Eigenes Spielende-Element — Position per 3D-Projektion (Mitte Zeile 11)
+        // Süd-Farbfelder Z=0.658 (Zeile 10), eine Zelle südlicher = Zeile 11 Mitte
         const geText = document.getElementById('gameEndText');
+        const row11_3D = new THREE.Vector3(0, 0.001, 0.658 + 0.15625);
+        row11_3D.project(camera);
+        const row11ScreenY = (-row11_3D.y * 0.5 + 0.5) * 720;
+        geText.style.top = Math.round(row11ScreenY) + 'px';
+        
         if (kipp21KippCount > 21) {
           geText.textContent = MOTIV_21[lang] || MOTIV_21.de;
           geText.style.color = '#d4a843';
