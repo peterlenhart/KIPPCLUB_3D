@@ -2379,15 +2379,7 @@
       }
     }
 
-    // No fantasy data — real scores only
-    // Einmalig alte Testdaten löschen
-    try {
-      if (localStorage.getItem('digikipp_fantasy_cleared') !== '1') {
-        localStorage.removeItem('digikipp_bestscores');
-        localStorage.removeItem('digikipp_tutorialscore');
-        localStorage.setItem('digikipp_fantasy_cleared', '1');
-      }
-    } catch(e) {}
+    // Real scores only
     
     function showBestScores() {
       renderBestScores();
