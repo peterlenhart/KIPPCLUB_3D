@@ -6595,6 +6595,7 @@
     // Tap-auf-Würfel Flag
     let kippzielChecked = false;
     let cubeLocked = false;  // Sperre nach 1s Auswertung - kein Kippen bis nächstes Kippziel
+    let kipp21CardTouchHandled = false; // Verhindert synthetischen Click nach Touchend
     
     // verdecktes Kippziel Tap-Erkennung (Raycaster)
     const vkRaycaster = new THREE.Raycaster();
@@ -6627,6 +6628,8 @@
           // Blick-Icon oder Karte treffen
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
               vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
+            kipp21CardTouchHandled = true;
+            setTimeout(() => { kipp21CardTouchHandled = false; }, 400);
             kipp21OnCardTap(ci);
             lastTouchPos = null;
             return;
@@ -6669,7 +6672,7 @@
       vkRaycaster.setFromCamera(vkMouse, camera);
       
       // KIPP 21: Card click detection (Desktop/Replay)
-      if (gamePhase === 'kipp21' && kipp21Active) {
+      if (gamePhase === 'kipp21' && kipp21Active && !kipp21CardTouchHandled) {
         for (let ci = 0; ci < 6; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
