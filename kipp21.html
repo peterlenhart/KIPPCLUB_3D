@@ -2293,9 +2293,13 @@
         .catch(e => console.warn('KlackCrop load failed:', e));
     }
     
+    let audioCtxResumed = false;
     function playKlack() {
-      if (!audioCtx || !klackBuffer) return;
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!audioCtx || !klackBuffer || !soundEnabled) return;
+      if (!audioCtxResumed) {
+        if (audioCtx.state === 'suspended') { audioCtx.resume(); return; }
+        audioCtxResumed = true;
+      }
       const src = audioCtx.createBufferSource();
       src.buffer = klackBuffer;
       src.connect(audioCtx.destination);
@@ -2332,6 +2336,7 @@
     function unlockAndPlayBgMusic() {
       initAudioContext();
       if (audioCtx.state === 'suspended') audioCtx.resume();
+      audioCtxResumed = true;
       if (!soundEnabled) return;
       bgMusicUnlocked = true;
       bgMusic.play().then(() => {
@@ -3230,7 +3235,7 @@
       const kniffPlan = {}; // Nicht mehr gebraucht, Blick-Typ kommt aus cardIdx % 2
       const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
       
-      await sleep(2000);
+      await sleep(1000);
       if (myGen !== kipp21Generation) return; // Abgebrochen
       dbgLog('Perfect Game Start');
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
@@ -4073,6 +4078,41 @@
       if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
     }
     
+    // --- Pause-Icon für Würfelblick (ersetzt Auge nach 1,5s) ---
+    const eyeOrigSrc = document.getElementById('eyeIcon').src;
+    let blickPauseTimeout = null;
+    let blickPauseClickHandler = null;
+    
+    function scheduleBlickPause(eyeEl) {
+      clearBlickPause(eyeEl);
+      blickPauseTimeout = setTimeout(() => {
+        eyeEl.src = 'pause.webp';
+        eyeEl.style.width = '70px';
+        eyeEl.style.pointerEvents = 'auto';
+        eyeEl.style.cursor = 'pointer';
+        blickPauseClickHandler = (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          kipp21KniffAbort = true;
+        };
+        eyeEl.addEventListener('click', blickPauseClickHandler);
+        eyeEl.addEventListener('touchend', blickPauseClickHandler, { passive: false });
+      }, 1500);
+    }
+    
+    function clearBlickPause(eyeEl) {
+      if (blickPauseTimeout) { clearTimeout(blickPauseTimeout); blickPauseTimeout = null; }
+      if (blickPauseClickHandler) {
+        eyeEl.removeEventListener('click', blickPauseClickHandler);
+        eyeEl.removeEventListener('touchend', blickPauseClickHandler);
+        blickPauseClickHandler = null;
+      }
+      eyeEl.src = eyeOrigSrc;
+      eyeEl.style.pointerEvents = 'none';
+      eyeEl.style.cursor = '';
+      eyeEl.style.width = '125px';
+    }
+    
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff() {
       console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
@@ -4116,6 +4156,7 @@
       const wobEye = document.getElementById('eyeIcon');
       wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
+      scheduleBlickPause(wobEye);
       
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
@@ -4145,6 +4186,7 @@
       }
       
       kippDirection = savedDir;
+      clearBlickPause(wobEye);
       wobEye.style.opacity = '0';
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
@@ -4263,6 +4305,7 @@
       const eckEye = document.getElementById('eyeIcon');
       eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
+      scheduleBlickPause(eckEye);
       
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
       if (!kipp21KniffAbort) {
@@ -4281,6 +4324,7 @@
       }
       
       // Auge-Icon ausblenden
+      clearBlickPause(eckEye);
       eckEye.style.opacity = '0';
       
       // --- Von Ecke zurückfallen lassen ---
@@ -7512,7 +7556,7 @@
         }
 
         // Klack kurz VOR dem Aufsetzen (wie im Tutorial)
-        if (!dragKlackFired && eased > 0.95 && targetAngle !== 0) {
+        if (!dragKlackFired && eased > 0.88 && targetAngle !== 0) {
           dragKlackFired = true;
           playKlack();
         }
