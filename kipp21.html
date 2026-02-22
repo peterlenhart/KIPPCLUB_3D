@@ -705,16 +705,26 @@
     #bestScoresBoard {
       position: absolute;
       left: 50%; top: 50%; transform: translate(-50%,-50%);
-      width: 340px; height: 227px;
+      width: 324px; height: 216px;
     }
     #bestScoresBoard img {
       width: 100%; height: 100%;
+    }
+    #bestScoresBoard .bsTitle {
+      position: absolute;
+      left: 0; right: 0; top: 6%;
+      text-align: center;
+      font: bold 12px Arial, sans-serif;
+      color: #a09080;
+      letter-spacing: 3px;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
     .bsRow {
       position: absolute;
       left: 12%; right: 6%;
       text-align: center;
-      font: bold 13px Arial, sans-serif;
+      font: bold 11px Arial, sans-serif;
       color: #c8c0b0;
       text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
       letter-spacing: 1px;
@@ -896,6 +906,7 @@
   <div id="bestScoresOverlay">
     <div id="bestScoresBoard">
       <img src="scoretafel.png" alt="Best Scores">
+      <div class="bsTitle">BEST SCORES</div>
       <div class="bsRow" style="top:18.75%" id="bsRow1"></div>
       <div class="bsRow" style="top:27.7%" id="bsRow2"></div>
       <div class="bsRow" style="top:36.7%" id="bsRow3"></div>
@@ -2297,16 +2308,30 @@
       return [];
     }
     
+    function loadTutorialScore() {
+      try {
+        const raw = localStorage.getItem('digikipp_tutorialscore');
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return null;
+    }
+    
+    function saveTutorialScore(kipps, secs) {
+      try {
+        localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: kipps, secs: secs }));
+      } catch(e) {}
+    }
+    
     function saveBestScore(kipps, secs) {
       try {
         const scores = loadBestScores();
         scores.push({ kipps: kipps, secs: secs, date: Date.now() });
         // Sort: fewer kipps = better, then fewer secs
         scores.sort((a, b) => a.kipps - b.kipps || a.secs - b.secs);
-        // Keep only top 6
-        const top6 = scores.slice(0, 6);
-        localStorage.setItem('digikipp_bestscores', JSON.stringify(top6));
-        return top6;
+        // Keep only top 5 (row 1 = tutorial)
+        const top5 = scores.slice(0, 5);
+        localStorage.setItem('digikipp_bestscores', JSON.stringify(top5));
+        return top5;
       } catch(e) {
         console.warn('[BS] localStorage failed:', e);
         return [];
@@ -2314,9 +2339,22 @@
     }
     
     function renderBestScores() {
+      // Row 1: Tutorial score
+      const tutScore = loadTutorialScore();
+      const el1 = document.getElementById('bsRow1');
+      if (el1) {
+        if (tutScore) {
+          const kStr = String(tutScore.kipps).padStart(2, '0');
+          const zStr = String(tutScore.secs).padStart(3, ' ');
+          el1.textContent = 'TUTORIAL  ' + kStr + ' KIPPS  |  ' + zStr + ' Sek.';
+        } else {
+          el1.textContent = 'TUTORIAL  —';
+        }
+      }
+      // Rows 2-6: Player scores
       const scores = loadBestScores();
-      for (let i = 0; i < 6; i++) {
-        const el = document.getElementById('bsRow' + (i + 1));
+      for (let i = 0; i < 5; i++) {
+        const el = document.getElementById('bsRow' + (i + 2));
         if (!el) continue;
         if (i < scores.length) {
           const s = scores[i];
@@ -3374,7 +3412,7 @@
       const _eyeR1 = document.getElementById('eyeIcon');
       if (_eyeR1) _eyeR1.style.pointerEvents = 'none';
       const kniffPlan = {}; // Nicht mehr gebraucht, Blick-Typ kommt aus cardIdx % 2
-      const KIPP_DUR = 350; // Schneller für Mastermind-Ergebnis
+      const KIPP_DUR = 550; // ~1 Sek pro Kipp (550+350+60+40)
       
       await sleep(2000);
       if (myGen !== kipp21Generation) return; // Abgebrochen
@@ -3466,6 +3504,9 @@
       const totalSec = Math.floor(totalMs / 1000);
       const zeitStr = totalSec + ' Sek.';
       setTutText(T.erg.replace('{k}', totalKipps).replace('{z}', zeitStr), T.best21);
+      
+      // Tutorial-Score speichern
+      saveTutorialScore(totalKipps, totalSec);
       
       // End-Buttons zeigen (Tutorial)
       showEndButtons(true);
