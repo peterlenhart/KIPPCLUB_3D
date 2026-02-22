@@ -1434,41 +1434,43 @@
     verdecktesMesh.visible = false; // Erst sichtbar wenn Spiel startet
     scene.add(verdecktesMesh);
     
-    // === Blick-Icons auf verdeckten Kippzielen (abwechselnd Kippblick/Eckblick) ===
-    const BLICK_ICONS = ['joker2.webp', 'joker3.webp']; // 0=Kippblick, 1=Eckblick
+    // === Blick-Icons auf verdeckten Kippzielen ===
+    // Außen links/rechts = Eckblick, mittlere 2 = Kippblick, Rest = kein Icon
+    const CARD_BLICK_MAP = { 0: 'joker3.webp', 1: null, 2: 'joker2.webp', 3: 'joker2.webp', 4: null, 5: 'joker3.webp' };
     const blickIconMeshes = [];
     const blickIconSize = cardWidth; // exakt gleiche Breite wie Kippziel = 45px
     const blickIconGeo = new THREE.PlaneGeometry(blickIconSize, blickIconSize);
     
     for (let i = 0; i < 6; i++) {
-      const iconSrc = BLICK_ICONS[i % 2]; // 0,2,4=Kippblick; 1,3,5=Eckblick
+      const iconSrc = CARD_BLICK_MAP[i];
       const iconMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
       const iconMesh = new THREE.Mesh(blickIconGeo, iconMat);
       iconMesh.rotation.x = -Math.PI / 2;
-      // Position: Kartenmitte X, leicht über Karte, obere Hälfte (Z nordwärts)
       const cx = cardStartX + i * (cardWidth + cardGap);
       iconMesh.position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
       iconMesh.visible = false;
       scene.add(iconMesh);
       blickIconMeshes.push(iconMesh);
       
-      // Textur laden
-      (function(mesh, src) {
-        const img = new Image();
-        img.onload = function() {
-          const tex = new THREE.Texture(img);
-          tex.needsUpdate = true;
-          mesh.material.map = tex;
-          mesh.material.needsUpdate = true;
-        };
-        img.src = src;
-      })(iconMesh, iconSrc);
+      // Textur laden (nur wenn Icon vorhanden)
+      if (iconSrc) {
+        (function(mesh, src) {
+          const img = new Image();
+          img.onload = function() {
+            const tex = new THREE.Texture(img);
+            tex.needsUpdate = true;
+            mesh.material.map = tex;
+            mesh.material.needsUpdate = true;
+          };
+          img.src = src;
+        })(iconMesh, iconSrc);
+      }
     }
     
-    // Blick-Icons anzeigen/verstecken
+    // Blick-Icons anzeigen/verstecken (nur Karten MIT Icon)
     function showBlickIcons() {
       for (let i = 0; i < 6; i++) {
-        blickIconMeshes[i].visible = (kipp21CardStates[i] === 'verdeckt');
+        blickIconMeshes[i].visible = (CARD_BLICK_MAP[i] !== null && kipp21CardStates[i] === 'verdeckt');
         const cx = cardStartX + i * (cardWidth + cardGap);
         blickIconMeshes[i].position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
       }
@@ -3048,18 +3050,26 @@
     
     async function replayOpenCard(ci) {
       if (!replayActive || replayGeneration !== kipp21Generation) return;
-      // Jetzt öffnet JEDE Karte über Blick-Animation
       const nextV = kipp21NextVerdeckt();
       if (nextV < 0) return;
-      dbgLog('Karte ' + nextV + ' aufdecken via Blick');
+      dbgLog('Karte ' + nextV + ' aufdecken');
       await handTapFromSouth(cardScreenX(nextV), cardScreenY(nextV) + 15, 600);
       pulseCard(nextV);
+      
+      const hasIcon = CARD_BLICK_MAP[nextV] !== null;
+      
+      if (!hasIcon) {
+        // Kein Blick-Icon → direkt öffnen
+        kipp21OnCardTap(nextV, true);
+        await sleep(400);
+        return;
+      }
       
       // Blick-Animation starten
       const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
       kipp21BlickTargetCard = nextV;
       hideBlickIcon(nextV);
-      const blickType = (nextV % 2 === 0) ? 'wobble' : 'eckblick';
+      const blickType = CARD_BLICK_MAP[nextV].includes('joker2') ? 'wobble' : 'eckblick';
       
       try {
         if (blickType === 'eckblick') {
@@ -3134,7 +3144,8 @@
       // Blick-Animation auslösen
       kipp21BlickTargetCard = targetCard;
       hideBlickIcon(targetCard);
-      const blickType = (targetCard % 2 === 0) ? 'wobble' : 'eckblick';
+      const blickSrc = CARD_BLICK_MAP[targetCard];
+      const blickType = (blickSrc && blickSrc.includes('joker2')) ? 'wobble' : 'eckblick';
       
       try {
         if (blickType === 'eckblick') {
@@ -4019,7 +4030,7 @@
     let kipp21KniffTimeout = null;
     let kipp21WobbleUsed = 0;
     let kipp21EckblickUsed = 0;
-    const KNIFF_MAX_USES = 3;
+    const KNIFF_MAX_USES = 2; // 2 Eckblick (Karten 0,5), 2 Kippblick (Karten 2,3)
     const KNIFF_SHOW_DURATION = 12000; // 12 Sekunden Showzeit
     
     function refreshKniffIcons() {
@@ -4093,39 +4104,56 @@
       if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
     }
     
-    // --- Pause-Icon für Würfelblick (ersetzt Auge nach 1,5s) ---
+    // --- Pause-Button auf Rasterfeld 9B (3D-projiziert) ---
     const eyeOrigSrc = document.getElementById('eyeIcon').src;
     let blickPauseTimeout = null;
-    let blickPauseClickHandler = null;
+    let pauseBtnEl = null;
     
-    function scheduleBlickPause(eyeEl) {
-      clearBlickPause(eyeEl);
-      blickPauseTimeout = setTimeout(() => {
-        eyeEl.src = 'pause.webp';
-        eyeEl.style.width = '56px';
-        eyeEl.style.pointerEvents = 'auto';
-        eyeEl.style.cursor = 'pointer';
-        blickPauseClickHandler = (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          kipp21KniffAbort = true;
-        };
-        eyeEl.addEventListener('click', blickPauseClickHandler);
-        eyeEl.addEventListener('touchend', blickPauseClickHandler, { passive: false });
-      }, 4000);
+    function createPauseBtnEl() {
+      if (pauseBtnEl) return;
+      pauseBtnEl = document.createElement('img');
+      pauseBtnEl.src = 'pause.webp';
+      pauseBtnEl.style.cssText = 'position:absolute;display:none;opacity:0;transition:opacity 0.4s ease;pointer-events:auto;cursor:pointer;z-index:200;';
+      document.getElementById('uiOverlay').appendChild(pauseBtnEl);
+      const handler = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        kipp21KniffAbort = true;
+      };
+      pauseBtnEl.addEventListener('click', handler);
+      pauseBtnEl.addEventListener('touchend', handler, { passive: false });
     }
     
-    function clearBlickPause(eyeEl) {
+    function scheduleBlickPause() {
+      clearBlickPause();
+      createPauseBtnEl();
+      // Zelle 9B: col B (idx 1), row 9
+      // X = -0.625 + 0.15625/2 + 1*0.15625 = -0.39063
+      // Z = wallInnerNorth + (9-4)*cellSize + cellSize/2 = -0.359375 + 5*0.15625 + 0.078125 = 0.50000
+      const cellPos = new THREE.Vector3(-0.39063, 0.002, 0.50000);
+      const cellPosEdge = new THREE.Vector3(-0.39063 + 0.15625/2, 0.002, 0.50000 - 0.15625/2);
+      const p1 = cellPos.clone().project(camera);
+      const p2 = cellPosEdge.clone().project(camera);
+      const sx = (p1.x * 0.5 + 0.5) * 360;
+      const sy = (-p1.y * 0.5 + 0.5) * 720;
+      const ex = (p2.x * 0.5 + 0.5) * 360;
+      const ey = (-p2.y * 0.5 + 0.5) * 720;
+      const cellPx = Math.max(Math.abs(ex - sx), Math.abs(ey - sy)) * 2;
+      
+      blickPauseTimeout = setTimeout(() => {
+        pauseBtnEl.style.width = cellPx + 'px';
+        pauseBtnEl.style.height = cellPx + 'px';
+        pauseBtnEl.style.left = sx + 'px';
+        pauseBtnEl.style.top = sy + 'px';
+        pauseBtnEl.style.transform = 'translate(-50%,-50%)';
+        pauseBtnEl.style.display = 'block';
+        requestAnimationFrame(() => { pauseBtnEl.style.opacity = '1'; });
+      }, 5000);
+    }
+    
+    function clearBlickPause() {
       if (blickPauseTimeout) { clearTimeout(blickPauseTimeout); blickPauseTimeout = null; }
-      if (blickPauseClickHandler) {
-        eyeEl.removeEventListener('click', blickPauseClickHandler);
-        eyeEl.removeEventListener('touchend', blickPauseClickHandler);
-        blickPauseClickHandler = null;
-      }
-      eyeEl.src = eyeOrigSrc;
-      eyeEl.style.pointerEvents = 'none';
-      eyeEl.style.cursor = '';
-      eyeEl.style.width = '125px';
+      if (pauseBtnEl) { pauseBtnEl.style.opacity = '0'; setTimeout(() => { if (pauseBtnEl) pauseBtnEl.style.display = 'none'; }, 400); }
     }
     
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
@@ -4171,7 +4199,7 @@
       const wobEye = document.getElementById('eyeIcon');
       wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
-      scheduleBlickPause(wobEye);
+      scheduleBlickPause();
       
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
@@ -4201,7 +4229,7 @@
       }
       
       kippDirection = savedDir;
-      clearBlickPause(wobEye);
+      clearBlickPause();
       wobEye.style.opacity = '0';
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
@@ -4320,7 +4348,7 @@
       const eckEye = document.getElementById('eyeIcon');
       eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
-      scheduleBlickPause(eckEye);
+      scheduleBlickPause();
       
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
       if (!kipp21KniffAbort) {
@@ -4339,7 +4367,7 @@
       }
       
       // Auge-Icon ausblenden
-      clearBlickPause(eckEye);
+      clearBlickPause();
       eckEye.style.opacity = '0';
       
       // --- Von Ecke zurückfallen lassen ---
@@ -4634,8 +4662,18 @@
           return;
         }
         
-        // Manueller Klick: Blick-Animation starten
-        const blickType = (cardIdx % 2 === 0) ? 'wobble' : 'eckblick';
+        // Karte OHNE Blick-Icon → direkt öffnen (kein Kniff)
+        const iconSrc = CARD_BLICK_MAP[cardIdx];
+        if (!iconSrc) {
+          if (!kipp21GenerateTarget(cardIdx)) return;
+          const mesh = gameCards[cardIdx].mesh;
+          mesh.scale.set(1.15, 1.15, 1.15);
+          setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
+          return;
+        }
+        
+        // Karte MIT Blick-Icon → Blick-Animation starten
+        const blickType = iconSrc.includes('joker2') ? 'wobble' : 'eckblick';
         hideBlickIcon(cardIdx);
         kipp21BlickTargetCard = cardIdx;
         if (blickType === 'wobble') runKipp21WobbleKniff();
