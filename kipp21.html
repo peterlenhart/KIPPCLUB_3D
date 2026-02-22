@@ -694,6 +694,42 @@
     #btnSpielen  { top: 421px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 480px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnBestScores { top: 598px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    
+    /* Best Scores Overlay */
+    #bestScoresOverlay {
+      position: absolute; top: 0; left: 0; width: 360px; height: 720px;
+      background: rgba(0,0,0,0.85);
+      display: none; z-index: 300;
+    }
+    #bestScoresBoard {
+      position: absolute;
+      left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 340px; height: 227px;
+    }
+    #bestScoresBoard img {
+      width: 100%; height: 100%;
+    }
+    .bsRow {
+      position: absolute;
+      left: 12%; right: 6%;
+      text-align: center;
+      font: bold 13px Arial, sans-serif;
+      color: #c8c0b0;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
+      letter-spacing: 1px;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+    #bestScoresClose {
+      position: absolute;
+      bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: url(button_lang.webp) center/contain no-repeat;
+      width: 200px; height: 49px; border: none; cursor: pointer;
+      font: bold 16px Arial; color: #d0d0d0; letter-spacing: 2px;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
+      pointer-events: auto;
+    }
 
     /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
     #kippPrinzipOverlay {
@@ -798,9 +834,9 @@
     #gameEndText {
       position: absolute;
       left: 0;
+      top: 450px;
       width: 360px;
       text-align: center;
-      transform: translateY(-50%);
       font-family: Arial, sans-serif;
       font-size: 16px;
       font-weight: bold;
@@ -808,7 +844,7 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.6);
       pointer-events: none;
       display: none;
-      z-index: 150;
+      z-index: 140;
       letter-spacing: 0.5px;
     }
     #progressDots {
@@ -849,6 +885,21 @@
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">KIPP Prinzip</button>
+    <button class="startClickZone" id="btnBestScores" disabled style="opacity:0">BEST SCORES</button>
+  </div>
+  
+  <!-- BEST SCORES Overlay -->
+  <div id="bestScoresOverlay">
+    <div id="bestScoresBoard">
+      <img src="bestscores.webp" alt="Best Scores">
+      <div class="bsRow" style="top:18.75%" id="bsRow1"></div>
+      <div class="bsRow" style="top:27.7%" id="bsRow2"></div>
+      <div class="bsRow" style="top:36.7%" id="bsRow3"></div>
+      <div class="bsRow" style="top:45.8%" id="bsRow4"></div>
+      <div class="bsRow" style="top:54.8%" id="bsRow5"></div>
+      <div class="bsRow" style="top:63.9%" id="bsRow6"></div>
+    </div>
+    <button id="bestScoresClose">OK</button>
   </div>
   
   <!-- KIPP-PRINZIP Overlay -->
@@ -2159,6 +2210,8 @@
             document.getElementById('btnDemo').style.opacity = '1';
             document.getElementById('btnKippPrinzip').disabled = false;
             document.getElementById('btnKippPrinzip').style.opacity = '1';
+            document.getElementById('btnBestScores').disabled = false;
+            document.getElementById('btnBestScores').style.opacity = '1';
           }, 700);
         }, fadeDelay);
       }
@@ -2230,6 +2283,60 @@
     }
     
     function updateProgressDots() { /* disabled */ }
+    
+    // ===== BEST SCORES SYSTEM =====
+    function loadBestScores() {
+      try {
+        const raw = localStorage.getItem('digikipp_bestscores');
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return [];
+    }
+    
+    function saveBestScore(kipps, secs) {
+      try {
+        const scores = loadBestScores();
+        scores.push({ kipps: kipps, secs: secs, date: Date.now() });
+        // Sort: fewer kipps = better, then fewer secs
+        scores.sort((a, b) => a.kipps - b.kipps || a.secs - b.secs);
+        // Keep only top 6
+        const top6 = scores.slice(0, 6);
+        localStorage.setItem('digikipp_bestscores', JSON.stringify(top6));
+        return top6;
+      } catch(e) {
+        console.warn('[BS] localStorage failed:', e);
+        return [];
+      }
+    }
+    
+    function renderBestScores() {
+      const scores = loadBestScores();
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById('bsRow' + (i + 1));
+        if (!el) continue;
+        if (i < scores.length) {
+          const s = scores[i];
+          const kStr = String(s.kipps).padStart(2, '0');
+          const zStr = String(s.secs).padStart(3, ' ');
+          el.textContent = kStr + ' KIPPS  |  ' + zStr + ' Sek.';
+        } else {
+          el.textContent = '';
+        }
+      }
+    }
+    
+    function showBestScores() {
+      renderBestScores();
+      document.getElementById('bestScoresOverlay').style.display = 'block';
+    }
+    
+    document.getElementById('bestScoresClose').addEventListener('click', () => {
+      document.getElementById('bestScoresOverlay').style.display = 'none';
+    });
+    
+    document.getElementById('btnBestScores').addEventListener('click', () => {
+      showBestScores();
+    });
     
     function updateSoundIcon() {
       soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
@@ -2473,7 +2580,8 @@
       if (!kipp21CardStates.includes('offen')) return;
       const result = checkTreffer();
       if (!result) return;
-      // Würfel liegt richtig → sofort sperren + Karte pulsieren, dann AUTO-CONFIRM
+      // Würfel liegt richtig → Timer SOFORT stoppen + sperren
+      kipp21StopRoundTimer();
       kipp21HitLock = true;
       const openIdx = kipp21CardStates.indexOf('offen');
       if (openIdx >= 0 && gameCards[openIdx]?.mesh) {
@@ -2923,31 +3031,41 @@
     }
     
     // --- Hand-Kipp-Animation: über Mitte → 135px mitbewegen ---
+    let lastKippTime = 0;
     async function handKippAnim(kippDir, kippDur) {
       if (!replayActive) return;
       const c = cubeScreenXY();
       const off = kippPixelDir(kippDir);
       
-      // Hand gleitet von unten zum Würfel (nicht abrupt erscheinen)
-      setHandPos(c.x, c.y + 80);
-      handEl.style.opacity = '1';
-      updateHandShadow(c.x, c.y + 80, true);
-      await moveHandSmooth(c.x, c.y, 400);
-      await sleep(200);
-      
-      // Timer GO
-      if (kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
-        kipp21StartRoundTimer();
+      // Erste Berührung: Hand gleitet sanft zum Würfel
+      // Folge-Kipps (<500ms): Hand erscheint direkt
+      const now = performance.now();
+      if (now - lastKippTime > 500) {
+        setHandPos(c.x, c.y + 80);
+        handEl.style.opacity = '1';
+        updateHandShadow(c.x, c.y + 80, true);
+        await moveHandSmooth(c.x, c.y, 400);
+        await sleep(150);
+      } else {
+        setHandPos(c.x, c.y);
+        handEl.style.opacity = '1';
+        updateHandShadow(c.x, c.y, true);
       }
       
       // Sicherstellen dass performKipp nicht blockiert wird
       isAnimating = false;
+      
+      // Timer GO — erst bei Würfelberührung (=Kipp-Start)
+      if (kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
+        kipp21StartRoundTimer();
+      }
       
       const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, kippDur);
       await performKipp(kippDir, kippDur);
       advanceTopFace();
       await moveP;
       
+      lastKippTime = performance.now();
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(60);
@@ -3053,17 +3171,33 @@
       const nextV = kipp21NextVerdeckt();
       if (nextV < 0) return;
       dbgLog('Karte ' + nextV + ' aufdecken');
-      await handTapFromSouth(cardScreenX(nextV), cardScreenY(nextV) + 15, 600);
-      pulseCard(nextV);
       
       const hasIcon = CARD_BLICK_MAP[nextV] !== null;
+      const tx = cardScreenX(nextV);
+      const ty = cardScreenY(nextV) + 15;
+      const SY = 680;
       
       if (!hasIcon) {
-        // Kein Blick-Icon → direkt öffnen
+        // Kein Blick-Icon → Hand hinfliegen, sofort beim Kontakt pulsen+öffnen
+        setHandPos(tx, SY);
+        handEl.style.opacity = '1';
+        updateHandShadow(tx, SY, true);
+        await moveHandSmooth(tx, ty, 800);
+        // Sofort bei Kontakt: Pulse + Open
+        pulseCard(nextV);
         kipp21OnCardTap(nextV, true);
-        await sleep(400);
+        await sleep(350);
+        // Hand zurück
+        await moveHandSmooth(tx, SY, 500);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(100);
         return;
       }
+      
+      // MIT Blick-Icon: volle Hand-Tap-Animation, dann Kniff
+      await handTapFromSouth(tx, ty, 600);
+      pulseCard(nextV);
       
       // Blick-Animation starten
       const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
@@ -3074,7 +3208,7 @@
       try {
         if (blickType === 'eckblick') {
           const eckP = runKipp21EckblickKniff();
-          await sleep(5500);
+          await sleep(7000);
           if (replayActive) kipp21KniffAbort = true;
           await eckP;
         } else {
@@ -3151,7 +3285,7 @@
         if (blickType === 'eckblick') {
           console.log('[REPLAY-KNIFF] calling eckblick for card ' + targetCard);
           const eckP = runKipp21EckblickKniff();
-          await sleep(5500);
+          await sleep(7000);
           if (replayActive) kipp21KniffAbort = true;
           await eckP;
         } else {
@@ -3554,18 +3688,21 @@
           startKipp21(false);
         };
       } else {
-        // Spiel-Ende: NEUES SPIEL + KIPP PRINZIP (+ Motivationstext bei >21 Kipps)
+        // Spiel-Ende: gameEndText + BEST SCORES + KIPP PRINZIP + NEUES SPIEL
         try {
-        console.log('[END] showEndButtons game-end, kipps='+kipp21KippCount, 'btnBaseY='+btnBaseY);
+        console.log('[END] showEndButtons game-end, kipps='+kipp21KippCount);
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
         
-        // Ergebnis-Text anzeigen
+        // Ergebnis speichern
         const totalSec = Math.floor((kipp21TotalTime || 0) / 1000);
         const zeitStr = totalSec + ' Sek.';
         const lang = _digikippLang || 'de';
         
-        // Motivationstext: einzeilig, Mitte Zeile 11
+        // Score in Best Scores speichern (nur echte Spiele, nicht Tutorial)
+        saveBestScore(kipp21KippCount, totalSec);
+        
+        // Motivationstext: einzeilig, Oberkante Zeile 11
         const MOTIV_21 = {
           de: '21 KIPPS sind möglich. Jedes Mal.',
           en: '21 TILTS are possible. Every time.',
@@ -3575,17 +3712,12 @@
           tr: '21 DEVİRME mümkün. Her seferinde.'
         };
         
-        // motivEl nicht mehr nötig
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
         
-        // Eigenes Spielende-Element — Position per 3D-Projektion (Mitte Zeile 11)
-        // Süd-Farbfelder Z=0.658 (Zeile 10), eine Zelle südlicher = Zeile 11 Mitte
+        // gameEndText — Oberkante Zeile 11 (2D: 10×45 = 450px)
         const geText = document.getElementById('gameEndText');
-        const row11_3D = new THREE.Vector3(0, 0.001, 0.658 + 0.15625);
-        row11_3D.project(camera);
-        const row11ScreenY = (-row11_3D.y * 0.5 + 0.5) * 720;
-        geText.style.top = Math.round(row11ScreenY) + 'px';
+        geText.style.top = '450px';
         
         if (kipp21KippCount > 21) {
           geText.textContent = MOTIV_21[lang] || MOTIV_21.de;
@@ -3596,21 +3728,35 @@
         }
         geText.style.display = 'block';
         
-        abtn.textContent = T.nm;
-        abtn.style.cssText = btnCSS(btnBaseY, 18, 2.5);
-        abtn.onclick = () => {
+        // Funktion zum Aufräumen aller End-Buttons
+        function hideAllEndBtns() {
           abtn.style.display = 'none';
           const ekpb = document.getElementById('endKippPrinzipBtn');
           if (ekpb) ekpb.style.display = 'none';
+          const ebsb = document.getElementById('endBestScoresBtn');
+          if (ebsb) ebsb.style.display = 'none';
           if (motivEl) motivEl.style.display = 'none';
-          document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
+          document.getElementById('perfektGameText').style.display = 'none';
+          document.getElementById('gameEndText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
           counterOrigPos = null;
-          if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
-          startKipp21(false);
-        };
+        }
         
+        // Button 1: BEST SCORES (480px — wie btnDemo auf Intro)
+        let bsBtn = document.getElementById('endBestScoresBtn');
+        if (!bsBtn) {
+          bsBtn = document.createElement('button');
+          bsBtn.id = 'endBestScoresBtn';
+          bsBtn.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(bsBtn);
+        }
+        bsBtn.textContent = 'BEST SCORES';
+        bsBtn.style.cssText = btnCSS(480, 16, 2);
+        bsBtn.style.display = 'block';
+        bsBtn.onclick = () => { showBestScores(); };
+        
+        // Button 2: KIPP PRINZIP (539px — wie btnKippPrinzip auf Intro)
         let kpBtn = document.getElementById('endKippPrinzipBtn');
         if (!kpBtn) {
           kpBtn = document.createElement('button');
@@ -3619,13 +3765,21 @@
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
         kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
-        kpBtn.style.cssText = btnCSS(btnBaseY + 68, 16, 2);
+        kpBtn.style.cssText = btnCSS(539, 16, 2);
         kpBtn.style.display = 'block';
-        kpBtn.onclick = () => {
-          showKippPrinzip();
+        kpBtn.onclick = () => { showKippPrinzip(); };
+        
+        // Button 3: NEUES SPIEL (598px — wie btnBestScores auf Intro)
+        abtn.textContent = T.nm;
+        abtn.style.cssText = btnCSS(598, 18, 2.5);
+        abtn.onclick = () => {
+          hideAllEndBtns();
+          if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
+          startKipp21(false);
         };
+        
         console.log('[END] Buttons created successfully');
-        if (dbg) dbg.textContent += ' | OK abtn='+abtn.style.display+' kp='+kpBtn.style.display+' Y='+btnBaseY;
+        if (dbg) dbg.textContent += ' | OK 3btn';
         } catch(e) {
           console.error('[showEndButtons] CRASH:', e);
           let dbg2 = document.getElementById('endDebug');
@@ -3696,7 +3850,7 @@
       if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
       stopCountdown();
       // Dynamische Elemente entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endBestScoresBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
@@ -4031,7 +4185,7 @@
     let kipp21WobbleUsed = 0;
     let kipp21EckblickUsed = 0;
     const KNIFF_MAX_USES = 2; // 2 Eckblick (Karten 0,5), 2 Kippblick (Karten 2,3)
-    const KNIFF_SHOW_DURATION = 12000; // 12 Sekunden Showzeit
+    const KNIFF_SHOW_DURATION = 13500; // 13,5 Sekunden Showzeit (+1,5s)
     
     function refreshKniffIcons() {
       const allImgs = document.querySelectorAll('#jokerIconsRow img');
@@ -4130,9 +4284,7 @@
     
     function scheduleBlickPause() {
       clearBlickPause();
-      blickPauseTimeout = setTimeout(() => {
-        pauseBtnMesh.visible = true;
-      }, 5000);
+      pauseBtnMesh.visible = true;
     }
     
     function clearBlickPause() {
@@ -7206,7 +7358,7 @@
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endBestScoresBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
