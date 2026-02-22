@@ -4223,59 +4223,6 @@
       if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
     }
     
-    // --- Pause-Button als 2D-Overlay unter Kärtchen-Reihe ---
-    const pauseBtnGeo = new THREE.PlaneGeometry(0.01, 0.01); // Dummy für Kompatibilität
-    const pauseBtnMat = new THREE.MeshBasicMaterial({ visible: false });
-    const pauseBtnMesh = new THREE.Mesh(pauseBtnGeo, pauseBtnMat);
-    scene.add(pauseBtnMesh);
-    pauseBtnMesh.visible = false;
-    
-    // 2D Pause-Button
-    const pauseBtn2D = document.createElement('img');
-    pauseBtn2D.id = 'pauseBtn2D';
-    pauseBtn2D.style.cssText = 'position:absolute; width:45px; height:45px; left:50%; transform:translateX(-50%); pointer-events:auto; cursor:pointer; display:none; z-index:150;';
-    pauseBtn2D.src = 'pause.webp';
-    document.getElementById('uiOverlay').appendChild(pauseBtn2D);
-    
-    // Position: unter Kippziel-Reihe, mittig
-    function updatePauseBtnPos() {
-      // cardScreenY gibt die Kartenmitte. Karten sind ~90px hoch auf Screen.
-      const cy = cardScreenY(0);
-      pauseBtn2D.style.top = Math.min(cy + 55, 670) + 'px';
-    }
-    
-    let blickPauseTimeout = null;
-    
-    function scheduleBlickPause() {
-      clearBlickPause();
-      updatePauseBtnPos();
-      pauseBtn2D.style.display = 'block';
-    }
-    
-    function clearBlickPause() {
-      if (blickPauseTimeout) { clearTimeout(blickPauseTimeout); blickPauseTimeout = null; }
-      pauseBtn2D.style.display = 'none';
-    }
-    
-    // Pause-Klick per DOM-Event
-    pauseBtn2D.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      kipp21KniffAbort = true;
-      clearBlickPause();
-    });
-    pauseBtn2D.addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      kipp21KniffAbort = true;
-      clearBlickPause();
-    });
-    
-    // Legacy-Kompatibilität: checkPauseBtnTap gibt jetzt immer false (2D handled es selbst)
-    function checkPauseBtnTap(x, y, rect) {
-      return false;
-    }
-    
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff() {
       console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
@@ -4319,7 +4266,7 @@
       const wobEye = document.getElementById('eyeIcon');
       wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
-      scheduleBlickPause();
+
       
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
@@ -4349,7 +4296,7 @@
       }
       
       kippDirection = savedDir;
-      clearBlickPause();
+
       wobEye.style.opacity = '0';
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
@@ -4468,7 +4415,7 @@
       const eckEye = document.getElementById('eyeIcon');
       eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
       setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
-      scheduleBlickPause();
+
       
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
       if (!kipp21KniffAbort) {
@@ -4487,7 +4434,7 @@
       }
       
       // Auge-Icon ausblenden
-      clearBlickPause();
+
       eckEye.style.opacity = '0';
       
       // --- Von Ecke zurückfallen lassen ---
@@ -6827,12 +6774,6 @@
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
         
-        // Pause-Button prüfen
-        if (checkPauseBtnTap(lastTouchPos.x, lastTouchPos.y, rect2)) {
-          lastTouchPos = null;
-          return;
-        }
-        
         vkMouse.x = ((lastTouchPos.x - rect2.left) / rect2.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
@@ -6888,7 +6829,7 @@
       // KIPP 21: Card click detection (Desktop/Replay)
       if (gamePhase === 'kipp21' && kipp21Active && !kipp21CardTouchHandled) {
         // Pause-Button prüfen
-        if (checkPauseBtnTap(e.clientX, e.clientY, rect)) return;
+
         
         for (let ci = 0; ci < 6; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
