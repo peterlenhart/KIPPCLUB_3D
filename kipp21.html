@@ -802,7 +802,7 @@
       text-align: center;
       transform: translateY(-50%);
       font-family: Arial, sans-serif;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: bold;
       color: #d4a843;
       text-shadow: 0 1px 2px rgba(0,0,0,0.6);
@@ -1433,6 +1433,49 @@
     verdecktesMesh.position.set(cardStartX, cardY + 0.001, cardZ);
     verdecktesMesh.visible = false; // Erst sichtbar wenn Spiel startet
     scene.add(verdecktesMesh);
+    
+    // === Blick-Icons auf verdeckten Kippzielen (abwechselnd Kippblick/Eckblick) ===
+    const BLICK_ICONS = ['joker2.webp', 'joker3.webp']; // 0=Kippblick, 1=Eckblick
+    const blickIconMeshes = [];
+    const blickIconSize = 0.12; // ~34px, passt auf obere Kartenhälfte
+    const blickIconGeo = new THREE.PlaneGeometry(blickIconSize, blickIconSize);
+    
+    for (let i = 0; i < 6; i++) {
+      const iconSrc = BLICK_ICONS[i % 2]; // 0,2,4=Kippblick; 1,3,5=Eckblick
+      const iconMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
+      const iconMesh = new THREE.Mesh(blickIconGeo, iconMat);
+      iconMesh.rotation.x = -Math.PI / 2;
+      // Position: Kartenmitte X, leicht über Karte, obere Hälfte (Z nordwärts)
+      const cx = cardStartX + i * (cardWidth + cardGap);
+      iconMesh.position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
+      iconMesh.visible = false;
+      scene.add(iconMesh);
+      blickIconMeshes.push(iconMesh);
+      
+      // Textur laden
+      (function(mesh, src) {
+        const img = new Image();
+        img.onload = function() {
+          const tex = new THREE.Texture(img);
+          tex.needsUpdate = true;
+          mesh.material.map = tex;
+          mesh.material.needsUpdate = true;
+        };
+        img.src = src;
+      })(iconMesh, iconSrc);
+    }
+    
+    // Blick-Icons anzeigen/verstecken
+    function showBlickIcons() {
+      for (let i = 0; i < 6; i++) {
+        blickIconMeshes[i].visible = (kipp21CardStates[i] === 'verdeckt');
+        const cx = cardStartX + i * (cardWidth + cardGap);
+        blickIconMeshes[i].position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
+      }
+    }
+    function hideBlickIcon(idx) {
+      if (idx >= 0 && idx < 6) blickIconMeshes[idx].visible = false;
+    }
     
     // Gespeichertes erstes Kippziel
     let erstesKippziel = null;
@@ -3643,8 +3686,8 @@
       if (_pd) _pd.style.display = 'none';
       // Hand ausblenden
       if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
-      // Kniff-State zurücksetzen
       kipp21KniffActive = false;
+      kipp21BlickTargetCard = -1;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
       kippenWarningActive = false;
@@ -3746,17 +3789,20 @@
             m.material.opacity = 0;
             m.material.needsUpdate = true;
           }
-          showKniffIcons();
+          // Blick-Icons auf Kippzielen (statt jokerIconsRow)
+          showBlickIcons();
+          for (let i = 0; i < 6; i++) {
+            if (blickIconMeshes[i].visible) {
+              blickIconMeshes[i].material.transparent = true;
+              blickIconMeshes[i].material.opacity = 0;
+              blickIconMeshes[i].material.needsUpdate = true;
+            }
+          }
+          // JokerIconsRow versteckt lassen
           const jr2 = document.getElementById('jokerIconsRow');
-          jr2.style.transition = 'none';
-          jr2.style.opacity = '0';
-          jr2.style.pointerEvents = 'auto';
+          jr2.style.display = 'none';
           const zsb2 = document.getElementById('zumSpielBtn');
           if (zsb2) { zsb2.style.transition = 'none'; zsb2.style.opacity = '0'; }
-          document.querySelectorAll('#jokerIconsRow img').forEach(img => {
-            img.style.pointerEvents = 'auto';
-            img.style.cursor = 'pointer';
-          });
           countdown.style.display = 'block'; countdown.style.opacity = '0';
           hintText.style.display = 'block'; hintText.style.opacity = '0';
           const pd = document.getElementById('progressDots');
@@ -3776,7 +3822,13 @@
               gameCards[i].mesh.material.opacity = e;
               gameCards[i].mesh.material.needsUpdate = true;
             }
-            jr2.style.opacity = String(e);
+            jr2.style.display = 'none';
+            for (let i = 0; i < 6; i++) {
+              if (blickIconMeshes[i].visible) {
+                blickIconMeshes[i].material.opacity = e;
+                blickIconMeshes[i].material.needsUpdate = true;
+              }
+            }
             if (zsb2) zsb2.style.opacity = String(e);
             countdown.style.opacity = String(e);
             hintText.style.opacity = String(e);
@@ -3788,6 +3840,10 @@
                 gameCards[i].mesh.material.opacity = 1;
                 gameCards[i].mesh.material.transparent = false;
                 gameCards[i].mesh.material.needsUpdate = true;
+                if (blickIconMeshes[i].visible) {
+                  blickIconMeshes[i].material.opacity = 1;
+                  blickIconMeshes[i].material.needsUpdate = true;
+                }
               }
               if (zsb2) zsb2.style.transition = '';
               resolve();
@@ -3860,6 +3916,9 @@
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
       
+      // Blick-Icons auf Kippzielen anzeigen
+      showBlickIcons();
+      
       kipp21Active = false; // Wird erst nach fadeInUIs() aktiviert
       kipp21KippCount = 0;
       
@@ -3884,6 +3943,7 @@
       bereitsAusgegeben.clear();
       bereitsGetroffen.clear();
       kipp21KniffActive = false;
+      kipp21BlickTargetCard = -1;
       kipp21KniffAbort = false;
       offeneKippzieleVergeben = 0;
       openKippzielPositions = pickTwoRandomPositions();
@@ -3942,13 +4002,14 @@
     
     // === KIPP KNIFF SYSTEM (beide Joker) ===
     let kipp21KniffActive = false;
+    let kipp21BlickTargetCard = -1; // Welche Karte nach Blick-Animation öffnen
     let kipp21KniffAbort = false;
     let kipp21KniffsUsed = 0;
     let kipp21PendingCardTap = -1;
     let kipp21KniffTimeout = null;
     let kipp21WobbleUsed = 0;
     let kipp21EckblickUsed = 0;
-    const KNIFF_MAX_USES = 2;
+    const KNIFF_MAX_USES = 3;
     const KNIFF_SHOW_DURATION = 12000; // 12 Sekunden Showzeit
     
     function refreshKniffIcons() {
@@ -3990,9 +4051,10 @@
     
     function kipp21EndKniffAndOpenCard() {
       if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
-      const next = kipp21NextVerdeckt();
-      if (next >= 0) {
-        kipp21OnCardTap(next, true); // öffnet verdecktes Kippziel
+      const target = (kipp21BlickTargetCard >= 0) ? kipp21BlickTargetCard : kipp21NextVerdeckt();
+      kipp21BlickTargetCard = -1;
+      if (target >= 0) {
+        kipp21OnCardTap(target, true); // _fromReplay=true → öffnet direkt
       }
     }
     
@@ -4510,12 +4572,25 @@
       if (state === 'verdeckt') {
         // GUARD: Nie 2 Kippziele gleichzeitig offen
         if (kipp21CardStates.indexOf('offen') >= 0) return;
-        // REVEAL
-        if (!kipp21GenerateTarget(cardIdx)) return;
-        // Einmaliges Pulse
-        const mesh = gameCards[cardIdx].mesh;
-        mesh.scale.set(1.15, 1.15, 1.15);
-        setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
+        // GUARD: Kein Kniff während anderer Kniff läuft
+        if (kipp21KniffActive) return;
+        
+        if (_fromReplay) {
+          // Nach Blick-Animation oder Tutorial: direkt öffnen
+          hideBlickIcon(cardIdx);
+          if (!kipp21GenerateTarget(cardIdx)) return;
+          const mesh = gameCards[cardIdx].mesh;
+          mesh.scale.set(1.15, 1.15, 1.15);
+          setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
+          return;
+        }
+        
+        // Manueller Klick: Blick-Animation starten
+        const blickType = (cardIdx % 2 === 0) ? 'wobble' : 'eckblick';
+        hideBlickIcon(cardIdx);
+        kipp21BlickTargetCard = cardIdx;
+        if (blickType === 'wobble') runKipp21WobbleKniff();
+        else runKipp21EckblickKniff();
         return;
       }
       
@@ -5732,6 +5807,7 @@
 
       // Reset cards
       gameCards.forEach(c => { c.mesh.visible = false; c.zahl = null; c.color = null; c.isHit = false; c.isMiss = false; });
+      blickIconMeshes.forEach(m => { m.visible = false; });
 
       // Hide all UI
       document.getElementById('spielZielText').style.display = 'none';
@@ -6548,7 +6624,9 @@
         
         for (let ci = 0; ci < 6; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
-          if (vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
+          // Blick-Icon oder Karte treffen
+          if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
+              vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
             kipp21OnCardTap(ci);
             lastTouchPos = null;
             return;
@@ -6594,7 +6672,8 @@
       if (gamePhase === 'kipp21' && kipp21Active) {
         for (let ci = 0; ci < 6; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
-          if (vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
+          if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
+              vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
             kipp21OnCardTap(ci);
             return;
           }
