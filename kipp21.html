@@ -4104,56 +4104,56 @@
       if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
     }
     
-    // --- Pause-Button auf Rasterfeld 9B (3D-projiziert) ---
-    const eyeOrigSrc = document.getElementById('eyeIcon').src;
-    let blickPauseTimeout = null;
-    let pauseBtnEl = null;
+    // --- Pause-Button als 3D-Mesh auf Rasterfeld 9B, Rahmenhöhe (Y=0.46875) ---
+    const pauseBtnGeo = new THREE.PlaneGeometry(0.15625, 0.15625); // 1 Rasterzelle
+    const pauseBtnMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
+    const pauseBtnMesh = new THREE.Mesh(pauseBtnGeo, pauseBtnMat);
+    pauseBtnMesh.rotation.x = -Math.PI / 2;
+    // Zelle 9B: Spalte B (idx 1), Zeile 9
+    // X = colX(B) = -0.39063
+    // Z = rowZ(9) = 0.50000
+    pauseBtnMesh.position.set(-0.39063, 0.48, 0.50000); // knapp über Rahmenhöhe
+    pauseBtnMesh.visible = false;
+    scene.add(pauseBtnMesh);
     
-    function createPauseBtnEl() {
-      if (pauseBtnEl) return;
-      pauseBtnEl = document.createElement('img');
-      pauseBtnEl.src = 'pause.webp';
-      pauseBtnEl.style.cssText = 'position:absolute;display:none;opacity:0;transition:opacity 0.4s ease;pointer-events:auto;cursor:pointer;z-index:200;';
-      document.getElementById('uiOverlay').appendChild(pauseBtnEl);
-      const handler = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        kipp21KniffAbort = true;
-      };
-      pauseBtnEl.addEventListener('click', handler);
-      pauseBtnEl.addEventListener('touchend', handler, { passive: false });
-    }
+    // Textur laden
+    const pauseImg = new Image();
+    pauseImg.onload = function() {
+      const tex = new THREE.Texture(pauseImg);
+      tex.needsUpdate = true;
+      pauseBtnMat.map = tex;
+      pauseBtnMat.needsUpdate = true;
+    };
+    pauseImg.src = 'pause.webp';
+    
+    let blickPauseTimeout = null;
     
     function scheduleBlickPause() {
       clearBlickPause();
-      createPauseBtnEl();
-      // Zelle 9B: col B (idx 1), row 9
-      // X = -0.625 + 0.15625/2 + 1*0.15625 = -0.39063
-      // Z = wallInnerNorth + (9-4)*cellSize + cellSize/2 = -0.359375 + 5*0.15625 + 0.078125 = 0.50000
-      const cellPos = new THREE.Vector3(-0.39063, 0.002, 0.50000);
-      const cellPosEdge = new THREE.Vector3(-0.39063 + 0.15625/2, 0.002, 0.50000 - 0.15625/2);
-      const p1 = cellPos.clone().project(camera);
-      const p2 = cellPosEdge.clone().project(camera);
-      const sx = (p1.x * 0.5 + 0.5) * 360;
-      const sy = (-p1.y * 0.5 + 0.5) * 720;
-      const ex = (p2.x * 0.5 + 0.5) * 360;
-      const ey = (-p2.y * 0.5 + 0.5) * 720;
-      const cellPx = Math.max(Math.abs(ex - sx), Math.abs(ey - sy)) * 2;
-      
       blickPauseTimeout = setTimeout(() => {
-        pauseBtnEl.style.width = cellPx + 'px';
-        pauseBtnEl.style.height = cellPx + 'px';
-        pauseBtnEl.style.left = sx + 'px';
-        pauseBtnEl.style.top = sy + 'px';
-        pauseBtnEl.style.transform = 'translate(-50%,-50%)';
-        pauseBtnEl.style.display = 'block';
-        requestAnimationFrame(() => { pauseBtnEl.style.opacity = '1'; });
+        pauseBtnMesh.visible = true;
       }, 5000);
     }
     
     function clearBlickPause() {
       if (blickPauseTimeout) { clearTimeout(blickPauseTimeout); blickPauseTimeout = null; }
-      if (pauseBtnEl) { pauseBtnEl.style.opacity = '0'; setTimeout(() => { if (pauseBtnEl) pauseBtnEl.style.display = 'none'; }, 400); }
+      pauseBtnMesh.visible = false;
+    }
+    
+    // Pause-Klick per Raycaster (in touchend/click Handler integriert)
+    function checkPauseBtnTap(x, y, rect) {
+      if (!pauseBtnMesh.visible) return false;
+      const mouse = new THREE.Vector2();
+      mouse.x = ((x - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((y - rect.top) / rect.height) * 2 + 1;
+      const rc = new THREE.Raycaster();
+      rc.setFromCamera(mouse, camera);
+      if (rc.intersectObject(pauseBtnMesh).length > 0) {
+        kipp21KniffAbort = true;
+        clearBlickPause();
+        return true;
+      }
+      return false;
     }
     
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
@@ -6706,6 +6706,13 @@
       // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
+        
+        // Pause-Button prüfen
+        if (checkPauseBtnTap(lastTouchPos.x, lastTouchPos.y, rect2)) {
+          lastTouchPos = null;
+          return;
+        }
+        
         vkMouse.x = ((lastTouchPos.x - rect2.left) / rect2.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
@@ -6760,6 +6767,9 @@
       
       // KIPP 21: Card click detection (Desktop/Replay)
       if (gamePhase === 'kipp21' && kipp21Active && !kipp21CardTouchHandled) {
+        // Pause-Button prüfen
+        if (checkPauseBtnTap(e.clientX, e.clientY, rect)) return;
+        
         for (let ci = 0; ci < 6; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
