@@ -712,7 +712,7 @@
     }
     .bsRow {
       position: absolute;
-      left: 140px; right: 6%;
+      left: 90px; right: 6%;
       text-align: left;
       font: bold 15px Arial, sans-serif;
       color: #c8c0b0;
@@ -743,9 +743,9 @@
     }
     #bestScoresClose {
       position: absolute;
-      bottom: 75px; left: 50%; transform: translateX(-50%);
+      bottom: 69px; left: 50%; transform: translateX(-50%);
       background: url(button_lang.webp) center/contain no-repeat;
-      width: 200px; height: 49px; border: none; cursor: pointer;
+      width: 280px; height: 49px; border: none; cursor: pointer;
       font: bold 16px Arial; color: #d0d0d0; letter-spacing: 2px;
       text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
       pointer-events: auto;
@@ -2349,7 +2349,11 @@
     function saveBestScore(kipps, secs) {
       try {
         const scores = loadBestScores();
-        scores.push({ kipps: kipps, secs: secs });
+        // Kein Duplikat einfügen
+        const exists = scores.some(s => s.kipps === kipps && s.secs === secs && !s.tutorial);
+        if (!exists) {
+          scores.push({ kipps: kipps, secs: secs });
+        }
         scores.sort((a, b) => a.kipps - b.kipps || a.secs - b.secs);
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_bestscores', JSON.stringify(top11));
