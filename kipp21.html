@@ -957,7 +957,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:3px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -3495,13 +3495,15 @@
         
         // Hand einblenden in Bildmitte
         if (handEl) {
+          // Hand über Pokal heben (uiOverlay z-index 10 → 51, über resetButtonWrap 50)
+          document.getElementById('uiOverlay').style.zIndex = '51';
           setHandPos(180, 400);
           handEl.style.opacity = '1';
           updateHandShadow(180, 400, true);
           await sleep(300);
           
-          // Pokal-Zentrum im 360px-Raster: right:9 + 57/2 = 37.5 von rechts = 322 von links, top:11 + 57/2 = 39
-          await moveHandSmooth(322, 40, 800);
+          // Pokal-Zentrum im 360px-Raster: right:5 + 57/2 = 33.5 von rechts = 326 von links, top:11 + 57/2 = 39
+          await moveHandSmooth(326, 40, 800);
           
           // Klick-Pulse auf Pokal
           const pokalEl = document.getElementById('btnBestScores');
@@ -3514,6 +3516,8 @@
           // Hand weg
           handEl.style.opacity = '0';
           updateHandShadow(0, 0, false);
+          // z-index zurücksetzen
+          document.getElementById('uiOverlay').style.zIndex = '10';
           await sleep(200);
           await sleep(200);
           
