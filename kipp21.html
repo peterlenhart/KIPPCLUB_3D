@@ -3541,7 +3541,39 @@
       // End-Buttons zeigen (Tutorial)
       showEndButtons(true);
       
-      replayCleanup(jr);
+      // Hand zum Pokal fahren, klicken, Scoretafel öffnen
+      (async () => {
+        await sleep(2000);
+        
+        // Hand einblenden in Bildmitte
+        if (handEl) {
+          setHandPos(180, 400);
+          handEl.style.opacity = '1';
+          updateHandShadow(180, 400, true);
+          await sleep(300);
+          
+          // Pokal-Zentrum im 360px-Raster: right:9 + 57/2 = 37.5 von rechts = 322 von links, top:11 + 57/2 = 39
+          await moveHandSmooth(322, 40, 800);
+          
+          // Klick-Pulse auf Pokal
+          const pokalEl = document.getElementById('btnBestScores');
+          pokalEl.style.transition = 'transform 0.15s ease-out';
+          pokalEl.style.transform = 'scale(1.2)';
+          await sleep(150);
+          pokalEl.style.transform = 'scale(1.0)';
+          await sleep(300);
+          
+          // Hand weg
+          handEl.style.opacity = '0';
+          updateHandShadow(0, 0, false);
+          await sleep(200);
+          
+          // Scoretafel zeigen
+          showBestScores();
+        }
+        
+        replayCleanup(jr);
+      })();
     }
     
     // ============================================================
@@ -4827,7 +4859,7 @@
           const card = gameCards[cardIdx];
           const isLastHit = (kipp21Done >= 6);
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-            if (!isLastHit) showHitText(cardIdx);
+            if (!isLastHit || kipp21WithTutorial) showHitText(cardIdx);
           });
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
