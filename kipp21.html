@@ -4148,7 +4148,7 @@
     let kipp21WobbleUsed = 0;
     let kipp21EckblickUsed = 0;
     const KNIFF_MAX_USES = 2; // 2 Eckblick (Karten 0,5), 2 Kippblick (Karten 2,3)
-    const KNIFF_SHOW_DURATION = 13500; // 13,5 Sekunden Showzeit (+1,5s)
+    const KNIFF_SHOW_DURATION = 11500; // 11,5 Sekunden Showzeit
     
     function refreshKniffIcons() {
       const allImgs = document.querySelectorAll('#jokerIconsRow img');
@@ -4768,7 +4768,7 @@
           // Card fliegt zum Treffer-Slot
           const card = gameCards[cardIdx];
           const isLastHit = (kipp21Done >= 6);
-          animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
+          const flyPromise = animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             if (!isLastHit || kipp21WithTutorial) showHitText(cardIdx);
           });
           
@@ -4818,8 +4818,9 @@
               gamePhase = 'ende';
               kipp21Active = false;
             }
-            // End-Buttons zeigen — IMMER, auch nach Fehler
-            showEndButtons(false, isNewRecord);
+            // End-Buttons erst nach Kartenflug + 1s Pause
+            const _isNewRecord = isNewRecord;
+            flyPromise.then(() => setTimeout(() => showEndButtons(false, _isNewRecord), 1000));
             }
           }
         } else {
