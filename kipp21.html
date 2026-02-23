@@ -3537,6 +3537,15 @@
       // Tutorial-Score speichern
       saveTutorialScore(totalKipps, totalSec);
       
+      // "21 KIPPS" Label aktualisieren
+      const kLabel = document.getElementById('kipps21Label');
+      if (kLabel) {
+        const diff = totalKipps - 21;
+        if (diff > 0) {
+          kLabel.textContent = '21 ' + (kLabel.dataset.kterm||'KIPPS') + ' | ' + diff + ' ' + (kLabel.dataset.zterm||'zuviel');
+        }
+      }
+      
       // End-Buttons zeigen (Tutorial)
       showEndButtons(true);
       
@@ -3729,41 +3738,23 @@
         // Score in Best Scores speichern (nur echte Spiele, nicht Tutorial)
         saveBestScore(kipp21KippCount, totalSec);
         
-        // Motivationstext: einzeilig, Oberkante Zeile 11
-        const MOTIV_21 = {
-          de: '21 KIPPS sind möglich. Jedes Mal.',
-          en: '21 TILTS are possible. Every time.',
-          es: '21 VOLCADOS son posibles. Cada vez.',
-          fr: '21 BASCULES sont possibles. À chaque fois.',
-          it: '21 RIBALTAMENTI sono possibili. Ogni volta.',
-          tr: '21 DEVİRME mümkün. Her seferinde.'
-        };
-        
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
         
-        // gameEndText NICHT mehr auf 450px — Motivtext kommt in die würfelfreie Hälfte
+        // gameEndText nicht mehr benötigt
         const geText = document.getElementById('gameEndText');
         geText.style.display = 'none';
         
-        // Motivationstext unter Score-Countern in der Box-Hälfte
-        if (!motivEl) {
-          motivEl = document.createElement('div');
-          motivEl.id = 'endMotivText';
-          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:13; transform:translateX(-50%);';
-          document.getElementById('uiOverlay').appendChild(motivEl);
+        // "21 KIPPS" Label aktualisieren mit Differenz
+        const kLabel = document.getElementById('kipps21Label');
+        if (kLabel) {
+          const diff = kipp21KippCount - 21;
+          if (diff > 0) {
+            kLabel.textContent = '21 ' + (kLabel.dataset.kterm||'KIPPS') + ' | ' + diff + ' ' + (kLabel.dataset.zterm||'zuviel');
+          } else {
+            kLabel.textContent = '21 ' + (kLabel.dataset.kterm||'KIPPS');
+          }
         }
-        motivEl.style.left = lastCounterTarget.x + 'px';
-        motivEl.style.top = (lastCounterTarget.y + 40) + 'px';
-        
-        if (kipp21KippCount > 21) {
-          motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
-          motivEl.style.color = '#d4a843';
-          motivEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
-        } else {
-          motivEl.textContent = '';
-        }
-        motivEl.style.display = 'block';
         
         // Funktion zum Aufräumen aller End-Buttons
         function hideAllEndBtns() {
@@ -3872,7 +3863,7 @@
       if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
       stopCountdown();
       // Dynamische Elemente entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'kipps21Label', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
@@ -4112,6 +4103,26 @@
       // HIT-Texte aus vorherigem Spiel entfernen
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
+      
+      // "21 KIPPS" Label unter den Kippzielen
+      const KIPPS_TERM = { de:'KIPPS', en:'TIPS', es:'VOLCADOS', fr:'BASCULES', it:'RIBALTAMENTI', tr:'DEVİRME' };
+      const ZUVIEL = { de:'zuviel', en:'too many', es:'de más', fr:'de trop', it:'di troppo', tr:'fazla' };
+      const _kTerm = KIPPS_TERM[_digikippLang] || KIPPS_TERM.de;
+      const _zTerm = ZUVIEL[_digikippLang] || ZUVIEL.de;
+      let kLabel = document.getElementById('kipps21Label');
+      if (!kLabel) {
+        kLabel = document.createElement('div');
+        kLabel.id = 'kipps21Label';
+        document.getElementById('uiOverlay').appendChild(kLabel);
+      }
+      const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
+      cardSouth3D.project(camera);
+      const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 2;
+      kLabel.textContent = '21 ' + _kTerm;
+      kLabel.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%); top:' + labelY + 'px; font:bold 14px Arial,sans-serif; color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.8); pointer-events:none; z-index:13; white-space:nowrap;';
+      kLabel.style.display = 'block';
+      kLabel.dataset.kterm = _kTerm;
+      kLabel.dataset.zterm = _zTerm;
       
       // Blick-Icons auf Kippzielen anzeigen
       showBlickIcons();
@@ -7331,7 +7342,7 @@
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'kipps21Label', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
