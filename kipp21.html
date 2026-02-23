@@ -957,7 +957,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:9px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:9px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:none;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -2250,8 +2250,9 @@
             document.getElementById('btnDemo').disabled = false;
             document.getElementById('btnDemo').style.opacity = '1';
             document.getElementById('btnKippPrinzip').disabled = false;
-            document.getElementById('btnBestScores').style.opacity = '1';
             document.getElementById('btnKippPrinzip').style.opacity = '1';
+            document.getElementById('btnBestScores').style.opacity = '1';
+            document.getElementById('btnBestScores').style.display = 'block';
            
           }, 700);
         }, fadeDelay);
@@ -3537,15 +3538,6 @@
       // Tutorial-Score speichern
       saveTutorialScore(totalKipps, totalSec);
       
-      // "21 KIPPS" Label aktualisieren
-      const kLabel = document.getElementById('kipps21Label');
-      if (kLabel) {
-        const diff = totalKipps - 21;
-        if (diff > 0) {
-          kLabel.textContent = '21 ' + (kLabel.dataset.kterm||'KIPPS') + ' | ' + diff + ' ' + (kLabel.dataset.zterm||'zuviel');
-        }
-      }
-      
       // End-Buttons zeigen (Tutorial)
       showEndButtons(true);
       
@@ -3574,7 +3566,6 @@
           // Hand weg
           handEl.style.opacity = '0';
           updateHandShadow(0, 0, false);
-          await sleep(200);
           await sleep(200);
           
           // Scoretafel zeigen
@@ -3695,6 +3686,8 @@
           abtn.style.display = 'none';
           const esb = document.getElementById('endSpielenBtn');
           if (esb) esb.style.display = 'none';
+          const ebsb = document.getElementById('endBestScoresBtn');
+          if (ebsb) ebsb.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
@@ -3715,6 +3708,8 @@
         spielenBtn.onclick = () => {
           spielenBtn.style.display = 'none';
           abtn.style.display = 'none';
+          const ebsb = document.getElementById('endBestScoresBtn');
+          if (ebsb) ebsb.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
@@ -3724,6 +3719,18 @@
           startKipp21(false);
         };
         
+        // Button 3: HIGHSCORES (539px — wie btnKippPrinzip auf Intro)
+        let ebsBtn = document.getElementById('endBestScoresBtn');
+        if (!ebsBtn) {
+          ebsBtn = document.createElement('button');
+          ebsBtn.id = 'endBestScoresBtn';
+          ebsBtn.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(ebsBtn);
+        }
+        ebsBtn.textContent = T.bs || 'HIGHSCORES';
+        ebsBtn.style.cssText = btnCSS(539, 16, 2);
+        ebsBtn.style.display = 'block';
+        ebsBtn.onclick = () => { showBestScores(); };
       } else {
         // Spiel-Ende: gameEndText + BEST SCORES + KIPP PRINZIP + NEUES SPIEL
         try {
@@ -3739,29 +3746,49 @@
         // Score in Best Scores speichern (nur echte Spiele, nicht Tutorial)
         saveBestScore(kipp21KippCount, totalSec);
         
+        // Motivationstext: einzeilig, Oberkante Zeile 11
+        const MOTIV_21 = {
+          de: '21 KIPPS sind möglich. Jedes Mal.',
+          en: '21 TILTS are possible. Every time.',
+          es: '21 VOLCADOS son posibles. Cada vez.',
+          fr: '21 BASCULES sont possibles. À chaque fois.',
+          it: '21 RIBALTAMENTI sono possibili. Ogni volta.',
+          tr: '21 DEVİRME mümkün. Her seferinde.'
+        };
+        
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
         
-        // gameEndText nicht mehr benötigt
+        // gameEndText NICHT mehr auf 450px — Motivtext kommt in die würfelfreie Hälfte
         const geText = document.getElementById('gameEndText');
         geText.style.display = 'none';
         
-        // "21 KIPPS" Label aktualisieren mit Differenz
-        const kLabel = document.getElementById('kipps21Label');
-        if (kLabel) {
-          const diff = kipp21KippCount - 21;
-          if (diff > 0) {
-            kLabel.textContent = '21 ' + (kLabel.dataset.kterm||'KIPPS') + ' | ' + diff + ' ' + (kLabel.dataset.zterm||'zuviel');
-          } else {
-            kLabel.textContent = '21 ' + (kLabel.dataset.kterm||'KIPPS');
-          }
+        // Motivationstext unter Score-Countern in der Box-Hälfte
+        if (!motivEl) {
+          motivEl = document.createElement('div');
+          motivEl.id = 'endMotivText';
+          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:13; transform:translateX(-50%);';
+          document.getElementById('uiOverlay').appendChild(motivEl);
         }
+        motivEl.style.left = lastCounterTarget.x + 'px';
+        motivEl.style.top = (lastCounterTarget.y + 40) + 'px';
+        
+        if (kipp21KippCount > 21) {
+          motivEl.textContent = MOTIV_21[lang] || MOTIV_21.de;
+          motivEl.style.color = '#d4a843';
+          motivEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
+        } else {
+          motivEl.textContent = '';
+        }
+        motivEl.style.display = 'block';
         
         // Funktion zum Aufräumen aller End-Buttons
         function hideAllEndBtns() {
           abtn.style.display = 'none';
           const ekpb = document.getElementById('endKippPrinzipBtn');
           if (ekpb) ekpb.style.display = 'none';
+          const ebsb = document.getElementById('endBestScoresBtn');
+          if (ebsb) ebsb.style.display = 'none';
           if (motivEl) motivEl.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none';
           document.getElementById('gameEndText').style.display = 'none';
@@ -3770,7 +3797,20 @@
           counterOrigPos = null;
         }
         
-        // Button 1: KIPP PRINZIP (421px)
+        // Button 1: BEST SCORES (480px — wie btnDemo auf Intro)
+        let bsBtn = document.getElementById('endBestScoresBtn');
+        if (!bsBtn) {
+          bsBtn = document.createElement('button');
+          bsBtn.id = 'endBestScoresBtn';
+          bsBtn.className = 'end-btn-dynamic';
+          document.getElementById('uiOverlay').appendChild(bsBtn);
+        }
+        bsBtn.textContent = T.bs || 'HIGHSCORES';
+        bsBtn.style.cssText = btnCSS(421, 16, 2);
+        bsBtn.style.display = 'block';
+        bsBtn.onclick = () => { showBestScores(); };
+        
+        // Button 2: KIPP PRINZIP (539px — wie btnKippPrinzip auf Intro)
         let kpBtn = document.getElementById('endKippPrinzipBtn');
         if (!kpBtn) {
           kpBtn = document.createElement('button');
@@ -3779,13 +3819,13 @@
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
         kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
-        kpBtn.style.cssText = btnCSS(421, 16, 2);
+        kpBtn.style.cssText = btnCSS(480, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => { showKippPrinzip(); };
         
-        // Button 2: NEUES SPIEL (480px)
+        // Button 3: NEUES SPIEL (598px — wie btnBestScores auf Intro)
         abtn.textContent = T.nm;
-        abtn.style.cssText = btnCSS(480, 18, 2.5);
+        abtn.style.cssText = btnCSS(539, 18, 2.5);
         abtn.onclick = () => {
           hideAllEndBtns();
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
@@ -3793,7 +3833,7 @@
         };
         
         console.log('[END] Buttons created successfully');
-        if (dbg) dbg.textContent += ' | OK 2btn';
+        if (dbg) dbg.textContent += ' | OK 3btn';
         } catch(e) {
           console.error('[showEndButtons] CRASH:', e);
           let dbg2 = document.getElementById('endDebug');
@@ -3864,7 +3904,7 @@
       if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
       stopCountdown();
       // Dynamische Elemente entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'kipps21Label', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endBestScoresBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
@@ -4104,26 +4144,6 @@
       // HIT-Texte aus vorherigem Spiel entfernen
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
-      
-      // "21 KIPPS" Label unter den Kippzielen
-      const KIPPS_TERM = { de:'KIPPS', en:'TIPS', es:'VOLCADOS', fr:'BASCULES', it:'RIBALTAMENTI', tr:'DEVİRME' };
-      const ZUVIEL = { de:'zuviel', en:'too many', es:'de más', fr:'de trop', it:'di troppo', tr:'fazla' };
-      const _kTerm = KIPPS_TERM[_digikippLang] || KIPPS_TERM.de;
-      const _zTerm = ZUVIEL[_digikippLang] || ZUVIEL.de;
-      let kLabel = document.getElementById('kipps21Label');
-      if (!kLabel) {
-        kLabel = document.createElement('div');
-        kLabel.id = 'kipps21Label';
-        document.getElementById('uiOverlay').appendChild(kLabel);
-      }
-      const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
-      cardSouth3D.project(camera);
-      const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 2;
-      kLabel.textContent = '21 ' + _kTerm;
-      kLabel.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%); top:' + labelY + 'px; font:bold 14px Arial,sans-serif; color:#d4a843; text-shadow:0 1px 2px rgba(0,0,0,0.8); pointer-events:none; z-index:13; white-space:nowrap;';
-      kLabel.style.display = 'block';
-      kLabel.dataset.kterm = _kTerm;
-      kLabel.dataset.zterm = _zTerm;
       
       // Blick-Icons auf Kippzielen anzeigen
       showBlickIcons();
@@ -7343,7 +7363,7 @@
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'kipps21Label', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endBestScoresBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
