@@ -3486,7 +3486,15 @@
       
       // "kipps21Label" zeigt schon den finalen Countdown-Stand — nichts zu ändern
       
-      // End-Buttons zeigen (Tutorial)
+      // HITs ausblenden, dann End-Buttons zeigen (Tutorial)
+      hitTextEls.forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out';
+        el.style.opacity = '0';
+      });
+      await sleep(500);
+      hitTextEls.forEach(el => el.remove());
+      hitTextEls.length = 0;
+      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
       showEndButtons(true);
       
       // Hand zum Pokal fahren, klicken, Scoretafel öffnen
