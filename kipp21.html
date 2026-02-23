@@ -4769,7 +4769,7 @@
           const card = gameCards[cardIdx];
           const isLastHit = (kipp21Done >= 6);
           const flyPromise = animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-            if (!isLastHit || kipp21WithTutorial) showHitText(cardIdx);
+            showHitText(cardIdx);
           });
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
@@ -4807,20 +4807,26 @@
               if (kl) kl.innerHTML = formatCountdownLabel(kipp21TotalTime);
               // Joker-Reihe ausblenden
               hideKniffIcons();
-              // HIT-Texte auch verzögert nochmal räumen (letzter HIT entsteht nach 800ms Fly)
-              setTimeout(() => {
-                hitTextEls.forEach(el => el.remove());
-                hitTextEls.length = 0;
-                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-              }, 1200);
             } catch(e) {
               console.error('[END] Pre-button error:', e);
               gamePhase = 'ende';
               kipp21Active = false;
             }
-            // End-Buttons erst nach Kartenflug + 1s Pause
+            // End-Buttons erst nach Kartenflug + 1s Pause, HITs bleiben bis dahin stehen
             const _isNewRecord = isNewRecord;
-            flyPromise.then(() => setTimeout(() => showEndButtons(false, _isNewRecord), 1000));
+            flyPromise.then(() => setTimeout(() => {
+              // JETZT erst HITs entfernen (alle 6 waren sichtbar)
+              hitTextEls.forEach(el => {
+                el.style.transition = 'opacity 0.5s ease-out';
+                el.style.opacity = '0';
+              });
+              setTimeout(() => {
+                hitTextEls.forEach(el => el.remove());
+                hitTextEls.length = 0;
+                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+              }, 500);
+              showEndButtons(false, _isNewRecord);
+            }, 1000));
             }
           }
         } else {
