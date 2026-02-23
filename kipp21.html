@@ -957,7 +957,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:9px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:3px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -3451,7 +3451,7 @@
         }
         console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
-        await sleep(800); // Kurz warten bis Kartenflug + HIT sichtbar
+        await sleep(800); // Zwischen-Runden Pause
       }
       
       // === ERGEBNIS ===
@@ -3486,16 +3486,8 @@
       
       // "kipps21Label" zeigt schon den finalen Countdown-Stand — nichts zu ändern
       
-      // HITs ausblenden, dann End-Buttons zeigen (Tutorial)
-      hitTextEls.forEach(el => {
-        el.style.transition = 'opacity 0.5s ease-out';
-        el.style.opacity = '0';
-      });
-      await sleep(500);
-      hitTextEls.forEach(el => el.remove());
-      hitTextEls.length = 0;
-      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-      showEndButtons(true);
+      // showEndButtons wartet selbst auf alle HITs, blendet sie aus, dann Buttons
+      await showEndButtons(true);
       
       // Hand zum Pokal fahren, klicken, Scoretafel öffnen
       (async () => {
@@ -3602,16 +3594,35 @@
     }
 
     // === END-BUTTONS (WIEDERHOLEN + SPIELEN) ===
-    function showEndButtons(isTutorial, isNewRecord) {
+    async function showEndButtons(isTutorial, isNewRecord) {
       // Guard: Reset wurde gedrückt, wir sind schon am Start-Screen
       if (gamePhase === 'start') return;
       // DEBUG
       let dbg = document.getElementById('endDebug');
       if (dbg) dbg.textContent += ' | sEB(tut='+isTutorial+',rec='+isNewRecord+')';
-      // HIT-Texte entfernen
+      
+      // BULLETPROOF: Warten bis ALLE HITs wirklich existieren und sichtbar sind
+      // Dann ausblenden, DANN erst Buttons zeigen
+      let waitLoops = 0;
+      while (document.querySelectorAll('.hit-text-el').length < kipp21Done && waitLoops < 30) {
+        await sleep(100);
+        waitLoops++;
+      }
+      // 1s sichtbar lassen
+      await sleep(1000);
+      // Ausblenden
+      const allHits = document.querySelectorAll('.hit-text-el');
+      allHits.forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out';
+        el.style.opacity = '0';
+      });
+      hitTextEls.forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out';
+        el.style.opacity = '0';
+      });
+      await sleep(500);
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
-      // Auch verspätete HIT-Texte abfangen
       document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
       
       // Position berechnen (Kärtchen-Reihe)
@@ -4814,21 +4825,9 @@
               gamePhase = 'ende';
               kipp21Active = false;
             }
-            // End-Buttons erst nach Kartenflug + 1s Pause, HITs bleiben bis dahin stehen
+            // End-Buttons — showEndButtons wartet selbst auf HITs
             const _isNewRecord = isNewRecord;
-            flyPromise.then(() => setTimeout(() => {
-              // JETZT erst HITs entfernen (alle 6 waren sichtbar)
-              hitTextEls.forEach(el => {
-                el.style.transition = 'opacity 0.5s ease-out';
-                el.style.opacity = '0';
-              });
-              setTimeout(() => {
-                hitTextEls.forEach(el => el.remove());
-                hitTextEls.length = 0;
-                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-              }, 500);
-              showEndButtons(false, _isNewRecord);
-            }, 1000));
+            flyPromise.then(() => showEndButtons(false, _isNewRecord));
             }
           }
         } else {
