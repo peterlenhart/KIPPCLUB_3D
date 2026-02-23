@@ -3383,7 +3383,7 @@
       const kniffPlan = {}; // Nicht mehr gebraucht, Blick-Typ kommt aus cardIdx % 2
       const KIPP_DUR = 550; // ~1 Sek pro Kipp (550+350+60+40)
       
-      await sleep(2000);
+      await sleep(500);
       if (myGen !== kipp21Generation) return; // Abgebrochen
       dbgLog('Perfect Game Start');
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
