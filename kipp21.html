@@ -3858,9 +3858,9 @@
         pgt.appendChild(pgtH);
         pgt.appendChild(pgtS);
       }
-      pgtH.textContent = T.ch1;
-      pgtS.innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">21</span> ' + T.ch2.replace('21 ','');
-      // Beide Zeilen im Sub-Stil (21px, normal)
+      pgtH.innerHTML = T.s1 + '  <span style="font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ','');
+      pgtS.style.display = 'none';
+      // Einzeilig im Sub-Stil
       pgtH.style.fontSize = '21px';
       pgtH.style.letterSpacing = '0';
       pgtH.style.color = '';
@@ -3987,15 +3987,9 @@
       // Prüft gamePhase — Reset setzt 'start' und bricht die Sequenz ab
       (async () => {
         if (gamePhase !== 'kipp21') return;
-        await pgtInflate(pgtH, pgtS);    // "6 HITS..." erscheint
+        await pgtInflate(pgtH, pgtS);    // "SPIEL ZIEL 21 SEKUNDEN" erscheint
         if (gamePhase !== 'kipp21') return;
-        await wait(200);                  // kurz stehen lassen
-        if (gamePhase !== 'kipp21') return;
-        await pgtDeflate(pgtH);           // "6 HITS..." weg
-        if (gamePhase !== 'kipp21') return;
-        await pgtInflate(pgtS, pgtH);     // "Bestzeit..." erscheint
-        if (gamePhase !== 'kipp21') return;
-        await wait(800);                  // 0.8s stehen lassen
+        await wait(1000);                 // stehen lassen
         if (gamePhase !== 'kipp21') return;
         await fadeOutText();              // Text KOMPLETT weg
         if (gamePhase !== 'kipp21') return;
@@ -4053,7 +4047,7 @@
       }
       const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
       cardSouth3D.project(camera);
-      const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 2;
+      const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 22;
       kLabel.innerHTML = '<span style="font-size:36px;line-height:36px">21</span>';
       kLabel.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%); top:' + labelY + 'px; font-family:Arial,sans-serif; font-weight:bold; color:#d4b48c; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(212,180,140,0.5); pointer-events:none; z-index:13; white-space:nowrap;';
       kLabel.style.display = 'block';
