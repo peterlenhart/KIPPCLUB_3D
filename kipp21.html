@@ -3028,34 +3028,11 @@
       initHandShadow();
     }
     
-    function setHandPos(x, y, tilt) {
+    function setHandPos(x, y) {
       if (!handEl) return;
-      tilt = tilt || 0;
-      if (tilt) {
-        handEl.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px) perspective(300px) rotateX(-' + tilt.toFixed(1) + 'deg)';
-      } else {
-        handEl.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
-      }
-      _handX = x; _handY = y; _handTilt = tilt;
+      handEl.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
+      _handX = x; _handY = y;
       updateHandShadow(x, y, parseFloat(handEl.style.opacity) > 0);
-    }
-    let _handTilt = 0;
-    
-    // Smooth move with tilt interpolation
-    function moveHandSmoothTilt(toX, toY, toTilt, durMs) {
-      return new Promise(resolve => {
-        const sx = _handX, sy = _handY, st = _handTilt;
-        const startT = performance.now();
-        function tick() {
-          if (!replayActive) { setHandPos(toX, toY, toTilt); resolve(); return; }
-          const t = Math.min((performance.now() - startT) / durMs, 1);
-          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e, st + (toTilt - st) * e);
-          if (t < 1) requestAnimationFrame(tick);
-          else { setHandPos(toX, toY, toTilt); resolve(); }
-        }
-        requestAnimationFrame(tick);
-      });
     }
     
     function dbgLog(msg) {
@@ -3086,20 +3063,13 @@
       if (!replayActive) return;
       holdMs = holdMs || 600;
       const SY = 740;
-      const scanY = ty - 25;
       
-      setHandPos(tx, SY, 0);
+      setHandPos(tx, SY);
       handEl.style.opacity = '1';
       updateHandShadow(tx, SY, true);
-      // Hoch — angehoben mit Tilt
-      await moveHandSmoothTilt(tx, scanY, 14, 500);
-      await sleep(Math.max(100, holdMs - 400));
-      // Tap: Finger hebt sich, dann runter zum Klick
-      await moveHandSmoothTilt(tx, scanY - 8, 22, 150);
-      await moveHandSmoothTilt(tx, ty, 0, 180);
-      await sleep(200);
-      // Zurück nach Süden
-      await moveHandSmoothTilt(tx, SY, 0, 600);
+      await moveHandSmooth(tx, ty, 600);
+      await sleep(holdMs);
+      await moveHandSmooth(tx, SY, 600);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(100);
@@ -3260,23 +3230,17 @@
       const SY = 740;
       
       if (!hasIcon) {
-        // Kein Blick-Icon → Hand hinfliegen, Tap-Motion, dann öffnen
-        const scanY = ty - 25;
-        setHandPos(tx, SY, 0);
+        // Kein Blick-Icon → Hand hinfliegen, sofort beim Kontakt pulsen+öffnen
+        setHandPos(tx, SY);
         handEl.style.opacity = '1';
         updateHandShadow(tx, SY, true);
-        // Hoch — angehoben mit Tilt
-        await moveHandSmoothTilt(tx, scanY, 14, 500);
-        await sleep(100);
-        // Tap: Finger hebt, dann runter
-        await moveHandSmoothTilt(tx, scanY - 8, 22, 150);
-        await moveHandSmoothTilt(tx, ty, 0, 180);
+        await moveHandSmooth(tx, ty, 600);
         // Sofort bei Kontakt: Pulse + Open
         pulseCard(nextV);
         kipp21OnCardTap(nextV, true);
         await sleep(350);
         // Hand zurück
-        await moveHandSmoothTilt(tx, SY, 0, 500);
+        await moveHandSmooth(tx, SY, 500);
         handEl.style.opacity = '0';
         updateHandShadow(0, 0, false);
         await sleep(100);
@@ -3329,39 +3293,28 @@
         const leftX = cardScreenX(0);
         const rightX = cardScreenX(5);
         const targetX = cardScreenX(targetCard);
-        const scanY = cardY_screen - 25; // höher beim Suchen
         
-        setHandPos(leftX, 740, 0);
+        setHandPos(leftX, 740);
         handEl.style.opacity = '1';
         updateHandShadow(leftX, 740, true);
-        // Hoch zur Kartenreihe — mit Tilt (Finger zur Kamera)
-        await moveHandSmoothTilt(leftX, scanY, 15, 800);
+        // Hoch zur Kartenreihe
+        await moveHandSmooth(leftX, cardY_screen, 800);
         await sleep(200);
-        // Nach rechts suchen (angehoben + leicht gekippt)
-        await moveHandSmoothTilt(rightX, scanY, 12, 1400);
+        // Nach rechts suchen
+        await moveHandSmooth(rightX, cardY_screen, 1400);
         await sleep(250);
         // Zurück nach links
-        await moveHandSmoothTilt(leftX, scanY, 15, 1200);
+        await moveHandSmooth(leftX, cardY_screen, 1200);
         await sleep(250);
-        // Zum Ziel fahren
-        await moveHandSmoothTilt(targetX, scanY, 14, 700);
-        await sleep(150);
-        // Tap: Tilt verstärken (Finger hebt sich) ...
-        await moveHandSmoothTilt(targetX, scanY - 8, 22, 180);
-        // ... dann runtersenken zum Klick (Tilt weg)
-        await moveHandSmoothTilt(targetX, cardY_screen, 0, 200);
+        // Zum Ziel
+        await moveHandSmooth(targetX, cardY_screen, 700);
       } else {
         // Direkt zur Zielkarte
         const targetX = cardScreenX(targetCard);
-        const scanY = cardY_screen - 25;
-        setHandPos(targetX, 740, 0);
+        setHandPos(targetX, 740);
         handEl.style.opacity = '1';
         updateHandShadow(targetX, 740, true);
-        await moveHandSmoothTilt(targetX, scanY, 14, 700);
-        await sleep(150);
-        // Tap-Bewegung
-        await moveHandSmoothTilt(targetX, scanY - 8, 22, 180);
-        await moveHandSmoothTilt(targetX, cardY_screen, 0, 200);
+        await moveHandSmooth(targetX, cardY_screen, 900);
       }
       
       // Karte pulsieren ("klick")
@@ -3607,32 +3560,8 @@
           updateHandShadow(180, 400, true);
           await sleep(300);
           
-          // Hand in UI-Tap-Modus: größer, perspektivisch gekippt (Finger näher an Kamera)
-          handEl.style.transition = 'width 0.6s ease, transform 0.8s ease';
-          handEl.style.width = '120px';
-          handEl.style.transformOrigin = 'center top';
-          
-          // Pokal-Zentrum: right:9 + 57/2 = 37.5 von rechts = 322 von links, top:11 + 57/2 = 39
-          // Custom smooth move mit perspective tilt
-          const sx = _handX, sy = _handY;
-          const tx = 322, ty = 40;
-          const dur = 800;
-          await new Promise(resolve => {
-            const startT = performance.now();
-            function tick() {
-              const t = Math.min((performance.now() - startT) / dur, 1);
-              const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-              const cx = sx + (tx - sx) * e;
-              const cy = sy + (ty - sy) * e;
-              const tilt = e * 20; // bis 20° Neigung
-              _handX = cx; _handY = cy;
-              handEl.style.transform = 'translate(' + Math.round(cx - 30) + 'px,' + Math.round(cy) + 'px) perspective(300px) rotateX(-' + tilt.toFixed(1) + 'deg)';
-              updateHandShadow(cx, cy, true);
-              if (t < 1) requestAnimationFrame(tick);
-              else resolve();
-            }
-            requestAnimationFrame(tick);
-          });
+          // Pokal-Zentrum im 360px-Raster: right:9 + 57/2 = 37.5 von rechts = 322 von links, top:11 + 57/2 = 39
+          await moveHandSmooth(322, 40, 800);
           
           // Klick-Pulse auf Pokal
           const pokalEl = document.getElementById('btnBestScores');
@@ -3642,13 +3571,10 @@
           pokalEl.style.transform = 'scale(1.0)';
           await sleep(300);
           
-          // Hand weg + Reset
+          // Hand weg
           handEl.style.opacity = '0';
           updateHandShadow(0, 0, false);
-          await sleep(250);
-          handEl.style.width = '90px';
-          handEl.style.transformOrigin = '';
-          handEl.style.transition = 'opacity 0.25s ease';
+          await sleep(200);
           await sleep(200);
           
           // Scoretafel zeigen
