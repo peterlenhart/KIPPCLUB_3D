@@ -957,7 +957,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:9px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; opacity:0; transition:opacity 1.2s ease-in-out; display:none;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:9px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -2250,9 +2250,8 @@
             document.getElementById('btnDemo').disabled = false;
             document.getElementById('btnDemo').style.opacity = '1';
             document.getElementById('btnKippPrinzip').disabled = false;
-            document.getElementById('btnKippPrinzip').style.opacity = '1';
             document.getElementById('btnBestScores').style.opacity = '1';
-            document.getElementById('btnBestScores').style.display = 'block';
+            document.getElementById('btnKippPrinzip').style.opacity = '1';
            
           }, 700);
         }, fadeDelay);
@@ -3686,8 +3685,6 @@
           abtn.style.display = 'none';
           const esb = document.getElementById('endSpielenBtn');
           if (esb) esb.style.display = 'none';
-          const ebsb = document.getElementById('endBestScoresBtn');
-          if (ebsb) ebsb.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
@@ -3708,8 +3705,6 @@
         spielenBtn.onclick = () => {
           spielenBtn.style.display = 'none';
           abtn.style.display = 'none';
-          const ebsb = document.getElementById('endBestScoresBtn');
-          if (ebsb) ebsb.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
@@ -3719,18 +3714,6 @@
           startKipp21(false);
         };
         
-        // Button 3: HIGHSCORES (539px — wie btnKippPrinzip auf Intro)
-        let ebsBtn = document.getElementById('endBestScoresBtn');
-        if (!ebsBtn) {
-          ebsBtn = document.createElement('button');
-          ebsBtn.id = 'endBestScoresBtn';
-          ebsBtn.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(ebsBtn);
-        }
-        ebsBtn.textContent = T.bs || 'HIGHSCORES';
-        ebsBtn.style.cssText = btnCSS(539, 16, 2);
-        ebsBtn.style.display = 'block';
-        ebsBtn.onclick = () => { showBestScores(); };
       } else {
         // Spiel-Ende: gameEndText + BEST SCORES + KIPP PRINZIP + NEUES SPIEL
         try {
@@ -3787,8 +3770,6 @@
           abtn.style.display = 'none';
           const ekpb = document.getElementById('endKippPrinzipBtn');
           if (ekpb) ekpb.style.display = 'none';
-          const ebsb = document.getElementById('endBestScoresBtn');
-          if (ebsb) ebsb.style.display = 'none';
           if (motivEl) motivEl.style.display = 'none';
           document.getElementById('perfektGameText').style.display = 'none';
           document.getElementById('gameEndText').style.display = 'none';
@@ -3797,20 +3778,7 @@
           counterOrigPos = null;
         }
         
-        // Button 1: BEST SCORES (480px — wie btnDemo auf Intro)
-        let bsBtn = document.getElementById('endBestScoresBtn');
-        if (!bsBtn) {
-          bsBtn = document.createElement('button');
-          bsBtn.id = 'endBestScoresBtn';
-          bsBtn.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(bsBtn);
-        }
-        bsBtn.textContent = T.bs || 'HIGHSCORES';
-        bsBtn.style.cssText = btnCSS(421, 16, 2);
-        bsBtn.style.display = 'block';
-        bsBtn.onclick = () => { showBestScores(); };
-        
-        // Button 2: KIPP PRINZIP (539px — wie btnKippPrinzip auf Intro)
+        // Button 1: KIPP PRINZIP (421px)
         let kpBtn = document.getElementById('endKippPrinzipBtn');
         if (!kpBtn) {
           kpBtn = document.createElement('button');
@@ -3819,13 +3787,13 @@
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
         kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
-        kpBtn.style.cssText = btnCSS(480, 16, 2);
+        kpBtn.style.cssText = btnCSS(421, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => { showKippPrinzip(); };
         
-        // Button 3: NEUES SPIEL (598px — wie btnBestScores auf Intro)
+        // Button 2: NEUES SPIEL (480px)
         abtn.textContent = T.nm;
-        abtn.style.cssText = btnCSS(539, 18, 2.5);
+        abtn.style.cssText = btnCSS(480, 18, 2.5);
         abtn.onclick = () => {
           hideAllEndBtns();
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
@@ -3833,7 +3801,7 @@
         };
         
         console.log('[END] Buttons created successfully');
-        if (dbg) dbg.textContent += ' | OK 3btn';
+        if (dbg) dbg.textContent += ' | OK 2btn';
         } catch(e) {
           console.error('[showEndButtons] CRASH:', e);
           let dbg2 = document.getElementById('endDebug');
@@ -3904,7 +3872,7 @@
       if (kipp21TutorialTimeout) { clearTimeout(kipp21TutorialTimeout); kipp21TutorialTimeout = null; }
       stopCountdown();
       // Dynamische Elemente entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endBestScoresBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
@@ -7363,7 +7331,7 @@
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
-      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endBestScoresBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
+      ['auswertungBtn', 'endSpielenBtn', 'endKippPrinzipBtn', 'endMotivText', 'endScoreBtn', 'timeoutNeuesSpielBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.remove();
       });
