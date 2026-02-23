@@ -46,7 +46,7 @@
       width: 360px;
       height: 100vh;
       pointer-events: none;
-      z-index: 100;
+      z-index: 10;
       overflow: hidden;
     }
 
@@ -103,7 +103,7 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
       pointer-events: none;
       display: none;
-      z-index: 130;
+      z-index: 13;
       opacity: 0;
       transition: opacity 0.35s ease;
     }
@@ -114,7 +114,7 @@
       width: 360px;
       height: 58px;
       display: none;
-      z-index: 130;
+      z-index: 13;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.35s ease;
@@ -141,7 +141,7 @@
       border: none;
       cursor: pointer;
       pointer-events: auto;
-      z-index: 131;
+      z-index: 14;
       font-family: Arial, sans-serif;
       font-size: 14px;
       font-weight: bold;
@@ -166,7 +166,7 @@
       white-space: nowrap;
       pointer-events: none;
       display: none;
-      z-index: 130;
+      z-index: 13;
       transition: opacity 1.2s ease-in-out;
     }
     #perfektGameText .pgtLine {
@@ -197,7 +197,7 @@
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
       white-space: nowrap;
       pointer-events: none;
-      z-index: 10;
+      z-index: 1;
       transition: opacity 1.2s ease-in-out;
     }
     #startChallengeText .sctLine {
@@ -258,7 +258,7 @@
       pointer-events: auto;
       filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4));
       display: none;
-      z-index: 150;
+      z-index: 15;
       animation: eyePulse 1.5s ease-in-out infinite;
     }
     @keyframes eyePulse {
@@ -271,7 +271,7 @@
       display: none;
       pointer-events: auto;
       cursor: pointer;
-      z-index: 55;
+      z-index: 5;
       border-radius: 6px;
       background: rgba(20,14,8,0.6);
       border: 2px solid rgba(212,180,140,0.5);
@@ -295,7 +295,7 @@
       border-radius: 50%;
       pointer-events: none;
       display: none;
-      z-index: 120;
+      z-index: 12;
       transform: translate(-50%, -50%);
       animation: targetPulse 1.5s ease-in-out infinite;
     }
@@ -323,7 +323,7 @@
       cursor: pointer;
       pointer-events: auto;
       display: none;
-      z-index: 150;
+      z-index: 15;
       object-fit: contain;
     }
     #entscheidungText {
@@ -338,7 +338,7 @@
       text-align: left;
       text-shadow: 0 1px 2px rgba(0,0,0,0.8);
       display: none;
-      z-index: 100;
+      z-index: 10;
     }
     
     #instructionText {
@@ -394,7 +394,7 @@
       left: 10px;
       top: 481px;
       cursor: pointer;
-      z-index: 300;
+      z-index: 25;
       animation: pulsate 1.5s ease-in-out infinite;
       transform-origin: center center;
     }
@@ -498,7 +498,7 @@
       display: flex;
       gap: 6px;
       pointer-events: auto;
-      z-index: 200;
+      z-index: 20;
     }
 
     .kippBtn {
@@ -557,7 +557,7 @@
       width: 360px;
       height: 720px;
       pointer-events: none;
-      z-index: 10000;
+      z-index: 5;
     }
     #resetButton {
       display: none;
@@ -619,7 +619,7 @@
                   inset 0 1px 0 rgba(255,255,255,0.8);
       align-items: center;
       justify-content: center;
-      z-index: 200;
+      z-index: 20;
     }
 
     #backButton:active {
@@ -652,7 +652,7 @@
       width: 360px; height: 720px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 300;
+      z-index: 20;
       pointer-events: none;
     }
     .startClickZone {
@@ -700,7 +700,7 @@
     #bestScoresOverlay {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 360px; height: 720px;
       background: rgba(0,0,0,0.85);
-      display: none; z-index: 300;
+      display: none; z-index: 20;
     }
     #bestScoresBoard {
       position: absolute;
@@ -758,7 +758,7 @@
       transform: translateX(-50%);
       top: 0;
       width: 360px; height: 720px;
-      z-index: 9500;
+      z-index: 25;
       display: none;
       pointer-events: auto;
     }
@@ -849,7 +849,7 @@
       color: #d0d0d0;
       text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
       letter-spacing: 1px;
-      z-index: 9501;
+      z-index: 26;
       pointer-events: auto;
     }
 
@@ -868,7 +868,7 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.6);
       pointer-events: none;
       display: none;
-      z-index: 140;
+      z-index: 14;
       letter-spacing: 0.5px;
     }
     #progressDots {
@@ -953,7 +953,7 @@
     </div>
   </div>
   
-  <!-- RESET-BUTTON (Body-Ebene, z-index über startOverlay) -->
+  <!-- RESET-BUTTON (Body-Ebene, z-index 5 — unter uiOverlay(10), über Canvas) -->
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
@@ -991,7 +991,7 @@
     <button id="actionButton"></button>
     <button id="backButton">↻</button>
     
-    <div id="richtungButtons" class="hidden" style="position:absolute;top:540px;left:50%;transform:translateX(-50%);display:flex;gap:21px;width:180px;z-index:200;">
+    <div id="richtungButtons" class="hidden" style="position:absolute;top:540px;left:50%;transform:translateX(-50%);display:flex;gap:21px;width:180px;z-index:20;">
       <button id="cwBtn" class="kippBtn" style="flex:1;height:45px;font-size:40px;line-height:1;position:relative;"><span style="position:absolute;top:calc(50% - 3px);left:50%;transform:translate(-50%,-50%);font-size:40px;">↻</span></button>
       <button id="ccwBtn" class="kippBtn" style="flex:1;height:45px;font-size:40px;line-height:1;position:relative;"><span style="position:absolute;top:calc(50% - 3px);left:50%;transform:translate(-50%,-50%);font-size:40px;">↺</span></button>
     </div>
@@ -3024,7 +3024,7 @@
       if (handEl) return;
       handEl = document.createElement('img');
       handEl.src = 'handsilber.webp';
-      handEl.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
+      handEl.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:20;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
       document.getElementById('uiOverlay').appendChild(handEl);
       initHandShadow();
     }
@@ -3426,7 +3426,7 @@
       if (!replayDbg) {
         replayDbg = document.createElement('div');
         replayDbg.id = 'replayDbg';
-        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:transparent;background:transparent;padding:2px 4px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
+        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:transparent;background:transparent;padding:2px 4px;z-index:30;pointer-events:none;white-space:pre;max-width:356px;';
         document.getElementById('uiOverlay').appendChild(replayDbg);
       }
       
@@ -3443,7 +3443,7 @@
       console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
       
       // Sichtbarer Schritt-Zähler oben im Bild
-      if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:999;pointer-events:none;white-space:pre;max-width:356px;';
+      if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:30;pointer-events:none;white-space:pre;max-width:356px;';
       
       for (let ci = 0; ci < 6; ci++) {
         if (!replayActive || myGen !== kipp21Generation) break;
@@ -3616,7 +3616,7 @@
         }
         console.error('[startReplay] UNCAUGHT:', e);
         const errDiv = document.createElement('div');
-        errDiv.style.cssText = 'position:absolute;top:100px;left:10px;right:10px;font:bold 11px monospace;color:#ff0;background:rgba(0,0,0,0.9);padding:8px;z-index:9999;word-break:break-all;';
+        errDiv.style.cssText = 'position:absolute;top:100px;left:10px;right:10px;font:bold 11px monospace;color:#ff0;background:rgba(0,0,0,0.9);padding:8px;z-index:35;word-break:break-all;';
         errDiv.textContent = 'UNCAUGHT: ' + e.message + '\n' + (e.stack || '');
         document.getElementById('uiOverlay').appendChild(errDiv);
       }
@@ -3631,7 +3631,7 @@
       if (!replayBlocker) {
         replayBlocker = document.createElement('div');
         replayBlocker.id = 'replayBlocker';
-        replayBlocker.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:transparent;pointer-events:auto;touch-action:none;';
+        replayBlocker.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:30;background:transparent;pointer-events:auto;touch-action:none;';
         // Jeden Event schlucken
         ['touchstart','touchmove','touchend','click','mousedown','mouseup','pointerdown','pointerup'].forEach(evt => {
           replayBlocker.addEventListener(evt, (e) => { e.stopPropagation(); e.preventDefault(); }, { capture: true, passive: false });
@@ -3665,7 +3665,7 @@
       const btnCSS = (top, fs, ls) => 'position:absolute; display:block; left:50%; transform:translateX(-50%);' +
         ' top:' + top + 'px; width:280px; height:49px;' +
         ' background:url(button_lang.webp) center/contain no-repeat;' +
-        ' border:none; cursor:pointer; pointer-events:auto; z-index:150;' +
+        ' border:none; cursor:pointer; pointer-events:auto; z-index:15;' +
         ' font-family:Arial,sans-serif; font-size:' + fs + 'px; font-weight:bold;' +
         ' letter-spacing:' + ls + 'px; padding-top:4px;' +
         ' color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);';
@@ -3767,7 +3767,7 @@
         if (!motivEl) {
           motivEl = document.createElement('div');
           motivEl.id = 'endMotivText';
-          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:130; transform:translateX(-50%);';
+          motivEl.style.cssText = 'position:absolute; width:200px; text-align:center; font-family:Arial,sans-serif; font-size:15px; font-weight:bold; line-height:1.3; pointer-events:none; z-index:13; transform:translateX(-50%);';
           document.getElementById('uiOverlay').appendChild(motivEl);
         }
         motivEl.style.left = lastCounterTarget.x + 'px';
@@ -3839,7 +3839,7 @@
           let dbg2 = document.getElementById('endDebug');
           if (dbg2) dbg2.textContent += ' | CRASH:'+e.message;
           abtn.textContent = T.nm || 'NEUES SPIEL';
-          abtn.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);top:500px;width:280px;height:49px;background:#333;border:2px solid #d4a843;border-radius:8px;cursor:pointer;pointer-events:auto;z-index:9999;font:bold 18px Arial;color:#d4a843;text-align:center;line-height:45px;';
+          abtn.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);top:500px;width:280px;height:49px;background:#333;border:2px solid #d4a843;border-radius:8px;cursor:pointer;pointer-events:auto;z-index:15;font:bold 18px Arial;color:#d4a843;text-align:center;line-height:45px;';
           abtn.onclick = () => { abtn.style.display='none'; startKipp21(false); };
         }
       }
@@ -4747,7 +4747,7 @@
         neuesBtn.style.cssText = 'position:absolute; display:block; left:50%; transform:translateX(-50%);' +
           ' top:' + btnY + 'px; width:280px; height:49px;' +
           ' background:url(button_lang.webp) center/contain no-repeat;' +
-          ' border:none; cursor:pointer; pointer-events:auto; z-index:150;' +
+          ' border:none; cursor:pointer; pointer-events:auto; z-index:15;' +
           ' font-family:Arial,sans-serif; font-size:18px; font-weight:bold;' +
           ' letter-spacing:2.5px; padding-top:4px;' +
           ' color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);' +
@@ -4876,7 +4876,7 @@
             if (!dbg) {
               dbg = document.createElement('div');
               dbg.id = 'endDebug';
-              dbg.style.cssText = 'position:absolute;bottom:4px;left:4px;font:bold 10px monospace;color:#0f0;background:rgba(0,0,0,0.85);padding:3px 6px;z-index:99999;pointer-events:none;max-width:350px;word-wrap:break-word;';
+              dbg.style.cssText = 'position:absolute;bottom:4px;left:4px;font:bold 10px monospace;color:#0f0;background:rgba(0,0,0,0.85);padding:3px 6px;z-index:35;pointer-events:none;max-width:350px;word-wrap:break-word;';
               document.getElementById('uiOverlay').appendChild(dbg);
             }
             dbg.textContent = 'END: done='+kipp21Done+' kipps='+kipp21KippCount+' phase='+gamePhase;
