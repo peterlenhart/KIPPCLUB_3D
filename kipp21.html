@@ -2999,7 +2999,7 @@
       setHandPos(tx, SY);
       handEl.style.opacity = '1';
       updateHandShadow(tx, SY, true);
-      await moveHandSmooth(tx, ty, 600);
+      await moveHandSmooth(tx, ty, 900);
       await sleep(holdMs);
       await moveHandSmooth(tx, SY, 600);
       handEl.style.opacity = '0';
@@ -3181,7 +3181,7 @@
         setHandPos(tx, SY);
         handEl.style.opacity = '1';
         updateHandShadow(tx, SY, true);
-        await moveHandSmooth(tx, ty, 600);
+        await moveHandSmooth(tx, ty, 900);
         // Sofort bei Kontakt: Pulse + Open
         pulseCard(nextV);
         kipp21OnCardTap(nextV, true);
@@ -3497,13 +3497,12 @@
         if (handEl) {
           // Hand über Pokal heben (uiOverlay z-index 10 → 51, über resetButtonWrap 50)
           document.getElementById('uiOverlay').style.zIndex = '51';
-          setHandPos(180, 400);
+          setHandPos(326, 740);
           handEl.style.opacity = '1';
-          updateHandShadow(180, 400, true);
-          await sleep(300);
+          updateHandShadow(326, 740, true);
           
-          // Pokal-Zentrum im 360px-Raster: right:5 + 57/2 = 33.5 von rechts = 326 von links, top:11 + 57/2 = 39
-          await moveHandSmooth(326, 40, 800);
+          // Direkt von unten zum Pokal — kein Zwischenstopp
+          await moveHandSmooth(326, 40, 1200);
           
           // Klick-Pulse auf Pokal
           const pokalEl = document.getElementById('btnBestScores');
