@@ -3497,11 +3497,11 @@
         if (handEl) {
           // Hand über Pokal heben (uiOverlay z-index 10 → 51, über resetButtonWrap 50)
           document.getElementById('uiOverlay').style.zIndex = '51';
-          setHandPos(326, 740);
+          setHandPos(180, 740);
           handEl.style.opacity = '1';
-          updateHandShadow(326, 740, true);
+          updateHandShadow(180, 740, true);
           
-          // Direkt von unten zum Pokal — kein Zwischenstopp
+          // Von Mitte unten zum Pokal — eine flüssige Bewegung
           await moveHandSmooth(326, 40, 1200);
           
           // Klick-Pulse auf Pokal
