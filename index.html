@@ -273,6 +273,67 @@
       background: linear-gradient(180deg, #f0d080, #c89b30);
     }
 
+    /* Level-Auswahl Overlay */
+    #levelOverlay {
+      display: none;
+      position: fixed;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(6px);
+      z-index: 8000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+    #levelOverlay.show {
+      display: flex;
+    }
+    #levelOverlay h2 {
+      font-size: 28px; font-weight: bold; letter-spacing: 3px;
+      color: #d4b48c;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+      margin-bottom: 12px;
+    }
+    .lvl-btn {
+      width: 320px; height: 62px;
+      border: none; border-radius: 8px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Arial, sans-serif; font-weight: bold;
+      font-size: 19px; letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #d0d0d0;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
+      position: relative; overflow: hidden; isolation: isolate;
+      background: transparent;
+      pointer-events: auto;
+    }
+    .lvl-btn::before {
+      content: '';
+      position: absolute; top:0; left:0; right:0; bottom:0;
+      background: url('button_lang.webp') center/cover no-repeat;
+      opacity: 0.87;
+      border-radius: 8px;
+      z-index: -1;
+    }
+    .lvl-btn:active { filter: brightness(0.85); }
+    .lvl-btn.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .lvl-btn .badge {
+      font-size: 11px; letter-spacing: 1px;
+      color: #a08060; margin-left: 10px; font-weight: normal;
+    }
+    #levelBack {
+      margin-top: 10px;
+      font-size: 14px; color: #8a7a66; letter-spacing: 1px;
+      cursor: pointer; pointer-events: auto;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
   </style>
 </head>
 
@@ -319,6 +380,16 @@
 
       </div>
     </div>
+  </div>
+
+  <!-- Level-Auswahl Overlay -->
+  <div id="levelOverlay">
+    <h2 id="levelTitle">WÄHLE DEIN LEVEL</h2>
+    <button class="lvl-btn" onclick="location.href='training.html?lang='+currentLang">TRAINING</button>
+    <button class="lvl-btn disabled">BRAINY <span class="badge" id="badgeBrainy">BALD</span></button>
+    <button class="lvl-btn disabled">BRAIN <span class="badge" id="badgeBrain">BALD</span></button>
+    <button class="lvl-btn" onclick="location.href='kipp21.html?lang='+currentLang">MASTERBRAIN</button>
+    <div id="levelBack">← ZURÜCK</div>
   </div>
 
   <!-- Modal -->
@@ -470,7 +541,30 @@
     window.addEventListener("resize", rebuild);
 
     // Game navigation
-    document.getElementById("clickColor").onclick = () => location.href="kipp21.html";
+    document.getElementById("clickColor").onclick = () => {
+      document.getElementById("levelOverlay").classList.add("show");
+    };
+    document.getElementById("levelBack").onclick = () => {
+      document.getElementById("levelOverlay").classList.remove("show");
+    };
+    // Localized level overlay texts
+    const LEVEL_L10N = {
+      de: { t:'WÄHLE DEIN LEVEL', s:'BALD', b:'← ZURÜCK' },
+      en: { t:'CHOOSE YOUR LEVEL', s:'SOON', b:'← BACK' },
+      es: { t:'ELIGE TU NIVEL', s:'PRONTO', b:'← VOLVER' },
+      fr: { t:'CHOISIS TON NIVEAU', s:'BIENTÔT', b:'← RETOUR' },
+      it: { t:'SCEGLI IL TUO LIVELLO', s:'PRESTO', b:'← INDIETRO' },
+      tr: { t:'SEVİYENİ SEÇ', s:'YAKINDA', b:'← GERİ' }
+    };
+    function updateLevelTexts() {
+      const lt = LEVEL_L10N[currentLang] || LEVEL_L10N.de;
+      document.getElementById("levelTitle").textContent = lt.t;
+      document.getElementById("badgeBrainy").textContent = lt.s;
+      document.getElementById("badgeBrain").textContent = lt.s;
+      document.getElementById("levelBack").textContent = lt.b;
+    }
+    updateLevelTexts();
+
     document.getElementById("clickCard").onclick  = () => location.href="kipp-card.html";
     // clickQueen und clickKing haben vorerst keine Funktion
 
@@ -556,6 +650,7 @@
         currentLang = row.dataset.lang;
         localStorage.setItem("digikipp_lang", currentLang);
         updateToggles();
+        updateLevelTexts();
         // Auto-close nach kurzer Verzögerung
         setTimeout(() => { langDropdown.classList.remove("show"); document.getElementById("dimOverlay").classList.remove("active"); }, 200);
       };
