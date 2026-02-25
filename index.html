@@ -385,10 +385,11 @@
   <!-- Level-Auswahl Overlay -->
   <div id="levelOverlay">
     <h2 id="levelTitle">WÄHLE DEIN LEVEL</h2>
-    <button class="lvl-btn" onclick="location.href='training.html?lang='+currentLang">TRAINING</button>
-    <button class="lvl-btn disabled">BRAINY <span class="badge" id="badgeBrainy">BALD</span></button>
-    <button class="lvl-btn disabled">BRAIN <span class="badge" id="badgeBrain">BALD</span></button>
-    <button class="lvl-btn" onclick="location.href='kipp21.html?lang='+currentLang">MASTERBRAIN</button>
+    <button class="lvl-btn" id="lvlTraining">TRAINING</button>
+    <div id="lvlProgress" style="font-size:11px; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; pointer-events:none;">6 HITS → NEXT LEVEL</div>
+    <button class="lvl-btn disabled" id="lvlBrainy">BRAINY <span class="badge" id="badgeBrainy">BALD</span></button>
+    <button class="lvl-btn disabled" id="lvlBrain">BRAIN <span class="badge" id="badgeBrain">BALD</span></button>
+    <button class="lvl-btn disabled" id="lvlMaster">MASTERBRAIN <span class="badge" id="badgeMaster">BALD</span></button>
     <div id="levelBack">← ZURÜCK</div>
   </div>
 
@@ -540,13 +541,56 @@
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
 
-    // Game navigation
+    // Game navigation — Level-Auswahl
     document.getElementById("clickColor").onclick = () => {
+      updateLevelUnlocks();
       document.getElementById("levelOverlay").classList.add("show");
     };
     document.getElementById("levelBack").onclick = () => {
       document.getElementById("levelOverlay").classList.remove("show");
     };
+    
+    // Level buttons
+    document.getElementById("lvlTraining").onclick = () => {
+      location.href = 'training.html?lang=' + currentLang;
+    };
+    document.getElementById("lvlBrainy").onclick = () => {
+      location.href = 'brainy.html?lang=' + currentLang;
+    };
+    document.getElementById("lvlBrain").onclick = () => {
+      location.href = 'brain.html?lang=' + currentLang;
+    };
+    document.getElementById("lvlMaster").onclick = () => {
+      location.href = 'kipp21.html?lang=' + currentLang;
+    };
+    
+    // Progression: Level freischalten nach 6 HITS im Vorgänger
+    function updateLevelUnlocks() {
+      const tDone = localStorage.getItem('digikipp_training_done') === 'true';
+      const bDone = localStorage.getItem('digikipp_brainy_done') === 'true';
+      const brDone = localStorage.getItem('digikipp_brain_done') === 'true';
+      
+      const brainy = document.getElementById('lvlBrainy');
+      const brain = document.getElementById('lvlBrain');
+      const master = document.getElementById('lvlMaster');
+      const prog = document.getElementById('lvlProgress');
+      
+      if (tDone) {
+        brainy.classList.remove('disabled');
+        brainy.querySelector('.badge').style.display = 'none';
+        prog.textContent = '✓';
+        prog.style.color = '#cedb25';
+      }
+      if (bDone) {
+        brain.classList.remove('disabled');
+        brain.querySelector('.badge').style.display = 'none';
+      }
+      if (brDone) {
+        master.classList.remove('disabled');
+        master.querySelector('.badge').style.display = 'none';
+      }
+    }
+    
     // Localized level overlay texts
     const LEVEL_L10N = {
       de: { t:'WÄHLE DEIN LEVEL', s:'BALD', b:'← ZURÜCK' },
@@ -559,8 +603,7 @@
     function updateLevelTexts() {
       const lt = LEVEL_L10N[currentLang] || LEVEL_L10N.de;
       document.getElementById("levelTitle").textContent = lt.t;
-      document.getElementById("badgeBrainy").textContent = lt.s;
-      document.getElementById("badgeBrain").textContent = lt.s;
+      document.querySelectorAll('.badge').forEach(b => b.textContent = lt.s);
       document.getElementById("levelBack").textContent = lt.b;
     }
     updateLevelTexts();
