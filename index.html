@@ -287,6 +287,7 @@
       justify-content: center;
       gap: 18px;
       pointer-events: auto;
+      touch-action: auto;
     }
     #levelOverlay.show {
       display: flex;
@@ -307,17 +308,9 @@
       text-transform: uppercase;
       color: #d0d0d0;
       text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
-      position: relative; overflow: hidden; isolation: isolate;
-      background: transparent;
-      pointer-events: auto;
-    }
-    .lvl-btn::before {
-      content: '';
-      position: absolute; top:0; left:0; right:0; bottom:0;
       background: url('button_lang.webp') center/cover no-repeat;
-      opacity: 0.87;
-      border-radius: 8px;
-      z-index: -1;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
     }
     .lvl-btn:active { filter: brightness(0.85); }
     .lvl-btn.disabled {
@@ -388,7 +381,7 @@
   <div id="levelOverlay">
     <h2 id="levelTitle">WÄHLE DEIN LEVEL</h2>
     <button class="lvl-btn" id="lvlTraining">TRAINING</button>
-    <div id="lvlProgress" style="font-size:15px; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; pointer-events:none;">6 HITS → NEXT LEVEL</div>
+    <div id="lvlProgress" style="font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-14px; text-align:center; pointer-events:none;">6 HITS → NEXT LEVEL</div>
     <button class="lvl-btn disabled" id="lvlBrainy">BRAINY <span class="badge" id="badgeBrainy">BALD</span></button>
     <button class="lvl-btn disabled" id="lvlBrain">BRAIN <span class="badge" id="badgeBrain">BALD</span></button>
     <button class="lvl-btn disabled" id="lvlMaster">MASTERBRAIN <span class="badge" id="badgeMaster">BALD</span></button>
