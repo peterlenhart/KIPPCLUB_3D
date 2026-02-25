@@ -4172,6 +4172,8 @@
           bereitsGetroffen.add(card.zahl + '_' + card.color.name);
           
           if (kipp21Done >= 6) {
+            // TRAINING geschafft → nächstes Level freischalten
+            try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
             kipp21Active = false;
             gamePhase = 'ende';
             btnCCW.style.display = 'none';
