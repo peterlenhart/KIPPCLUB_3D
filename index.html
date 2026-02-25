@@ -306,6 +306,7 @@
       font-family: Arial, sans-serif; font-weight: bold;
       font-size: 19px; letter-spacing: 2.5px;
       text-transform: uppercase;
+      text-decoration: none;
       color: #d0d0d0;
       text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
       background: url('button_lang.webp') center/cover no-repeat;
@@ -327,7 +328,6 @@
       cursor: pointer; pointer-events: auto;
       text-decoration: underline;
       text-underline-offset: 3px;
-      display: flex; align-items: center; gap: 4px;
     }
   </style>
 </head>
@@ -380,12 +380,12 @@
   <!-- Level-Auswahl Overlay -->
   <div id="levelOverlay">
     <h2 id="levelTitle">WÄHLE DEIN LEVEL</h2>
-    <button class="lvl-btn" id="lvlTraining">TRAINING</button>
+    <a class="lvl-btn" id="lvlTraining" href="training.html">TRAINING</a>
     <div id="lvlProgress" style="font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-14px; text-align:center; pointer-events:none;">6 HITS → NEXT LEVEL</div>
-    <button class="lvl-btn disabled" id="lvlBrainy">BRAINY <span class="badge" id="badgeBrainy">BALD</span></button>
-    <button class="lvl-btn disabled" id="lvlBrain">BRAIN <span class="badge" id="badgeBrain">BALD</span></button>
-    <button class="lvl-btn disabled" id="lvlMaster">MASTERBRAIN <span class="badge" id="badgeMaster">BALD</span></button>
-    <div id="levelBack"><span style="font-size:18px;line-height:14px;">←</span> ZURÜCK</div>
+    <a class="lvl-btn disabled" id="lvlBrainy">BRAINY <span class="badge" id="badgeBrainy">BALD</span></a>
+    <a class="lvl-btn disabled" id="lvlBrain">BRAIN <span class="badge" id="badgeBrain">BALD</span></a>
+    <a class="lvl-btn disabled" id="lvlMaster">MASTERBRAIN <span class="badge" id="badgeMaster">BALD</span></a>
+    <div id="levelBack"><span style="vertical-align:middle;font-size:20px;">←</span><span style="vertical-align:middle;"> ZURÜCK</span></div>
   </div>
 
   <!-- Modal -->
@@ -541,43 +541,16 @@
     levelOverlay.addEventListener("click", (e) => e.stopPropagation());
     
     document.getElementById("clickColor").onclick = () => {
+      // Sprache an Links anhängen
+      const q = currentLang !== 'de' ? '?lang=' + currentLang : '';
+      document.getElementById("lvlTraining").href = 'training.html' + q;
+      if (document.getElementById("lvlMaster").href) document.getElementById("lvlMaster").href = 'kipp21.html' + q;
       updateLevelUnlocks();
       levelOverlay.classList.add("show");
     };
-    document.getElementById("levelBack").onclick = (e) => {
-      e.stopPropagation();
+    document.getElementById("levelBack").onclick = () => {
       levelOverlay.classList.remove("show");
     };
-    document.getElementById("levelBack").addEventListener("touchend", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      levelOverlay.classList.remove("show");
-    });
-    
-    // Level buttons
-    document.getElementById("lvlTraining").addEventListener("click", (e) => {
-      e.stopPropagation();
-      location.href = 'training.html?lang=' + currentLang;
-    });
-    document.getElementById("lvlTraining").addEventListener("touchend", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      location.href = 'training.html?lang=' + currentLang;
-    });
-    document.getElementById("lvlBrainy").addEventListener("click", (e) => {
-      e.stopPropagation();
-      location.href = 'brainy.html?lang=' + currentLang;
-    });
-    document.getElementById("lvlBrain").addEventListener("click", (e) => {
-      e.stopPropagation();
-      location.href = 'brain.html?lang=' + currentLang;
-    });
-    document.getElementById("lvlMaster").addEventListener("click", (e) => {
-      e.stopPropagation();
-      location.href = 'kipp21.html?lang=' + currentLang;
-    });
-    document.getElementById("lvlMaster").addEventListener("touchend", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      location.href = 'kipp21.html?lang=' + currentLang;
-    });
     
     // Progression: Level freischalten nach 6 HITS im Vorgänger
     function updateLevelUnlocks() {
@@ -619,7 +592,7 @@
       const lt = LEVEL_L10N[currentLang] || LEVEL_L10N.de;
       document.getElementById("levelTitle").textContent = lt.t;
       document.querySelectorAll('.badge').forEach(b => b.textContent = lt.s);
-      document.getElementById("levelBack").innerHTML = '<span style="font-size:18px;line-height:14px;">←</span> ' + lt.b;
+      document.getElementById("levelBack").innerHTML = '<span style="vertical-align:middle;font-size:20px;">←</span><span style="vertical-align:middle;"> ' + lt.b + '</span>';
     }
     updateLevelTexts();
 
