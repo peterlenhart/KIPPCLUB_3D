@@ -286,6 +286,7 @@
       align-items: center;
       justify-content: center;
       gap: 18px;
+      pointer-events: auto;
     }
     #levelOverlay.show {
       display: flex;
@@ -333,6 +334,7 @@
       cursor: pointer; pointer-events: auto;
       text-decoration: underline;
       text-underline-offset: 3px;
+      display: flex; align-items: center; gap: 4px;
     }
   </style>
 </head>
@@ -386,11 +388,11 @@
   <div id="levelOverlay">
     <h2 id="levelTitle">WÄHLE DEIN LEVEL</h2>
     <button class="lvl-btn" id="lvlTraining">TRAINING</button>
-    <div id="lvlProgress" style="font-size:11px; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; pointer-events:none;">6 HITS → NEXT LEVEL</div>
+    <div id="lvlProgress" style="font-size:15px; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; pointer-events:none;">6 HITS → NEXT LEVEL</div>
     <button class="lvl-btn disabled" id="lvlBrainy">BRAINY <span class="badge" id="badgeBrainy">BALD</span></button>
     <button class="lvl-btn disabled" id="lvlBrain">BRAIN <span class="badge" id="badgeBrain">BALD</span></button>
     <button class="lvl-btn disabled" id="lvlMaster">MASTERBRAIN <span class="badge" id="badgeMaster">BALD</span></button>
-    <div id="levelBack">← ZURÜCK</div>
+    <div id="levelBack"><span style="font-size:18px;line-height:14px;">←</span> ZURÜCK</div>
   </div>
 
   <!-- Modal -->
@@ -542,27 +544,47 @@
     window.addEventListener("resize", rebuild);
 
     // Game navigation — Level-Auswahl
+    const levelOverlay = document.getElementById("levelOverlay");
+    levelOverlay.addEventListener("click", (e) => e.stopPropagation());
+    
     document.getElementById("clickColor").onclick = () => {
       updateLevelUnlocks();
-      document.getElementById("levelOverlay").classList.add("show");
+      levelOverlay.classList.add("show");
     };
-    document.getElementById("levelBack").onclick = () => {
-      document.getElementById("levelOverlay").classList.remove("show");
+    document.getElementById("levelBack").onclick = (e) => {
+      e.stopPropagation();
+      levelOverlay.classList.remove("show");
     };
+    document.getElementById("levelBack").addEventListener("touchend", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      levelOverlay.classList.remove("show");
+    });
     
     // Level buttons
-    document.getElementById("lvlTraining").onclick = () => {
+    document.getElementById("lvlTraining").addEventListener("click", (e) => {
+      e.stopPropagation();
       location.href = 'training.html?lang=' + currentLang;
-    };
-    document.getElementById("lvlBrainy").onclick = () => {
+    });
+    document.getElementById("lvlTraining").addEventListener("touchend", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      location.href = 'training.html?lang=' + currentLang;
+    });
+    document.getElementById("lvlBrainy").addEventListener("click", (e) => {
+      e.stopPropagation();
       location.href = 'brainy.html?lang=' + currentLang;
-    };
-    document.getElementById("lvlBrain").onclick = () => {
+    });
+    document.getElementById("lvlBrain").addEventListener("click", (e) => {
+      e.stopPropagation();
       location.href = 'brain.html?lang=' + currentLang;
-    };
-    document.getElementById("lvlMaster").onclick = () => {
+    });
+    document.getElementById("lvlMaster").addEventListener("click", (e) => {
+      e.stopPropagation();
       location.href = 'kipp21.html?lang=' + currentLang;
-    };
+    });
+    document.getElementById("lvlMaster").addEventListener("touchend", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      location.href = 'kipp21.html?lang=' + currentLang;
+    });
     
     // Progression: Level freischalten nach 6 HITS im Vorgänger
     function updateLevelUnlocks() {
@@ -593,18 +615,18 @@
     
     // Localized level overlay texts
     const LEVEL_L10N = {
-      de: { t:'WÄHLE DEIN LEVEL', s:'BALD', b:'← ZURÜCK' },
-      en: { t:'CHOOSE YOUR LEVEL', s:'SOON', b:'← BACK' },
-      es: { t:'ELIGE TU NIVEL', s:'PRONTO', b:'← VOLVER' },
-      fr: { t:'CHOISIS TON NIVEAU', s:'BIENTÔT', b:'← RETOUR' },
-      it: { t:'SCEGLI IL TUO LIVELLO', s:'PRESTO', b:'← INDIETRO' },
-      tr: { t:'SEVİYENİ SEÇ', s:'YAKINDA', b:'← GERİ' }
+      de: { t:'WÄHLE DEIN LEVEL', s:'BALD', b:'ZURÜCK' },
+      en: { t:'CHOOSE YOUR LEVEL', s:'SOON', b:'BACK' },
+      es: { t:'ELIGE TU NIVEL', s:'PRONTO', b:'VOLVER' },
+      fr: { t:'CHOISIS TON NIVEAU', s:'BIENTÔT', b:'RETOUR' },
+      it: { t:'SCEGLI IL TUO LIVELLO', s:'PRESTO', b:'INDIETRO' },
+      tr: { t:'SEVİYENİ SEÇ', s:'YAKINDA', b:'GERİ' }
     };
     function updateLevelTexts() {
       const lt = LEVEL_L10N[currentLang] || LEVEL_L10N.de;
       document.getElementById("levelTitle").textContent = lt.t;
       document.querySelectorAll('.badge').forEach(b => b.textContent = lt.s);
-      document.getElementById("levelBack").textContent = lt.b;
+      document.getElementById("levelBack").innerHTML = '<span style="font-size:18px;line-height:14px;">←</span> ' + lt.b;
     }
     updateLevelTexts();
 
