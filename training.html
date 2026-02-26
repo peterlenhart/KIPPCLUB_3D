@@ -957,7 +957,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:block;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:none;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -967,7 +967,11 @@
     <!-- TRAINING: Richtungs-Buttons -->
     <img id="btnCCW" src="ccw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer; z-index:20;" />
     <img id="btnCW" src="cw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer; z-index:20;" />
-    <div id="dirText" style="display:none; position:absolute; font:bold 13px Arial; color:#d4b48c; text-align:center; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap; z-index:20;">Tippe 1 bis 3 mal</div>
+    <div id="numBtns" style="display:none; position:absolute; z-index:20; pointer-events:none;">
+      <div id="numBtn1" class="numBtn" style="position:absolute; width:45px; height:45px; border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; box-shadow:0 2px 4px rgba(0,0,0,0.4);">1</div>
+      <div id="numBtn2" class="numBtn" style="position:absolute; width:45px; height:45px; border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; box-shadow:0 2px 4px rgba(0,0,0,0.4);">2</div>
+      <div id="numBtn3" class="numBtn" style="position:absolute; width:45px; height:45px; border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; box-shadow:0 2px 4px rgba(0,0,0,0.4);">3</div>
+    </div>
     <div id="instructionText"></div>
     <img id="verdecktesKippziel" src="leernohit.webp" style="display:none;">
     <div id="tutorialText"></div>
@@ -2245,7 +2249,7 @@
             document.getElementById('btnDemo').disabled = false;
             document.getElementById('btnDemo').style.opacity = '1';
             document.getElementById('btnKippPrinzip').disabled = false;
-            document.getElementById('btnBestScores').style.opacity = '1';
+            // Kein Pokal im Training
             document.getElementById('btnKippPrinzip').style.opacity = '1';
            
           }, 700);
@@ -3374,7 +3378,11 @@
       // Hilfsfunktionen
       function getBtnCenter(id) {
         const b = document.getElementById(id);
-        return { x: parseInt(b.style.left) + 34, y: parseInt(b.style.top) + 34 };
+        const l = parseInt(b.style.left) || 0;
+        const t = parseInt(b.style.top) || 0;
+        const w = b.offsetWidth || (id.startsWith('num') ? 45 : 68);
+        const h = b.offsetHeight || (id.startsWith('num') ? 45 : 68);
+        return { x: l + Math.round(w / 2), y: t + Math.round(h / 2) };
       }
       function pulseBtn(id) {
         const b = document.getElementById(id);
@@ -3385,12 +3393,12 @@
       function hideButtons() {
         document.getElementById('btnCCW').style.display = 'none';
         document.getElementById('btnCW').style.display = 'none';
-        document.getElementById('dirText').style.display = 'none';
+        document.getElementById('numBtns').style.display = 'none';
       }
       function showButtons() {
         document.getElementById('btnCCW').style.display = 'block';
         document.getElementById('btnCW').style.display = 'block';
-        document.getElementById('dirText').style.display = 'block';
+        document.getElementById('numBtns').style.display = 'block';
       }
       
       await sleep(500);
@@ -3457,42 +3465,44 @@
       await sleep(800);
       
       // ==============================================
-      // SCHRITT 5-6: Hand schwankt überlegend zwischen Buttons
+      // SCHRITT 5-7: Hand überlegt Zahlen, wählt eine, überlegt Richtung, wählt FALSCH → FAIL
       // ==============================================
+      const numBtn1P = getBtnCenter('numBtn1');
+      const numBtn2P = getBtnCenter('numBtn2');
+      const numBtn3P = getBtnCenter('numBtn3');
       const ccwP = getBtnCenter('btnCCW');
       const cwP = getBtnCenter('btnCW');
-      const midBtnX = (ccwP.x + cwP.x) / 2;
-      const btnY = ccwP.y;
       
-      setHandPos(midBtnX, 740);
+      // Hand über Zahlen-Buttons schweben
+      setHandPos(numBtn1P.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(midBtnX, 740, true);
-      await moveHandSmooth(midBtnX, btnY, 600);
-      await sleep(200);
-      // Links (CCW)
-      await moveHandSmooth(ccwP.x, btnY, 500);
-      await sleep(200);
-      // Rechts (CW)
-      await moveHandSmooth(cwP.x, btnY, 600);
-      await sleep(200);
-      // Zurück links (CCW)
-      await moveHandSmooth(ccwP.x, btnY, 500);
+      updateHandShadow(numBtn1P.x, 740, true);
+      await moveHandSmooth(numBtn1P.x, numBtn1P.y, 600);
+      await sleep(250);
+      await moveHandSmooth(numBtn3P.x, numBtn3P.y, 500);
+      await sleep(250);
+      await moveHandSmooth(numBtn2P.x, numBtn2P.y, 400);
       await sleep(300);
+      // Klick auf "1" (falsche Anzahl für den FAIL)
+      await moveHandSmooth(numBtn1P.x, numBtn1P.y, 300);
+      pulseBtn('numBtn1');
+      await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
-      // ==============================================
-      // SCHRITT 7: Klickt FALSCH → FAIL
-      // ==============================================
+      // Hand zu Richtungs-Buttons — überlegend
+      await moveHandSmooth(ccwP.x, ccwP.y, 500);
+      await sleep(200);
+      await moveHandSmooth(cwP.x, cwP.y, 600);
+      await sleep(200);
+      
+      // Falsche Richtung wählen
       const correctDir1 = findHitDirection(TARGET_CARD);
       const wrongDir = (correctDir1 === 'cw') ? 'ccw' : 'cw';
       const wrongBtnId = (wrongDir === 'ccw') ? 'btnCCW' : 'btnCW';
       const wrongBtnP = getBtnCenter(wrongBtnId);
       
-      // Hand zum falschen Button (falls nicht schon dort)
-      await moveHandSmooth(wrongBtnP.x, btnY, 400);
+      await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 400);
       await sleep(200);
-      
-      // Klick-Pulse auf Button (KEIN Klack!)
       pulseBtn(wrongBtnId);
       await sleep(500);
       
@@ -3563,25 +3573,35 @@
       await sleep(800);
       
       // ==============================================
-      // SCHRITT 10-12: Hand zum RICHTIGEN Button, richtige Anzahl
+      // SCHRITT 10-12: Hand wählt richtige Zahl, dann richtige Richtung → HIT
       // ==============================================
       const correctDir2 = findHitDirection(TARGET_CARD);
       const dist2 = kipp21CardDistances[TARGET_CARD] || 1;
+      const correctNumId = 'numBtn' + dist2;
+      const correctNumP = getBtnCenter(correctNumId);
       const correctBtnId = (correctDir2 === 'ccw') ? 'btnCCW' : 'btnCW';
       const correctBtnP = getBtnCenter(correctBtnId);
       
-      setHandPos(correctBtnP.x, 740);
+      // Hand über Zahlen-Buttons
+      setHandPos(numBtn1P.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(correctBtnP.x, 740, true);
-      await moveHandSmooth(correctBtnP.x, correctBtnP.y, 600);
+      updateHandShadow(numBtn1P.x, 740, true);
+      await moveHandSmooth(numBtn1P.x, numBtn1P.y, 600);
+      await sleep(200);
+      await moveHandSmooth(numBtn3P.x, numBtn3P.y, 400);
+      await sleep(200);
+      // Zur richtigen Zahl
+      await moveHandSmooth(correctNumP.x, correctNumP.y, 400);
       await sleep(300);
+      pulseBtn(correctNumId);
+      await sleep(500);
+      if (aborted()) { replayCleanup(jr); return; }
       
-      // Taps (KEIN Klack pro Tap!)
-      for (let t = 0; t < dist2; t++) {
-        pulseBtn(correctBtnId);
-        await sleep(500);
-        if (aborted()) { replayCleanup(jr); return; }
-      }
+      // Hand zu Richtungs-Buttons
+      await moveHandSmooth(correctBtnP.x, correctBtnP.y, 500);
+      await sleep(300);
+      pulseBtn(correctBtnId);
+      await sleep(500);
       
       // Hand weg
       await moveHandSmooth(correctBtnP.x, 740, 500);
@@ -3680,19 +3700,32 @@
         const bId = (dir === 'ccw') ? 'btnCCW' : 'btnCW';
         const bPos = getBtnCenter(bId);
         
-        // Hand zum Button
-        setHandPos(bPos.x, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(bPos.x, 740, true);
-        await moveHandSmooth(bPos.x, bPos.y, 600);
-        await sleep(300);
+        // Hand zu Zahlen-Buttons — überlegend
+        const n1P = getBtnCenter('numBtn1');
+        const n2P = getBtnCenter('numBtn2');
+        const n3P = getBtnCenter('numBtn3');
+        const numId = 'numBtn' + dist;
+        const numP = getBtnCenter(numId);
         
-        // Taps (KEIN Klack)
-        for (let t = 0; t < dist; t++) {
-          pulseBtn(bId);
-          await sleep(500);
-          if (aborted()) break;
-        }
+        setHandPos(n1P.x, 740);
+        handEl.style.opacity = '1';
+        updateHandShadow(n1P.x, 740, true);
+        await moveHandSmooth(n1P.x, n1P.y, 500);
+        await sleep(150);
+        await moveHandSmooth(n3P.x, n3P.y, 350);
+        await sleep(150);
+        // Zur richtigen Zahl
+        await moveHandSmooth(numP.x, numP.y, 350);
+        await sleep(250);
+        pulseBtn(numId);
+        await sleep(400);
+        if (aborted()) break;
+        
+        // Hand zu Richtungs-Button
+        await moveHandSmooth(bPos.x, bPos.y, 500);
+        await sleep(250);
+        pulseBtn(bId);
+        await sleep(400);
         if (aborted()) break;
         
         // Hand weg
@@ -3723,37 +3756,11 @@
       }
       
       // ==============================================
-      // ENDE: Hand zum Pokal
+      // ENDE: Tutorial fertig
       // ==============================================
       if (aborted()) { replayCleanup(jr); return; }
       
       await sleep(1500);
-      
-      // Hand zum Pokal fahren
-      if (handEl && !aborted()) {
-        document.getElementById('uiOverlay').style.zIndex = '51';
-        setHandPos(180, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(180, 740, true);
-        await moveHandSmooth(326, 40, 1200);
-        
-        const pokalEl = document.getElementById('btnBestScores');
-        if (pokalEl) {
-          pokalEl.style.transition = 'transform 0.15s ease-out';
-          pokalEl.style.transform = 'scale(1.2)';
-          await sleep(150);
-          pokalEl.style.transform = 'scale(1.0)';
-        }
-        await sleep(300);
-        
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        document.getElementById('uiOverlay').style.zIndex = '10';
-        await sleep(400);
-        
-        if (typeof showBestScores === 'function') showBestScores();
-      }
-      
       replayCleanup(jr);
     }
     
@@ -4282,14 +4289,17 @@
       hitTextEls.forEach(el => el.remove());
       hitTextEls.length = 0;
       
-      // TRAINING: Richtungs-Buttons positionieren (unter Kippzielen)
+      // TRAINING: Buttons positionieren (unter Kippzielen)
       const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
       cardSouth3D.project(camera);
       const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 12;
       
       const btnCCW = document.getElementById('btnCCW');
       const btnCW = document.getElementById('btnCW');
-      const dirText = document.getElementById('dirText');
+      const numBtns = document.getElementById('numBtns');
+      const numBtn1 = document.getElementById('numBtn1');
+      const numBtn2 = document.getElementById('numBtn2');
+      const numBtn3 = document.getElementById('numBtn3');
       
       // Screen-X der ersten und letzten Karte
       const card0_3D = new THREE.Vector3(cardStartX, cardY, cardZ);
@@ -4299,13 +4309,27 @@
       card5_3D.project(camera);
       const card5sx = Math.round((card5_3D.x * 0.5 + 0.5) * 360);
       
+      // CCW links, CW rechts (wie bisher)
       btnCCW.style.left = (card0sx - 34) + 'px';
       btnCCW.style.top = labelY + 'px';
       btnCW.style.left = (card5sx - 34) + 'px';
       btnCW.style.top = labelY + 'px';
-      dirText.style.left = ((card0sx + card5sx) / 2) + 'px';
-      dirText.style.top = (labelY + 24) + 'px';
-      dirText.style.transform = 'translateX(-50%)';
+      
+      // Zahlen-Buttons 1,2,3 mittig zwischen CCW und CW
+      const midX = Math.round((card0sx + card5sx) / 2);
+      const numTop = labelY + 12; // leicht tiefer als Richtungsbuttons
+      const numGap = 8;
+      const numW = 45;
+      const totalNumW = 3 * numW + 2 * numGap; // 151px
+      const numStartX = midX - Math.round(totalNumW / 2);
+      numBtns.style.left = '0px';
+      numBtns.style.top = '0px';
+      numBtn1.style.left = numStartX + 'px';
+      numBtn1.style.top = numTop + 'px';
+      numBtn2.style.left = (numStartX + numW + numGap) + 'px';
+      numBtn2.style.top = numTop + 'px';
+      numBtn3.style.left = (numStartX + 2 * (numW + numGap)) + 'px';
+      numBtn3.style.top = numTop + 'px';
       
       // Countdown/HintText ausblenden (Training braucht keinen Timer)
       countdown.style.display = 'none';
@@ -4315,51 +4339,44 @@
       let kLabel = document.getElementById('kipps21Label');
       if (kLabel) kLabel.style.display = 'none';
       
-      // TRAINING: Tap-State
-      let trainingDir = null; // 'cw' oder 'ccw'
-      let trainingTaps = 0;
-      let trainingTimeout = null;
-      const TRAINING_MAX_TAPS = 3;
-      const TRAINING_TAP_DELAY = 1200; // ms nach letztem Tap → Auto-Kipp
+      // === TRAINING: Zwei-Gruppen Input-State ===
+      let selectedDir = null;   // 'cw' oder 'ccw'
+      let selectedNum = null;   // 1, 2 oder 3
+      let firstGroup = null;    // 'dir' oder 'num' — welche Gruppe zuerst gewählt wurde
       
-      function resetTrainingTaps() {
-        trainingDir = null;
-        trainingTaps = 0;
-        if (trainingTimeout) { clearTimeout(trainingTimeout); trainingTimeout = null; }
-        // Tap-Indicators ausblenden
+      const SEL_STYLE_DIR = 'brightness(1.4) drop-shadow(0 0 6px rgba(255,255,200,0.8))';
+      const SEL_STYLE_NUM = 'background:linear-gradient(180deg,#ffe88a 0%,#d4a843 100%); border-color:#a08030; box-shadow:0 0 8px rgba(255,220,80,0.6), 0 2px 4px rgba(0,0,0,0.4);';
+      const UNSEL_STYLE_NUM = 'background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border-color:#8a7a66; box-shadow:0 2px 4px rgba(0,0,0,0.4);';
+      
+      function highlightDir(dir) {
+        btnCCW.style.filter = (dir === 'ccw') ? SEL_STYLE_DIR : '';
+        btnCW.style.filter = (dir === 'cw') ? SEL_STYLE_DIR : '';
+      }
+      function highlightNum(n) {
+        [numBtn1, numBtn2, numBtn3].forEach((btn, i) => {
+          const s = (n === i + 1) ? SEL_STYLE_NUM : UNSEL_STYLE_NUM;
+          btn.style.cssText = btn.style.cssText.replace(/background:[^;]+;|border-color:[^;]+;|box-shadow:[^;]+;/g, '') + s;
+        });
+      }
+      
+      function resetTrainingInput() {
+        selectedDir = null;
+        selectedNum = null;
+        firstGroup = null;
+        highlightDir(null);
+        highlightNum(null);
         tapIndicatorA.mesh.visible = false;
         tapIndicatorB.mesh.visible = false;
       }
       
-      function showTrainingTapCount() {
-        const off = 0.234375;
-        const QC = {
-          0: { x: -off, z: 0.109375 - off },
-          1: { x:  off, z: 0.109375 - off },
-          2: { x:  off, z: 0.109375 + off },
-          3: { x: -off, z: 0.109375 + off }
-        };
-        const adj = ADJACENT_Q[currentQuadrant];
-        const qA = QC[adj[0]];
-        const qB = QC[adj[1]];
-        tapIndicatorA.mesh.position.set(qA.x, tapIndicatorY, qA.z);
-        tapIndicatorB.mesh.position.set(qB.x, tapIndicatorY, qB.z);
-        drawTapIndicator(tapIndicatorA, trainingTaps);
-        drawTapIndicator(tapIndicatorB, trainingTaps);
-        tapIndicatorA.mesh.visible = trainingTaps > 0;
-        tapIndicatorB.mesh.visible = trainingTaps > 0;
-      }
-      
       async function executeTrainingKipp() {
-        if (trainingTaps <= 0 || !trainingDir || !kipp21Active) return;
+        if (!selectedDir || !selectedNum || !kipp21Active) return;
         kipp21Active = false;
-        btnCCW.style.display = 'none';
-        btnCW.style.display = 'none';
-        dirText.style.display = 'none';
+        hideAllTrainingUI();
         
-        const steps = trainingTaps;
-        const dir = trainingDir;
-        resetTrainingTaps();
+        const steps = selectedNum;
+        const dir = selectedDir;
+        resetTrainingInput();
         
         // Auto-Kipp-Sequenz
         for (let i = 0; i < steps; i++) {
@@ -4377,6 +4394,63 @@
         if (openIdx >= 0) {
           checkTrainingResult(openIdx);
         }
+      }
+      window._executeTrainingKipp = executeTrainingKipp;
+      
+      function onDirBtn(dir) {
+        if (!kipp21Active || gamePhase !== 'kipp21') return;
+        if (!kipp21CardStates.includes('offen')) return;
+        
+        if (firstGroup === 'dir') {
+          // Selbe Gruppe → innerhalb änderbar
+          selectedDir = dir;
+          highlightDir(dir);
+        } else if (firstGroup === 'num') {
+          // Andere Gruppe → Kipp auslösen!
+          selectedDir = dir;
+          highlightDir(dir);
+          executeTrainingKipp();
+        } else {
+          // Noch keine Gruppe gewählt → erste Wahl
+          firstGroup = 'dir';
+          selectedDir = dir;
+          highlightDir(dir);
+        }
+      }
+      
+      function onNumBtn(n) {
+        if (!kipp21Active || gamePhase !== 'kipp21') return;
+        if (!kipp21CardStates.includes('offen')) return;
+        
+        if (firstGroup === 'num') {
+          // Selbe Gruppe → innerhalb änderbar
+          selectedNum = n;
+          highlightNum(n);
+        } else if (firstGroup === 'dir') {
+          // Andere Gruppe → Kipp auslösen!
+          selectedNum = n;
+          highlightNum(n);
+          executeTrainingKipp();
+        } else {
+          // Noch keine Gruppe gewählt → erste Wahl
+          firstGroup = 'num';
+          selectedNum = n;
+          highlightNum(n);
+        }
+      }
+      
+      function hideAllTrainingUI() {
+        btnCCW.style.display = 'none';
+        btnCW.style.display = 'none';
+        numBtns.style.display = 'none';
+        hintText.style.display = 'none';
+      }
+      
+      function showAllTrainingUI() {
+        btnCCW.style.display = 'block';
+        btnCW.style.display = 'block';
+        numBtns.style.display = 'block';
+        resetTrainingInput();
       }
       
       function checkTrainingResult(cardIdx) {
@@ -4404,9 +4478,7 @@
             try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
             kipp21Active = false;
             gamePhase = 'ende';
-            btnCCW.style.display = 'none';
-            btnCW.style.display = 'none';
-            dirText.style.display = 'none';
+            hideAllTrainingUI();
             showEndButtons(false, false);
             return;
           }
@@ -4414,9 +4486,7 @@
           setTimeout(() => {
             if (gamePhase === 'kipp21') {
               kipp21Active = true;
-              btnCCW.style.display = 'none';
-              btnCW.style.display = 'none';
-              dirText.style.display = 'none';
+              hideAllTrainingUI();
               showTrainingButtons(); // "Ein Kippziel öffnen" anzeigen
             }
           }, 1500);
@@ -4474,17 +4544,11 @@
       
       function showTrainingButtons() {
         if (kipp21CardStates.includes('offen')) {
-          // Kippziel ist offen → Buttons zeigen
-          btnCCW.style.display = 'block';
-          btnCW.style.display = 'block';
-          dirText.style.display = 'block';
-          dirText.textContent = T.dt || 'Tippe 1 bis 3 mal';
-          // hintText ausblenden
+          // Kippziel ist offen → alle Buttons zeigen
+          showAllTrainingUI();
           hintText.style.display = 'none';
         } else {
-          btnCCW.style.display = 'none';
-          btnCW.style.display = 'none';
-          dirText.style.display = 'none';
+          hideAllTrainingUI();
           // "Ein Kippziel öffnen" anzeigen
           hintText.innerHTML = T.d2 || 'Ein Kippziel öffnen';
           hintText.style.cssText = 'position:absolute; left:50%; top:' + (labelY + 24) + 'px; transform:translateX(-50%); font:bold 14px Arial; color:#d4b48c; text-shadow:0 1px 3px rgba(0,0,0,0.8); pointer-events:none; text-align:center; white-space:nowrap; display:block; opacity:1;';
@@ -4492,42 +4556,22 @@
       }
       window._showTrainingBtns = showTrainingButtons;
       
-      // Button Click-Handler
-      function onDirButtonTap(dir) {
-        if (!kipp21Active || gamePhase !== 'kipp21') return;
-        if (!kipp21CardStates.includes('offen')) return;
-        
-        if (trainingDir && trainingDir !== dir) {
-          // Richtungswechsel → Reset
-          resetTrainingTaps();
-        }
-        
-        trainingDir = dir;
-        trainingTaps++;
-        // Kein Klack hier — nur der Würfel beim Kippen macht Klack
-        // Text ausblenden sobald getappt
-        dirText.style.display = 'none';
-        showTrainingTapCount();
-        
-        // Max erreicht → sofort kippen
-        if (trainingTaps >= TRAINING_MAX_TAPS) {
-          executeTrainingKipp();
-          return;
-        }
-        
-        // Timer für Auto-Kipp nach Pause
-        if (trainingTimeout) clearTimeout(trainingTimeout);
-        trainingTimeout = setTimeout(() => executeTrainingKipp(), TRAINING_TAP_DELAY);
-      }
-      
+      // Button Event-Listener (einmalig)
       if (!window._trainingBtnsInit) {
         window._trainingBtnsInit = true;
-        btnCCW.addEventListener('click', (e) => { e.stopPropagation(); if (window._onDirTap) window._onDirTap('ccw'); });
-        btnCCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onDirTap) window._onDirTap('ccw'); });
-        btnCW.addEventListener('click', (e) => { e.stopPropagation(); if (window._onDirTap) window._onDirTap('cw'); });
-        btnCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onDirTap) window._onDirTap('cw'); });
+        btnCCW.addEventListener('click', (e) => { e.stopPropagation(); if (window._onDirBtn) window._onDirBtn('ccw'); });
+        btnCCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onDirBtn) window._onDirBtn('ccw'); });
+        btnCW.addEventListener('click', (e) => { e.stopPropagation(); if (window._onDirBtn) window._onDirBtn('cw'); });
+        btnCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onDirBtn) window._onDirBtn('cw'); });
+        numBtn1.addEventListener('click', (e) => { e.stopPropagation(); if (window._onNumBtn) window._onNumBtn(1); });
+        numBtn1.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onNumBtn) window._onNumBtn(1); });
+        numBtn2.addEventListener('click', (e) => { e.stopPropagation(); if (window._onNumBtn) window._onNumBtn(2); });
+        numBtn2.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onNumBtn) window._onNumBtn(2); });
+        numBtn3.addEventListener('click', (e) => { e.stopPropagation(); if (window._onNumBtn) window._onNumBtn(3); });
+        numBtn3.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onNumBtn) window._onNumBtn(3); });
       }
-      window._onDirTap = onDirButtonTap;
+      window._onDirBtn = onDirBtn;
+      window._onNumBtn = onNumBtn;
       
       // Blick-Icons auf Kippzielen anzeigen
       showBlickIcons();
