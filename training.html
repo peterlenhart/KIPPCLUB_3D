@@ -2239,7 +2239,7 @@
         }
         
         // Nach Halten: Container ausfaden, Buttons rein
-        const fadeDelay = subVisible ? 1600 : 2800;
+        const fadeDelay = subVisible ? 100 : 300;
         setTimeout(() => {
           sct.style.opacity = '0';
           setTimeout(() => { sct.style.display = 'none'; }, 1300);
@@ -4377,9 +4377,19 @@
       }
       function highlightNum(n) {
         [numBtn1, numBtn2, numBtn3].forEach((btn, i) => {
-          const s = (n === i + 1) ? NUM_SELECTED : NUM_NORMAL;
-          const base = 'position:absolute; width:45px; height:45px; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; ';
-          btn.style.cssText = base + s + ' left:' + btn.style.left + '; top:' + btn.style.top + ';';
+          if (n === i + 1) {
+            // SELECTED: dunkelbraun, beige Zahl
+            btn.style.background = 'linear-gradient(180deg,#3a2a1a 0%,#2a1810 100%)';
+            btn.style.borderColor = '#5a4a36';
+            btn.style.color = '#e8dcc8';
+            btn.style.boxShadow = '0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4)';
+          } else {
+            // NORMAL: beige, dunkelbraune Zahl
+            btn.style.background = 'linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%)';
+            btn.style.borderColor = '#8a7a66';
+            btn.style.color = '#2a1810';
+            btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+          }
         });
       }
       
@@ -4407,10 +4417,10 @@
           const kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
           if (!kippDir) break;
           kippDirection = dir;
-          await performKipp(kippDir, 550);
+          await performKipp(kippDir, 400);
           advanceTopFace();
           kipp21KippCount++;
-          if (i < steps - 1) await sleep(350);
+          if (i < steps - 1) await sleep(200);
         }
         
         // Treffer prüfen
@@ -4581,6 +4591,7 @@
         hintText.style.display = 'none';
       }
       window._showTrainingBtns = showTrainingButtons;
+      window._hideTrainingBtns = hideAllTrainingUI;
       
       // Button Event-Listener (einmalig)
       if (!window._trainingBtnsInit) {
@@ -4769,11 +4780,11 @@
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff() {
       console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || gamePhase !== 'kipp21') { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
-      if (kipp21WobbleUsed >= KNIFF_MAX_USES) { console.warn('[WOBBLE] BLOCKED: max uses'); return false; }
-      if (kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen!
-      if (kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
+      if (gamePhase !== 'demo' && kipp21WobbleUsed >= KNIFF_MAX_USES) { console.warn('[WOBBLE] BLOCKED: max uses'); return false; }
+      if (gamePhase !== 'demo' && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
+      // Kippziel offen? Erst kippen! (bypass in demo/tutorial)
+      if (gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -4866,11 +4877,11 @@
     
     async function runKipp21EckblickKniff() {
       console.log('[ECKBLICK] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21EckblickUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || gamePhase !== 'kipp21') { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
-      if (kipp21EckblickUsed >= KNIFF_MAX_USES) { console.warn('[ECKBLICK] BLOCKED: max uses'); return false; }
-      if (kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen!
-      if (kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
+      if (gamePhase !== 'demo' && kipp21EckblickUsed >= KNIFF_MAX_USES) { console.warn('[ECKBLICK] BLOCKED: max uses'); return false; }
+      if (gamePhase !== 'demo' && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
+      // Kippziel offen? Erst kippen! (bypass in demo/tutorial)
+      if (gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -5052,6 +5063,12 @@
       const faceOff = { f0: 0, f1: 4, f2: 8 };
       const slots = ['S1', 'S2', 'S3', 'S4'];
       const currentFulfilled = getCurrentErfuellteKombis();
+      // Build display-equivalent set from bereitsAusgegeben
+      const displayAusgegeben = new Set();
+      bereitsAusgegeben.forEach(k => {
+        const parts = k.split('_');
+        if (parts.length === 2) displayAusgegeben.add(displayNum(parseInt(parts[0])) + 'd_' + parts[1]);
+      });
       
       for (const dist of available) {
         const fromIdx = stateIndex(currentQuadrant, topFace);
@@ -5067,7 +5084,8 @@
             const zahl = deck[off + i];
             const farbe = SLOT_NEIGHBOR_COLORS[tQ][slot];
             const key = zahl + '_' + farbe;
-            if (!bereitsAusgegeben.has(key) && !currentFulfilled.has(key)) {
+            const dKey = displayNum(zahl) + 'd_' + farbe;
+            if (!displayAusgegeben.has(dKey) && !currentFulfilled.has(key) && !currentFulfilled.has(dKey)) {
               const colorObj = GAME_COLORS.find(c => c.name === farbe);
               if (colorObj) validCombos.push({ zahl, color: colorObj, key, dist });
             }
@@ -5386,7 +5404,7 @@
     }
 
     function getCurrentErfuellteKombis() {
-      // Aktuelle Würfellage ermitteln und erfüllte Kombis zurückgeben
+      // Aktuelle Würfellage: alle erfüllten Kombis (mit displayNum für Training)
       const faceOffset = { f0: 0, f1: 4, f2: 8 };
       const off = faceOffset[topFace];
       const erfuellteKombis = new Set();
@@ -5394,7 +5412,9 @@
       slots.forEach((slot, i) => {
         const zahl = deck[off + i];
         const farbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][slot];
+        // Intern UND Display-Version ausschließen
         erfuellteKombis.add(zahl + '_' + farbe);
+        erfuellteKombis.add(displayNum(zahl) + 'd_' + farbe);
       });
       return erfuellteKombis;
     }
@@ -6781,6 +6801,8 @@
       // Tap-Indikatoren ausblenden
       tapIndicatorA.mesh.visible = false;
       tapIndicatorB.mesh.visible = false;
+      // Training-Buttons ausblenden
+      if (window._hideTrainingBtns) window._hideTrainingBtns();
       // Start-Buttons wieder zeigen
       document.getElementById('startOverlay').style.display = 'block';
       const btnS = document.getElementById('btnSpielen');
