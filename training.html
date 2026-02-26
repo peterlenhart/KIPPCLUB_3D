@@ -965,8 +965,8 @@
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
     <!-- TRAINING: Richtungs-Buttons -->
-    <img id="btnCCW" src="ccw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer; z-index:20;" />
-    <img id="btnCW" src="cw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer; z-index:20;" />
+    <img id="btnCCW" src="ccw.webp" style="display:none; position:absolute; width:45px; height:45px; pointer-events:auto; cursor:pointer; z-index:20; border-radius:8px;" />
+    <img id="btnCW" src="cw.webp" style="display:none; position:absolute; width:45px; height:45px; pointer-events:auto; cursor:pointer; z-index:20; border-radius:8px;" />
     <div id="numBtns" style="display:none; position:absolute; z-index:20; pointer-events:none;">
       <div id="numBtn1" class="numBtn" style="position:absolute; width:45px; height:45px; border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; box-shadow:0 2px 4px rgba(0,0,0,0.4);">1</div>
       <div id="numBtn2" class="numBtn" style="position:absolute; width:45px; height:45px; border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; box-shadow:0 2px 4px rgba(0,0,0,0.4);">2</div>
@@ -3380,8 +3380,8 @@
         const b = document.getElementById(id);
         const l = parseInt(b.style.left) || 0;
         const t = parseInt(b.style.top) || 0;
-        const w = b.offsetWidth || (id.startsWith('num') ? 45 : 68);
-        const h = b.offsetHeight || (id.startsWith('num') ? 45 : 68);
+        const w = b.offsetWidth || 45;
+        const h = b.offsetHeight || 45;
         return { x: l + Math.round(w / 2), y: t + Math.round(h / 2) };
       }
       function pulseBtn(id) {
@@ -4309,27 +4309,28 @@
       card5_3D.project(camera);
       const card5sx = Math.round((card5_3D.x * 0.5 + 0.5) * 360);
       
-      // CCW links, CW rechts (wie bisher)
-      btnCCW.style.left = (card0sx - 34) + 'px';
-      btnCCW.style.top = labelY + 'px';
-      btnCW.style.left = (card5sx - 34) + 'px';
-      btnCW.style.top = labelY + 'px';
-      
-      // Zahlen-Buttons 1,2,3 mittig zwischen CCW und CW
+      // CCW | 1 | 2 | 3 | CW — alle 45×45, eine Reihe
+      const btnSize = 45;
+      const btnGap = 8;
+      const totalBtnW = 5 * btnSize + 4 * btnGap; // 257px
       const midX = Math.round((card0sx + card5sx) / 2);
-      const numTop = labelY + 12; // leicht tiefer als Richtungsbuttons
-      const numGap = 8;
-      const numW = 45;
-      const totalNumW = 3 * numW + 2 * numGap; // 151px
-      const numStartX = midX - Math.round(totalNumW / 2);
+      const btnStartX = midX - Math.round(totalBtnW / 2);
+      const btnTop = labelY + 12;
+      
+      btnCCW.style.left = btnStartX + 'px';
+      btnCCW.style.top = btnTop + 'px';
+      
       numBtns.style.left = '0px';
       numBtns.style.top = '0px';
-      numBtn1.style.left = numStartX + 'px';
-      numBtn1.style.top = numTop + 'px';
-      numBtn2.style.left = (numStartX + numW + numGap) + 'px';
-      numBtn2.style.top = numTop + 'px';
-      numBtn3.style.left = (numStartX + 2 * (numW + numGap)) + 'px';
-      numBtn3.style.top = numTop + 'px';
+      numBtn1.style.left = (btnStartX + 1 * (btnSize + btnGap)) + 'px';
+      numBtn1.style.top = btnTop + 'px';
+      numBtn2.style.left = (btnStartX + 2 * (btnSize + btnGap)) + 'px';
+      numBtn2.style.top = btnTop + 'px';
+      numBtn3.style.left = (btnStartX + 3 * (btnSize + btnGap)) + 'px';
+      numBtn3.style.top = btnTop + 'px';
+      
+      btnCW.style.left = (btnStartX + 4 * (btnSize + btnGap)) + 'px';
+      btnCW.style.top = btnTop + 'px';
       
       // Countdown/HintText ausblenden (Training braucht keinen Timer)
       countdown.style.display = 'none';
@@ -4344,18 +4345,39 @@
       let selectedNum = null;   // 1, 2 oder 3
       let firstGroup = null;    // 'dir' oder 'num' — welche Gruppe zuerst gewählt wurde
       
-      const SEL_STYLE_DIR = 'brightness(1.4) drop-shadow(0 0 6px rgba(255,255,200,0.8))';
-      const SEL_STYLE_NUM = 'background:linear-gradient(180deg,#ffe88a 0%,#d4a843 100%); border-color:#a08030; box-shadow:0 0 8px rgba(255,220,80,0.6), 0 2px 4px rgba(0,0,0,0.4);';
-      const UNSEL_STYLE_NUM = 'background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border-color:#8a7a66; box-shadow:0 2px 4px rgba(0,0,0,0.4);';
+      const NUM_NORMAL = 'border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; box-shadow:0 2px 4px rgba(0,0,0,0.4);';
+      const NUM_SELECTED = 'border-radius:8px; background:linear-gradient(180deg,#3a2a1a 0%,#2a1810 100%); border:2px solid #5a4a36; color:#e8dcc8; box-shadow:0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4);';
       
       function highlightDir(dir) {
-        btnCCW.style.filter = (dir === 'ccw') ? SEL_STYLE_DIR : '';
-        btnCW.style.filter = (dir === 'cw') ? SEL_STYLE_DIR : '';
+        // Normal: kein Extra-Styling. Selected: dunkler Hintergrund
+        if (dir === 'ccw') {
+          btnCCW.style.background = '#2a1810';
+          btnCCW.style.boxShadow = '0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4)';
+          btnCCW.style.filter = 'brightness(2.5)';
+          btnCW.style.background = '';
+          btnCW.style.boxShadow = '';
+          btnCW.style.filter = '';
+        } else if (dir === 'cw') {
+          btnCW.style.background = '#2a1810';
+          btnCW.style.boxShadow = '0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4)';
+          btnCW.style.filter = 'brightness(2.5)';
+          btnCCW.style.background = '';
+          btnCCW.style.boxShadow = '';
+          btnCCW.style.filter = '';
+        } else {
+          btnCCW.style.background = '';
+          btnCCW.style.boxShadow = '';
+          btnCCW.style.filter = '';
+          btnCW.style.background = '';
+          btnCW.style.boxShadow = '';
+          btnCW.style.filter = '';
+        }
       }
       function highlightNum(n) {
         [numBtn1, numBtn2, numBtn3].forEach((btn, i) => {
-          const s = (n === i + 1) ? SEL_STYLE_NUM : UNSEL_STYLE_NUM;
-          btn.style.cssText = btn.style.cssText.replace(/background:[^;]+;|border-color:[^;]+;|box-shadow:[^;]+;/g, '') + s;
+          const s = (n === i + 1) ? NUM_SELECTED : NUM_NORMAL;
+          const base = 'position:absolute; width:45px; height:45px; font:bold 22px Arial; text-align:center; line-height:45px; cursor:pointer; pointer-events:auto; ';
+          btn.style.cssText = base + s + ' left:' + btn.style.left + '; top:' + btn.style.top + ';';
         });
       }
       
