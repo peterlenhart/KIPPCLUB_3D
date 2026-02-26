@@ -965,9 +965,9 @@
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
     <!-- TRAINING: Richtungs-Buttons -->
-    <img id="btnCCW" src="ccw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer;" />
-    <img id="btnCW" src="cw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer;" />
-    <div id="dirText" style="display:none; position:absolute; font:bold 13px Arial; color:#d4b48c; text-align:center; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap;">Tippe 1 bis 3 mal</div>
+    <img id="btnCCW" src="ccw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer; z-index:20;" />
+    <img id="btnCW" src="cw.webp" style="display:none; position:absolute; width:68px; height:68px; pointer-events:auto; cursor:pointer; z-index:20;" />
+    <div id="dirText" style="display:none; position:absolute; font:bold 13px Arial; color:#d4b48c; text-align:center; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap; z-index:20;">Tippe 1 bis 3 mal</div>
     <div id="instructionText"></div>
     <img id="verdecktesKippziel" src="leernohit.webp" style="display:none;">
     <div id="tutorialText"></div>
@@ -2643,11 +2643,8 @@
     function checkOnTargetAfterKipp() {
       if (gamePhase !== 'kipp21' || !kipp21Active) return;
       if (!kipp21CardStates.includes('offen')) return;
-      const result = checkTreffer();
-      if (!result) return;
-      // Würfel liegt richtig → Timer SOFORT stoppen + sperren
-      kipp21StopRoundTimer();
-      kipp21HitLock = true;
+      // TRAINING: Kein Auto-Confirm — checkTrainingResult handelt das
+      return;
       const openIdx = kipp21CardStates.indexOf('offen');
       if (openIdx >= 0 && gameCards[openIdx]?.mesh) {
         const mesh = gameCards[openIdx].mesh;
@@ -4189,6 +4186,7 @@
               btnCCW.style.display = 'none';
               btnCW.style.display = 'none';
               dirText.style.display = 'none';
+              showTrainingButtons(); // "Ein Kippziel öffnen" anzeigen
             }
           }, 1500);
         } else {
@@ -4260,6 +4258,7 @@
           hintText.style.cssText = 'position:absolute; left:50%; top:' + (labelY + 24) + 'px; transform:translateX(-50%); font:bold 14px Arial; color:#d4b48c; text-shadow:0 1px 3px rgba(0,0,0,0.8); pointer-events:none; text-align:center; white-space:nowrap; display:block; opacity:1;';
         }
       }
+      window._showTrainingBtns = showTrainingButtons;
       
       // Button Click-Handler
       function onDirButtonTap(dir) {
@@ -4289,10 +4288,14 @@
         trainingTimeout = setTimeout(() => executeTrainingKipp(), TRAINING_TAP_DELAY);
       }
       
-      btnCCW.addEventListener('click', (e) => { e.stopPropagation(); onDirButtonTap('ccw'); });
-      btnCCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); onDirButtonTap('ccw'); });
-      btnCW.addEventListener('click', (e) => { e.stopPropagation(); onDirButtonTap('cw'); });
-      btnCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); onDirButtonTap('cw'); });
+      if (!window._trainingBtnsInit) {
+        window._trainingBtnsInit = true;
+        btnCCW.addEventListener('click', (e) => { e.stopPropagation(); if (window._onDirTap) window._onDirTap('ccw'); });
+        btnCCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onDirTap) window._onDirTap('ccw'); });
+        btnCW.addEventListener('click', (e) => { e.stopPropagation(); if (window._onDirTap) window._onDirTap('cw'); });
+        btnCW.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (window._onDirTap) window._onDirTap('cw'); });
+      }
+      window._onDirTap = onDirButtonTap;
       
       // Blick-Icons auf Kippzielen anzeigen
       showBlickIcons();
@@ -4348,9 +4351,9 @@
       countdown.innerHTML = formatTimer(0);
       countdown.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + ghX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:none; line-height:28px; white-space:nowrap;';
       
-      // KippAnzahl mittig A|B
-      hintText.style.cssText = 'position:absolute; top:' + row10Y + 'px; left:' + abX + 'px; transform:translate(-50%,-50%); width:auto; text-align:center; font-size:28px; font-weight:bold; background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 50%,#e0e0e0 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.5); filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5)); pointer-events:none; display:none; opacity:1; overflow:visible; line-height:28px;';
-      hintText.innerHTML = formatKipps(0);
+      // KippAnzahl mittig A|B (Training: wird von showTrainingButtons überschrieben)
+      hintText.style.cssText = 'position:absolute; left:50%; top:' + (labelY + 24) + 'px; transform:translateX(-50%); width:auto; text-align:center; font:bold 14px Arial; color:#d4b48c; text-shadow:0 1px 3px rgba(0,0,0,0.8); pointer-events:none; display:none; opacity:1; white-space:nowrap;';
+      hintText.innerHTML = T.d2 || 'Ein Kippziel öffnen';
       
       // Karten nach Setup wieder verstecken (werden nach Challenge-Text gezeigt)
       for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = false;
@@ -4784,7 +4787,7 @@
           kipp21RoundTimerStart = null;
           kipp21TimerRunning = false;
           // TRAINING: Buttons zeigen
-          showTrainingButtons();
+          if (window._showTrainingBtns) window._showTrainingBtns();
           return true;
         }
       }
