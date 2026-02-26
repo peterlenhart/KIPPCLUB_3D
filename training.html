@@ -902,8 +902,8 @@
   <!-- START-OVERLAY -->
   <div id="startOverlay">
     <div id="startChallengeText">
-      <div class="sctLine sctHead" id="sctHead">SPIEL ZIEL</div>
-      <div class="sctLine sctSub" id="sctSub">6 HITS</div>
+      <div class="sctLine sctHead" id="sctHead">6 HITS = NEXT LEVEL</div>
+      <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
@@ -989,8 +989,8 @@
     
     <!-- KIPP-TIPP Overlay -->
     <div id="perfektGameText">
-      <div class="pgtLine pgtHead" id="pgtHead">SPIEL ZIEL</div>
-      <div class="pgtLine pgtSub" id="pgtSub">6 HITS</div>
+      <div class="pgtLine pgtHead" id="pgtHead">6 HITS = NEXT LEVEL</div>
+      <div class="pgtLine pgtSub" id="pgtSub" style="display:none"></div>
     </div>
     <div id="gameEndText"></div>
     <!-- End-Buttons werden dynamisch erzeugt (button_lang.webp) -->
@@ -1275,8 +1275,8 @@
     document.getElementById('kpCloseBtn').addEventListener('click', () => {
       hideKippPrinzip();
     });
-    document.getElementById("sctHead").textContent = T.s1;
-    document.getElementById("sctSub").innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">6</span> HITS';
+    document.getElementById("sctHead").textContent = '6 HITS = NEXT LEVEL';
+    document.getElementById("sctSub").style.display = 'none';
     document.getElementById("pgtHead").textContent = T.s1;
     document.getElementById("pgtSub").innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ','');
 
@@ -2628,10 +2628,11 @@
       const off = faceOffset[topFace];
       const visible = { S1: deck[off], S2: deck[off+1], S3: deck[off+2], S4: deck[off+3] };
 
-      // Ist card.zahl sichtbar?
+      // TRAINING: displayNum vergleichen (1-4), nicht interne Zahlen (1-12)
+      const targetDisplay = displayNum(card.zahl);
       let hitSlot = null;
       for (const [slot, val] of Object.entries(visible)) {
-        if (val === card.zahl) { hitSlot = slot; break; }
+        if (displayNum(val) === targetDisplay) { hitSlot = slot; break; }
       }
       if (!hitSlot) return false;
 
@@ -3137,6 +3138,7 @@
       const fromIdx = stateIndex(currentQuadrant, topFace);
       const faceOff = {f0: 0, f1: 4, f2: 8};
       const slots = ['S1', 'S2', 'S3', 'S4'];
+      const targetDisplay = displayNum(card.zahl);
       
       // CW zuerst probieren, dann CCW
       for (const dir of ['cw', 'ccw']) {
@@ -3146,7 +3148,7 @@
         const off = faceOff[tF];
         
         for (let s = 0; s < 4; s++) {
-          if (deck[off + s] === card.zahl) {
+          if (displayNum(deck[off + s]) === targetDisplay) {
             const nColor = SLOT_NEIGHBOR_COLORS[tQ][slots[s]];
             if (nColor === card.color.name) return dir;
           }
@@ -4110,7 +4112,7 @@
         pgt.appendChild(pgtH);
         pgt.appendChild(pgtS);
       }
-      pgtH.innerHTML = T.s1 + '  <span style="font-size:1.4em;font-weight:bold">6</span> HITS';
+      pgtH.innerHTML = '6 HITS = NEXT LEVEL';
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
       pgtH.style.fontSize = '21px';
@@ -4501,6 +4503,15 @@
             kipp21Active = false;
             gamePhase = 'ende';
             hideAllTrainingUI();
+            // "6 HITS = NEXT LEVEL" nochmal zeigen
+            const pgt = document.getElementById('perfektGameText');
+            const pgtH = document.getElementById('pgtHead');
+            if (pgt && pgtH) {
+              pgtH.innerHTML = '6 HITS = NEXT LEVEL';
+              pgt.style.display = 'block';
+              pgtH.style.animation = 'none'; void pgtH.offsetWidth;
+              pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+            }
             showEndButtons(false, false);
             return;
           }
@@ -4565,16 +4576,9 @@
       window._checkTrainingResult = checkTrainingResult;
       
       function showTrainingButtons() {
-        if (kipp21CardStates.includes('offen')) {
-          // Kippziel ist offen → alle Buttons zeigen
-          showAllTrainingUI();
-          hintText.style.display = 'none';
-        } else {
-          hideAllTrainingUI();
-          // "Ein Kippziel öffnen" anzeigen
-          hintText.innerHTML = T.d2 || 'Ein Kippziel öffnen';
-          hintText.style.cssText = 'position:absolute; left:50%; top:' + (labelY + 24) + 'px; transform:translateX(-50%); font:bold 14px Arial; color:#d4b48c; text-shadow:0 1px 3px rgba(0,0,0,0.8); pointer-events:none; text-align:center; white-space:nowrap; display:block; opacity:1;';
-        }
+        // Buttons IMMER zeigen
+        showAllTrainingUI();
+        hintText.style.display = 'none';
       }
       window._showTrainingBtns = showTrainingButtons;
       
