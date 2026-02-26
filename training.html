@@ -1308,7 +1308,7 @@
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     
@@ -1785,7 +1785,7 @@
     let spieltisch = null;
     const SPIEL_WIDTH = 8 * 0.15625;
     
-    new THREE.TextureLoader().load('spieltisch_color.webp', (texture) => {
+    new THREE.TextureLoader().load('spieltisch_21.webp', (texture) => {
       const imgAspect = texture.image.height / texture.image.width;
       const height = SPIEL_WIDTH * imgAspect;
       
@@ -3353,177 +3353,408 @@
     //  Kniff-Plan: 0=Eckblick, 2=Wobble, 3=Eckblick, 5=Wobble
     // ============================================================
     async function startPerfectReplay() {
-      const myGen = kipp21Generation; // Meine Generation merken
+      const myGen = kipp21Generation;
       replayGeneration = myGen;
-      console.log('[REPLAY] === startPerfectReplay ENTER === gen='+myGen);
-      console.log('[REPLAY] gamePhase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'dragActive='+dragActive);
+      const jr = document.getElementById('jokerIconsRow');
+      
+      function aborted() { return !replayActive || myGen !== kipp21Generation; }
+      
       try {
         initHandEl();
-        console.log('[REPLAY] handEl created:', !!handEl);
-      } catch(e) {
-        console.error('[REPLAY] initHandEl FAILED:', e);
-      }
+      } catch(e) { console.error('[TUT] initHandEl FAILED:', e); }
+      
       replayActive = true;
       enableReplayBlocker();
-      renderer.domElement.style.pointerEvents = 'none'; // Canvas komplett blocken
-      
-      if (!replayDbg) {
-        replayDbg = document.createElement('div');
-        replayDbg.id = 'replayDbg';
-        replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:10px monospace;color:transparent;background:transparent;padding:2px 4px;z-index:30;pointer-events:none;white-space:pre;max-width:356px;';
-        document.getElementById('uiOverlay').appendChild(replayDbg);
-      }
-      
-      const jr = document.getElementById('jokerIconsRow');
+      renderer.domElement.style.pointerEvents = 'none';
       if (jr) jr.style.pointerEvents = 'none';
-      const _eyeR1 = document.getElementById('eyeIcon');
-      if (_eyeR1) _eyeR1.style.pointerEvents = 'none';
-      const kniffPlan = {}; // Nicht mehr gebraucht, Blick-Typ kommt aus cardIdx % 2
-      const KIPP_DUR = 550; // ~1 Sek pro Kipp (550+350+60+40)
+      
+      const KIPP_DUR = 550;
+      const TARGET_CARD = 4; // Karte mit Eckblick-Icon
+      
+      // Hilfsfunktionen
+      function getBtnCenter(id) {
+        const b = document.getElementById(id);
+        return { x: parseInt(b.style.left) + 34, y: parseInt(b.style.top) + 34 };
+      }
+      function pulseBtn(id) {
+        const b = document.getElementById(id);
+        b.style.transition = 'transform 0.12s ease-out';
+        b.style.transform = 'scale(1.3)';
+        setTimeout(() => { b.style.transform = 'scale(1)'; b.style.transition = ''; }, 160);
+      }
+      function hideButtons() {
+        document.getElementById('btnCCW').style.display = 'none';
+        document.getElementById('btnCW').style.display = 'none';
+        document.getElementById('dirText').style.display = 'none';
+      }
+      function showButtons() {
+        document.getElementById('btnCCW').style.display = 'block';
+        document.getElementById('btnCW').style.display = 'block';
+        document.getElementById('dirText').style.display = 'block';
+      }
       
       await sleep(500);
-      if (myGen !== kipp21Generation) return; // Abgebrochen
-      dbgLog('Perfect Game Start');
-      console.log('[REPLAY] START phase='+gamePhase, 'kipp21Active='+kipp21Active, 'isAnim='+isAnimating, 'Q='+currentQuadrant, 'F='+topFace);
+      if (aborted()) { replayCleanup(jr); return; }
       
-      // Sichtbarer Schritt-Zähler oben im Bild
-      if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:30;pointer-events:none;white-space:pre;max-width:356px;';
+      // ==============================================
+      // SCHRITT 1-3: Hand sucht Karten, klickt Karte 4 (Eckblick)
+      // ==============================================
+      const cardY_s = cardScreenY(TARGET_CARD) + 15;
+      const leftX = cardScreenX(0);
+      const rightX = cardScreenX(5);
+      const targetX = cardScreenX(TARGET_CARD);
       
-      for (let ci = 0; ci < 6; ci++) {
-        if (!replayActive || myGen !== kipp21Generation) break;
-        dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
-        console.log('[REPLAY] === RUNDE', ci, '===');
-        console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
-        console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
+      // Hand erscheint links unten, fährt hoch
+      setHandPos(leftX, 740);
+      handEl.style.opacity = '1';
+      updateHandShadow(leftX, 740, true);
+      await moveHandSmooth(leftX, cardY_s, 800);
+      if (aborted()) { replayCleanup(jr); return; }
+      await sleep(200);
+      // Suchend nach rechts
+      await moveHandSmooth(rightX, cardY_s, 1400);
+      await sleep(250);
+      // Zurück nach links
+      await moveHandSmooth(leftX, cardY_s, 1200);
+      await sleep(250);
+      // Zum Ziel (Karte 4)
+      await moveHandSmooth(targetX, cardY_s, 700);
+      
+      // Klick-Pulse auf Karte
+      pulseCard(TARGET_CARD);
+      await sleep(300);
+      
+      // Hand runter
+      await moveHandSmooth(targetX, 740, 500);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      await sleep(100);
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // ==============================================
+      // SCHRITT 4: Eckblick-Animation + Karte öffnet sich
+      // ==============================================
+      kipp21BlickTargetCard = TARGET_CARD;
+      hideBlickIcon(TARGET_CARD);
+      try {
+        const eckP = runKipp21EckblickKniff();
+        await sleep(7000);
+        if (replayActive) kipp21KniffAbort = true;
+        await eckP;
+      } catch(e) { console.error('[TUT] Eckblick error:', e); }
+      
+      await sleep(400);
+      // Fallback: Karte manuell öffnen falls nötig
+      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
+        kipp21OnCardTap(TARGET_CARD, true);
+        await sleep(300);
+      }
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // Buttons zeigen
+      if (window._showTrainingBtns) window._showTrainingBtns();
+      showButtons();
+      await sleep(800);
+      
+      // ==============================================
+      // SCHRITT 5-6: Hand schwankt überlegend zwischen Buttons
+      // ==============================================
+      const ccwP = getBtnCenter('btnCCW');
+      const cwP = getBtnCenter('btnCW');
+      const midBtnX = (ccwP.x + cwP.x) / 2;
+      const btnY = ccwP.y;
+      
+      setHandPos(midBtnX, 740);
+      handEl.style.opacity = '1';
+      updateHandShadow(midBtnX, 740, true);
+      await moveHandSmooth(midBtnX, btnY, 600);
+      await sleep(200);
+      // Links (CCW)
+      await moveHandSmooth(ccwP.x, btnY, 500);
+      await sleep(200);
+      // Rechts (CW)
+      await moveHandSmooth(cwP.x, btnY, 600);
+      await sleep(200);
+      // Zurück links (CCW)
+      await moveHandSmooth(ccwP.x, btnY, 500);
+      await sleep(300);
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // ==============================================
+      // SCHRITT 7: Klickt FALSCH → FAIL
+      // ==============================================
+      const correctDir1 = findHitDirection(TARGET_CARD);
+      const wrongDir = (correctDir1 === 'cw') ? 'ccw' : 'cw';
+      const wrongBtnId = (wrongDir === 'ccw') ? 'btnCCW' : 'btnCW';
+      const wrongBtnP = getBtnCenter(wrongBtnId);
+      
+      // Hand zum falschen Button (falls nicht schon dort)
+      await moveHandSmooth(wrongBtnP.x, btnY, 400);
+      await sleep(200);
+      
+      // Klick-Pulse auf Button (KEIN Klack!)
+      pulseBtn(wrongBtnId);
+      await sleep(500);
+      
+      // Hand weg
+      await moveHandSmooth(wrongBtnP.x, 740, 500);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      hideButtons();
+      
+      // Würfel kippt 1x in falsche Richtung (hier kommt das Klack vom Kipp)
+      isAnimating = false;
+      const wrongKipp = (wrongDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+      kippDirection = wrongDir;
+      await performKipp(wrongKipp, KIPP_DUR);
+      advanceTopFace();
+      kipp21KippCount++;
+      kipp21RoundKipps++;
+      
+      // Treffer prüfen → FAIL
+      if (window._checkTrainingResult) {
+        window._checkTrainingResult(TARGET_CARD);
+      }
+      
+      // Warten bis FAIL-Animation komplett (1000ms Timeout + Buffer)
+      await sleep(1800);
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // ==============================================
+      // SCHRITT 8-9: Hand klickt DIESELBE Karte nochmal
+      // ==============================================
+      const targetX2 = cardScreenX(TARGET_CARD);
+      const cardY2 = cardScreenY(TARGET_CARD) + 15;
+      
+      setHandPos(targetX2, 740);
+      handEl.style.opacity = '1';
+      updateHandShadow(targetX2, 740, true);
+      await moveHandSmooth(targetX2, cardY2, 800);
+      
+      pulseCard(TARGET_CARD);
+      await sleep(300);
+      
+      await moveHandSmooth(targetX2, 740, 500);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      await sleep(100);
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // Eckblick nochmal
+      kipp21BlickTargetCard = TARGET_CARD;
+      hideBlickIcon(TARGET_CARD);
+      try {
+        const eckP2 = runKipp21EckblickKniff();
+        await sleep(7000);
+        if (replayActive) kipp21KniffAbort = true;
+        await eckP2;
+      } catch(e) { console.error('[TUT] Eckblick2 error:', e); }
+      
+      await sleep(400);
+      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
+        kipp21OnCardTap(TARGET_CARD, true);
+        await sleep(300);
+      }
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // Buttons zeigen
+      if (window._showTrainingBtns) window._showTrainingBtns();
+      showButtons();
+      await sleep(800);
+      
+      // ==============================================
+      // SCHRITT 10-12: Hand zum RICHTIGEN Button, richtige Anzahl
+      // ==============================================
+      const correctDir2 = findHitDirection(TARGET_CARD);
+      const dist2 = kipp21CardDistances[TARGET_CARD] || 1;
+      const correctBtnId = (correctDir2 === 'ccw') ? 'btnCCW' : 'btnCW';
+      const correctBtnP = getBtnCenter(correctBtnId);
+      
+      setHandPos(correctBtnP.x, 740);
+      handEl.style.opacity = '1';
+      updateHandShadow(correctBtnP.x, 740, true);
+      await moveHandSmooth(correctBtnP.x, correctBtnP.y, 600);
+      await sleep(300);
+      
+      // Taps (KEIN Klack pro Tap!)
+      for (let t = 0; t < dist2; t++) {
+        pulseBtn(correctBtnId);
+        await sleep(500);
+        if (aborted()) { replayCleanup(jr); return; }
+      }
+      
+      // Hand weg
+      await moveHandSmooth(correctBtnP.x, 740, 500);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      hideButtons();
+      
+      // Würfel kippt (Klack kommt hier natürlich)
+      isAnimating = false;
+      kipp21RoundKipps = 0;
+      for (let i = 0; i < dist2; i++) {
+        const kDir = (correctDir2 === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        kippDirection = correctDir2;
+        isAnimating = false;
+        await performKipp(kDir, KIPP_DUR);
+        advanceTopFace();
+        kipp21KippCount++;
+        kipp21RoundKipps++;
+        if (i < dist2 - 1) await sleep(350);
+      }
+      
+      // Treffer → HIT
+      if (window._checkTrainingResult) {
+        window._checkTrainingResult(TARGET_CARD);
+      }
+      await sleep(2500);
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // ==============================================
+      // SCHRITT 13-16: Restliche 5 Karten — normaler Flow
+      // ==============================================
+      for (let round = 1; round < 6; round++) {
+        if (aborted()) break;
         
-        // === KARTE AUFDECKEN ===
-        dbgLog('R' + ci + ': Aufdecken...');
-        let useKniff = kniffPlan[ci] || null;
-        // Prüfen ob geplanter KNIFF noch verfügbar
-        if (useKniff === 'eckblick' && kipp21EckblickUsed >= KNIFF_MAX_USES) useKniff = null;
-        if (useKniff === 'wobble' && kipp21WobbleUsed >= KNIFF_MAX_USES) useKniff = null;
-        
-        // Tutorial-Text vor Aktion
-        await sleep(600);
-        
-        if (ci === 0) {
-          // Erste Runde: Hand sucht Kartenreihe, klickt 3. Kippziel (idx 2)
-          console.log('[REPLAY] R0: Suche + Klick auf Karte 2');
-          await replayKniff(null, 2);
-        } else {
-          // Folgerunden: direkt nächste verdeckte Karte
-          console.log('[REPLAY] R'+ci+': OpenCard');
-          await replayOpenCard(ci);
-        }
-        console.log('[REPLAY] R'+ci+': Aufdecken fertig');
-        if (!replayActive || myGen !== kipp21Generation) break;
-        
-        // Prüfen ob eine Karte offen ist
-        const openCheck = kipp21CardStates.indexOf('offen');
-        if (openCheck < 0) {
-          console.warn('[REPLAY] Runde ' + ci + ': Keine offene Karte nach Aufdecken!');
-          dbgLog('SKIP R' + ci + ': keine offene Karte');
-          continue;
-        }
-        dbgLog('R' + ci + ': Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
-        
-        // Denkpause nach Aufdecken
-        await sleep(2200);
-        
-        // === KIPPEN ===
-        console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
-        dbgLog('R' + ci + ': Kippen...');
-        const actualOpen = kipp21CardStates.indexOf('offen');
-        await replayKippSequence(actualOpen >= 0 ? actualOpen : ci, KIPP_DUR);
-        console.log('[REPLAY] R'+ci+': Kippen fertig');
-        if (!replayActive || myGen !== kipp21Generation) break;
-        
-        // === BESTÄTIGEN ===
         await sleep(800);
-        // Wenn checkOnTargetAfterKipp bereits auto-confirmed hat → überspringen
-        if (kipp21CardStates[ci] === 'erledigt' || !kipp21CardStates.includes('offen')) {
-          console.log('[REPLAY] R'+ci+': Auto-confirmed by checkOnTarget, skip hand confirm');
+        const nextCard = kipp21NextVerdeckt();
+        if (nextCard < 0) break;
+        
+        const cx = cardScreenX(nextCard);
+        const cy = cardScreenY(nextCard) + 15;
+        const hasBlick = CARD_BLICK_MAP[nextCard] !== null;
+        
+        // Hand zur Karte
+        setHandPos(cx, 740);
+        handEl.style.opacity = '1';
+        updateHandShadow(cx, 740, true);
+        await moveHandSmooth(cx, cy, 800);
+        
+        pulseCard(nextCard);
+        await sleep(300);
+        
+        await moveHandSmooth(cx, 740, 500);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(100);
+        if (aborted()) break;
+        
+        // Blick-Animation falls vorhanden
+        if (hasBlick) {
+          kipp21BlickTargetCard = nextCard;
+          hideBlickIcon(nextCard);
+          const blickSrc = CARD_BLICK_MAP[nextCard];
+          const bType = blickSrc.includes('joker2') ? 'wobble' : 'eckblick';
+          try {
+            if (bType === 'eckblick') {
+              const ep = runKipp21EckblickKniff();
+              await sleep(7000);
+              if (replayActive) kipp21KniffAbort = true;
+              await ep;
+            } else {
+              await runKipp21WobbleKniff();
+            }
+          } catch(e) { console.error('[TUT] Kniff error R'+round+':', e); }
+          await sleep(400);
         } else {
-          dbgLog('R' + ci + ': Bestätigen...');
-          await replayConfirm(ci);
+          // Kein Blick → direkt öffnen
+          kipp21OnCardTap(nextCard, true);
+          await sleep(300);
         }
-        console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
-        await sleep(800); // Zwischen-Runden Pause
-      }
-      
-      // === ERGEBNIS ===
-      // Abbruch? Dann kein End-UI zeigen
-      if (!replayActive || gamePhase === 'start' || myGen !== kipp21Generation) {
-        replayCleanup(jr);
-        return;
-      }
-      // KniffIcons und Karten ausblenden
-      hideKniffIcons();
-      countdown.style.display = 'none';
-      hintText.style.display = 'none';
-      for (let i = 0; i < 6; i++) {
-        if (gameCards[i].mesh.visible) gameCards[i].mesh.visible = false;
-      }
-      
-      const totalKipps = kipp21KippCount;
-      const totalMs = kipp21TotalTime || 0;
-      const totalSec = Math.floor(totalMs / 1000);
-      const zeitStr = totalSec + ' Sek.';
-      // Score steht schon in der Box-Hälfte — kein Extra-Text nötig
-      document.getElementById('perfektGameText').style.display = 'none';
-      document.getElementById('gameEndText').style.display = 'none';
-      countdown.style.display = 'none';
-      hintText.style.display = 'none';
-      // Subtitle auch weg
-      const subEl = document.getElementById('subtitleText');
-      if (subEl) subEl.style.display = 'none';
-      
-      // Tutorial-Score speichern
-      saveTutorialScore(totalKipps, totalSec);
-      
-      // "kipps21Label" zeigt schon den finalen Countdown-Stand — nichts zu ändern
-      
-      // showEndButtons wartet selbst auf alle HITs, blendet sie aus, dann Buttons
-      await showEndButtons(true);
-      
-      // Hand zum Pokal fahren, klicken, Scoretafel öffnen
-      (async () => {
-        await sleep(2000);
+        // Fallback
+        if (kipp21CardStates[nextCard] !== 'offen') {
+          kipp21OnCardTap(nextCard, true);
+          await sleep(300);
+        }
+        if (aborted()) break;
         
-        // Hand einblenden in Bildmitte
-        if (handEl) {
-          // Hand über Pokal heben (uiOverlay z-index 10 → 51, über resetButtonWrap 50)
-          document.getElementById('uiOverlay').style.zIndex = '51';
-          setHandPos(180, 740);
-          handEl.style.opacity = '1';
-          updateHandShadow(180, 740, true);
-          
-          // Von Mitte unten zum Pokal — eine flüssige Bewegung
-          await moveHandSmooth(326, 40, 1200);
-          
-          // Klick-Pulse auf Pokal
-          const pokalEl = document.getElementById('btnBestScores');
+        // Buttons zeigen
+        if (window._showTrainingBtns) window._showTrainingBtns();
+        showButtons();
+        await sleep(800);
+        
+        // Richtung + Distanz bestimmen
+        const dir = findHitDirection(nextCard);
+        const dist = kipp21CardDistances[nextCard] || 1;
+        const bId = (dir === 'ccw') ? 'btnCCW' : 'btnCW';
+        const bPos = getBtnCenter(bId);
+        
+        // Hand zum Button
+        setHandPos(bPos.x, 740);
+        handEl.style.opacity = '1';
+        updateHandShadow(bPos.x, 740, true);
+        await moveHandSmooth(bPos.x, bPos.y, 600);
+        await sleep(300);
+        
+        // Taps (KEIN Klack)
+        for (let t = 0; t < dist; t++) {
+          pulseBtn(bId);
+          await sleep(500);
+          if (aborted()) break;
+        }
+        if (aborted()) break;
+        
+        // Hand weg
+        await moveHandSmooth(bPos.x, 740, 500);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        hideButtons();
+        
+        // Würfel kippt (Klack kommt natürlich)
+        isAnimating = false;
+        kipp21RoundKipps = 0;
+        for (let i = 0; i < dist; i++) {
+          const kDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+          kippDirection = dir;
+          isAnimating = false;
+          await performKipp(kDir, KIPP_DUR);
+          advanceTopFace();
+          kipp21KippCount++;
+          kipp21RoundKipps++;
+          if (i < dist - 1) await sleep(350);
+        }
+        
+        // Treffer → HIT
+        if (window._checkTrainingResult) {
+          window._checkTrainingResult(nextCard);
+        }
+        await sleep(2500);
+      }
+      
+      // ==============================================
+      // ENDE: Hand zum Pokal
+      // ==============================================
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      await sleep(1500);
+      
+      // Hand zum Pokal fahren
+      if (handEl && !aborted()) {
+        document.getElementById('uiOverlay').style.zIndex = '51';
+        setHandPos(180, 740);
+        handEl.style.opacity = '1';
+        updateHandShadow(180, 740, true);
+        await moveHandSmooth(326, 40, 1200);
+        
+        const pokalEl = document.getElementById('btnBestScores');
+        if (pokalEl) {
           pokalEl.style.transition = 'transform 0.15s ease-out';
           pokalEl.style.transform = 'scale(1.2)';
           await sleep(150);
           pokalEl.style.transform = 'scale(1.0)';
-          await sleep(300);
-          
-          // Hand weg
-          handEl.style.opacity = '0';
-          updateHandShadow(0, 0, false);
-          // z-index zurücksetzen
-          document.getElementById('uiOverlay').style.zIndex = '10';
-          await sleep(200);
-          await sleep(200);
-          
-          // Scoretafel zeigen
-          showBestScores();
         }
+        await sleep(300);
         
-        replayCleanup(jr);
-      })();
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        document.getElementById('uiOverlay').style.zIndex = '10';
+        await sleep(400);
+        
+        if (typeof showBestScores === 'function') showBestScores();
+      }
+      
+      replayCleanup(jr);
     }
     
     // ============================================================
@@ -4239,6 +4470,7 @@
           }, 1000);
         }
       }
+      window._checkTrainingResult = checkTrainingResult;
       
       function showTrainingButtons() {
         if (kipp21CardStates.includes('offen')) {
@@ -4272,7 +4504,7 @@
         
         trainingDir = dir;
         trainingTaps++;
-        playKlack();
+        // Kein Klack hier — nur der Würfel beim Kippen macht Klack
         // Text ausblenden sobald getappt
         dirText.style.display = 'none';
         showTrainingTapCount();
