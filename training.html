@@ -2725,7 +2725,7 @@
       // Counter fliegen nicht mehr — no-op
     }
 
-    function animateCardFly(card, quadrant, slot) {
+    function animateCardFly(card, quadrant, slot, stayAtTarget) {
       return new Promise(resolve => {
         const target = HIT_TARGETS[quadrant][slot];
         const mesh = card.mesh;
@@ -2774,6 +2774,12 @@
           } else {
             mesh.position.set(endX, endY, endZ);
             mesh.rotation.z = endRotZ;
+            
+            if (stayAtTarget) {
+              mesh.scale.set(1, 1, 1);
+              resolve();
+              return;
+            }
             
             // Kurzer Puls am Ziel, dann vanish
             const landTime = performance.now();
@@ -3488,6 +3494,7 @@
       // Klick auf "1" (falsche Anzahl für den FAIL)
       await moveHandSmooth(numBtn1P.x, numBtn1P.y, 300);
       pulseBtn('numBtn1');
+      highlightNum(1);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
@@ -3506,12 +3513,15 @@
       await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 400);
       await sleep(200);
       pulseBtn(wrongBtnId);
+      highlightDir(wrongDir);
       await sleep(500);
       
       // Hand weg
       await moveHandSmooth(wrongBtnP.x, 740, 500);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
+      highlightNum(null);
+      highlightDir(null);
       hideButtons();
       
       // Würfel kippt 1x in falsche Richtung (hier kommt das Klack vom Kipp)
@@ -3528,8 +3538,8 @@
         window._checkTrainingResult(TARGET_CARD);
       }
       
-      // Warten bis FAIL-Animation komplett (1500ms Rand + Buffer)
-      await sleep(2200);
+      // Warten bis FAIL-Animation komplett (Flug 800 + Hold 2000 + Geste ~1500 + X 1200 + Fade 600)
+      await sleep(6500);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
@@ -3596,6 +3606,7 @@
       await moveHandSmooth(correctNumP.x, correctNumP.y, 400);
       await sleep(300);
       pulseBtn(correctNumId);
+      highlightNum(dist2);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
@@ -3603,12 +3614,15 @@
       await moveHandSmooth(correctBtnP.x, correctBtnP.y, 500);
       await sleep(300);
       pulseBtn(correctBtnId);
+      highlightDir(correctDir2);
       await sleep(500);
       
       // Hand weg
       await moveHandSmooth(correctBtnP.x, 740, 500);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
+      highlightNum(null);
+      highlightDir(null);
       hideButtons();
       
       // Würfel kippt (Klack kommt hier natürlich)
@@ -4507,34 +4521,105 @@
             if (color === cardColorName) { failSlot = slot; break; }
           }
           
-          // Flug zur Farbposition (wie HIT, aber FAIL-Variante)
-          animateCardFly(card, currentQuadrant, failSlot).then(() => {
-            // 1.5s nach Flug: Karte wieder verdecken
-            setTimeout(() => {
-              card.mesh.visible = true; // Mesh zurücksetzen
-              card.mesh.material.transparent = false;
-              card.mesh.material.opacity = 1;
+          // Flug zur Farbposition (stayAtTarget — Karte bleibt liegen)
+          animateCardFly(card, currentQuadrant, failSlot, true).then(async () => {
+            // Karte liegt jetzt auf dem Farbfeld
+            // 3D-Position → Screen für Overlay-Elemente
+            const target = HIT_TARGETS[currentQuadrant][failSlot];
+            const tPos = new THREE.Vector3(target.x, 0.48, target.z);
+            tPos.project(camera);
+            const sx = Math.round((tPos.x * 0.5 + 0.5) * 360);
+            const sy = Math.round((-tPos.y * 0.5 + 0.5) * 720);
+            
+            // 2 Sek halten
+            await sleep(2000);
+            
+            // Nein-Geste: Hand-Element über dem Kippziel
+            const neinHand = document.createElement('img');
+            neinHand.src = 'handsilber.webp';
+            neinHand.style.cssText = 'position:absolute;width:70px;height:auto;pointer-events:none;z-index:25;' +
+              'transform-origin:top center;opacity:1;';
+            neinHand.style.left = (sx - 12) + 'px';
+            neinHand.style.top = (sy - 10) + 'px';
+            document.getElementById('uiOverlay').appendChild(neinHand);
+            
+            // Schwenk links-rechts-links (Nein-Geste)
+            const swingDur = 180;
+            function swing(angle) {
+              return new Promise(r => {
+                neinHand.style.transition = 'transform ' + swingDur + 'ms ease-in-out';
+                neinHand.style.transform = 'rotate(' + angle + 'deg)';
+                setTimeout(r, swingDur);
+              });
+            }
+            await swing(-18);
+            await swing(18);
+            await swing(-14);
+            await swing(10);
+            await swing(0);
+            await sleep(300);
+            
+            // Nein-Hand ausblenden
+            neinHand.style.transition = 'opacity 0.3s';
+            neinHand.style.opacity = '0';
+            
+            // Rotes Kreuz über dem Kippziel
+            const redX = document.createElement('div');
+            redX.textContent = '✕';
+            redX.style.cssText = 'position:absolute;z-index:26;pointer-events:none;' +
+              'font:bold 40px Arial;color:#ff0000;' +
+              'text-shadow:0 0 8px rgba(255,0,0,0.8),0 2px 4px rgba(0,0,0,0.5);' +
+              'transform:translate(-50%,-50%) scale(0.3);opacity:0;' +
+              'transition:transform 0.3s ease-out, opacity 0.2s ease-out;';
+            redX.style.left = sx + 'px';
+            redX.style.top = sy + 'px';
+            document.getElementById('uiOverlay').appendChild(redX);
+            
+            requestAnimationFrame(() => {
+              redX.style.opacity = '1';
+              redX.style.transform = 'translate(-50%,-50%) scale(1)';
+            });
+            
+            await sleep(1200);
+            
+            // Alles zusammen ausfaden
+            card.mesh.material.transparent = true;
+            const fadeStart = performance.now();
+            const fadeDur = 600;
+            function fadeTick(now) {
+              const t = Math.min((now - fadeStart) / fadeDur, 1);
+              card.mesh.material.opacity = 1 - t;
               card.mesh.material.needsUpdate = true;
-              // Position zurücksetzen
-              card.mesh.position.set(cardStartX + cardIdx * (cardWidth + cardGap), cardY, cardZ);
-              card.mesh.rotation.set(-Math.PI / 2, 0, 0);
-              card.mesh.scale.set(1, 1, 1);
-              
-              kipp21CardStates[cardIdx] = 'verdeckt';
-              card.zahl = null;
-              card.color = null;
-              card.isHit = false;
-              card.isMiss = false;
-              
-              // Verdecktes Aussehen
-              card.ctx.clearRect(0, 0, 85, 170);
-              card.ctx.drawImage(leerImage, 0, 0, 85, 170);
-              card.texture.needsUpdate = true;
-              
-              showBlickIcons();
-              kipp21Active = true;
-              showTrainingButtons();
-            }, 500);
+              redX.style.opacity = String(1 - t);
+              if (t < 1) requestAnimationFrame(fadeTick);
+              else {
+                // Cleanup
+                neinHand.remove();
+                redX.remove();
+                card.mesh.visible = true;
+                card.mesh.material.transparent = false;
+                card.mesh.material.opacity = 1;
+                card.mesh.material.needsUpdate = true;
+                card.mesh.position.set(cardStartX + cardIdx * (cardWidth + cardGap), cardY, cardZ);
+                card.mesh.rotation.set(-Math.PI / 2, 0, 0);
+                card.mesh.scale.set(1, 1, 1);
+                
+                kipp21CardStates[cardIdx] = 'verdeckt';
+                card.zahl = null;
+                card.color = null;
+                card.isHit = false;
+                card.isMiss = false;
+                
+                card.ctx.clearRect(0, 0, 85, 170);
+                card.ctx.drawImage(leerImage, 0, 0, 85, 170);
+                card.texture.needsUpdate = true;
+                
+                showBlickIcons();
+                kipp21Active = true;
+                showTrainingButtons();
+              }
+            }
+            requestAnimationFrame(fadeTick);
           });
         }
       }
