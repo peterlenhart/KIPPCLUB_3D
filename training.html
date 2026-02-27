@@ -907,8 +907,8 @@
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
-    <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
-    <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0">KIPP Prinzip</button>
+    <button class="startClickZone" id="btnDemo" disabled style="opacity:0;display:none">TUTORIAL</button>
+    <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
   
   <!-- BEST SCORES Overlay -->
@@ -2098,29 +2098,26 @@
       await new Promise(r => setTimeout(r, 150));
 
       // 2) Kipp 1 CW + f0 einfaden
-      await loadingKipp(cwDirs[0], 500);
+      await loadingKipp(cwDirs[0], 1000);
       await fadeInFace('f0', fd);
       await new Promise(r => setTimeout(r, 200));
 
       // 3) Kipp 2 CW + f1 einfaden
-      await loadingKipp(cwDirs[1], 500);
+      await loadingKipp(cwDirs[1], 1000);
       await fadeInFace('f1', fd);
       await new Promise(r => setTimeout(r, 200));
 
-      // 4) Kipps 3-4 CW
-      await loadingKipp(cwDirs[2], 450);
-      await new Promise(r => setTimeout(r, 150));
-      await loadingKipp(cwDirs[3], 450);
-      await new Promise(r => setTimeout(r, 250));
+      // 4) Kipp 3 CW
+      await loadingKipp(cwDirs[2], 1000);
+      await new Promise(r => setTimeout(r, 300));
 
-      // 5) Kipps 5-8 CCW (leicht beschleunigend)
-      await loadingKipp(ccwDirs[0], 400);
-      await new Promise(r => setTimeout(r, 100));
-      await loadingKipp(ccwDirs[1], 350);
-      await new Promise(r => setTimeout(r, 80));
-      await loadingKipp(ccwDirs[2], 300);
-      await new Promise(r => setTimeout(r, 60));
-      await loadingKipp(ccwDirs[3], 250);
+      // 5) 3 Kipps CCW zurück (Q2→Q1→Q0→Q3)
+      await loadingKipp(ccwDirs[1], 1000);  // north_from_q2: Q2→Q1
+      await new Promise(r => setTimeout(r, 200));
+      await loadingKipp(ccwDirs[2], 1000);  // west: Q1→Q0
+      await new Promise(r => setTimeout(r, 200));
+      await loadingKipp(ccwDirs[3], 1000);  // south: Q0→Q3
+      await new Promise(r => setTimeout(r, 200));
 
       // Reset: Würfel exakt in Q3, f2 obenauf
       cube.position.set(-offset, offset, 0.109375 + offset);
@@ -2211,49 +2208,31 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
-        // Head und Best immer verstecken
-        head.style.animation = 'none';
-        head.style.opacity = '0';
-        if (best) { best.style.animation = 'none'; best.style.opacity = '0'; }
+        // Prüfe ob Spieler schon mal Training gespielt hat
+        let hasPlayed = false;
+        try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
         
-        // Sub: wenn schon sichtbar (opacity > 0.5), nicht nochmal inflaten
-        const subVisible = parseFloat(getComputedStyle(sub).opacity) > 0.5;
-        
-        if (subVisible) {
-          sub.style.animation = 'none';
-          sub.style.opacity = '1';
-          sub.style.transform = 'scale(1)';
-          // Sanftes Nachpulsieren vor Fade
-          requestAnimationFrame(() => {
-            sub.style.animation = 'sctBreathe 1.6s ease-in-out';
-          });
-        } else {
-          sub.style.animation = 'none';
-          sub.style.opacity = '0';
-          sub.style.transform = 'scale(0.6)';
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              sub.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
-            });
-          });
+        if (hasPlayed) {
+          // WIEDERHOLUNGSSPIEL: Kein Overlay, direkt starten
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          // Direkt Spiel starten (ohne Tutorial)
+          setTimeout(() => { startKipp21(false); }, 200);
+          return;
         }
         
-        // Nach Halten: Container ausfaden, Buttons rein
-        const fadeDelay = subVisible ? 100 : 300;
+        // ERSTES SPIEL: Nur SPIELEN-Button zeigen
+        head.style.animation = 'none'; head.style.opacity = '0';
+        if (best) { best.style.animation = 'none'; best.style.opacity = '0'; }
+        sub.style.animation = 'none'; sub.style.opacity = '0';
+        
+        sct.style.opacity = '0';
+        setTimeout(() => { sct.style.display = 'none'; }, 300);
         setTimeout(() => {
-          sct.style.opacity = '0';
-          setTimeout(() => { sct.style.display = 'none'; }, 1300);
-          setTimeout(() => {
-            document.getElementById('btnSpielen').disabled = false;
-            document.getElementById('btnSpielen').style.opacity = '1';
-            document.getElementById('btnDemo').disabled = false;
-            document.getElementById('btnDemo').style.opacity = '1';
-            document.getElementById('btnKippPrinzip').disabled = false;
-            // Kein Pokal im Training
-            document.getElementById('btnKippPrinzip').style.opacity = '1';
-           
-          }, 700);
-        }, fadeDelay);
+          document.getElementById('btnSpielen').disabled = false;
+          document.getElementById('btnSpielen').style.opacity = '1';
+          // Tutorial + KippPrinzip bleiben unsichtbar
+        }, 500);
       }
     }
 
@@ -3374,7 +3353,7 @@
       renderer.domElement.style.pointerEvents = 'none';
       if (jr) jr.style.pointerEvents = 'none';
       
-      const KIPP_DUR = 550;
+      const KIPP_DUR = 1600;
       const TARGET_CARD = 4; // Karte mit Eckblick-Icon
       
       // Hilfsfunktionen
@@ -3622,7 +3601,7 @@
         advanceTopFace();
         kipp21KippCount++;
         kipp21RoundKipps++;
-        if (i < dist2 - 1) await sleep(350);
+        if (i < dist2 - 1) await sleep(800);
       }
       
       // Treffer → HIT
@@ -3633,137 +3612,68 @@
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
-      // SCHRITT 13-16: Restliche 5 Karten — normaler Flow
+      // BLUR + "JETZT DU!" + Spiel starten
       // ==============================================
-      for (let round = 1; round < 6; round++) {
-        if (aborted()) break;
-        
-        await sleep(800);
-        const nextCard = kipp21NextVerdeckt();
-        if (nextCard < 0) break;
-        
-        const cx = cardScreenX(nextCard);
-        const cy = cardScreenY(nextCard) + 15;
-        const hasBlick = CARD_BLICK_MAP[nextCard] !== null;
-        
-        // Hand zur Karte
-        setHandPos(cx, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(cx, 740, true);
-        await moveHandSmooth(cx, cy, 800);
-        
-        pulseCard(nextCard);
-        await sleep(300);
-        
-        await moveHandSmooth(cx, 740, 500);
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await sleep(100);
-        if (aborted()) break;
-        
-        // Blick-Animation falls vorhanden
-        if (hasBlick) {
-          kipp21BlickTargetCard = nextCard;
-          hideBlickIcon(nextCard);
-          const blickSrc = CARD_BLICK_MAP[nextCard];
-          const bType = blickSrc.includes('joker2') ? 'wobble' : 'eckblick';
-          try {
-            if (bType === 'eckblick') {
-              const ep = runKipp21EckblickKniff();
-              await sleep(7000);
-              if (replayActive) kipp21KniffAbort = true;
-              await ep;
-            } else {
-              await runKipp21WobbleKniff();
-            }
-          } catch(e) { console.error('[TUT] Kniff error R'+round+':', e); }
-          await sleep(400);
-        } else {
-          // Kein Blick → direkt öffnen
-          kipp21OnCardTap(nextCard, true);
-          await sleep(300);
-        }
-        
-        // Fallback
-        if (kipp21CardStates[nextCard] !== 'offen') {
-          kipp21OnCardTap(nextCard, true);
-          await sleep(300);
-        }
-        if (aborted()) break;
-        
-        // Buttons zeigen
-        if (window._showTrainingBtns) window._showTrainingBtns();
-        showButtons();
-        await sleep(800);
-        
-        // Richtung + Distanz bestimmen
-        const dir = findHitDirection(nextCard);
-        const dist = kipp21CardDistances[nextCard] || 1;
-        const bId = (dir === 'ccw') ? 'btnCCW' : 'btnCW';
-        const bPos = getBtnCenter(bId);
-        
-        // Hand zu Zahlen-Buttons — überlegend
-        const n1P = getBtnCenter('numBtn1');
-        const n2P = getBtnCenter('numBtn2');
-        const n3P = getBtnCenter('numBtn3');
-        const numId = 'numBtn' + dist;
-        const numP = getBtnCenter(numId);
-        
-        setHandPos(n1P.x, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(n1P.x, 740, true);
-        await moveHandSmooth(n1P.x, n1P.y, 500);
-        await sleep(150);
-        await moveHandSmooth(n3P.x, n3P.y, 350);
-        await sleep(150);
-        // Zur richtigen Zahl
-        await moveHandSmooth(numP.x, numP.y, 350);
-        await sleep(250);
-        pulseBtn(numId);
-        await sleep(400);
-        if (aborted()) break;
-        
-        // Hand zu Richtungs-Button
-        await moveHandSmooth(bPos.x, bPos.y, 500);
-        await sleep(250);
-        pulseBtn(bId);
-        await sleep(400);
-        if (aborted()) break;
-        
-        // Hand weg
-        await moveHandSmooth(bPos.x, 740, 500);
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        hideButtons();
-        
-        // Würfel kippt (Klack kommt natürlich)
-        isAnimating = false;
-        kipp21RoundKipps = 0;
-        for (let i = 0; i < dist; i++) {
-          const kDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
-          kippDirection = dir;
-          isAnimating = false;
-          await performKipp(kDir, KIPP_DUR);
-          advanceTopFace();
-          kipp21KippCount++;
-          kipp21RoundKipps++;
-          if (i < dist - 1) await sleep(350);
-        }
-        
-        // Treffer → HIT
-        if (window._checkTrainingResult) {
-          window._checkTrainingResult(nextCard);
-        }
-        await sleep(2500);
-      }
       
-      // ==============================================
-      // ENDE: Tutorial fertig
-      // ==============================================
-      if (aborted()) { replayCleanup(jr); return; }
+      // Blur-Overlay erzeugen
+      const blurOverlay = document.createElement('div');
+      blurOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:28;' +
+        'backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);' +
+        'background:rgba(0,0,0,0);transition:all 0.8s ease-out;pointer-events:none;';
+      document.body.appendChild(blurOverlay);
       
-      await sleep(1500);
+      // "JETZT DU!" Text
+      const jetztDuEl = document.createElement('div');
+      jetztDuEl.textContent = 'JETZT DU!';
+      jetztDuEl.style.cssText = 'position:fixed;top:50%;left:50%;z-index:29;' +
+        'transform:translate(-50%,-50%) scale(0.3);' +
+        'font:bold 52px Arial;color:#e8dcc8;letter-spacing:4px;' +
+        'text-shadow:0 2px 8px rgba(0,0,0,0.7),0 0 20px rgba(42,24,16,0.5);' +
+        'opacity:0;transition:transform 0.6s ease-out, opacity 0.5s ease-out;' +
+        'pointer-events:none;';
+      document.body.appendChild(jetztDuEl);
+      
+      // Blur einblenden
+      requestAnimationFrame(() => {
+        blurOverlay.style.backdropFilter = 'blur(8px)';
+        blurOverlay.style.webkitBackdropFilter = 'blur(8px)';
+        blurOverlay.style.background = 'rgba(0,0,0,0.4)';
+      });
+      
+      await sleep(600);
+      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); return; }
+      
+      // "JETZT DU!" einblenden
+      requestAnimationFrame(() => {
+        jetztDuEl.style.opacity = '1';
+        jetztDuEl.style.transform = 'translate(-50%,-50%) scale(1)';
+      });
+      
+      await sleep(2000);
+      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); return; }
+      
+      // Alles ausblenden
+      jetztDuEl.style.opacity = '0';
+      jetztDuEl.style.transform = 'translate(-50%,-50%) scale(1.3)';
+      blurOverlay.style.backdropFilter = 'blur(0px)';
+      blurOverlay.style.webkitBackdropFilter = 'blur(0px)';
+      blurOverlay.style.background = 'rgba(0,0,0,0)';
+      
+      await sleep(800);
+      blurOverlay.remove();
+      jetztDuEl.remove();
+      
+      // localStorage: erstes Spiel absolviert
+      try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
+      
+      // Tutorial beenden und frisches Spiel starten
       replayCleanup(jr);
+      
+      // Komplett-Reset für echtes Spiel
+      kipp21Generation++;
+      kipp21WithTutorial = false;
+      gamePhase = 'start';
+      startKipp21(false);
     }
     
     // ============================================================
@@ -4426,10 +4336,10 @@
           const kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
           if (!kippDir) break;
           kippDirection = dir;
-          await performKipp(kippDir, 800);
+          await performKipp(kippDir, 1600);
           advanceTopFace();
           kipp21KippCount++;
-          if (i < steps - 1) await sleep(400);
+          if (i < steps - 1) await sleep(800);
         }
         
         // Treffer prüfen
@@ -4549,27 +4459,8 @@
           card.ctx.strokeRect(2, 2, 81, 166);
           card.texture.needsUpdate = true;
           
-          // Rot-Puls Animation
-          const failEl = document.createElement('div');
-          failEl.textContent = 'FAIL';
-          failEl.className = 'hit-text-el';
-          failEl.style.cssText = 'position:absolute;' +
-            'left:' + cardScreenX(cardIdx) + 'px; top:' + cardScreenY(cardIdx) + 'px;' +
-            'transform:translate(-50%,-50%) rotate(-90deg) scale(0.3);' +
-            'font:bold 28px Arial; color:#ff3333;' +
-            'text-shadow:0 1px 4px rgba(0,0,0,0.7);' +
-            'pointer-events:none; opacity:0;' +
-            'transition:transform 0.3s ease-out, opacity 0.3s ease-out;';
-          document.getElementById('uiOverlay').appendChild(failEl);
-          requestAnimationFrame(() => {
-            failEl.style.transform = 'translate(-50%,-50%) rotate(-90deg) scale(1)';
-            failEl.style.opacity = '1';
-          });
-          
-          // Nach 1s: FAIL-Text weg, Karte wieder verdecken
+          // Nach 1.5s: Karte wieder verdecken
           setTimeout(() => {
-            failEl.style.opacity = '0';
-            setTimeout(() => failEl.remove(), 300);
             
             // Karte wieder verdecken (neues Kippziel bei erneutem Klick)
             kipp21CardStates[cardIdx] = 'verdeckt';
@@ -6777,9 +6668,9 @@
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
-    document.getElementById('btnSpielen').addEventListener('click', () => handleStart(false));
+    document.getElementById('btnSpielen').addEventListener('click', () => handleStart(true));
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
-      e.preventDefault(); handleStart(false);
+      e.preventDefault(); handleStart(true);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
@@ -6812,29 +6703,39 @@
       tapIndicatorB.mesh.visible = false;
       // Training-Buttons ausblenden
       if (window._hideTrainingBtns) window._hideTrainingBtns();
-      // Start-Buttons wieder zeigen
-      document.getElementById('startOverlay').style.display = 'block';
-      const btnS = document.getElementById('btnSpielen');
-      const btnD = document.getElementById('btnDemo');
-      btnS.textContent = T.sp;
-      btnD.textContent = T.dm;
-      btnS.disabled = false;
-      btnS.style.opacity = '1';
-      btnD.disabled = false;
-      btnD.style.opacity = '1';
-      // Full state reset so SPIELEN starts clean
+      
+      // Full state reset
       erstesKippziel = null;
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       activeCardIdx = 0;
-      // Würfelzahlen neu mischen und Faces neu aufbauen
       deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
       updateFaceSlots();
       rebuildFaceMat('f0', 1);
       rebuildFaceMat('f1', 1);
       rebuildFaceMat('f2', 1);
       
+      // Würfel zurück zu Q3
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      isAnimating = false;
+      
       gamePhase = 'start';
+      
+      // Direkt neu starten (kein Overlay)
+      let hasPlayed = false;
+      try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
+      if (hasPlayed) {
+        setTimeout(() => { startKipp21(false); }, 300);
+      } else {
+        // Erstes Mal: SPIELEN-Button zeigen
+        document.getElementById('startOverlay').style.display = 'block';
+        const btnS = document.getElementById('btnSpielen');
+        btnS.disabled = false;
+        btnS.style.opacity = '1';
+      }
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
