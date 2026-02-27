@@ -1863,7 +1863,20 @@
       }
       return arr;
     }
-    let deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
+    // Balanced Deck: jede Fläche bekommt genau Display 1,2,3,4
+    function generateBalancedDeck() {
+      const groups = [[1,5,9],[2,6,10],[3,7,11],[4,8,12]]; // Display 1,2,3,4
+      const deck = [];
+      // Für jede der 3 Flächen: aus jeder Gruppe eine Zahl ziehen
+      const pools = groups.map(g => shuffle(g.slice())); // je 3 Werte, einer pro Face
+      for (let face = 0; face < 3; face++) {
+        const faceNums = pools.map(p => p[face]); // eine aus jeder Gruppe
+        shuffle(faceNums); // Slot-Reihenfolge zufällig
+        deck.push(...faceNums);
+      }
+      return deck;
+    }
+    let deck = generateBalancedDeck();
 
     // Slot-Zuordnung: welche Zelle auf welcher Face → deck-Index
     // f0: 7=S1, 4=S2, 2=S3, 3=S4
@@ -2229,10 +2242,16 @@
           void head.offsetWidth;
           head.style.animation = 'sctInflate 1.2s ease-out forwards';
           
-          // 3. Nach Text-Anzeige: SPIELEN-Button
+          // 3. Text ausblenden, dann SPIELEN-Button
           setTimeout(() => {
-            document.getElementById('btnSpielen').disabled = false;
-            document.getElementById('btnSpielen').style.opacity = '1';
+            sct.style.transition = 'opacity 0.5s ease-out';
+            sct.style.opacity = '0';
+            setTimeout(() => {
+              sct.style.display = 'none';
+              sct.style.transition = '';
+              document.getElementById('btnSpielen').disabled = false;
+              document.getElementById('btnSpielen').style.opacity = '1';
+            }, 600);
           }, 1400);
         }, 800);
       }
@@ -2900,7 +2919,7 @@
     ];
     
     // === TUTORIAL REPLAY SYSTEM (Prozedural: Perfect & Random) ===
-    const REPLAY_DECK = [5,11,8,3,6,7,10,12,4,2,1,9];
+    const REPLAY_DECK = [5,2,11,8, 9,6,3,12, 1,10,7,4];
     
     let handEl = null;
     let _handX = 0, _handY = 0;
@@ -3357,7 +3376,7 @@
       renderer.domElement.style.pointerEvents = 'none';
       if (jr) jr.style.pointerEvents = 'none';
       
-      const KIPP_DUR = 1600;
+      const KIPP_DUR = 1000;
       const TARGET_CARD = 4; // Karte mit Eckblick-Icon
       
       // Hilfsfunktionen
@@ -3407,10 +3426,7 @@
       // Suchend nach rechts
       await moveHandSmooth(rightX, cardY_s, 1400);
       await sleep(250);
-      // Zurück nach links
-      await moveHandSmooth(leftX, cardY_s, 1200);
-      await sleep(250);
-      // Zum Ziel (Karte 4)
+      // Zurück — klickt Karte 4 direkt auf dem Rückweg
       await moveHandSmooth(targetX, cardY_s, 700);
       
       // Klick-Pulse auf Karte
@@ -3605,7 +3621,7 @@
         advanceTopFace();
         kipp21KippCount++;
         kipp21RoundKipps++;
-        if (i < dist2 - 1) await sleep(800);
+        if (i < dist2 - 1) await sleep(400);
       }
       
       // Treffer → HIT
@@ -4340,10 +4356,10 @@
           const kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
           if (!kippDir) break;
           kippDirection = dir;
-          await performKipp(kippDir, 1600);
+          await performKipp(kippDir, 1000);
           advanceTopFace();
           kipp21KippCount++;
-          if (i < steps - 1) await sleep(800);
+          if (i < steps - 1) await sleep(400);
         }
         
         // Treffer prüfen
@@ -4457,41 +4473,67 @@
             }
           }, 1500);
         } else {
-          // FAIL — deutlich roter Rand, Karte wird wieder verdeckt
+          // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
           card.ctx.save();
-          // Äußerer dicker roter Rand
           card.ctx.strokeStyle = '#ff0000';
           card.ctx.lineWidth = 8;
           card.ctx.strokeRect(1, 1, 83, 168);
-          // Innerer heller Rand für Kontrast
           card.ctx.strokeStyle = '#ff6666';
           card.ctx.lineWidth = 3;
           card.ctx.strokeRect(5, 5, 75, 160);
           card.ctx.restore();
+          // Zahl 50% transparent übermalen
+          card.ctx.save();
+          card.ctx.globalAlpha = 0.5;
+          card.ctx.fillStyle = '#e8dcc8'; // Hintergrund über Zahl
+          card.ctx.fillRect(15, 10, 55, 60);
+          card.ctx.globalAlpha = 0.5;
+          card.ctx.fillStyle = '#2a1810';
+          card.ctx.font = 'bold 56px Arial';
+          card.ctx.textAlign = 'center';
+          const dNum = displayNum(card.zahl);
+          const numStr = (dNum === 6 || dNum === 9) ? dNum + '.' : String(dNum);
+          card.ctx.fillText(numStr, 42, 55);
+          card.ctx.restore();
           card.texture.needsUpdate = true;
           
-          // Nach 1.5s: Karte wieder verdecken
-          setTimeout(() => {
-            
-            // Karte wieder verdecken (neues Kippziel bei erneutem Klick)
-            kipp21CardStates[cardIdx] = 'verdeckt';
-            card.zahl = null;
-            card.color = null;
-            card.isHit = false;
-            card.isMiss = false;
-            
-            // Verdecktes Aussehen wiederherstellen
-            card.ctx.clearRect(0, 0, 85, 170);
-            card.ctx.drawImage(leerImage, 0, 0, 85, 170);
-            card.texture.needsUpdate = true;
-            
-            // Blick-Icon wieder anzeigen
-            showBlickIcons();
-            
-            // Buttons wieder zeigen
-            kipp21Active = true;
-            showTrainingButtons();
-          }, 1500);
+          // Finde Slot mit passender Farbe im aktuellen Quadranten
+          const cardColorName = card.color.name;
+          const neighborColors = SLOT_NEIGHBOR_COLORS[currentQuadrant];
+          let failSlot = 'S1';
+          for (const [slot, color] of Object.entries(neighborColors)) {
+            if (color === cardColorName) { failSlot = slot; break; }
+          }
+          
+          // Flug zur Farbposition (wie HIT, aber FAIL-Variante)
+          animateCardFly(card, currentQuadrant, failSlot).then(() => {
+            // 1.5s nach Flug: Karte wieder verdecken
+            setTimeout(() => {
+              card.mesh.visible = true; // Mesh zurücksetzen
+              card.mesh.material.transparent = false;
+              card.mesh.material.opacity = 1;
+              card.mesh.material.needsUpdate = true;
+              // Position zurücksetzen
+              card.mesh.position.set(cardStartX + cardIdx * (cardWidth + cardGap), cardY, cardZ);
+              card.mesh.rotation.set(-Math.PI / 2, 0, 0);
+              card.mesh.scale.set(1, 1, 1);
+              
+              kipp21CardStates[cardIdx] = 'verdeckt';
+              card.zahl = null;
+              card.color = null;
+              card.isHit = false;
+              card.isMiss = false;
+              
+              // Verdecktes Aussehen
+              card.ctx.clearRect(0, 0, 85, 170);
+              card.ctx.drawImage(leerImage, 0, 0, 85, 170);
+              card.texture.needsUpdate = true;
+              
+              showBlickIcons();
+              kipp21Active = true;
+              showTrainingButtons();
+            }, 500);
+          });
         }
       }
       window._checkTrainingResult = checkTrainingResult;
@@ -4598,7 +4640,7 @@
         }, 4500);
       } else {
         // Normales Spiel: Deck neu mischen, Faces neu bauen, Recording starten
-        deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
+        deck = generateBalancedDeck();
         updateAllFaceTextures();
       }
       
@@ -6679,9 +6721,16 @@
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
-    document.getElementById('btnSpielen').addEventListener('click', () => handleStart(true));
+    document.getElementById('btnSpielen').addEventListener('click', () => {
+      let hp = false;
+      try { hp = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
+      handleStart(!hp);
+    });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
-      e.preventDefault(); handleStart(true);
+      e.preventDefault();
+      let hp = false;
+      try { hp = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
+      handleStart(!hp);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
@@ -6720,7 +6769,7 @@
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       activeCardIdx = 0;
-      deck = shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
+      deck = generateBalancedDeck();
       updateFaceSlots();
       rebuildFaceMat('f0', 1);
       rebuildFaceMat('f1', 1);
@@ -6735,18 +6784,12 @@
       
       gamePhase = 'start';
       
-      // Direkt neu starten (kein Overlay)
-      let hasPlayed = false;
-      try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
-      if (hasPlayed) {
-        setTimeout(() => { startKipp21(false); }, 300);
-      } else {
-        // Erstes Mal: SPIELEN-Button zeigen
-        document.getElementById('startOverlay').style.display = 'block';
-        const btnS = document.getElementById('btnSpielen');
-        btnS.disabled = false;
-        btnS.style.opacity = '1';
-      }
+      // Start-Overlay IMMER zeigen bei Reset
+      document.getElementById('startOverlay').style.display = 'block';
+      const btnS = document.getElementById('btnSpielen');
+      btnS.textContent = T.sp;
+      btnS.disabled = false;
+      btnS.style.opacity = '1';
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
