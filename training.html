@@ -3646,6 +3646,10 @@
       await sleep(2500);
       if (aborted()) { replayCleanup(jr); return; }
       
+      // 1 Sek extra Pause vor JETZT DU
+      await sleep(1000);
+      if (aborted()) { replayCleanup(jr); return; }
+      
       // ==============================================
       // BLUR + "JETZT DU!" + Spiel starten
       // ==============================================
@@ -4513,7 +4517,7 @@
             // Karte liegt jetzt auf dem Farbfeld
             // Material halbtransparent → Würfelzahl scheint durch
             card.mesh.material.transparent = true;
-            card.mesh.material.opacity = 0.55;
+            card.mesh.material.opacity = 0.35;
             card.mesh.material.depthWrite = false;
             card.mesh.material.needsUpdate = true;
             
@@ -4533,7 +4537,7 @@
             neinHand.style.cssText = 'position:absolute;width:70px;height:auto;pointer-events:none;z-index:25;' +
               'transform-origin:bottom center;opacity:1;';
             neinHand.style.left = (sx - 35) + 'px';
-            neinHand.style.top = (sy - 95) + 'px';
+            neinHand.style.top = (sy - 85) + 'px';
             document.getElementById('uiOverlay').appendChild(neinHand);
             
             // Schwenk links-rechts-links (Nein-Geste)
