@@ -3648,8 +3648,8 @@
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
       }
-      // Warten bis HIT komplett (1500 Delay + Flug 800 + Pulse 250 + Hold 1500 + Fade 300 = 4350)
-      await sleep(4400);
+      // Warten bis HIT komplett + 1s sichtbar (1500 Delay + Flug 800 + Pulse 250 + Hold 1500 + Fade 300 + HIT-Transition 300 + 1000 Hold = 5650)
+      await sleep(5700);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
