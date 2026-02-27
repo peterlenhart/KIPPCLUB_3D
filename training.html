@@ -2190,12 +2190,8 @@
       tick();
     }
     
-    // Nach erstem Frame starten (blockiert nicht Kipp-Animation)
-    try {
-      requestAnimationFrame(() => {
-        try { startChallengeSequence(); } catch(e) { console.error('SCT error:', e); }
-      });
-    } catch(e) { console.error('SCT init error:', e); }
+    // Challenge-Sequenz wird NICHT mehr automatisch gestartet
+    // Stattdessen sequenziell nach Kipp-Animation in checkEnableButtons
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
@@ -2221,18 +2217,24 @@
           return;
         }
         
-        // ERSTES SPIEL: Nur SPIELEN-Button zeigen
-        head.style.animation = 'none'; head.style.opacity = '0';
-        if (best) { best.style.animation = 'none'; best.style.opacity = '0'; }
-        sub.style.animation = 'none'; sub.style.opacity = '0';
+        // ERSTES SPIEL: Sequenziell — erst Text, dann Button
+        // Challenge-Text verstecken (war während Kipp-Anim unsichtbar)
+        sct.style.display = 'none';
         
-        sct.style.opacity = '0';
-        setTimeout(() => { sct.style.display = 'none'; }, 300);
+        // 1. Kurze Pause nach Kipp-Animation
         setTimeout(() => {
-          document.getElementById('btnSpielen').disabled = false;
-          document.getElementById('btnSpielen').style.opacity = '1';
-          // Tutorial + KippPrinzip bleiben unsichtbar
-        }, 500);
+          // 2. "6 HITS = NEXT LEVEL" einblenden (Inflate)
+          head.style.animation = 'none'; head.style.opacity = '0'; head.style.transform = 'scale(0.6)';
+          sct.style.display = 'block'; sct.style.opacity = '1';
+          void head.offsetWidth;
+          head.style.animation = 'sctInflate 1.2s ease-out forwards';
+          
+          // 3. Nach Text-Anzeige: SPIELEN-Button
+          setTimeout(() => {
+            document.getElementById('btnSpielen').disabled = false;
+            document.getElementById('btnSpielen').style.opacity = '1';
+          }, 1400);
+        }, 800);
       }
     }
 
@@ -2955,14 +2957,16 @@
     }
     
     // --- Smooth easeInOut Bewegung ---
+    const HAND_SPEED_MUL = 2.0; // Tutorial-Hand doppelt so langsam
     function moveHandSmooth(toX, toY, durMs) {
+      const actualDur = replayActive ? durMs * HAND_SPEED_MUL : durMs;
       return new Promise(resolve => {
         const sx = _handX;
         const sy = _handY;
         const startT = performance.now();
         function tick() {
           if (!replayActive) { setHandPos(toX, toY); resolve(); return; }
-          const t = Math.min((performance.now() - startT) / durMs, 1);
+          const t = Math.min((performance.now() - startT) / actualDur, 1);
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
           if (t < 1) requestAnimationFrame(tick);
@@ -3507,8 +3511,8 @@
         window._checkTrainingResult(TARGET_CARD);
       }
       
-      // Warten bis FAIL-Animation komplett (1000ms Timeout + Buffer)
-      await sleep(1800);
+      // Warten bis FAIL-Animation komplett (1500ms Rand + Buffer)
+      await sleep(2200);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
@@ -4453,10 +4457,17 @@
             }
           }, 1500);
         } else {
-          // FAIL — rotes Pulsieren, Karte wird wieder verdeckt
-          card.ctx.strokeStyle = '#ff3333';
-          card.ctx.lineWidth = 4;
-          card.ctx.strokeRect(2, 2, 81, 166);
+          // FAIL — deutlich roter Rand, Karte wird wieder verdeckt
+          card.ctx.save();
+          // Äußerer dicker roter Rand
+          card.ctx.strokeStyle = '#ff0000';
+          card.ctx.lineWidth = 8;
+          card.ctx.strokeRect(1, 1, 83, 168);
+          // Innerer heller Rand für Kontrast
+          card.ctx.strokeStyle = '#ff6666';
+          card.ctx.lineWidth = 3;
+          card.ctx.strokeRect(5, 5, 75, 160);
+          card.ctx.restore();
           card.texture.needsUpdate = true;
           
           // Nach 1.5s: Karte wieder verdecken
@@ -4480,7 +4491,7 @@
             // Buttons wieder zeigen
             kipp21Active = true;
             showTrainingButtons();
-          }, 1000);
+          }, 1500);
         }
       }
       window._checkTrainingResult = checkTrainingResult;
