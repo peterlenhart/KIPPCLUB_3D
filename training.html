@@ -2789,7 +2789,7 @@
             // Kurzer Puls am Ziel, dann vanish
             const landTime = performance.now();
             const pulseDur = 250;
-            const holdDur = 2400;
+            const holdDur = 1500;
             const fadeDur = 300;
             function landPulse(now) {
               const elapsed = now - landTime;
@@ -3538,6 +3538,10 @@
       kipp21KippCount++;
       kipp21RoundKipps++;
       
+      // 1.5 Sek Pause nach Kipp — nichts passiert
+      await sleep(1500);
+      if (aborted()) { replayCleanup(jr); return; }
+      
       // Treffer prüfen → FAIL
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
@@ -3644,15 +3648,16 @@
         if (i < dist2 - 1) await sleep(400);
       }
       
-      // Treffer → HIT
+      // 1.5 Sek Pause nach Kipp — nichts passiert
+      await sleep(1500);
+      if (aborted()) { replayCleanup(jr); return; }
+      
+      // Treffer → HIT (Flug 800ms + Pulse 250ms + Hold 1500ms + Fade 300ms = 2850ms)
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
       }
-      await sleep(2500);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // 1 Sek extra Pause vor JETZT DU
-      await sleep(1000);
+      // Warten bis HIT 1.5s sichtbar war + Fade fertig
+      await sleep(2900);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
