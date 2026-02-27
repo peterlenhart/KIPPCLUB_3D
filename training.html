@@ -2471,23 +2471,29 @@
     // KlackCrop als AudioBuffer für präzises Timing (kein Latenz-Delay)
     let klackBuffer = null;
     let audioCtx = null;
+    let klackReady = false;
     function initAudioContext() {
       if (audioCtx) return;
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       fetch('KippKlack.wav')
         .then(r => r.arrayBuffer())
         .then(buf => audioCtx.decodeAudioData(buf))
-        .then(decoded => { klackBuffer = decoded; })
+        .then(decoded => { klackBuffer = decoded; klackReady = true; })
         .catch(e => console.warn('KlackCrop load failed:', e));
     }
+    // AudioContext so früh wie möglich initialisieren (erster Touch irgendwo)
+    function ensureAudioCtx() {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    document.addEventListener('touchstart', ensureAudioCtx, { once: true });
+    document.addEventListener('click', ensureAudioCtx, { once: true });
     
     let audioCtxResumed = false;
     function playKlack() {
+      // Klack spielt IMMER, unabhängig von soundEnabled
       if (!audioCtx || !klackBuffer) return;
-      if (!audioCtxResumed) {
-        if (audioCtx.state === 'suspended') { audioCtx.resume(); return; }
-        audioCtxResumed = true;
-      }
+      if (audioCtx.state === 'suspended') { audioCtx.resume(); }
       const src = audioCtx.createBufferSource();
       src.buffer = klackBuffer;
       src.connect(audioCtx.destination);
@@ -4553,7 +4559,7 @@
               else neinHand.onload = r;
             });
             const handH = neinHand.offsetHeight || neinHand.naturalHeight * (70 / neinHand.naturalWidth);
-            neinHand.style.top = (sy - handH) + 'px';
+            neinHand.style.top = (sy - handH + 140) + 'px';
             neinHand.style.opacity = '1';
             
             // Schwenk links-rechts-links (Nein-Geste)
