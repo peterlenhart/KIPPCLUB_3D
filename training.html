@@ -3494,7 +3494,7 @@
       // Klick auf "1" (falsche Anzahl für den FAIL)
       await moveHandSmooth(numBtn1P.x, numBtn1P.y, 300);
       pulseBtn('numBtn1');
-      highlightNum(1);
+      window._highlightNum(1);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
@@ -3513,15 +3513,15 @@
       await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 400);
       await sleep(200);
       pulseBtn(wrongBtnId);
-      highlightDir(wrongDir);
+      window._highlightDir(wrongDir);
       await sleep(500);
       
       // Hand weg
       await moveHandSmooth(wrongBtnP.x, 740, 500);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
-      highlightNum(null);
-      highlightDir(null);
+      window._highlightNum(null);
+      window._highlightDir(null);
       hideButtons();
       
       // Würfel kippt 1x in falsche Richtung (hier kommt das Klack vom Kipp)
@@ -3606,7 +3606,7 @@
       await moveHandSmooth(correctNumP.x, correctNumP.y, 400);
       await sleep(300);
       pulseBtn(correctNumId);
-      highlightNum(dist2);
+      window._highlightNum(dist2);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
@@ -3614,15 +3614,15 @@
       await moveHandSmooth(correctBtnP.x, correctBtnP.y, 500);
       await sleep(300);
       pulseBtn(correctBtnId);
-      highlightDir(correctDir2);
+      window._highlightDir(correctDir2);
       await sleep(500);
       
       // Hand weg
       await moveHandSmooth(correctBtnP.x, 740, 500);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
-      highlightNum(null);
-      highlightDir(null);
+      window._highlightNum(null);
+      window._highlightDir(null);
       hideButtons();
       
       // Würfel kippt (Klack kommt hier natürlich)
@@ -4632,6 +4632,8 @@
       }
       window._showTrainingBtns = showTrainingButtons;
       window._hideTrainingBtns = hideAllTrainingUI;
+      window._highlightNum = highlightNum;
+      window._highlightDir = highlightDir;
       
       // Button Event-Listener (einmalig)
       if (!window._trainingBtnsInit) {
