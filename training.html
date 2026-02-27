@@ -3538,17 +3538,13 @@
       kipp21KippCount++;
       kipp21RoundKipps++;
       
-      // 1.5 Sek Pause nach Kipp — nichts passiert
-      await sleep(1500);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Treffer prüfen → FAIL
+      // Treffer prüfen → FAIL (1.5s Delay + Flug intern)
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
       }
       
-      // Warten bis FAIL-Animation komplett (Flug 800 + Hold 2000 + Geste ~1500 + X 1200 + Fade 600)
-      await sleep(6500);
+      // Warten bis FAIL-Animation komplett (1500 Delay + Flug 800 + Hold 2000 + Geste ~1500 + X 1200 + Fade 600)
+      await sleep(8000);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
@@ -3648,16 +3644,12 @@
         if (i < dist2 - 1) await sleep(400);
       }
       
-      // 1.5 Sek Pause nach Kipp — nichts passiert
-      await sleep(1500);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Treffer → HIT (Flug 800ms + Pulse 250ms + Hold 1500ms + Fade 300ms = 2850ms)
+      // Treffer → HIT (1.5s Delay + Flug intern)
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
       }
-      // Warten bis HIT 1.5s sichtbar war + Fade fertig
-      await sleep(2900);
+      // Warten bis HIT komplett (1500 Delay + Flug 800 + Pulse 250 + Hold 1500 + Fade 300 = 4350)
+      await sleep(4400);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
@@ -4471,9 +4463,12 @@
           card.texture.needsUpdate = true;
           updateProgressDots(kipp21Done, -1);
           
-          const flyPromise = animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-            showHitText(cardIdx);
-          });
+          // 1.5s Kärtchen liegen lassen, dann fliegen
+          setTimeout(() => {
+            animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
+              showHitText(cardIdx);
+            });
+          }, 1500);
           bereitsGetroffen.add(card.zahl + '_' + card.color.name);
           
           if (kipp21Done >= 6) {
@@ -4522,7 +4517,8 @@
             if (color === cardColorName) { failSlot = slot; break; }
           }
           
-          // Flug zur Farbposition (stayAtTarget — Karte bleibt liegen)
+          // 1.5s Kärtchen liegen lassen, dann fliegen
+          setTimeout(() => {
           animateCardFly(card, currentQuadrant, failSlot, true).then(async () => {
             // Karte liegt jetzt auf dem Farbfeld
             // Material halbtransparent → Würfelzahl scheint durch
@@ -4636,6 +4632,7 @@
             }
             requestAnimationFrame(fadeTick);
           });
+          }, 1500); // Ende 1.5s Verzögerung
         }
       }
       window._checkTrainingResult = checkTrainingResult;
