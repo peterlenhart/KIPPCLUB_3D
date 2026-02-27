@@ -2931,7 +2931,7 @@
     ];
     
     // === TUTORIAL REPLAY SYSTEM (Prozedural: Perfect & Random) ===
-    const REPLAY_DECK = [5,2,11,8, 9,6,3,12, 1,10,7,4];
+    // REPLAY_DECK entfernt — Tutorial nutzt das Intro-Deck
     
     let handEl = null;
     let _handX = 0, _handY = 0;
@@ -4727,8 +4727,7 @@
       
       // Tutorial = Geskriptetes Demo starten
       if (kipp21WithTutorial) {
-        deck = REPLAY_DECK.slice();
-        updateAllFaceTextures();
+        // Deck bleibt vom Intro — keine Änderung
         const replayStartGen = kipp21Generation;
         setTimeout(() => { 
           if (kipp21Generation !== replayStartGen) return; // Reset/Neustart
@@ -4738,9 +4737,7 @@
           });
         }, 4500);
       } else {
-        // Normales Spiel: Deck neu mischen, Faces neu bauen, Recording starten
-        deck = generateBalancedDeck();
-        updateAllFaceTextures();
+        // Wiederkehrender Spieler: Deck vom Intro bleibt
       }
       
       positionResetButton();
