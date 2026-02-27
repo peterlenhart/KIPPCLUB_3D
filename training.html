@@ -2059,7 +2059,15 @@
         function animateKipp() {
           const elapsed = performance.now() - startTime;
           const t = Math.min(elapsed / duration, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          // Schwerkraft-realistisch
+          let ease;
+          if (t < 0.5) {
+            const p = t * 2;
+            ease = p * (2 - p) * 0.5;
+          } else {
+            const p = (t - 0.5) * 2;
+            ease = 0.5 + p * p * 0.5;
+          }
           
           pivotGroup.quaternion.setFromAxisAngle(rotAxis, def.angle * ease);
           
@@ -2077,6 +2085,7 @@
             pivotGroup.remove(cube);
             kipGroup.add(cube);
             scene.remove(pivotGroup);
+            try { playKlack(); } catch(e) {}
             resolve();
           }
         }
@@ -3427,14 +3436,14 @@
       setHandPos(leftX, 740);
       handEl.style.opacity = '1';
       updateHandShadow(leftX, 740, true);
-      await moveHandSmooth(leftX, cardY_s, 800);
+      await moveHandSmooth(leftX, cardY_s, 530);
       if (aborted()) { replayCleanup(jr); return; }
-      await sleep(200);
+      await sleep(150);
       // Suchend nach rechts
-      await moveHandSmooth(rightX, cardY_s, 1400);
-      await sleep(250);
+      await moveHandSmooth(rightX, cardY_s, 930);
+      await sleep(170);
       // Zurück — klickt Karte 4 direkt auf dem Rückweg
-      await moveHandSmooth(targetX, cardY_s, 700);
+      await moveHandSmooth(targetX, cardY_s, 470);
       
       // Klick-Pulse auf Karte
       pulseCard(TARGET_CARD);
@@ -4535,10 +4544,17 @@
             const neinHand = document.createElement('img');
             neinHand.src = 'handsilber.webp';
             neinHand.style.cssText = 'position:absolute;width:70px;height:auto;pointer-events:none;z-index:25;' +
-              'transform-origin:bottom center;opacity:1;';
+              'transform-origin:bottom center;opacity:0;';
             neinHand.style.left = (sx - 35) + 'px';
-            neinHand.style.top = (sy - 85) + 'px';
             document.getElementById('uiOverlay').appendChild(neinHand);
+            // Warten bis Bild geladen, dann Fingerspitze (Unterkante) auf sy setzen
+            await new Promise(r => {
+              if (neinHand.naturalHeight > 0) r();
+              else neinHand.onload = r;
+            });
+            const handH = neinHand.offsetHeight || neinHand.naturalHeight * (70 / neinHand.naturalWidth);
+            neinHand.style.top = (sy - handH) + 'px';
+            neinHand.style.opacity = '1';
             
             // Schwenk links-rechts-links (Nein-Geste)
             const swingDur = 180;
@@ -8346,9 +8362,17 @@
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / duration, 1);
           
-          const eased = progress < 0.5 
-            ? 2 * progress * progress 
-            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          // Schwerkraft-realistisch: Aufkippen bremst ab, über Schwerpunkt → Schwerkraft-Fall
+          // Erste Hälfte (0→45°): ease-out (Push verlangsamt sich am Kipppunkt)
+          // Zweite Hälfte (45°→90°): ease-in (Schwerkraft beschleunigt)
+          let eased;
+          if (progress < 0.5) {
+            const t = progress * 2;
+            eased = t * (2 - t) * 0.5; // ease-out → 0 bis 0.5
+          } else {
+            const t = (progress - 0.5) * 2;
+            eased = 0.5 + t * t * 0.5;  // ease-in (Schwerkraft) → 0.5 bis 1
+          }
           
           if (axis === 'x') {
             pivotGroup.rotation.x = eased * targetRotation;
@@ -8357,7 +8381,7 @@
           }
           
           // Klack kurz VOR dem Aufsetzen (eased > 0.95 ≈ letzten 5% der Bewegung)
-          if (!klackFired && eased > 0.95) {
+          if (!klackFired && eased > 0.88) {
             klackFired = true;
             playKlack();
           }
