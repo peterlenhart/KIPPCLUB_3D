@@ -2218,8 +2218,9 @@
         const best = document.getElementById('sctBest');
         
         // Prüfe ob Spieler schon mal Training gespielt hat
+        // TESTING: immer Tutorial zeigen
         let hasPlayed = false;
-        try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
+        // try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
         
         if (hasPlayed) {
           // WIEDERHOLUNGSSPIEL: Kein Overlay, direkt starten
@@ -3684,7 +3685,8 @@
       jetztDuEl.remove();
       
       // localStorage: erstes Spiel absolviert
-      try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
+      // TESTING: localStorage deaktiviert
+      // try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
       
       // Tutorial beenden und frisches Spiel starten
       replayCleanup(jr);
@@ -6722,15 +6724,11 @@
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
-      let hp = false;
-      try { hp = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
-      handleStart(!hp);
+      handleStart(true);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
-      let hp = false;
-      try { hp = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
-      handleStart(!hp);
+      handleStart(true);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
