@@ -1865,16 +1865,7 @@
     }
     // Balanced Deck: jede Fläche bekommt genau Display 1,2,3,4
     function generateBalancedDeck() {
-      const groups = [[1,5,9],[2,6,10],[3,7,11],[4,8,12]]; // Display 1,2,3,4
-      const deck = [];
-      // Für jede der 3 Flächen: aus jeder Gruppe eine Zahl ziehen
-      const pools = groups.map(g => shuffle(g.slice())); // je 3 Werte, einer pro Face
-      for (let face = 0; face < 3; face++) {
-        const faceNums = pools.map(p => p[face]); // eine aus jeder Gruppe
-        shuffle(faceNums); // Slot-Reihenfolge zufällig
-        deck.push(...faceNums);
-      }
-      return deck;
+      return shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
     }
     let deck = generateBalancedDeck();
 
@@ -2646,16 +2637,15 @@
 
       // TRAINING: displayNum vergleichen (1-4), nicht interne Zahlen (1-12)
       const targetDisplay = displayNum(card.zahl);
-      let hitSlot = null;
       for (const [slot, val] of Object.entries(visible)) {
-        if (displayNum(val) === targetDisplay) { hitSlot = slot; break; }
+        if (displayNum(val) === targetDisplay) {
+          const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][slot];
+          if (neighborColor === card.color.name) {
+            return { slot: slot, quadrant: currentQuadrant };
+          }
+        }
       }
-      if (!hitSlot) return false;
-
-      // Nachbarfarbe prüfen
-      const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][hitSlot];
-      if (neighborColor !== card.color.name) return false;
-      return { slot: hitSlot, quadrant: currentQuadrant };
+      return false;
     }
 
     // =========================
@@ -2799,7 +2789,7 @@
             // Kurzer Puls am Ziel, dann vanish
             const landTime = performance.now();
             const pulseDur = 250;
-            const holdDur = 1400;
+            const holdDur = 2400;
             const fadeDur = 300;
             function landPulse(now) {
               const elapsed = now - landTime;
