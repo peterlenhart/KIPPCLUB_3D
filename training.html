@@ -1789,7 +1789,7 @@
     let spieltisch = null;
     const SPIEL_WIDTH = 8 * 0.15625;
     
-    new THREE.TextureLoader().load('spieltisch_color.webp', (texture) => {
+    new THREE.TextureLoader().load('kippzahltisch.webp', (texture) => {
       const imgAspect = texture.image.height / texture.image.width;
       const height = SPIEL_WIDTH * imgAspect;
       
@@ -1821,6 +1821,63 @@
       
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
+      
+      // Quadratischer Rahmen auf dem Stellrad-Ausschnitt
+      new THREE.TextureLoader().load('quadr_rahmen.webp', (frameTex) => {
+        const frameSize = 0.15625;
+        const frameGeo = new THREE.PlaneGeometry(frameSize, frameSize);
+        const frameMat = new THREE.MeshStandardMaterial({
+          map: frameTex, transparent: true, roughness: 0.3, metalness: 0.6, depthWrite: true
+        });
+        const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+        frameMesh.rotation.x = -Math.PI / 2;
+        frameMesh.position.set(0, yPos + 0.002, 1.21354);
+        frameMesh.renderOrder = 2;
+        scene.add(frameMesh);
+      });
+      
+      // Richtungsbuttons CW (west) und CCW (ost)
+      const dirBtnSize = 0.23148; // 200/3 px
+      const dirBtnY = yPos + 0.003;
+      const dirBtnZ = 1.24248; // Unterkante = Schlitz-Unterkante
+      const dirCwX = -0.48843;
+      const dirCcwX = 0.48843;
+      const DIR_ROT = { 3: 0, 0: -Math.PI/2, 1: Math.PI, 2: Math.PI/2 };
+      
+      const dirBtnGeo = new THREE.PlaneGeometry(dirBtnSize, dirBtnSize);
+      
+      new THREE.TextureLoader().load('richtungcw.webp', (tex) => {
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex, transparent: true, roughness: 0.4, metalness: 0.4, depthWrite: true
+        });
+        window._dirCwMesh = new THREE.Mesh(dirBtnGeo, mat);
+        window._dirCwMesh.rotation.x = -Math.PI / 2;
+        window._dirCwMesh.rotation.z = DIR_ROT[3]; // Start Q3
+        window._dirCwMesh.position.set(dirCwX, dirBtnY, dirBtnZ);
+        window._dirCwMesh.renderOrder = 2;
+        window._dirCwMesh.visible = false; // erst bei Spielphase zeigen
+        scene.add(window._dirCwMesh);
+      });
+      
+      new THREE.TextureLoader().load('richtungccw.webp', (tex) => {
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex, transparent: true, roughness: 0.4, metalness: 0.4, depthWrite: true
+        });
+        window._dirCcwMesh = new THREE.Mesh(dirBtnGeo, mat);
+        window._dirCcwMesh.rotation.x = -Math.PI / 2;
+        window._dirCcwMesh.rotation.z = DIR_ROT[3]; // Start Q3
+        window._dirCcwMesh.position.set(dirCcwX, dirBtnY, dirBtnZ);
+        window._dirCcwMesh.renderOrder = 2;
+        window._dirCcwMesh.visible = false;
+        scene.add(window._dirCcwMesh);
+      });
+      
+      // Rotation der Richtungsbuttons nach Quadrant aktualisieren
+      window._updateDirBtnRotation = function() {
+        const rot = DIR_ROT[currentQuadrant] || 0;
+        if (window._dirCwMesh) window._dirCwMesh.rotation.z = rot;
+        if (window._dirCcwMesh) window._dirCcwMesh.rotation.z = rot;
+      };
     });
 
     // =========================
@@ -1865,7 +1922,12 @@
     }
     // Balanced Deck: jede Fläche bekommt genau Display 1,2,3,4
     function generateBalancedDeck() {
-      return [1,1,2,2, 1,1,3,3, 2,2,3,3]; // Training: f0={1,2}, f1={1,3}, f2={2,3}
+      // TRAINING: 1 sichtbare Zahl pro Face, Rest unsichtbar (4-12)
+      const invisible = shuffle([4,5,6,7,8,9,10,11,12]);
+      const f0 = shuffle([1, invisible[0], invisible[1], invisible[2]]);
+      const f1 = shuffle([2, invisible[3], invisible[4], invisible[5]]);
+      const f2 = shuffle([3, invisible[6], invisible[7], invisible[8]]);
+      return [...f0, ...f1, ...f2];
     }
     let deck = generateBalancedDeck();
 
@@ -1875,9 +1937,8 @@
     // f2: 27=S1, 26=S2, 22=S3, 19=S4
     // deck[0-3] → f0 Slots, deck[4-7] → f1 Slots, deck[8-11] → f2 Slots
 
-    // === TRAINING LEVEL: Display-Mapping 1-4 ===
-    // Intern bleibt der 12er-Würfel, Anzeige: ((n-1) % 4) + 1
-    function displayNum(n) { return ((n - 1) % 4) + 1; }
+    // === TRAINING: Zahlen 1-3 sichtbar, 4-12 unsichtbar auf Würfel ===
+    function displayNum(n) { return n; }
     
     // Canvas-Textur: 3x3 Gitter, slotMap = { "row,col": { val, rot } }
     function createFaceTexture(slotMap, imgRotation, numberAlpha) {
@@ -1908,6 +1969,7 @@
       for (const key in slotMap) {
         const [r, c] = key.split(',').map(Number);
         const { val, rot } = slotMap[key];
+        if (val > 3) continue; // TRAINING: 4-12 unsichtbar
         const cx = c * cell + cell / 2;
         const cy = r * cell + cell / 2;
         ctx.save();
@@ -3648,8 +3710,8 @@
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
       }
-      // Warten bis HIT komplett + 1s sichtbar (1500 Delay + Flug 800 + Pulse 250 + Hold 1500 + Fade 300 + HIT-Transition 300 + 1000 Hold = 5650)
-      await sleep(5700);
+      // Warten bis HIT komplett (1500 Delay + Flug 800 + Pulse 250 + Hold 1500 + Fade 300 = 4350)
+      await sleep(4400);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
@@ -6410,6 +6472,7 @@
 
       currentQuadrant = def.toQ;
       advanceTopFace();
+      if (window._updateDirBtnRotation) window._updateDirBtnRotation();
     }
 
     // Show HIT/MISS on verdecktes mesh (no proceedToNextRound timer)
