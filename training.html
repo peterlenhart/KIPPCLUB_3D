@@ -5122,6 +5122,7 @@
           const off = faceOff[tF];
           slots.forEach((slot, i) => {
             const zahl = deck[off + i];
+            if (!visibleDeckIndices.has(off + i)) return; // unsichtbare Zahl
             const farbe = SLOT_NEIGHBOR_COLORS[tQ][slot];
             const key = zahl + '_' + farbe;
             const dKey = displayNum(zahl) + 'd_' + farbe;
@@ -5166,6 +5167,7 @@
           const off = faceOff[tF];
           slots.forEach((slot, i) => {
             const zahl = deck[off + i];
+            if (!visibleDeckIndices.has(off + i)) return; // unsichtbare Zahl
             const farbe = SLOT_NEIGHBOR_COLORS[tQ][slot];
             const key = zahl + '_' + farbe;
             // Nur exakte interne Kombi ausschließen, nicht Display-Äquivalente
@@ -5420,6 +5422,14 @@
       }
       return visible;
     }
+    // Alle 6 sichtbaren Zahlen über ALLE Faces (für Kippziel-Filter)
+    function getAllVisibleZahlen() {
+      const visible = new Set();
+      for (let i = 0; i < 12; i++) {
+        if (visibleDeckIndices.has(i)) visible.add(deck[i]);
+      }
+      return visible;
+    }
 
     function fillCardWithKombi(idx, zahl, colorObj) {
       const card = gameCards[idx];
@@ -5470,13 +5480,12 @@
     }
     
 
-    function generateNeueKombiOhne(ausschlussSet, zahlenFilter, visibleZahlen) {
-      // zahlenFilter: 'open' = nur sichtbare Zahlen, 'closed' = nur NICHT sichtbare, undefined = alle
-      // visibleZahlen: Set der aktuell sichtbaren Zahlen (nur nötig wenn zahlenFilter gesetzt)
+    function generateNeueKombiOhne(ausschlussSet) {
+      // TRAINING: NUR sichtbare Zahlen (Kantenpaare) erlauben
+      const allVisible = getAllVisibleZahlen();
       const alleMoeglichenKombis = [];
       for (let z = 1; z <= 12; z++) {
-        if (zahlenFilter === 'open' && visibleZahlen && !visibleZahlen.has(z)) continue;
-        if (zahlenFilter === 'closed' && visibleZahlen && visibleZahlen.has(z)) continue;
+        if (!allVisible.has(z)) continue; // unsichtbare Zahlen raus
         
         for (const colorObj of GAME_COLORS) {
           const key = z + '_' + colorObj.name;
@@ -5521,17 +5530,8 @@
       // ERST: NEUES KÄRTCHEN GENERIEREN
       if (activeCardIdx < 4) {
         const erfuellteKombis = getCurrentErfuellteKombis();
-        const visibleZahlen = getCurrentVisibleZahlen();
-        let zahlenFilter;
-        if (openKippzielPositions.has(activeCardIdx) && offeneKippzieleVergeben < 2) {
-          zahlenFilter = 'open';
-        } else {
-          zahlenFilter = 'closed';
-        }
-        let neueKombi = generateNeueKombiOhne(erfuellteKombis, zahlenFilter, visibleZahlen);
-        if (!neueKombi) neueKombi = generateNeueKombiOhne(erfuellteKombis); // Fallback
+        let neueKombi = generateNeueKombiOhne(erfuellteKombis);
         if (neueKombi) {
-          if (visibleZahlen.has(neueKombi.zahl)) offeneKippzieleVergeben++;
           fillCardWithKombi(activeCardIdx, neueKombi.zahl, neueKombi.color);
         }
       }
@@ -7143,12 +7143,8 @@
         } else {
           // Fallback falls kein Kippziel vorgemerkt
           const erfuellteKombis = getCurrentErfuellteKombis();
-          const visibleZahlen = getCurrentVisibleZahlen();
-          const zahlenFilter = openKippzielPositions.has(0) && offeneKippzieleVergeben < 2 ? 'open' : 'closed';
-          let neueKombi = generateNeueKombiOhne(erfuellteKombis, zahlenFilter, visibleZahlen);
-          if (!neueKombi) neueKombi = generateNeueKombiOhne(erfuellteKombis);
+          let neueKombi = generateNeueKombiOhne(erfuellteKombis);
           if (neueKombi) {
-            if (visibleZahlen.has(neueKombi.zahl)) offeneKippzieleVergeben++;
             fillCardWithKombi(0, neueKombi.zahl, neueKombi.color);
           }
         }
@@ -7256,29 +7252,11 @@
       schauenWobbleActive = false; isDemoAnimating = false;
       handDemo.visible = false;
       
-      // Kippziel generieren mit open/closed Filter
+      // Kippziel generieren (nur sichtbare Zahlen)
       const erfuellteKombis = getCurrentErfuellteKombis();
-      const visibleZahlen = getCurrentVisibleZahlen();
       
-      let zahlenFilter = undefined;
-      if (openKippzielPositions.has(activeCardIdx) && offeneKippzieleVergeben < 2) {
-        zahlenFilter = 'open';
-      } else {
-        zahlenFilter = 'closed';
-      }
-      
-      erstesKippziel = generateNeueKombiOhne(erfuellteKombis, zahlenFilter, visibleZahlen);
-      
-      // Fallback: wenn Filter nichts liefert, ohne Filter versuchen
-      if (!erstesKippziel) {
-        erstesKippziel = generateNeueKombiOhne(erfuellteKombis);
-      }
+      erstesKippziel = generateNeueKombiOhne(erfuellteKombis);
       if (!erstesKippziel) return;
-      
-      // Tracking: war es eine sichtbare Zahl?
-      if (visibleZahlen.has(erstesKippziel.zahl)) {
-        offeneKippzieleVergeben++;
-      }
       
       // Farb-Image + Zahl auf verdecktes Canvas zeichnen
       const img = colorTargetImages[erstesKippziel.color.name];
