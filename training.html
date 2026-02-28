@@ -1925,7 +1925,30 @@
     // deck[0-3] → f0 Slots, deck[4-7] → f1 Slots, deck[8-11] → f2 Slots
 
     // === TRAINING: 3 Kantenpaare sichtbar (6 von 12 Zahlen, alle 1-12 möglich) ===
-    function displayNum(n) { return n; }
+    function displayNum(n) { return (n === 6 || n === 9) ? n + '.' : n.toString(); }
+    // Zeichnet Text zentriert, bei 2+ Zeichen enger spationiert
+    function drawCenteredText(ctx, txt, cx, cy, size) {
+      size = size || 56;
+      ctx.font = 'bold ' + size + 'px Arial';
+      if (txt.length <= 1) {
+        ctx.fillText(txt, cx, cy);
+      } else {
+        // Enger spationieren: Zeichen einzeln mit reduziertem Abstand
+        const spacing = -4; // negative = enger
+        const widths = [];
+        for (let i = 0; i < txt.length; i++) widths.push(ctx.measureText(txt[i]).width);
+        let totalW = 0;
+        for (let i = 0; i < widths.length; i++) totalW += widths[i];
+        totalW += spacing * (txt.length - 1);
+        let x = cx - totalW / 2;
+        ctx.textAlign = 'left';
+        for (let i = 0; i < txt.length; i++) {
+          ctx.fillText(txt[i], x, cy);
+          x += widths[i] + spacing;
+        }
+        ctx.textAlign = 'center';
+      }
+    }
     
     // Canvas-Textur: 3x3 Gitter, slotMap = { "row,col": { val, rot } }
     function createFaceTexture(slotMap, imgRotation, numberAlpha) {
@@ -1963,7 +1986,7 @@
         ctx.translate(cx, cy);
         ctx.rotate(rot);
         const dVal = displayNum(val);
-        ctx.fillText(dVal.toString(), 0, 0);
+        drawCenteredText(ctx, dVal, 0, 0);
         ctx.restore();
       }
 
@@ -5421,7 +5444,7 @@
       card.ctx.font = 'bold 56px Arial';
       card.ctx.textAlign = 'center';
       card.ctx.textBaseline = 'middle';
-      card.ctx.fillText(displayText, 42, 42);
+      drawCenteredText(card.ctx, displayText, 42, 42);
       
       card.texture.needsUpdate = true;
       card.mesh.material.map = card.texture;
@@ -5938,7 +5961,7 @@
         verdecktesCtx.font = 'bold 56px Arial';
         verdecktesCtx.textAlign = 'center';
         verdecktesCtx.textBaseline = 'middle';
-        verdecktesCtx.fillText(displayText, 42, 42);
+        drawCenteredText(verdecktesCtx, displayText, 42, 42);
         verdecktesCanvasTex.needsUpdate = true;
       }
       drawBeispiel();
@@ -6257,7 +6280,7 @@
       verdecktesCtx.font = 'bold 56px Arial';
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
-      verdecktesCtx.fillText(displayText, 42, 42);
+      drawCenteredText(verdecktesCtx, displayText, 42, 42);
       // Nuclear: fresh texture object — Three.js cannot cache what it never saw
       const freshTex = new THREE.CanvasTexture(verdecktesCanvas);
       verdecktesMat.map = freshTex;
@@ -6433,7 +6456,7 @@
           verdecktesCtx.font = 'bold 56px Arial';
           verdecktesCtx.textAlign = 'center';
           verdecktesCtx.textBaseline = 'middle';
-          verdecktesCtx.fillText(displayText, 42, 42);
+          drawCenteredText(verdecktesCtx, displayText, 42, 42);
         }
         verdecktesCtx.strokeStyle = '#FF2020';
         verdecktesCtx.lineWidth = 2;
@@ -7269,7 +7292,7 @@
       verdecktesCtx.font = 'bold 56px Arial';
       verdecktesCtx.textAlign = 'center';
       verdecktesCtx.textBaseline = 'middle';
-      verdecktesCtx.fillText(displayText, 42, 42);
+      drawCenteredText(verdecktesCtx, displayText, 42, 42);
       verdecktesCanvasTex.needsUpdate = true;
       
       // Puls stoppen, volle Deckkraft
@@ -7513,7 +7536,7 @@
           verdecktesCtx.font = 'bold 56px Arial';
           verdecktesCtx.textAlign = 'center';
           verdecktesCtx.textBaseline = 'middle';
-          verdecktesCtx.fillText(displayText, 42, 42);
+          drawCenteredText(verdecktesCtx, displayText, 42, 42);
         }
         
         // Roter Rahmen
@@ -8666,7 +8689,7 @@
       card.ctx.font = 'bold 56px Arial';
       card.ctx.textAlign = 'center';
       card.ctx.textBaseline = 'middle';
-      card.ctx.fillText(displayText, 42, 42);
+      drawCenteredText(card.ctx, displayText, 42, 42);
       card.texture.needsUpdate = true;
       card.mesh.scale.set(1, 1, 1);
       card.mesh.material.opacity = 1.0;
