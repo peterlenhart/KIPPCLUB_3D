@@ -1812,95 +1812,110 @@
         scene.add(frameMesh);
       });
       
-      // === ZAHLENBAND (gebogenes Band mit Zahlen 1-6) ===
+      // === 3D STELLRAD (Zylinder mit Fläche + Rand-Texturen) ===
       // Durchmesser = stellradflaeche.webp = 1654px @3x = 551px @1x
-      const BAND_RADIUS = (551 / 2) * (2.5 / 720); // ≈ 0.9566 units
-      const BAND_HEIGHT = 0.15625; // 1 Zelle = 45px (Bandbreite)
-      const BAND_Z = 1.21354; // Schlitz-Mitte Z (= quadr_rahmen Z)
-      const BAND_CENTER_Y = yPos - BAND_RADIUS; // Zentrum unter Kippzahltisch
+      const STELLRAD_RADIUS = (551 / 2) * (2.5 / 720); // ≈ 0.9566 units
+      const STELLRAD_THICKNESS = 0.15625; // 1 Zelle = sichtbare Breite im Schlitz
+      const STELLRAD_Z = 1.21354; // Schlitz-Mitte Z (= quadr_rahmen Z)
+      const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS; // Zentrum unter Kippzahltisch
       
-      // Canvas-Textur mit Zahlen 1-6
-      const bandCvs = document.createElement('canvas');
-      bandCvs.width = 1200; // 200px pro Abschnitt
-      bandCvs.height = 200;
-      const bCtx = bandCvs.getContext('2d');
+      // Deckflächen-Textur (kreisförmige Metallfläche)
+      const stellradFlaecheTex = new THREE.TextureLoader().load('stellradflaeche.webp');
       
-      // Metallischer Hintergrund
-      const bGrad = bCtx.createLinearGradient(0, 0, 0, 200);
-      bGrad.addColorStop(0, '#5a5a5a');
-      bGrad.addColorStop(0.15, '#787878');
-      bGrad.addColorStop(0.4, '#909090');
-      bGrad.addColorStop(0.5, '#989898');
-      bGrad.addColorStop(0.6, '#909090');
-      bGrad.addColorStop(0.85, '#787878');
-      bGrad.addColorStop(1, '#5a5a5a');
-      bCtx.fillStyle = bGrad;
-      bCtx.fillRect(0, 0, 1200, 200);
-      
-      // Feine Trennlinien
-      bCtx.strokeStyle = '#3a3a3a';
-      bCtx.lineWidth = 2;
-      for (let i = 1; i < 6; i++) {
-        bCtx.beginPath();
-        bCtx.moveTo(i * 200, 0);
-        bCtx.lineTo(i * 200, 200);
-        bCtx.stroke();
-      }
-      
-      // Zahlen 1-6 zeichnen
-      bCtx.font = 'bold 110px Arial';
-      bCtx.textAlign = 'center';
-      bCtx.textBaseline = 'middle';
-      for (let i = 0; i < 6; i++) {
-        const cx = i * 200 + 100;
-        // Schatten
-        bCtx.fillStyle = 'rgba(0,0,0,0.5)';
-        bCtx.fillText((i + 1).toString(), cx + 2, 104);
-        // Zahl hell
-        bCtx.fillStyle = '#e0e0e0';
-        bCtx.fillText((i + 1).toString(), cx, 100);
-      }
-      
-      const bandTex = new THREE.CanvasTexture(bandCvs);
-      
-      // Offener Zylinder (nur Mantelfläche)
-      const bandGeo = new THREE.CylinderGeometry(
-        BAND_RADIUS, BAND_RADIUS, BAND_HEIGHT, 64, 1, true
-      );
-      const bandMat = new THREE.MeshBasicMaterial({
-        map: bandTex, side: THREE.DoubleSide
-      });
-      const bandMesh = new THREE.Mesh(bandGeo, bandMat);
-      bandMesh.rotation.z = Math.PI / 2; // Achse entlang X (horizontal)
-      
-      const bandGroup = new THREE.Group();
-      bandGroup.position.set(0, BAND_CENTER_Y, BAND_Z);
-      bandGroup.add(bandMesh);
-      scene.add(bandGroup);
-      
-      // UV-Offset: Bei CylinderGeo liegt U=0 bei lokalem +Z.
-      // Nach rotation.z=PI/2 ist +Z immer noch +Z.
-      // Oben (max Y) entspricht lokalem +X = theta=PI/2 = U=0.25.
-      // Mitte von Zahl 1 = U=1/12 ≈ 0.083.
-      // Offset = (0.25 - 0.083) × 2π = PI/3
-      const BAND_UV_OFFSET = -Math.PI / 3;
-      bandGroup.rotation.x = BAND_UV_OFFSET;
-      
-      window._zahlenband = bandGroup;
-      window._zahlenbandNumber = 1;
-      window._zahlenbandUVOffset = BAND_UV_OFFSET;
-      window._zahlenbandStep = Math.PI / 3; // 60° pro Zahl
-      
-      // Hilfsfunktion: Zahl N (1-6) anzeigen
-      window._setZahlenbandNumber = function(n) {
-        if (!window._zahlenband) return;
-        n = Math.max(1, Math.min(6, n));
-        window._zahlenbandNumber = n;
-        window._zahlenband.rotation.x = BAND_UV_OFFSET + (n - 1) * (Math.PI / 3);
+      // Rand-Bild laden, dann Mantel-Canvas mit Zahlen erstellen
+      const stellradRandImg = new Image();
+      stellradRandImg.onload = function() {
+        // Mantel-Canvas: Stellradrand-Textur gekachelt + Zahlen 1-6
+        const mantelCvs = document.createElement('canvas');
+        const SEC_W = 400; // px pro Zahl-Sektion
+        mantelCvs.width = SEC_W * 6; // 2400px gesamt
+        mantelCvs.height = 200;
+        const mCtx = mantelCvs.getContext('2d');
+        
+        // Stellradrand horizontal kacheln, vertikal gestreckt
+        const tileW = stellradRandImg.width; // 540px
+        for (let x = 0; x < mantelCvs.width; x += tileW) {
+          const drawW = Math.min(tileW, mantelCvs.width - x);
+          mCtx.drawImage(stellradRandImg, 0, 0, drawW, stellradRandImg.height,
+                         x, 0, drawW, mantelCvs.height);
+        }
+        
+        // Feine Trennlinien zwischen Sektionen
+        mCtx.strokeStyle = 'rgba(0,0,0,0.3)';
+        mCtx.lineWidth = 2;
+        for (let i = 1; i < 6; i++) {
+          mCtx.beginPath();
+          mCtx.moveTo(i * SEC_W, 0);
+          mCtx.lineTo(i * SEC_W, mantelCvs.height);
+          mCtx.stroke();
+        }
+        
+        // Zahlen 1-6 zentriert in jeder Sektion
+        mCtx.font = 'bold 120px Arial';
+        mCtx.textAlign = 'center';
+        mCtx.textBaseline = 'middle';
+        for (let i = 0; i < 6; i++) {
+          const cx = i * SEC_W + SEC_W / 2;
+          // Schatten
+          mCtx.fillStyle = 'rgba(0,0,0,0.6)';
+          mCtx.fillText((i + 1).toString(), cx + 2, 104);
+          // Helle Zahl
+          mCtx.fillStyle = '#e8e8e8';
+          mCtx.fillText((i + 1).toString(), cx, 100);
+        }
+        
+        const mantelTex = new THREE.CanvasTexture(mantelCvs);
+        
+        // Geschlossener Zylinder: Mantel + 2 Deckflächen
+        // CylinderGeometry groups: [0]=Mantel, [1]=Deck oben, [2]=Deck unten
+        const stellradGeo = new THREE.CylinderGeometry(
+          STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_THICKNESS, 64, 1, false
+        );
+        
+        // Mantel-Material (Rand mit Zahlen)
+        const mantelMat = new THREE.MeshStandardMaterial({
+          map: mantelTex, side: THREE.DoubleSide,
+          roughness: 0.4, metalness: 0.5
+        });
+        // Deckflächen-Material (kreisförmige Stellrad-Fläche)
+        const capMat = new THREE.MeshStandardMaterial({
+          map: stellradFlaecheTex, transparent: true,
+          roughness: 0.3, metalness: 0.6
+        });
+        
+        // Mesh mit 3 Materialien
+        const stellradMesh = new THREE.Mesh(stellradGeo, [mantelMat, capMat, capMat]);
+        stellradMesh.rotation.z = Math.PI / 2; // Zylinderachse entlang X (horizontal)
+        
+        const stellradGroup = new THREE.Group();
+        stellradGroup.position.set(0, STELLRAD_CENTER_Y, STELLRAD_Z);
+        stellradGroup.add(stellradMesh);
+        scene.add(stellradGroup);
+        
+        // UV-Offset: Zahl 1 oben sichtbar im Schlitz
+        // Bei CylinderGeo U=0 bei +Z, nach rot.z=PI/2 bleibt +Z.
+        // Oben (max Y) = theta=PI/2 = U=0.25. Mitte Zahl 1 = U=1/12 ≈ 0.083.
+        const STELLRAD_UV_OFFSET = -Math.PI / 3;
+        stellradGroup.rotation.x = STELLRAD_UV_OFFSET;
+        
+        window._zahlenband = stellradGroup;
+        window._zahlenbandNumber = 1;
+        window._zahlenbandUVOffset = STELLRAD_UV_OFFSET;
+        window._zahlenbandStep = Math.PI / 3; // 60° pro Zahl
+        
+        // Hilfsfunktion: Zahl N (1-6) im Schlitz anzeigen
+        window._setZahlenbandNumber = function(n) {
+          if (!window._zahlenband) return;
+          n = Math.max(1, Math.min(6, n));
+          window._zahlenbandNumber = n;
+          window._zahlenband.rotation.x = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
+        };
+        
+        console.log('[STELLRAD 3D] R=' + STELLRAD_RADIUS.toFixed(4) + 
+          ', centerY=' + STELLRAD_CENTER_Y.toFixed(4) + ', Z=' + STELLRAD_Z +
+          ', thickness=' + STELLRAD_THICKNESS);
       };
-      
-      console.log('[ZAHLENBAND] R=' + BAND_RADIUS.toFixed(4) + 
-        ', centerY=' + BAND_CENTER_Y.toFixed(4) + ', Z=' + BAND_Z);
+      stellradRandImg.src = 'stellradrand.webp';
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
       const dirBtnY = yPos + 0.003;
