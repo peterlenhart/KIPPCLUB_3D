@@ -1812,27 +1812,29 @@
         scene.add(frameMesh);
       });
       
-      // === 3D STELLRAD (Zylinder mit Fläche + Rand-Texturen) ===
-      // Durchmesser = stellradflaeche.webp = 1654px @3x = 551px @1x
-      const STELLRAD_RADIUS = (551 / 2) * (2.5 / 720); // ≈ 0.9566 units
-      const STELLRAD_THICKNESS = 0.15625; // 1 Zelle = sichtbare Breite im Schlitz
+      // === 3D STELLRAD (erkennbares Rad das durch den Schlitz ragt) ===
+      // Radius so gewählt dass 1 Zahl im 42×42px Ausschnitt lesbar ist
+      // und die Krümmung des Rades sichtbar ist
+      const STELLRAD_RADIUS = 0.25; // ~1.6 Zellen – sichtbare Krümmung
+      const STELLRAD_THICKNESS = 0.15625; // 1 Zelle Dicke (entlang X-Achse)
       const STELLRAD_Z = 1.21354; // Schlitz-Mitte Z (= quadr_rahmen Z)
-      const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS; // Zentrum unter Kippzahltisch
+      const STELLRAD_PROTRUSION = 0.055; // Rad ragt 0.055 über Oberfläche
+      const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS + STELLRAD_PROTRUSION;
       
-      // Deckflächen-Textur (kreisförmige Metallfläche)
+      // Deckflächen-Textur (kreisförmige geschliffene Metallfläche)
       const stellradFlaecheTex = new THREE.TextureLoader().load('stellradflaeche.webp');
       
       // Rand-Bild laden, dann Mantel-Canvas mit Zahlen erstellen
       const stellradRandImg = new Image();
       stellradRandImg.onload = function() {
-        // Mantel-Canvas: Stellradrand-Textur gekachelt + Zahlen 1-6
+        // === Mantel-Canvas: Stellradrand-Textur + Zahlen 1-6 ===
         const mantelCvs = document.createElement('canvas');
         const SEC_W = 400; // px pro Zahl-Sektion
-        mantelCvs.width = SEC_W * 6; // 2400px gesamt
-        mantelCvs.height = 200;
+        mantelCvs.width = SEC_W * 6; // 2400px gesamt (6 Sektionen)
+        mantelCvs.height = 300; // Höher für bessere Auflösung
         const mCtx = mantelCvs.getContext('2d');
         
-        // Stellradrand horizontal kacheln, vertikal gestreckt
+        // Stellradrand-Textur horizontal kacheln als Hintergrund
         const tileW = stellradRandImg.width; // 540px
         for (let x = 0; x < mantelCvs.width; x += tileW) {
           const drawW = Math.min(tileW, mantelCvs.width - x);
@@ -1840,9 +1842,9 @@
                          x, 0, drawW, mantelCvs.height);
         }
         
-        // Feine Trennlinien zwischen Sektionen
-        mCtx.strokeStyle = 'rgba(0,0,0,0.3)';
-        mCtx.lineWidth = 2;
+        // Feine vertikale Trennlinien zwischen Sektionen
+        mCtx.strokeStyle = 'rgba(0,0,0,0.25)';
+        mCtx.lineWidth = 3;
         for (let i = 1; i < 6; i++) {
           mCtx.beginPath();
           mCtx.moveTo(i * SEC_W, 0);
@@ -1850,42 +1852,42 @@
           mCtx.stroke();
         }
         
-        // Zahlen 1-6 zentriert in jeder Sektion
-        mCtx.font = 'bold 120px Arial';
+        // Zahlen 1-6 groß und lesbar in jeder Sektion
+        mCtx.font = 'bold 190px Arial';
         mCtx.textAlign = 'center';
         mCtx.textBaseline = 'middle';
         for (let i = 0; i < 6; i++) {
           const cx = i * SEC_W + SEC_W / 2;
-          // Schatten
-          mCtx.fillStyle = 'rgba(0,0,0,0.6)';
-          mCtx.fillText((i + 1).toString(), cx + 2, 104);
-          // Helle Zahl
-          mCtx.fillStyle = '#e8e8e8';
-          mCtx.fillText((i + 1).toString(), cx, 100);
+          // Dunkelgrauer Schatten
+          mCtx.fillStyle = 'rgba(0,0,0,0.7)';
+          mCtx.fillText((i + 1).toString(), cx + 3, 155);
+          // Helle Zahl (Silber)
+          mCtx.fillStyle = '#e0e0e0';
+          mCtx.fillText((i + 1).toString(), cx, 150);
         }
         
         const mantelTex = new THREE.CanvasTexture(mantelCvs);
         
-        // Geschlossener Zylinder: Mantel + 2 Deckflächen
-        // CylinderGeometry groups: [0]=Mantel, [1]=Deck oben, [2]=Deck unten
+        // Geschlossener Zylinder: [0]=Mantel, [1]=Deck oben, [2]=Deck unten
         const stellradGeo = new THREE.CylinderGeometry(
           STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_THICKNESS, 64, 1, false
         );
         
-        // Mantel-Material (Rand mit Zahlen)
+        // Mantel-Material (Rändelung + Zahlen)
         const mantelMat = new THREE.MeshStandardMaterial({
           map: mantelTex, side: THREE.DoubleSide,
-          roughness: 0.4, metalness: 0.5
+          roughness: 0.35, metalness: 0.6
         });
-        // Deckflächen-Material (kreisförmige Stellrad-Fläche)
+        // Deckflächen-Material (geschliffenes Metall-Kreismuster)
         const capMat = new THREE.MeshStandardMaterial({
           map: stellradFlaecheTex, transparent: true,
-          roughness: 0.3, metalness: 0.6
+          roughness: 0.25, metalness: 0.7
         });
         
-        // Mesh mit 3 Materialien
+        // Mesh mit 3 Material-Gruppen
         const stellradMesh = new THREE.Mesh(stellradGeo, [mantelMat, capMat, capMat]);
         stellradMesh.rotation.z = Math.PI / 2; // Zylinderachse entlang X (horizontal)
+        stellradMesh.castShadow = true;
         
         const stellradGroup = new THREE.Group();
         stellradGroup.position.set(0, STELLRAD_CENTER_Y, STELLRAD_Z);
@@ -1893,12 +1895,14 @@
         scene.add(stellradGroup);
         
         // UV-Offset: Zahl 1 oben sichtbar im Schlitz
-        // Bei CylinderGeo U=0 bei +Z, nach rot.z=PI/2 bleibt +Z.
+        // CylinderGeo: U=0 bei +Z. Nach rot.z=PI/2, +Z bleibt +Z.
         // Oben (max Y) = theta=PI/2 = U=0.25. Mitte Zahl 1 = U=1/12 ≈ 0.083.
+        // Offset = (0.25 - 0.083) × 2π ≈ PI/3
         const STELLRAD_UV_OFFSET = -Math.PI / 3;
         stellradGroup.rotation.x = STELLRAD_UV_OFFSET;
         
         window._zahlenband = stellradGroup;
+        window._stellradMesh = stellradMesh; // Für Raycasting
         window._zahlenbandNumber = 1;
         window._zahlenbandUVOffset = STELLRAD_UV_OFFSET;
         window._zahlenbandStep = Math.PI / 3; // 60° pro Zahl
@@ -1911,9 +1915,9 @@
           window._zahlenband.rotation.x = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
         };
         
-        console.log('[STELLRAD 3D] R=' + STELLRAD_RADIUS.toFixed(4) + 
-          ', centerY=' + STELLRAD_CENTER_Y.toFixed(4) + ', Z=' + STELLRAD_Z +
-          ', thickness=' + STELLRAD_THICKNESS);
+        console.log('[STELLRAD 3D] R=' + STELLRAD_RADIUS +
+          ', centerY=' + STELLRAD_CENTER_Y.toFixed(4) +
+          ', Z=' + STELLRAD_Z + ', protrusion=' + STELLRAD_PROTRUSION);
       };
       stellradRandImg.src = 'stellradrand.webp';
       // Richtungsbuttons CW (west) und CCW (ost)
@@ -4447,7 +4451,7 @@
       
       // === TRAINING: Zwei-Gruppen Input-State ===
       let selectedDir = null;   // 'cw' oder 'ccw'
-      let selectedNum = null;   // 1, 2 oder 3
+      let selectedNum = null;   // 1-6 (via Stellrad)
       let firstGroup = null;    // 'dir' oder 'num' — welche Gruppe zuerst gewählt wurde
       
       const NUM_NORMAL = 'border-radius:8px; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); border:2px solid #8a7a66; color:#2a1810; box-shadow:0 2px 4px rgba(0,0,0,0.4);';
@@ -4468,6 +4472,8 @@
         highlightNum(null);
         tapIndicatorA.mesh.visible = false;
         tapIndicatorB.mesh.visible = false;
+        // Stellrad auf 1 zurücksetzen
+        if (window._setZahlenbandNumber) window._setZahlenbandNumber(1);
       }
       
       async function executeTrainingKipp() {
@@ -7413,21 +7419,66 @@
     const vkMouse = new THREE.Vector2();
     let lastTouchPos = null;
     
+    // === STELLRAD SWIPE STATE ===
+    let stellradSwipeActive = false;
+    let stellradSwipeStartX = 0;
+    let stellradSwipeStartNum = 1;
+    const STELLRAD_SWIPE_THRESHOLD = 30; // px pro Zahlenschritt
+    
     renderer.domElement.addEventListener('touchstart', (e) => {
       if (replayActive) return; // Tutorial: keine Interaktion
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
-      // KIPP 21: Card tap detection
+      // KIPP 21: Card tap detection + Stellrad swipe
       if (gamePhase === 'kipp21' && kipp21Active) {
         dismissKippenWarning();
-        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        const touch = e.touches[0];
+        lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        
+        // Prüfe ob Touch auf dem Stellrad liegt (Raycasting)
+        if (window._stellradMesh && window._stellradMesh.visible !== false) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          const mx = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+          const my = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+          const tempRay = new THREE.Raycaster();
+          tempRay.setFromCamera(new THREE.Vector2(mx, my), camera);
+          if (tempRay.intersectObject(window._stellradMesh).length > 0) {
+            stellradSwipeActive = true;
+            stellradSwipeStartX = touch.clientX;
+            stellradSwipeStartNum = window._zahlenbandNumber || 1;
+            e.preventDefault();
+          }
+        }
       }
-    }, { passive: true });
+    }, { passive: false });
+    
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      // Stellrad Swipe: Zahl ändern per horizontaler Bewegung
+      if (stellradSwipeActive && gamePhase === 'kipp21') {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - stellradSwipeStartX;
+        const steps = Math.round(deltaX / STELLRAD_SWIPE_THRESHOLD);
+        let newNum = stellradSwipeStartNum + steps;
+        newNum = Math.max(1, Math.min(6, newNum));
+        if (newNum !== window._zahlenbandNumber) {
+          if (window._setZahlenbandNumber) window._setZahlenbandNumber(newNum);
+        }
+      }
+    }, { passive: false });
     
     renderer.domElement.addEventListener('touchend', (e) => {
+      // Stellrad Swipe beenden → Zahl bestätigen
+      if (stellradSwipeActive) {
+        stellradSwipeActive = false;
+        const finalNum = window._zahlenbandNumber || 1;
+        if (window._onNumBtn) window._onNumBtn(finalNum);
+        lastTouchPos = null;
+        return;
+      }
       if (replayActive) return; // Tutorial: keine Interaktion
-      // KIPP 21: Card tap detection
+      // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
         
@@ -7443,6 +7494,22 @@
             kipp21CardTouchHandled = true;
             setTimeout(() => { kipp21CardTouchHandled = false; }, 400);
             kipp21OnCardTap(ci);
+            lastTouchPos = null;
+            return;
+          }
+        }
+        
+        // Richtungsbuttons (3D) Raycasting → Kipprichtung wählen
+        if (window._dirCwMesh && window._dirCwMesh.visible) {
+          if (vkRaycaster.intersectObject(window._dirCwMesh).length > 0) {
+            if (window._onDirBtn) window._onDirBtn('cw');
+            lastTouchPos = null;
+            return;
+          }
+        }
+        if (window._dirCcwMesh && window._dirCcwMesh.visible) {
+          if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
+            if (window._onDirBtn) window._onDirBtn('ccw');
             lastTouchPos = null;
             return;
           }
@@ -7493,6 +7560,20 @@
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
               vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
             kipp21OnCardTap(ci);
+            return;
+          }
+        }
+        
+        // Richtungsbuttons (3D) Raycasting → Kipprichtung wählen (Desktop)
+        if (window._dirCwMesh && window._dirCwMesh.visible) {
+          if (vkRaycaster.intersectObject(window._dirCwMesh).length > 0) {
+            if (window._onDirBtn) window._onDirBtn('cw');
+            return;
+          }
+        }
+        if (window._dirCcwMesh && window._dirCcwMesh.visible) {
+          if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
+            if (window._onDirBtn) window._onDirBtn('ccw');
             return;
           }
         }
