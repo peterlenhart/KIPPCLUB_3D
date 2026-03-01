@@ -3560,46 +3560,55 @@
       await sleep(800);
       
       // ==============================================
-      // SCHRITT 5-7: Hand überlegt Zahlen, wählt eine, überlegt Richtung, wählt FALSCH → FAIL
+      // SCHRITT 5-7: Hand wischt am Scrollband, wählt falsche Richtung → FAIL
       // ==============================================
-      const numBtn1P = getBtnCenter('numBtn1');
-      const numBtn2P = getBtnCenter('numBtn2');
-      const numBtn3P = getBtnCenter('numBtn3');
-      const ccwP = getBtnCenter('btnCCW');
-      const cwP = getBtnCenter('btnCW');
       
-      // Hand über Zahlen-Buttons schweben
-      setHandPos(numBtn1P.x, 740);
+      // Hilfsfunktion: 3D-Mesh Position auf Screen projizieren
+      function meshScreenPos(mesh) {
+        if (!mesh) return { x: 180, y: 600 };
+        const v = new THREE.Vector3();
+        mesh.getWorldPosition(v);
+        v.project(camera);
+        return { x: Math.round((v.x * 0.5 + 0.5) * 360), y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+      }
+      
+      // Scrollband Screen-Position (Mitte)
+      function scrollBandCenter() {
+        const el = document.getElementById('numBtns');
+        if (!el) return { x: 180, y: 620 };
+        const t = parseInt(el.style.top) || 620;
+        return { x: 180, y: t + 22 }; // 45px hoch, Mitte = +22
+      }
+      
+      const sbCenter = scrollBandCenter();
+      const cwP = meshScreenPos(window._dirCwMesh);
+      const ccwP = meshScreenPos(window._dirCcwMesh);
+      
+      // Hand von unten zum Scrollband
+      setHandPos(sbCenter.x + 60, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(numBtn1P.x, 740, true);
-      await moveHandSmooth(numBtn1P.x, numBtn1P.y, 600);
-      await sleep(250);
-      await moveHandSmooth(numBtn3P.x, numBtn3P.y, 500);
-      await sleep(250);
-      await moveHandSmooth(numBtn2P.x, numBtn2P.y, 400);
-      await sleep(300);
-      // Klick auf "1" (falsche Anzahl für den FAIL)
-      await moveHandSmooth(numBtn1P.x, numBtn1P.y, 300);
-      pulseBtn('numBtn1');
+      updateHandShadow(sbCenter.x + 60, 740, true);
+      await moveHandSmooth(sbCenter.x + 60, sbCenter.y, 600);
+      await sleep(200);
+      
+      // Swipe-Geste: von rechts nach links (wischt zum falschen Wert)
+      await moveHandSmooth(sbCenter.x - 40, sbCenter.y, 500);
+      if (window._scrollBandToNum) window._scrollBandToNum(1); // falsche Anzahl: 1
       window._highlightNum(1);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
-      // Hand zu Richtungs-Buttons — überlegend
-      await moveHandSmooth(ccwP.x, ccwP.y, 500);
-      await sleep(200);
+      // Hand fährt nach links zum CW-Richtungsbutton
       await moveHandSmooth(cwP.x, cwP.y, 600);
       await sleep(200);
       
       // Falsche Richtung wählen
       const correctDir1 = findHitDirection(TARGET_CARD);
       const wrongDir = (correctDir1 === 'cw') ? 'ccw' : 'cw';
-      const wrongBtnId = (wrongDir === 'ccw') ? 'btnCCW' : 'btnCW';
-      const wrongBtnP = getBtnCenter(wrongBtnId);
+      const wrongBtnP = (wrongDir === 'ccw') ? ccwP : cwP;
       
       await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 400);
       await sleep(200);
-      pulseBtn(wrongBtnId);
       window._highlightDir(wrongDir);
       await sleep(500);
       
@@ -3672,35 +3681,30 @@
       await sleep(800);
       
       // ==============================================
-      // SCHRITT 10-12: Hand wählt richtige Zahl, dann richtige Richtung → HIT
+      // SCHRITT 10-12: Hand wählt richtige Zahl am Scrollband, dann richtige Richtung → HIT
       // ==============================================
       const correctDir2 = findHitDirection(TARGET_CARD);
       const dist2 = kipp21CardDistances[TARGET_CARD] || 1;
-      const correctNumId = 'numBtn' + dist2;
-      const correctNumP = getBtnCenter(correctNumId);
-      const correctBtnId = (correctDir2 === 'ccw') ? 'btnCCW' : 'btnCW';
-      const correctBtnP = getBtnCenter(correctBtnId);
+      const correctBtnP = (correctDir2 === 'ccw') ? ccwP : cwP;
       
-      // Hand über Zahlen-Buttons
-      setHandPos(numBtn1P.x, 740);
+      const sbCenter2 = scrollBandCenter();
+      
+      // Hand zum Scrollband
+      setHandPos(sbCenter2.x - 40, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(numBtn1P.x, 740, true);
-      await moveHandSmooth(numBtn1P.x, numBtn1P.y, 600);
+      updateHandShadow(sbCenter2.x - 40, 740, true);
+      await moveHandSmooth(sbCenter2.x - 40, sbCenter2.y, 600);
       await sleep(200);
-      await moveHandSmooth(numBtn3P.x, numBtn3P.y, 400);
-      await sleep(200);
-      // Zur richtigen Zahl
-      await moveHandSmooth(correctNumP.x, correctNumP.y, 400);
-      await sleep(300);
-      pulseBtn(correctNumId);
+      // Swipe zur richtigen Zahl
+      await moveHandSmooth(sbCenter2.x + 40, sbCenter2.y, 500);
+      if (window._scrollBandToNum) window._scrollBandToNum(dist2);
       window._highlightNum(dist2);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
-      // Hand zu Richtungs-Buttons
+      // Hand zum richtigen Richtungsbutton
       await moveHandSmooth(correctBtnP.x, correctBtnP.y, 500);
       await sleep(300);
-      pulseBtn(correctBtnId);
       window._highlightDir(correctDir2);
       await sleep(500);
       
@@ -4322,12 +4326,7 @@
       cardSouth3D.project(camera);
       const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 12;
       
-      const btnCCW = document.getElementById('btnCCW');
-      const btnCW = document.getElementById('btnCW');
       const numBtns = document.getElementById('numBtns');
-      const numBtn1 = document.getElementById('numBtn1');
-      const numBtn2 = document.getElementById('numBtn2');
-      const numBtn3 = document.getElementById('numBtn3');
       
       // Screen-X der ersten und letzten Karte
       const card0_3D = new THREE.Vector3(cardStartX, cardY, cardZ);
@@ -8756,6 +8755,10 @@
       window._resetScrollBand = function() {
         inner.style.transition = 'left 0.2s ease';
         scrollToNum(1);
+      };
+      window._scrollBandToNum = function(n) {
+        inner.style.transition = 'left 0.2s ease';
+        scrollToNum(n);
       };
     })();
 
