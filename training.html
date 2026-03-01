@@ -8617,6 +8617,11 @@
           btn.style.boxShadow = '';
         }
       });
+      // Scrollband ein-/ausblenden
+      if (kippButtons) {
+        if (disabled) kippButtons.classList.add('hidden');
+        else kippButtons.classList.remove('hidden');
+      }
       if (!disabled) startZahlWarten();
     }
 
@@ -8635,6 +8640,7 @@
     function startZahlWarten() {
       if (!cwBtn || !ccwBtn) return;
       selectedAnzahl = null;
+      if (window._resetScrollBand) window._resetScrollBand();
       pulseZahlenButtons(true);
       pulseRichtungButtons(false);
       cwBtn.style.background = 'linear-gradient(180deg,#404040 0%,#303030 100%)';
