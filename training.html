@@ -492,7 +492,6 @@
     /* BUTTONS 1-6 */
     #numBtns {
       position: absolute;
-      top: 600px;
       left: 50%;
       transform: translateX(-50%);
       pointer-events: auto;
@@ -989,7 +988,7 @@
     
 
     <!-- Kippanzahl-Scrollband: 180×45px Fenster, 6 Zahlen à 45px scrollbar -->
-    <div id="numBtns" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
+    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
       <div id="scrollBand" style="width:180px; height:45px; overflow:hidden; border:2px solid #808080; border-radius:6px; background:#2a2a2a; position:relative; touch-action:none;">
         <div id="scrollBandInner" style="display:flex; width:270px; height:45px; position:absolute; left:0; top:0; transition:left 0.2s ease;">
           <div class="scrollNum" data-num="1" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">1</div>
@@ -1850,6 +1849,15 @@
         if (window._dirCwMesh) window._dirCwMesh.rotation.z = rot;
         if (window._dirCcwMesh) window._dirCcwMesh.rotation.z = rot;
       };
+      
+      // Scrollband-Position: Unterkante = Richtungsbutton-Unterkante
+      const dirBtnBottom3D = new THREE.Vector3(0, dirBtnY, dirBtnZ + dirBtnSize / 2);
+      dirBtnBottom3D.project(camera);
+      const dirBtnBottomScreenY = (-dirBtnBottom3D.y * 0.5 + 0.5) * 720;
+      const numBtnsEl = document.getElementById('numBtns');
+      if (numBtnsEl) {
+        numBtnsEl.style.top = Math.round(dirBtnBottomScreenY - 49 + 12) + 'px'; // 12px südlicher
+      }
     });
 
     // =========================
@@ -4108,7 +4116,7 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      ['eyeIcon','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
+      ['eyeIcon','numBtns','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -4437,14 +4445,14 @@
       function hideAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        // kippButtons bleibt sichtbar
+        if (kippButtons) kippButtons.classList.add('hidden');
         hintText.style.display = 'none';
       }
       
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = true;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
-        if (kippButtons) kippButtons.classList.remove('hidden');
+        if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
