@@ -928,7 +928,7 @@
       <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
-    <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
+    <button class="startClickZone" id="btnSpielen" disabled style="opacity:0;display:none">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0;display:none">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
@@ -1938,6 +1938,17 @@
       else                     { vis.add(9); vis.add(2); }
       return vis;
     }
+    
+    // Level 2: Je 1 zusätzliche Zahl pro Face sichtbar machen
+    function addOneVisiblePerFace() {
+      const faceRanges = [[0,1,2,3], [4,5,6,7], [8,9,10,11]];
+      for (const range of faceRanges) {
+        const nonVis = range.filter(i => !visibleDeckIndices.has(i));
+        if (nonVis.length > 0) {
+          visibleDeckIndices.add(nonVis[Math.floor(Math.random() * nonVis.length)]);
+        }
+      }
+    }
     let deck = generateBalancedDeck();
     let visibleDeckIndices = pickEdgePairs();
 
@@ -2197,6 +2208,17 @@
     async function runLoadingAnimation() {
       const fd = 400; // Fade-Dauer ms
 
+      // Auge mittig über Box zeigen (pulsierend)
+      const _eyeIcon = document.getElementById('eyeIcon');
+      const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
+      _boxTopPt.project(camera);
+      const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
+      _eyeIcon.style.top = _eyeTopPx + 'px';
+      _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
+      _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
+      _eyeIcon.style.display = 'block';
+      _eyeIcon.style.pointerEvents = 'none';
+
       // 4 CW: Q3→Q0→Q1→Q2→Q3, dann 4 CCW: Q3→Q2→Q1→Q0→Q3
       const cwDirs = ['north', 'east', 'south_from_q1', 'west_from_q2'];
       const ccwDirs = ['east_from_q3', 'north_from_q2', 'west', 'south'];
@@ -2220,12 +2242,15 @@
       await new Promise(r => setTimeout(r, 300));
 
       // 5) 3 Kipps CCW zurück (Q2→Q1→Q0→Q3)
-      await loadingKipp(ccwDirs[1], 1000);  // north_from_q2: Q2→Q1
+      await loadingKipp(ccwDirs[1], 1000);
       await new Promise(r => setTimeout(r, 200));
-      await loadingKipp(ccwDirs[2], 1000);  // west: Q1→Q0
+      await loadingKipp(ccwDirs[2], 1000);
       await new Promise(r => setTimeout(r, 200));
-      await loadingKipp(ccwDirs[3], 1000);  // south: Q0→Q3
+      await loadingKipp(ccwDirs[3], 1000);
       await new Promise(r => setTimeout(r, 200));
+
+      // Auge ausblenden
+      _eyeIcon.style.display = 'none';
 
       // Reset: Würfel exakt in Q3, f2 obenauf
       cube.position.set(-offset, offset, 0.109375 + offset);
@@ -2329,30 +2354,14 @@
           return;
         }
         
-        // ERSTES SPIEL: Sequenziell — erst Text, dann Button
-        // Challenge-Text verstecken (war während Kipp-Anim unsichtbar)
+        // ERSTES SPIEL: Direkt ins Spiel (kein SPIELEN-Button Zwischenschritt)
         sct.style.display = 'none';
         
-        // 1. Kurze Pause nach Kipp-Animation
         setTimeout(() => {
-          if (head) {
-            // 2. "4 HITS = NEXT LEVEL" einblenden (Inflate)
-            head.style.animation = 'none'; head.style.opacity = '0'; head.style.transform = 'scale(0.6)';
-            sct.style.display = 'block'; sct.style.opacity = '1';
-            void head.offsetWidth;
-            head.style.animation = 'sctInflate 1.2s ease-out forwards';
-          }
-          
-          // 3. Text ausblenden, dann SPIELEN-Button
-          setTimeout(() => {
-            if (sct) { sct.style.transition = 'opacity 0.5s ease-out'; sct.style.opacity = '0'; }
-            setTimeout(() => {
-              if (sct) { sct.style.display = 'none'; sct.style.transition = ''; }
-              document.getElementById('btnSpielen').disabled = false;
-              document.getElementById('btnSpielen').style.opacity = '1';
-            }, 600);
-          }, 1400);
-        }, 800);
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          startKipp21(true);
+        }, 100);
       }
     }
 
@@ -3007,6 +3016,7 @@
     
     // KIPP 21 state
     let kipp21Active = false;
+    let currentLevel = 1; // 1=6 Zahlen, 2=9 Zahlen, 3=12 Zahlen (MASTER)
     let kipp21HitLock = false; // Würfel gesperrt nach Auto-Treffer
     let kipp21Generation = 0; // Incrementiert bei jedem startKipp21, alte Async-Chains prüfen dagegen
     let replayGeneration = 0; // Wird bei Replay-Start auf kipp21Generation gesetzt
@@ -4295,22 +4305,36 @@
       gamePhase = 'kipp21';
       currentMode = 'kanten';
       
-      // SEQUENZ: Jeder Schritt wartet auf den vorherigen
+      // SEQUENZ: Text → UIs → Hand-Tutorial
+      // (4cw+4ccw Demo läuft bereits in runLoadingAnimation mit Auge)
       // Prüft gamePhase — Reset setzt 'start' und bricht die Sequenz ab
       (async () => {
         if (gamePhase !== 'kipp21') return;
-        await pgtInflate(pgtH, pgtS);    // "SPIEL ZIEL 21 SEKUNDEN" erscheint
+        
+        // --- "4 HITS = NEXT LEVEL" Text ---
+        await pgtInflate(pgtH, pgtS);
         if (gamePhase !== 'kipp21') return;
-        await wait(1000);                 // stehen lassen
+        await wait(1000);
         if (gamePhase !== 'kipp21') return;
-        await fadeOutText();              // Text KOMPLETT weg
+        await fadeOutText();
         if (gamePhase !== 'kipp21') return;
-        await wait(100);                  // Sicherheitspause
+        await wait(100);
         if (gamePhase !== 'kipp21') return;
-        await fadeInUIs();                // ERST JETZT UIs rein
-        // JETZT erst Input freigeben
+        
+        // --- UIs einblenden ---
+        await fadeInUIs();
         kipp21Active = true;
-        showTrainingButtons(); // TRAINING: "Ein Kippziel öffnen" anzeigen
+        showTrainingButtons();
+        
+        // --- Hand-Tutorial direkt starten ---
+        if (kipp21WithTutorial && gamePhase === 'kipp21') {
+          await wait(800);
+          if (gamePhase !== 'kipp21') return;
+          startReplay().catch(err => {
+            if (err instanceof ReplayAbort) return;
+            console.error('[REPLAY] ERROR:', err);
+          });
+        }
       })();
       
       // Joker-Icons und Karten erst nach Delay
@@ -4507,20 +4531,142 @@
           bereitsGetroffen.add(card.zahl + '_' + card.color.name);
           
           if (kipp21Done >= 4) {
-            // TRAINING geschafft → nächstes Level freischalten
-            try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
             kipp21Active = false;
-            gamePhase = 'ende';
             hideAllTrainingUI();
-            // "4 HITS = NEXT LEVEL" nochmal zeigen
-            const pgt = document.getElementById('perfektGameText');
-            const pgtH = document.getElementById('pgtHead');
-            if (pgt && pgtH) {
-              pgtH.innerHTML = '4 HITS = NEXT LEVEL';
-              pgt.style.display = 'block';
-              pgtH.style.animation = 'none'; void pgtH.offsetWidth;
-              pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+            
+            if (currentLevel < 3) {
+              // === LEVEL TRANSITION ===
+              const nextLevel = currentLevel + 1;
+              const transText = (nextLevel === 2) ? '4 HITS = NEXT LEVEL' : '4 HITS = MASTER LEVEL';
+              
+              (async () => {
+                await wait(2000); // Letzte Karte fliegen lassen
+                if (gamePhase !== 'kipp21') return;
+                
+                // Cube zurück auf Q3
+                cube.position.set(-offset, offset, 0.109375 + offset);
+                cube.quaternion.set(0, 0, 0, 1);
+                currentQuadrant = 3;
+                topFace = 'f2';
+                
+                // Auge über Box
+                const _eyeIcon = document.getElementById('eyeIcon');
+                const _boxPt = new THREE.Vector3(0, 0.52, 0.1105);
+                _boxPt.project(camera);
+                const _eyePx = Math.round((-_boxPt.y * 0.5 + 0.5) * 720) - 50;
+                _eyeIcon.style.top = _eyePx + 'px';
+                _eyeIcon.style.pointerEvents = 'none';
+                _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
+                _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
+                _eyeIcon.style.display = 'block';
+                
+                await wait(500);
+                if (gamePhase !== 'kipp21') return;
+                
+                // Zahlen ergänzen + Texturen neu
+                if (nextLevel === 2) {
+                  addOneVisiblePerFace(); // 6→9
+                } else {
+                  for (let _i = 0; _i < 12; _i++) visibleDeckIndices.add(_i); // 9→12
+                }
+                updateAllFaceTextures();
+                
+                // 4 CW Kipps
+                for (let _i = 0; _i < 4; _i++) {
+                  if (gamePhase !== 'kipp21') return;
+                  kippDirection = 'cw';
+                  await performKipp(CW_KIPP[currentQuadrant], 700);
+                  advanceTopFace();
+                  if (_i < 3) await wait(200);
+                }
+                
+                await wait(400);
+                if (gamePhase !== 'kipp21') return;
+                
+                // 4 CCW Kipps
+                for (let _i = 0; _i < 4; _i++) {
+                  if (gamePhase !== 'kipp21') return;
+                  kippDirection = 'ccw';
+                  await performKipp(CCW_KIPP[currentQuadrant], 700);
+                  advanceTopFace();
+                  if (_i < 3) await wait(200);
+                }
+                
+                // Auge weg
+                _eyeIcon.style.display = 'none';
+                
+                await wait(400);
+                if (gamePhase !== 'kipp21') return;
+                
+                // Text anzeigen
+                const _pgt = document.getElementById('perfektGameText');
+                const _pgtH = document.getElementById('pgtHead');
+                if (_pgt && _pgtH) {
+                  _pgtH.innerHTML = transText;
+                  _pgt.style.display = 'block'; _pgt.style.opacity = '1';
+                  _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
+                  _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+                }
+                
+                await wait(2500);
+                if (gamePhase !== 'kipp21') return;
+                
+                // Text ausblenden
+                if (_pgt) {
+                  _pgt.style.transition = 'opacity 0.5s'; _pgt.style.opacity = '0';
+                  await wait(600);
+                  _pgt.style.display = 'none'; _pgt.style.transition = '';
+                }
+                if (gamePhase !== 'kipp21') return;
+                
+                // Level hochsetzen
+                currentLevel = nextLevel;
+                
+                // Karten-States zurücksetzen
+                kipp21Done = 0;
+                bereitsGetroffen.clear();
+                bereitsAusgegeben.clear();
+                kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt'];
+                kipp21CardDistances = [0,0,0,0,0,0];
+                kipp21RoundKipps = 0;
+                kipp21HitLock = false;
+                offeneKippzieleVergeben = 0;
+                openKippzielPositions = pickTwoRandomPositions();
+                activeCardIdx = 0;
+                gameCards.forEach(c => { c.mesh.visible = false; c.zahl = null; c.color = null; c.isHit = false; c.isMiss = false; });
+                blickIconMeshes.forEach(m => { m.visible = false; });
+                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+                hitTextEls.length = 0;
+                
+                // Würfel zurück Q3
+                cube.position.set(-offset, offset, 0.109375 + offset);
+                cube.quaternion.set(0, 0, 0, 1);
+                currentQuadrant = 3;
+                topFace = 'f2';
+                kippDirection = 'cw';
+                isAnimating = false;
+                
+                // UIs einblenden
+                await fadeInUIs();
+                kipp21Active = true;
+                showTrainingButtons();
+                
+                // Hand-Tutorial starten
+                if (kipp21WithTutorial) {
+                  await wait(800);
+                  if (gamePhase !== 'kipp21') return;
+                  startReplay().catch(err => {
+                    if (err instanceof ReplayAbort) return;
+                    console.error('[REPLAY] ERROR:', err);
+                  });
+                }
+              })();
+              return;
             }
+            
+            // Level 3 (MASTER) geschafft
+            try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
+            gamePhase = 'ende';
             showEndButtons(false, false);
             return;
           }
@@ -4752,20 +4898,8 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
-      // Tutorial = Geskriptetes Demo starten
-      if (kipp21WithTutorial) {
-        // Deck bleibt vom Intro — keine Änderung
-        const replayStartGen = kipp21Generation;
-        setTimeout(() => { 
-          if (kipp21Generation !== replayStartGen) return; // Reset/Neustart
-          startReplay().catch(err => {
-            if (err instanceof ReplayAbort) return;
-            console.error('[REPLAY] ERROR:', err);
-          });
-        }, 4500);
-      } else {
-        // Wiederkehrender Spieler: Deck vom Intro bleibt
-      }
+      // Tutorial wird jetzt direkt aus der Intro-Sequenz gestartet (siehe async IIFE oben)
+      
       
       positionResetButton();
     }
@@ -6953,15 +7087,13 @@
       isAnimating = false;
       
       gamePhase = 'start';
+      currentLevel = 1;
       
-      // Start-Overlay IMMER zeigen bei Reset
-      document.getElementById('startOverlay').style.display = 'block';
+      // Direkt neu starten (kein SPIELEN-Button Zwischenschritt)
+      document.getElementById('startOverlay').style.display = 'none';
       document.getElementById('startChallengeText').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
-      const btnS = document.getElementById('btnSpielen');
-      btnS.textContent = T.sp;
-      btnS.disabled = false;
-      btnS.style.opacity = '1';
+      startKipp21(true);
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
@@ -8812,19 +8944,19 @@
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
 
-    // Numpad (1-6 Tasten) positionieren: Unterkante bündig mit Richtungsbuttons
+    // Numpad (1-6 Tasten) positionieren: Unterkante bündig mit Richtungsbuttons-Unterkante
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      // Bekannte 3D-Koordinaten der Richtungsbuttons (aus Texture-Loader)
-      const dBtnY = 0.001 + 3 * 0.15625 + 0.003; // = 0.47175
-      const dBtnZ = 1.24248 + 0.04167;            // = 1.28415
-      const dBtnSize = 0.23148;
-      const bottomZ = dBtnZ + dBtnSize / 2;        // Unterkante
-      const pt = new THREE.Vector3(0, dBtnY, bottomZ);
-      pt.project(camera);
-      const screenY = Math.round((-pt.y * 0.5 + 0.5) * 720);
-      el.style.top = Math.max(400, Math.min(700, screenY - 84 + 130)) + 'px';
+      // Richtungsbuttons: Y=0.47175, Z=1.28415, Size=0.23148
+      // Unterkante = Z + Size/2 = 1.39989
+      const bottomEdge = new THREE.Vector3(0, 0.47175, 1.39989);
+      bottomEdge.project(camera);
+      const bottomScreenY = Math.round((-bottomEdge.y * 0.5 + 0.5) * 720);
+      // numBtns Grid-Höhe = 2×38 + 4 gap = 80px
+      const gridHeight = 80;
+      el.style.top = (bottomScreenY - gridHeight) + 'px';
+      console.log('[NUMBTNS] dirBtn-Unterkante screenY=' + bottomScreenY + ' numBtns.top=' + (bottomScreenY - gridHeight));
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
