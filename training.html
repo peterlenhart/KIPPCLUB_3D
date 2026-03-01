@@ -989,7 +989,7 @@
     
 
     <!-- Kippanzahl-Scrollband: 180×45px Fenster, 6 Zahlen à 45px scrollbar -->
-    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
+    <div id="numBtns" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
       <div id="scrollBand" style="width:180px; height:45px; overflow:hidden; border:2px solid #808080; border-radius:6px; background:#2a2a2a; position:relative; touch-action:none;">
         <div id="scrollBandInner" style="display:flex; width:270px; height:45px; position:absolute; left:0; top:0; transition:left 0.2s ease;">
           <div class="scrollNum" data-num="1" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">1</div>
@@ -4108,7 +4108,7 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      ['eyeIcon','numBtns','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
+      ['eyeIcon','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -4437,12 +4437,14 @@
       function hideAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
+        // kippButtons bleibt sichtbar
         hintText.style.display = 'none';
       }
       
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = true;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (kippButtons) kippButtons.classList.remove('hidden');
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
@@ -5539,7 +5541,7 @@
       // if (activeCardIdx === 3) {
       //   setButtonsDisabled(true);
       //   { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
-      //   if (kippButtons) kippButtons.classList.add('hidden');
+      //   // kippButtons bleibt sichtbar
       //   savedCubePosition = cube.position.clone();
       //   savedCubeQuaternion = cube.quaternion.clone();
       //   savedTopFace = topFace;
@@ -5567,7 +5569,7 @@
         stopCountdown();
         setButtonsDisabled(true);
         { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
-        if (kippButtons) kippButtons.classList.add('hidden');
+        // kippButtons bleibt sichtbar
         document.getElementById('kippTarget').style.display = 'none';
         document.getElementById('tutorialText').style.display = 'none';
         document.getElementById('instructionText').style.display = 'none';
@@ -7083,7 +7085,7 @@
       
       // Buttons UNSICHTBAR und INAKTIV lassen
       { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
-      if (kippButtons) kippButtons.classList.add('hidden');
+      // kippButtons bleibt sichtbar
       
       // Richtungs-Lock zurücksetzen
       lockedKippDir = null;
@@ -7190,7 +7192,7 @@
       
       // Buttons versteckt
       { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
-      if (kippButtons) kippButtons.classList.add('hidden');
+      // kippButtons bleibt sichtbar
       
       // Richtungs-Lock zurücksetzen
       lockedKippDir = null;
@@ -7811,7 +7813,7 @@
       tapCount = 0;
       tapIndicatorA.mesh.visible = false; tapIndicatorB.mesh.visible = false;
       drawLeernohitOnVerdecktes();
-      if (kippButtons) kippButtons.classList.add('hidden');
+      // kippButtons bleibt sichtbar
       { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
       
       // Kärtchen verstecken
@@ -7878,7 +7880,7 @@
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       actionButton.style.display = 'none';
-      if (kippButtons) kippButtons.classList.add('hidden');
+      // kippButtons bleibt sichtbar
       { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
       
       // 5. 3D zurücksetzen
@@ -8203,7 +8205,7 @@
       gamePhase = 'spielen';
       // Buttons bleiben versteckt (Tutorial-Modus: Swipe-Kipping)
       { const _rb = document.getElementById('richtungButtons'); if (_rb) _rb.classList.add('hidden'); }
-      if (kippButtons) kippButtons.classList.add('hidden');
+      // kippButtons bleibt sichtbar
       updateKippTargetPosition();
       document.getElementById('kippTarget').style.display = 'block';
 
@@ -8617,11 +8619,7 @@
           btn.style.boxShadow = '';
         }
       });
-      // Scrollband ein-/ausblenden
-      if (kippButtons) {
-        if (disabled) kippButtons.classList.add('hidden');
-        else kippButtons.classList.remove('hidden');
-      }
+      // Scrollband bleibt immer sichtbar
       if (!disabled) startZahlWarten();
     }
 
@@ -8721,8 +8719,10 @@
         const snappedNum = Math.max(1, Math.min(6, rawNum));
         scrollToNum(snappedNum);
         
-        // Zahl an Spiellogik melden
-        if (gamePhase === 'spielen' && selectedAnzahl === null) {
+        // Zahl an Spiellogik melden (Training: kipp21, Hauptspiel: spielen)
+        if (gamePhase === 'kipp21' && window._onNumBtn) {
+          window._onNumBtn(snappedNum);
+        } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
           selectedAnzahl = snappedNum;
           startRichtungWarten();
         }
@@ -8735,7 +8735,9 @@
           const n = parseInt(el.dataset.num);
           inner.style.transition = 'left 0.2s ease';
           scrollToNum(n);
-          if (gamePhase === 'spielen' && selectedAnzahl === null) {
+          if (gamePhase === 'kipp21' && window._onNumBtn) {
+            window._onNumBtn(n);
+          } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
             selectedAnzahl = n;
             startRichtungWarten();
           }
