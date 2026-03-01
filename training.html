@@ -495,9 +495,6 @@
       top: 600px;
       left: 50%;
       transform: translateX(-50%);
-      display: grid;
-      grid-template-columns: repeat(3, 52px);
-      gap: 6px;
       pointer-events: auto;
       z-index: 20;
     }
@@ -991,14 +988,18 @@
     <button id="backButton">↻</button>
     
 
-    <!-- Kippanzahl-Tasten: 2 Reihen à 3 -->
-    <div id="numBtns" class="hidden">
-      <button class="kippBtn" data-anzahl="1">1</button>
-      <button class="kippBtn" data-anzahl="2">2</button>
-      <button class="kippBtn" data-anzahl="3">3</button>
-      <button class="kippBtn" data-anzahl="4">4</button>
-      <button class="kippBtn" data-anzahl="5">5</button>
-      <button class="kippBtn" data-anzahl="6">6</button>
+    <!-- Kippanzahl-Scrollband: 180×45px Fenster, 6 Zahlen à 45px scrollbar -->
+    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
+      <div id="scrollBand" style="width:180px; height:45px; overflow:hidden; border:2px solid #808080; border-radius:6px; background:#2a2a2a; position:relative; touch-action:none;">
+        <div id="scrollBandInner" style="display:flex; width:270px; height:45px; position:absolute; left:0; top:0; transition:left 0.2s ease;">
+          <div class="scrollNum" data-num="1" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">1</div>
+          <div class="scrollNum" data-num="2" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">2</div>
+          <div class="scrollNum" data-num="3" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">3</div>
+          <div class="scrollNum" data-num="4" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">4</div>
+          <div class="scrollNum" data-num="5" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">5</div>
+          <div class="scrollNum" data-num="6" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">6</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1807,121 +1808,6 @@
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
       
-      // Quadratischer Rahmen auf dem Stellrad-Ausschnitt
-      new THREE.TextureLoader().load('quadr_rahmen.webp', (frameTex) => {
-        const frameSize = 0.15625;
-        const frameGeo = new THREE.PlaneGeometry(frameSize, frameSize);
-        const frameMat = new THREE.MeshStandardMaterial({
-          map: frameTex, transparent: true, roughness: 0.3, metalness: 0.6, depthWrite: true
-        });
-        const frameMesh = new THREE.Mesh(frameGeo, frameMat);
-        frameMesh.rotation.x = -Math.PI / 2;
-        frameMesh.position.set(0, yPos + 0.002, 1.21354);
-        frameMesh.renderOrder = 2;
-        scene.add(frameMesh);
-      });
-      
-      // === STELLKNOPF (flacher Drehknopf für Kippanzahl 1-6) ===
-      // Waagrechte Scheibe auf dem Tisch, Zahlen 1-6 drumherum (obere 2/3)
-      // Unterkante Knopf = Unterkante Richtungsbuttons
-      const KNOB_RADIUS = 0.18;
-      const KNOB_Y = yPos + 0.004;
-      const dirBtnBottomZ = 1.24248 + 0.23148 / 2; // 1.35822
-      const KNOB_CENTER_Z = dirBtnBottomZ - KNOB_RADIUS; // Unterkante = dirBtn Unterkante
-      const KNOB_NUMBER_DIST = KNOB_RADIUS + 0.07; // Zahlen etwas außerhalb
-
-      // 6 Zahlen im oberen 240°-Bogen (unteres Drittel frei)
-      // Winkel von Nord (oben), im Uhrzeigersinn: -120° bis +120°, je 48° Schritt
-      const KNOB_ANGLES = [-120, -72, -24, 24, 72, 120].map(d => d * Math.PI / 180);
-
-      // Knopf-Canvas (dunkle Scheibe mit hellem Punkt)
-      const knobCvs = document.createElement('canvas');
-      knobCvs.width = 256; knobCvs.height = 256;
-      const kCtx = knobCvs.getContext('2d');
-      const cx = 128, cy = 128, cr = 120;
-
-      // Metallischer Hintergrund
-      const radGrad = kCtx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, cr);
-      radGrad.addColorStop(0, '#707070');
-      radGrad.addColorStop(0.5, '#404040');
-      radGrad.addColorStop(1, '#1a1a1a');
-      kCtx.beginPath(); kCtx.arc(cx, cy, cr, 0, Math.PI * 2); kCtx.fillStyle = radGrad; kCtx.fill();
-
-      // Rand
-      kCtx.beginPath(); kCtx.arc(cx, cy, cr, 0, Math.PI * 2);
-      kCtx.strokeStyle = '#888'; kCtx.lineWidth = 4; kCtx.stroke();
-
-      // Zeiger-Punkt oben (bei 12 Uhr = Nord)
-      const dotR = 14;
-      const dotDist = cr - 28;
-      kCtx.beginPath(); kCtx.arc(cx, cy - dotDist, dotR, 0, Math.PI * 2);
-      kCtx.fillStyle = '#ff4444'; kCtx.fill();
-      kCtx.strokeStyle = '#ffffff'; kCtx.lineWidth = 2; kCtx.stroke();
-
-      const knobTex = new THREE.CanvasTexture(knobCvs);
-      const knobGeo = new THREE.CircleGeometry(KNOB_RADIUS, 48);
-      const knobMat = new THREE.MeshBasicMaterial({ map: knobTex, transparent: false, depthWrite: true });
-      const knobMesh = new THREE.Mesh(knobGeo, knobMat);
-      knobMesh.rotation.x = -Math.PI / 2;
-
-      const knobGroup = new THREE.Group();
-      knobGroup.position.set(0, KNOB_Y, KNOB_CENTER_Z);
-      knobGroup.add(knobMesh);
-      knobGroup.visible = false; // erst bei kipp21-Phase zeigen
-      scene.add(knobGroup);
-
-      // Zahlen 1-6 als feste Labels um den Knopf
-      const numLabelMeshes = [];
-      for (let i = 0; i < 6; i++) {
-        const angle = KNOB_ANGLES[i];
-        const numCvs = document.createElement('canvas');
-        numCvs.width = 64; numCvs.height = 64;
-        const nCtx = numCvs.getContext('2d');
-        nCtx.fillStyle = '#e0d0b8';
-        nCtx.font = 'bold 48px Arial';
-        nCtx.textAlign = 'center';
-        nCtx.textBaseline = 'middle';
-        nCtx.fillText((i + 1).toString(), 32, 34);
-
-        const numTex = new THREE.CanvasTexture(numCvs);
-        const numGeo = new THREE.PlaneGeometry(0.08, 0.08);
-        const numMat = new THREE.MeshBasicMaterial({ map: numTex, transparent: true, depthWrite: false });
-        const numMesh = new THREE.Mesh(numGeo, numMat);
-        numMesh.rotation.x = -Math.PI / 2;
-        // Position: Winkel von Nord, Uhrzeigersinn
-        const nx = Math.sin(angle) * KNOB_NUMBER_DIST;
-        const nz = -Math.cos(angle) * KNOB_NUMBER_DIST;
-        numMesh.position.set(nx, KNOB_Y + 0.001, KNOB_CENTER_Z + nz);
-        numMesh.visible = false;
-        scene.add(numMesh);
-        numLabelMeshes.push(numMesh);
-      }
-
-      // Stellknopf State
-      window._knobGroup = knobGroup;
-      window._knobLabelMeshes = numLabelMeshes;
-      window._knobAngles = KNOB_ANGLES;
-      window._knobSelectedNum = 1;
-      window._knobCurrentAngle = KNOB_ANGLES[0]; // Start: Punkt zeigt auf 1
-
-      // Initial: Punkt auf Zahl 1 drehen
-      knobGroup.rotation.y = -KNOB_ANGLES[0];
-
-      // Hilfsfunktion: Knopf auf Zahl N drehen
-      window._setKnobNumber = function(n) {
-        n = Math.max(1, Math.min(6, n));
-        window._knobSelectedNum = n;
-        const targetAngle = KNOB_ANGLES[n - 1];
-        window._knobCurrentAngle = targetAngle;
-        knobGroup.rotation.y = -targetAngle;
-      };
-
-      // Stellknopf + Labels zeigen/verstecken
-      window._showKnob = function(show) {
-        knobGroup.visible = show;
-        numLabelMeshes.forEach(m => m.visible = show);
-      };
-
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
       const dirBtnY = yPos + 0.003;
@@ -3598,12 +3484,10 @@
       function hideButtons() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (window._showKnob) window._showKnob(false);
       }
       function showButtons() {
         if (window._dirCwMesh) window._dirCwMesh.visible = true;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
-        if (window._showKnob) window._showKnob(true);
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       }
       
@@ -4476,8 +4360,8 @@
         highlightNum(null);
         tapIndicatorA.mesh.visible = false;
         tapIndicatorB.mesh.visible = false;
-        // Stellknopf auf 1 zurücksetzen
-        if (window._setKnobNumber) window._setKnobNumber(1);
+        // Scrollband zurücksetzen
+        if (window._resetScrollBand) window._resetScrollBand();
       }
       
       async function executeTrainingKipp() {
@@ -4553,14 +4437,12 @@
       function hideAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (window._showKnob) window._showKnob(false);
         hintText.style.display = 'none';
       }
       
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = true;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
-        if (window._showKnob) window._showKnob(true);
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
@@ -7481,24 +7363,6 @@
         }
         
         // Stellknopf: Tap auf Zahlen-Label → direkt wählen, Tap auf Knopf → weiterdrehen
-        if (window._knobGroup && window._knobGroup.visible) {
-          for (let li = 0; li < window._knobLabelMeshes.length; li++) {
-            if (vkRaycaster.intersectObject(window._knobLabelMeshes[li]).length > 0) {
-              window._setKnobNumber(li + 1);
-              if (window._onNumBtn) window._onNumBtn(li + 1);
-              lastTouchPos = null;
-              return;
-            }
-          }
-          const knobMeshRef = window._knobGroup.children[0];
-          if (knobMeshRef && vkRaycaster.intersectObject(knobMeshRef).length > 0) {
-            const nextNum = (window._knobSelectedNum % 6) + 1;
-            window._setKnobNumber(nextNum);
-            if (window._onNumBtn) window._onNumBtn(nextNum);
-            lastTouchPos = null;
-            return;
-          }
-        }
       }
       
       if (!verdecktesMesh.visible || !lastTouchPos) { lastTouchPos = null; return; }
@@ -8757,10 +8621,10 @@
     }
 
     function pulseZahlenButtons(on) {
-      document.querySelectorAll('.kippBtn[data-anzahl]').forEach(btn => {
-        if (on) btn.classList.add('pulsing');
-        else btn.classList.remove('pulsing');
-      });
+      const band = document.getElementById('scrollBand');
+      if (!band) return;
+      if (on) band.style.boxShadow = '0 0 10px rgba(212,180,140,0.6)';
+      else band.style.boxShadow = '';
     }
     function pulseRichtungButtons(on) {
       if (!cwBtn || !ccwBtn) return;
@@ -8793,23 +8657,91 @@
       pulseRichtungButtons(false);
     }
 
-    // Zahl-Buttons: nur Zahl speichern, kein Kipp
-    document.querySelectorAll('.kippBtn[data-anzahl]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (gamePhase !== 'spielen') return;
-        if (selectedAnzahl !== null) return; // schon eine Zahl gewählt
-
-        selectedAnzahl = parseInt(btn.dataset.anzahl);
-
-        // Gewählte Zahl hervorheben
-        btn.style.background = 'linear-gradient(180deg,#4a3e28 0%,#3a2e1c 100%)';
-        btn.style.color = '#c0b870';
-        btn.style.borderColor = '#d4b48c';
-        btn.style.boxShadow = '0 0 8px rgba(212,180,140,0.6), 0 0 20px rgba(212,180,140,0.35)';
-
-        startRichtungWarten();
+    // === SCROLLBAND Touch-Logik ===
+    (function() {
+      const band = document.getElementById('scrollBand');
+      const inner = document.getElementById('scrollBandInner');
+      if (!band || !inner) return;
+      
+      let scrollStartX = 0;
+      let scrollStartLeft = 0;
+      let currentNum = 1;
+      const CELL = 45; // px pro Zahl
+      const BAND_W = 180; // sichtbares Fenster
+      
+      function scrollToNum(n) {
+        n = Math.max(1, Math.min(6, n));
+        currentNum = n;
+        // Zahl zentrieren im 180px Fenster: offset = -(n-1)*45 + (180-45)/2
+        const offset = -(n - 1) * CELL + (BAND_W - CELL) / 2;
+        inner.style.left = offset + 'px';
+        
+        // Aktive Zahl hervorheben
+        inner.querySelectorAll('.scrollNum').forEach((el, i) => {
+          if (i === n - 1) {
+            el.style.color = '#f0e0b0';
+            el.style.fontSize = '28px';
+          } else {
+            el.style.color = '#808080';
+            el.style.fontSize = '20px';
+          }
+        });
+      }
+      
+      // Start: Zahl 1 zentriert
+      scrollToNum(1);
+      
+      band.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        inner.style.transition = 'none';
+        scrollStartX = e.touches[0].clientX;
+        scrollStartLeft = parseInt(inner.style.left) || 0;
+      }, { passive: true });
+      
+      band.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dx = e.touches[0].clientX - scrollStartX;
+        inner.style.left = (scrollStartLeft + dx) + 'px';
+      }, { passive: false });
+      
+      band.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        inner.style.transition = 'left 0.2s ease';
+        // Nächste Zahl einrasten
+        const currentLeft = parseInt(inner.style.left) || 0;
+        const center = (BAND_W - CELL) / 2;
+        const rawNum = Math.round((center - currentLeft) / CELL) + 1;
+        const snappedNum = Math.max(1, Math.min(6, rawNum));
+        scrollToNum(snappedNum);
+        
+        // Zahl an Spiellogik melden
+        if (gamePhase === 'spielen' && selectedAnzahl === null) {
+          selectedAnzahl = snappedNum;
+          startRichtungWarten();
+        }
+      }, { passive: true });
+      
+      // Tap auf einzelne Zahl
+      inner.querySelectorAll('.scrollNum').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const n = parseInt(el.dataset.num);
+          inner.style.transition = 'left 0.2s ease';
+          scrollToNum(n);
+          if (gamePhase === 'spielen' && selectedAnzahl === null) {
+            selectedAnzahl = n;
+            startRichtungWarten();
+          }
+        });
       });
-    });
+      
+      // Reset-Funktion für neue Runde
+      window._resetScrollBand = function() {
+        inner.style.transition = 'left 0.2s ease';
+        scrollToNum(1);
+      };
+    })();
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
     async function triggerKipp(direction) {
