@@ -1818,11 +1818,10 @@
       // Durch die 42×42 Ausnehmung sieht man die eingestellte Kippzahl
       // Schlitz: 181.3×10.7px @1x = 0.62847 breit, Mitte Z=1.34028
       // Quadrat: 42×42px @1x, Mitte Z=1.21296
-      const STELLRAD_RADIUS = 0.625;    // 4 Zellen – Sehne füllt Schlitzbreite exakt
-      const STELLRAD_THICKNESS = 0.20;  // Spannt Quadrat-Ausschnitt bis Schlitz
-      const STELLRAD_Z = 1.277;         // Mitte zwischen Quadrat (1.213) und Schlitz (1.340)
-      const STELLRAD_PROTRUSION = 0.08474; // Sagitta: Bogensehne = Schlitzbreite
-      const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS + STELLRAD_PROTRUSION;
+      const STELLRAD_RADIUS = 0.625;      // 4 Zellen
+      const STELLRAD_HEIGHT = 0.15625;    // 1 Zelle Breite (entlang X-Achse)
+      const STELLRAD_Z = 1.21354;         // Exakt unter 42×42 Ausschnitt
+      const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS; // Oberkante = Tischfläche
       
       // Rand-Bild laden, dann Mantel-Canvas mit Zahlen erstellen
       const stellradRandImg = new Image();
@@ -1868,7 +1867,7 @@
         
         // Offener Zylinder: NUR Mantel, keine Deckflächen (openEnded=true)
         const stellradGeo = new THREE.CylinderGeometry(
-          STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_THICKNESS, 64, 1, true
+          STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_HEIGHT, 64, 1, true
         );
         
         // Mantel-Material – MeshBasicMaterial (keine Beleuchtung, wie Richtungsbuttons)
@@ -1877,7 +1876,7 @@
         });
         
         const stellradMesh = new THREE.Mesh(stellradGeo, mantelMat);
-        stellradMesh.rotation.x = Math.PI / 2; // Zylinderachse entlang Z (Rad steht senkrecht in XY)
+        stellradMesh.rotation.z = Math.PI / 2; // Zylinderachse entlang X (horizontal)
         stellradMesh.renderOrder = 0; // Vor kippzahltisch (renderOrder 1) rendern
         
         const stellradGroup = new THREE.Group();
@@ -1886,9 +1885,9 @@
         scene.add(stellradGroup);
         
         // UV-Offset: Zahl 1 oben sichtbar durch 42×42 Ausschnitt
-        // Zylinderachse entlang Z → Rotation um Z scrollt Zahlen links/rechts
+        // Zylinderachse entlang X → Rotation um X scrollt Zahlen hoch/runter
         const STELLRAD_UV_OFFSET = -Math.PI / 3;
-        stellradGroup.rotation.z = STELLRAD_UV_OFFSET;
+        stellradGroup.rotation.x = STELLRAD_UV_OFFSET;
         
         window._zahlenband = stellradGroup;
         window._stellradMesh = stellradMesh; // Für Raycasting
@@ -1901,12 +1900,12 @@
           if (!window._zahlenband) return;
           n = Math.max(1, Math.min(6, n));
           window._zahlenbandNumber = n;
-          window._zahlenband.rotation.z = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
+          window._zahlenband.rotation.x = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
         };
         
-        console.log('[STELLRAD 3D] R=' + STELLRAD_RADIUS +
+        console.log('[STELLRAD] R=' + STELLRAD_RADIUS +
           ', centerY=' + STELLRAD_CENTER_Y.toFixed(4) +
-          ', Z=' + STELLRAD_Z + ', protrusion=' + STELLRAD_PROTRUSION);
+          ', Z=' + STELLRAD_Z);
       };
       stellradRandImg.src = 'stellradrand.webp';
       // Richtungsbuttons CW (west) und CCW (ost)
