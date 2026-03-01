@@ -490,12 +490,13 @@
 
 
     /* BUTTONS 1-6 */
-    #kippButtons {
+    #numBtns {
       position: absolute;
-      top: 605px;
+      top: 600px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, 52px);
       gap: 6px;
       pointer-events: auto;
       z-index: 20;
@@ -990,7 +991,15 @@
     <button id="backButton">↻</button>
     
 
-    <!-- Buttons 1-6 - Vernünftig positioniert -->
+    <!-- Kippanzahl-Tasten: 2 Reihen à 3 -->
+    <div id="numBtns" class="hidden">
+      <button class="kippBtn" data-anzahl="1">1</button>
+      <button class="kippBtn" data-anzahl="2">2</button>
+      <button class="kippBtn" data-anzahl="3">3</button>
+      <button class="kippBtn" data-anzahl="4">4</button>
+      <button class="kippBtn" data-anzahl="5">5</button>
+      <button class="kippBtn" data-anzahl="6">6</button>
+    </div>
 
   </div>
 
@@ -1764,7 +1773,7 @@
     let spieltisch = null;
     const SPIEL_WIDTH = 8 * 0.15625;
     
-    new THREE.TextureLoader().load('kippzahltisch.webp', (texture) => {
+    new THREE.TextureLoader().load('spieltisch_21.webp', (texture) => {
       const imgAspect = texture.image.height / texture.image.width;
       const height = SPIEL_WIDTH * imgAspect;
       
@@ -1812,102 +1821,107 @@
         scene.add(frameMesh);
       });
       
-      // === 3D STELLRAD (senkrecht stehendes Rad, wie Auto-Lüftungsregler) ===
-      // Offener Zylinder (nur Mantel, keine Caps – bei Kameraperspektive unsichtbar)
-      // Ragt als Bogensegment durch den breiten Schlitz im kippzahltisch
-      // Durch die 42×42 Ausnehmung sieht man die eingestellte Kippzahl
-      // Schlitz: 181.3×10.7px @1x = 0.62847 breit, Mitte Z=1.34028
-      // Quadrat: 42×42px @1x, Mitte Z=1.21296
-      const STELLRAD_RADIUS = 0.625;      // 4 Zellen
-      const STELLRAD_HEIGHT = 0.15625;    // 1 Zelle Breite (entlang X-Achse)
-      const STELLRAD_Z = 1.21354;         // Exakt unter 42×42 Ausschnitt
-      const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS; // Oberkante = Tischfläche
-      
-      // Rand-Bild laden, dann Mantel-Canvas mit Zahlen erstellen
-      const stellradRandImg = new Image();
-      stellradRandImg.onload = function() {
-        // === Mantel-Canvas: Stellradrand-Textur + Zahlen 1-6 ===
-        const mantelCvs = document.createElement('canvas');
-        const SEC_W = 400; // px pro Zahl-Sektion
-        mantelCvs.width = SEC_W * 6; // 2400px gesamt (6 Sektionen)
-        mantelCvs.height = 300;
-        const mCtx = mantelCvs.getContext('2d');
-        
-        // Stellradrand-Textur horizontal kacheln als Hintergrund
-        const tileW = stellradRandImg.width; // 540px
-        for (let x = 0; x < mantelCvs.width; x += tileW) {
-          const drawW = Math.min(tileW, mantelCvs.width - x);
-          mCtx.drawImage(stellradRandImg, 0, 0, drawW, stellradRandImg.height,
-                         x, 0, drawW, mantelCvs.height);
-        }
-        
-        // Feine vertikale Trennlinien zwischen Sektionen
-        mCtx.strokeStyle = 'rgba(0,0,0,0.25)';
-        mCtx.lineWidth = 3;
-        for (let i = 1; i < 6; i++) {
-          mCtx.beginPath();
-          mCtx.moveTo(i * SEC_W, 0);
-          mCtx.lineTo(i * SEC_W, mantelCvs.height);
-          mCtx.stroke();
-        }
-        
-        // Zahlen 1-6 groß und lesbar in jeder Sektion
-        mCtx.font = 'bold 190px Arial';
-        mCtx.textAlign = 'center';
-        mCtx.textBaseline = 'middle';
-        for (let i = 0; i < 6; i++) {
-          const cx = i * SEC_W + SEC_W / 2;
-          mCtx.fillStyle = 'rgba(0,0,0,0.7)';
-          mCtx.fillText((i + 1).toString(), cx + 3, 155);
-          mCtx.fillStyle = '#e0e0e0';
-          mCtx.fillText((i + 1).toString(), cx, 150);
-        }
-        
-        const mantelTex = new THREE.CanvasTexture(mantelCvs);
-        
-        // Offener Zylinder: NUR Mantel, keine Deckflächen (openEnded=true)
-        const stellradGeo = new THREE.CylinderGeometry(
-          STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_HEIGHT, 64, 1, true
-        );
-        
-        // Mantel-Material – MeshBasicMaterial (keine Beleuchtung, wie Richtungsbuttons)
-        const mantelMat = new THREE.MeshBasicMaterial({
-          map: mantelTex, side: THREE.DoubleSide, depthWrite: false
-        });
-        
-        const stellradMesh = new THREE.Mesh(stellradGeo, mantelMat);
-        stellradMesh.rotation.z = Math.PI / 2; // Zylinderachse entlang X (horizontal)
-        stellradMesh.renderOrder = 0; // Vor kippzahltisch (renderOrder 1) rendern
-        
-        const stellradGroup = new THREE.Group();
-        stellradGroup.position.set(0, STELLRAD_CENTER_Y, STELLRAD_Z);
-        stellradGroup.add(stellradMesh);
-        scene.add(stellradGroup);
-        
-        // UV-Offset: Zahl 1 oben sichtbar durch 42×42 Ausschnitt
-        // Zylinderachse entlang X → Rotation um X scrollt Zahlen hoch/runter
-        const STELLRAD_UV_OFFSET = -Math.PI / 3;
-        stellradGroup.rotation.x = STELLRAD_UV_OFFSET;
-        
-        window._zahlenband = stellradGroup;
-        window._stellradMesh = stellradMesh; // Für Raycasting
-        window._zahlenbandNumber = 1;
-        window._zahlenbandUVOffset = STELLRAD_UV_OFFSET;
-        window._zahlenbandStep = Math.PI / 3; // 60° pro Zahl
-        
-        // Hilfsfunktion: Zahl N (1-6) im Ausschnitt anzeigen
-        window._setZahlenbandNumber = function(n) {
-          if (!window._zahlenband) return;
-          n = Math.max(1, Math.min(6, n));
-          window._zahlenbandNumber = n;
-          window._zahlenband.rotation.x = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
-        };
-        
-        console.log('[STELLRAD] R=' + STELLRAD_RADIUS +
-          ', centerY=' + STELLRAD_CENTER_Y.toFixed(4) +
-          ', Z=' + STELLRAD_Z);
+      // === STELLKNOPF (flacher Drehknopf für Kippanzahl 1-6) ===
+      // Waagrechte Scheibe auf dem Tisch, Zahlen 1-6 drumherum (obere 2/3)
+      // Unterkante Knopf = Unterkante Richtungsbuttons
+      const KNOB_RADIUS = 0.18;
+      const KNOB_Y = yPos + 0.004;
+      const dirBtnBottomZ = 1.24248 + 0.23148 / 2; // 1.35822
+      const KNOB_CENTER_Z = dirBtnBottomZ - KNOB_RADIUS; // Unterkante = dirBtn Unterkante
+      const KNOB_NUMBER_DIST = KNOB_RADIUS + 0.07; // Zahlen etwas außerhalb
+
+      // 6 Zahlen im oberen 240°-Bogen (unteres Drittel frei)
+      // Winkel von Nord (oben), im Uhrzeigersinn: -120° bis +120°, je 48° Schritt
+      const KNOB_ANGLES = [-120, -72, -24, 24, 72, 120].map(d => d * Math.PI / 180);
+
+      // Knopf-Canvas (dunkle Scheibe mit hellem Punkt)
+      const knobCvs = document.createElement('canvas');
+      knobCvs.width = 256; knobCvs.height = 256;
+      const kCtx = knobCvs.getContext('2d');
+      const cx = 128, cy = 128, cr = 120;
+
+      // Metallischer Hintergrund
+      const radGrad = kCtx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, cr);
+      radGrad.addColorStop(0, '#707070');
+      radGrad.addColorStop(0.5, '#404040');
+      radGrad.addColorStop(1, '#1a1a1a');
+      kCtx.beginPath(); kCtx.arc(cx, cy, cr, 0, Math.PI * 2); kCtx.fillStyle = radGrad; kCtx.fill();
+
+      // Rand
+      kCtx.beginPath(); kCtx.arc(cx, cy, cr, 0, Math.PI * 2);
+      kCtx.strokeStyle = '#888'; kCtx.lineWidth = 4; kCtx.stroke();
+
+      // Zeiger-Punkt oben (bei 12 Uhr = Nord)
+      const dotR = 14;
+      const dotDist = cr - 28;
+      kCtx.beginPath(); kCtx.arc(cx, cy - dotDist, dotR, 0, Math.PI * 2);
+      kCtx.fillStyle = '#ff4444'; kCtx.fill();
+      kCtx.strokeStyle = '#ffffff'; kCtx.lineWidth = 2; kCtx.stroke();
+
+      const knobTex = new THREE.CanvasTexture(knobCvs);
+      const knobGeo = new THREE.CircleGeometry(KNOB_RADIUS, 48);
+      const knobMat = new THREE.MeshBasicMaterial({ map: knobTex, transparent: false, depthWrite: true });
+      const knobMesh = new THREE.Mesh(knobGeo, knobMat);
+      knobMesh.rotation.x = -Math.PI / 2;
+
+      const knobGroup = new THREE.Group();
+      knobGroup.position.set(0, KNOB_Y, KNOB_CENTER_Z);
+      knobGroup.add(knobMesh);
+      knobGroup.visible = false; // erst bei kipp21-Phase zeigen
+      scene.add(knobGroup);
+
+      // Zahlen 1-6 als feste Labels um den Knopf
+      const numLabelMeshes = [];
+      for (let i = 0; i < 6; i++) {
+        const angle = KNOB_ANGLES[i];
+        const numCvs = document.createElement('canvas');
+        numCvs.width = 64; numCvs.height = 64;
+        const nCtx = numCvs.getContext('2d');
+        nCtx.fillStyle = '#e0d0b8';
+        nCtx.font = 'bold 48px Arial';
+        nCtx.textAlign = 'center';
+        nCtx.textBaseline = 'middle';
+        nCtx.fillText((i + 1).toString(), 32, 34);
+
+        const numTex = new THREE.CanvasTexture(numCvs);
+        const numGeo = new THREE.PlaneGeometry(0.08, 0.08);
+        const numMat = new THREE.MeshBasicMaterial({ map: numTex, transparent: true, depthWrite: false });
+        const numMesh = new THREE.Mesh(numGeo, numMat);
+        numMesh.rotation.x = -Math.PI / 2;
+        // Position: Winkel von Nord, Uhrzeigersinn
+        const nx = Math.sin(angle) * KNOB_NUMBER_DIST;
+        const nz = -Math.cos(angle) * KNOB_NUMBER_DIST;
+        numMesh.position.set(nx, KNOB_Y + 0.001, KNOB_CENTER_Z + nz);
+        numMesh.visible = false;
+        scene.add(numMesh);
+        numLabelMeshes.push(numMesh);
+      }
+
+      // Stellknopf State
+      window._knobGroup = knobGroup;
+      window._knobLabelMeshes = numLabelMeshes;
+      window._knobAngles = KNOB_ANGLES;
+      window._knobSelectedNum = 1;
+      window._knobCurrentAngle = KNOB_ANGLES[0]; // Start: Punkt zeigt auf 1
+
+      // Initial: Punkt auf Zahl 1 drehen
+      knobGroup.rotation.y = -KNOB_ANGLES[0];
+
+      // Hilfsfunktion: Knopf auf Zahl N drehen
+      window._setKnobNumber = function(n) {
+        n = Math.max(1, Math.min(6, n));
+        window._knobSelectedNum = n;
+        const targetAngle = KNOB_ANGLES[n - 1];
+        window._knobCurrentAngle = targetAngle;
+        knobGroup.rotation.y = -targetAngle;
       };
-      stellradRandImg.src = 'stellradrand.webp';
+
+      // Stellknopf + Labels zeigen/verstecken
+      window._showKnob = function(show) {
+        knobGroup.visible = show;
+        numLabelMeshes.forEach(m => m.visible = show);
+      };
+
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
       const dirBtnY = yPos + 0.003;
@@ -2466,7 +2480,7 @@
     const actionButton = document.getElementById('actionButton');
     const backButton = document.getElementById('backButton');
     const resetButton = document.getElementById('resetButton');
-    const kippButtons = document.getElementById('kippButtons');
+    const kippButtons = document.getElementById('numBtns');
     
     // === SOUND TOGGLE ===
     const soundToggle = document.getElementById('soundToggle');
@@ -3584,10 +3598,12 @@
       function hideButtons() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
+        if (window._showKnob) window._showKnob(false);
       }
       function showButtons() {
         if (window._dirCwMesh) window._dirCwMesh.visible = true;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (window._showKnob) window._showKnob(true);
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       }
       
@@ -4208,7 +4224,7 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      ['eyeIcon','kippButtons','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
+      ['eyeIcon','numBtns','richtungButtons','kippTarget','demoSubtitle'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -4460,8 +4476,8 @@
         highlightNum(null);
         tapIndicatorA.mesh.visible = false;
         tapIndicatorB.mesh.visible = false;
-        // Stellrad auf 1 zurücksetzen
-        if (window._setZahlenbandNumber) window._setZahlenbandNumber(1);
+        // Stellknopf auf 1 zurücksetzen
+        if (window._setKnobNumber) window._setKnobNumber(1);
       }
       
       async function executeTrainingKipp() {
@@ -4537,12 +4553,14 @@
       function hideAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
+        if (window._showKnob) window._showKnob(false);
         hintText.style.display = 'none';
       }
       
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = true;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (window._showKnob) window._showKnob(true);
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
@@ -7407,64 +7425,23 @@
     const vkMouse = new THREE.Vector2();
     let lastTouchPos = null;
     
-    // === STELLRAD SWIPE STATE ===
-    let stellradSwipeActive = false;
-    let stellradSwipeStartX = 0;
-    let stellradSwipeStartNum = 1;
-    const STELLRAD_SWIPE_THRESHOLD = 30; // px pro Zahlenschritt
-    
     renderer.domElement.addEventListener('touchstart', (e) => {
       if (replayActive) return; // Tutorial: keine Interaktion
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
-      // KIPP 21: Card tap detection + Stellrad swipe
+      // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active) {
         dismissKippenWarning();
         const touch = e.touches[0];
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
-        
-        // Prüfe ob Touch auf dem Stellrad liegt (Raycasting)
-        if (window._stellradMesh && window._stellradMesh.visible !== false) {
-          const rect = renderer.domElement.getBoundingClientRect();
-          const mx = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
-          const my = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
-          const tempRay = new THREE.Raycaster();
-          tempRay.setFromCamera(new THREE.Vector2(mx, my), camera);
-          if (tempRay.intersectObject(window._stellradMesh).length > 0) {
-            stellradSwipeActive = true;
-            stellradSwipeStartX = touch.clientX;
-            stellradSwipeStartNum = window._zahlenbandNumber || 1;
-            e.preventDefault();
-          }
-        }
       }
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchmove', (e) => {
-      // Stellrad Swipe: Zahl ändern per horizontaler Bewegung
-      if (stellradSwipeActive && gamePhase === 'kipp21') {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - stellradSwipeStartX;
-        const steps = Math.round(deltaX / STELLRAD_SWIPE_THRESHOLD);
-        let newNum = stellradSwipeStartNum + steps;
-        newNum = Math.max(1, Math.min(6, newNum));
-        if (newNum !== window._zahlenbandNumber) {
-          if (window._setZahlenbandNumber) window._setZahlenbandNumber(newNum);
-        }
-      }
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchend', (e) => {
-      // Stellrad Swipe beenden → Zahl bestätigen
-      if (stellradSwipeActive) {
-        stellradSwipeActive = false;
-        const finalNum = window._zahlenbandNumber || 1;
-        if (window._onNumBtn) window._onNumBtn(finalNum);
-        lastTouchPos = null;
-        return;
-      }
       if (replayActive) return; // Tutorial: keine Interaktion
       // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
@@ -7498,6 +7475,26 @@
         if (window._dirCcwMesh && window._dirCcwMesh.visible) {
           if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
             if (window._onDirBtn) window._onDirBtn('ccw');
+            lastTouchPos = null;
+            return;
+          }
+        }
+        
+        // Stellknopf: Tap auf Zahlen-Label → direkt wählen, Tap auf Knopf → weiterdrehen
+        if (window._knobGroup && window._knobGroup.visible) {
+          for (let li = 0; li < window._knobLabelMeshes.length; li++) {
+            if (vkRaycaster.intersectObject(window._knobLabelMeshes[li]).length > 0) {
+              window._setKnobNumber(li + 1);
+              if (window._onNumBtn) window._onNumBtn(li + 1);
+              lastTouchPos = null;
+              return;
+            }
+          }
+          const knobMeshRef = window._knobGroup.children[0];
+          if (knobMeshRef && vkRaycaster.intersectObject(knobMeshRef).length > 0) {
+            const nextNum = (window._knobSelectedNum % 6) + 1;
+            window._setKnobNumber(nextNum);
+            if (window._onNumBtn) window._onNumBtn(nextNum);
             lastTouchPos = null;
             return;
           }
