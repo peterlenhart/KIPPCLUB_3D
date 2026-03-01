@@ -998,6 +998,9 @@
           <div class="scrollNum" data-num="5" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">5</div>
           <div class="scrollNum" data-num="6" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">6</div>
         </div>
+        <!-- Zylindrische Abdunklung links/rechts -->
+        <div style="position:absolute;top:0;left:0;width:40px;height:100%;background:linear-gradient(to right,rgba(20,20,20,0.85),rgba(20,20,20,0));pointer-events:none;z-index:1;"></div>
+        <div style="position:absolute;top:0;right:0;width:40px;height:100%;background:linear-gradient(to left,rgba(20,20,20,0.85),rgba(20,20,20,0));pointer-events:none;z-index:1;"></div>
       </div>
     </div>
 
@@ -3577,7 +3580,29 @@
         const el = document.getElementById('numBtns');
         if (!el) return { x: 180, y: 620 };
         const t = parseInt(el.style.top) || 620;
-        return { x: 180, y: t + 22 }; // 45px hoch, Mitte = +22
+        return { x: 180, y: t + 22 };
+      }
+      
+      // Scrollband-Offset für Zahl N: -(N-1)*45 + 67.5
+      function sbOffsetForNum(n) { return -(n - 1) * 45 + 67.5; }
+      
+      // Hand bewegen UND Scrollband mitziehen (simuliert Wischen)
+      async function handSwipeBand(fromX, toX, bandFromOff, bandToOff, y, durMs) {
+        return new Promise(resolve => {
+          const startTime = performance.now();
+          function tick(now) {
+            const t = Math.min(1, (now - startTime) / durMs);
+            const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            const cx = fromX + (toX - fromX) * ease;
+            const bo = bandFromOff + (bandToOff - bandFromOff) * ease;
+            setHandPos(cx, y);
+            updateHandShadow(cx, y, true);
+            if (window._scrollBandSetRaw) window._scrollBandSetRaw(bo);
+            if (t < 1) requestAnimationFrame(tick);
+            else resolve();
+          }
+          requestAnimationFrame(tick);
+        });
       }
       
       const sbCenter = scrollBandCenter();
@@ -3585,29 +3610,33 @@
       const ccwP = meshScreenPos(window._dirCcwMesh);
       
       // Hand von unten zum Scrollband
-      setHandPos(sbCenter.x + 60, 740);
+      setHandPos(sbCenter.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(sbCenter.x + 60, 740, true);
-      await moveHandSmooth(sbCenter.x + 60, sbCenter.y, 600);
-      await sleep(200);
+      updateHandShadow(sbCenter.x, 740, true);
+      await moveHandSmooth(sbCenter.x, sbCenter.y, 600);
+      await sleep(300);
       
-      // Swipe-Geste: von rechts nach links (wischt zum falschen Wert)
-      await moveHandSmooth(sbCenter.x - 40, sbCenter.y, 500);
-      if (window._scrollBandToNum) window._scrollBandToNum(1); // falsche Anzahl: 1
+      // Suchend wischen: nach links ziehen (zeigt 3, 4, 5)
+      await handSwipeBand(sbCenter.x, sbCenter.x - 70, sbOffsetForNum(1), sbOffsetForNum(4), sbCenter.y, 700);
+      await sleep(250);
+      
+      // Weiter nach links (zeigt 5, 6)
+      await handSwipeBand(sbCenter.x - 70, sbCenter.x - 110, sbOffsetForNum(4), sbOffsetForNum(6), sbCenter.y, 500);
+      await sleep(300);
+      
+      // Zurück nach rechts wischen (suchend, landet bei 1 = falsche Anzahl)
+      await handSwipeBand(sbCenter.x - 110, sbCenter.x + 30, sbOffsetForNum(6), sbOffsetForNum(1), sbCenter.y, 800);
+      if (window._scrollBandToNum) window._scrollBandToNum(1);
       window._highlightNum(1);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
-      // Hand fährt nach links zum CW-Richtungsbutton
-      await moveHandSmooth(cwP.x, cwP.y, 600);
-      await sleep(200);
-      
-      // Falsche Richtung wählen
+      // Hand fährt zum falschen Richtungsbutton
       const correctDir1 = findHitDirection(TARGET_CARD);
       const wrongDir = (correctDir1 === 'cw') ? 'ccw' : 'cw';
       const wrongBtnP = (wrongDir === 'ccw') ? ccwP : cwP;
       
-      await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 400);
+      await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 600);
       await sleep(200);
       window._highlightDir(wrongDir);
       await sleep(500);
@@ -3689,14 +3718,23 @@
       
       const sbCenter2 = scrollBandCenter();
       
+      // Band steht noch auf 1 (vom vorherigen Reset)
       // Hand zum Scrollband
-      setHandPos(sbCenter2.x - 40, 740);
+      setHandPos(sbCenter2.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(sbCenter2.x - 40, 740, true);
-      await moveHandSmooth(sbCenter2.x - 40, sbCenter2.y, 600);
-      await sleep(200);
-      // Swipe zur richtigen Zahl
-      await moveHandSmooth(sbCenter2.x + 40, sbCenter2.y, 500);
+      updateHandShadow(sbCenter2.x, 740, true);
+      await moveHandSmooth(sbCenter2.x, sbCenter2.y, 600);
+      await sleep(250);
+      
+      // Suchend wischen: zur richtigen Zahl
+      if (dist2 > 1) {
+        // Etwas über Ziel hinaus wischen, dann zurück (suchend)
+        const overNum = Math.min(6, dist2 + 1);
+        await handSwipeBand(sbCenter2.x, sbCenter2.x - (overNum - 1) * 18, sbOffsetForNum(1), sbOffsetForNum(overNum), sbCenter2.y, 600);
+        await sleep(200);
+        // Zurück zur richtigen Zahl
+        await handSwipeBand(sbCenter2.x - (overNum - 1) * 18, sbCenter2.x - (dist2 - 1) * 18, sbOffsetForNum(overNum), sbOffsetForNum(dist2), sbCenter2.y, 400);
+      }
       if (window._scrollBandToNum) window._scrollBandToNum(dist2);
       window._highlightNum(dist2);
       await sleep(500);
@@ -8759,6 +8797,19 @@
       window._scrollBandToNum = function(n) {
         inner.style.transition = 'left 0.2s ease';
         scrollToNum(n);
+      };
+      // Für Tutorial: Band pixelgenau bewegen (ohne Snap)
+      window._scrollBandSetRaw = function(leftPx) {
+        inner.style.transition = 'none';
+        inner.style.left = leftPx + 'px';
+        // Highlight nächste Zahl visuell
+        const center = (BAND_W - CELL) / 2;
+        const rawNum = Math.round((center - leftPx) / CELL) + 1;
+        const n = Math.max(1, Math.min(6, rawNum));
+        inner.querySelectorAll('.scrollNum').forEach((el, i) => {
+          if (i === n - 1) { el.style.color = '#f0e0b0'; el.style.fontSize = '28px'; }
+          else { el.style.color = '#808080'; el.style.fontSize = '20px'; }
+        });
       };
     })();
 
