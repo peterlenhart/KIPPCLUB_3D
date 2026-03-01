@@ -497,6 +497,32 @@
       pointer-events: auto;
       z-index: 20;
     }
+    .numBtn {
+      width: 42px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: bold 18px Arial;
+      color: #2a1810;
+      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
+      border: 2px solid #8a7a66;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: all 0.12s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .numBtn.selected {
+      background: linear-gradient(180deg, #3a2a1a 0%, #2a1810 100%);
+      border-color: #5a4a36;
+      color: #e8dcc8;
+      box-shadow: 0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .numBtn:active {
+      transform: scale(0.92);
+    }
 
     .kippBtn {
       width: 52px;
@@ -987,20 +1013,15 @@
     <button id="backButton">↻</button>
     
 
-    <!-- Kippanzahl-Scrollband: 180×45px Fenster, 6 Zahlen à 45px scrollbar -->
+    <!-- Kippanzahl: 6 Tasten in 2×3 Grid -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="scrollBand" style="width:180px; height:45px; overflow:hidden; border:2px solid #808080; border-radius:6px; background:#2a2a2a; position:relative; touch-action:none;">
-        <div id="scrollBandInner" style="display:flex; width:270px; height:45px; position:absolute; left:0; top:0; transition:left 0.2s ease;">
-          <div class="scrollNum" data-num="1" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">1</div>
-          <div class="scrollNum" data-num="2" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">2</div>
-          <div class="scrollNum" data-num="3" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">3</div>
-          <div class="scrollNum" data-num="4" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">4</div>
-          <div class="scrollNum" data-num="5" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">5</div>
-          <div class="scrollNum" data-num="6" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#c0b8a8;flex-shrink:0;">6</div>
-        </div>
-        <!-- Zylindrische Abdunklung links/rechts -->
-        <div style="position:absolute;top:0;left:0;width:40px;height:100%;background:linear-gradient(to right,rgba(20,20,20,0.85),rgba(20,20,20,0));pointer-events:none;z-index:1;"></div>
-        <div style="position:absolute;top:0;right:0;width:40px;height:100%;background:linear-gradient(to left,rgba(20,20,20,0.85),rgba(20,20,20,0));pointer-events:none;z-index:1;"></div>
+      <div style="display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(2,38px); gap:4px;">
+        <div class="numBtn" data-num="1">1</div>
+        <div class="numBtn" data-num="2">2</div>
+        <div class="numBtn" data-num="3">3</div>
+        <div class="numBtn" data-num="4">4</div>
+        <div class="numBtn" data-num="5">5</div>
+        <div class="numBtn" data-num="6">6</div>
       </div>
     </div>
 
@@ -1853,14 +1874,8 @@
         if (window._dirCcwMesh) window._dirCcwMesh.rotation.z = rot;
       };
       
-      // Scrollband-Position: Unterkante = Richtungsbutton-Unterkante
-      const dirBtnBottom3D = new THREE.Vector3(0, dirBtnY, dirBtnZ + dirBtnSize / 2);
-      dirBtnBottom3D.project(camera);
-      const dirBtnBottomScreenY = (-dirBtnBottom3D.y * 0.5 + 0.5) * 720;
-      const numBtnsEl = document.getElementById('numBtns');
-      if (numBtnsEl) {
-        numBtnsEl.style.top = Math.round(dirBtnBottomScreenY - 49) + 'px';
-      }
+      // Numpad-Position: wird unten bei renderLoop-Start gesetzt
+      // (hier ist die Kamera noch nicht fertig)
     });
 
     // =========================
@@ -3563,7 +3578,7 @@
       await sleep(800);
       
       // ==============================================
-      // SCHRITT 5-7: Hand wischt am Scrollband, wählt falsche Richtung → FAIL
+      // SCHRITT 5-7: Hand klickt falsche Kippanzahl, dann falsche Richtung → FAIL
       // ==============================================
       
       // Hilfsfunktion: 3D-Mesh Position auf Screen projizieren
@@ -3575,59 +3590,40 @@
         return { x: Math.round((v.x * 0.5 + 0.5) * 360), y: Math.round((-v.y * 0.5 + 0.5) * 720) };
       }
       
-      // Scrollband Screen-Position (Mitte)
-      function scrollBandCenter() {
-        const el = document.getElementById('numBtns');
-        if (!el) return { x: 180, y: 620 };
-        const t = parseInt(el.style.top) || 620;
-        return { x: 180, y: t + 22 };
+      // numBtn Screen-Position (Mitte des Buttons)
+      function numBtnCenter(n) {
+        const btn = document.querySelector('.numBtn[data-num="' + n + '"]');
+        if (!btn) return { x: 180, y: 620 };
+        const r = btn.getBoundingClientRect();
+        const overlay = document.getElementById('uiOverlay');
+        const or2 = overlay ? overlay.getBoundingClientRect() : { left: 0, top: 0, width: 360, height: 720 };
+        const scaleX = 360 / or2.width;
+        const scaleY = 720 / or2.height;
+        return {
+          x: Math.round((r.left + r.width / 2 - or2.left) * scaleX),
+          y: Math.round((r.top + r.height / 2 - or2.top) * scaleY)
+        };
       }
       
-      // Scrollband-Offset für Zahl N: -(N-1)*45 + 67.5
-      function sbOffsetForNum(n) { return -(n - 1) * 45 + 67.5; }
-      
-      // Hand bewegen UND Scrollband mitziehen (simuliert Wischen)
-      async function handSwipeBand(fromX, toX, bandFromOff, bandToOff, y, durMs) {
-        return new Promise(resolve => {
-          const startTime = performance.now();
-          function tick(now) {
-            const t = Math.min(1, (now - startTime) / durMs);
-            const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            const cx = fromX + (toX - fromX) * ease;
-            const bo = bandFromOff + (bandToOff - bandFromOff) * ease;
-            setHandPos(cx, y);
-            updateHandShadow(cx, y, true);
-            if (window._scrollBandSetRaw) window._scrollBandSetRaw(bo);
-            if (t < 1) requestAnimationFrame(tick);
-            else resolve();
-          }
-          requestAnimationFrame(tick);
-        });
-      }
-      
-      const sbCenter = scrollBandCenter();
       const cwP = meshScreenPos(window._dirCwMesh);
       const ccwP = meshScreenPos(window._dirCcwMesh);
       
-      // Hand von unten zum Scrollband
-      setHandPos(sbCenter.x, 740);
+      // Hand schwebt suchend über Zahlen-Buttons
+      const nb3P = numBtnCenter(3);
+      const nb5P = numBtnCenter(5);
+      const nb1P = numBtnCenter(1);
+      
+      setHandPos(nb3P.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(sbCenter.x, 740, true);
-      await moveHandSmooth(sbCenter.x, sbCenter.y, 600);
+      updateHandShadow(nb3P.x, 740, true);
+      await moveHandSmooth(nb3P.x, nb3P.y, 600);
+      await sleep(200);
+      await moveHandSmooth(nb5P.x, nb5P.y, 400);
+      await sleep(200);
+      await moveHandSmooth(nb1P.x, nb1P.y, 400);
       await sleep(300);
-      
-      // Suchend wischen: nach links ziehen (zeigt 3, 4, 5)
-      await handSwipeBand(sbCenter.x, sbCenter.x - 70, sbOffsetForNum(1), sbOffsetForNum(4), sbCenter.y, 700);
-      await sleep(250);
-      
-      // Weiter nach links (zeigt 5, 6)
-      await handSwipeBand(sbCenter.x - 70, sbCenter.x - 110, sbOffsetForNum(4), sbOffsetForNum(6), sbCenter.y, 500);
-      await sleep(300);
-      
-      // Zurück nach rechts wischen (suchend, landet bei 1 = falsche Anzahl)
-      await handSwipeBand(sbCenter.x - 110, sbCenter.x + 30, sbOffsetForNum(6), sbOffsetForNum(1), sbCenter.y, 800);
-      if (window._scrollBandToNum) window._scrollBandToNum(1);
-      window._highlightNum(1);
+      // Klick auf "1" (falsche Anzahl)
+      if (window._highlightNum) window._highlightNum(1);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
@@ -3710,33 +3706,27 @@
       await sleep(800);
       
       // ==============================================
-      // SCHRITT 10-12: Hand wählt richtige Zahl am Scrollband, dann richtige Richtung → HIT
+      // SCHRITT 10-12: Hand wählt richtige Zahl, dann richtige Richtung → HIT
       // ==============================================
       const correctDir2 = findHitDirection(TARGET_CARD);
       const dist2 = kipp21CardDistances[TARGET_CARD] || 1;
       const correctBtnP = (correctDir2 === 'ccw') ? ccwP : cwP;
       
-      const sbCenter2 = scrollBandCenter();
+      const correctNumP = numBtnCenter(dist2);
       
-      // Band steht noch auf 1 (vom vorherigen Reset)
-      // Hand zum Scrollband
-      setHandPos(sbCenter2.x, 740);
+      // Hand schwebt suchend über Buttons
+      const nb2P = numBtnCenter(2);
+      setHandPos(nb2P.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(sbCenter2.x, 740, true);
-      await moveHandSmooth(sbCenter2.x, sbCenter2.y, 600);
-      await sleep(250);
-      
-      // Suchend wischen: zur richtigen Zahl
-      if (dist2 > 1) {
-        // Etwas über Ziel hinaus wischen, dann zurück (suchend)
-        const overNum = Math.min(6, dist2 + 1);
-        await handSwipeBand(sbCenter2.x, sbCenter2.x - (overNum - 1) * 18, sbOffsetForNum(1), sbOffsetForNum(overNum), sbCenter2.y, 600);
-        await sleep(200);
-        // Zurück zur richtigen Zahl
-        await handSwipeBand(sbCenter2.x - (overNum - 1) * 18, sbCenter2.x - (dist2 - 1) * 18, sbOffsetForNum(overNum), sbOffsetForNum(dist2), sbCenter2.y, 400);
+      updateHandShadow(nb2P.x, 740, true);
+      await moveHandSmooth(nb2P.x, nb2P.y, 600);
+      await sleep(200);
+      if (dist2 !== 2) {
+        await moveHandSmooth(correctNumP.x, correctNumP.y, 400);
+        await sleep(300);
       }
-      if (window._scrollBandToNum) window._scrollBandToNum(dist2);
-      window._highlightNum(dist2);
+      // Klick auf richtige Zahl
+      if (window._highlightNum) window._highlightNum(dist2);
       await sleep(500);
       if (aborted()) { replayCleanup(jr); return; }
       
@@ -8669,10 +8659,11 @@
     }
 
     function pulseZahlenButtons(on) {
-      const band = document.getElementById('scrollBand');
-      if (!band) return;
-      if (on) band.style.boxShadow = '0 0 10px rgba(212,180,140,0.6)';
-      else band.style.boxShadow = '';
+      const btns = document.querySelectorAll('.numBtn');
+      btns.forEach(b => {
+        if (on) b.style.boxShadow = '0 0 10px rgba(212,180,140,0.6)';
+        else b.style.boxShadow = '';
+      });
     }
     function pulseRichtungButtons(on) {
       if (!cwBtn || !ccwBtn) return;
@@ -8706,80 +8697,33 @@
       pulseRichtungButtons(false);
     }
 
-    // === SCROLLBAND Touch-Logik ===
+    // === KIPPANZAHL-BUTTONS (6 Tasten) ===
     (function() {
-      const band = document.getElementById('scrollBand');
-      const inner = document.getElementById('scrollBandInner');
-      if (!band || !inner) return;
+      const btns = document.querySelectorAll('.numBtn');
+      if (!btns.length) return;
       
-      let scrollStartX = 0;
-      let scrollStartLeft = 0;
-      let currentNum = 1;
-      const CELL = 45; // px pro Zahl
-      const BAND_W = 180; // sichtbares Fenster
+      let currentNum = null;
       
-      function scrollToNum(n) {
-        n = Math.max(1, Math.min(6, n));
+      function selectNum(n) {
         currentNum = n;
-        // Zahl zentrieren im 180px Fenster: offset = -(n-1)*45 + (180-45)/2
-        const offset = -(n - 1) * CELL + (BAND_W - CELL) / 2;
-        inner.style.left = offset + 'px';
-        
-        // Aktive Zahl hervorheben
-        inner.querySelectorAll('.scrollNum').forEach((el, i) => {
-          if (i === n - 1) {
-            el.style.color = '#f0e0b0';
-            el.style.fontSize = '28px';
-          } else {
-            el.style.color = '#808080';
-            el.style.fontSize = '20px';
-          }
+        btns.forEach(b => {
+          if (parseInt(b.dataset.num) === n) b.classList.add('selected');
+          else b.classList.remove('selected');
         });
       }
       
-      // Start: Zahl 1 zentriert
-      scrollToNum(1);
+      function clearSelection() {
+        currentNum = null;
+        btns.forEach(b => b.classList.remove('selected'));
+      }
       
-      band.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
-        inner.style.transition = 'none';
-        scrollStartX = e.touches[0].clientX;
-        scrollStartLeft = parseInt(inner.style.left) || 0;
-      }, { passive: true });
-      
-      band.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const dx = e.touches[0].clientX - scrollStartX;
-        inner.style.left = (scrollStartLeft + dx) + 'px';
-      }, { passive: false });
-      
-      band.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        inner.style.transition = 'left 0.2s ease';
-        // Nächste Zahl einrasten
-        const currentLeft = parseInt(inner.style.left) || 0;
-        const center = (BAND_W - CELL) / 2;
-        const rawNum = Math.round((center - currentLeft) / CELL) + 1;
-        const snappedNum = Math.max(1, Math.min(6, rawNum));
-        scrollToNum(snappedNum);
-        
-        // Zahl an Spiellogik melden (Training: kipp21, Hauptspiel: spielen)
-        if (gamePhase === 'kipp21' && window._onNumBtn) {
-          window._onNumBtn(snappedNum);
-        } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
-          selectedAnzahl = snappedNum;
-          startRichtungWarten();
-        }
-      }, { passive: true });
-      
-      // Tap auf einzelne Zahl
-      inner.querySelectorAll('.scrollNum').forEach(el => {
-        el.addEventListener('click', (e) => {
+      btns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const n = parseInt(el.dataset.num);
-          inner.style.transition = 'left 0.2s ease';
-          scrollToNum(n);
+          const n = parseInt(btn.dataset.num);
+          selectNum(n);
+          
+          // Zahl an Spiellogik melden
           if (gamePhase === 'kipp21' && window._onNumBtn) {
             window._onNumBtn(n);
           } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
@@ -8789,27 +8733,16 @@
         });
       });
       
-      // Reset-Funktion für neue Runde
-      window._resetScrollBand = function() {
-        inner.style.transition = 'left 0.2s ease';
-        scrollToNum(1);
-      };
-      window._scrollBandToNum = function(n) {
-        inner.style.transition = 'left 0.2s ease';
-        scrollToNum(n);
-      };
-      // Für Tutorial: Band pixelgenau bewegen (ohne Snap)
-      window._scrollBandSetRaw = function(leftPx) {
-        inner.style.transition = 'none';
-        inner.style.left = leftPx + 'px';
-        // Highlight nächste Zahl visuell
-        const center = (BAND_W - CELL) / 2;
-        const rawNum = Math.round((center - leftPx) / CELL) + 1;
-        const n = Math.max(1, Math.min(6, rawNum));
-        inner.querySelectorAll('.scrollNum').forEach((el, i) => {
-          if (i === n - 1) { el.style.color = '#f0e0b0'; el.style.fontSize = '28px'; }
-          else { el.style.color = '#808080'; el.style.fontSize = '20px'; }
-        });
+      // Global: Zahl auswählen (für Tutorial)
+      window._scrollBandToNum = function(n) { selectNum(n); };
+      
+      // Global: Reset
+      window._resetScrollBand = function() { clearSelection(); };
+      
+      // Highlight (für Tutorial-Anzeige)
+      window._highlightNum = function(n) {
+        if (n === null) { clearSelection(); return; }
+        selectNum(n);
       };
     })();
 
@@ -8878,6 +8811,21 @@
 
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
+
+    // Numpad (1-6 Tasten) positionieren: Unterkante bündig mit Richtungsbuttons
+    (function() {
+      const el = document.getElementById('numBtns');
+      if (!el) return;
+      // Bekannte 3D-Koordinaten der Richtungsbuttons (aus Texture-Loader)
+      const dBtnY = 0.001 + 3 * 0.15625 + 0.003; // = 0.47175
+      const dBtnZ = 1.24248 + 0.04167;            // = 1.28415
+      const dBtnSize = 0.23148;
+      const bottomZ = dBtnZ + dBtnSize / 2;        // Unterkante
+      const pt = new THREE.Vector3(0, dBtnY, bottomZ);
+      pt.project(camera);
+      const screenY = Math.round((-pt.y * 0.5 + 0.5) * 720);
+      el.style.top = Math.max(400, Math.min(700, screenY - 84 + 130)) + 'px';
+    })();
 
     // DEBUG: If this text appears, the script reached the end without crash
 
