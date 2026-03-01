@@ -1810,7 +1810,7 @@
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
       const dirBtnY = yPos + 0.003;
-      const dirBtnZ = 1.24248; // Unterkante = Schlitz-Unterkante
+      const dirBtnZ = 1.24248 + 0.04167; // 12px südlicher
       const dirCwX = -0.48843;
       const dirCcwX = 0.48843;
       const DIR_ROT = { 3: 0, 0: -Math.PI/2, 1: Math.PI, 2: Math.PI/2 };
@@ -1856,7 +1856,7 @@
       const dirBtnBottomScreenY = (-dirBtnBottom3D.y * 0.5 + 0.5) * 720;
       const numBtnsEl = document.getElementById('numBtns');
       if (numBtnsEl) {
-        numBtnsEl.style.top = Math.round(dirBtnBottomScreenY - 49 + 12) + 'px'; // 12px südlicher
+        numBtnsEl.style.top = Math.round(dirBtnBottomScreenY - 49) + 'px';
       }
     });
 
