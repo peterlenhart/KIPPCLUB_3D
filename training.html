@@ -1812,13 +1812,15 @@
         scene.add(frameMesh);
       });
       
-      // === 3D STELLRAD (erkennbares Rad das durch den Schlitz ragt) ===
-      // Radius so gewählt dass 1 Zahl im 42×42px Ausschnitt lesbar ist
-      // und die Krümmung des Rades sichtbar ist
-      const STELLRAD_RADIUS = 0.25; // ~1.6 Zellen – sichtbare Krümmung
-      const STELLRAD_THICKNESS = 0.15625; // 1 Zelle Dicke (entlang X-Achse)
-      const STELLRAD_Z = 1.21354; // Schlitz-Mitte Z (= quadr_rahmen Z)
-      const STELLRAD_PROTRUSION = 0.055; // Rad ragt 0.055 über Oberfläche
+      // === 3D STELLRAD (senkrecht stehendes Rad, wie Auto-Lüftungsregler) ===
+      // Ragt als Bogensegment durch den breiten Schlitz im kippzahltisch
+      // Durch die 42×42 Ausnehmung sieht man die eingestellte Kippzahl
+      // Schlitz: 181.3×10.7px @1x = 0.62847 breit, Mitte Z=1.34028
+      // Quadrat: 42×42px @1x, Mitte Z=1.21296
+      const STELLRAD_RADIUS = 0.625;    // 4 Zellen – Sehne füllt Schlitzbreite exakt
+      const STELLRAD_THICKNESS = 0.20;  // Spannt Quadrat-Ausschnitt bis Schlitz
+      const STELLRAD_Z = 1.277;         // Mitte zwischen Quadrat (1.213) und Schlitz (1.340)
+      const STELLRAD_PROTRUSION = 0.08474; // Sagitta: Bogensehne = Schlitzbreite
       const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS + STELLRAD_PROTRUSION;
       
       // Deckflächen-Textur (kreisförmige geschliffene Metallfläche)
@@ -1873,21 +1875,20 @@
           STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_THICKNESS, 64, 1, false
         );
         
-        // Mantel-Material (Rändelung + Zahlen)
-        const mantelMat = new THREE.MeshStandardMaterial({
-          map: mantelTex, side: THREE.DoubleSide,
-          roughness: 0.35, metalness: 0.6
+        // Mantel-Material (Rändelung + Zahlen) – MeshBasicMaterial wie Richtungsbuttons
+        // depthWrite:false damit kippzahltisch an opaken Stellen das Rad verdeckt
+        const mantelMat = new THREE.MeshBasicMaterial({
+          map: mantelTex, side: THREE.DoubleSide, depthWrite: false
         });
-        // Deckflächen-Material (geschliffenes Metall-Kreismuster)
-        const capMat = new THREE.MeshStandardMaterial({
-          map: stellradFlaecheTex, transparent: true,
-          roughness: 0.25, metalness: 0.7
+        // Deckflächen-Material (geschliffenes Metall-Kreismuster) – MeshBasicMaterial
+        const capMat = new THREE.MeshBasicMaterial({
+          map: stellradFlaecheTex, transparent: true, depthWrite: false
         });
         
         // Mesh mit 3 Material-Gruppen
         const stellradMesh = new THREE.Mesh(stellradGeo, [mantelMat, capMat, capMat]);
-        stellradMesh.rotation.z = Math.PI / 2; // Zylinderachse entlang X (horizontal)
-        stellradMesh.castShadow = true;
+        stellradMesh.rotation.x = Math.PI / 2; // Zylinderachse entlang Z (Rad steht senkrecht in XY)
+        stellradMesh.renderOrder = 0; // Vor kippzahltisch (renderOrder 1) rendern
         
         const stellradGroup = new THREE.Group();
         stellradGroup.position.set(0, STELLRAD_CENTER_Y, STELLRAD_Z);
@@ -1895,11 +1896,9 @@
         scene.add(stellradGroup);
         
         // UV-Offset: Zahl 1 oben sichtbar im Schlitz
-        // CylinderGeo: U=0 bei +Z. Nach rot.z=PI/2, +Z bleibt +Z.
-        // Oben (max Y) = theta=PI/2 = U=0.25. Mitte Zahl 1 = U=1/12 ≈ 0.083.
-        // Offset = (0.25 - 0.083) × 2π ≈ PI/3
+        // Achse nun entlang Z → Rotation um Z scrollt Zahlen
         const STELLRAD_UV_OFFSET = -Math.PI / 3;
-        stellradGroup.rotation.x = STELLRAD_UV_OFFSET;
+        stellradGroup.rotation.z = STELLRAD_UV_OFFSET;
         
         window._zahlenband = stellradGroup;
         window._stellradMesh = stellradMesh; // Für Raycasting
@@ -1912,7 +1911,7 @@
           if (!window._zahlenband) return;
           n = Math.max(1, Math.min(6, n));
           window._zahlenbandNumber = n;
-          window._zahlenband.rotation.x = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
+          window._zahlenband.rotation.z = STELLRAD_UV_OFFSET + (n - 1) * (Math.PI / 3);
         };
         
         console.log('[STELLRAD 3D] R=' + STELLRAD_RADIUS +
