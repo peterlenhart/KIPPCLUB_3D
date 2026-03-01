@@ -1813,6 +1813,7 @@
       });
       
       // === 3D STELLRAD (senkrecht stehendes Rad, wie Auto-Lüftungsregler) ===
+      // Offener Zylinder (nur Mantel, keine Caps – bei Kameraperspektive unsichtbar)
       // Ragt als Bogensegment durch den breiten Schlitz im kippzahltisch
       // Durch die 42×42 Ausnehmung sieht man die eingestellte Kippzahl
       // Schlitz: 181.3×10.7px @1x = 0.62847 breit, Mitte Z=1.34028
@@ -1823,9 +1824,6 @@
       const STELLRAD_PROTRUSION = 0.08474; // Sagitta: Bogensehne = Schlitzbreite
       const STELLRAD_CENTER_Y = yPos - STELLRAD_RADIUS + STELLRAD_PROTRUSION;
       
-      // Deckflächen-Textur (kreisförmige geschliffene Metallfläche)
-      const stellradFlaecheTex = new THREE.TextureLoader().load('stellradflaeche.webp');
-      
       // Rand-Bild laden, dann Mantel-Canvas mit Zahlen erstellen
       const stellradRandImg = new Image();
       stellradRandImg.onload = function() {
@@ -1833,7 +1831,7 @@
         const mantelCvs = document.createElement('canvas');
         const SEC_W = 400; // px pro Zahl-Sektion
         mantelCvs.width = SEC_W * 6; // 2400px gesamt (6 Sektionen)
-        mantelCvs.height = 300; // Höher für bessere Auflösung
+        mantelCvs.height = 300;
         const mCtx = mantelCvs.getContext('2d');
         
         // Stellradrand-Textur horizontal kacheln als Hintergrund
@@ -1860,33 +1858,25 @@
         mCtx.textBaseline = 'middle';
         for (let i = 0; i < 6; i++) {
           const cx = i * SEC_W + SEC_W / 2;
-          // Dunkelgrauer Schatten
           mCtx.fillStyle = 'rgba(0,0,0,0.7)';
           mCtx.fillText((i + 1).toString(), cx + 3, 155);
-          // Helle Zahl (Silber)
           mCtx.fillStyle = '#e0e0e0';
           mCtx.fillText((i + 1).toString(), cx, 150);
         }
         
         const mantelTex = new THREE.CanvasTexture(mantelCvs);
         
-        // Geschlossener Zylinder: [0]=Mantel, [1]=Deck oben, [2]=Deck unten
+        // Offener Zylinder: NUR Mantel, keine Deckflächen (openEnded=true)
         const stellradGeo = new THREE.CylinderGeometry(
-          STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_THICKNESS, 64, 1, false
+          STELLRAD_RADIUS, STELLRAD_RADIUS, STELLRAD_THICKNESS, 64, 1, true
         );
         
-        // Mantel-Material (Rändelung + Zahlen) – MeshBasicMaterial wie Richtungsbuttons
-        // depthWrite:false damit kippzahltisch an opaken Stellen das Rad verdeckt
+        // Mantel-Material – MeshBasicMaterial (keine Beleuchtung, wie Richtungsbuttons)
         const mantelMat = new THREE.MeshBasicMaterial({
           map: mantelTex, side: THREE.DoubleSide, depthWrite: false
         });
-        // Deckflächen-Material (geschliffenes Metall-Kreismuster) – MeshBasicMaterial
-        const capMat = new THREE.MeshBasicMaterial({
-          map: stellradFlaecheTex, transparent: true, depthWrite: false
-        });
         
-        // Mesh mit 3 Material-Gruppen
-        const stellradMesh = new THREE.Mesh(stellradGeo, [mantelMat, capMat, capMat]);
+        const stellradMesh = new THREE.Mesh(stellradGeo, mantelMat);
         stellradMesh.rotation.x = Math.PI / 2; // Zylinderachse entlang Z (Rad steht senkrecht in XY)
         stellradMesh.renderOrder = 0; // Vor kippzahltisch (renderOrder 1) rendern
         
@@ -1895,8 +1885,8 @@
         stellradGroup.add(stellradMesh);
         scene.add(stellradGroup);
         
-        // UV-Offset: Zahl 1 oben sichtbar im Schlitz
-        // Achse nun entlang Z → Rotation um Z scrollt Zahlen
+        // UV-Offset: Zahl 1 oben sichtbar durch 42×42 Ausschnitt
+        // Zylinderachse entlang Z → Rotation um Z scrollt Zahlen links/rechts
         const STELLRAD_UV_OFFSET = -Math.PI / 3;
         stellradGroup.rotation.z = STELLRAD_UV_OFFSET;
         
@@ -1906,7 +1896,7 @@
         window._zahlenbandUVOffset = STELLRAD_UV_OFFSET;
         window._zahlenbandStep = Math.PI / 3; // 60° pro Zahl
         
-        // Hilfsfunktion: Zahl N (1-6) im Schlitz anzeigen
+        // Hilfsfunktion: Zahl N (1-6) im Ausschnitt anzeigen
         window._setZahlenbandNumber = function(n) {
           if (!window._zahlenband) return;
           n = Math.max(1, Math.min(6, n));
