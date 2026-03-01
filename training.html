@@ -4265,59 +4265,31 @@
       gamePhase = 'kipp21';
       currentMode = 'kanten';
       
-      // SEQUENZ: 4cw+4ccw Demo mit Auge → Text → UIs → Hand-Tutorial
-      // Läuft NACH User-Touch → AudioContext aktiv → Klack funktioniert
+      // SEQUENZ: "4 HITS" 2.5s → blur → "Jetzt Du" → UIs → Hand-Tutorial
       (async () => {
         if (gamePhase !== 'kipp21') return;
         
-        // AudioContext sicherstellen (User hat bereits getoucht)
         ensureAudioCtx();
         
-        // --- 4cw + 4ccw Kipp-Demo mit pulsierendem Auge ---
-        const _eyeIcon = document.getElementById('eyeIcon');
-        const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
-        _boxTopPt.project(camera);
-        const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
-        _eyeIcon.style.top = _eyeTopPx + 'px';
-        _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
-        _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
-        _eyeIcon.style.display = 'block';
-        _eyeIcon.style.pointerEvents = 'none';
+        // --- "4 HITS" Text 2.5 Sekunden zeigen ---
+        await pgtInflate(pgtH, pgtS);
+        if (gamePhase !== 'kipp21') return;
+        await wait(2500);
+        if (gamePhase !== 'kipp21') return;
         
+        // --- Blur/Fade out ---
+        await fadeOutText();
+        if (gamePhase !== 'kipp21') return;
         await wait(300);
         if (gamePhase !== 'kipp21') return;
         
-        // 4 CW Kipps (Q3→Q0→Q1→Q2→Q3)
-        for (let _i = 0; _i < 4; _i++) {
-          if (gamePhase !== 'kipp21') return;
-          kippDirection = 'cw';
-          await performKipp(CW_KIPP[currentQuadrant], 700);
-          advanceTopFace();
-          if (_i < 3) await wait(200);
-        }
-        
-        await wait(400);
-        if (gamePhase !== 'kipp21') return;
-        
-        // 4 CCW Kipps (Q3→Q2→Q1→Q0→Q3)
-        for (let _i = 0; _i < 4; _i++) {
-          if (gamePhase !== 'kipp21') return;
-          kippDirection = 'ccw';
-          await performKipp(CCW_KIPP[currentQuadrant], 700);
-          advanceTopFace();
-          if (_i < 3) await wait(200);
-        }
-        
-        // Auge ausblenden
-        _eyeIcon.style.display = 'none';
-        
-        await wait(400);
-        if (gamePhase !== 'kipp21') return;
-        
-        // --- "4 HITS = NEXT LEVEL" Text ---
+        // --- "Jetzt Du" Text ---
+        pgtH.innerHTML = 'Jetzt Du!';
+        pgt.style.display = 'block';
+        pgt.style.opacity = '1';
         await pgtInflate(pgtH, pgtS);
         if (gamePhase !== 'kipp21') return;
-        await wait(1000);
+        await wait(1500);
         if (gamePhase !== 'kipp21') return;
         await fadeOutText();
         if (gamePhase !== 'kipp21') return;
@@ -4408,10 +4380,31 @@
       const NUM_SELECTED = 'border-radius:8px; background:linear-gradient(180deg,#3a2a1a 0%,#2a1810 100%); border:2px solid #5a4a36; color:#e8dcc8; box-shadow:0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4);';
       
       function highlightDir(dir) {
-        // TODO: 3D-Button Highlight mit Stellrad
+        // Visuelles Signal: kurzer Scale-Pulse + Opacity-Flash auf dem 3D-Mesh
+        const meshCw = window._dirCwMesh;
+        const meshCcw = window._dirCcwMesh;
+        if (!meshCw || !meshCcw) return;
+        // Reset beide
+        meshCw.scale.set(1, 1, 1);
+        meshCcw.scale.set(1, 1, 1);
+        meshCw.material.opacity = 1;
+        meshCcw.material.opacity = 1;
+        if (!dir) return;
+        // Gewähltes Mesh: Scale-Pulse
+        const mesh = (dir === 'cw') ? meshCw : meshCcw;
+        const other = (dir === 'cw') ? meshCcw : meshCw;
+        other.material.opacity = 0.4;
+        mesh.scale.set(1.25, 1.25, 1.25);
+        setTimeout(() => { mesh.scale.set(1.15, 1.15, 1.15); }, 150);
       }
       function highlightNum(n) {
-        // TODO: Stellrad-Highlight
+        // Invertiere Zahl+Fläche: .selected Klasse toggled
+        document.querySelectorAll('.numBtn').forEach(btn => {
+          btn.classList.remove('selected');
+        });
+        if (n == null) return;
+        const btn = document.querySelector('.numBtn[data-num="' + n + '"]');
+        if (btn) btn.classList.add('selected');
       }
       
       function resetTrainingInput() {
@@ -4537,150 +4530,38 @@
             kipp21Active = false;
             hideAllTrainingUI();
             
-            if (currentLevel < 3) {
-              // === LEVEL TRANSITION ===
-              const nextLevel = currentLevel + 1;
-              const transText = (nextLevel === 2) ? '4 HITS = NEXT LEVEL' : '4 HITS = MASTER LEVEL';
+            // Sauber beenden: 2s warten (letzte Karte fliegen lassen), dann Ende
+            setTimeout(() => {
+              gamePhase = 'ende';
+              // Alles aufräumen
+              ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+              });
+              document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
               
-              (async () => {
-                await wait(2000); // Letzte Karte fliegen lassen
-                if (gamePhase !== 'kipp21') return;
-                
-                // Cube zurück auf Q3
-                cube.position.set(-offset, offset, 0.109375 + offset);
-                cube.quaternion.set(0, 0, 0, 1);
-                currentQuadrant = 3;
-                topFace = 'f2';
-                
-                // Auge über Box
-                const _eyeIcon = document.getElementById('eyeIcon');
-                const _boxPt = new THREE.Vector3(0, 0.52, 0.1105);
-                _boxPt.project(camera);
-                const _eyePx = Math.round((-_boxPt.y * 0.5 + 0.5) * 720) - 50;
-                _eyeIcon.style.top = _eyePx + 'px';
-                _eyeIcon.style.pointerEvents = 'none';
-                _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
-                _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
-                _eyeIcon.style.display = 'block';
-                
-                await wait(500);
-                if (gamePhase !== 'kipp21') return;
-                
-                // Zahlen ergänzen + Texturen neu
-                if (nextLevel === 2) {
-                  addOneVisiblePerFace(); // 6→9
-                } else {
-                  for (let _i = 0; _i < 12; _i++) visibleDeckIndices.add(_i); // 9→12
-                }
-                updateAllFaceTextures();
-                
-                // 4 CW Kipps
-                for (let _i = 0; _i < 4; _i++) {
-                  if (gamePhase !== 'kipp21') return;
-                  kippDirection = 'cw';
-                  await performKipp(CW_KIPP[currentQuadrant], 700);
-                  advanceTopFace();
-                  if (_i < 3) await wait(200);
-                }
-                
-                await wait(400);
-                if (gamePhase !== 'kipp21') return;
-                
-                // 4 CCW Kipps
-                for (let _i = 0; _i < 4; _i++) {
-                  if (gamePhase !== 'kipp21') return;
-                  kippDirection = 'ccw';
-                  await performKipp(CCW_KIPP[currentQuadrant], 700);
-                  advanceTopFace();
-                  if (_i < 3) await wait(200);
-                }
-                
-                // Auge weg
-                _eyeIcon.style.display = 'none';
-                
-                await wait(400);
-                if (gamePhase !== 'kipp21') return;
-                
-                // Text anzeigen
-                const _pgt = document.getElementById('perfektGameText');
-                const _pgtH = document.getElementById('pgtHead');
-                if (_pgt && _pgtH) {
-                  _pgtH.innerHTML = transText;
-                  _pgt.style.display = 'block'; _pgt.style.opacity = '1';
-                  _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
-                  _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
-                }
-                
-                await wait(2500);
-                if (gamePhase !== 'kipp21') return;
-                
-                // Text ausblenden
-                if (_pgt) {
-                  _pgt.style.transition = 'opacity 0.5s'; _pgt.style.opacity = '0';
-                  await wait(600);
-                  _pgt.style.display = 'none'; _pgt.style.transition = '';
-                }
-                if (gamePhase !== 'kipp21') return;
-                
-                // Level hochsetzen
-                currentLevel = nextLevel;
-                
-                // Karten-States zurücksetzen
-                kipp21Done = 0;
-                bereitsGetroffen.clear();
-                bereitsAusgegeben.clear();
-                kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt'];
-                kipp21CardDistances = [0,0,0,0,0,0];
-                kipp21RoundKipps = 0;
-                kipp21HitLock = false;
-                offeneKippzieleVergeben = 0;
-                openKippzielPositions = pickTwoRandomPositions();
-                activeCardIdx = 0;
-                gameCards.forEach(c => { c.mesh.visible = false; c.zahl = null; c.color = null; c.isHit = false; c.isMiss = false; });
-                blickIconMeshes.forEach(m => { m.visible = false; });
-                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-                hitTextEls.length = 0;
-                
-                // Würfel zurück Q3
-                cube.position.set(-offset, offset, 0.109375 + offset);
-                cube.quaternion.set(0, 0, 0, 1);
-                currentQuadrant = 3;
-                topFace = 'f2';
-                kippDirection = 'cw';
-                isAnimating = false;
-                
-                // UIs einblenden
-                await fadeInUIs();
-                kipp21Active = true;
-                showTrainingButtons();
-                
-                // Hand-Tutorial starten
-                if (kipp21WithTutorial) {
-                  await wait(800);
-                  if (gamePhase !== 'kipp21') return;
-                  startReplay().catch(err => {
-                    if (err instanceof ReplayAbort) return;
-                    console.error('[REPLAY] ERROR:', err);
-                  });
-                }
-              })();
-              return;
-            }
-            
-            // Level 3 (MASTER) geschafft
-            try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-            gamePhase = 'ende';
-            showEndButtons(false, false);
+              // "4 HITS!" Erfolgsmeldung
+              const _pgt = document.getElementById('perfektGameText');
+              const _pgtH = document.getElementById('pgtHead');
+              if (_pgt && _pgtH) {
+                _pgtH.innerHTML = '4 HITS!';
+                _pgt.style.display = 'block'; _pgt.style.opacity = '1';
+                _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
+                _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+              }
+              
+              try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
+            }, 2000);
             return;
           }
-          // Nächstes Kippziel nach kurzer Pause
+          // Nächstes Kippziel — warten bis HIT-Text 2.5s sichtbar war
           setTimeout(() => {
             if (gamePhase === 'kipp21') {
               kipp21Active = true;
               hideAllTrainingUI();
               showTrainingButtons(); // "Ein Kippziel öffnen" anzeigen
             }
-          }, 1500);
+          }, 5000);
         } else {
           // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
           card.ctx.save();
@@ -8951,7 +8832,7 @@
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      el.style.top = '600px';
+      el.style.top = '410px';
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
