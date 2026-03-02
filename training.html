@@ -3737,7 +3737,7 @@
       jetztDuEl.textContent = 'JETZT DU!';
       jetztDuEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
         'transform:translateY(-50%) scale(0.3);text-align:center;' +
-        'font:bold 52px Arial;color:#e8dcc8;letter-spacing:4px;' +
+        'font:bold 52px Arial;color:#e8dcc8;letter-spacing:1.5px;' +
         'text-shadow:0 2px 8px rgba(0,0,0,0.7),0 0 20px rgba(42,24,16,0.5);' +
         'opacity:0;transition:transform 0.6s ease-out, opacity 0.5s ease-out;' +
         'pointer-events:none;';
@@ -4610,7 +4610,7 @@
               brainyEl.textContent = 'BRAINY';
               brainyEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
                 'transform:translateY(-50%) scale(0.3);text-align:center;' +
-                'font:bold 56px Arial;color:#e8dcc8;letter-spacing:6px;' +
+                'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
                 'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
                 'opacity:0;pointer-events:none;';
               document.body.appendChild(brainyEl);
@@ -5399,6 +5399,27 @@
       const faceOff = { f0: 0, f1: 4, f2: 8 };
       const slots = ['S1', 'S2', 'S3', 'S4'];
       const currentFulfilled = getCurrentErfuellteKombis();
+      
+      // POST-BLICK SCHUTZ: Wenn Karte ein Wobble-Icon hat, auch die Post-Wobble-Positionen ausschließen
+      // Wobble macht 3 CW-Schritte (evtl. +1 extra) → Positionen +3 und +4 im CW_CYCLE prüfen
+      const iconSrc = CARD_BLICK_MAP[cardIdx];
+      if (iconSrc && iconSrc.includes('joker2')) {
+        const curIdx = stateIndex(currentQuadrant, topFace);
+        // Wobble bewegt den Würfel 3 oder 4 CW-Schritte → beide Positionen ausschließen
+        for (const wobbleSteps of [3, 4]) {
+          const postIdx = (curIdx + wobbleSteps) % 12;
+          const [postQ, postF] = CW_CYCLE[postIdx];
+          const postOff = faceOff[postF];
+          slots.forEach((slot, i) => {
+            const zahl = deck[postOff + i];
+            const farbe = SLOT_NEIGHBOR_COLORS[postQ][slot];
+            currentFulfilled.add(zahl + '_' + farbe);
+            currentFulfilled.add(displayNum(zahl) + 'd_' + farbe);
+          });
+        }
+        console.log('[GENTARGET] Post-Wobble Schutz: +3/+4 CW Positionen ausgeschlossen');
+      }
+      
       // Build display-equivalent set from bereitsAusgegeben
       const displayAusgegeben = new Set();
       bereitsAusgegeben.forEach(k => {
