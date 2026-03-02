@@ -4319,11 +4319,17 @@
         
         // Nach "JETZT DU!": Karten sichtbar erzwingen
         if (!kipp21WithTutorial) {
+          showBlickIcons();
           for (let i = 0; i < 4; i++) {
             gameCards[i].mesh.visible = true;
             gameCards[i].mesh.material.transparent = false;
             gameCards[i].mesh.material.opacity = 1;
             gameCards[i].mesh.material.needsUpdate = true;
+            if (blickIconMeshes[i].visible) {
+              blickIconMeshes[i].material.transparent = false;
+              blickIconMeshes[i].material.opacity = 1;
+              blickIconMeshes[i].material.needsUpdate = true;
+            }
           }
         }
         
