@@ -3288,12 +3288,12 @@
       
       try {
         if (blickType === 'eckblick') {
-          const eckP = runKipp21EckblickKniff();
+          const eckP = runKipp21EckblickKniff(true);
           await sleep(7000);
           if (replayActive) kipp21KniffAbort = true;
           await eckP;
         } else {
-          await runKipp21WobbleKniff();
+          await runKipp21WobbleKniff(true);
         }
       } catch(e) { console.error('[REPLAY-OPEN] kniff error:', e); }
       
@@ -3360,13 +3360,13 @@
       try {
         if (blickType === 'eckblick') {
           console.log('[REPLAY-KNIFF] calling eckblick for card ' + targetCard);
-          const eckP = runKipp21EckblickKniff();
+          const eckP = runKipp21EckblickKniff(true);
           await sleep(7000);
           if (replayActive) kipp21KniffAbort = true;
           await eckP;
         } else {
           console.log('[REPLAY-KNIFF] calling wobble for card ' + targetCard);
-          await runKipp21WobbleKniff();
+          await runKipp21WobbleKniff(true);
         }
       } catch (err) {
         console.error('[REPLAY-KNIFF] ERROR:', err);
@@ -3509,19 +3509,18 @@
       // ==============================================
       kipp21BlickTargetCard = TARGET_CARD;
       hideBlickIcon(TARGET_CARD);
+      // Kippziel sofort öffnen (zeitgleich mit Blick)
+      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
+        kipp21OnCardTap(TARGET_CARD, true);
+      }
       try {
-        const eckP = runKipp21EckblickKniff();
+        const eckP = runKipp21EckblickKniff(true);
         await sleep(7000);
         if (replayActive) kipp21KniffAbort = true;
         await eckP;
       } catch(e) { console.error('[TUT] Eckblick error:', e); }
       
       await sleep(400);
-      // Fallback: Karte manuell öffnen falls nötig
-      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
-        kipp21OnCardTap(TARGET_CARD, true);
-        await sleep(300);
-      }
       if (aborted()) { replayCleanup(jr); return; }
       
       // Buttons zeigen
@@ -3638,18 +3637,18 @@
       // Eckblick nochmal
       kipp21BlickTargetCard = TARGET_CARD;
       hideBlickIcon(TARGET_CARD);
+      // Kippziel sofort öffnen (zeitgleich mit Blick)
+      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
+        kipp21OnCardTap(TARGET_CARD, true);
+      }
       try {
-        const eckP2 = runKipp21EckblickKniff();
+        const eckP2 = runKipp21EckblickKniff(true);
         await sleep(7000);
         if (replayActive) kipp21KniffAbort = true;
         await eckP2;
       } catch(e) { console.error('[TUT] Eckblick2 error:', e); }
       
       await sleep(400);
-      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
-        kipp21OnCardTap(TARGET_CARD, true);
-        await sleep(300);
-      }
       if (aborted()) { replayCleanup(jr); return; }
       
       // Buttons zeigen
@@ -4889,13 +4888,13 @@
     }
     
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
-    async function runKipp21WobbleKniff() {
+    async function runKipp21WobbleKniff(skipOpenGuard) {
       console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
       if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
       if (gamePhase !== 'demo' && kipp21WobbleUsed >= KNIFF_MAX_USES) { console.warn('[WOBBLE] BLOCKED: max uses'); return false; }
-      if (gamePhase !== 'demo' && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen! (bypass in demo/tutorial)
-      if (gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
+      // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
+      if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -4986,13 +4985,13 @@
     // --- KNIFF 2: Eckblick (joker3, rechts) ---
     let eckblickPivot = null;
     
-    async function runKipp21EckblickKniff() {
+    async function runKipp21EckblickKniff(skipOpenGuard) {
       console.log('[ECKBLICK] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21EckblickUsed+'/'+KNIFF_MAX_USES, 'nextV='+kipp21NextVerdeckt());
       if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
       if (gamePhase !== 'demo' && kipp21EckblickUsed >= KNIFF_MAX_USES) { console.warn('[ECKBLICK] BLOCKED: max uses'); return false; }
-      if (gamePhase !== 'demo' && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen! (bypass in demo/tutorial)
-      if (gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
+      // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
+      if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -5462,8 +5461,8 @@
         setTimeout(() => { mesh2.scale.set(1, 1, 1); }, 180);
         const blickType = iconSrc.includes('joker2') ? 'wobble' : 'eckblick';
         kipp21BlickTargetCard = cardIdx;
-        if (blickType === 'wobble') runKipp21WobbleKniff();
-        else runKipp21EckblickKniff();
+        if (blickType === 'wobble') runKipp21WobbleKniff(true);
+        else runKipp21EckblickKniff(true);
         return;
       }
       
