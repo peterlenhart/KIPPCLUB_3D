@@ -3278,10 +3278,12 @@
       await handTapFromSouth(tx, ty, 600);
       pulseCard(nextV);
       
-      // Blick-Animation starten
-      const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
-      kipp21BlickTargetCard = nextV;
+      // Kippziel sofort öffnen (zeitgleich mit Blick)
       hideBlickIcon(nextV);
+      kipp21OnCardTap(nextV, true);
+      
+      // Blick-Animation starten
+      kipp21BlickTargetCard = nextV;
       const blickType = CARD_BLICK_MAP[nextV].includes('joker2') ? 'wobble' : 'eckblick';
       
       try {
@@ -5465,9 +5467,13 @@
           return;
         }
         
-        // Karte MIT Blick-Icon → Blick-Animation starten
-        const blickType = iconSrc.includes('joker2') ? 'wobble' : 'eckblick';
+        // Karte MIT Blick-Icon → Kippziel sofort öffnen + Blick-Animation starten
         hideBlickIcon(cardIdx);
+        if (!kipp21GenerateTarget(cardIdx)) return;
+        const mesh2 = gameCards[cardIdx].mesh;
+        mesh2.scale.set(1.15, 1.15, 1.15);
+        setTimeout(() => { mesh2.scale.set(1, 1, 1); }, 180);
+        const blickType = iconSrc.includes('joker2') ? 'wobble' : 'eckblick';
         kipp21BlickTargetCard = cardIdx;
         if (blickType === 'wobble') runKipp21WobbleKniff();
         else runKipp21EckblickKniff();
