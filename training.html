@@ -8853,19 +8853,11 @@
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
 
-    // Numpad (1-6 Tasten) positionieren: Unterkante = Unterkante Richtungsbuttons
+    // Numpad (1-6 Tasten) positionieren: feste Position
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      // Richtungsbutton-Unterkante in 3D
-      const dirBottomZ = 1.28415 + 0.23148 / 2; // 1.39989
-      const dirY = 0.47275;
-      // Projizieren auf Screen
-      const pt = new THREE.Vector3(0, dirY, dirBottomZ);
-      pt.project(camera);
-      const screenY = Math.round((-pt.y * 0.5 + 0.5) * 720);
-      // numBtns Höhe: 2 Reihen × 38px + 4px gap = 80px (border-box)
-      el.style.top = (screenY - 80) + 'px';
+      el.style.top = '570px';
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
