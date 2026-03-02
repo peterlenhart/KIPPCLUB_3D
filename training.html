@@ -5388,8 +5388,8 @@
     function kipp21GenerateTarget(cardIdx) {
       console.log('[GENTARGET-TRAINING] cardIdx='+cardIdx);
       
-      // TRAINING: Distances 1-3, reusable (no unique constraint)
-      const available = [1, 2, 3];
+      // TRAINING: Distances 1-6, reusable (no unique constraint)
+      const available = [1, 2, 3, 4, 5, 6];
       // Shuffle
       for (let i = available.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -5470,7 +5470,7 @@
         }
       }
       
-      console.warn('TRAINING: No unique target at dist 1-3, trying with display-repeats...');
+      console.warn('TRAINING: No unique target at dist 1-6, trying with display-repeats...');
       // Fallback: erlaubt Display-Duplikate, verhindert nur exakt-interne Duplikate
       for (const dist of available) {
         const fromIdx = stateIndex(currentQuadrant, topFace);
