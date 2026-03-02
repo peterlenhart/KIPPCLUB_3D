@@ -3297,12 +3297,6 @@
         }
       } catch(e) { console.error('[REPLAY-OPEN] kniff error:', e); }
       
-      // Fallback falls Karte nicht geöffnet wurde
-      const newOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
-      if (newOpenCount <= prevOpenCount) {
-        const nv = kipp21NextVerdeckt();
-        if (nv >= 0) { pulseCard(nv); kipp21OnCardTap(nv, true); }
-      }
       await sleep(400);
     }
     
@@ -3310,7 +3304,6 @@
     async function replayKniff(type, targetCard) {
       if (!replayActive || replayGeneration !== kipp21Generation) return;
       
-      const prevOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
       const isFirstKniff = (kipp21WobbleUsed + kipp21EckblickUsed === 0);
       const cardY_screen = cardScreenY(targetCard >= 0 ? targetCard : 0) + 15; // leicht unter Kartenmitte
       
@@ -3356,9 +3349,11 @@
       updateHandShadow(0, 0, false);
       await sleep(100);
       
-      // Blick-Animation auslösen
+      // Kippziel sofort öffnen (zeitgleich mit Blick)
       kipp21BlickTargetCard = targetCard;
       hideBlickIcon(targetCard);
+      kipp21OnCardTap(targetCard, true);
+      
       const blickSrc = CARD_BLICK_MAP[targetCard];
       const blickType = (blickSrc && blickSrc.includes('joker2')) ? 'wobble' : 'eckblick';
       
@@ -3375,14 +3370,6 @@
         }
       } catch (err) {
         console.error('[REPLAY-KNIFF] ERROR:', err);
-      }
-      
-      // Fallback prüfen
-      const newOpenCount = kipp21CardStates.filter(s => s === 'offen' || s === 'erledigt').length;
-      if (newOpenCount <= prevOpenCount) {
-        console.warn('[REPLAY-KNIFF] Fallback: Karte manuell öffnen');
-        const nv = kipp21NextVerdeckt();
-        if (nv >= 0) { pulseCard(nv); kipp21OnCardTap(nv, true); }
       }
       
       await sleep(400);
