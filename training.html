@@ -4317,6 +4317,16 @@
         kipp21Active = true;
         showTrainingButtons();
         
+        // Nach "JETZT DU!": Karten sichtbar erzwingen
+        if (!kipp21WithTutorial) {
+          for (let i = 0; i < 4; i++) {
+            gameCards[i].mesh.visible = true;
+            gameCards[i].mesh.material.transparent = false;
+            gameCards[i].mesh.material.opacity = 1;
+            gameCards[i].mesh.material.needsUpdate = true;
+          }
+        }
+        
         // --- Hand-Tutorial direkt starten ---
         if (kipp21WithTutorial && gamePhase === 'kipp21') {
           await wait(800);
