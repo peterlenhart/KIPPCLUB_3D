@@ -1282,7 +1282,7 @@
     document.getElementById('kpCloseBtn').addEventListener('click', () => {
       hideKippPrinzip();
     });
-    { const _sh = document.getElementById('sctHead'); if (_sh) _sh.textContent = '4 HITS = NEXT LEVEL'; }
+    { const _sh = document.getElementById('sctHead'); if (_sh) _sh.textContent = 'Mit 4 HITS ins BRAINY Level'; }
     { const _ss = document.getElementById('sctSub'); if (_ss) _ss.style.display = 'none'; }
     { const _ph = document.getElementById('pgtHead'); if (_ph) _ph.textContent = T.s1; }
     { const _ps = document.getElementById('pgtSub'); if (_ps) _ps.innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ',''); }
@@ -4126,7 +4126,7 @@
         pgt.appendChild(pgtS);
       }
       const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
-      const challengeText = currentLevel >= 2 ? '4 HITS' : '4 HITS = NEXT LEVEL';
+      const challengeText = currentLevel >= 2 ? '4 HITS' : 'Mit 4 HITS ins BRAINY Level';
       pgtH.innerHTML = challengeText;
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
@@ -4301,10 +4301,10 @@
           await wait(400);
           if (gamePhase !== 'kipp21') return;
           
-          // --- "4 HITS = NEXT LEVEL" Text ---
+          // --- "Mit 4 HITS ins BRAINY Level" Text ---
           await pgtInflate(pgtH, pgtS);
           if (gamePhase !== 'kipp21') return;
-          await wait(2500);
+          await wait(3500);
           if (gamePhase !== 'kipp21') return;
           
           // --- Text ausblenden ---
@@ -4567,16 +4567,21 @@
             if (currentLevel === 1) {
             // === BRAINY LEVEL TRANSITION ===
             setTimeout(async () => {
-              // Aufräumen
+              // UI-Buttons ausblenden, aber HIT-Texte bleiben sichtbar!
               ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
               });
+              const _pd2 = document.getElementById('progressDots');
+              if (_pd2) _pd2.style.display = 'none';
+              
+              // 2.5s Endergebnis mit 4× HIT zeigen
+              await wait(2500);
+              
+              // Jetzt erst aufräumen
               document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
               hitTextEls.length = 0;
               gameCards.forEach(c => c.mesh.visible = false);
-              const _pd2 = document.getElementById('progressDots');
-              if (_pd2) _pd2.style.display = 'none';
               
               // Würfel zurück in Startposition
               kipGroup.add(cube);
@@ -4713,19 +4718,40 @@
               }
               pulseNewNumbers();
               
-              // 7. 4 CW Kipps
+              // 7. Demo-Kipps: bei neuer Zahl bei 45° innehalten
               gamePhase = 'kipp21';
               await wait(300);
+              
+              const cwNext = { f2: 'f0', f0: 'f1', f1: 'f2' };
+              const ccwNext = { f2: 'f1', f1: 'f0', f0: 'f2' };
+              // Welche Faces haben neue Zahlen?
+              const facesWithNew = new Set();
+              for (const fKey of ['f0','f1','f2']) {
+                const fOff = faceOffMap[fKey];
+                for (let si = 0; si < 4; si++) {
+                  if (newIndices.has(fOff + si)) { facesWithNew.add(fKey); break; }
+                }
+              }
+              const heldFaces = new Set(); // Nur 1x pro Face halten
+              
+              // 4 CW Kipps
               for (let _i = 0; _i < 4; _i++) {
                 kippDirection = 'cw';
-                await performKipp(CW_KIPP[currentQuadrant], 1000);
+                const upcomingFace = cwNext[topFace];
+                const shouldHold = facesWithNew.has(upcomingFace) && !heldFaces.has(upcomingFace);
+                if (shouldHold) {
+                  heldFaces.add(upcomingFace);
+                  await performKippWithHold(CW_KIPP[currentQuadrant], 2000, 1000);
+                } else {
+                  await performKipp(CW_KIPP[currentQuadrant], 1000);
+                }
                 advanceTopFace();
                 if (_i < 3) await wait(200);
               }
               
               await wait(400);
               
-              // 8. 4 CCW Kipps
+              // 4 CCW Kipps (keine Holds mehr - alle Faces schon gezeigt)
               for (let _i = 0; _i < 4; _i++) {
                 kippDirection = 'ccw';
                 await performKipp(CCW_KIPP[currentQuadrant], 1000);
@@ -8737,6 +8763,70 @@
       currentQuadrant = newQ;
       isAnimating = false;
       if (callback) callback();
+    }
+
+    // Kipp mit Halt bei 45° (für BRAINY-Transition)
+    async function performKippWithHold(direction, holdMs, duration) {
+      if (isAnimating) return;
+      isAnimating = true;
+      duration = duration || 1000;
+      
+      let pivotPoint, axis, targetRotation, toQ;
+      if (direction === 'north') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; toQ = 0; }
+      else if (direction === 'south') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = Math.PI/2; toQ = 3; }
+      else if (direction === 'east') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = -Math.PI/2; toQ = 1; }
+      else if (direction === 'west') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = Math.PI/2; toQ = 0; }
+      else if (direction === 'south_from_q1') { pivotPoint = new THREE.Vector3(0.234375, 0, 0.109375); axis = 'x'; targetRotation = Math.PI/2; toQ = 2; }
+      else if (direction === 'north_from_q2') { pivotPoint = new THREE.Vector3(0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; toQ = 1; }
+      else if (direction === 'west_from_q2') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = Math.PI/2; toQ = 3; }
+      else if (direction === 'east_from_q3') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = -Math.PI/2; toQ = 2; }
+      
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(pivotPoint);
+      kipGroup.add(pivotGroup);
+      cube.updateMatrixWorld();
+      const cwp = new THREE.Vector3();
+      cube.getWorldPosition(cwp);
+      kipGroup.remove(cube);
+      cube.position.copy(cwp.clone().sub(pivotPoint));
+      pivotGroup.add(cube);
+      
+      const halfDur = duration / 2;
+      const halfRot = targetRotation / 2;
+      
+      // Phase 1: 0° → 45°
+      await new Promise(resolve => {
+        const st = Date.now();
+        (function a1() {
+          const p = Math.min((Date.now() - st) / halfDur, 1);
+          const e = p * (2 - p); // ease-out
+          if (axis === 'x') pivotGroup.rotation.x = e * halfRot;
+          else pivotGroup.rotation.z = e * halfRot;
+          if (p < 1) requestAnimationFrame(a1);
+          else resolve();
+        })();
+      });
+      
+      // Phase 2: Halten bei 45°
+      await new Promise(r => setTimeout(r, holdMs));
+      
+      // Phase 3: 45° → 90°
+      await new Promise(resolve => {
+        const st = Date.now();
+        let klackFired = false;
+        (function a2() {
+          const p = Math.min((Date.now() - st) / halfDur, 1);
+          const e = p * p; // ease-in (Schwerkraft)
+          const rot = halfRot + e * halfRot;
+          if (axis === 'x') pivotGroup.rotation.x = rot;
+          else pivotGroup.rotation.z = rot;
+          if (!klackFired && e > 0.75) { klackFired = true; playKlack(); }
+          if (p < 1) requestAnimationFrame(a2);
+          else resolve();
+        })();
+      });
+      
+      finalizeKipp(toQ, null);
     }
 
     // =========================
