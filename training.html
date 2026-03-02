@@ -4661,22 +4661,13 @@
               // 6. Puls-Animation für neue Zahlen während Demo
               let pulseActive = true;
               let pulsePhase = 0;
-              // Pre-build cached canvases and textures for affected faces
               const faceOffMap = { f0: 0, f1: 4, f2: 8 };
-              const pulseCache = {};
+              
+              // Sammle Info: welche Faces haben neue Zahlen, wo genau?
+              const pulseInfo = {};
               for (const fKey of ['f0','f1','f2']) {
                 const fOff = faceOffMap[fKey];
-                let hasNew = false;
-                for (let si = 0; si < 4; si++) {
-                  if (newIndices.has(fOff + si)) { hasNew = true; break; }
-                }
-                if (!hasNew) continue;
                 const f = faceSlots[fKey];
-                const baseCanvas = createFaceTexture(f.slotMap, f.imgRot, 1);
-                const glowCanvas = document.createElement('canvas');
-                glowCanvas.width = 256; glowCanvas.height = 256;
-                const tex = new THREE.CanvasTexture(glowCanvas);
-                // Finde Glow-Positionen (row,col der neuen Zahlen)
                 const glowCells = [];
                 const keys = Object.keys(f.slotMap);
                 for (let ki = 0; ki < keys.length; ki++) {
@@ -4685,34 +4676,46 @@
                     glowCells.push({ r, c });
                   }
                 }
-                pulseCache[fKey] = { baseCanvas, glowCanvas, tex, glowCells, matIdx: f.matIdx };
+                if (glowCells.length === 0) continue;
+                
+                // Basis-Canvas ohne Rahmen sichern (für Redraw)
+                const matIdx = f.matIdx;
+                const origCanvas = cubeMaterial[matIdx].map.image;
+                const backupCanvas = document.createElement('canvas');
+                backupCanvas.width = 256; backupCanvas.height = 256;
+                backupCanvas.getContext('2d').drawImage(origCanvas, 0, 0);
+                
+                pulseInfo[fKey] = { matIdx, glowCells, backupCanvas, origCanvas };
               }
               
               function pulseNewNumbers() {
                 if (!pulseActive) return;
-                pulsePhase += 0.08;
-                const glow = 0.5 + 0.5 * Math.sin(pulsePhase);
+                pulsePhase += 0.06;
+                const pulse = 0.5 + 0.5 * Math.sin(pulsePhase); // 0→1
                 const cell = 256 / 3;
-                for (const fKey in pulseCache) {
-                  const pc = pulseCache[fKey];
-                  const ctx = pc.glowCanvas.getContext('2d');
+                const bw = 8; // Rahmenbreite
+                for (const fKey in pulseInfo) {
+                  const pi = pulseInfo[fKey];
+                  const ctx = pi.origCanvas.getContext('2d');
+                  // Backup wiederherstellen
                   ctx.clearRect(0, 0, 256, 256);
-                  ctx.drawImage(pc.baseCanvas, 0, 0);
-                  for (const gc of pc.glowCells) {
-                    const cx = gc.c * cell + cell / 2;
-                    const cy = gc.r * cell + cell / 2;
-                    const radius = cell * 0.48;
-                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                    grad.addColorStop(0, 'rgba(206,219,37,' + (0.5 * glow) + ')');
-                    grad.addColorStop(1, 'rgba(206,219,37,0)');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                    ctx.fill();
+                  ctx.drawImage(pi.backupCanvas, 0, 0);
+                  // Goldbraunen Rahmen auf jede neue Zahl zeichnen
+                  for (const gc of pi.glowCells) {
+                    const cx = gc.c * cell;
+                    const cy = gc.r * cell;
+                    // Äußerer goldbrauner Rahmen
+                    const borderAlpha = 0.6 + 0.4 * pulse;
+                    ctx.strokeStyle = 'rgba(200,160,50,' + borderAlpha.toFixed(2) + ')';
+                    ctx.lineWidth = bw;
+                    ctx.strokeRect(cx + bw/2, cy + bw/2, cell - bw, cell - bw);
+                    // Innerer heller Akzent
+                    ctx.strokeStyle = 'rgba(255,220,80,' + (0.5 * pulse).toFixed(2) + ')';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(cx + bw + 2, cy + bw + 2, cell - 2*bw - 4, cell - 2*bw - 4);
                   }
-                  pc.tex.needsUpdate = true;
-                  cubeMaterial[pc.matIdx].map = pc.tex;
-                  cubeMaterial[pc.matIdx].needsUpdate = true;
+                  // Bestehende CanvasTexture als dirty markieren
+                  cubeMaterial[pi.matIdx].map.needsUpdate = true;
                 }
                 requestAnimationFrame(pulseNewNumbers);
               }
