@@ -4125,7 +4125,9 @@
         pgt.appendChild(pgtH);
         pgt.appendChild(pgtS);
       }
-      pgtH.innerHTML = '4 HITS = NEXT LEVEL';
+      const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+      const challengeText = currentLevel >= 2 ? '4 HITS' : '4 HITS = NEXT LEVEL';
+      pgtH.innerHTML = challengeText;
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
       pgtH.style.fontSize = '21px';
@@ -4562,29 +4564,211 @@
             kipp21Active = false;
             hideAllTrainingUI();
             
-            // Sauber beenden: 2s warten (letzte Karte fliegen lassen), dann Ende
-            setTimeout(() => {
-              gamePhase = 'ende';
-              // Alles aufräumen
+            if (currentLevel === 1) {
+            // === BRAINY LEVEL TRANSITION ===
+            setTimeout(async () => {
+              // Aufräumen
               ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
               });
               document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+              hitTextEls.length = 0;
+              gameCards.forEach(c => c.mesh.visible = false);
+              const _pd2 = document.getElementById('progressDots');
+              if (_pd2) _pd2.style.display = 'none';
               
-              // "4 HITS!" Erfolgsmeldung
-              const _pgt = document.getElementById('perfektGameText');
-              const _pgtH = document.getElementById('pgtHead');
-              if (_pgt && _pgtH) {
-                _pgtH.innerHTML = '4 HITS!';
-                _pgt.style.display = 'block'; _pgt.style.opacity = '1';
-                _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
-                _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+              // Würfel zurück in Startposition
+              kipGroup.add(cube);
+              cube.position.set(-offset, offset, 0.109375 + offset);
+              cube.quaternion.set(0, 0, 0, 1);
+              currentQuadrant = 3;
+              topFace = 'f2';
+              
+              // 1. Blur-Overlay
+              const blurOv = document.createElement('div');
+              blurOv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:28;' +
+                'backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);' +
+                'background:rgba(0,0,0,0);transition:all 0.8s ease-out;pointer-events:none;';
+              document.body.appendChild(blurOv);
+              
+              requestAnimationFrame(() => {
+                blurOv.style.backdropFilter = 'blur(8px)';
+                blurOv.style.webkitBackdropFilter = 'blur(8px)';
+                blurOv.style.background = 'rgba(0,0,0,0.45)';
+              });
+              
+              await wait(700);
+              
+              // 2. "BRAINY" groß einblenden (Inflate)
+              const brainyEl = document.createElement('div');
+              brainyEl.textContent = 'BRAINY';
+              brainyEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
+                'transform:translateY(-50%) scale(0.3);text-align:center;' +
+                'font:bold 56px Arial;color:#e8dcc8;letter-spacing:6px;' +
+                'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
+                'opacity:0;pointer-events:none;';
+              document.body.appendChild(brainyEl);
+              
+              // Inflate-Animation
+              requestAnimationFrame(() => {
+                brainyEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
+                brainyEl.style.opacity = '1';
+                brainyEl.style.transform = 'translateY(-50%) scale(1)';
+              });
+              
+              await wait(2200);
+              
+              // 3. Ausblenden
+              brainyEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
+              brainyEl.style.opacity = '0';
+              brainyEl.style.transform = 'translateY(-50%) scale(1.2)';
+              blurOv.style.backdropFilter = 'blur(0px)';
+              blurOv.style.webkitBackdropFilter = 'blur(0px)';
+              blurOv.style.background = 'rgba(0,0,0,0)';
+              
+              await wait(600);
+              brainyEl.remove();
+              blurOv.remove();
+              
+              // 4. Level hochschalten + 3 neue Zahlen
+              currentLevel = 2;
+              const oldVisible = new Set(visibleDeckIndices);
+              addOneVisiblePerFace();
+              const newIndices = new Set();
+              visibleDeckIndices.forEach(i => { if (!oldVisible.has(i)) newIndices.add(i); });
+              
+              // Texturen neu bauen (neue Zahlen sichtbar)
+              updateFaceSlots();
+              updateAllFaceTextures();
+              
+              // 5. Auge-Icon über Box
+              const _eyeIcon = document.getElementById('eyeIcon');
+              const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
+              _boxTopPt.project(camera);
+              const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
+              _eyeIcon.style.top = _eyeTopPx + 'px';
+              _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
+              _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
+              _eyeIcon.style.display = 'block';
+              _eyeIcon.style.pointerEvents = 'none';
+              
+              // 6. Puls-Animation für neue Zahlen während Demo
+              let pulseActive = true;
+              let pulsePhase = 0;
+              // Pre-build cached canvases and textures for affected faces
+              const faceOffMap = { f0: 0, f1: 4, f2: 8 };
+              const pulseCache = {};
+              for (const fKey of ['f0','f1','f2']) {
+                const fOff = faceOffMap[fKey];
+                let hasNew = false;
+                for (let si = 0; si < 4; si++) {
+                  if (newIndices.has(fOff + si)) { hasNew = true; break; }
+                }
+                if (!hasNew) continue;
+                const f = faceSlots[fKey];
+                const baseCanvas = createFaceTexture(f.slotMap, f.imgRot, 1);
+                const glowCanvas = document.createElement('canvas');
+                glowCanvas.width = 256; glowCanvas.height = 256;
+                const tex = new THREE.CanvasTexture(glowCanvas);
+                // Finde Glow-Positionen (row,col der neuen Zahlen)
+                const glowCells = [];
+                const keys = Object.keys(f.slotMap);
+                for (let ki = 0; ki < keys.length; ki++) {
+                  if (newIndices.has(fOff + ki)) {
+                    const [r, c] = keys[ki].split(',').map(Number);
+                    glowCells.push({ r, c });
+                  }
+                }
+                pulseCache[fKey] = { baseCanvas, glowCanvas, tex, glowCells, matIdx: f.matIdx };
               }
               
-              try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-            }, 2000);
+              function pulseNewNumbers() {
+                if (!pulseActive) return;
+                pulsePhase += 0.08;
+                const glow = 0.5 + 0.5 * Math.sin(pulsePhase);
+                const cell = 256 / 3;
+                for (const fKey in pulseCache) {
+                  const pc = pulseCache[fKey];
+                  const ctx = pc.glowCanvas.getContext('2d');
+                  ctx.clearRect(0, 0, 256, 256);
+                  ctx.drawImage(pc.baseCanvas, 0, 0);
+                  for (const gc of pc.glowCells) {
+                    const cx = gc.c * cell + cell / 2;
+                    const cy = gc.r * cell + cell / 2;
+                    const radius = cell * 0.48;
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    grad.addColorStop(0, 'rgba(206,219,37,' + (0.5 * glow) + ')');
+                    grad.addColorStop(1, 'rgba(206,219,37,0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                  pc.tex.needsUpdate = true;
+                  cubeMaterial[pc.matIdx].map = pc.tex;
+                  cubeMaterial[pc.matIdx].needsUpdate = true;
+                }
+                requestAnimationFrame(pulseNewNumbers);
+              }
+              pulseNewNumbers();
+              
+              // 7. 4 CW Kipps
+              gamePhase = 'kipp21';
+              await wait(300);
+              for (let _i = 0; _i < 4; _i++) {
+                kippDirection = 'cw';
+                await performKipp(CW_KIPP[currentQuadrant], 1000);
+                advanceTopFace();
+                if (_i < 3) await wait(200);
+              }
+              
+              await wait(400);
+              
+              // 8. 4 CCW Kipps
+              for (let _i = 0; _i < 4; _i++) {
+                kippDirection = 'ccw';
+                await performKipp(CCW_KIPP[currentQuadrant], 1000);
+                advanceTopFace();
+                if (_i < 3) await wait(200);
+              }
+              
+              // 9. Pulsieren stoppen, finale Texturen
+              pulseActive = false;
+              _eyeIcon.style.display = 'none';
+              updateAllFaceTextures();
+              
+              await wait(300);
+              
+              // 10. BRAINY-Spiel starten (ohne Tutorial)
+              kipp21WithTutorial = false;
+              gamePhase = 'start';
+              startKipp21(false);
+              
+            }, 2000); // 2s warten bis letzte Karte geflogen ist
             return;
+            
+            } else {
+              // BRAINY+ Level-Ende: Erfolgsmeldung
+              setTimeout(() => {
+                gamePhase = 'ende';
+                ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
+                  const el = document.getElementById(id);
+                  if (el) el.style.display = 'none';
+                });
+                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+                
+                const _pgt = document.getElementById('perfektGameText');
+                const _pgtH = document.getElementById('pgtHead');
+                if (_pgt && _pgtH) {
+                  _pgtH.innerHTML = '4 HITS!';
+                  _pgt.style.display = 'block'; _pgt.style.opacity = '1';
+                  _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
+                  _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+                }
+              }, 2000);
+              return;
+            }
           }
           // Nächstes Kippziel — warten bis HIT-Text 2.5s sichtbar war
           setTimeout(() => {
