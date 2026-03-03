@@ -2403,12 +2403,14 @@
 
     const SCORE_LEVEL_NAMES = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
 
-    function saveBestScore(level, hits, kipps) {
+    function saveBestScore(level, hits, fails) {
       try {
+        const total = hits + fails;
+        const pct = total > 0 ? Math.round(hits / total * 100) : 0;
         const scores = loadBestScores();
-        scores.push({ level: level, hits: hits, kipps: kipps, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level });
-        // Sortierung: Hits absteigend, dann Kipps aufsteigend
-        scores.sort((a, b) => b.hits - a.hits || a.kipps - b.kipps);
+        scores.push({ level: level, hits: hits, fails: fails, pct: pct, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level });
+        // Sortierung: Prozent absteigend, dann weniger Fails
+        scores.sort((a, b) => b.pct - a.pct || a.fails - b.fails);
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(top11));
         return top11;
@@ -2417,42 +2419,38 @@
       }
     }
 
-    // Per-Level Best ermitteln (höchste Hits, bei Gleichstand wenigste Kipps)
-    function getLevelBests() {
+    function getBestPct() {
       const scores = loadBestScores();
-      const bests = {};
+      let best = 0;
       for (const s of scores) {
-        const lv = s.level || 1;
-        if (!bests[lv] || s.hits > bests[lv].hits || (s.hits === bests[lv].hits && s.kipps < bests[lv].kipps)) {
-          bests[lv] = { hits: s.hits, kipps: s.kipps };
-        }
+        if ((s.pct || 0) > best) best = s.pct;
       }
-      return bests;
+      return best;
     }
 
     function renderBestScores() {
       const titleEl = document.getElementById('bsTitleText');
-      if (titleEl) titleEl.textContent = T.bs || 'HIGHSCORES';
+      const bestPct = getBestPct();
+      if (titleEl) titleEl.textContent = (T.bs || 'HIGHSCORES') + ' (Best = ' + bestPct + '%)';
       const scores = loadBestScores();
-      const bests = getLevelBests();
       
       for (let i = 0; i < 11; i++) {
         const el = document.getElementById('bsRow' + (i + 1));
         if (!el) continue;
         if (i < scores.length) {
           const s = scores[i];
-          const lv = s.level || 1;
-          const lvName = s.levelName || SCORE_LEVEL_NAMES[lv] || '?';
-          const best = bests[lv] || { hits: 0, kipps: 0 };
-          // Format: LEVEL | hits / kipps (Best: bestHits / bestKipps)
+          const lvName = s.levelName || SCORE_LEVEL_NAMES[s.level || 1] || '?';
+          const pct = s.pct || 0;
+          const hits = s.hits || 0;
+          const fails = s.fails || 0;
+          // Format: TRAINING | 67% (4 HITs / 2 FAILs)
           el.innerHTML = '<span style="color:#c8c0b0;font-size:13px">' + lvName + '</span>' +
             ' <span style="color:#888;font-size:12px">|</span> ' +
-            '<span style="color:#cedb25;font-size:17px;font-weight:bold">' + s.hits + '</span>' +
-            '<span style="color:#888;font-size:13px"> / </span>' +
-            '<span style="color:#e05050;font-size:17px;font-weight:bold">' + s.kipps + '</span>' +
-            ' <span style="color:#888;font-size:11px">(Best: ' +
-            '<span style="color:#cedb25">' + best.hits + '</span>' +
-            ' / <span style="color:#e05050">' + best.kipps + '</span>)</span>';
+            '<span style="color:#cedb25;font-size:17px;font-weight:bold">' + pct + '%</span>' +
+            ' <span style="color:#999;font-size:12px">(' +
+            '<span style="color:#cedb25">' + hits + '</span> HIT' + (hits !== 1 ? 's' : '') +
+            ' / <span style="color:#e05050">' + fails + '</span> FAIL' + (fails !== 1 ? 's' : '') +
+            ')</span>';
         } else {
           el.textContent = '';
         }
@@ -2986,6 +2984,7 @@
     let kipp21RoundTimerStart = null;
     let kipp21TotalTime = 0;
     let kipp21Done = 0;
+    let kipp21Fails = 0;
     let kipp21UsedDistances = [];
     let kipp21CardStates = [];
     let kipp21CardDistances = [];
@@ -4016,7 +4015,7 @@
         const lang = _digikippLang || 'de';
         
         // Score in Best Scores speichern (nur echte Spiele, nicht Tutorial)
-        saveBestScore(currentLevel, kipp21Done, kipp21KippCount);
+        saveBestScore(currentLevel, kipp21Done, kipp21Fails);
         
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
@@ -4628,7 +4627,7 @@
             // === BRAINY LEVEL TRANSITION ===
             setTimeout(async () => {
               // TRAINING Score speichern
-              saveBestScore(currentLevel, kipp21Done, kipp21KippCount);
+              saveBestScore(currentLevel, kipp21Done, kipp21Fails);
               
               // UI-Buttons ausblenden, aber HIT-Texte bleiben sichtbar!
               ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
@@ -4842,7 +4841,7 @@
             
             } else {
               // BRAINY+ Level-Ende: Erfolgsmeldung
-              saveBestScore(currentLevel, kipp21Done, kipp21KippCount);
+              saveBestScore(currentLevel, kipp21Done, kipp21Fails);
               setTimeout(() => {
                 gamePhase = 'ende';
                 ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
@@ -4873,6 +4872,7 @@
           }, 5000);
         } else {
           // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
+          kipp21Fails++;
           card.ctx.save();
           card.ctx.strokeStyle = '#ff0000';
           card.ctx.lineWidth = 8;
@@ -5046,6 +5046,7 @@
       kipp21HitLock = false;
       kipp21TotalTime = 0;
       kipp21Done = 0;
+      kipp21Fails = 0;
       kipp21UsedDistances = [];
       kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt'];
       kipp21CardDistances = [0,0,0,0,0,0];
