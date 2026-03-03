@@ -4319,6 +4319,20 @@
       kippenWarningActive = false;
       // ===== CLEANUP ENDE =====
       
+      // ===== SAVED GAME RESTORE =====
+      if (hasSavedGame()) {
+        // Funktionen global exponieren (normalerweise erst später im Flow)
+        window._showTrainingBtns = showTrainingButtons;
+        window._showAllTrainingUI = showAllTrainingUI;
+        window._hideTrainingBtns = hideAllTrainingUI;
+        window._highlightNum = highlightNum;
+        window._highlightDir = highlightDir;
+        window._onDirBtn = onDirBtn;
+        window._onNumBtn = onNumBtn;
+        if (loadAndRestoreGame()) return;
+      }
+      // ===== SAVED GAME RESTORE ENDE =====
+      
       kipp21WithTutorial = !!withTutorial;
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
@@ -7419,11 +7433,6 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      // Gespeicherten Spielstand laden falls vorhanden
-      if (hasSavedGame() && loadAndRestoreGame()) {
-        setTimeout(() => { _startBtnLock = false; }, 1000);
-        return;
-      }
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
