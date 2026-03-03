@@ -2423,7 +2423,9 @@
       const scores = loadBestScores();
       let best = 0;
       for (const s of scores) {
-        if ((s.pct || 0) > best) best = s.pct;
+        const total = (s.hits || 0) + (s.fails || 0);
+        const pct = total > 0 ? Math.round((s.hits || 0) / total * 100) : 0;
+        if (pct > best) best = pct;
       }
       return best;
     }
@@ -2440,9 +2442,10 @@
         if (i < scores.length) {
           const s = scores[i];
           const lvName = s.levelName || SCORE_LEVEL_NAMES[s.level || 1] || '?';
-          const pct = s.pct || 0;
           const hits = s.hits || 0;
           const fails = s.fails || 0;
+          const total = hits + fails;
+          const pct = total > 0 ? Math.round(hits / total * 100) : 0;
           // Format: TRAINING | 67% (4 HITs / 2 FAILs)
           el.innerHTML = '<span style="color:#c8c0b0;font-size:13px">' + lvName + '</span>' +
             ' <span style="color:#888;font-size:12px">|</span> ' +
