@@ -533,8 +533,8 @@
       0%, 50% { background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%); color: #2a1810; }
       25%, 75% { background: linear-gradient(180deg, #2a1810 0%, #1a0e08 100%); color: #e8dcc8; border-color: #cedb25; }
     }
-    .numBtn.brainy-pulse-a { animation: brainyNumPulseA 1.2s ease-in-out infinite; }
-    .numBtn.brainy-pulse-b { animation: brainyNumPulseB 1.2s ease-in-out infinite; }
+    .numBtn.brainy-pulse-a { animation: brainyNumPulseA 2.4s ease-in-out infinite; }
+    .numBtn.brainy-pulse-b { animation: brainyNumPulseB 2.4s ease-in-out infinite; }
 
 
     .kippBtn {
@@ -5429,92 +5429,87 @@
     }
 
     async function brainyCheckResult() {
-      const origZahl = gameCards[0].zahl;
-      const origColor = gameCards[0].color;
-      gameCards[0].zahl = brainyCurrentZahl;
-      gameCards[0].color = brainyCurrentColor;
-      activeCardIdx = 0;
-      const treffer = checkTreffer();
-      gameCards[0].zahl = origZahl;
-      gameCards[0].color = origColor;
-
-      if (treffer) {
-        brainyHits++;
-        kipp21Done++;
-        // Find the floating card at the hit quadrant
-        const bPositions = COLOR_FIELD_POS[brainyCurrentColor.name];
-        let hitCardIdx = 0;
-        for (let hi = 0; hi < 4; hi++) {
-          if (bPositions[hi].q === treffer.quadrant) { hitCardIdx = hi; break; }
+      // Prüfe alle offenen Karten
+      let hitIdx = -1;
+      for (let ci = 0; ci < 4; ci++) {
+        if (kipp21CardStates[ci] !== 'offen') continue;
+        const card = gameCards[ci];
+        activeCardIdx = ci;
+        const treffer = checkTreffer();
+        if (treffer) {
+          hitIdx = ci;
+          // HIT — gleich wie Training
+          brainyHits++;
+          kipp21Done++;
+          kipp21CardStates[ci] = 'erledigt';
+          card.isHit = true;
+          drawGoldenBorder(card);
+          card.texture.needsUpdate = true;
+          
+          setTimeout(() => {
+            animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
+              showHitText(ci);
+            });
+          }, 1500);
+          bereitsGetroffen.add(card.zahl + '_' + card.color.name);
+          
+          if (brainyHits >= 4) {
+            // Alle 4 getroffen — Ende
+            brainyActive = false;
+            kipp21Active = false;
+            if (window._hideTrainingBtns) window._hideTrainingBtns();
+            await new Promise(r => setTimeout(r, 5000));
+            document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+            hitTextEls.length = 0;
+            saveBestScore(currentLevel, brainyHits, brainyFails);
+            gamePhase = 'ende';
+            ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+            const _pgt = document.getElementById('perfektGameText');
+            const _pgtH = document.getElementById('pgtHead');
+            if (_pgt && _pgtH) { _pgtH.innerHTML = '4 HITS!'; _pgt.style.display = 'block'; _pgt.style.opacity = '1'; _pgtH.style.animation = 'none'; void _pgtH.offsetWidth; _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards'; }
+            showEndButtons(true);
+            return;
+          }
+          
+          // Weiter spielen nach HIT
+          setTimeout(() => {
+            if (gamePhase === 'kipp21') {
+              brainySelectedNum = 0;
+              brainySelectedDir = null;
+              kipp21Active = true;
+              brainyStartNumPulse();
+            }
+          }, 5000);
+          break;
         }
-        const hitCard = brainyFloatingCards[hitCardIdx];
-        hitCard.isHit = true;
-        hitCard.ctx.strokeStyle = '#cedb25';
-        hitCard.ctx.lineWidth = 4;
-        hitCard.ctx.strokeRect(2, 2, 81, 166);
-        hitCard.texture.needsUpdate = true;
-        for (let i = 0; i < 4; i++) { if (i !== hitCardIdx) brainyFloatingCards[i].mesh.visible = false; }
-        await animateCardFly(hitCard, treffer.quadrant, treffer.slot);
-        // HIT text "links außen" — left side, stacked vertically
-        const hitLeftPos = new THREE.Vector3(-0.625, 0.48, -0.125 + (brainyHits - 1) * 0.15625);
-        hitLeftPos.project(camera);
-        const hsx = Math.round((hitLeftPos.x * 0.5 + 0.5) * 360);
-        const hsy = Math.round((-hitLeftPos.y * 0.5 + 0.5) * 720);
-        const hEl = document.createElement('div');
-        hEl.textContent = 'HIT';
-        hEl.className = 'hit-text-el';
-        hEl.style.cssText = 'position:absolute;left:' + hsx + 'px;top:' + hsy + 'px;transform:translate(-50%,-50%) rotate(-90deg) scale(0.3);font:bold 28px Arial;color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);pointer-events:none;opacity:0;transition:transform 0.3s ease-out, opacity 0.3s ease-out;z-index:25;';
-        document.getElementById('uiOverlay').appendChild(hEl);
-        hitTextEls.push(hEl);
-        requestAnimationFrame(() => { hEl.style.transform = 'translate(-50%,-50%) rotate(-90deg) scale(1)'; hEl.style.opacity = '1'; });
-        bereitsGetroffen.add(brainyCurrentZahl + '_' + brainyCurrentColor.name);
-
-        if (brainyHits >= 4) {
-          brainyActive = false;
-          kipp21Active = false;
-          if (window._hideTrainingBtns) window._hideTrainingBtns();
-          await new Promise(r => setTimeout(r, 2000));
-          document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-          hitTextEls.length = 0;
-          brainyHideCards();
-          saveBestScore(currentLevel, brainyHits, brainyFails);
-          gamePhase = 'ende';
-          ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-          const _pgt = document.getElementById('perfektGameText');
-          const _pgtH = document.getElementById('pgtHead');
-          if (_pgt && _pgtH) { _pgtH.innerHTML = '4 HITS!'; _pgt.style.display = 'block'; _pgt.style.opacity = '1'; _pgtH.style.animation = 'none'; void _pgtH.offsetWidth; _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards'; }
-          showEndButtons(true);
-          return;
-        }
-
-        await new Promise(r => setTimeout(r, 1500));
-        brainyColorIdx++;
-        const nextColor = brainyColorOrder[brainyColorIdx];
-        const nextZahl = brainyGenerateKippziel(nextColor);
-        brainyHideCards();
-        await brainyEckblick(() => {
-          // Callback at peak: place new cards while cube is on corner
-          brainyPlaceCards(nextColor, nextZahl);
-        });
-        brainySelectedNum = 0;
-        brainySelectedDir = null;
-        brainyStartNumPulse();
-      } else {
+      }
+      
+      if (hitIdx < 0) {
+        // FAIL — roter Rand auf ALLE offenen Karten + Kreuzchen
         brainyFails++;
         kipp21Fails++;
-        for (let i = 0; i < 4; i++) {
-          const fc = brainyFloatingCards[i];
-          fc.ctx.strokeStyle = '#ff0000';
-          fc.ctx.lineWidth = 6;
-          fc.ctx.strokeRect(2, 2, 81, 166);
-          fc.ctx.strokeStyle = '#ff6666';
-          fc.ctx.lineWidth = 2;
-          fc.ctx.strokeRect(5, 5, 75, 160);
-          fc.texture.needsUpdate = true;
+        
+        const openCards = [];
+        for (let ci = 0; ci < 4; ci++) {
+          if (kipp21CardStates[ci] !== 'offen') continue;
+          const card = gameCards[ci];
+          card.ctx.save();
+          card.ctx.strokeStyle = '#ff0000';
+          card.ctx.lineWidth = 8;
+          card.ctx.strokeRect(1, 1, 83, 168);
+          card.ctx.strokeStyle = '#ff6666';
+          card.ctx.lineWidth = 3;
+          card.ctx.strokeRect(5, 5, 75, 160);
+          card.ctx.restore();
+          card.texture.needsUpdate = true;
+          openCards.push(ci);
         }
+        
+        // Rote Kreuzchen auf alle offenen Karten
         const redXEls = [];
-        for (let i = 0; i < 4; i++) {
-          const p3 = brainyFloatingCards[i].mesh.position.clone();
+        for (const ci of openCards) {
+          const cx = cardStartX + ci * (cardWidth + cardGap);
+          const p3 = new THREE.Vector3(cx, cardY, cardZ);
           p3.project(camera);
           const sx = Math.round((p3.x * 0.5 + 0.5) * 360);
           const sy = Math.round((-p3.y * 0.5 + 0.5) * 720);
@@ -5525,11 +5520,30 @@
           redXEls.push(rx);
           requestAnimationFrame(() => { rx.style.opacity = '1'; rx.style.transform = 'translate(-50%,-50%) scale(1)'; });
         }
-        await new Promise(r => setTimeout(r, 1500));
+        
+        await new Promise(r => setTimeout(r, 1800));
+        
+        // Kreuzchen entfernen, roten Rand entfernen (Karten neu zeichnen)
         redXEls.forEach(rx => rx.remove());
-        for (let i = 0; i < 4; i++) fillBrainyCard(brainyFloatingCards[i], brainyCurrentZahl, brainyCurrentColor);
+        for (const ci of openCards) {
+          const card = gameCards[ci];
+          const img = colorTargetImages[card.color.name];
+          if (img) {
+            card.ctx.clearRect(0, 0, 85, 170);
+            card.ctx.drawImage(img, 0, 0, 85, 170);
+            const displayText = displayNum(card.zahl).toString();
+            card.ctx.fillStyle = '#2a1810';
+            card.ctx.font = 'bold 56px Arial';
+            card.ctx.textAlign = 'center';
+            card.ctx.textBaseline = 'middle';
+            drawCenteredText(card.ctx, displayText, 42, 42);
+            card.texture.needsUpdate = true;
+          }
+        }
+        
         brainySelectedNum = 0;
         brainySelectedDir = null;
+        kipp21Active = true;
         brainyStartNumPulse();
       }
     }
@@ -5577,11 +5591,8 @@
       brainyActive = true;
       brainyHits = 0;
       brainyFails = 0;
-      brainyColorIdx = 0;
       brainySelectedNum = 0;
       brainySelectedDir = null;
-      brainyCurrentZahl = 0;
-      brainyCurrentColor = null;
       kipp21Done = 0;
       kipp21Fails = 0;
       kipp21KippCount = 0;
@@ -5589,9 +5600,12 @@
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       gamePhase = 'kipp21';
+      
+      // Alle 12 Zahlen sichtbar
       for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
       updateFaceSlots();
       updateAllFaceTextures();
+      
       kipGroup.add(cube);
       cube.position.set(-offset, offset, 0.109375 + offset);
       cube.quaternion.set(0, 0, 0, 1);
@@ -5599,10 +5613,12 @@
       topFace = 'f2';
       kippDirection = 'cw';
       isAnimating = false;
-      gameCards.forEach(c => { c.mesh.visible = false; });
+      
+      // Training UI zeigen
       if (window._showAllTrainingUI) window._showAllTrainingUI();
       if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
-
+      
+      // "BRAINY" Inflate
       const sct = document.getElementById('startChallengeText');
       const sctHead = document.getElementById('sctHead');
       if (sct && sctHead) {
@@ -5618,12 +5634,45 @@
         sct.style.display = 'none';
         sct.style.transition = '';
       }
-
-      brainyColorOrder = shuffleArray(['violett', 'blau', 'gruen', 'orange']);
-      const firstColor = brainyColorOrder[0];
-      const firstZahl = brainyGenerateKippziel(firstColor);
-      if (firstZahl === null) { console.error('[BRAINY] No valid kippziel!'); return; }
-      brainyPlaceCards(firstColor, firstZahl);
+      
+      // 4 verschiedene Kippziele generieren und alle sofort offen zeigen
+      const erfuellt = getCurrentErfuellteKombis();
+      const usedCombis = new Set(erfuellt);
+      for (let ci = 0; ci < 4; ci++) {
+        const card = gameCards[ci];
+        const kombi = generateNeueKombiOhne(usedCombis);
+        if (!kombi) { console.error('[BRAINY] No valid kippziel for card ' + ci); continue; }
+        usedCombis.add(kombi.zahl + '_' + kombi.color.name);
+        bereitsAusgegeben.add(kombi.zahl + '_' + kombi.color.name);
+        
+        // Karte aufdecken
+        const img = colorTargetImages[kombi.color.name];
+        if (img) {
+          card.ctx.clearRect(0, 0, 85, 170);
+          card.ctx.drawImage(img, 0, 0, 85, 170);
+          const displayText = displayNum(kombi.zahl).toString();
+          card.ctx.fillStyle = '#2a1810';
+          card.ctx.font = 'bold 56px Arial';
+          card.ctx.textAlign = 'center';
+          card.ctx.textBaseline = 'middle';
+          drawCenteredText(card.ctx, displayText, 42, 42);
+          card.texture.needsUpdate = true;
+        }
+        card.zahl = kombi.zahl;
+        card.color = kombi.color;
+        card.isHit = false;
+        card.isMiss = false;
+        card.mesh.visible = true;
+        card.mesh.material.transparent = false;
+        card.mesh.material.opacity = 1;
+        card.mesh.material.needsUpdate = true;
+        card.mesh.position.set(cardStartX + ci * (cardWidth + cardGap), cardY, cardZ);
+        card.mesh.rotation.set(-Math.PI / 2, 0, 0);
+        card.mesh.scale.set(1, 1, 1);
+        kipp21CardStates[ci] = 'offen';
+      }
+      
+      // BRAINY Input: Zahl wählen → Richtung wählen → Kipp
       window._onNumBtn = brainyOnNumBtn;
       window._onDirBtn = brainyOnDirBtn;
       kipp21Active = true;
@@ -8786,6 +8835,7 @@
       autoDemoActive = false;
       replayActive = false;
       kipp21Active = false;
+      brainyActive = false;
       kipp21TimerRunning = false;
       kipp21KniffActive = false;
       kipp21KniffAbort = true;
@@ -8796,6 +8846,9 @@
       if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
       stopCountdown();
       disableReplayBlocker();
+      brainyStopNumPulse();
+      brainyStopDirPulse();
+      brainyHideCards();
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
