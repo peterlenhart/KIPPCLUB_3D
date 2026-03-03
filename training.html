@@ -714,11 +714,36 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
+    #btnWeiter   { top: 410px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; color: #5cb85c; }
     #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 480px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
     
+    /* Save Game Overlay */
+    #saveGameOverlay {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 360px; height: 720px;
+      background: rgba(0,0,0,0.85);
+      display: none; z-index: 56;
+      pointer-events: auto;
+    }
+    #saveGameBox {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 320px;
+    }
+    #saveGameBox img {
+      width: 100%; height: auto; display: block;
+    }
+    #saveGameBox .sgBtnRow {
+      position: absolute; bottom: 17%; left: 13%; right: 13%;
+      display: flex; gap: 6%; justify-content: center;
+    }
+    .sgBtn {
+      flex: 1; height: 38px; border: none; border-radius: 6px;
+      background: transparent; cursor: pointer; pointer-events: auto;
+      font-size: 0; color: transparent;
+    }
+
     /* Best Scores Overlay */
     #bestScoresOverlay {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 360px; height: 720px;
@@ -735,7 +760,7 @@
     }
     .bsRow {
       position: absolute;
-      left: 90px; right: 6%;
+      left: 72px; right: 6%;
       text-align: left;
       font: bold 15px Arial, sans-serif;
       color: #c8c0b0;
@@ -928,11 +953,23 @@
       <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
+    <button class="startClickZone" id="btnWeiter" style="opacity:0;display:none">WEITERSPIELEN</button>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0;display:none">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0;display:none">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
   
+  <!-- SAVE GAME Overlay -->
+  <div id="saveGameOverlay">
+    <div id="saveGameBox">
+      <img src="save_overlay.webp" alt="Speichern">
+      <div class="sgBtnRow">
+        <button class="sgBtn save" id="sgBtnSave">Speichern</button>
+        <button class="sgBtn quit" id="sgBtnQuit">Beenden</button>
+      </div>
+    </div>
+  </div>
+
   <!-- BEST SCORES Overlay -->
   <div id="bestScoresOverlay">
     <div id="bestScoresBoard">
@@ -2462,6 +2499,117 @@
 
     // Real scores only
     
+    // === GAME STATE SAVE / LOAD ===
+    function saveGameState() {
+      try {
+        const state = {
+          currentLevel, currentQuadrant, topFace,
+          cubePos: [cube.position.x, cube.position.y, cube.position.z],
+          cubeQuat: [cube.quaternion.x, cube.quaternion.y, cube.quaternion.z, cube.quaternion.w],
+          kipp21Done, kipp21Fails,
+          kipp21CardStates: kipp21CardStates.slice(),
+          kipp21CardDistances: kipp21CardDistances.slice(),
+          kipp21KippCount, kipp21TotalTime,
+          kipp21WobbleUsed, kipp21EckblickUsed,
+          deck: deck.slice(),
+          visibleDeckIndices: Array.from(visibleDeckIndices),
+          bereitsGetroffen: Array.from(bereitsGetroffen),
+          bereitsAusgegeben: Array.from(bereitsAusgegeben),
+          activeCardIdx, kippDirection,
+          cards: gameCards.map(c => ({
+            zahl: c.zahl,
+            color: c.color ? { name: c.color.name, hex: c.color.hex } : null,
+            isHit: c.isHit, isMiss: c.isMiss
+          }))
+        };
+        localStorage.setItem('digikipp_savedgame', JSON.stringify(state));
+        console.log('[SAVE] Done='+kipp21Done+' Fails='+kipp21Fails+' Level='+currentLevel);
+        return true;
+      } catch(e) { console.error('[SAVE]', e); return false; }
+    }
+
+    function hasSavedGame() {
+      try { return !!localStorage.getItem('digikipp_savedgame'); } catch(e) { return false; }
+    }
+    function deleteSavedGame() {
+      try { localStorage.removeItem('digikipp_savedgame'); } catch(e) {}
+    }
+
+    function loadAndRestoreGame() {
+      try {
+        const raw = localStorage.getItem('digikipp_savedgame');
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        deleteSavedGame();
+
+        currentLevel = s.currentLevel || 1;
+        currentQuadrant = s.currentQuadrant;
+        topFace = s.topFace;
+        cube.position.set(s.cubePos[0], s.cubePos[1], s.cubePos[2]);
+        cube.quaternion.set(s.cubeQuat[0], s.cubeQuat[1], s.cubeQuat[2], s.cubeQuat[3]);
+        kippDirection = s.kippDirection || 'cw';
+
+        deck = s.deck;
+        visibleDeckIndices = new Set(s.visibleDeckIndices);
+        updateFaceSlots();
+        rebuildFaceMat('f0', 1);
+        rebuildFaceMat('f1', 1);
+        rebuildFaceMat('f2', 1);
+
+        kipp21Done = s.kipp21Done;
+        kipp21Fails = s.kipp21Fails;
+        kipp21CardStates = s.kipp21CardStates;
+        kipp21CardDistances = s.kipp21CardDistances;
+        kipp21KippCount = s.kipp21KippCount;
+        kipp21TotalTime = s.kipp21TotalTime || 0;
+        kipp21WobbleUsed = s.kipp21WobbleUsed || 0;
+        kipp21EckblickUsed = s.kipp21EckblickUsed || 0;
+        bereitsGetroffen = new Set(s.bereitsGetroffen);
+        bereitsAusgegeben = new Set(s.bereitsAusgegeben);
+        activeCardIdx = s.activeCardIdx;
+
+        for (let i = 0; i < 4; i++) {
+          const saved = s.cards[i];
+          const card = gameCards[i];
+          card.zahl = saved.zahl;
+          card.color = saved.color ? (GAME_COLORS.find(c => c.name === saved.color.name) || saved.color) : null;
+          card.isHit = saved.isHit;
+          card.isMiss = saved.isMiss;
+          card.mesh.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
+          card.mesh.rotation.set(-Math.PI / 2, 0, 0);
+          card.mesh.scale.set(1, 1, 1);
+          if (kipp21CardStates[i] === 'erledigt') {
+            card.mesh.visible = false;
+          } else {
+            card.ctx.clearRect(0, 0, 85, 170);
+            if (leerImage) card.ctx.drawImage(leerImage, 0, 0, 85, 170);
+            card.texture.needsUpdate = true;
+            card.mesh.visible = true;
+            card.mesh.material.transparent = false;
+            card.mesh.material.opacity = 1;
+          }
+          card.mesh.material.needsUpdate = true;
+        }
+
+        kipp21WithTutorial = false;
+        gamePhase = 'kipp21';
+        currentMode = 'kanten';
+        kipp21Active = true;
+        isAnimating = false;
+
+        document.getElementById('startOverlay').style.display = 'none';
+        showBlickIcons();
+        const _pd = document.getElementById('progressDots');
+        if (_pd) { _pd.style.display = 'flex'; _pd.style.opacity = '1'; }
+        updateProgressDots(kipp21Done, -1);
+        positionResetButton();
+        if (window._showTrainingBtns) window._showTrainingBtns();
+
+        console.log('[LOAD] Restored. Done='+kipp21Done+' Fails='+kipp21Fails+' Q='+currentQuadrant+' F='+topFace);
+        return true;
+      } catch(e) { console.error('[LOAD]', e); deleteSavedGame(); return false; }
+    }
+
     function showBestScores() {
       renderBestScores();
       document.getElementById('bestScoresOverlay').style.display = 'block';
@@ -7264,6 +7412,19 @@
     
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
+    // WEITERSPIELEN button handler
+    document.getElementById('btnWeiter').addEventListener('click', () => {
+      if (loadAndRestoreGame()) {
+        console.log('[WEITER] Game restored successfully');
+      }
+    });
+    document.getElementById('btnWeiter').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (loadAndRestoreGame()) {
+        console.log('[WEITER] Game restored via touch');
+      }
+    }, { passive: false });
+
     function backToStartScreen() {
       // KIPP-TIPP Overlay schließen falls offen
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
@@ -7312,6 +7473,15 @@
       currentLevel = 1;
       
       // startOverlay mit Level-Auswahl zeigen
+      // WEITERSPIELEN button sichtbar wenn gespeichertes Spiel existiert
+      const _bw = document.getElementById('btnWeiter');
+      if (hasSavedGame()) {
+        _bw.style.display = 'block';
+        _bw.style.opacity = '1';
+        _bw.disabled = false;
+      } else {
+        _bw.style.display = 'none';
+      }
       document.getElementById('startOverlay').style.display = 'flex';
       document.getElementById('startChallengeText').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
@@ -8219,12 +8389,45 @@
     // - Auf Start-Overlay → zurück zu index.html (Hauptmenü)
     // - In Spielziel-Phase → zurück zum Start-Overlay
     // - In allen anderen Phasen → Reset + zurück zum Start-Overlay
+    // Save overlay handlers
+    document.getElementById('sgBtnSave').addEventListener('click', () => {
+      saveGameState();
+      document.getElementById('saveGameOverlay').style.display = 'none';
+      _doNukeAndReset();
+    });
+    document.getElementById('sgBtnSave').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      saveGameState();
+      document.getElementById('saveGameOverlay').style.display = 'none';
+      _doNukeAndReset();
+    }, { passive: false });
+    document.getElementById('sgBtnQuit').addEventListener('click', () => {
+      deleteSavedGame();
+      document.getElementById('saveGameOverlay').style.display = 'none';
+      _doNukeAndReset();
+    });
+    document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      deleteSavedGame();
+      document.getElementById('saveGameOverlay').style.display = 'none';
+      _doNukeAndReset();
+    }, { passive: false });
+
     resetButton.addEventListener('click', () => {
       if (gamePhase === 'start') {
+        // Saved game vorhanden? Direkt index.html
         window.location.href = 'index.html';
         return;
       }
-      
+      // Aktives Spiel mit Fortschritt: Save-Overlay zeigen
+      if (gamePhase === 'kipp21' && kipp21Done > 0) {
+        document.getElementById('saveGameOverlay').style.display = 'block';
+        return;
+      }
+      _doNukeAndReset();
+    });
+
+    function _doNukeAndReset() {
       // ===== NUKLEARER CLEANUP =====
       // 1. Alles stoppen
       gamePhase = 'start';
@@ -8301,7 +8504,7 @@
       
       // 6. Start-Overlay zeigen
       backToStartScreen();
-    });
+    }
 
     // =========================
     // WÜRFEL-KIPPMECHANIK
