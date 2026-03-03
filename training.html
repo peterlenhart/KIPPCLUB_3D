@@ -3423,6 +3423,39 @@
     //  PERFECT GAME: alle 6 Treffer, optimale Richtungen
     //  Kniff-Plan: 0=Eckblick, 2=Wobble, 3=Eckblick, 5=Wobble
     // ============================================================
+    // === TUTORIAL CONTINUATION: Globaler State ===
+    let _tutContinuationNeeded = false;
+    let _tutContinuationDone = false;
+    
+    function _executeTutContinuation() {
+      if (!_tutContinuationNeeded || _tutContinuationDone) {
+        console.log('[TUT-CONT] SKIP: needed='+_tutContinuationNeeded+' done='+_tutContinuationDone);
+        return;
+      }
+      _tutContinuationDone = true;
+      console.log('[TUT-CONT] Spieler übernimmt. kipp21Done='+kipp21Done+' Q='+currentQuadrant+' F='+topFace);
+      
+      // Replay-Blocker entfernen — das ist alles was nötig ist.
+      // checkTrainingResult hat den HIT bereits korrekt verarbeitet:
+      // kipp21Done=1, Karte erledigt, goldener Rahmen, Flug, HIT-Text.
+      // Der 5s-Timeout hat kipp21Active=true gesetzt und Buttons gezeigt.
+      // Der Würfel steht an der korrekten Position nach den Tutorial-Kipps.
+      const jr = document.getElementById('jokerIconsRow');
+      replayCleanup(jr);
+      
+      // Tutorial-Flag löschen (damit showGameEnd später funktioniert)
+      kipp21WithTutorial = false;
+      
+      // Progress dots einblenden (waren während Tutorial versteckt)
+      const _pd = document.getElementById('progressDots');
+      if (_pd) { _pd.style.display = 'flex'; _pd.style.opacity = '1'; }
+      updateProgressDots(kipp21Done, -1);
+      
+      positionResetButton();
+      
+      console.log('[TUT-CONT] DONE. kipp21Active='+kipp21Active+' gamePhase='+gamePhase);
+    }
+    
     async function startPerfectReplay() {
       const myGen = kipp21Generation;
       replayGeneration = myGen;
@@ -3713,13 +3746,20 @@
       if (window._checkTrainingResult) {
         window._checkTrainingResult(TARGET_CARD);
       }
+      
+      // Tutorial-Continuation markieren (Spielzustand ist bereits korrekt
+      // durch checkTrainingResult — nur Replay-Blocker muss später weg)
+      _tutContinuationNeeded = true;
+      _tutContinuationDone = false;
+      console.log('[TUT] HIT done. kipp21Done='+kipp21Done+' Q='+currentQuadrant+' F='+topFace);
+      
       // Warten bis HIT komplett sichtbar + 2s Stehzeit
       // (1500 Delay + 800 Flug + 200 Pulse = ~2500ms bis HIT sichtbar, dann +2000ms Stehzeit)
       await sleep(4500);
-      if (aborted()) { replayCleanup(jr); return; }
+      if (aborted()) { replayCleanup(jr); _executeTutContinuation(); return; }
       // Extra 2s damit HIT-Text klar sichtbar bleibt
       await sleep(2000);
-      if (aborted()) { replayCleanup(jr); return; }
+      if (aborted()) { replayCleanup(jr); _executeTutContinuation(); return; }
       
       // ==============================================
       // BLUR + "JETZT DU!" + Spiel starten
@@ -3751,7 +3791,7 @@
       });
       
       await sleep(600);
-      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); return; }
+      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); _executeTutContinuation(); return; }
       
       // "JETZT DU!" einblenden
       requestAnimationFrame(() => {
@@ -3760,7 +3800,7 @@
       });
       
       await sleep(2000);
-      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); return; }
+      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); _executeTutContinuation(); return; }
       
       // Alles ausblenden
       jetztDuEl.style.opacity = '0';
@@ -3777,14 +3817,9 @@
       // TESTING: localStorage deaktiviert
       // try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
       
-      // Tutorial beenden und frisches Spiel starten
-      replayCleanup(jr);
-      
-      // Komplett-Reset für echtes Spiel
-      kipp21Generation++;
-      kipp21WithTutorial = false;
-      gamePhase = 'start';
-      startKipp21(false);
+      // Tutorial beenden, SPIELZUSTAND BEIBEHALTEN (1 HIT mitnehmen)
+      // → Zentrale Continuation-Funktion aufrufen
+      _executeTutContinuation();
     }
     
     // ============================================================
@@ -3821,11 +3856,26 @@
         await startPerfectReplay();
       } catch(e) {
         if (e instanceof ReplayAbort) {
-          console.log('[startReplay] Aborted (Reset)');
+          console.log('[startReplay] Aborted (Reset). ContinuationNeeded='+_tutContinuationNeeded);
           replayCleanup(document.getElementById('jokerIconsRow'));
+          // FAILSAFE: Wenn Tutorial-HIT schon war, Continuation trotzdem ausführen
+          if (_tutContinuationNeeded && !_tutContinuationDone) {
+            console.log('[startReplay] Executing continuation after ReplayAbort');
+            // Blur/JETZT DU Overlays aufräumen falls noch vorhanden
+            document.querySelectorAll('[style*="z-index:28"], [style*="z-index:29"]').forEach(el => {
+              if (el.style.position === 'fixed') el.remove();
+            });
+            _executeTutContinuation();
+          }
           return;
         }
         console.error('[startReplay] UNCAUGHT:', e);
+        // FAILSAFE: Auch bei unerwarteten Fehlern Continuation versuchen
+        if (_tutContinuationNeeded && !_tutContinuationDone) {
+          console.log('[startReplay] Executing continuation after ERROR:', e.message);
+          _executeTutContinuation();
+          return; // Kein Error-Display wenn Continuation klappt
+        }
         const errDiv = document.createElement('div');
         errDiv.style.cssText = 'position:absolute;top:100px;left:10px;right:10px;font:bold 11px monospace;color:#ff0;background:rgba(0,0,0,0.9);padding:8px;z-index:35;word-break:break-all;';
         errDiv.textContent = 'UNCAUGHT: ' + e.message + '\n' + (e.stack || '');
@@ -4056,6 +4106,8 @@
     
     function startKipp21(withTutorial) {
       // ===== HARTER CLEANUP: Alles aus vorherigem Tutorial/Spiel killen =====
+      _tutContinuationNeeded = false;
+      _tutContinuationDone = false;
       kipp21Generation++; // Alte Async-Chains werden ungültig
       // Replay/Async stoppen
       replayActive = false;
