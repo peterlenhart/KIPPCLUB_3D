@@ -748,14 +748,19 @@
       margin-top: 4px;
     }
     #saveGameBox .sgBtnRow {
-      position: absolute; bottom: 17%; left: 14%; right: 14%;
-      display: flex; gap: 6%; justify-content: center;
-      z-index: 2;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
     }
     .sgBtn {
-      flex: 1; height: 42px; border: none; border-radius: 6px;
+      position: absolute; border: none; border-radius: 6px;
       background: transparent; cursor: pointer; pointer-events: auto;
       font-size: 0; color: transparent;
+    }
+    .sgBtn.save {
+      left: 20.5%; right: 52.1%; top: 54.0%; bottom: 36.1%;
+    }
+    .sgBtn.quit {
+      left: 52.5%; right: 18.9%; top: 53.8%; bottom: 35.1%;
     }
 
     /* Best Scores Overlay */
