@@ -735,17 +735,12 @@
       pointer-events: none;
     }
     .sgTextBlock {
-      position: absolute; left: 0; right: 0; top: 27%;
+      position: absolute; left: 0; right: 0; top: 30%;
       text-align: center; pointer-events: none; z-index: 2;
     }
     .sgTextBlock .sgLine1 {
-      font: bold 18px Arial; color: #e0d8c8; letter-spacing: 1px;
+      font: bold 20px Arial; color: #e0d8c8; letter-spacing: 1px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-    }
-    .sgTextBlock .sgLine2 {
-      font: 15px Arial; color: #b0a898; letter-spacing: 0.5px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-      margin-top: 4px;
     }
     #saveGameBox .sgBtnRow {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -980,13 +975,13 @@
   <!-- SAVE GAME Overlay -->
   <div id="saveGameOverlay">
     <div id="saveGameBox">
-      <img src="save_overlay.webp" alt="Speichern">
+      <img src="save_overlay.webp" alt="Beenden">
       <div class="sgTextBlock">
-        <div class="sgLine1">Spielstand speichern?</div>
-        <div class="sgLine2">Später weiterspielen?</div>
+        <div class="sgLine1">Partie wirklich beenden?</div>
+        
       </div>
       <div class="sgBtnRow">
-        <button class="sgBtn save" id="sgBtnSave">Speichern</button>
+        <button class="sgBtn save" id="sgBtnSave">Weiterspielen</button>
         <button class="sgBtn quit" id="sgBtnQuit">Beenden</button>
       </div>
     </div>
@@ -2545,7 +2540,6 @@
           }))
         };
         localStorage.setItem('digikipp_savedgame', JSON.stringify(state));
-        document.title = 'SAVED! keys=' + Object.keys(state).length;
         console.log('[SAVE] Done='+kipp21Done+' Fails='+kipp21Fails+' Level='+currentLevel);
         return true;
       } catch(e) { console.error('[SAVE]', e); return false; }
@@ -4320,24 +4314,7 @@
       kippenWarningActive = false;
       // ===== CLEANUP ENDE =====
       
-      // ===== SAVED GAME RESTORE =====
-      if (hasSavedGame()) {
-        document.title = 'SAVE FOUND!';
-        window._showTrainingBtns = showTrainingButtons;
-        window._showAllTrainingUI = showAllTrainingUI;
-        window._hideTrainingBtns = hideAllTrainingUI;
-        window._highlightNum = highlightNum;
-        window._highlightDir = highlightDir;
-        window._onDirBtn = onDirBtn;
-        window._onNumBtn = onNumBtn;
-        const restored = loadAndRestoreGame();
-        document.title = restored ? 'RESTORED OK' : 'RESTORE FAILED';
-        if (restored) return;
-      } else {
-        document.title = 'NO SAVE';
-      }
-      // ===== SAVED GAME RESTORE ENDE =====
-      
+
       kipp21WithTutorial = !!withTutorial;
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
@@ -7438,11 +7415,6 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      // Gespeicherten Spielstand laden falls vorhanden
-      if (hasSavedGame() && loadAndRestoreGame()) {
-        setTimeout(() => { _startBtnLock = false; }, 1000);
-        return;
-      }
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
@@ -8415,34 +8387,29 @@
     // - Auf Start-Overlay → zurück zu index.html (Hauptmenü)
     // - In Spielziel-Phase → zurück zum Start-Overlay
     // - In allen anderen Phasen → Reset + zurück zum Start-Overlay
-    // Save overlay handlers
+    // Quit confirmation handlers
     document.getElementById('sgBtnSave').addEventListener('click', () => {
-      saveGameState();
-      window.location.href = 'index.html';
+      document.getElementById('saveGameOverlay').style.display = 'none';
     });
     document.getElementById('sgBtnSave').addEventListener('touchend', (e) => {
       e.preventDefault();
-      saveGameState();
-      window.location.href = 'index.html';
+      document.getElementById('saveGameOverlay').style.display = 'none';
     }, { passive: false });
     document.getElementById('sgBtnQuit').addEventListener('click', () => {
-      deleteSavedGame();
       window.location.href = 'index.html';
     });
     document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
       e.preventDefault();
-      deleteSavedGame();
       window.location.href = 'index.html';
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
       if (gamePhase === 'start') {
-        // Saved game vorhanden? Direkt index.html
         window.location.href = 'index.html';
         return;
       }
-      // Aktives Spiel mit Fortschritt: Save-Overlay zeigen
-      if (gamePhase === 'kipp21' && kipp21Done > 0) {
+      // Aktives Spiel: Bestätigung zeigen
+      if (gamePhase === 'kipp21') {
         document.getElementById('saveGameOverlay').style.display = 'block';
         return;
       }
