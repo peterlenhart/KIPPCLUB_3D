@@ -2545,6 +2545,7 @@
           }))
         };
         localStorage.setItem('digikipp_savedgame', JSON.stringify(state));
+        document.title = 'SAVED! keys=' + Object.keys(state).length;
         console.log('[SAVE] Done='+kipp21Done+' Fails='+kipp21Fails+' Level='+currentLevel);
         return true;
       } catch(e) { console.error('[SAVE]', e); return false; }
@@ -2630,7 +2631,7 @@
 
         console.log('[LOAD] Restored. Done='+kipp21Done+' Fails='+kipp21Fails+' Q='+currentQuadrant+' F='+topFace);
         return true;
-      } catch(e) { console.error('[LOAD]', e); deleteSavedGame(); return false; }
+      } catch(e) { console.error('[LOAD] RESTORE FAILED:', e.message, e.stack); deleteSavedGame(); return false; }
     }
 
     function showBestScores() {
@@ -4321,7 +4322,7 @@
       
       // ===== SAVED GAME RESTORE =====
       if (hasSavedGame()) {
-        // Funktionen global exponieren (normalerweise erst später im Flow)
+        document.title = 'SAVE FOUND!';
         window._showTrainingBtns = showTrainingButtons;
         window._showAllTrainingUI = showAllTrainingUI;
         window._hideTrainingBtns = hideAllTrainingUI;
@@ -4329,7 +4330,11 @@
         window._highlightDir = highlightDir;
         window._onDirBtn = onDirBtn;
         window._onNumBtn = onNumBtn;
-        if (loadAndRestoreGame()) return;
+        const restored = loadAndRestoreGame();
+        document.title = restored ? 'RESTORED OK' : 'RESTORE FAILED';
+        if (restored) return;
+      } else {
+        document.title = 'NO SAVE';
       }
       // ===== SAVED GAME RESTORE ENDE =====
       
@@ -7433,6 +7438,11 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
+      // Gespeicherten Spielstand laden falls vorhanden
+      if (hasSavedGame() && loadAndRestoreGame()) {
+        setTimeout(() => { _startBtnLock = false; }, 1000);
+        return;
+      }
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
