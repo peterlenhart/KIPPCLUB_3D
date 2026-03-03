@@ -979,7 +979,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto; display:none;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
   </div>
   
   <div id="uiOverlay">
@@ -2389,62 +2389,70 @@
     // ===== BEST SCORES SYSTEM =====
     function loadBestScores() {
       try {
-        const raw = localStorage.getItem('digikipp_bestscores');
+        const raw = localStorage.getItem('digikipp_bestscores_v2');
         if (raw) return JSON.parse(raw);
       } catch(e) {}
       return [];
     }
 
-    function saveTutorialScore(kipps, secs) {
+    function saveTutorialScore(hits, kipps) {
       try {
-        localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: kipps, secs: secs }));
-        // Alten Tutorial-Eintrag aus Ranking entfernen, neuen einfügen
-        const scores = loadBestScores().filter(s => !s.tutorial);
-        scores.push({ kipps: kipps, secs: secs, tutorial: true });
-        scores.sort((a, b) => a.secs - b.secs);
-        localStorage.setItem('digikipp_bestscores', JSON.stringify(scores.slice(0, 11)));
+        localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ level: 1, hits: hits, kipps: kipps, tutorial: true }));
       } catch(e) {}
     }
 
-    function saveBestScore(kipps, secs) {
+    const SCORE_LEVEL_NAMES = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+
+    function saveBestScore(level, hits, kipps) {
       try {
         const scores = loadBestScores();
-        // Kein Duplikat einfügen
-        const exists = scores.some(s => s.kipps === kipps && s.secs === secs && !s.tutorial);
-        if (!exists) {
-          scores.push({ kipps: kipps, secs: secs });
-        }
-        scores.sort((a, b) => a.secs - b.secs);
+        scores.push({ level: level, hits: hits, kipps: kipps, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level });
+        // Sortierung: Hits absteigend, dann Kipps aufsteigend
+        scores.sort((a, b) => b.hits - a.hits || a.kipps - b.kipps);
         const top11 = scores.slice(0, 11);
-        localStorage.setItem('digikipp_bestscores', JSON.stringify(top11));
+        localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(top11));
         return top11;
       } catch(e) {
         return [];
       }
     }
 
+    // Per-Level Best ermitteln (höchste Hits, bei Gleichstand wenigste Kipps)
+    function getLevelBests() {
+      const scores = loadBestScores();
+      const bests = {};
+      for (const s of scores) {
+        const lv = s.level || 1;
+        if (!bests[lv] || s.hits > bests[lv].hits || (s.hits === bests[lv].hits && s.kipps < bests[lv].kipps)) {
+          bests[lv] = { hits: s.hits, kipps: s.kipps };
+        }
+      }
+      return bests;
+    }
+
     function renderBestScores() {
       const titleEl = document.getElementById('bsTitleText');
       if (titleEl) titleEl.textContent = T.bs || 'HIGHSCORES';
-      const SEK = { de:'Sek.', en:'sec.', es:'seg.', fr:'sec.', it:'sec.', tr:'sn.' };
-      const sekT = SEK[_digikippLang] || SEK.de;
       const scores = loadBestScores();
-      // Cross-check: markiere Tutorial-Eintrag anhand gespeicherter Werte
-      let tutData = null;
-      try { const raw = localStorage.getItem('digikipp_tutorialscore'); if (raw) tutData = JSON.parse(raw); } catch(e) {}
+      const bests = getLevelBests();
+      
       for (let i = 0; i < 11; i++) {
         const el = document.getElementById('bsRow' + (i + 1));
         if (!el) continue;
         if (i < scores.length) {
           const s = scores[i];
-          const isTut = s.tutorial || (tutData && s.kipps === tutData.kipps && s.secs === tutData.secs);
-          const prefix = isTut ? 'TUTORIAL  |  ' : '';
-          if (s.secs <= 21) {
-            el.innerHTML = prefix + '<span style="color:#5cb85c;font-size:17px">' + s.secs + ' ' + sekT + '</span>';
-          } else {
-            const over = s.secs - 21;
-            el.innerHTML = prefix + '<span style="font-size:17px">21 ' + sekT + '</span> <span style="color:#c85a5a;font-size:19px">+ ' + over + '</span>';
-          }
+          const lv = s.level || 1;
+          const lvName = s.levelName || SCORE_LEVEL_NAMES[lv] || '?';
+          const best = bests[lv] || { hits: 0, kipps: 0 };
+          // Format: LEVEL | hits / kipps (Best: bestHits / bestKipps)
+          el.innerHTML = '<span style="color:#c8c0b0;font-size:13px">' + lvName + '</span>' +
+            ' <span style="color:#888;font-size:12px">|</span> ' +
+            '<span style="color:#cedb25;font-size:17px;font-weight:bold">' + s.hits + '</span>' +
+            '<span style="color:#888;font-size:13px"> / </span>' +
+            '<span style="color:#e05050;font-size:17px;font-weight:bold">' + s.kipps + '</span>' +
+            ' <span style="color:#888;font-size:11px">(Best: ' +
+            '<span style="color:#cedb25">' + best.hits + '</span>' +
+            ' / <span style="color:#e05050">' + best.kipps + '</span>)</span>';
         } else {
           el.textContent = '';
         }
@@ -4008,7 +4016,7 @@
         const lang = _digikippLang || 'de';
         
         // Score in Best Scores speichern (nur echte Spiele, nicht Tutorial)
-        saveBestScore(kipp21KippCount, totalSec);
+        saveBestScore(currentLevel, kipp21Done, kipp21KippCount);
         
         let motivEl = document.getElementById('endMotivText');
         if (motivEl) motivEl.style.display = 'none';
