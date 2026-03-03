@@ -728,18 +728,32 @@
       pointer-events: auto;
     }
     #saveGameBox {
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-      width: 320px;
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 360px;
     }
     #saveGameBox img {
       width: 100%; height: auto; display: block;
     }
+    .sgTextBlock {
+      position: absolute; left: 0; right: 0; top: 18%;
+      text-align: center; pointer-events: none; z-index: 2;
+    }
+    .sgTextBlock .sgLine1 {
+      font: bold 14px Arial; color: #e0d8c8; letter-spacing: 1px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
+    .sgTextBlock .sgLine2 {
+      font: 11px Arial; color: #b0a898; letter-spacing: 0.5px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      margin-top: 4px;
+    }
     #saveGameBox .sgBtnRow {
-      position: absolute; bottom: 17%; left: 13%; right: 13%;
+      position: absolute; bottom: 17%; left: 14%; right: 14%;
       display: flex; gap: 6%; justify-content: center;
+      z-index: 2;
     }
     .sgBtn {
-      flex: 1; height: 38px; border: none; border-radius: 6px;
+      flex: 1; height: 42px; border: none; border-radius: 6px;
       background: transparent; cursor: pointer; pointer-events: auto;
       font-size: 0; color: transparent;
     }
@@ -963,6 +977,10 @@
   <div id="saveGameOverlay">
     <div id="saveGameBox">
       <img src="save_overlay.webp" alt="Speichern">
+      <div class="sgTextBlock">
+        <div class="sgLine1">Spielstand speichern?</div>
+        <div class="sgLine2">Später weiterspielen?</div>
+      </div>
       <div class="sgBtnRow">
         <button class="sgBtn save" id="sgBtnSave">Speichern</button>
         <button class="sgBtn quit" id="sgBtnQuit">Beenden</button>
@@ -8477,7 +8495,7 @@
       // 5. 3D zurücksetzen
       if (cube.parent !== kipGroup) {
         const oldP = cube.parent;
-        if (oldP) oldP.remove(cube);
+        if (oldP) { oldP.remove(cube); if (oldP.parent) oldP.parent.remove(oldP); }
         kipGroup.add(cube);
       }
       gameCards.forEach(c => c.mesh.visible = false);
@@ -9039,6 +9057,12 @@
     }
     
     function finalizeKipp(newQ, callback) {
+      // Nuke-Schutz: Cube bereits in kipGroup (durch Reset) -> nichts tun
+      if (cube.parent === kipGroup) {
+        isAnimating = false;
+        if (callback) callback();
+        return;
+      }
       console.log('[KIPP] finalizeKipp Q='+newQ);
       cube.updateMatrixWorld();
       const newWorldPos = new THREE.Vector3();
