@@ -4627,6 +4627,9 @@
             if (currentLevel === 1) {
             // === BRAINY LEVEL TRANSITION ===
             setTimeout(async () => {
+              // TRAINING Score speichern
+              saveBestScore(currentLevel, kipp21Done, kipp21KippCount);
+              
               // UI-Buttons ausblenden, aber HIT-Texte bleiben sichtbar!
               ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
                 const el = document.getElementById(id);
@@ -4834,11 +4837,12 @@
               gamePhase = 'start';
               startKipp21(false);
               
-            }, 2000); // 2s warten bis letzte Karte geflogen ist
+            }, 5000); // 5s warten: 4. HIT braucht ~2.3s zum Erscheinen + 2.7s Sichtbarkeit
             return;
             
             } else {
               // BRAINY+ Level-Ende: Erfolgsmeldung
+              saveBestScore(currentLevel, kipp21Done, kipp21KippCount);
               setTimeout(() => {
                 gamePhase = 'ende';
                 ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
