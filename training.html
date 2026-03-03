@@ -714,7 +714,6 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnWeiter   { top: 410px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; color: #5cb85c; }
     #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 480px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
@@ -733,6 +732,7 @@
     }
     #saveGameBox img {
       width: 100%; height: auto; display: block;
+      pointer-events: none;
     }
     .sgTextBlock {
       position: absolute; left: 0; right: 0; top: 18%;
@@ -967,7 +967,6 @@
       <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
-    <button class="startClickZone" id="btnWeiter" style="opacity:0;display:none">WEITERSPIELEN</button>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0;display:none">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0;display:none">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
@@ -2621,7 +2620,8 @@
         if (_pd) { _pd.style.display = 'flex'; _pd.style.opacity = '1'; }
         updateProgressDots(kipp21Done, -1);
         positionResetButton();
-        if (window._showTrainingBtns) window._showTrainingBtns();
+        // NUR UI zeigen, NICHT showTrainingButtons (das resettet den Spielzustand!)
+        if (window._showAllTrainingUI) window._showAllTrainingUI();
 
         console.log('[LOAD] Restored. Done='+kipp21Done+' Fails='+kipp21Fails+' Q='+currentQuadrant+' F='+topFace);
         return true;
@@ -5186,6 +5186,7 @@
         hintText.style.display = 'none';
       }
       window._showTrainingBtns = showTrainingButtons;
+      window._showAllTrainingUI = showAllTrainingUI;
       window._hideTrainingBtns = hideAllTrainingUI;
       window._highlightNum = highlightNum;
       window._highlightDir = highlightDir;
@@ -7413,6 +7414,11 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
+      // Gespeicherten Spielstand laden falls vorhanden
+      if (hasSavedGame() && loadAndRestoreGame()) {
+        setTimeout(() => { _startBtnLock = false; }, 1000);
+        return;
+      }
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
@@ -7430,19 +7436,6 @@
     
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
-    // WEITERSPIELEN button handler
-    document.getElementById('btnWeiter').addEventListener('click', () => {
-      if (loadAndRestoreGame()) {
-        console.log('[WEITER] Game restored successfully');
-      }
-    });
-    document.getElementById('btnWeiter').addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (loadAndRestoreGame()) {
-        console.log('[WEITER] Game restored via touch');
-      }
-    }, { passive: false });
-
     function backToStartScreen() {
       // KIPP-TIPP Overlay schließen falls offen
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
@@ -7491,15 +7484,6 @@
       currentLevel = 1;
       
       // startOverlay mit Level-Auswahl zeigen
-      // WEITERSPIELEN button sichtbar wenn gespeichertes Spiel existiert
-      const _bw = document.getElementById('btnWeiter');
-      if (hasSavedGame()) {
-        _bw.style.display = 'block';
-        _bw.style.opacity = '1';
-        _bw.disabled = false;
-      } else {
-        _bw.style.display = 'none';
-      }
       document.getElementById('startOverlay').style.display = 'flex';
       document.getElementById('startChallengeText').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
@@ -8410,25 +8394,21 @@
     // Save overlay handlers
     document.getElementById('sgBtnSave').addEventListener('click', () => {
       saveGameState();
-      document.getElementById('saveGameOverlay').style.display = 'none';
-      _doNukeAndReset();
+      window.location.href = 'index.html';
     });
     document.getElementById('sgBtnSave').addEventListener('touchend', (e) => {
       e.preventDefault();
       saveGameState();
-      document.getElementById('saveGameOverlay').style.display = 'none';
-      _doNukeAndReset();
+      window.location.href = 'index.html';
     }, { passive: false });
     document.getElementById('sgBtnQuit').addEventListener('click', () => {
       deleteSavedGame();
-      document.getElementById('saveGameOverlay').style.display = 'none';
-      _doNukeAndReset();
+      window.location.href = 'index.html';
     });
     document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
       e.preventDefault();
       deleteSavedGame();
-      document.getElementById('saveGameOverlay').style.display = 'none';
-      _doNukeAndReset();
+      window.location.href = 'index.html';
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
@@ -8442,7 +8422,7 @@
         document.getElementById('saveGameOverlay').style.display = 'block';
         return;
       }
-      _doNukeAndReset();
+      window.location.href = 'index.html';
     });
 
     function _doNukeAndReset() {
