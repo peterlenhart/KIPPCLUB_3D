@@ -524,6 +524,19 @@
       transform: scale(0.92);
     }
 
+    /* BRAINY Level Animations */
+    @keyframes brainyNumPulseA {
+      0%, 100% { background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%); color: #2a1810; }
+      50% { background: linear-gradient(180deg, #2a1810 0%, #1a0e08 100%); color: #e8dcc8; border-color: #cedb25; }
+    }
+    @keyframes brainyNumPulseB {
+      0%, 50% { background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%); color: #2a1810; }
+      25%, 75% { background: linear-gradient(180deg, #2a1810 0%, #1a0e08 100%); color: #e8dcc8; border-color: #cedb25; }
+    }
+    .numBtn.brainy-pulse-a { animation: brainyNumPulseA 1.2s ease-in-out infinite; }
+    .numBtn.brainy-pulse-b { animation: brainyNumPulseB 1.2s ease-in-out infinite; }
+
+
     .kippBtn {
       width: 52px;
       height: 52px;
@@ -1559,7 +1572,25 @@
       gameCards.push({ mesh: plane, canvas: canvas, ctx: ctx, texture: texture });
     }
     
-    // === Verdecktes Kippziel als 3D-Mesh auf dem Spieltisch (Canvas-basiert) ===
+
+    // === BRAINY: 4 Floating Card Meshes ===
+    const brainyFloatingCards = [];
+    for (let bi = 0; bi < 4; bi++) {
+      const bCanvas = document.createElement('canvas');
+      bCanvas.width = 85;
+      bCanvas.height = 170;
+      const bCtx = bCanvas.getContext('2d');
+      const bTex = new THREE.CanvasTexture(bCanvas);
+      const bGeo = new THREE.PlaneGeometry(cardWidth, cardHeight);
+      const bMat = new THREE.MeshBasicMaterial({ map: bTex, side: THREE.DoubleSide, transparent: true });
+      const bPlane = new THREE.Mesh(bGeo, bMat);
+      bPlane.rotation.x = -Math.PI / 2;
+      bPlane.visible = false;
+      scene.add(bPlane);
+      brainyFloatingCards.push({ mesh: bPlane, canvas: bCanvas, ctx: bCtx, texture: bTex });
+    }
+
+        // === Verdecktes Kippziel als 3D-Mesh auf dem Spieltisch (Canvas-basiert) ===
     const verdecktesCanvas = document.createElement('canvas');
     verdecktesCanvas.width = 85;
     verdecktesCanvas.height = 170;
@@ -2348,14 +2379,14 @@
         const best = document.getElementById('sctBest');
         
         // Prüfe ob Spieler schon mal Training gespielt hat
-        // TESTING: immer Tutorial zeigen
         let hasPlayed = false;
-        // try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
+        try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
         
         if (hasPlayed) {
           // WIEDERHOLUNGSSPIEL: Kein Overlay, direkt starten
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
           // Direkt Spiel starten (ohne Tutorial)
           setTimeout(() => { startKipp21(false); }, 200);
           return;
@@ -2944,7 +2975,36 @@
       }
     };
 
-    // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
+
+    // === BRAINY: Farbfeld-Positionen pro Farbe (4 Felder am Rahmen) ===
+    const COLOR_FIELD_POS = {
+      'violett': [
+        {x: -0.46875, z: -0.125,    q: 0, slot: 'S2'},
+        {x:  0.46875, z: -0.125,    q: 1, slot: 'S3'},
+        {x:  0.07813, z:  0.580375, q: 2, slot: 'S4'},
+        {x: -0.07813, z:  0.580375, q: 3, slot: 'S1'}
+      ],
+      'blau': [
+        {x: -0.46875, z:  0.03125,  q: 0, slot: 'S1'},
+        {x:  0.23438, z: -0.359375, q: 1, slot: 'S2'},
+        {x:  0.23438, z:  0.580375, q: 2, slot: 'S3'},
+        {x: -0.46875, z:  0.1875,   q: 3, slot: 'S4'}
+      ],
+      'gruen': [
+        {x: -0.23438, z: -0.359375, q: 0, slot: 'S3'},
+        {x:  0.46875, z:  0.03125,  q: 1, slot: 'S4'},
+        {x:  0.46875, z:  0.1875,   q: 2, slot: 'S1'},
+        {x: -0.23438, z:  0.580375, q: 3, slot: 'S2'}
+      ],
+      'orange': [
+        {x: -0.07813, z: -0.359375, q: 0, slot: 'S4'},
+        {x:  0.07813, z: -0.359375, q: 1, slot: 'S1'},
+        {x:  0.46875, z:  0.34375,  q: 2, slot: 'S2'},
+        {x: -0.46875, z:  0.34375,  q: 3, slot: 'S3'}
+      ]
+    };
+
+        // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
     // Zähler-Flug: in die würfelfreie Boxhälfte
     let counterOrigPos = null;
     let lastCounterTarget = { x: 180, y: 300 }; // Fallback
@@ -4355,7 +4415,7 @@
         pgt.appendChild(pgtS);
       }
       const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
-      const challengeText = currentLevel >= 2 ? '4 HITS' : 'Mit 4 HITS ins BRAINY Level';
+      const challengeText = currentLevel >= 2 ? 'Mit 4 HITS ins BRAIN Level' : 'Mit 4 HITS ins BRAINY Level';
       pgtH.innerHTML = challengeText;
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
@@ -4798,6 +4858,7 @@
             setTimeout(async () => {
               // TRAINING Score speichern
               saveBestScore(currentLevel, kipp21Done, kipp21Fails);
+              try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
               
               // UI-Buttons ausblenden, aber HIT-Texte bleiben sichtbar!
               ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
@@ -4868,12 +4929,8 @@
               brainyEl.remove();
               blurOv.remove();
               
-              // 4. Level hochschalten + 3 neue Zahlen
+              // 4. Level hochschalten (BRAINY macht alle 12 sichtbar)
               currentLevel = 2;
-              const oldVisible = new Set(visibleDeckIndices);
-              addOneVisiblePerFace();
-              const newIndices = new Set();
-              visibleDeckIndices.forEach(i => { if (!oldVisible.has(i)) newIndices.add(i); });
               
               // Texturen neu bauen (neue Zahlen sichtbar)
               updateFaceSlots();
@@ -4890,103 +4947,21 @@
               _eyeIcon.style.display = 'block';
               _eyeIcon.style.pointerEvents = 'none';
               
-              // 6. Puls-Animation für neue Zahlen während Demo
-              let pulseActive = true;
-              let pulsePhase = 0;
-              const faceOffMap = { f0: 0, f1: 4, f2: 8 };
-              
-              // Sammle Info: welche Faces haben neue Zahlen, wo genau?
-              const pulseInfo = {};
-              for (const fKey of ['f0','f1','f2']) {
-                const fOff = faceOffMap[fKey];
-                const f = faceSlots[fKey];
-                const glowCells = [];
-                const keys = Object.keys(f.slotMap);
-                for (let ki = 0; ki < keys.length; ki++) {
-                  if (newIndices.has(fOff + ki)) {
-                    const [r, c] = keys[ki].split(',').map(Number);
-                    glowCells.push({ r, c });
-                  }
-                }
-                if (glowCells.length === 0) continue;
-                
-                // Basis-Canvas ohne Rahmen sichern (für Redraw)
-                const matIdx = f.matIdx;
-                const origCanvas = cubeMaterial[matIdx].map.image;
-                const backupCanvas = document.createElement('canvas');
-                backupCanvas.width = 256; backupCanvas.height = 256;
-                backupCanvas.getContext('2d').drawImage(origCanvas, 0, 0);
-                
-                pulseInfo[fKey] = { matIdx, glowCells, backupCanvas, origCanvas };
-              }
-              
-              function pulseNewNumbers() {
-                if (!pulseActive) return;
-                pulsePhase += 0.06;
-                const pulse = 0.5 + 0.5 * Math.sin(pulsePhase); // 0→1
-                const cell = 256 / 3;
-                const bw = 8; // Rahmenbreite
-                for (const fKey in pulseInfo) {
-                  const pi = pulseInfo[fKey];
-                  const ctx = pi.origCanvas.getContext('2d');
-                  // Backup wiederherstellen
-                  ctx.clearRect(0, 0, 256, 256);
-                  ctx.drawImage(pi.backupCanvas, 0, 0);
-                  // Goldbraunen Rahmen auf jede neue Zahl zeichnen
-                  for (const gc of pi.glowCells) {
-                    const cx = gc.c * cell;
-                    const cy = gc.r * cell;
-                    // Äußerer goldbrauner Rahmen
-                    const borderAlpha = 0.6 + 0.4 * pulse;
-                    ctx.strokeStyle = 'rgba(200,160,50,' + borderAlpha.toFixed(2) + ')';
-                    ctx.lineWidth = bw;
-                    ctx.strokeRect(cx + bw/2, cy + bw/2, cell - bw, cell - bw);
-                    // Innerer heller Akzent
-                    ctx.strokeStyle = 'rgba(255,220,80,' + (0.5 * pulse).toFixed(2) + ')';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(cx + bw + 2, cy + bw + 2, cell - 2*bw - 4, cell - 2*bw - 4);
-                  }
-                  // Bestehende CanvasTexture als dirty markieren
-                  cubeMaterial[pi.matIdx].map.needsUpdate = true;
-                }
-                requestAnimationFrame(pulseNewNumbers);
-              }
-              pulseNewNumbers();
-              
-              // 7. Demo-Kipps: bei neuer Zahl bei 45° innehalten
+              // 6. Demo-Kipps (ohne Pulsieren)
               gamePhase = 'kipp21';
               await wait(300);
-              
-              const cwNext = { f2: 'f0', f0: 'f1', f1: 'f2' };
-              const ccwNext = { f2: 'f1', f1: 'f0', f0: 'f2' };
-              // Welche Faces haben neue Zahlen?
-              const facesWithNew = new Set();
-              for (const fKey of ['f0','f1','f2']) {
-                const fOff = faceOffMap[fKey];
-                for (let si = 0; si < 4; si++) {
-                  if (newIndices.has(fOff + si)) { facesWithNew.add(fKey); break; }
-                }
-              }
-              const heldFaces = new Set(); // Nur 1x pro Face halten
               
               // 4 CW Kipps
               for (let _i = 0; _i < 4; _i++) {
                 kippDirection = 'cw';
-                const upcomingFace = cwNext[topFace];
-                const shouldHold = facesWithNew.has(upcomingFace) && !heldFaces.has(upcomingFace);
-                if (shouldHold) {
-                  heldFaces.add(upcomingFace);
-                  await performKippWithHold(CW_KIPP[currentQuadrant], 2000, 1000);
-                } else {
-                  await performKipp(CW_KIPP[currentQuadrant], 1000);
-                }
+                await performKipp(CW_KIPP[currentQuadrant], 1000);
                 advanceTopFace();
                 if (_i < 3) await wait(200);
               }
               
               await wait(400);
               
-              // 4 CCW Kipps (keine Holds mehr - alle Faces schon gezeigt)
+              // 4 CCW Kipps
               for (let _i = 0; _i < 4; _i++) {
                 kippDirection = 'ccw';
                 await performKipp(CCW_KIPP[currentQuadrant], 1000);
@@ -4994,17 +4969,12 @@
                 if (_i < 3) await wait(200);
               }
               
-              // 9. Pulsieren stoppen, finale Texturen
-              pulseActive = false;
               _eyeIcon.style.display = 'none';
-              updateAllFaceTextures();
               
               await wait(300);
               
-              // 10. BRAINY-Spiel starten (ohne Tutorial)
-              kipp21WithTutorial = false;
-              gamePhase = 'start';
-              startKipp21(false);
+              // 10. BRAINY-Spiel starten
+              startBrainyLevel();
               
             }, 5000); // 5s warten: 4. HIT braucht ~2.3s zum Erscheinen + 2.7s Sichtbarkeit
             return;
@@ -5269,6 +5239,398 @@
       positionResetButton();
     }
     
+    // ==========================================================
+    // === BRAINY LEVEL SYSTEM ===
+    // ==========================================================
+    let brainyActive = false;
+    let brainyColorOrder = [];
+    let brainyColorIdx = 0;
+    let brainyHits = 0;
+    let brainyFails = 0;
+    let brainyCurrentZahl = 0;
+    let brainyCurrentColor = null;
+    let brainyNumPulseActive = false;
+    let brainyDirPulseActive = false;
+    let brainyDirPulseRAF = null;
+    let brainySelectedNum = 0;
+    let brainySelectedDir = null;
+    const BRAINY_FLOAT_Y = 0.636; // 45px above frame top (0.48 + 0.15625)
+
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function fillBrainyCard(bCard, zahl, colorObj) {
+      const img = colorTargetImages[colorObj.name];
+      if (!img) return;
+      bCard.ctx.clearRect(0, 0, 85, 170);
+      bCard.ctx.drawImage(img, 0, 0, 85, 170);
+      const displayText = displayNum(zahl).toString();
+      bCard.ctx.fillStyle = '#2a1810';
+      bCard.ctx.font = 'bold 56px Arial';
+      bCard.ctx.textAlign = 'center';
+      bCard.ctx.textBaseline = 'middle';
+      drawCenteredText(bCard.ctx, displayText, 42, 42);
+      bCard.texture.needsUpdate = true;
+      bCard.zahl = zahl;
+      bCard.color = colorObj;
+    }
+
+    function brainyPlaceCards(colorName, zahl) {
+      const positions = COLOR_FIELD_POS[colorName];
+      const colorObj = GAME_COLORS.find(c => c.name === colorName);
+      brainyCurrentZahl = zahl;
+      brainyCurrentColor = colorObj;
+      for (let i = 0; i < 4; i++) {
+        const fc = brainyFloatingCards[i];
+        fillBrainyCard(fc, zahl, colorObj);
+        fc.mesh.position.set(positions[i].x, BRAINY_FLOAT_Y, positions[i].z);
+        fc.mesh.rotation.set(-Math.PI / 2, 0, 0);
+        fc.mesh.material.transparent = false;
+        fc.mesh.material.opacity = 1;
+        fc.mesh.material.needsUpdate = true;
+        fc.mesh.scale.set(1, 1, 1);
+        fc.mesh.visible = true;
+        fc.isHit = false;
+      }
+    }
+
+    function brainyHideCards() {
+      brainyFloatingCards.forEach(fc => { fc.mesh.visible = false; });
+    }
+
+    function brainyGenerateKippziel(colorName) {
+      const faceOff = { f0: 0, f1: 4, f2: 8 };
+      const slots = ['S1', 'S2', 'S3', 'S4'];
+      const fulfilled = new Set();
+      const off = faceOff[topFace];
+      slots.forEach((slot, i) => {
+        const zahl = deck[off + i];
+        const farbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][slot];
+        fulfilled.add(zahl + '_' + farbe);
+      });
+      const validZahlen = [];
+      for (let di = 0; di < 12; di++) {
+        if (!visibleDeckIndices.has(di)) continue;
+        const zahl = deck[di];
+        const key = zahl + '_' + colorName;
+        if (fulfilled.has(key)) continue;
+        if (bereitsGetroffen.has(key)) continue;
+        validZahlen.push(zahl);
+      }
+      if (validZahlen.length === 0) return null;
+      return validZahlen[Math.floor(Math.random() * validZahlen.length)];
+    }
+
+    function brainyStartNumPulse() {
+      brainyNumPulseActive = true;
+      const btns = document.querySelectorAll('.numBtn');
+      btns.forEach((btn, i) => {
+        btn.classList.remove('selected', 'brainy-pulse-a', 'brainy-pulse-b');
+        btn.classList.add(i % 2 === 0 ? 'brainy-pulse-a' : 'brainy-pulse-b');
+      });
+    }
+
+    function brainyStopNumPulse() {
+      brainyNumPulseActive = false;
+      document.querySelectorAll('.numBtn').forEach(btn => {
+        btn.classList.remove('brainy-pulse-a', 'brainy-pulse-b');
+      });
+    }
+
+    function brainyStartDirPulse() {
+      brainyDirPulseActive = true;
+      let phase = 0;
+      function pulseTick() {
+        if (!brainyDirPulseActive) return;
+        phase += 0.05;
+        const a = 0.5 + 0.5 * Math.sin(phase);
+        const b = 0.5 + 0.5 * Math.sin(phase + Math.PI);
+        if (window._dirCwMesh && window._dirCwMesh.material) {
+          window._dirCwMesh.material.emissive = new THREE.Color(0.3 * a, 0.3 * a, 0);
+          window._dirCwMesh.material.needsUpdate = true;
+        }
+        if (window._dirCcwMesh && window._dirCcwMesh.material) {
+          window._dirCcwMesh.material.emissive = new THREE.Color(0.3 * b, 0.3 * b, 0);
+          window._dirCcwMesh.material.needsUpdate = true;
+        }
+        brainyDirPulseRAF = requestAnimationFrame(pulseTick);
+      }
+      pulseTick();
+    }
+
+    function brainyStopDirPulse() {
+      brainyDirPulseActive = false;
+      if (brainyDirPulseRAF) { cancelAnimationFrame(brainyDirPulseRAF); brainyDirPulseRAF = null; }
+      if (window._dirCwMesh && window._dirCwMesh.material) {
+        window._dirCwMesh.material.emissive = new THREE.Color(0, 0, 0);
+        window._dirCwMesh.material.needsUpdate = true;
+      }
+      if (window._dirCcwMesh && window._dirCcwMesh.material) {
+        window._dirCcwMesh.material.emissive = new THREE.Color(0, 0, 0);
+        window._dirCcwMesh.material.needsUpdate = true;
+      }
+    }
+
+    async function brainyEckblick(onPeakCallback) {
+      const savedPos = cube.position.clone();
+      const savedQuat = cube.quaternion.clone();
+      const savedQ = currentQuadrant;
+      const savedF = topFace;
+      const cornerPos = new THREE.Vector3(0, 0, 0.109375);
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(cornerPos);
+      kipGroup.add(pivotGroup);
+      cube.updateMatrixWorld();
+      const cwp = new THREE.Vector3(); cube.getWorldPosition(cwp);
+      const cwq = new THREE.Quaternion(); cube.getWorldQuaternion(cwq);
+      kipGroup.remove(cube);
+      cube.position.copy(cwp.clone().sub(cornerPos));
+      cube.quaternion.copy(cwq);
+      pivotGroup.add(cube);
+      const o = 0.234375;
+      const diagVectors = { 0: new THREE.Vector3(-o,o,-o), 1: new THREE.Vector3(o,o,-o), 2: new THREE.Vector3(o,o,o), 3: new THREE.Vector3(-o,o,o) };
+      const diag = diagVectors[currentQuadrant].clone().normalize();
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, new THREE.Vector3(0,1,0));
+      await new Promise(resolve => {
+        const st = performance.now();
+        (function anim() {
+          const t = Math.min((performance.now() - st) / 1200, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, e));
+          if (t < 1) requestAnimationFrame(anim); else resolve();
+        })();
+      });
+      // Peak: cube on corner — show new cards now
+      if (onPeakCallback) onPeakCallback();
+      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(resolve => {
+        const st = performance.now();
+        (function anim() {
+          const t = Math.min((performance.now() - st) / 800, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(new THREE.Quaternion(), e));
+          if (t < 1) requestAnimationFrame(anim); else resolve();
+        })();
+      });
+      cube.updateMatrixWorld();
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      cube.position.copy(savedPos);
+      cube.quaternion.copy(savedQuat);
+      kipGroup.add(cube);
+      currentQuadrant = savedQ;
+      topFace = savedF;
+    }
+
+    async function brainyCheckResult() {
+      const origZahl = gameCards[0].zahl;
+      const origColor = gameCards[0].color;
+      gameCards[0].zahl = brainyCurrentZahl;
+      gameCards[0].color = brainyCurrentColor;
+      activeCardIdx = 0;
+      const treffer = checkTreffer();
+      gameCards[0].zahl = origZahl;
+      gameCards[0].color = origColor;
+
+      if (treffer) {
+        brainyHits++;
+        kipp21Done++;
+        // Find the floating card at the hit quadrant
+        const bPositions = COLOR_FIELD_POS[brainyCurrentColor.name];
+        let hitCardIdx = 0;
+        for (let hi = 0; hi < 4; hi++) {
+          if (bPositions[hi].q === treffer.quadrant) { hitCardIdx = hi; break; }
+        }
+        const hitCard = brainyFloatingCards[hitCardIdx];
+        hitCard.isHit = true;
+        hitCard.ctx.strokeStyle = '#cedb25';
+        hitCard.ctx.lineWidth = 4;
+        hitCard.ctx.strokeRect(2, 2, 81, 166);
+        hitCard.texture.needsUpdate = true;
+        for (let i = 0; i < 4; i++) { if (i !== hitCardIdx) brainyFloatingCards[i].mesh.visible = false; }
+        await animateCardFly(hitCard, treffer.quadrant, treffer.slot);
+        // HIT text "links außen" — left side, stacked vertically
+        const hitLeftPos = new THREE.Vector3(-0.625, 0.48, -0.125 + (brainyHits - 1) * 0.15625);
+        hitLeftPos.project(camera);
+        const hsx = Math.round((hitLeftPos.x * 0.5 + 0.5) * 360);
+        const hsy = Math.round((-hitLeftPos.y * 0.5 + 0.5) * 720);
+        const hEl = document.createElement('div');
+        hEl.textContent = 'HIT';
+        hEl.className = 'hit-text-el';
+        hEl.style.cssText = 'position:absolute;left:' + hsx + 'px;top:' + hsy + 'px;transform:translate(-50%,-50%) rotate(-90deg) scale(0.3);font:bold 28px Arial;color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);pointer-events:none;opacity:0;transition:transform 0.3s ease-out, opacity 0.3s ease-out;z-index:25;';
+        document.getElementById('uiOverlay').appendChild(hEl);
+        hitTextEls.push(hEl);
+        requestAnimationFrame(() => { hEl.style.transform = 'translate(-50%,-50%) rotate(-90deg) scale(1)'; hEl.style.opacity = '1'; });
+        bereitsGetroffen.add(brainyCurrentZahl + '_' + brainyCurrentColor.name);
+
+        if (brainyHits >= 4) {
+          brainyActive = false;
+          kipp21Active = false;
+          if (window._hideTrainingBtns) window._hideTrainingBtns();
+          await new Promise(r => setTimeout(r, 2000));
+          document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+          hitTextEls.length = 0;
+          brainyHideCards();
+          saveBestScore(currentLevel, brainyHits, brainyFails);
+          gamePhase = 'ende';
+          ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+          const _pgt = document.getElementById('perfektGameText');
+          const _pgtH = document.getElementById('pgtHead');
+          if (_pgt && _pgtH) { _pgtH.innerHTML = '4 HITS!'; _pgt.style.display = 'block'; _pgt.style.opacity = '1'; _pgtH.style.animation = 'none'; void _pgtH.offsetWidth; _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards'; }
+          showEndButtons(true);
+          return;
+        }
+
+        await new Promise(r => setTimeout(r, 1500));
+        brainyColorIdx++;
+        const nextColor = brainyColorOrder[brainyColorIdx];
+        const nextZahl = brainyGenerateKippziel(nextColor);
+        brainyHideCards();
+        await brainyEckblick(() => {
+          // Callback at peak: place new cards while cube is on corner
+          brainyPlaceCards(nextColor, nextZahl);
+        });
+        brainySelectedNum = 0;
+        brainySelectedDir = null;
+        brainyStartNumPulse();
+      } else {
+        brainyFails++;
+        kipp21Fails++;
+        for (let i = 0; i < 4; i++) {
+          const fc = brainyFloatingCards[i];
+          fc.ctx.strokeStyle = '#ff0000';
+          fc.ctx.lineWidth = 6;
+          fc.ctx.strokeRect(2, 2, 81, 166);
+          fc.ctx.strokeStyle = '#ff6666';
+          fc.ctx.lineWidth = 2;
+          fc.ctx.strokeRect(5, 5, 75, 160);
+          fc.texture.needsUpdate = true;
+        }
+        const redXEls = [];
+        for (let i = 0; i < 4; i++) {
+          const p3 = brainyFloatingCards[i].mesh.position.clone();
+          p3.project(camera);
+          const sx = Math.round((p3.x * 0.5 + 0.5) * 360);
+          const sy = Math.round((-p3.y * 0.5 + 0.5) * 720);
+          const rx = document.createElement('div');
+          rx.textContent = '\u2715';
+          rx.style.cssText = 'position:absolute;z-index:26;pointer-events:none;font:bold 32px Arial;color:#ff0000;text-shadow:0 0 8px rgba(255,0,0,0.8);transform:translate(-50%,-50%) scale(0.3);opacity:0;transition:transform 0.3s ease-out, opacity 0.2s ease-out;left:' + sx + 'px;top:' + sy + 'px;';
+          document.getElementById('uiOverlay').appendChild(rx);
+          redXEls.push(rx);
+          requestAnimationFrame(() => { rx.style.opacity = '1'; rx.style.transform = 'translate(-50%,-50%) scale(1)'; });
+        }
+        await new Promise(r => setTimeout(r, 1500));
+        redXEls.forEach(rx => rx.remove());
+        for (let i = 0; i < 4; i++) fillBrainyCard(brainyFloatingCards[i], brainyCurrentZahl, brainyCurrentColor);
+        brainySelectedNum = 0;
+        brainySelectedDir = null;
+        brainyStartNumPulse();
+      }
+    }
+
+    async function brainyExecuteKipp() {
+      const steps = brainySelectedNum;
+      const dir = brainySelectedDir;
+      brainyStopNumPulse();
+      brainyStopDirPulse();
+      kipp21Active = false;
+      for (let i = 0; i < steps; i++) {
+        const kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        if (!kippDir) break;
+        kippDirection = dir;
+        await performKipp(kippDir, 1000);
+        advanceTopFace();
+        kipp21KippCount++;
+        if (i < steps - 1) await new Promise(r => setTimeout(r, 400));
+      }
+      await brainyCheckResult();
+      if (brainyActive) kipp21Active = true;
+    }
+
+    function brainyOnNumBtn(n) {
+      if (!brainyActive || !kipp21Active || gamePhase !== 'kipp21') return;
+      brainyStopNumPulse();
+      brainySelectedNum = n;
+      document.querySelectorAll('.numBtn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (parseInt(btn.dataset.num) === n) btn.classList.add('selected');
+      });
+      brainyStartDirPulse();
+    }
+
+    function brainyOnDirBtn(dir) {
+      if (!brainyActive || !kipp21Active || gamePhase !== 'kipp21') return;
+      if (brainySelectedNum === 0) return;
+      brainyStopDirPulse();
+      brainySelectedDir = dir;
+      brainyExecuteKipp();
+    }
+
+    async function startBrainyLevel() {
+      console.log('[BRAINY] Starting level');
+      brainyActive = true;
+      brainyHits = 0;
+      brainyFails = 0;
+      brainyColorIdx = 0;
+      brainySelectedNum = 0;
+      brainySelectedDir = null;
+      brainyCurrentZahl = 0;
+      brainyCurrentColor = null;
+      kipp21Done = 0;
+      kipp21Fails = 0;
+      kipp21KippCount = 0;
+      kipp21Active = false;
+      bereitsGetroffen.clear();
+      bereitsAusgegeben.clear();
+      gamePhase = 'kipp21';
+      for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
+      updateFaceSlots();
+      updateAllFaceTextures();
+      kipGroup.add(cube);
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      kippDirection = 'cw';
+      isAnimating = false;
+      gameCards.forEach(c => { c.mesh.visible = false; });
+      if (window._showAllTrainingUI) window._showAllTrainingUI();
+      if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
+
+      const sct = document.getElementById('startChallengeText');
+      const sctHead = document.getElementById('sctHead');
+      if (sct && sctHead) {
+        sctHead.textContent = 'BRAINY';
+        sctHead.style.animation = 'none'; void sctHead.offsetWidth;
+        sctHead.style.animation = 'sctInflate 1.2s ease-out forwards';
+        sct.style.display = 'flex';
+        sct.style.opacity = '1';
+        await new Promise(r => setTimeout(r, 2000));
+        sct.style.transition = 'opacity 0.5s';
+        sct.style.opacity = '0';
+        await new Promise(r => setTimeout(r, 500));
+        sct.style.display = 'none';
+        sct.style.transition = '';
+      }
+
+      brainyColorOrder = shuffleArray(['violett', 'blau', 'gruen', 'orange']);
+      const firstColor = brainyColorOrder[0];
+      const firstZahl = brainyGenerateKippziel(firstColor);
+      if (firstZahl === null) { console.error('[BRAINY] No valid kippziel!'); return; }
+      brainyPlaceCards(firstColor, firstZahl);
+      window._onNumBtn = brainyOnNumBtn;
+      window._onDirBtn = brainyOnDirBtn;
+      kipp21Active = true;
+      brainyStartNumPulse();
+      positionResetButton();
+    }
+
     // === KIPP KNIFF SYSTEM (beide Joker) ===
     let kipp21KniffActive = false;
     let kipp21BlickTargetCard = -1; // Welche Karte nach Blick-Animation öffnen
