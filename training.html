@@ -5271,7 +5271,14 @@
         gem.material.color.set(GEM_COLORS_HEX[colorName] || 0xffffff);
       }
       gem.material.needsUpdate = true;
-      gem.position.set(hitTarget.x, 0.481, hitTarget.z);
+      // HIT_TARGETS sit at wall inner edge; color square is half cell outward
+      const half = 0.078125; // half cell
+      let gx = hitTarget.x, gz = hitTarget.z;
+      if (hitTarget.rotZ === -Math.PI / 2) gx -= half;       // West → shift -X
+      else if (hitTarget.rotZ === Math.PI / 2) gx += half;   // Ost → shift +X
+      else if (Math.abs(hitTarget.rotZ - Math.PI) < 0.01) gz -= half; // Nord → shift -Z
+      else if (Math.abs(hitTarget.rotZ) < 0.01) gz += half;  // Süd → shift +Z
+      gem.position.set(gx, 0.481, gz);
       gem.scale.set(1, 1, 1);
       gem.visible = true;
     }
@@ -5515,6 +5522,11 @@
       // Show only this zahl on cube
       brainyShowOnlyZahl(zahl);
 
+      // === GEM appears on target frame field ===
+      const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
+      brainyPlaceGem(brainyHits, target.colorName, hitTarget);
+      brainyStartGemPulse(brainyHits);
+
       // === ECKBLICK: up on corner ===
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
       const pivotGroup = new THREE.Group();
@@ -5546,11 +5558,6 @@
         cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
         kipGroup.add(cube); return;
       }
-
-      // === GEM appears on target frame field simultaneously with Eckblick ===
-      const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
-      brainyPlaceGem(brainyHits, target.colorName, hitTarget);
-      brainyStartGemPulse(brainyHits);
 
       // === HOLD on corner (2s) — player sees number + pulsing gem ===
       await new Promise(r => setTimeout(r, 2000));
