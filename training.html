@@ -2369,6 +2369,21 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
+        // URL-Parameter Check: ?level=brainy → direkt BRAINY starten
+        const urlParams = new URLSearchParams(window.location.search);
+        const levelParam = urlParams.get('level');
+        if (levelParam === 'brainy') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          currentLevel = 2;
+          for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
+          updateFaceSlots();
+          updateAllFaceTextures();
+          setTimeout(() => { startBrainyLevel(); }, 200);
+          return;
+        }
+        
         // Prüfe ob Spieler schon mal Training gespielt hat
         let hasPlayed = false;
         try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
@@ -4927,44 +4942,15 @@
               updateFaceSlots();
               updateAllFaceTextures();
               
-              // 5. Auge-Icon über Box
+              // 5. Auge-Icon kurz zeigen
               const _eyeIcon = document.getElementById('eyeIcon');
-              const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
-              _boxTopPt.project(camera);
-              const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
-              _eyeIcon.style.top = _eyeTopPx + 'px';
-              _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
-              _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
-              _eyeIcon.style.display = 'block';
-              _eyeIcon.style.pointerEvents = 'none';
+              _eyeIcon.style.display = 'none';
               
-              // 6. Demo-Kipps (ohne Pulsieren)
+              // Direkt BRAINY-Spiel starten (kein Demo)
               gamePhase = 'kipp21';
               await wait(300);
               
-              // 4 CW Kipps
-              for (let _i = 0; _i < 4; _i++) {
-                kippDirection = 'cw';
-                await performKipp(CW_KIPP[currentQuadrant], 1000);
-                advanceTopFace();
-                if (_i < 3) await wait(200);
-              }
-              
-              await wait(400);
-              
-              // 4 CCW Kipps
-              for (let _i = 0; _i < 4; _i++) {
-                kippDirection = 'ccw';
-                await performKipp(CCW_KIPP[currentQuadrant], 1000);
-                advanceTopFace();
-                if (_i < 3) await wait(200);
-              }
-              
-              _eyeIcon.style.display = 'none';
-              
-              await wait(300);
-              
-              // 10. BRAINY-Spiel starten
+              // BRAINY-Spiel starten
               startBrainyLevel();
               
             }, 5000); // 5s warten: 4. HIT braucht ~2.3s zum Erscheinen + 2.7s Sichtbarkeit
@@ -5343,19 +5329,30 @@
       return valid[Math.floor(Math.random() * valid.length)];
     }
 
-    // Fast-tumble cube from Q3/f2 to target CW_CYCLE state
-    async function brainyTumbleToState(targetState) {
-      const cwSteps = targetState.cwSteps;
-      if (cwSteps === 0) return;
-      const ccwSteps = 12 - cwSteps;
-      const useCW = cwSteps <= ccwSteps;
-      const steps = useCW ? cwSteps : ccwSteps;
-      for (let i = 0; i < steps; i++) {
-        const kippDir = useCW ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
-        kippDirection = useCW ? 'cw' : 'ccw';
-        await performKipp(kippDir, 150);
-        advanceTopFace();
+    // Compute quaternion for a CW_STATE by simulating CW kipp rotations
+    function brainyGetStateQuaternion(cwSteps) {
+      const q = new THREE.Quaternion(); // identity = Q3/f2
+      const stepRots = [
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -Math.PI/2), // Q3→Q0
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), -Math.PI/2), // Q0→Q1
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),  Math.PI/2), // Q1→Q2
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),  Math.PI/2), // Q2→Q3
+      ];
+      for (let i = 0; i < cwSteps; i++) {
+        q.premultiply(stepRots[i % 4]);
       }
+      return q;
+    }
+
+    // Get cube center position for a quadrant
+    function brainyGetQuadrantPos(q) {
+      const positions = [
+        new THREE.Vector3(-offset, offset, 0.109375 - offset), // Q0 NW
+        new THREE.Vector3( offset, offset, 0.109375 - offset), // Q1 NE
+        new THREE.Vector3( offset, offset, 0.109375 + offset), // Q2 SE
+        new THREE.Vector3(-offset, offset, 0.109375 + offset), // Q3 SW
+      ];
+      return positions[q].clone();
     }
 
     function brainyStartNumPulse() {
@@ -5405,55 +5402,6 @@
         window._dirCcwMesh.material.emissive = new THREE.Color(0, 0, 0);
         window._dirCcwMesh.material.needsUpdate = true;
       }
-    }
-
-    async function brainyEckblick() {
-      const savedPos = cube.position.clone();
-      const savedQuat = cube.quaternion.clone();
-      const savedQ = currentQuadrant;
-      const savedF = topFace;
-      const cornerPos = new THREE.Vector3(0, 0, 0.109375);
-      const pivotGroup = new THREE.Group();
-      pivotGroup.position.copy(cornerPos);
-      kipGroup.add(pivotGroup);
-      cube.updateMatrixWorld();
-      const cwp = new THREE.Vector3(); cube.getWorldPosition(cwp);
-      const cwq = new THREE.Quaternion(); cube.getWorldQuaternion(cwq);
-      kipGroup.remove(cube);
-      cube.position.copy(cwp.clone().sub(cornerPos));
-      cube.quaternion.copy(cwq);
-      pivotGroup.add(cube);
-      const o = 0.234375;
-      const diagVectors = { 0: new THREE.Vector3(-o,o,-o), 1: new THREE.Vector3(o,o,-o), 2: new THREE.Vector3(o,o,o), 3: new THREE.Vector3(-o,o,o) };
-      const diag = diagVectors[currentQuadrant].clone().normalize();
-      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, new THREE.Vector3(0,1,0));
-      await new Promise(resolve => {
-        const st = performance.now();
-        (function anim() {
-          const t = Math.min((performance.now() - st) / 1200, 1);
-          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, e));
-          if (t < 1) requestAnimationFrame(anim); else resolve();
-        })();
-      });
-      await new Promise(r => setTimeout(r, 2000));
-      await new Promise(resolve => {
-        const st = performance.now();
-        (function anim() {
-          const t = Math.min((performance.now() - st) / 800, 1);
-          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(new THREE.Quaternion(), e));
-          if (t < 1) requestAnimationFrame(anim); else resolve();
-        })();
-      });
-      cube.updateMatrixWorld();
-      pivotGroup.remove(cube);
-      kipGroup.remove(pivotGroup);
-      cube.position.copy(savedPos);
-      cube.quaternion.copy(savedQuat);
-      kipGroup.add(cube);
-      currentQuadrant = savedQ;
-      topFace = savedF;
     }
 
     // Fly card from above to frame position
@@ -5535,6 +5483,10 @@
       }
       brainyCurrentTarget = target;
 
+      // Pick fall position (must not fulfill target)
+      const fallState = brainyPickFallPosition(target);
+      console.log('[BRAINY] Target: Q=' + target.targetQ + ' color=' + target.colorName + ' | Fall: Q=' + fallState.q + ' face=' + fallState.face);
+
       // Reset cube to Q3/f2
       cube.position.set(-offset, offset, 0.109375 + offset);
       cube.quaternion.set(0, 0, 0, 1);
@@ -5544,25 +5496,94 @@
       // Show only this zahl on cube
       brainyShowOnlyZahl(zahl);
 
-      // Eckblick (cube on corner, player sees the single number)
-      await brainyEckblick();
-      if (!brainyActive || gamePhase !== 'kipp21') return;
+      // === ECKBLICK: up on corner ===
+      const cornerPos = new THREE.Vector3(0, 0, 0.109375);
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(cornerPos);
+      kipGroup.add(pivotGroup);
+      cube.updateMatrixWorld();
+      const cwp = new THREE.Vector3(); cube.getWorldPosition(cwp);
+      const cwq = new THREE.Quaternion(); cube.getWorldQuaternion(cwq);
+      kipGroup.remove(cube);
+      cube.position.copy(cwp.clone().sub(cornerPos));
+      cube.quaternion.copy(cwq);
+      pivotGroup.add(cube);
+      const o = 0.234375;
+      const diag = new THREE.Vector3(-o, o, o).normalize(); // Q3 corner diagonal
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, new THREE.Vector3(0, 1, 0));
 
-      // Fly kippziel card to frame position
+      // Animate up to corner (1200ms)
+      await new Promise(resolve => {
+        const st = performance.now();
+        (function anim() {
+          const t = Math.min((performance.now() - st) / 1200, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, e));
+          if (t < 1) requestAnimationFrame(anim); else resolve();
+        })();
+      });
+      if (!brainyActive || gamePhase !== 'kipp21') {
+        pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
+        cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
+        kipGroup.add(cube); return;
+      }
+
+      // === HOLD on corner (2s): card flies to frame during this ===
       const colorObj = GAME_COLORS.find(c => c.name === target.colorName);
-      const fc = brainyFloatingCards[brainyHits]; // reuse slot on FAIL, next slot on HIT
+      const fc = brainyFloatingCards[brainyHits];
       fillBrainyCard(fc, zahl, colorObj);
       const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
-      await brainyFlyCardToFrame(fc, hitTarget);
-      if (!brainyActive || gamePhase !== 'kipp21') return;
 
-      // Restore all 12 numbers on cube
+      // Start card fly (non-blocking) + hold timer in parallel
+      const cardFlyPromise = brainyFlyCardToFrame(fc, hitTarget);
+      const holdPromise = new Promise(r => setTimeout(r, 2000));
+      await Promise.all([cardFlyPromise, holdPromise]);
+      if (!brainyActive || gamePhase !== 'kipp21') {
+        pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
+        cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
+        kipGroup.add(cube); return;
+      }
+
+      // Restore all 12 numbers on cube (while still on corner)
       brainyShowAllZahlen();
 
-      // Tumble cube to random non-fulfilling position
-      const fallState = brainyPickFallPosition(target);
-      console.log('[BRAINY] Fall to Q=' + fallState.q + ' face=' + fallState.face + ' (' + fallState.cwSteps + ' steps)');
-      await brainyTumbleToState(fallState);
+      // === FALL from corner directly to target position ===
+      // Get current world transform (cube on corner)
+      cube.updateMatrixWorld();
+      const onCornerWorldPos = new THREE.Vector3(); cube.getWorldPosition(onCornerWorldPos);
+      const onCornerWorldQuat = new THREE.Quaternion(); cube.getWorldQuaternion(onCornerWorldQuat);
+
+      // Extract cube from pivotGroup
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      kipGroup.add(cube);
+      cube.position.copy(onCornerWorldPos);
+      cube.quaternion.copy(onCornerWorldQuat);
+
+      // Compute target position + quaternion
+      const targetPos = brainyGetQuadrantPos(fallState.q);
+      const targetQuat = brainyGetStateQuaternion(fallState.cwSteps);
+      const fallStartPos = onCornerWorldPos.clone();
+      const fallStartQuat = onCornerWorldQuat.clone();
+
+      // Animate fall (800ms easeInOut)
+      await new Promise(resolve => {
+        const st = performance.now();
+        (function tick() {
+          const t = Math.min((performance.now() - st) / 800, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          cube.position.lerpVectors(fallStartPos, targetPos, e);
+          cube.quaternion.slerpQuaternions(fallStartQuat, targetQuat, e);
+          if (t < 1) requestAnimationFrame(tick); else resolve();
+        })();
+      });
+
+      // Set final state
+      cube.position.copy(targetPos);
+      cube.quaternion.copy(targetQuat);
+      currentQuadrant = fallState.q;
+      topFace = fallState.face;
+
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
       // Enable player input
