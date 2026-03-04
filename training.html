@@ -5260,7 +5260,28 @@
       return a;
     }
 
-    function brainyPlaceGem(gemIdx, colorName, hitTarget) {
+    // Exact frame color square center positions (from Rastersystem reference)
+    // Key: "Q_Slot" → {x, z} of the color square center on the frame
+    const GEM_POSITIONS = {
+      '0_S1': { x: -0.546875, z:  0.03125  }, // West_6 (blau)
+      '0_S2': { x: -0.546875, z: -0.12500  }, // West_5 (violett)
+      '0_S3': { x: -0.23438,  z: -0.43750  }, // Nord_C (grün)
+      '0_S4': { x: -0.07813,  z: -0.43750  }, // Nord_D (orange)
+      '1_S1': { x:  0.07813,  z: -0.43750  }, // Nord_E (orange)
+      '1_S2': { x:  0.23438,  z: -0.43750  }, // Nord_F (blau)
+      '1_S3': { x:  0.546875, z: -0.12500  }, // Ost_5 (violett)
+      '1_S4': { x:  0.546875, z:  0.03125  }, // Ost_6 (grün)
+      '2_S1': { x:  0.546875, z:  0.18750  }, // Ost_7 (grün)
+      '2_S2': { x:  0.546875, z:  0.34375  }, // Ost_8 (orange)
+      '2_S3': { x:  0.23438,  z:  0.65800  }, // Süd_F (blau)
+      '2_S4': { x:  0.07813,  z:  0.65800  }, // Süd_E (violett)
+      '3_S1': { x: -0.07813,  z:  0.65800  }, // Süd_D (violett)
+      '3_S2': { x: -0.23438,  z:  0.65800  }, // Süd_C (grün)
+      '3_S3': { x: -0.546875, z:  0.34375  }, // West_8 (orange)
+      '3_S4': { x: -0.546875, z:  0.18750  }  // West_7 (blau)
+    };
+
+    function brainyPlaceGem(gemIdx, colorName, targetQ, targetSlot) {
       const gem = brainyGemMeshes[gemIdx];
       const tex = gemTextures[colorName];
       if (tex) {
@@ -5271,14 +5292,8 @@
         gem.material.color.set(GEM_COLORS_HEX[colorName] || 0xffffff);
       }
       gem.material.needsUpdate = true;
-      // HIT_TARGETS sit at wall inner edge; color square is half cell outward
-      const half = 0.078125; // half cell
-      let gx = hitTarget.x, gz = hitTarget.z;
-      if (hitTarget.rotZ === -Math.PI / 2) gx -= half;       // West → shift -X
-      else if (hitTarget.rotZ === Math.PI / 2) gx += half;   // Ost → shift +X
-      else if (Math.abs(hitTarget.rotZ - Math.PI) < 0.01) gz -= half; // Nord → shift -Z
-      else if (Math.abs(hitTarget.rotZ) < 0.01) gz += half;  // Süd → shift +Z
-      gem.position.set(gx, 0.481, gz);
+      const pos = GEM_POSITIONS[targetQ + '_' + targetSlot];
+      gem.position.set(pos.x, 0.481, pos.z);
       gem.scale.set(1, 1, 1);
       gem.visible = true;
     }
@@ -5289,10 +5304,13 @@
       let phase = 0;
       function tick() {
         if (!brainyGemPulseActive) return;
-        phase += 0.06;
-        const s = 1.0 + 0.2 * Math.sin(phase);
+        phase += 0.04;
+        const s = 1.0 + 0.15 * Math.sin(phase * 1.5);
         const gem = brainyGemMeshes[brainyActiveGemIdx];
-        if (gem) gem.scale.set(s, s, 1);
+        if (gem) {
+          gem.scale.set(s, s, 1);
+          gem.rotation.z = phase; // spin around Y (plane is rotated x=-PI/2, so z = vertical)
+        }
         brainyGemPulseRAF = requestAnimationFrame(tick);
       }
       tick();
@@ -5303,6 +5321,7 @@
       if (brainyGemPulseRAF) { cancelAnimationFrame(brainyGemPulseRAF); brainyGemPulseRAF = null; }
       if (brainyActiveGemIdx >= 0 && brainyGemMeshes[brainyActiveGemIdx]) {
         brainyGemMeshes[brainyActiveGemIdx].scale.set(1, 1, 1);
+        brainyGemMeshes[brainyActiveGemIdx].rotation.z = 0;
       }
     }
 
@@ -5523,8 +5542,7 @@
       brainyShowOnlyZahl(zahl);
 
       // === GEM appears on target frame field ===
-      const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
-      brainyPlaceGem(brainyHits, target.colorName, hitTarget);
+      brainyPlaceGem(brainyHits, target.colorName, target.targetQ, target.targetSlot);
       brainyStartGemPulse(brainyHits);
 
       // === ECKBLICK: up on corner ===
@@ -5677,9 +5695,8 @@
         borderMesh.renderOrder = 2;
         scene.add(borderMesh);
 
-        // X marker
-        const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
-        const p3 = new THREE.Vector3(hitTarget.x, 0.55, hitTarget.z);
+        // X marker (above gem)
+        const p3 = new THREE.Vector3(gem.position.x, 0.55, gem.position.z);
         p3.project(camera);
         const sx = Math.round((p3.x * 0.5 + 0.5) * 360);
         const sy = Math.round((-p3.y * 0.5 + 0.5) * 720);
