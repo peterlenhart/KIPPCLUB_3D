@@ -5544,8 +5544,7 @@
         kipGroup.add(cube); return;
       }
 
-      // Restore all 12 numbers on cube (while still on corner)
-      brainyShowAllZahlen();
+      // Keep only current zahl visible (no restore)
 
       // === FALL from corner directly to target position ===
       // Get current world transform (cube on corner)
@@ -5583,6 +5582,7 @@
       cube.quaternion.copy(targetQuat);
       currentQuadrant = fallState.q;
       topFace = fallState.face;
+      playKlack();
 
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
