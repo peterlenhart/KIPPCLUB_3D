@@ -1461,12 +1461,29 @@
     // Kärtchen auf dem Spieltisch (π1, orange Raster)
     const cardWidth = 0.15625;   // 1 Zelle
     const cardHeight = 0.3125;   // 2 Zellen
-    const cardGap = (1.25 - 4 * cardWidth) / 3 - 4 * (2.5 / 720); // 4 Karten, Gap -4px
+    let numActiveCards = 4;
+    let cardGap = (1.25 - 4 * cardWidth) / 3 - 4 * (2.5 / 720); // 4 Karten, Gap -4px
     const cardY = 0.001 + 3 * 0.15625 + 0.002; // auf Spieltisch (3 Zellen über π1)
     const cardZ = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720); // 4 Zeilen südlich, + 15px
 
-    const totalCardsWidth = 4 * cardWidth + 3 * cardGap; // Tatsächliche Breite aller Kärtchen + Gaps
-    const cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+    let totalCardsWidth = 4 * cardWidth + 3 * cardGap;
+    let cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+
+    function recalcCardLayout(n) {
+      numActiveCards = n;
+      cardGap = (1.25 - n * cardWidth) / (n - 1) - 4 * (2.5 / 720);
+      totalCardsWidth = n * cardWidth + (n - 1) * cardGap;
+      cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+      for (let i = 0; i < 6; i++) {
+        if (i < n) {
+          gameCards[i].mesh.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
+        }
+        if (blickIconMeshes[i]) {
+          const cx = cardStartX + i * (cardWidth + cardGap);
+          blickIconMeshes[i].position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
+        }
+      }
+    }
 
     const gameCards = [];
     
@@ -1539,7 +1556,7 @@
       checkEnableButtons();
     });
     
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       const canvas = document.createElement('canvas');
       canvas.width = 85;
       canvas.height = 170;
@@ -1633,13 +1650,22 @@
     
     // === Blick-Icons auf verdeckten Kippzielen ===
     // Außen links/rechts = Eckblick, mittlere 2 = Kippblick, Rest = kein Icon
-    const CARD_BLICK_MAP = { 0: null, 1: 'joker2.webp', 2: 'joker3.webp', 3: null };
+    // TRAINING: Eckblick=null, Kippblick auf 2., Eckblick auf 3.
+    // BRAIN: Eckblick auf 1., Kippblick auf 3.+4., Eckblick auf 6.
+    const CARD_BLICK_MAP_TRAINING = { 0: null, 1: 'joker2.webp', 2: 'joker3.webp', 3: null };
+    const CARD_BLICK_MAP_BRAIN = { 0: 'joker3.webp', 1: null, 2: 'joker2.webp', 3: 'joker2.webp', 4: null, 5: 'joker3.webp' };
+    let CARD_BLICK_MAP = CARD_BLICK_MAP_TRAINING;
     const blickIconMeshes = [];
-    const blickIconSize = cardWidth; // exakt gleiche Breite wie Kippziel = 45px
+    const blickIconSize = cardWidth;
     const blickIconGeo = new THREE.PlaneGeometry(blickIconSize, blickIconSize);
+    const jokerTextures = {};
+    ['joker2.webp', 'joker3.webp'].forEach(src => {
+      const img = new Image();
+      img.onload = () => { const t = new THREE.Texture(img); t.needsUpdate = true; jokerTextures[src] = t; };
+      img.src = src;
+    });
     
-    for (let i = 0; i < 4; i++) {
-      const iconSrc = CARD_BLICK_MAP[i];
+    for (let i = 0; i < 6; i++) {
       const iconMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
       const iconMesh = new THREE.Mesh(blickIconGeo, iconMat);
       iconMesh.rotation.x = -Math.PI / 2;
@@ -1648,32 +1674,24 @@
       iconMesh.visible = false;
       scene.add(iconMesh);
       blickIconMeshes.push(iconMesh);
-      
-      // Textur laden (nur wenn Icon vorhanden)
-      if (iconSrc) {
-        (function(mesh, src) {
-          const img = new Image();
-          img.onload = function() {
-            const tex = new THREE.Texture(img);
-            tex.needsUpdate = true;
-            mesh.material.map = tex;
-            mesh.material.needsUpdate = true;
-          };
-          img.src = src;
-        })(iconMesh, iconSrc);
-      }
     }
     
     // Blick-Icons anzeigen/verstecken (nur Karten MIT Icon)
     function showBlickIcons() {
-      for (let i = 0; i < 4; i++) {
-        blickIconMeshes[i].visible = (CARD_BLICK_MAP[i] !== null && kipp21CardStates[i] === 'verdeckt');
+      for (let i = 0; i < numActiveCards; i++) {
+        const src = CARD_BLICK_MAP[i];
+        if (src && jokerTextures[src]) {
+          blickIconMeshes[i].material.map = jokerTextures[src];
+          blickIconMeshes[i].material.needsUpdate = true;
+        }
+        blickIconMeshes[i].visible = (src !== null && kipp21CardStates[i] === 'verdeckt');
         const cx = cardStartX + i * (cardWidth + cardGap);
         blickIconMeshes[i].position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
       }
+      for (let i = numActiveCards; i < 6; i++) blickIconMeshes[i].visible = false;
     }
     function hideBlickIcon(idx) {
-      if (idx >= 0 && idx < 4) blickIconMeshes[idx].visible = false;
+      if (idx >= 0 && idx < 6) blickIconMeshes[idx].visible = false;
     }
     
     // Gespeichertes erstes Kippziel
@@ -4401,6 +4419,14 @@
       
 
       kipp21WithTutorial = !!withTutorial;
+      // Level-dependent card layout
+      if (currentLevel >= 3) {
+        CARD_BLICK_MAP = CARD_BLICK_MAP_BRAIN;
+        if (numActiveCards !== 6) recalcCardLayout(6);
+      } else {
+        CARD_BLICK_MAP = CARD_BLICK_MAP_TRAINING;
+        if (numActiveCards !== 4) recalcCardLayout(4);
+      }
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
       dragActive = false;     // Touch-Drag stoppen
@@ -4874,7 +4900,7 @@
           }, 1500);
           bereitsGetroffen.add(card.zahl + '_' + card.color.name);
           
-          if (kipp21Done >= 4) {
+          if (kipp21Done >= numActiveCards) {
             kipp21Active = false;
             hideAllTrainingUI();
             
@@ -5185,7 +5211,7 @@
       kipp21Done = 0;
       kipp21Fails = 0;
       kipp21UsedDistances = [];
-      kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt'];
+      kipp21CardStates = Array(numActiveCards).fill('verdeckt');
       kipp21CardDistances = [0,0,0,0,0,0];
       kipp21TimerRunning = false;
       kipp21WobbleUsed = 0;
@@ -5481,6 +5507,7 @@
       kipp21Active = false;
       brainyStopNumPulse();
       brainyStopGemPulse();
+      brainyHideGems();
       
       if (window._hideTrainingBtns) window._hideTrainingBtns();
 
@@ -5488,21 +5515,74 @@
       console.log('[BRAINY] END: ' + brainyHits + ' hits, ' + brainyFails + ' fails, ' + total + ' attempts');
 
       saveBestScore(currentLevel, brainyHits, brainyFails);
-      gamePhase = 'ende';
       ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = 'none';
       });
 
-      const _pgt = document.getElementById('perfektGameText');
-      const _pgtH = document.getElementById('pgtHead');
-      if (_pgt && _pgtH) {
-        _pgtH.innerHTML = brainyHits + ' HITS!';
-        _pgt.style.display = 'block';
-        _pgt.style.opacity = '1';
-        _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
-        _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
+      // Show HITs same duration as TRAINING end
+      let waitLoops = 0;
+      while (document.querySelectorAll('.hit-text-el').length < brainyHits && waitLoops < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        waitLoops++;
       }
-      showEndButtons(true);
+      await new Promise(r => setTimeout(r, 1000));
+      // Fade out HITs
+      document.querySelectorAll('.hit-text-el').forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out';
+        el.style.opacity = '0';
+      });
+      hitTextEls.forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out';
+        el.style.opacity = '0';
+      });
+      await new Promise(r => setTimeout(r, 500));
+      hitTextEls.forEach(el => el.remove());
+      hitTextEls.length = 0;
+      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+
+      // === BLUR + "BRAIN" TRANSITION ===
+      const blurOv = document.createElement('div');
+      blurOv.style.cssText = 'position:fixed;inset:0;z-index:28;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);background:rgba(0,0,0,0);transition:all 0.6s ease-out;pointer-events:none;';
+      document.body.appendChild(blurOv);
+      requestAnimationFrame(() => {
+        blurOv.style.backdropFilter = 'blur(8px)';
+        blurOv.style.webkitBackdropFilter = 'blur(8px)';
+        blurOv.style.background = 'rgba(0,0,0,0.45)';
+      });
+      await new Promise(r => setTimeout(r, 700));
+
+      // "BRAIN" inflate
+      const brainEl = document.createElement('div');
+      brainEl.textContent = 'BRAIN';
+      brainEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
+        'transform:translateY(-50%) scale(0.3);text-align:center;' +
+        'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
+        'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
+        'opacity:0;pointer-events:none;';
+      document.body.appendChild(brainEl);
+      requestAnimationFrame(() => {
+        brainEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
+        brainEl.style.opacity = '1';
+        brainEl.style.transform = 'translateY(-50%) scale(1)';
+      });
+      await new Promise(r => setTimeout(r, 2200));
+
+      // Fade out
+      brainEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
+      brainEl.style.opacity = '0';
+      brainEl.style.transform = 'translateY(-50%) scale(1.2)';
+      blurOv.style.backdropFilter = 'blur(0px)';
+      blurOv.style.webkitBackdropFilter = 'blur(0px)';
+      blurOv.style.background = 'rgba(0,0,0,0)';
+      await new Promise(r => setTimeout(r, 600));
+      brainEl.remove();
+      blurOv.remove();
+
+      // === Start BRAIN level ===
+      currentLevel = 3;
+      gamePhase = 'kipp21';
+      await new Promise(r => setTimeout(r, 300));
+      startBrainLevel();
     }
 
     // === BRAINY ROUND ===
@@ -5801,6 +5881,21 @@
       // Erste Runde: Zahl 1
       await brainyNextRound();
       positionResetButton();
+    }
+
+    // === BRAIN LEVEL START ===
+    function startBrainLevel() {
+      console.log('[BRAIN] Starting level - 6 cards, 12 numbers');
+      currentLevel = 3;
+      CARD_BLICK_MAP = CARD_BLICK_MAP_BRAIN;
+      recalcCardLayout(6);
+      // All 12 numbers visible
+      visibleDeckIndices.clear();
+      for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
+      updateFaceSlots();
+      updateAllFaceTextures();
+      // Regular game (no tutorial)
+      startKipp21(false);
     }
 
     // === KIPP KNIFF SYSTEM (beide Joker) ===
@@ -6434,7 +6529,7 @@
       // Alte Replay-Generation: ignorieren (nur wenn Replay tatsächlich läuft)
       if (_fromReplay && replayActive && replayGeneration !== kipp21Generation) return;
       if (!kipp21Active) return;
-      if (cardIdx < 0 || cardIdx >= 4) return;
+      if (cardIdx < 0 || cardIdx >= numActiveCards) return;
       
       // Wobble-KNIFF abbrechen wenn aktiv — Tap wird nach Fall verarbeitet
       if (kipp21KniffActive) {
@@ -6471,16 +6566,33 @@
           return;
         }
         
-        // Karte MIT Blick-Icon → Kippziel sofort öffnen + Blick-Animation starten
+        // Karte MIT Blick-Icon
         hideBlickIcon(cardIdx);
-        if (!kipp21GenerateTarget(cardIdx)) return;
-        const mesh2 = gameCards[cardIdx].mesh;
-        mesh2.scale.set(1.15, 1.15, 1.15);
-        setTimeout(() => { mesh2.scale.set(1, 1, 1); }, 180);
         const blickType = iconSrc.includes('joker2') ? 'wobble' : 'eckblick';
         kipp21BlickTargetCard = cardIdx;
-        if (blickType === 'wobble') runKipp21WobbleKniff(true);
-        else runKipp21EckblickKniff(true);
+        
+        if (currentLevel >= 3) {
+          // BRAIN: Animation ZUERST, Kippziel öffnet sich DANACH
+          const onDone = () => {
+            if (!kipp21GenerateTarget(cardIdx)) return;
+            const mesh = gameCards[cardIdx].mesh;
+            mesh.scale.set(1.15, 1.15, 1.15);
+            setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
+          };
+          if (blickType === 'wobble') {
+            runKipp21WobbleKniff(true).then(onDone);
+          } else {
+            runKipp21EckblickKniff(true).then(onDone);
+          }
+        } else {
+          // TRAINING: Kippziel sofort öffnen + Blick-Animation gleichzeitig
+          if (!kipp21GenerateTarget(cardIdx)) return;
+          const mesh2 = gameCards[cardIdx].mesh;
+          mesh2.scale.set(1.15, 1.15, 1.15);
+          setTimeout(() => { mesh2.scale.set(1, 1, 1); }, 180);
+          if (blickType === 'wobble') runKipp21WobbleKniff(true);
+          else runKipp21EckblickKniff(true);
+        }
         return;
       }
       
@@ -6614,13 +6726,13 @@
       activeCardIdx++;
       
       // Nach 4 Versuchen: Spielende
-      if (activeCardIdx >= 4) {
+      if (activeCardIdx >= numActiveCards) {
         showGameEnd();
         return;
       }
       
       // ERST: NEUES KÄRTCHEN GENERIEREN
-      if (activeCardIdx < 4) {
+      if (activeCardIdx < numActiveCards) {
         const erfuellteKombis = getCurrentErfuellteKombis();
         let neueKombi = generateNeueKombiOhne(erfuellteKombis);
         if (neueKombi) {
@@ -7995,7 +8107,7 @@
       bereitsAusgegeben.clear();
       activeCardIdx = 0;
       deck = generateBalancedDeck();
-      visibleDeckIndices = pickEdgePairs();
+      visibleDeckIndices = (currentLevel >= 3) ? new Set(Array.from({length:12}, (_,i) => i)) : pickEdgePairs();
       updateFaceSlots();
       rebuildFaceMat('f0', 1);
       rebuildFaceMat('f1', 1);
@@ -8414,7 +8526,8 @@
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchend', (e) => {
-      if (replayActive) return; // Tutorial: keine Interaktion
+      if (replayActive) return;
+      if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
       // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
@@ -8423,7 +8536,7 @@
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         
-        for (let ci = 0; ci < 4; ci++) {
+        for (let ci = 0; ci < numActiveCards; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
           // Blick-Icon oder Karte treffen
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
@@ -8494,7 +8607,7 @@
         // Pause-Button prüfen
 
         
-        for (let ci = 0; ci < 4; ci++) {
+        for (let ci = 0; ci < numActiveCards; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
               vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
@@ -8682,7 +8795,7 @@
       activeCardIdx++;
       
       // 5. Spielende?
-      if (activeCardIdx >= 4) {
+      if (activeCardIdx >= numActiveCards) {
         verdecktesMesh.visible = false;
         document.getElementById('kippTarget').style.display = 'none';
         showGameEnd();
@@ -9871,8 +9984,8 @@
       
       btns.forEach(btn => {
         // Prevent touch from bleeding through to canvas
-        btn.addEventListener('touchstart', (e) => { window._numBtnTouchActive = true; }, { passive: true });
-        btn.addEventListener('touchend', (e) => { setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: true });
+        btn.addEventListener('touchstart', (e) => { e.stopPropagation(); window._numBtnTouchActive = true; }, { passive: false });
+        btn.addEventListener('touchend', (e) => { e.stopPropagation(); setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: false });
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const n = parseInt(btn.dataset.num);
