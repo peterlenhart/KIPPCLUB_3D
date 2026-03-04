@@ -4473,8 +4473,12 @@
         pgt.appendChild(pgtS);
       }
       const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
-      const challengeText = currentLevel >= 3 ? 'JETZT DU!' : (currentLevel >= 2 ? 'Mit 4 HITS ins BRAIN Level' : 'Mit 4 HITS ins BRAINY Level');
-      pgtH.innerHTML = challengeText;
+      const challengeText = currentLevel >= 3 ? null : (currentLevel >= 2 ? 'Mit 4 HITS ins BRAIN Level' : 'Mit 4 HITS ins BRAINY Level');
+      if (challengeText) {
+        pgtH.innerHTML = challengeText;
+      } else {
+        pgt.style.display = 'none';
+      }
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
       pgtH.style.fontSize = '21px';
@@ -4648,17 +4652,21 @@
           await wait(400);
           if (gamePhase !== 'kipp21') return;
           
-          // --- "Mit 4 HITS ins BRAINY Level" Text ---
-          await pgtInflate(pgtH, pgtS);
-          if (gamePhase !== 'kipp21') return;
-          await wait(3500);
-          if (gamePhase !== 'kipp21') return;
+          // --- Challenge Text (nicht für BRAIN) ---
+          if (currentLevel < 3) {
+            await pgtInflate(pgtH, pgtS);
+            if (gamePhase !== 'kipp21') return;
+            await wait(3500);
+            if (gamePhase !== 'kipp21') return;
+          }
           
           // --- Text ausblenden ---
-          await fadeOutText();
-          if (gamePhase !== 'kipp21') return;
-          await wait(300);
-          if (gamePhase !== 'kipp21') return;
+          if (currentLevel < 3) {
+            await fadeOutText();
+            if (gamePhase !== 'kipp21') return;
+            await wait(300);
+            if (gamePhase !== 'kipp21') return;
+          }
         }
         
         // --- UIs einblenden ---
