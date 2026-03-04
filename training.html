@@ -5656,17 +5656,7 @@
         brainyHits++;
         kipp21Done++;
         brainyStopGemPulse();
-
-        // Gold border around gem (slightly larger plane behind it)
-        const gem = brainyGemMeshes[brainyHits - 1];
-        const borderGeo = new THREE.PlaneGeometry(gemSize + 0.02, gemSize + 0.02);
-        const borderMat = new THREE.MeshBasicMaterial({ color: 0xcedb25, side: THREE.DoubleSide });
-        const borderMesh = new THREE.Mesh(borderGeo, borderMat);
-        borderMesh.rotation.x = -Math.PI / 2;
-        borderMesh.position.copy(gem.position);
-        borderMesh.position.y -= 0.001;
-        borderMesh.renderOrder = 2;
-        scene.add(borderMesh);
+        brainyGemMeshes[brainyHits - 1].visible = false;
 
         // HIT text on table (left to right, like TRAINING)
         showHitText(brainyHits - 1);
@@ -5684,16 +5674,7 @@
         kipp21Fails++;
         brainyStopGemPulse();
 
-        // Red border around gem
         const gem = brainyGemMeshes[brainyHits];
-        const borderGeo = new THREE.PlaneGeometry(gemSize + 0.02, gemSize + 0.02);
-        const borderMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });
-        const borderMesh = new THREE.Mesh(borderGeo, borderMat);
-        borderMesh.rotation.x = -Math.PI / 2;
-        borderMesh.position.copy(gem.position);
-        borderMesh.position.y -= 0.001;
-        borderMesh.renderOrder = 2;
-        scene.add(borderMesh);
 
         // X marker (above gem)
         const p3 = new THREE.Vector3(gem.position.x, 0.55, gem.position.z);
@@ -5709,9 +5690,6 @@
         await new Promise(r => setTimeout(r, 1800));
         rx.remove();
         gem.visible = false;
-        scene.remove(borderMesh);
-        borderGeo.dispose();
-        borderMat.dispose();
 
         brainyCurrentZahl++;
 
