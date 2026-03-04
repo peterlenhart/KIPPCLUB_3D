@@ -5313,10 +5313,12 @@
     }
 
     // Pick a random CW_CYCLE state that does NOT fulfill the target
+    // Also exclude cwSteps=0 (start position Q3/f2) so cube always visibly moves
     function brainyPickFallPosition(target) {
       const faceOff = { f0: 0, f1: 4, f2: 8 };
       const slots = ['S1', 'S2', 'S3', 'S4'];
       const valid = BRAINY_CW_STATES.filter(st => {
+        if (st.cwSteps === 0) return false; // never fall back to start
         const off = faceOff[st.face];
         for (let si = 0; si < 4; si++) {
           const z = deck[off + si];
@@ -5325,7 +5327,7 @@
         }
         return true;
       });
-      if (valid.length === 0) return BRAINY_CW_STATES[0];
+      if (valid.length === 0) return BRAINY_CW_STATES[1]; // fallback to Q0/f0
       return valid[Math.floor(Math.random() * valid.length)];
     }
 
@@ -5376,17 +5378,14 @@
       function pulseTick() {
         if (!brainyDirPulseActive) return;
         phase += 0.05;
-        const a = 0.7 + 0.3 * Math.sin(phase);
-        const b = 0.7 + 0.3 * Math.sin(phase + Math.PI);
+        const a = 0.65 + 0.35 * Math.sin(phase);
         if (window._dirCwMesh && window._dirCwMesh.material) {
           window._dirCwMesh.material.opacity = a;
           window._dirCwMesh.material.transparent = true;
-          window._dirCwMesh.material.needsUpdate = true;
         }
         if (window._dirCcwMesh && window._dirCcwMesh.material) {
-          window._dirCcwMesh.material.opacity = b;
+          window._dirCcwMesh.material.opacity = a;
           window._dirCcwMesh.material.transparent = true;
-          window._dirCcwMesh.material.needsUpdate = true;
         }
         brainyDirPulseRAF = requestAnimationFrame(pulseTick);
       }
@@ -5399,12 +5398,10 @@
       if (window._dirCwMesh && window._dirCwMesh.material) {
         window._dirCwMesh.material.opacity = 1;
         window._dirCwMesh.material.transparent = true;
-        window._dirCwMesh.material.needsUpdate = true;
       }
       if (window._dirCcwMesh && window._dirCcwMesh.material) {
         window._dirCcwMesh.material.opacity = 1;
         window._dirCcwMesh.material.transparent = true;
-        window._dirCcwMesh.material.needsUpdate = true;
       }
     }
 
@@ -5440,7 +5437,7 @@
       brainyActive = false;
       kipp21Active = false;
       brainyStopNumPulse();
-      brainyStopDirPulse();
+      
       if (window._hideTrainingBtns) window._hideTrainingBtns();
 
       const total = brainyHits + brainyFails;
@@ -5700,7 +5697,7 @@
       const steps = brainySelectedNum;
       const dir = brainySelectedDir;
       brainyStopNumPulse();
-      brainyStopDirPulse();
+      
       kipp21Active = false;
       for (let i = 0; i < steps; i++) {
         const kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
@@ -5721,13 +5718,13 @@
         btn.classList.remove('selected');
         if (parseInt(btn.dataset.num) === n) btn.classList.add('selected');
       });
-      brainyStartDirPulse();
+      
     }
 
     function brainyOnDirBtn(dir) {
       if (!brainyActive || !kipp21Active || gamePhase !== 'kipp21') return;
       if (brainySelectedNum === 0) return;
-      brainyStopDirPulse();
+      
       brainySelectedDir = dir;
       brainyExecuteKipp();
     }
@@ -8964,7 +8961,7 @@
       stopCountdown();
       disableReplayBlocker();
       brainyStopNumPulse();
-      brainyStopDirPulse();
+      
       brainyHideCards();
       renderer.domElement.style.pointerEvents = 'auto';
       
