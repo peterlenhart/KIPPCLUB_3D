@@ -5760,8 +5760,10 @@
       gameCards.forEach(c => { c.mesh.visible = false; });
       brainyHideCards();
 
-      // Training-Buttons zeigen
-      if (window._showAllTrainingUI) window._showAllTrainingUI();
+      // Training-Buttons direkt zeigen (showAllTrainingUI existiert evtl. nicht bei Direktstart)
+      if (window._dirCwMesh) window._dirCwMesh.visible = true;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
 
       // "BRAINY" Inflate
