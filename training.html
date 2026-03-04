@@ -1564,22 +1564,39 @@
     }
     
 
-    // === BRAINY: 4 Floating Card Meshes ===
-    const brainyFloatingCards = [];
-    for (let bi = 0; bi < 4; bi++) {
-      const bCanvas = document.createElement('canvas');
-      bCanvas.width = 85;
-      bCanvas.height = 170;
-      const bCtx = bCanvas.getContext('2d');
-      const bTex = new THREE.CanvasTexture(bCanvas);
-      const bGeo = new THREE.PlaneGeometry(cardWidth, cardHeight);
-      const bMat = new THREE.MeshBasicMaterial({ map: bTex, side: THREE.DoubleSide, transparent: true });
-      const bPlane = new THREE.Mesh(bGeo, bMat);
-      bPlane.rotation.x = -Math.PI / 2;
-      bPlane.visible = false;
-      scene.add(bPlane);
-      brainyFloatingCards.push({ mesh: bPlane, canvas: bCanvas, ctx: bCtx, texture: bTex });
+    // === BRAINY: Gem Base64 textures ===
+    const gemB64 = {
+      blau: 'data:image/webp;base64,UklGRvoIAABXRUJQVlA4WAoAAAAQAAAAjwAAjQAAQUxQSHUAAAABgBAIAMEow2zbto3+fdbg9v6ImICXZoAjxBHlSHCkOXIcRY4KR4OjzdHjGHJMOGYcS44Nx5Zjz3HkOHFcOK4cN447x+PT5fnvv3///YTz77/Hp8ud48Zx5bhwnDiOHHuOLceGY8kx45hwDDl6HG2OBkeFowgAVlA4IF4IAABwMQCdASqQAI4APjEUh0KiIQzt1wgQAYJYmtyU1mnD11r1FPWN85+QeXeOpa89NW4x74D3o3vzxbtKekRVqemmDGhm/vr4eTrY0x7nH2WTTMGKqQGS9oGe5xGCO9SDPvK5HQ5TZaZ6TVL+XNvLixm4lad4ue/wgoYPtQZ/5nvIsYIx8DyvAQSTxROqcHOoUmuX4jN0wDPf0uggO3yo1XZiGqFBbaiUFbUDPjgZZ7dGbP+fOmQFRDRhlHpJ5vVoXfC+u+qUEMMUAxX9y6ppC2NiFstukHABgZ7d7vgS5/H9P8yPlDMfbNqZdYOdkYrgCGqI65I/YOWfMOY6KAjLeGRrAIjwB2+bmNoRvqoBqcCJu8s7RFgox6jrrx2nh5IuDbrZJPFC/Of0p5Y9pYqihkmFwwM++o/7qLYWYPBMBQ5ihletI1Ku70Gyc3vQI/DvbHIJ/0ZKxf8geqRc6BxoFINeIlRYtLa3kAzr+W/NXcyjXl7EGqbOA6H8dq8k7FkIIJc/ZxFKkREFNQEeusAYnGK+8YYGIAD7euCtclQ8dzgDK1fkk4E4hzzfCcl1ARKy6pynR7Xp2je9zQr5DAYV8w5Dp3kmkDOoWT4PfYMOx/x796POXJ8O6heaNUVtpiY1LTcXyktS1CyJiHgMCASLnMBs4wHIWaYCvsvZQuNICAW8fddyoqV/qYC4AkaqQsM8x4sZXcye9HoYe8JanMH8/0tih/afYjjNierGsz3CPVNYxbtISrev2PW3lgDcbzbCN17ZvGVC9MZOlAPGCUmFRuUjSNwsn7B2+ZJkeJO3W99T1i8v7BbDStp2qb7vX09BRwGYVud3V4DGAJL2RKYFQHsLcf9T9/5Ff/0Avhe1XHhodbh8ghv7J8GS/5X3sQQkpZaDACFZhmpk4xJcvQDDgMvdYft/jV9q5keZHZl5OC4IUEPoWrdk+QHKEOsl0yBHRZlkJJJpu4HNxv7cPIKwQUwZSSfjVnIAPdCUDEmxB0qkIsEGzIweZj+XIHmRBm2W7JQU7iOcldaSW1NU4J2Rd9D7OkXgVYPL8b/X8Rhx629rp79cEJ2SaeMLmW+xVfU+yG/eBXw11j+z+ln8jZ7G6CezpA/GU0AG05yU3yGEJi2uDDajWomrY0SNtS6kT9Awcv8AFYFH9z4sCCnkyEW+AXXTAMkAVYSully58ql3H0ECUNhpqBOD0WxN1mKlDv+O6h6YrUIFhgg3VvMFWOHvgjQqZkPfv/+eV0fhli067k/zZMlylVH96aQ+ZocB02Gt1DR72xJY7p1TkwNAsQdGnA4sPa8lDjE3AIAsW63liOIpV+4PNQuE0Nezd7BWTb2shZeLxgbB+m47zjSIJX2kR4owdd2t05C8WDYcxzd22gynqJ3VujEYOoFaR3Swp+iBdjML7m0f0qQE6rQ7ByttfWl9PwgL1chpyMXhPJYnJ5FG8qCRehrNbHnk/M5pSEMgO8AEkJIm5+apAtNxhEVFtUq7H0GCYvuFbr4yqS2dogON9Tk6l/8QYiJzMgJxP9+eDT/VnWaYo6aPsktfxMZpHzn1ctZYeQ+svGd6ryhfW9mFpOd4mZZqjfSJ5Xpzr3Of+VBV3kMtCSl2Rofke7l+5cXsDOxr9Ib9mgu99//2YVVC7ropBDR411cRJ09/ymf2BFsBe33xlDald0q/4unbM0DGKEohFB34G+lxUXzxewj4d5Z8yRvLEIOBoYOaMaLtY0VOsdOjtym9zd3DbFFW3qNkIm9LbPd38miB0lE/92pXOuAUe23VuVT/Xgf5p02HEdFpUKNdNjyYT5G64FcRMnWPw2aXaW2uDKcnHcVtVZEHfyppYfEershiu2yrQ/osR55eYdP7nwcNbE6bZFDMAUEgYFm533gtOaciVDHohe4oUGlrDzivto7rHaErJZ2t8a/UbHIlqLqF9Mexsw5axuEPbGCkJUlhQO9ry+uw3f62ueb9UzIvh7bCKnwGJVpVkJMxuOd/zrJOpTUf8RPk1dL1ljRjKuFZnn6h/NnAkwpP1itgGvPj9qHotRHJ7MBCfm68VP6zSZ4CRUr3W2ovf4C5vanHkkRMh6GTjN8cvmhYJ4yv243AeBEGhCa6H3+pCucTGhKLvp2hYTtuOC7JBipXHwFLqzukhPxq9nXrrDUjDx8pgTbUkRvaiNjvoP9hT1+U/LWZgxceHQWYlTgTOnX9/pYUSdaYqTQgTqJNBjdDkA12KXadTkYw9/WMzqiVY1S/1EcvWVKpWj2ZqEFN6Q/JgFp3pQgnCJblwPNPzthHNVpuYpEESKfGSA+PIiKi4IhIOXJRdxZOb+YLrx6KxeREbSWqvn6wZuMSkEjhjbkqqFjOItnts23B/8qavhMMYbCxbztTwRCl2phOcz5qGJzB2uhBgNqYkC8j9rzLQ35AgK9g6DHzR+DJHdy+SvpGg3V2Pxx+VlsBdSQrMoLLkRO3c1XGY2xRo5qKaDBpqbyM42BPAw5iRfRsKc7N0Fkypjn1Am0jeH/xQD/OZuKIgoroudDSxqgWwQJH5tALDpPV37PT6eIr/zxlk2JJaxJOfNZ27qw/nRpXwfK1t8maEGznANOEu8xuHpdjOGH8FNCzn8/6STBdFYCXWShe4gWRDhl2UZaAiq5WZGU4yoatHBmCr0B+RVc3h3D0CRvykhLFxJU2K9WQF9V0/c8jYNMyZeRd32dwX5JqRwFa9H1eISHnZIaGE6SOzs/KdsjZPnb5H693Mu6AvzhuZC+kJISDEOHjqcaG9V/EVmvv9cNwCeSzmGJ6IKngTsqj0Sd3gb5I4VGBHrvwfgiDZaoKufBfSRThzMX2ak6ETr44UBiXM4WgSfeavtTWH3+J3WgAAAA=',
+      gruen: 'data:image/webp;base64,UklGRpIIAABXRUJQVlA4IIYIAAAwNQCdASqPAI4APjEUiEKiISEYep0oIAMEpn3lKS2cfShmzBBCDlm+Xk/KGuT+43zI6lrn/kew7Cc3wVtLd+8HKwq8EUlHCZZ5SQ1Pl5OoHPqgME2iQZhU+aKxNsn3vrb48I2zOBNnA1TzzRNza6qeUAz1pv050SosmcqWlO+tMR1Vl065nvJNXWkTLMa6Rv4LijrPb6yrZ50N0gKC5F3k6xjYj97OQ8Vy093LWnFsh+aVebpAU8Yh8B6U7QFauYPX4YdV39DPl4fTOZCkFykKpsR+0w8P4BfMm38RgqvKUJdUJCeVZfQJi7WCFegMXQP5wtSX1fEzdscHpRqzTF5Xz8vzmWJa+j8DR/RKUj9NqoUMz5hEO0ndBleW8yCSoAtMnpONJJ1UB3eMQkB0oGNk2u1B61y6sSL+8ZYi45SwvMT/YcvVC6VJfOCEyxsEsCrSOZcgsinReYveKclDPqzBF8xx8DBaMPMR4rOexXpH9+Rl2SCEvN+QQmncFCY0c0AftzKvUkY6n6fXY4aAmUmDWvtrtCq7c4oFwit5ABSBKVaFMt4YL8Zw9eH4HXy5E/iQAAC8fEU92YY/h5vpDAxl9uevfy09qMCUa5qIpwnk+tM30z/gvyUgPiCWHpMH0nUMlnBXlfPWlPqdIwk1X+Dt1yC5C/lh3zPJPD6cr7wlto6YcMsVh9XcDQW5M/k0Em3erE8IEev/kmnD5VFUjMUtpYg/YmRNS42z49phK22zbTrP+yy+J5qVKLhjTiNC0e+U/uFcm59RTf+K3zponJ4Gry27R1x9HCeNMA5dki/gsIpBUQLu+tAU8anmpHSsUNUGmNhSn43hvrBbjsAr4GCnUAcDAknIHSdBGDz/fA2EyP/ORAJ8Wk+CGoeAbMuvK74gm+QRLA/YnAAv38u5SxtVyjiNUr/9woaCo3X1FrEvmcNaAhGWLbUQMOhOY0BCLO1H1wSvzxGkfr3zL/6uL1GjX5Jx0ScNPnpgqQju5z2SWRwapKpfEjs8lrJSaNer4rSimmpRYlB511Uj1niALtYE2w0u7eAQZAKeYV91SDPZ2ECaMz5wRZy4VJnMi/jNrpWoJLfeW5yOp9jNLuJErJa9W0ly9yaS8+PGTy0fcIzpkoguRGmvpSKi0ENNIttHZk75dGp2rgXOSvtCCQxkitW7E0DbrK/C7IrkcZMvz61uiplq27wkEkHBTV/qnb8f92XuNveWUzRZM3V6g0UherStLV81LvAnLXjg43tJmwrH3IXunovAlPNOuOl4v0Sloi0BUWvxgS+Ercs3Psz135709l+ENJojc3H4F2sPpUA3gt5ea4fufqfYVk3plIt2/cItzn1Qvaq+HBFb1zR1eOoNpysm9eqo1xIW4upxaLvd50uKkTDxhui9MpTYm3/r8LzSpx+0BFkIgCVXufR+/lDz75U3BGnM+h0zqx/xlFo1RYt2kAuzgPNROJKbjRKN5AmeomGPonKCjts5FOUYxTRJrryY4Dg8F8JHA+lJ8XW7Ki8UydKKVNN6Ji+SGuYepSfO6At8U5kkExCUH/6v4DOd5AoY2qTCxcKMd4Yp+402ZeZoxoXZI7BgBSj0wev14XYECOfxEwN7zVCjY/yJPV9k2i2ZiOrS/5lMiF/VONs2IWzA3eFunAUrH8awuZ4Dm5acIWj8fAmtYtCxYmfUUCm/qE8GpUGMNG9/Uh94Cj2yv3y+uXfiDuMf8Vx6MTpEgO2HpvRDqgz6X58NLZXn4aLpOhjmAC81BppF0uSFP1PMGnSkd+88owA6sc3roeBsgwEjUmT8Kpcz3wNFcMoFc3fcWJ7b0MuFsDd41Y7pgYr7/WLfZqZ8ovDUwdzHGKyrpxct/XXac8GyTqeYo1SVV2IkYVMtAtX16pmgV+VxpXFUpBgI3DbM6Ro1+HddDM5vXAE5Y4KJS7kAxycT09/RPo2SH9wsPHDES+k16uAauIHU/c0fzPD6FQ6qPhyJrCj+fk9EzcdBIUHr7FTNK360sCDXgSRAN3qfzOMJ1MRkIYDOONvZful1Mp9DNFV/9bxgDznc1ZziLLL9TBFPwdzZidkx84DRKFjkb9T6RUyEsayvfV29ZnXNnzmC53rUAfc71IqiRBoUGVtjB+k5wIbyTnJ2QJ9G0pUWb7sFChJKjGGGu3bivAJ3RMi51w4pS7cIUWtbiduFK+4Fb90z6XjQPXgurMN8fZig+AfXGIqz4KG1Rrgqx/p/E5NaJfgqj0g2+kQJFpsiel/8qN6pEbRNocSMII9l/xD++cmVRvz8kAM9XRb2+ZFRu0qxgIqI6vgj//s2b7s2FN0JhanQFUyqGFPhBL7ApC97hXqGkoa2g4y4mpEjnSXmPSV0hDghR0FWHsrZNuHMnQXBma4SqdaiCZ3h0iwNRo3GTQT3RseHiC+l7YfZxEPneeGNRmgpSgSfFhM9Rm4EQbKgagz2gqxrBfou+oN/a/PZA1ldAzcqMQWIqaSqDRwQbZKDYPk54XFQ2apx+HZdqfoY2s/7qdnKM1ed5v3Qjz46zzMdMhs3OIgKdrCX3q1DwG8dpJp/5whECCdRv9/ouDGz+tc4YP5m1DK5mheyxPRcBF/SKoBfhGy35em/baXuW9aOggbeIA4xZU2sf66744gW+IOGmSMUTQmIIjuhrq69sklduf7u8Chj6RJYl21xK0+tPha6NTYtC0z1TU2oQgBxWOYmYjHYRkB4MpClFt48JEv9DcmOboE/Rt4HgbQeiYg+QjD09lxYISV1OjM6DoezkP9uuyeb0t9WAnN3sgvSV9zTpPxdIbX2IYtt5y+sKWje5heD/CFK4sPjvgDikCKQ4KLvq4tdfNAej7oZ4DWU1TBeFlc8uQNL71quTz00y9nKWNKzW3mm1aQlqeTlwbEF/tG6aIANdHz2oDkUAAAA',
+      violett: 'data:image/webp;base64,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',
+      orange: 'data:image/webp;base64,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'
+    };
+    const gemTextures = {};
+    Object.keys(gemB64).forEach(color => {
+      const img = new Image();
+      img.src = gemB64[color];
+      img.onload = () => {
+        gemTextures[color] = new THREE.Texture(img);
+        gemTextures[color].needsUpdate = true;
+      };
+    });
+
+    // === BRAINY: Gem meshes (square, on frame) ===
+    const gemSize = 0.15625; // 1 cell = matches frame color squares
+    const brainyGemMeshes = [];
+    for (let gi = 0; gi < 4; gi++) {
+      const gGeo = new THREE.PlaneGeometry(gemSize, gemSize);
+      const gMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: true });
+      const gMesh = new THREE.Mesh(gGeo, gMat);
+      gMesh.rotation.x = -Math.PI / 2;
+      gMesh.renderOrder = 3;
+      gMesh.visible = false;
+      scene.add(gMesh);
+      brainyGemMeshes.push(gMesh);
     }
+    let brainyGemPulseRAF = null;
+    let brainyGemPulseActive = false;
+    let brainyActiveGemIdx = -1;
 
         // === Verdecktes Kippziel als 3D-Mesh auf dem Spieltisch (Canvas-basiert) ===
     const verdecktesCanvas = document.createElement('canvas');
@@ -5241,24 +5258,44 @@
       return a;
     }
 
-    function fillBrainyCard(bCard, zahl, colorObj) {
-      const img = colorTargetImages[colorObj.name];
-      if (!img) return;
-      bCard.ctx.clearRect(0, 0, 85, 170);
-      bCard.ctx.drawImage(img, 0, 0, 85, 170);
-      const displayText = displayNum(zahl).toString();
-      bCard.ctx.fillStyle = '#2a1810';
-      bCard.ctx.font = 'bold 56px Arial';
-      bCard.ctx.textAlign = 'center';
-      bCard.ctx.textBaseline = 'middle';
-      drawCenteredText(bCard.ctx, displayText, 42, 42);
-      bCard.texture.needsUpdate = true;
-      bCard.zahl = zahl;
-      bCard.color = colorObj;
+    function brainyPlaceGem(gemIdx, colorName, hitTarget) {
+      const gem = brainyGemMeshes[gemIdx];
+      const tex = gemTextures[colorName];
+      if (tex) {
+        gem.material.map = tex;
+        gem.material.needsUpdate = true;
+      }
+      gem.position.set(hitTarget.x, 0.481, hitTarget.z);
+      gem.scale.set(1, 1, 1);
+      gem.visible = true;
     }
 
-    function brainyHideCards() {
-      brainyFloatingCards.forEach(fc => { fc.mesh.visible = false; });
+    function brainyStartGemPulse(gemIdx) {
+      brainyGemPulseActive = true;
+      brainyActiveGemIdx = gemIdx;
+      let phase = 0;
+      function tick() {
+        if (!brainyGemPulseActive) return;
+        phase += 0.06;
+        const s = 1.0 + 0.2 * Math.sin(phase);
+        const gem = brainyGemMeshes[brainyActiveGemIdx];
+        if (gem) gem.scale.set(s, s, 1);
+        brainyGemPulseRAF = requestAnimationFrame(tick);
+      }
+      tick();
+    }
+
+    function brainyStopGemPulse() {
+      brainyGemPulseActive = false;
+      if (brainyGemPulseRAF) { cancelAnimationFrame(brainyGemPulseRAF); brainyGemPulseRAF = null; }
+      if (brainyActiveGemIdx >= 0 && brainyGemMeshes[brainyActiveGemIdx]) {
+        brainyGemMeshes[brainyActiveGemIdx].scale.set(1, 1, 1);
+      }
+    }
+
+    function brainyHideGems() {
+      brainyGemMeshes.forEach(g => { g.visible = false; });
+      brainyStopGemPulse();
     }
 
     // Show only slots matching given zahl, hide all others
@@ -5406,37 +5443,12 @@
     }
 
     // Fly card from above to frame position
-    async function brainyFlyCardToFrame(fc, hitTarget) {
-      fc.mesh.position.set(0, 1.0, 0.1105);
-      fc.mesh.rotation.set(-Math.PI / 2, 0, hitTarget.rotZ);
-      fc.mesh.visible = true;
-      fc.mesh.material.transparent = false;
-      fc.mesh.material.opacity = 1;
-      fc.mesh.material.needsUpdate = true;
-      fc.mesh.scale.set(1, 1, 1);
-      const startX = 0, startY = 1.0, startZ = 0.1105;
-      const endX = hitTarget.x, endY = 0.48, endZ = hitTarget.z;
-      await new Promise(resolve => {
-        const st = performance.now();
-        const dur = 900;
-        (function tick() {
-          const t = Math.min((performance.now() - st) / dur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          fc.mesh.position.x = startX + (endX - startX) * ease;
-          fc.mesh.position.z = startZ + (endZ - startZ) * ease;
-          const arc = 4 * t * (1 - t);
-          fc.mesh.position.y = (startY + (endY - startY) * ease) + arc * 0.15;
-          if (t < 1) requestAnimationFrame(tick);
-          else { fc.mesh.position.set(endX, endY, endZ); resolve(); }
-        })();
-      });
-    }
-
     // End BRAINY game
     async function brainyEndGame() {
       brainyActive = false;
       kipp21Active = false;
       brainyStopNumPulse();
+      brainyStopGemPulse();
       
       if (window._hideTrainingBtns) window._hideTrainingBtns();
 
@@ -5529,51 +5541,40 @@
         kipGroup.add(cube); return;
       }
 
-      // === HOLD on corner (2s): card flies to frame during this ===
-      const colorObj = GAME_COLORS.find(c => c.name === target.colorName);
-      const fc = brainyFloatingCards[brainyHits];
-      fillBrainyCard(fc, zahl, colorObj);
-      const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
-
-      // Start card fly (non-blocking) + hold timer in parallel
-      const cardFlyPromise = brainyFlyCardToFrame(fc, hitTarget);
-      const holdPromise = new Promise(r => setTimeout(r, 2000));
-      await Promise.all([cardFlyPromise, holdPromise]);
+      // === HOLD on corner (2s) — player sees the number ===
+      await new Promise(r => setTimeout(r, 2000));
       if (!brainyActive || gamePhase !== 'kipp21') {
         pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
         cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
         kipGroup.add(cube); return;
       }
 
-      // Keep only current zahl visible (no restore)
-
       // === FALL from corner directly to target position ===
-      // Get current world transform (cube on corner)
       cube.updateMatrixWorld();
       const onCornerWorldPos = new THREE.Vector3(); cube.getWorldPosition(onCornerWorldPos);
       const onCornerWorldQuat = new THREE.Quaternion(); cube.getWorldQuaternion(onCornerWorldQuat);
 
-      // Extract cube from pivotGroup
       pivotGroup.remove(cube);
       kipGroup.remove(pivotGroup);
       kipGroup.add(cube);
       cube.position.copy(onCornerWorldPos);
       cube.quaternion.copy(onCornerWorldQuat);
 
-      // Compute target position + quaternion
       const targetPos = brainyGetQuadrantPos(fallState.q);
       const targetQuat = brainyGetStateQuaternion(fallState.cwSteps);
       const fallStartPos = onCornerWorldPos.clone();
       const fallStartQuat = onCornerWorldQuat.clone();
 
-      // Animate fall (800ms easeInOut)
+      // Animate fall (800ms easeInOut) with klack near landing
       await new Promise(resolve => {
         const st = performance.now();
+        let klackFired = false;
         (function tick() {
           const t = Math.min((performance.now() - st) / 800, 1);
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
           cube.position.lerpVectors(fallStartPos, targetPos, e);
           cube.quaternion.slerpQuaternions(fallStartQuat, targetQuat, e);
+          if (!klackFired && e > 0.85) { klackFired = true; playKlack(); }
           if (t < 1) requestAnimationFrame(tick); else resolve();
         })();
       });
@@ -5583,8 +5584,13 @@
       cube.quaternion.copy(targetQuat);
       currentQuadrant = fallState.q;
       topFace = fallState.face;
-      playKlack();
 
+      if (!brainyActive || gamePhase !== 'kipp21') return;
+
+      // === GEM appears on target frame field + pulse ===
+      const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
+      brainyPlaceGem(brainyHits, target.colorName, hitTarget);
+      brainyStartGemPulse(brainyHits);
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
       // Enable player input
@@ -5620,28 +5626,22 @@
         brainyHits++;
         kipp21Done++;
 
-        // Gold border on card (already on frame)
-        const fc = brainyFloatingCards[brainyHits - 1];
-        fc.ctx.save();
-        fc.ctx.strokeStyle = '#cedb25';
-        fc.ctx.lineWidth = 6;
-        fc.ctx.strokeRect(1, 1, 83, 168);
-        fc.ctx.restore();
-        fc.texture.needsUpdate = true;
+        // Stop gem pulse, keep gem visible
+        brainyStopGemPulse();
 
-        // HIT text links aussen (stacked vertically on left frame)
-        const hitZ = -0.28 + (brainyHits - 1) * 0.18;
-        const hitPos = new THREE.Vector3(-0.625, 0.48, hitZ);
+        // HIT text near gem
+        const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
+        const hitPos = new THREE.Vector3(hitTarget.x, 0.55, hitTarget.z);
         hitPos.project(camera);
         const hsx = Math.round((hitPos.x * 0.5 + 0.5) * 360);
         const hsy = Math.round((-hitPos.y * 0.5 + 0.5) * 720);
         const hEl = document.createElement('div');
         hEl.textContent = 'HIT';
         hEl.className = 'hit-text-el';
-        hEl.style.cssText = 'position:absolute;left:' + hsx + 'px;top:' + hsy + 'px;transform:translate(-50%,-50%) scale(0.3) rotate(-90deg);font:bold 24px Arial;color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);pointer-events:none;opacity:0;transition:transform 0.3s ease-out, opacity 0.3s ease-out;z-index:25;';
+        hEl.style.cssText = 'position:absolute;left:' + hsx + 'px;top:' + hsy + 'px;transform:translate(-50%,-50%) scale(0.3);font:bold 24px Arial;color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);pointer-events:none;opacity:0;transition:transform 0.3s ease-out, opacity 0.3s ease-out;z-index:25;';
         document.getElementById('uiOverlay').appendChild(hEl);
         hitTextEls.push(hEl);
-        requestAnimationFrame(() => { hEl.style.transform = 'translate(-50%,-50%) scale(1) rotate(-90deg)'; hEl.style.opacity = '1'; });
+        requestAnimationFrame(() => { hEl.style.transform = 'translate(-50%,-50%) scale(1)'; hEl.style.opacity = '1'; });
 
         // Advance to next zahl
         brainyCurrentZahl++;
@@ -5656,19 +5656,9 @@
         brainyFails++;
         kipp21Fails++;
 
-        // Red border + X on current card
-        const fc = brainyFloatingCards[brainyHits];
+        // Stop gem pulse, show X
+        brainyStopGemPulse();
         const hitTarget = HIT_TARGETS[target.targetQ][target.targetSlot];
-        fc.ctx.save();
-        fc.ctx.strokeStyle = '#ff0000';
-        fc.ctx.lineWidth = 8;
-        fc.ctx.strokeRect(1, 1, 83, 168);
-        fc.ctx.strokeStyle = '#ff6666';
-        fc.ctx.lineWidth = 3;
-        fc.ctx.strokeRect(5, 5, 75, 160);
-        fc.ctx.restore();
-        fc.texture.needsUpdate = true;
-
         const p3 = new THREE.Vector3(hitTarget.x, 0.55, hitTarget.z);
         p3.project(camera);
         const sx = Math.round((p3.x * 0.5 + 0.5) * 360);
@@ -5681,7 +5671,7 @@
 
         await new Promise(r => setTimeout(r, 1800));
         rx.remove();
-        fc.mesh.visible = false;
+        brainyGemMeshes[brainyHits].visible = false; // hide gem on fail
 
         // Advance to next zahl
         brainyCurrentZahl++;
@@ -5762,7 +5752,7 @@
 
       // Keine Tischkarten
       gameCards.forEach(c => { c.mesh.visible = false; });
-      brainyHideCards();
+      brainyHideGems();
 
       // Training-Buttons direkt zeigen (showAllTrainingUI existiert evtl. nicht bei Direktstart)
       if (window._dirCwMesh) window._dirCwMesh.visible = true;
@@ -8962,7 +8952,7 @@
       disableReplayBlocker();
       brainyStopNumPulse();
       
-      brainyHideCards();
+      brainyHideGems();
       renderer.domElement.style.pointerEvents = 'auto';
       
       // 2. ALLE dynamischen Elemente aus uiOverlay entfernen
@@ -9175,6 +9165,7 @@
       }
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
+        if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
         if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
         if (cubeLocked && gamePhase !== 'kipp21') return;
@@ -9862,6 +9853,9 @@
       }
       
       btns.forEach(btn => {
+        // Prevent touch from bleeding through to canvas
+        btn.addEventListener('touchstart', (e) => { window._numBtnTouchActive = true; }, { passive: true });
+        btn.addEventListener('touchend', (e) => { setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: true });
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const n = parseInt(btn.dataset.num);
