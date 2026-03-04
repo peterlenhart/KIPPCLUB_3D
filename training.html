@@ -5375,15 +5375,17 @@
       let phase = 0;
       function pulseTick() {
         if (!brainyDirPulseActive) return;
-        phase += 0.03;
-        const a = 0.5 + 0.5 * Math.sin(phase);
-        const b = 0.5 + 0.5 * Math.sin(phase + Math.PI);
+        phase += 0.05;
+        const a = 0.7 + 0.3 * Math.sin(phase);
+        const b = 0.7 + 0.3 * Math.sin(phase + Math.PI);
         if (window._dirCwMesh && window._dirCwMesh.material) {
-          window._dirCwMesh.material.emissive = new THREE.Color(0.3 * a, 0.3 * a, 0);
+          window._dirCwMesh.material.opacity = a;
+          window._dirCwMesh.material.transparent = true;
           window._dirCwMesh.material.needsUpdate = true;
         }
         if (window._dirCcwMesh && window._dirCcwMesh.material) {
-          window._dirCcwMesh.material.emissive = new THREE.Color(0.3 * b, 0.3 * b, 0);
+          window._dirCcwMesh.material.opacity = b;
+          window._dirCcwMesh.material.transparent = true;
           window._dirCcwMesh.material.needsUpdate = true;
         }
         brainyDirPulseRAF = requestAnimationFrame(pulseTick);
@@ -5395,11 +5397,13 @@
       brainyDirPulseActive = false;
       if (brainyDirPulseRAF) { cancelAnimationFrame(brainyDirPulseRAF); brainyDirPulseRAF = null; }
       if (window._dirCwMesh && window._dirCwMesh.material) {
-        window._dirCwMesh.material.emissive = new THREE.Color(0, 0, 0);
+        window._dirCwMesh.material.opacity = 1;
+        window._dirCwMesh.material.transparent = true;
         window._dirCwMesh.material.needsUpdate = true;
       }
       if (window._dirCcwMesh && window._dirCcwMesh.material) {
-        window._dirCcwMesh.material.emissive = new THREE.Color(0, 0, 0);
+        window._dirCcwMesh.material.opacity = 1;
+        window._dirCcwMesh.material.transparent = true;
         window._dirCcwMesh.material.needsUpdate = true;
       }
     }
@@ -5590,6 +5594,9 @@
       brainySelectedNum = 0;
       brainySelectedDir = null;
       document.querySelectorAll('.numBtn').forEach(btn => btn.classList.remove('selected'));
+      if (window._dirCwMesh) window._dirCwMesh.visible = true;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       kipp21Active = true;
       brainyStartNumPulse();
     }
@@ -9176,7 +9183,7 @@
         if (cubeLocked && gamePhase !== 'kipp21') return;
         if (gamePhase === 'kipp21' && kipp21HitLock) return; // Treffer erkannt → Würfel gesperrt
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
-        if (gamePhase === 'kipp21' && kipp21CardStates.indexOf('offen') < 0) return;
+        if (gamePhase === 'kipp21' && !brainyActive && kipp21CardStates.indexOf('offen') < 0) return;
         e.preventDefault();
         
         const touch = e.touches[0];
