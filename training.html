@@ -2420,6 +2420,13 @@
           setTimeout(() => { startBrainyLevel(); }, 200);
           return;
         }
+        if (levelParam === 'brain') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          setTimeout(() => { startBrainLevel(); }, 200);
+          return;
+        }
         
         // Prüfe ob Spieler schon mal Training gespielt hat
         let hasPlayed = false;
@@ -2659,7 +2666,7 @@
         bereitsAusgegeben = new Set(s.bereitsAusgegeben);
         activeCardIdx = s.activeCardIdx;
 
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < numActiveCards; i++) {
           const saved = s.cards[i];
           const card = gameCards[i];
           card.zahl = saved.zahl;
@@ -4466,7 +4473,7 @@
         pgt.appendChild(pgtS);
       }
       const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
-      const challengeText = currentLevel >= 2 ? 'Mit 4 HITS ins BRAIN Level' : 'Mit 4 HITS ins BRAINY Level';
+      const challengeText = currentLevel >= 3 ? 'JETZT DU!' : (currentLevel >= 2 ? 'Mit 4 HITS ins BRAIN Level' : 'Mit 4 HITS ins BRAINY Level');
       pgtH.innerHTML = challengeText;
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
@@ -4517,7 +4524,7 @@
       function fadeInUIs() {
         return new Promise(resolve => {
           // Alles auf opacity 0 vorbereiten
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < numActiveCards; i++) {
             const m = gameCards[i].mesh;
             m.visible = true;
             m.material.transparent = true;
@@ -4526,7 +4533,7 @@
           }
           // Blick-Icons auf Kippzielen (statt jokerIconsRow)
           showBlickIcons();
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < numActiveCards; i++) {
             if (blickIconMeshes[i].visible) {
               blickIconMeshes[i].material.transparent = true;
               blickIconMeshes[i].material.opacity = 0;
@@ -4553,12 +4560,12 @@
           function tick(now) {
             const t = Math.min((now - start) / dur, 1);
             const e = t * t * (3 - 2 * t);
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < numActiveCards; i++) {
               gameCards[i].mesh.material.opacity = e;
               gameCards[i].mesh.material.needsUpdate = true;
             }
             jr2.style.display = 'none';
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < numActiveCards; i++) {
               if (blickIconMeshes[i].visible) {
                 blickIconMeshes[i].material.opacity = e;
                 blickIconMeshes[i].material.needsUpdate = true;
@@ -4571,7 +4578,7 @@
             if (t < 1) {
               requestAnimationFrame(tick);
             } else {
-              for (let i = 0; i < 4; i++) {
+              for (let i = 0; i < numActiveCards; i++) {
                 gameCards[i].mesh.material.opacity = 1;
                 gameCards[i].mesh.material.transparent = false;
                 gameCards[i].mesh.material.needsUpdate = true;
@@ -4660,9 +4667,9 @@
         showTrainingButtons();
         
         // Nach "JETZT DU!": Karten sichtbar erzwingen
-        if (!kipp21WithTutorial) {
+        if (!kipp21WithTutorial || currentLevel >= 3) {
           showBlickIcons();
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < numActiveCards; i++) {
             gameCards[i].mesh.visible = true;
             gameCards[i].mesh.material.transparent = false;
             gameCards[i].mesh.material.opacity = 1;
@@ -4675,8 +4682,8 @@
           }
         }
         
-        // --- Hand-Tutorial direkt starten ---
-        if (kipp21WithTutorial && gamePhase === 'kipp21') {
+        // --- Hand-Tutorial direkt starten (nur TRAINING, nicht BRAIN+) ---
+        if (kipp21WithTutorial && currentLevel < 3 && gamePhase === 'kipp21') {
           await wait(800);
           if (gamePhase !== 'kipp21') return;
           startReplay().catch(err => {
@@ -4692,12 +4699,12 @@
       jr.style.opacity = '0';
       document.getElementById('zumSpielBtn').style.display = 'none';
       document.getElementById('zumSpielBtn').style.opacity = '0';
-      for (let i = 0; i < 4; i++) gameCards[i].mesh.visible = false;
+      for (let i = 0; i < numActiveCards; i++) gameCards[i].mesh.visible = false;
       
       verdecktesMesh.visible = false;
       
       // Show 6 verdeckte cards
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < numActiveCards; i++) {
         const card = gameCards[i];
         card.ctx.clearRect(0, 0, 85, 170);
         if (leerImage) {
@@ -5015,7 +5022,7 @@
                 const _pgt = document.getElementById('perfektGameText');
                 const _pgtH = document.getElementById('pgtHead');
                 if (_pgt && _pgtH) {
-                  _pgtH.innerHTML = '4 HITS!';
+                  _pgtH.innerHTML = numActiveCards + ' HITS!';
                   _pgt.style.display = 'block'; _pgt.style.opacity = '1';
                   _pgtH.style.animation = 'none'; void _pgtH.offsetWidth;
                   _pgtH.style.animation = 'sctInflate 1.2s ease-out forwards';
@@ -5251,7 +5258,7 @@
       hintText.innerHTML = T.d2 || 'Ein Kippziel öffnen';
       
       // Karten nach Setup wieder verstecken (werden nach Challenge-Text gezeigt)
-      for (let i = 0; i < 4; i++) gameCards[i].mesh.visible = false;
+      for (let i = 0; i < numActiveCards; i++) gameCards[i].mesh.visible = false;
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
@@ -5894,8 +5901,8 @@
       for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
       updateFaceSlots();
       updateAllFaceTextures();
-      // Regular game (no tutorial)
-      startKipp21(false);
+      // Start with 4CW+4CCW demo
+      startKipp21(true);
     }
 
     // === KIPP KNIFF SYSTEM (beide Joker) ===
@@ -5941,7 +5948,7 @@
     }
     
     function kipp21NextVerdeckt() {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < numActiveCards; i++) {
         if (kipp21CardStates[i] === 'verdeckt') return i;
       }
       return -1;
@@ -6440,7 +6447,7 @@
       // Nach Fly-in: Kippziele ausblenden, Text + Button zeigen
       setTimeout(() => {
         // Alle nicht-erledigten Kippziele ausblenden
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < numActiveCards; i++) {
           if (kipp21CardStates[i] !== 'erledigt') {
             const m = gameCards[i].mesh;
             m.material.transparent = true;
@@ -6762,7 +6769,7 @@
 
     function showGameEnd() {
       // Tutorial: Replay-Code handelt das Ende selbst
-      if (kipp21WithTutorial) { console.log('[showGameEnd] skip — tutorial'); return; }
+      if (kipp21WithTutorial && currentLevel < 3) { console.log('[showGameEnd] skip — tutorial'); return; }
       gamePhase = 'ende';
       let isNewRec = false;
       try {
