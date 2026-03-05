@@ -355,8 +355,10 @@
   <div id="closeModal" class="modalOverlay hidden">
     <div class="modalContainer">
       <img src="sicherheitsabfrage.webp" class="modalImage" alt="Sicherheitsabfrage">
-      <div id="modalAbbrechen" class="modalClickArea"></div>
-      <div id="modalBeenden" class="modalClickArea"></div>
+      <div id="modalTitle" style="position:absolute;left:0;right:0;top:37%;text-align:center;font:bold 28px Arial;color:#e8dcc0;letter-spacing:2px;text-shadow:0 2px 6px rgba(0,0,0,0.8);pointer-events:none;">Spiel beenden?</div>
+      <div id="modalSub" style="position:absolute;left:10%;right:10%;top:43%;text-align:center;font:400 18px Arial;color:#c0b098;letter-spacing:0.5px;text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;">Möchtest du das Spiel<br>wirklich beenden?</div>
+      <div id="modalAbbrechen" class="modalClickArea" style="display:flex;align-items:center;justify-content:center;font:bold 17px Arial;color:#d0d8c0;letter-spacing:1.5px;text-shadow:0 1px 3px rgba(0,0,0,0.8);"></div>
+      <div id="modalBeenden" class="modalClickArea" style="display:flex;align-items:center;justify-content:center;font:bold 17px Arial;color:#e0c8b0;letter-spacing:1.5px;text-shadow:0 1px 3px rgba(0,0,0,0.8);"></div>
     </div>
   </div>
 
@@ -601,12 +603,12 @@
 
     // === LEVEL OVERLAY TRANSLATIONS ===
     const LVL_T = {
-      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "DigiKipp \u2013 schau mal vorbei!" },
-      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "DigiKipp \u2013 check it out!" },
-      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "DigiKipp \u2013 \u00a1echa un vistazo!" },
-      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "DigiKipp \u2013 viens voir !" },
-      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO KIPP", s3: "per Super Rompicapi", share: "DigiKipp \u2013 dai un\u2019occhiata!" },
-      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "DigiKipp \u2013 bir g\u00f6z at!" }
+      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "DigiKipp \u2013 schau mal vorbei!", mT: "Spiel beenden?", mS: "Möchtest du das Spiel<br>wirklich beenden?", mA: "Abbrechen", mB: "Beenden" },
+      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "DigiKipp \u2013 check it out!", mT: "Quit game?", mS: "Do you really want<br>to quit the game?", mA: "Cancel", mB: "Quit" },
+      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "DigiKipp \u2013 \u00a1echa un vistazo!", mT: "\u00bfSalir del juego?", mS: "\u00bfRealmente quieres<br>salir del juego?", mA: "Cancelar", mB: "Salir" },
+      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "DigiKipp \u2013 viens voir !", mT: "Quitter le jeu ?", mS: "Veux-tu vraiment<br>quitter le jeu ?", mA: "Annuler", mB: "Quitter" },
+      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO KIPP", s3: "per Super Rompicapi", share: "DigiKipp \u2013 dai un\u2019occhiata!", mT: "Uscire dal gioco?", mS: "Vuoi davvero<br>uscire dal gioco?", mA: "Annulla", mB: "Esci" },
+      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "DigiKipp \u2013 bir g\u00f6z at!", mT: "Oyundan \u00e7ık?", mS: "Oyundan ger\u00e7ekten<br>\u00e7ıkmak istiyor musun?", mA: "\u0130ptal", mB: "\u00c7ık" }
     };
 
     function applyLevelLang() {
@@ -616,6 +618,10 @@
       document.getElementById('lvlSub2').textContent = t.s2;
       document.getElementById('lvlKP').textContent = t.kp;
       document.getElementById('lvlSub3').textContent = t.s3;
+      document.getElementById('modalTitle').textContent = t.mT;
+      document.getElementById('modalSub').innerHTML = t.mS;
+      document.getElementById('modalAbbrechen').textContent = t.mA;
+      document.getElementById('modalBeenden').textContent = t.mB;
     }
     applyLevelLang();
 
