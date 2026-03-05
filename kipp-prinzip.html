@@ -15,22 +15,14 @@
       background: #1a0e06;
       color: #d4c4a8;
     }
-    body {
-      display:flex; justify-content:center;
-    }
-    .page {
-      max-width:400px; width:100%; padding:20px 24px 40px;
-    }
-
-    /* Back button */
+    body { display:flex; justify-content:center; }
+    .page { max-width:400px; width:100%; padding:20px 24px 40px; }
     .back-btn {
       position:fixed; top:12px; left:12px; z-index:100;
       width:44px; height:44px; border:none; background:none;
       cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent;
     }
     .back-btn img { width:100%; height:100%; object-fit:contain; }
-
-    /* Title */
     h1 {
       text-align:center; font-size:28px; font-weight:bold;
       letter-spacing:4px; color:#d4a843;
@@ -41,44 +33,23 @@
       text-align:center; font-size:14px; letter-spacing:2px;
       color:#a08060; margin-bottom:28px;
     }
-
-    /* Sections */
-    .section {
-      margin-bottom:24px;
-    }
+    .section { margin-bottom:24px; }
     .section h2 {
       font-size:17px; font-weight:bold; letter-spacing:2px;
       color:#cedb25; margin-bottom:8px;
       text-shadow:0 1px 4px rgba(0,0,0,0.5);
     }
-    .section p {
-      font-size:15px; line-height:1.65; color:#c8b898;
-    }
-    .section p + p {
-      margin-top:10px;
-    }
-
-    /* Highlight boxes */
+    .section p { font-size:15px; line-height:1.65; color:#c8b898; }
+    .section p + p { margin-top:10px; }
     .tip {
       background: rgba(206,219,37,0.08);
       border-left: 3px solid #cedb25;
-      padding: 12px 14px;
-      margin: 14px 0;
+      padding: 12px 14px; margin: 14px 0;
       border-radius: 0 6px 6px 0;
     }
-    .tip p {
-      font-size:14px; line-height:1.6; color:#d4c4a8;
-    }
-    .tip strong {
-      color:#cedb25;
-    }
-
-    /* Fact row */
-    .facts {
-      display:flex; justify-content:space-around;
-      margin:16px 0 20px;
-      gap:8px;
-    }
+    .tip p { font-size:14px; line-height:1.6; color:#d4c4a8; }
+    .tip strong { color:#cedb25; }
+    .facts { display:flex; justify-content:space-around; margin:16px 0 20px; gap:8px; }
     .fact-box {
       flex:1; text-align:center;
       background: rgba(255,255,255,0.04);
@@ -89,27 +60,8 @@
       font-size:28px; font-weight:bold; color:#cedb25;
       text-shadow:0 1px 6px rgba(206,219,37,0.3);
     }
-    .fact-label {
-      font-size:11px; letter-spacing:1px; color:#a08060;
-      margin-top:4px;
-    }
-
-    /* Divider */
-    .divider {
-      border:none; border-top:1px solid rgba(138,122,102,0.2);
-      margin:24px 0;
-    }
-
-    /* Special: clock comparison */
-    .clock-note {
-      background:rgba(164,27,133,0.1);
-      border-left:3px solid #a41b85;
-      padding:12px 14px;
-      margin:14px 0;
-      border-radius:0 6px 6px 0;
-    }
-    .clock-note p { font-size:14px; line-height:1.6; }
-    .clock-note strong { color:#a41b85; }
+    .fact-label { font-size:11px; letter-spacing:1px; color:#a08060; margin-top:4px; }
+    .divider { border:none; border-top:1px solid rgba(138,122,102,0.2); margin:24px 0; }
   </style>
 </head>
 <body>
@@ -119,82 +71,161 @@
   </button>
 
   <div class="page">
-
-    <h1>KIPP PRINZIP</h1>
-    <div class="subtitle">FÜR SUPERTÜFTLER</div>
+    <h1 id="kpTitle"></h1>
+    <div class="subtitle" id="kpSubtitle"></div>
 
     <div class="facts">
       <div class="fact-box">
         <div class="fact-num">3</div>
-        <div class="fact-label">WÜRFELFLÄCHEN</div>
+        <div class="fact-label" id="fl1"></div>
       </div>
       <div class="fact-box">
         <div class="fact-num">16</div>
-        <div class="fact-label">RAHMENFELDER</div>
+        <div class="fact-label" id="fl2"></div>
       </div>
       <div class="fact-box">
         <div class="fact-num">48</div>
-        <div class="fact-label">MÖGLICHKEITEN</div>
+        <div class="fact-label" id="fl3"></div>
       </div>
     </div>
 
-    <div class="section">
-      <h2>DAS ZIEL</h2>
-      <p>Jedes Kippziel gibt dir ein Würfelfeld und ein Rahmenfeld vor. Deine Aufgabe: Kippe den Würfel so oft und in die richtige Richtung, dass genau dieses Würfelfeld am vorgegebenen Rahmenfeld zu liegen kommt.</p>
-    </div>
-
-    <div class="section">
-      <h2>1 BIS 6 KIPPS</h2>
-      <p>Jede Würfelfeld-Rahmenfeld-Kombination ist mit maximal 6 Kipps erreichbar — vorausgesetzt, die Richtung stimmt.</p>
-      <p>In die falsche Richtung wären es 7 bis 11 Kipps. Da die Zahlentastatur nur 1 bis 6 erlaubt, muss beides stimmen: Kippzahl und Kipprichtung.</p>
-    </div>
-
-    <div class="tip">
-      <p><strong>Jedes Kippziel hat genau eine richtige Lösung.</strong> Es gibt immer nur eine Kombination aus Anzahl und Richtung, die zum Treffer führt.</p>
-    </div>
-
-    <hr class="divider">
-
-    <div class="section">
-      <h2>KIPP-TIPP: KANTEN-FELDER MERKEN</h2>
-      <p>Merke dir, welche Zahlen oder Motive an den Kanten gegenüberliegen. Das hilft enorm.</p>
-    </div>
-
-    <div class="section">
-      <h2>WÜRFELBLICK-JOKER</h2>
-      <p>Bei manchen Kippzielen hast du einen Würfelblick-Joker. Der Würfel zeigt sich dir — nutze die Chance!</p>
-      <p><strong>Eckblick:</strong> Der Würfel stellt sich auf die Ecke. Du siehst alle drei Flächen gleichzeitig.</p>
-      <p><strong>Kippblick:</strong> Der Würfel kippt langsam durch die Box. Du siehst, wie die Flächen nacheinander erscheinen.</p>
-      <p>Genau hinschauen und merken!</p>
-    </div>
-
-    <hr class="divider">
-
-    <div class="section">
-      <h2>LOGIK: 3er & 6er KIPPS</h2>
-      <p>Immer wenn das Kippziel ein Würfelfeld vorgibt, das der Würfel in seiner aktuellen Lage bereits zeigt, dann musst du 3 oder 6 mal kippen.</p>
-      <p>Die richtige Richtung findest du mit reiner Logik heraus.</p>
-    </div>
-
-    <hr class="divider">
-
-    <div class="section">
-      <h2>DER UHRENVERGLEICH</h2>
-      <p>Stell dir eine Uhr vor. Du kannst den Stundenzeiger <strong>11 Stunden vorstellen</strong> — oder <strong>1 Stunde zurück</strong>. Du landest auf derselben Stunde.</p>
-      <p>Genau so funktioniert der Würfel:</p>
-      <p>• <strong>11 Kipps</strong> im Uhrzeigersinn = <strong>1 Kipp</strong> gegen den Uhrzeigersinn<br>
-      • <strong>8 Kipps</strong> in eine Richtung = <strong>4 Kipps</strong> in die Gegenrichtung<br>
-      • <strong>6 Kipps</strong> im UZS = <strong>6 Kipps</strong> gegen UZS — Richtung egal<br>
-      • <strong>12 Kipps</strong> in beliebige Richtung: Wieder wie am Anfang</p>
-    </div>
-
-    <hr class="divider">
-
-    <div class="section" style="text-align:center;">
-      <p>100% Score ist immer möglich — mit Logik, Merkfähigkeit und räumlicher Vorstellungskraft.</p>
-      <p style="margin-top:18px; color:#d4a843; font-size:16px; letter-spacing:1px;">Viel Spannung, Spaß und Kopfzerbrechen<br>mit <strong>KIPP CLUB</strong>.</p>
-    </div>
-
+    <div id="content"></div>
   </div>
+
+  <script>
+    const T = {
+      de: {
+        title: "KIPP PRINZIP",
+        subtitle: "FÜR SUPERTÜFTLER",
+        fl1: "WÜRFELFLÄCHEN", fl2: "RAHMENFELDER", fl3: "MÖGLICHKEITEN",
+        sections: [
+          { t: "Der Würfel in der Box", p: "Ein Würfel mit drei sichtbaren Seiten, bestückt mit je vier Zahlen. Er kippt im Kreis \u2013 im oder gegen den Uhrzeigersinn. Das klingt simpel. Ist es aber nicht." },
+          { t: "Das Ziel", p: "Jedes Kippziel gibt dir ein Würfelfeld und ein Rahmenfeld vor. Deine Aufgabe: Kippe den Würfel so oft und in die richtige Richtung, dass genau dieses Würfelfeld am vorgegebenen Rahmenfeld zu liegen kommt." },
+          { t: "1 bis 6 Kipps", p: "Jede Würfelfeld-Rahmenfeld-Kombination ist mit maximal 6 Kipps erreichbar \u2013 vorausgesetzt, die Richtung stimmt.<br><br>In die falsche Richtung wären es 7 bis 11 Kipps. Da die Zahlentastatur nur 1 bis 6 erlaubt, muss beides stimmen: Kippzahl und Kipprichtung." },
+          { tip: true, p: "<strong>Jedes Kippziel hat genau eine richtige Lösung.</strong> Es gibt immer nur eine Kombination aus Anzahl und Richtung, die zum Treffer führt." },
+          { t: "48 Kombinationen. Maximal 6 Kipps.", p: "Es gibt genau <b>48 verschiedene Kombinationen</b> aus Würfelfeld und Randfeld. Jede einzelne davon lässt sich mit <b>höchstens 6 Kipps</b> erreichen. Immer. Die entscheidende Frage ist nur: <b>Im oder gegen den Uhrzeigersinn?</b><br><br>Wer die richtige Richtung wählt, braucht nie mehr als 6 Kipps. 50:50 Chance \u2013 oder pures Wissen." },
+          { t: "Kipp-Tipp: Kanten-Felder merken", p: "Merke dir, welche Zahlen oder Motive an den Kanten gegenüberliegen. Das hilft enorm." },
+          { t: "Würfelblick-Joker", p: "Bei manchen Kippzielen hast du einen Würfelblick-Joker. Der Würfel zeigt sich dir \u2013 nutze die Chance!<br><br><b>Eckblick:</b> Der Würfel stellt sich auf die Ecke. Du siehst alle drei Flächen gleichzeitig.<br><br><b>Kippblick:</b> Der Würfel kippt langsam durch die Box. Du siehst, wie die Flächen nacheinander erscheinen.<br><br>Genau hinschauen und merken!" },
+          { t: "Logik: 3er & 6er Kipps", p: "Immer wenn das Kippziel ein Würfelfeld vorgibt, das der Würfel in seiner aktuellen Lage bereits zeigt, dann musst du 3 oder 6 mal kippen.<br><br>Die richtige Richtung findest du mit reiner Logik heraus." },
+          { t: "Der Uhrenvergleich", p: "Stell dir eine Uhr vor. Du kannst den Stundenzeiger <b>11 Stunden vorstellen</b> \u2013 oder <b>1 Stunde zurück</b>. Du landest auf derselben Stunde.<br><br>Genau so funktioniert der Würfel:<br>\u2022 <b>11 Kipps</b> im Uhrzeigersinn = <b>1 Kipp</b> gegen den Uhrzeigersinn<br>\u2022 <b>8 Kipps</b> in eine Richtung = <b>4 Kipps</b> in die Gegenrichtung<br>\u2022 <b>6 Kipps</b> im UZS = <b>6 Kipps</b> gegen UZS \u2013 Richtung egal<br>\u2022 <b>12 Kipps</b> in beliebige Richtung: Wieder wie am Anfang" }
+        ],
+        footer: "100% Score ist immer möglich \u2013 mit Logik, Merkfähigkeit und räumlicher Vorstellungskraft.",
+        closer: "Viel Spannung, Spaß und Kopfzerbrechen<br>mit <strong>KIPP CLUB</strong>."
+      },
+      en: {
+        title: "TILT PRINCIPLE",
+        subtitle: "FOR SUPER PUZZLERS",
+        fl1: "CUBE FACES", fl2: "BORDER FIELDS", fl3: "COMBINATIONS",
+        sections: [
+          { t: "The Cube in the Box", p: "A cube with three visible faces, each bearing four numbers. It tilts in a circle \u2013 clockwise or counter-clockwise. Sounds simple. But it isn\u2019t." },
+          { t: "The Goal", p: "Each tilt target specifies a cube field and a border field. Your task: tilt the cube the right number of times and in the right direction so that exactly this cube field ends up at the specified border field." },
+          { t: "1 to 6 Tilts", p: "Every cube-field-border-field combination can be reached in at most 6 tilts \u2013 provided the direction is correct.<br><br>In the wrong direction it would take 7 to 11 tilts. Since the number pad only allows 1 to 6, both must be right: tilt count and direction." },
+          { tip: true, p: "<strong>Every tilt target has exactly one correct solution.</strong> There is always only one combination of count and direction that leads to a hit." },
+          { t: "48 Combinations. Maximum 6 Tilts.", p: "There are exactly <b>48 different combinations</b> of cube field and border field. Every single one can be reached in <b>at most 6 tilts</b>. Always. The only question is: <b>Clockwise or counter-clockwise?</b><br><br>Choose the right direction and you\u2019ll never need more than 6 tilts. 50:50 chance \u2013 or pure knowledge." },
+          { t: "Tilt Tip: Remember Edge Fields", p: "Remember which numbers or motifs sit opposite each other at the edges. This helps enormously." },
+          { t: "Cube View Jokers", p: "Some tilt targets come with a cube view joker. The cube reveals itself \u2013 seize the chance!<br><br><b>Corner View:</b> The cube balances on its corner. You see all three faces at once.<br><br><b>Tilt View:</b> The cube tilts slowly through the box. You see the faces appear one after another.<br><br>Watch carefully and remember!" },
+          { t: "Logic: 3 & 6 Tilts", p: "Whenever the tilt target specifies a cube field that the cube is already showing in its current position, you need to tilt exactly 3 or 6 times.<br><br>You can figure out the right direction with pure logic." },
+          { t: "The Clock Comparison", p: "Imagine a clock. You can move the hour hand <b>11 hours forward</b> \u2013 or <b>1 hour back</b>. Same position.<br><br>The cube works exactly the same way:<br>\u2022 <b>11 tilts</b> clockwise = <b>1 tilt</b> counter-clockwise<br>\u2022 <b>8 tilts</b> one way = <b>4 tilts</b> the other<br>\u2022 <b>6 tilts</b> CW = <b>6 tilts</b> CCW \u2013 direction doesn\u2019t matter<br>\u2022 <b>12 tilts</b> in any direction: Back to start" }
+        ],
+        footer: "100% score is always possible \u2013 with logic, memory and spatial awareness.",
+        closer: "Lots of suspense, fun and brainwork<br>with <strong>KIPP CLUB</strong>."
+      },
+      es: {
+        title: "PRINCIPIO VOLCADO",
+        subtitle: "PARA SUPER ENIGMISTAS",
+        fl1: "CARAS DEL CUBO", fl2: "CAMPOS DEL BORDE", fl3: "COMBINACIONES",
+        sections: [
+          { t: "El Cubo en la Caja", p: "Un cubo con tres caras visibles, cada una con cuatro números. Se vuelca en círculo \u2013 en sentido horario o antihorario. Suena simple. Pero no lo es." },
+          { t: "El Objetivo", p: "Cada objetivo de volcado especifica un campo del cubo y un campo del borde. Tu tarea: vuelca el cubo el número correcto de veces y en la dirección correcta para que ese campo del cubo termine en el campo del borde indicado." },
+          { t: "1 a 6 Volcados", p: "Cada combinación de campo del cubo y campo del borde se puede alcanzar con máximo 6 volcados \u2013 si la dirección es correcta.<br><br>En la dirección equivocada serían 7 a 11 volcados. Como el teclado solo permite 1 a 6, ambos deben ser correctos: cantidad y dirección." },
+          { tip: true, p: "<strong>Cada objetivo tiene exactamente una solución correcta.</strong> Siempre hay solo una combinación de cantidad y dirección que lleva al acierto." },
+          { t: "48 Combinaciones. Máximo 6 Volcados.", p: "Hay exactamente <b>48 combinaciones diferentes</b> de campo del cubo y campo del borde. Cada una se puede alcanzar con <b>máximo 6 volcados</b>. Siempre. La única pregunta es: <b>¿Horario o antihorario?</b><br><br>Quien elige la dirección correcta nunca necesita más de 6 volcados. 50:50 \u2013 o puro conocimiento." },
+          { t: "Consejo: Recuerda los Campos de Arista", p: "Recuerda qué números o motivos están opuestos en las aristas. Esto ayuda enormemente." },
+          { t: "Jokers de Vista del Cubo", p: "Algunos objetivos incluyen un joker de vista del cubo. El cubo se revela \u2013 ¡aprovecha la oportunidad!<br><br><b>Vista de Esquina:</b> El cubo se equilibra en su esquina. Ves las tres caras a la vez.<br><br><b>Vista de Volcado:</b> El cubo se vuelca lentamente por la caja. Ves las caras aparecer una tras otra.<br><br>¡Observa bien y memoriza!" },
+          { t: "Lógica: Volcados de 3 y 6", p: "Siempre que el objetivo especifique un campo del cubo que ya está visible en su posición actual, necesitas volcar exactamente 3 o 6 veces.<br><br>La dirección correcta la descubres con pura lógica." },
+          { t: "La Comparación del Reloj", p: "Imagina un reloj. Puedes adelantar la manecilla <b>11 horas</b> \u2013 o retroceder <b>1 hora</b>. Misma posición.<br><br>El cubo funciona exactamente igual:<br>\u2022 <b>11 volcados</b> horario = <b>1 volcado</b> antihorario<br>\u2022 <b>8 volcados</b> en una dirección = <b>4</b> en la contraria<br>\u2022 <b>6 volcados</b> horario = <b>6</b> antihorario \u2013 da igual<br>\u2022 <b>12 volcados</b>: De vuelta al inicio" }
+        ],
+        footer: "100% de puntuación siempre es posible \u2013 con lógica, memoria y visión espacial.",
+        closer: "Mucha tensión, diversión y rompecabezas<br>con <strong>KIPP CLUB</strong>."
+      },
+      fr: {
+        title: "PRINCIPE BASCULE",
+        subtitle: "POUR SUPER CASSE-TÊTES",
+        fl1: "FACES DU CUBE", fl2: "CASES DU CADRE", fl3: "COMBINAISONS",
+        sections: [
+          { t: "Le Cube dans la Boîte", p: "Un cube avec trois faces visibles, chacune portant quatre chiffres. Il bascule en cercle \u2013 dans le sens horaire ou antihoraire. Ça semble simple. Mais ça ne l\u2019est pas." },
+          { t: "L'Objectif", p: "Chaque cible de bascule indique une case du cube et une case du cadre. Ta mission : bascule le cube le bon nombre de fois et dans la bonne direction pour que cette case du cube se retrouve sur la case du cadre indiquée." },
+          { t: "1 à 6 Bascules", p: "Chaque combinaison case du cube / case du cadre est atteignable en 6 bascules maximum \u2013 à condition que la direction soit correcte.<br><br>Dans la mauvaise direction, il faudrait 7 à 11 bascules. Comme le clavier n'autorise que 1 à 6, les deux doivent être justes : nombre et direction." },
+          { tip: true, p: "<strong>Chaque cible a exactement une solution correcte.</strong> Il n\u2019y a toujours qu\u2019une seule combinaison de nombre et direction qui mène au coup réussi." },
+          { t: "48 Combinaisons. Maximum 6 Bascules.", p: "Il existe exactement <b>48 combinaisons différentes</b> de case du cube et case du cadre. Chacune est atteignable en <b>6 bascules maximum</b>. Toujours. La seule question : <b>Sens horaire ou antihoraire ?</b><br><br>Qui choisit la bonne direction n\u2019a jamais besoin de plus de 6 bascules. 50:50 \u2013 ou pur savoir." },
+          { t: "Astuce : Retenir les Cases d'Arête", p: "Retiens quels chiffres ou motifs se trouvent en face l\u2019un de l\u2019autre aux arêtes. Ça aide énormément." },
+          { t: "Jokers Aperçu du Cube", p: "Certaines cibles incluent un joker d\u2019aperçu du cube. Le cube se dévoile \u2013 saisis ta chance !<br><br><b>Vue d'Angle :</b> Le cube se tient sur son coin. Tu vois les trois faces en même temps.<br><br><b>Vue de Bascule :</b> Le cube bascule lentement à travers la boîte. Tu vois les faces apparaître l\u2019une après l\u2019autre.<br><br>Regarde bien et retiens !" },
+          { t: "Logique : Bascules de 3 et 6", p: "Quand la cible indique une case du cube déjà visible dans sa position actuelle, il faut exactement 3 ou 6 bascules.<br><br>La bonne direction se trouve par pure logique." },
+          { t: "La Comparaison de l'Horloge", p: "Imagine une horloge. Tu peux avancer l\u2019aiguille de <b>11 heures</b> \u2013 ou reculer d\u2019<b>1 heure</b>. Même position.<br><br>Le cube fonctionne exactement pareil :<br>\u2022 <b>11 bascules</b> horaire = <b>1 bascule</b> antihoraire<br>\u2022 <b>8 bascules</b> dans un sens = <b>4</b> dans l\u2019autre<br>\u2022 <b>6 bascules</b> horaire = <b>6</b> antihoraire \u2013 peu importe<br>\u2022 <b>12 bascules</b> : Retour au départ" }
+        ],
+        footer: "100% de score est toujours possible \u2013 avec logique, mémoire et vision spatiale.",
+        closer: "Beaucoup de suspense, de plaisir et de casse-tête<br>avec <strong>KIPP CLUB</strong>."
+      },
+      it: {
+        title: "PRINCIPIO RIBALTAMENTO",
+        subtitle: "PER SUPER ROMPICAPI",
+        fl1: "FACCE DEL CUBO", fl2: "CAMPI DEL BORDO", fl3: "COMBINAZIONI",
+        sections: [
+          { t: "Il Cubo nella Scatola", p: "Un cubo con tre facce visibili, ciascuna con quattro numeri. Si ribalta in cerchio \u2013 in senso orario o antiorario. Sembra semplice. Ma non lo è." },
+          { t: "L'Obiettivo", p: "Ogni obiettivo di ribaltamento indica un campo del cubo e un campo del bordo. Il tuo compito: ribalta il cubo il numero giusto di volte e nella giusta direzione affinché quel campo del cubo arrivi sul campo del bordo indicato." },
+          { t: "1 a 6 Ribaltamenti", p: "Ogni combinazione campo del cubo / campo del bordo è raggiungibile con massimo 6 ribaltamenti \u2013 a condizione che la direzione sia corretta.<br><br>Nella direzione sbagliata servirebbero 7 a 11 ribaltamenti. Poiché la tastiera permette solo 1 a 6, entrambi devono essere giusti: numero e direzione." },
+          { tip: true, p: "<strong>Ogni obiettivo ha esattamente una soluzione corretta.</strong> C\u2019è sempre una sola combinazione di numero e direzione che porta al colpo riuscito." },
+          { t: "48 Combinazioni. Massimo 6 Ribaltamenti.", p: "Esistono esattamente <b>48 combinazioni diverse</b> di campo del cubo e campo del bordo. Ognuna è raggiungibile con <b>massimo 6 ribaltamenti</b>. Sempre. L\u2019unica domanda: <b>Orario o antiorario?</b><br><br>Chi sceglie la direzione giusta non ha mai bisogno di più di 6 ribaltamenti. 50:50 \u2013 o pura conoscenza." },
+          { t: "Consiglio: Ricorda i Campi di Spigolo", p: "Ricorda quali numeri o motivi sono opposti agli spigoli. Questo aiuta enormemente." },
+          { t: "Joker Vista del Cubo", p: "Alcuni obiettivi includono un joker vista del cubo. Il cubo si rivela \u2013 cogli l\u2019occasione!<br><br><b>Vista d'Angolo:</b> Il cubo si tiene in equilibrio sul suo angolo. Vedi tutte e tre le facce contemporaneamente.<br><br><b>Vista di Ribaltamento:</b> Il cubo si ribalta lentamente attraverso la scatola. Vedi le facce apparire una dopo l\u2019altra.<br><br>Guarda bene e ricorda!" },
+          { t: "Logica: Ribaltamenti da 3 e 6", p: "Quando l\u2019obiettivo indica un campo del cubo già visibile nella posizione attuale, servono esattamente 3 o 6 ribaltamenti.<br><br>La direzione giusta si trova con pura logica." },
+          { t: "Il Confronto con l'Orologio", p: "Immagina un orologio. Puoi spostare la lancetta avanti di <b>11 ore</b> \u2013 o indietro di <b>1 ora</b>. Stessa posizione.<br><br>Il cubo funziona esattamente così:<br>\u2022 <b>11 ribaltamenti</b> orario = <b>1</b> antiorario<br>\u2022 <b>8 ribaltamenti</b> in una direzione = <b>4</b> nell\u2019altra<br>\u2022 <b>6 ribaltamenti</b> orario = <b>6</b> antiorario \u2013 indifferente<br>\u2022 <b>12 ribaltamenti</b>: Ritorno al via" }
+        ],
+        footer: "Il 100% è sempre possibile \u2013 con logica, memoria e immaginazione spaziale.",
+        closer: "Tanta suspense, divertimento e rompicapi<br>con <strong>KIPP CLUB</strong>."
+      },
+      tr: {
+        title: "DEV\u0130RME PRENS\u0130B\u0130",
+        subtitle: "SÜPER BULMACACILAR \u0130Ç\u0130N",
+        fl1: "KÜP YÜZLER\u0130", fl2: "ÇERÇEVE ALANLARI", fl3: "KOMB\u0130NASYONLAR",
+        sections: [
+          { t: "Kutudaki Küp", p: "Her biri dört sayı taşıyan üç görünür yüzü olan bir küp. Daire içinde devrilir \u2013 saat yönünde veya tersine. Basit görünür. Ama değil." },
+          { t: "Hedef", p: "Her devirme hedefi bir küp alanı ve bir çerçeve alanı belirtir. Görevin: küpü doğru sayıda ve doğru yönde devirerek o küp alanını belirtilen çerçeve alanına getirmek." },
+          { t: "1'den 6'ya Devirme", p: "Her küp alanı-çerçeve alanı kombinasyonu en fazla 6 devirme ile ulaşılabilir \u2013 yön doğru olduğu sürece.<br><br>Yanlış yönde 7 ile 11 devirme gerekir. Tuş takımı yalnızca 1-6 izin verdiğinden, ikisi de doğru olmalı: sayı ve yön." },
+          { tip: true, p: "<strong>Her hedefin tam olarak bir doğru çözümü vardır.</strong> Hedefe ulaştıran her zaman yalnızca bir sayı ve yön kombinasyonu vardır." },
+          { t: "48 Kombinasyon. Maksimum 6 Devirme.", p: "Tam olarak <b>48 farklı kombinasyon</b> vardır. Her biri <b>en fazla 6 devirme</b> ile ulaşılabilir. Her zaman. Tek soru: <b>Saat yönünde mi, tersine mi?</b><br><br>Doğru yönü seçen asla 6\u2019dan fazlasına ihtiyaç duymaz. 50:50 şans \u2013 ya da saf bilgi." },
+          { t: "\u0130pucu: Kenar Alanlarını Hatırla", p: "Hangi sayı veya motiflerin kenarlarda karşılıklı durduğunu hatırla. Bu çok yardımcı olur." },
+          { t: "Küp Görünümü Jokerleri", p: "Bazı hedeflerde küp görünümü jokerin vardır. Küp kendini gösterir \u2013 fırsatı değerlendir!<br><br><b>Köşe Görünümü:</b> Küp köşesi üzerinde durur. Üç yüzü aynı anda görürsün.<br><br><b>Devirme Görünümü:</b> Küp yavaşça kutudan geçer. Yüzlerin birbiri ardına ortaya çıktığını görürsün.<br><br>Dikkatli bak ve hatırla!" },
+          { t: "Mantık: 3 ve 6 Devirme", p: "Hedef, küpün mevcut konumunda zaten gösterdiği bir küp alanı belirttiğinde, tam olarak 3 veya 6 kez devirmek gerekir.<br><br>Doğru yön saf mantıkla bulunur." },
+          { t: "Saat Karşılaştırması", p: "Bir saat hayal et. Akrebi <b>11 saat ileri</b> veya <b>1 saat geri</b> alabilirsin. Aynı konum.<br><br>Küp tam olarak böyle çalışır:<br>\u2022 <b>11 devirme</b> saat yönünde = <b>1 devirme</b> tersine<br>\u2022 <b>8 devirme</b> bir yönde = <b>4</b> ters yönde<br>\u2022 <b>6 devirme</b> SY = <b>6</b> ters \u2013 fark etmez<br>\u2022 <b>12 devirme</b>: Başa dönüş" }
+        ],
+        footer: "100% skor her zaman mümkün \u2013 mantık, hafıza ve uzamsal hayal gücüyle.",
+        closer: "Kutudaki küple bol gerilim, eğlence ve kafa patlatma<br><strong>KIPP CLUB</strong> ile."
+      }
+    };
+
+    const lang = localStorage.getItem('digikipp_lang') || 'de';
+    const t = T[lang] || T.de;
+
+    document.getElementById('kpTitle').textContent = t.title;
+    document.getElementById('kpSubtitle').textContent = t.subtitle;
+    document.getElementById('fl1').textContent = t.fl1;
+    document.getElementById('fl2').textContent = t.fl2;
+    document.getElementById('fl3').textContent = t.fl3;
+
+    let html = '';
+    for (const s of t.sections) {
+      if (s.tip) {
+        html += '<div class="tip"><p>' + s.p + '</p></div>';
+      } else {
+        html += '<div class="section"><h2>' + s.t.toUpperCase() + '</h2><p>' + s.p + '</p></div>';
+      }
+    }
+    html += '<hr class="divider">';
+    html += '<div class="section" style="text-align:center;"><p>' + t.footer + '</p>';
+    html += '<p style="margin-top:18px;color:#d4a843;font-size:16px;letter-spacing:1px;">' + t.closer + '</p></div>';
+
+    document.getElementById('content').innerHTML = html;
+  </script>
 </body>
 </html>
