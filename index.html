@@ -338,16 +338,16 @@
   <!-- Level-Auswahl Overlay -->
   <div id="levelOverlay">
     <button id="levelClose" onclick="document.getElementById('levelOverlay').classList.remove('show')"><img src="rw.webp" alt="Zurück"></button>
-    <h2>WÄHLE DEIN LEVEL</h2>
+    <h2 id="lvlTitle">WÄHLE DEIN LEVEL</h2>
     <div class="lvl-btn" onclick="window.location='training.html'">TRAINING</div>
-    <div class="lvl-sub">mit TUTORIAL</div>
+    <div class="lvl-sub" id="lvlSub1">mit TUTORIAL</div>
     <div class="lvl-btn" onclick="window.location='training.html?skip=1'">TRAINING</div>
-    <div class="lvl-sub">ohne TUTORIAL</div>
+    <div class="lvl-sub" id="lvlSub2">ohne TUTORIAL</div>
     <div class="lvl-btn" onclick="window.location='brainy.html'">BRAINY</div>
     <div class="lvl-btn" onclick="window.location='brain.html'">BRAIN</div>
     <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
-      <div class="lvl-btn" onclick="window.location='kipp-prinzip.html'">KIPP PRINZIP</div>
-      <div class="lvl-sub-big">für Supertüftler</div>
+      <div class="lvl-btn" id="lvlKP" onclick="window.location='kipp-prinzip.html'">KIPP PRINZIP</div>
+      <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
     </div>
   </div>
 
@@ -536,7 +536,8 @@
     // Teilen
     function shareApp(){
       const url = window.location.href;
-      const text = "DigiKipp – schau mal vorbei!";
+      const t = LVL_T[currentLang] || LVL_T.de;
+      const text = t.share;
 
       if(navigator.share){
         navigator.share({ title:"DigiKipp", text, url }).catch(()=>{});
@@ -587,7 +588,7 @@
         localStorage.setItem("digikipp_lang", currentLang);
         updateToggles();
         // Auto-close nach kurzer Verzögerung
-        setTimeout(() => { langDropdown.classList.remove("show"); document.getElementById("dimOverlay").classList.remove("active"); }, 200);
+        setTimeout(() => { langDropdown.classList.remove("show"); document.getElementById("dimOverlay").classList.remove("active"); applyLevelLang(); }, 200);
       };
     });
 
@@ -597,6 +598,26 @@
       document.getElementById("dimOverlay").classList.remove("active");
     });
     langDropdown.onclick = (e) => e.stopPropagation();
+
+    // === LEVEL OVERLAY TRANSLATIONS ===
+    const LVL_T = {
+      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "DigiKipp \u2013 schau mal vorbei!" },
+      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "DigiKipp \u2013 check it out!" },
+      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "DigiKipp \u2013 \u00a1echa un vistazo!" },
+      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "DigiKipp \u2013 viens voir !" },
+      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO RIBALTAMENTO", s3: "per Super Rompicapi", share: "DigiKipp \u2013 dai un\u2019occhiata!" },
+      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "DigiKipp \u2013 bir g\u00f6z at!" }
+    };
+
+    function applyLevelLang() {
+      const t = LVL_T[currentLang] || LVL_T.de;
+      document.getElementById('lvlTitle').textContent = t.title;
+      document.getElementById('lvlSub1').textContent = t.s1;
+      document.getElementById('lvlSub2').textContent = t.s2;
+      document.getElementById('lvlKP').textContent = t.kp;
+      document.getElementById('lvlSub3').textContent = t.s3;
+    }
+    applyLevelLang();
 
   </script>
 </body>
