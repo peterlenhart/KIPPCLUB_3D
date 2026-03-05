@@ -46,28 +46,64 @@
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
       z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: bold 18px Arial;
+      color: #e0d8c8;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      background: transparent;
+      border: none;
     }
   </style>
 </head>
 <body>
   <div id="wrap">
     <img id="bgImg" src="tschuess.webp" alt="Tschüss">
+    <div id="txtTitle" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none;z-index:5;font-weight:bold;color:#d4a843;letter-spacing:1px;text-shadow:0 2px 4px rgba(0,0,0,0.7),0 0 12px rgba(160,120,40,0.3);background:linear-gradient(180deg,#f2dca8,#d8b878 40%,#b89850 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.7));">BIS BALD!</div>
+    <div id="txtSub" style="position:absolute;left:10%;right:10%;text-align:center;pointer-events:none;z-index:5;font-style:italic;color:#c8b898;letter-spacing:0px;text-shadow:0 1px 3px rgba(0,0,0,0.6),0 0 8px rgba(140,110,60,0.2);">Danke für's Spielen.</div>
     <div id="clickNochmal"></div>
   </div>
 
   <script>
+    var T = {
+      de: { t: "BIS BALD!", s: "Danke für's Spielen.", b: "NOCHMAL SPIELEN" },
+      en: { t: "SEE YOU SOON!", s: "Thanks for playing.", b: "PLAY AGAIN" },
+      es: { t: "¡HASTA PRONTO!", s: "Gracias por jugar.", b: "JUGAR DE NUEVO" },
+      fr: { t: "À BIENTÔT !", s: "Merci d'avoir joué.", b: "REJOUER" },
+      it: { t: "A PRESTO!", s: "Grazie per aver giocato.", b: "GIOCA ANCORA" },
+      tr: { t: "GÖRÜŞÜRÜZ!", s: "Oynadığın için teşekkürler.", b: "TEKRAR OYNA" }
+    };
+    var lang = "de";
+    try { lang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
+    var t = T[lang] || T.de;
+    document.getElementById("txtTitle").textContent = t.t;
+    document.getElementById("txtSub").textContent = t.s;
+    document.getElementById("clickNochmal").textContent = t.b;
+
     function positionButton() {
-      // Bild: 1134 x 2788 Originalpixel
-      // Bei 100vw Breite: Scale = window.innerWidth / 1134
-      // Button im Original: Y=1420..1570, X=213..923
+      // Positionen gemessen aus Referenzbild (625x1536):
+      // BIS BALD! Mitte: y=39% → 540*0.39=210px
+      // Danke: Mitte: y=43.5% → 540*0.435=235px
+      // Button: y=52%-55.5%, x=21%-78%
       var vw = window.innerWidth;
-      var scale = vw / 1134;
+      var scale = vw / 360;
+
+      var title = document.getElementById("txtTitle");
+      title.style.top = Math.round(200 * scale) + "px";
+      title.style.fontSize = Math.round(30 * scale) + "px";
+
+      var sub = document.getElementById("txtSub");
+      sub.style.top = Math.round(232 * scale) + "px";
+      sub.style.fontSize = Math.round(17 * scale) + "px";
 
       var btn = document.getElementById("clickNochmal");
-      btn.style.left   = Math.round(213 * scale) + "px";
-      btn.style.top    = Math.round(1420 * scale) + "px";
-      btn.style.width  = Math.round(710 * scale) + "px";
-      btn.style.height = Math.round(150 * scale) + "px";
+      btn.style.left   = Math.round(76 * scale) + "px";
+      btn.style.top    = Math.round(281 * scale) + "px";
+      btn.style.width  = Math.round(205 * scale) + "px";
+      btn.style.height = Math.round(19 * scale) + "px";
+      btn.style.fontSize = Math.round(14 * scale) + "px";
     }
 
     positionButton();
