@@ -2431,21 +2431,16 @@
           return;
         }
         
-        // Prüfe ob Spieler schon mal Training gespielt hat
-        let hasPlayed = false;
-        try { hasPlayed = localStorage.getItem('digikipp_training_played') === 'true'; } catch(e) {}
-        
-        if (hasPlayed) {
-          // WIEDERHOLUNGSSPIEL: Kein Overlay, direkt starten
+        // ?skip=1 → TRAINING ohne Tutorial
+        if (urlParams.get('skip') === '1') {
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
           unlockAndPlayBgMusic();
-          // Direkt Spiel starten (ohne Tutorial)
           setTimeout(() => { startKipp21(false); }, 200);
           return;
         }
         
-        // ERSTES SPIEL: Direkt ins Spiel (kein SPIELEN-Button Zwischenschritt)
+        // Standard: TRAINING mit Tutorial
         sct.style.display = 'none';
         
         setTimeout(() => {
@@ -2546,7 +2541,7 @@
         const total = hits + fails;
         const pct = total > 0 ? Math.round(hits / total * 100) : 0;
         const scores = loadBestScores();
-        scores.push({ level: level, hits: hits, fails: fails, pct: pct, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level });
+        scores.push({ level: level, hits: hits, fails: fails, pct: pct, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level, ts: Date.now() });
         scores.sort((a, b) => b.pct - a.pct || a.fails - b.fails);
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(top11));
@@ -2592,6 +2587,12 @@
       if (titleEl) titleEl.textContent = (T.bs || 'HIGHSCORES') + ' (Best = ' + bestPct + '%)';
       const scores = loadBestScores();
       
+      let latestIdx = -1;
+      let latestTs = 0;
+      for (let i = 0; i < scores.length; i++) {
+        if ((scores[i].ts || 0) > latestTs) { latestTs = scores[i].ts; latestIdx = i; }
+      }
+      
       for (let i = 0; i < 11; i++) {
         const el = document.getElementById('bsRow' + (i + 1));
         if (!el) continue;
@@ -2602,11 +2603,11 @@
           const fails = s.fails || 0;
           const total = hits + fails;
           const pct = total > 0 ? Math.round(hits / total * 100) : 0;
-          // Format: TRAINING | 67% (4 HITs / 2 FAILs)
-          el.innerHTML = '<span style="color:#c8c0b0;font-size:13px">' + lvName + '</span>' +
+          const ul = (i === latestIdx) ? 'text-decoration:underline;text-underline-offset:3px;' : '';
+          el.innerHTML = '<span style="color:#c8c0b0;font-size:13px;' + ul + '">' + lvName + '</span>' +
             ' <span style="color:#888;font-size:12px">|</span> ' +
-            '<span style="color:#cedb25;font-size:17px;font-weight:bold">' + pct + '%</span>' +
-            ' <span style="color:#999;font-size:12px">(' +
+            '<span style="color:#cedb25;font-size:17px;font-weight:bold;' + ul + '">' + pct + '%</span>' +
+            ' <span style="color:#999;font-size:12px;' + ul + '">(' +
             '<span style="color:#cedb25">' + hits + '</span> HIT' + (hits !== 1 ? 's' : '') +
             ' / <span style="color:#e05050">' + fails + '</span> FAIL' + (fails !== 1 ? 's' : '') +
             ')</span>';
@@ -4122,7 +4123,7 @@
       
       // localStorage: erstes Spiel absolviert
       // TESTING: localStorage deaktiviert
-      // try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
+
       
       // Tutorial beenden, SPIELZUSTAND BEIBEHALTEN (1 HIT mitnehmen)
       // → Zentrale Continuation-Funktion aufrufen
@@ -4346,15 +4347,25 @@
         const ekpb = document.getElementById('endKippPrinzipBtn');
         if (ekpb) ekpb.style.display = 'none';
         
-        // Button: NÄCHSTES LEVEL (421px)
-        abtn.textContent = 'NEXT LEVEL';
-        abtn.style.cssText = btnCSS(451, 18, 2.5);
-        abtn.onclick = () => {
-          hideAllEndBtns();
-          // BRAINY Level starten — Weiterleitung zu brainy.html
-          try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-          window.location.href = 'index.html';
-        };
+        // Button text depends on level
+        if (currentLevel >= 3) {
+          // BRAIN (höchstes Level): Nochmal spielen
+          abtn.textContent = 'NOCHMAL';
+          abtn.style.cssText = btnCSS(451, 18, 2.5);
+          abtn.onclick = () => {
+            hideAllEndBtns();
+            startBrainLevel();
+          };
+        } else {
+          // TRAINING: Nächstes Level
+          abtn.textContent = 'NEXT LEVEL';
+          abtn.style.cssText = btnCSS(451, 18, 2.5);
+          abtn.onclick = () => {
+            hideAllEndBtns();
+            try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
+            window.location.href = 'index.html';
+          };
+        }
         
         console.log('[END] Buttons created successfully');
         if (dbg) dbg.textContent += ' | OK 2btn';
@@ -4950,7 +4961,7 @@
               // TRAINING Score speichern
               saveBestScore(currentLevel, kipp21Done, kipp21Fails);
               showLevelScore(kipp21Done, kipp21Fails);
-              try { localStorage.setItem('digikipp_training_played', 'true'); } catch(e) {}
+
               
               // UI-Buttons ausblenden, aber HIT-Texte bleiben sichtbar!
               ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
@@ -6800,6 +6811,10 @@
       // Tutorial: Replay-Code handelt das Ende selbst
       if (kipp21WithTutorial && currentLevel < 3) { console.log('[showGameEnd] skip — tutorial'); return; }
       gamePhase = 'ende';
+      // HIT-Texte sofort entfernen
+      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+      hitTextEls.forEach(el => el.remove());
+      hitTextEls.length = 0;
       let isNewRec = false;
       try {
         hideKniffIcons();
