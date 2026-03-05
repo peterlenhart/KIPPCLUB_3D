@@ -355,10 +355,10 @@
   <div id="closeModal" class="modalOverlay hidden">
     <div class="modalContainer">
       <img src="sicherheitsabfrage.webp" class="modalImage" alt="Sicherheitsabfrage">
-      <div id="modalTitle" style="position:absolute;left:0;right:0;top:37%;text-align:center;font:bold 28px Arial;color:#e8dcc0;letter-spacing:2px;text-shadow:0 2px 6px rgba(0,0,0,0.8);pointer-events:none;">Spiel beenden?</div>
-      <div id="modalSub" style="position:absolute;left:10%;right:10%;top:43%;text-align:center;font:400 18px Arial;color:#c0b098;letter-spacing:0.5px;text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;">Möchtest du das Spiel<br>wirklich beenden?</div>
-      <div id="modalAbbrechen" class="modalClickArea" style="display:flex;align-items:center;justify-content:center;font:bold 17px Arial;color:#d0d8c0;letter-spacing:1.5px;text-shadow:0 1px 3px rgba(0,0,0,0.8);"></div>
-      <div id="modalBeenden" class="modalClickArea" style="display:flex;align-items:center;justify-content:center;font:bold 17px Arial;color:#e0c8b0;letter-spacing:1.5px;text-shadow:0 1px 3px rgba(0,0,0,0.8);"></div>
+      <div id="modalTitle" style="position:absolute;left:0;right:0;top:35%;text-align:center;font:bold 52px Arial;color:#e8dcc0;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,0.8);pointer-events:none;">Spiel beenden?</div>
+      <div id="modalSub" style="position:absolute;left:10%;right:10%;top:43%;text-align:center;font:400 32px Arial;color:#c0b098;letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,0.8);pointer-events:none;">Möchtest du das Spiel<br>wirklich beenden?</div>
+      <div id="modalAbbrechen" class="modalClickArea" style="display:flex;align-items:center;justify-content:center;font:bold 30px Arial;color:#d0d8c0;letter-spacing:2px;text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>
+      <div id="modalBeenden" class="modalClickArea" style="display:flex;align-items:center;justify-content:center;font:bold 30px Arial;color:#e0c8b0;letter-spacing:2px;text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>
     </div>
   </div>
 
@@ -512,22 +512,17 @@
     const modalAbbrechen = document.getElementById("modalAbbrechen");
     const modalBeenden = document.getElementById("modalBeenden");
 
-    // Klickbereiche für 1136px breites Bild (8 × 142px)
-    const imgWidth = 1136;
-    const cellSize = 142;
-    const row8Top = (8 + HEADER_ROW_OFFSET - 1) * cellSize;
+    // Klickbereiche relativ zum Bild (prozentual)
+    // Buttons bei ca. 58-66% vertikal, links/rechts jeweils Hälfte
+    modalAbbrechen.style.left = "13%";
+    modalAbbrechen.style.top = "57%";
+    modalAbbrechen.style.width = "27%";
+    modalAbbrechen.style.height = "9%";
     
-    // Abbrechen: halbe Spalte B (1.5) bis Ende Spalte D (4)
-    modalAbbrechen.style.left = (cellSize * 1.5) + "px";
-    modalAbbrechen.style.top = row8Top + "px";
-    modalAbbrechen.style.width = (cellSize * 2.5) + "px";
-    modalAbbrechen.style.height = cellSize + "px";
-    
-    // Beenden: Spalte E (4) bis halbe Spalte G (6.5)
-    modalBeenden.style.left = (cellSize * 4) + "px";
-    modalBeenden.style.top = row8Top + "px";
-    modalBeenden.style.width = (cellSize * 2.5) + "px";
-    modalBeenden.style.height = cellSize + "px";
+    modalBeenden.style.left = "52%";
+    modalBeenden.style.top = "57%";
+    modalBeenden.style.width = "27%";
+    modalBeenden.style.height = "9%";
 
     closeBtn.onclick = () => closeModal.classList.remove("hidden");
     modalAbbrechen.onclick = () => closeModal.classList.add("hidden");
