@@ -36,7 +36,9 @@
       left: 50%;
       transform: translateX(-50%);
       width: 100vw;
-      height: auto;
+      height: 100vh;
+      object-fit: cover;
+      object-position: top center;
       pointer-events: none;
     }
 
@@ -91,16 +93,16 @@
       var scale = vw / 360;
 
       var title = document.getElementById("txtTitle");
-      title.style.top = Math.round(200 * scale) + "px";
+      title.style.top = Math.round(215 * scale) + "px";
       title.style.fontSize = Math.round(30 * scale) + "px";
 
       var sub = document.getElementById("txtSub");
-      sub.style.top = Math.round(232 * scale) + "px";
+      sub.style.top = Math.round(247 * scale) + "px";
       sub.style.fontSize = Math.round(17 * scale) + "px";
 
       var btn = document.getElementById("clickNochmal");
       btn.style.left   = Math.round(76 * scale) + "px";
-      btn.style.top    = Math.round(281 * scale) + "px";
+      btn.style.top    = Math.round(291 * scale) + "px";
       btn.style.width  = Math.round(205 * scale) + "px";
       btn.style.height = Math.round(19 * scale) + "px";
       btn.style.fontSize = Math.round(14 * scale) + "px";
