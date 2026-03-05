@@ -276,15 +276,16 @@
     #levelOverlay {
       display:none; position:fixed; left:0; top:0; width:100%; height:100%;
       background:rgba(0,0,0,0.82); backdrop-filter:blur(6px); z-index:8000;
-      flex-direction:column; align-items:center; justify-content:center; gap:18px;
+      flex-direction:column; align-items:center; justify-content:flex-start; padding-top:12vh; gap:14px;
     }
     #levelOverlay.show { display:flex; }
-    #levelOverlay h2 { font-size:28px; font-weight:bold; letter-spacing:3px; color:#d4b48c; text-shadow:0 2px 6px rgba(0,0,0,0.8); margin-bottom:12px; }
-    .lvl-btn { width:320px; height:62px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-weight:bold; font-size:19px; letter-spacing:2.5px; text-transform:uppercase; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6); background:url('button_lang.webp') center/cover no-repeat; -webkit-tap-highlight-color:transparent; }
+    #levelOverlay h2 { font-size:26px; font-weight:bold; letter-spacing:3px; color:#d4b48c; text-shadow:0 2px 6px rgba(0,0,0,0.8); margin-bottom:8px; }
+    .lvl-btn { width:320px; height:58px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-weight:bold; font-size:19px; letter-spacing:2.5px; text-transform:uppercase; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6); background:url('button_lang.webp') center/cover no-repeat; -webkit-tap-highlight-color:transparent; }
     .lvl-btn:active { filter:brightness(0.85); }
     .lvl-btn.disabled { opacity:0.3; pointer-events:none; }
-    .lvl-btn .badge { font-size:11px; letter-spacing:1px; color:#a08060; margin-left:10px; font-weight:normal; }
-    #levelBack { margin-top:10px; font-size:14px; color:#8a7a66; letter-spacing:1px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+    .lvl-sub { font-size:13px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; }
+    #levelClose { position:absolute; top:12px; left:16px; width:48px; height:48px; cursor:pointer; background:none; border:none; padding:0; -webkit-tap-highlight-color:transparent; pointer-events:auto; }
+    #levelClose img { width:100%; height:100%; object-fit:contain; }
   </style>
 </head>
 
@@ -335,13 +336,18 @@
 
   <!-- Level-Auswahl Overlay -->
   <div id="levelOverlay">
+    <button id="levelClose" onclick="document.getElementById('levelOverlay').classList.remove('show')"><img src="rw.webp" alt="Zurück"></button>
     <h2>WÄHLE DEIN LEVEL</h2>
     <div class="lvl-btn" onclick="window.location='training.html'">TRAINING</div>
-    <div style="font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-14px; text-align:center;">mit TUTORIAL</div>
+    <div class="lvl-sub">mit TUTORIAL</div>
+    <div class="lvl-btn" onclick="window.location='training.html?skip=1'">TRAINING</div>
+    <div class="lvl-sub">ohne TUTORIAL</div>
     <div class="lvl-btn" onclick="window.location='brainy.html'">BRAINY</div>
     <div class="lvl-btn" onclick="window.location='brain.html'">BRAIN</div>
-    <div class="lvl-btn disabled">MASTERBRAIN <span class="badge">BALD</span></div>
-    <div id="levelBack" onclick="document.getElementById('levelOverlay').classList.remove('show')"><span style="vertical-align:middle;font-size:20px;">←</span><span style="vertical-align:middle;"> ZURÜCK</span></div>
+    <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div class="lvl-btn" onclick="window.location='kipp-prinzip.html'">KIPP PRINZIP</div>
+      <div class="lvl-sub">für Supertüftler</div>
+    </div>
   </div>
 
   <!-- Modal -->
