@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIPP PRINZIP</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a0e06">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      height:100%; overflow-y:auto; overflow-x:hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #1a0e06;
+      color: #d4c4a8;
+    }
+    body {
+      display:flex; justify-content:center;
+    }
+    .page {
+      max-width:400px; width:100%; padding:20px 24px 40px;
+    }
+
+    /* Back button */
+    .back-btn {
+      position:fixed; top:12px; left:12px; z-index:100;
+      width:44px; height:44px; border:none; background:none;
+      cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent;
+    }
+    .back-btn img { width:100%; height:100%; object-fit:contain; }
+
+    /* Title */
+    h1 {
+      text-align:center; font-size:28px; font-weight:bold;
+      letter-spacing:4px; color:#d4a843;
+      text-shadow:0 2px 8px rgba(0,0,0,0.6), 0 0 20px rgba(212,168,67,0.15);
+      margin: 16px 0 6px;
+    }
+    .subtitle {
+      text-align:center; font-size:14px; letter-spacing:2px;
+      color:#a08060; margin-bottom:28px;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom:24px;
+    }
+    .section h2 {
+      font-size:17px; font-weight:bold; letter-spacing:2px;
+      color:#cedb25; margin-bottom:8px;
+      text-shadow:0 1px 4px rgba(0,0,0,0.5);
+    }
+    .section p {
+      font-size:15px; line-height:1.65; color:#c8b898;
+    }
+    .section p + p {
+      margin-top:10px;
+    }
+
+    /* Highlight boxes */
+    .tip {
+      background: rgba(206,219,37,0.08);
+      border-left: 3px solid #cedb25;
+      padding: 12px 14px;
+      margin: 14px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .tip p {
+      font-size:14px; line-height:1.6; color:#d4c4a8;
+    }
+    .tip strong {
+      color:#cedb25;
+    }
+
+    /* Fact row */
+    .facts {
+      display:flex; justify-content:space-around;
+      margin:16px 0 20px;
+      gap:8px;
+    }
+    .fact-box {
+      flex:1; text-align:center;
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(212,168,67,0.2);
+      border-radius:8px; padding:12px 6px;
+    }
+    .fact-num {
+      font-size:28px; font-weight:bold; color:#cedb25;
+      text-shadow:0 1px 6px rgba(206,219,37,0.3);
+    }
+    .fact-label {
+      font-size:11px; letter-spacing:1px; color:#a08060;
+      margin-top:4px;
+    }
+
+    /* Divider */
+    .divider {
+      border:none; border-top:1px solid rgba(138,122,102,0.2);
+      margin:24px 0;
+    }
+
+    /* Special: clock comparison */
+    .clock-note {
+      background:rgba(164,27,133,0.1);
+      border-left:3px solid #a41b85;
+      padding:12px 14px;
+      margin:14px 0;
+      border-radius:0 6px 6px 0;
+    }
+    .clock-note p { font-size:14px; line-height:1.6; }
+    .clock-note strong { color:#a41b85; }
+  </style>
+</head>
+<body>
+
+  <button class="back-btn" onclick="history.back()">
+    <img src="rw.webp" alt="Zurück">
+  </button>
+
+  <div class="page">
+
+    <h1>KIPP PRINZIP</h1>
+    <div class="subtitle">FÜR SUPERTÜFTLER</div>
+
+    <div class="facts">
+      <div class="fact-box">
+        <div class="fact-num">3</div>
+        <div class="fact-label">WÜRFELFLÄCHEN</div>
+      </div>
+      <div class="fact-box">
+        <div class="fact-num">16</div>
+        <div class="fact-label">RAHMENFELDER</div>
+      </div>
+      <div class="fact-box">
+        <div class="fact-num">48</div>
+        <div class="fact-label">MÖGLICHKEITEN</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>DAS ZIEL</h2>
+      <p>Jedes Kippziel gibt dir ein Würfelfeld und ein Rahmenfeld vor. Deine Aufgabe: Kippe den Würfel so oft und in die richtige Richtung, dass genau dieses Würfelfeld am vorgegebenen Rahmenfeld zu liegen kommt.</p>
+    </div>
+
+    <div class="section">
+      <h2>1 BIS 6 KIPPS</h2>
+      <p>Jede Würfelfeld-Rahmenfeld-Kombination ist mit maximal 6 Kipps erreichbar — vorausgesetzt, die Richtung stimmt.</p>
+      <p>In die falsche Richtung wären es 7 bis 11 Kipps. Da die Zahlentastatur nur 1 bis 6 erlaubt, muss beides stimmen: Kippzahl und Kipprichtung.</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>Jedes Kippziel hat genau eine richtige Lösung.</strong> Es gibt immer nur eine Kombination aus Anzahl und Richtung, die zum Treffer führt.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <h2>KIPP-TIPP: KANTEN-FELDER MERKEN</h2>
+      <p>Merke dir, welche Zahlen oder Motive an den Kanten gegenüberliegen. Das hilft enorm.</p>
+    </div>
+
+    <div class="section">
+      <h2>WÜRFELBLICK-JOKER</h2>
+      <p>Bei manchen Kippzielen hast du einen Würfelblick-Joker. Der Würfel zeigt sich dir — nutze die Chance!</p>
+      <p><strong>Eckblick:</strong> Der Würfel stellt sich auf die Ecke. Du siehst alle drei Flächen gleichzeitig.</p>
+      <p><strong>Kippblick:</strong> Der Würfel kippt langsam durch die Box. Du siehst, wie die Flächen nacheinander erscheinen.</p>
+      <p>Genau hinschauen und merken!</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <h2>LOGIK: 3er & 6er KIPPS</h2>
+      <p>Immer wenn das Kippziel ein Würfelfeld vorgibt, das der Würfel in seiner aktuellen Lage bereits zeigt, dann musst du 3 oder 6 mal kippen.</p>
+      <p>Die richtige Richtung findest du mit reiner Logik heraus.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <h2>DER UHRENVERGLEICH</h2>
+      <p>Stell dir eine Uhr vor. Du kannst den Stundenzeiger <strong>11 Stunden vorstellen</strong> — oder <strong>1 Stunde zurück</strong>. Du landest auf derselben Stunde.</p>
+      <p>Genau so funktioniert der Würfel:</p>
+      <p>• <strong>11 Kipps</strong> im Uhrzeigersinn = <strong>1 Kipp</strong> gegen den Uhrzeigersinn<br>
+      • <strong>8 Kipps</strong> in eine Richtung = <strong>4 Kipps</strong> in die Gegenrichtung<br>
+      • <strong>6 Kipps</strong> im UZS = <strong>6 Kipps</strong> gegen UZS — Richtung egal<br>
+      • <strong>12 Kipps</strong> in beliebige Richtung: Wieder wie am Anfang</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section" style="text-align:center;">
+      <p>100% Score ist immer möglich — mit Logik, Merkfähigkeit und räumlicher Vorstellungskraft.</p>
+      <p style="margin-top:18px; color:#d4a843; font-size:16px; letter-spacing:1px;">Viel Spannung, Spaß und Kopfzerbrechen<br>mit <strong>KIPP CLUB</strong>.</p>
+    </div>
+
+  </div>
+</body>
+</html>
