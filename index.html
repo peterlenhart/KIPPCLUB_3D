@@ -281,6 +281,9 @@
     #levelOverlay.show { display:flex; }
     #levelOverlay h2 { font-size:26px; font-weight:bold; letter-spacing:3px; color:#d4b48c; text-shadow:0 2px 6px rgba(0,0,0,0.8); margin-bottom:8px; }
     .lvl-btn { width:320px; height:58px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-weight:bold; font-size:19px; letter-spacing:2.5px; text-transform:uppercase; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6); background:url('button_lang.webp') center/cover no-repeat; -webkit-tap-highlight-color:transparent; }
+    .lvl-btn-short { width:152px; height:52px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-weight:bold; font-size:16px; letter-spacing:2px; text-transform:uppercase; color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6); background:url('button_kurz.webp') center/cover no-repeat; -webkit-tap-highlight-color:transparent; }
+    .lvl-btn-short:active { filter:brightness(0.85); }
+    .lvl-row { display:flex; gap:16px; justify-content:center; }
     .lvl-btn:active { filter:brightness(0.85); }
     .lvl-btn.disabled { opacity:0.3; pointer-events:none; }
     .lvl-sub { font-size:13px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; }
@@ -343,8 +346,14 @@
     <div class="lvl-sub" id="lvlSub1">mit TUTORIAL</div>
     <div class="lvl-btn" onclick="window.location='training.html?skip=1'">TRAINING</div>
     <div class="lvl-sub" id="lvlSub2">ohne TUTORIAL</div>
-    <div class="lvl-btn" onclick="window.location='brainy.html'">BRAINY</div>
-    <div class="lvl-btn" onclick="window.location='brain.html'">BRAIN</div>
+    <div class="lvl-row">
+      <div class="lvl-btn-short" onclick="window.location='brainy.html'">BRAINY</div>
+      <div class="lvl-btn-short" onclick="window.location='brain.html'">BRAIN</div>
+    </div>
+    <div class="lvl-btn" id="lvlK21" onclick="window.location='kipp21.html'">KIPP 21</div>
+    <div class="lvl-sub" id="lvlSub4">mit TUTORIAL</div>
+    <div class="lvl-btn" onclick="window.location='kipp21.html?skip=1'">KIPP 21</div>
+    <div class="lvl-sub" id="lvlSub5">ohne TUTORIAL</div>
     <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
       <div class="lvl-btn" id="lvlKP" onclick="window.location='kipp-prinzip.html'">KIPP PRINZIP</div>
       <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
@@ -612,6 +621,10 @@
       document.getElementById('lvlSub2').textContent = t.s2;
       document.getElementById('lvlKP').textContent = t.kp;
       document.getElementById('lvlSub3').textContent = t.s3;
+      const s4 = document.getElementById('lvlSub4');
+      const s5 = document.getElementById('lvlSub5');
+      if (s4) s4.textContent = t.s1;
+      if (s5) s5.textContent = t.s2;
       document.getElementById('modalTitle').textContent = t.mT;
       document.getElementById('modalSub').innerHTML = t.mS;
       document.getElementById('modalAbbrechen').textContent = t.mA;
