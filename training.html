@@ -4532,19 +4532,18 @@
       const challengeText = currentLevel >= 3 ? null : (currentLevel >= 2 ? (T.h4r || 'Mit 4 HITS ins BRAIN Level') : (T.h4b || 'Mit 4 HITS ins BRAINY Level'));
       if (challengeText) {
         pgtH.innerHTML = challengeText;
+        pgtS.style.display = 'none';
+        pgtH.style.fontSize = '21px';
+        pgtH.style.letterSpacing = '0';
+        pgtH.style.color = '';
+        pgtH.style.animation = 'none'; pgtH.style.opacity = '0'; pgtH.style.transform = 'scale(0.6)';
+        pgtS.style.animation = 'none'; pgtS.style.opacity = '0'; pgtS.style.transform = 'scale(0.6)';
+        pgt.style.display = 'block';
+        pgt.style.opacity = '1';
+        pgt.style.transition = 'none';
       } else {
         pgt.style.display = 'none';
       }
-      pgtS.style.display = 'none';
-      // Einzeilig im Sub-Stil
-      pgtH.style.fontSize = '21px';
-      pgtH.style.letterSpacing = '0';
-      pgtH.style.color = '';
-      pgtH.style.animation = 'none'; pgtH.style.opacity = '0'; pgtH.style.transform = 'scale(0.6)';
-      pgtS.style.animation = 'none'; pgtS.style.opacity = '0'; pgtS.style.transform = 'scale(0.6)';
-      pgt.style.display = 'block';
-      pgt.style.opacity = '1';
-      pgt.style.transition = 'none'; // Kein CSS transition – alles manuell
       
       // Hilfsfunktionen mit Promise – nächster Schritt startet erst wenn FERTIG
       function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -4673,6 +4672,8 @@
           _boxTopPt.project(camera);
           const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
           _eyeIcon.style.top = _eyeTopPx + 'px';
+          _eyeIcon.style.left = '50%';
+          _eyeIcon.style.opacity = '1';
           _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
           _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
           _eyeIcon.style.display = 'block';
