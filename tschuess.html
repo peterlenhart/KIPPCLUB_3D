@@ -66,6 +66,15 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 8px rgba(140,110,60,0.2);
     }
 
+    #imgFade {
+      position: absolute;
+      left: 0; right: 0;
+      height: 30px;
+      background: linear-gradient(to bottom, transparent, #1a0e0a);
+      pointer-events: none;
+      z-index: 2;
+    }
+
     #clickNochmal {
       position: absolute;
       cursor: pointer;
@@ -87,6 +96,7 @@
 <body>
   <div id="wrap">
     <img id="bgImg" src="tschuess.webp" alt="Tschüss">
+    <div id="imgFade"></div>
     <div id="txtTitle">BIS BALD!</div>
     <div id="txtSub">Danke für's Spielen.</div>
     <div id="clickNochmal"></div>
@@ -129,6 +139,12 @@
       var sub = document.getElementById("txtSub");
       sub.style.top = Math.round(255 / 540 * imgH) + "px";
       sub.style.fontSize = Math.round(16 / 360 * vw) + "px";
+
+      // Soft fade at image bottom
+      var fade = document.getElementById("imgFade");
+      var fadeH = Math.round(30 * vw / 360);
+      fade.style.top = Math.round(imgH - fadeH) + "px";
+      fade.style.height = fadeH + "px";
     }
 
     layout();
