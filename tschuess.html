@@ -60,8 +60,9 @@
       text-align: center;
       pointer-events: none;
       z-index: 5;
-      font-style: italic;
+      font-style: normal;
       color: #c8b898;
+      font-family: Arial, Helvetica, sans-serif;
       letter-spacing: 0px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 8px rgba(140,110,60,0.2);
     }
@@ -120,31 +121,27 @@
 
     function layout() {
       var vw = window.innerWidth;
-      var imgH = vw * 1.5; // 360→540 proportional
+      // Bild jetzt 360×800, Content-Bereich in oberen 540px
+      var scale = vw / 360;
 
-      // Button gemessen: y=281-316, x=73-284 in 360x540
       var btn = document.getElementById("clickNochmal");
-      btn.style.left   = Math.round(73 / 360 * vw) + "px";
-      btn.style.top    = Math.round(281 / 540 * imgH) + "px";
-      btn.style.width  = Math.round(211 / 360 * vw) + "px";
-      btn.style.height = Math.round(35 / 540 * imgH) + "px";
-      btn.style.fontSize = Math.round(14 / 360 * vw) + "px";
+      btn.style.left   = Math.round(73 * scale) + "px";
+      btn.style.top    = Math.round(281 * scale) + "px";
+      btn.style.width  = Math.round(211 * scale) + "px";
+      btn.style.height = Math.round(35 * scale) + "px";
+      btn.style.fontSize = Math.round(14 * scale) + "px";
 
-      // BIS BALD! zwischen Logo-Unterkante (~195px) und Button (281px), Mitte ~230px
       var title = document.getElementById("txtTitle");
-      title.style.top = Math.round(225 / 540 * imgH) + "px";
-      title.style.fontSize = Math.round(26 / 360 * vw) + "px";
+      title.style.top = Math.round(225 * scale) + "px";
+      title.style.fontSize = Math.round(26 * scale) + "px";
 
-      // Danke fürs Spielen: zwischen BIS BALD und Button, ~255px
       var sub = document.getElementById("txtSub");
-      sub.style.top = Math.round(255 / 540 * imgH) + "px";
-      sub.style.fontSize = Math.round(16 / 360 * vw) + "px";
+      sub.style.top = Math.round(255 * scale) + "px";
+      sub.style.fontSize = Math.round(16 * scale) + "px";
 
-      // Soft fade at image bottom
+      // Fade nicht mehr nötig
       var fade = document.getElementById("imgFade");
-      var fadeH = Math.round(30 * vw / 360);
-      fade.style.top = Math.round(imgH - fadeH) + "px";
-      fade.style.height = fadeH + "px";
+      if (fade) fade.style.display = "none";
     }
 
     layout();
