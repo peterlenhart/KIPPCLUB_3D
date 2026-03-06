@@ -974,6 +974,7 @@
   <!-- START-OVERLAY -->
   <div id="startOverlay">
     <div id="startChallengeText">
+      <div class="sctLine sctHead" id="sctHead"></div>
       <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
@@ -2451,18 +2452,33 @@
           return;
         }
         
-        // ?skip=1 nicht mehr nötig — Buttons im Spiel
+        // Standard: Hinweistext zeigen, dann SPIELEN/TUTORIAL Buttons
+        // Hinweistext inflate
+        if (head) {
+          head.style.display = 'block';
+          head.style.animation = 'none'; void head.offsetWidth;
+          head.style.animation = 'sctInflate 1.2s ease-out forwards';
+        }
+        sct.style.display = 'block';
         
-        // Standard: SPIELEN / TUTORIAL Buttons einblenden
-        sct.style.display = 'none';
-        const _btnSp = document.getElementById('btnSpielen');
-        const _btnDm = document.getElementById('btnDemo');
-        _btnSp.disabled = false;
-        _btnDm.disabled = false;
-        _btnSp.style.display = 'block';
-        _btnDm.style.display = 'block';
-        _btnSp.style.opacity = '1';
-        _btnDm.style.opacity = '1';
+        // Nach 2.5s: Text ausblenden, Buttons einblenden
+        setTimeout(() => {
+          if (head) {
+            head.style.animation = 'none'; void head.offsetWidth;
+            head.style.animation = 'sctDeflate 0.4s ease-in forwards';
+          }
+          setTimeout(() => {
+            sct.style.display = 'none';
+            const _btnSp = document.getElementById('btnSpielen');
+            const _btnDm = document.getElementById('btnDemo');
+            _btnSp.disabled = false;
+            _btnDm.disabled = false;
+            _btnSp.style.display = 'block';
+            _btnDm.style.display = 'block';
+            _btnSp.style.opacity = '1';
+            _btnDm.style.opacity = '1';
+          }, 500);
+        }, 2500);
       }
     }
 
@@ -8205,15 +8221,38 @@
       gamePhase = 'start';
       currentLevel = 1;
       
-      // startOverlay mit SPIELEN/TUTORIAL Buttons zeigen
+      // startOverlay mit Hinweistext, dann SPIELEN/TUTORIAL Buttons
       document.getElementById('startOverlay').style.display = 'flex';
-      document.getElementById('startChallengeText').style.display = 'none';
+      const _sct = document.getElementById('startChallengeText');
       document.getElementById('perfektGameText').style.display = 'none';
       const _bSp = document.getElementById('btnSpielen');
       const _bDm = document.getElementById('btnDemo');
-      _bSp.disabled = false; _bDm.disabled = false;
-      _bSp.style.display = 'block'; _bDm.style.display = 'block';
-      _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
+      _bSp.style.display = 'none'; _bDm.style.display = 'none';
+      _bSp.style.opacity = '0'; _bDm.style.opacity = '0';
+      _bSp.disabled = true; _bDm.disabled = true;
+      
+      // Hinweistext inflate
+      const _sctH = document.getElementById('sctHead');
+      if (_sctH) {
+        _sctH.textContent = T.h4b || 'Mit 4 HITS ins BRAINY Level';
+        _sctH.style.display = 'block';
+        _sctH.style.animation = 'none'; void _sctH.offsetWidth;
+        _sctH.style.animation = 'sctInflate 1.2s ease-out forwards';
+      }
+      _sct.style.display = 'block';
+      
+      setTimeout(() => {
+        if (_sctH) {
+          _sctH.style.animation = 'none'; void _sctH.offsetWidth;
+          _sctH.style.animation = 'sctDeflate 0.4s ease-in forwards';
+        }
+        setTimeout(() => {
+          _sct.style.display = 'none';
+          _bSp.disabled = false; _bDm.disabled = false;
+          _bSp.style.display = 'block'; _bDm.style.display = 'block';
+          _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
+        }, 500);
+      }, 2500);
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
