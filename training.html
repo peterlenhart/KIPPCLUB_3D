@@ -196,7 +196,6 @@
       color: #e0d0b8;
       text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(200,180,140,0.3);
       white-space: nowrap;
-      overflow: hidden;
       pointer-events: none;
       z-index: 1;
       transition: opacity 1.2s ease-in-out;
@@ -226,8 +225,8 @@
     @keyframes sctInflate {
       0% { transform: scale(0.6); opacity: 0; }
       20% { opacity: 1; }
-      55% { transform: scale(1.02); }
-      75% { transform: scale(0.99); }
+      55% { transform: scale(1.08); }
+      75% { transform: scale(0.98); }
       100% { transform: scale(1); opacity: 1; }
     }
     @keyframes sctDeflate {
@@ -976,11 +975,11 @@
   <div id="startOverlay">
     <div id="startChallengeText">
       <div class="sctLine sctHead" id="sctHead"></div>
-      <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
+      <div class="sctLine sctSub" id="sctSub"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
-    <button class="startClickZone" id="btnSpielen" disabled style="opacity:0;display:none">SPIELEN</button>
-    <button class="startClickZone" id="btnDemo" disabled style="opacity:0;display:none">TUTORIAL</button>
+    <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
+    <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
   
@@ -1365,8 +1364,8 @@
     document.getElementById('kpCloseBtn').addEventListener('click', () => {
       hideKippPrinzip();
     });
-    { const _sh = document.getElementById('sctHead'); if (_sh) _sh.textContent = T.h4b || 'Mit 4 HITS ins BRAINY Level'; }
-    { const _ss = document.getElementById('sctSub'); if (_ss) _ss.style.display = 'none'; }
+    { const _sh = document.getElementById('sctHead'); if (_sh) _sh.textContent = T.s1 || 'SPIEL ZIEL'; }
+    { const _ss = document.getElementById('sctSub'); if (_ss) _ss.textContent = T.h4b || 'Mit 4 HITS ins BRAINY Level'; }
     { const _ph = document.getElementById('pgtHead'); if (_ph) _ph.textContent = T.s1; }
     { const _ps = document.getElementById('pgtSub'); if (_ps) _ps.innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ',''); }
 
@@ -2417,8 +2416,12 @@
       tick();
     }
     
-    // Challenge-Sequenz wird NICHT mehr automatisch gestartet
-    // Stattdessen sequenziell nach Kipp-Animation in checkEnableButtons
+    // Nach erstem Frame starten (wie kipp21)
+    try {
+      requestAnimationFrame(() => {
+        try { startChallengeSequence(); } catch(e) { console.error('SCT error:', e); }
+      });
+    } catch(e) { console.error('SCT init error:', e); }
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
@@ -2453,33 +2456,44 @@
           return;
         }
         
-        // Standard: Hinweistext zeigen, dann SPIELEN/TUTORIAL Buttons
-        // Hinweistext inflate
-        if (head) {
-          head.style.display = 'block';
-          head.style.animation = 'none'; void head.offsetWidth;
-          head.style.animation = 'sctInflate 1.2s ease-out forwards';
-        }
-        sct.style.display = 'block';
+        // Head und Best immer verstecken
+        head.style.animation = 'none';
+        head.style.opacity = '0';
+        if (best) { best.style.animation = 'none'; best.style.opacity = '0'; }
         
-        // Nach 2.5s: Text ausblenden, Buttons einblenden
+        // Sub: wenn schon sichtbar (opacity > 0.5), nicht nochmal inflaten
+        const subVisible = parseFloat(getComputedStyle(sub).opacity) > 0.5;
+        
+        if (subVisible) {
+          sub.style.animation = 'none';
+          sub.style.opacity = '1';
+          sub.style.transform = 'scale(1)';
+          requestAnimationFrame(() => {
+            sub.style.animation = 'sctBreathe 1.6s ease-in-out';
+          });
+        } else {
+          sub.style.animation = 'none';
+          sub.style.opacity = '0';
+          sub.style.transform = 'scale(0.6)';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              sub.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
+            });
+          });
+        }
+        
+        // Nach Halten: Container ausfaden, Buttons rein
+        const fadeDelay = subVisible ? 1600 : 2800;
         setTimeout(() => {
-          if (head) {
-            head.style.animation = 'none'; void head.offsetWidth;
-            head.style.animation = 'sctDeflate 0.4s ease-in forwards';
-          }
+          sct.style.opacity = '0';
+          setTimeout(() => { sct.style.display = 'none'; }, 1300);
           setTimeout(() => {
-            sct.style.display = 'none';
-            const _btnSp = document.getElementById('btnSpielen');
-            const _btnDm = document.getElementById('btnDemo');
-            _btnSp.disabled = false;
-            _btnDm.disabled = false;
-            _btnSp.style.display = 'block';
-            _btnDm.style.display = 'block';
-            _btnSp.style.opacity = '1';
-            _btnDm.style.opacity = '1';
-          }, 500);
-        }, 2500);
+            document.getElementById('btnSpielen').disabled = false;
+            document.getElementById('btnSpielen').style.opacity = '1';
+            document.getElementById('btnDemo').disabled = false;
+            document.getElementById('btnDemo').style.opacity = '1';
+          }, 700);
+        }, fadeDelay);
       }
     }
 
@@ -8222,38 +8236,41 @@
       gamePhase = 'start';
       currentLevel = 1;
       
-      // startOverlay mit Hinweistext, dann SPIELEN/TUTORIAL Buttons
+      // startOverlay mit Hinweistext, dann SPIELEN/TUTORIAL Buttons (wie kipp21)
       document.getElementById('startOverlay').style.display = 'flex';
       const _sct = document.getElementById('startChallengeText');
       document.getElementById('perfektGameText').style.display = 'none';
       const _bSp = document.getElementById('btnSpielen');
       const _bDm = document.getElementById('btnDemo');
-      _bSp.style.display = 'none'; _bDm.style.display = 'none';
+      _bSp.style.display = 'block'; _bDm.style.display = 'block';
       _bSp.style.opacity = '0'; _bDm.style.opacity = '0';
       _bSp.disabled = true; _bDm.disabled = true;
       
-      // Hinweistext inflate
       const _sctH = document.getElementById('sctHead');
-      if (_sctH) {
-        _sctH.textContent = T.h4b || 'Mit 4 HITS ins BRAINY Level';
-        _sctH.style.display = 'block';
-        _sctH.style.animation = 'none'; void _sctH.offsetWidth;
-        _sctH.style.animation = 'sctInflate 1.2s ease-out forwards';
+      const _sctS = document.getElementById('sctSub');
+      if (_sctH) { _sctH.style.animation = 'none'; _sctH.style.opacity = '0'; }
+      if (_sctS) {
+        _sctS.textContent = T.h4b || 'Mit 4 HITS ins BRAINY Level';
+        _sctS.style.animation = 'none';
+        _sctS.style.opacity = '0';
+        _sctS.style.transform = 'scale(0.6)';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            _sctS.style.animation = 'sctInflate 1.2s ease-out forwards, sctBreathe 1.6s ease-in-out 1.2s';
+          });
+        });
       }
       _sct.style.display = 'block';
+      _sct.style.opacity = '1';
       
       setTimeout(() => {
-        if (_sctH) {
-          _sctH.style.animation = 'none'; void _sctH.offsetWidth;
-          _sctH.style.animation = 'sctDeflate 0.4s ease-in forwards';
-        }
+        _sct.style.opacity = '0';
+        setTimeout(() => { _sct.style.display = 'none'; }, 1300);
         setTimeout(() => {
-          _sct.style.display = 'none';
           _bSp.disabled = false; _bDm.disabled = false;
-          _bSp.style.display = 'block'; _bDm.style.display = 'block';
           _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
-        }, 500);
-      }, 2500);
+        }, 700);
+      }, 2800);
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
