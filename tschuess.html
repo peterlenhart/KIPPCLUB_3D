@@ -36,10 +36,34 @@
       left: 50%;
       transform: translateX(-50%);
       width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      object-position: top center;
+      height: auto;
       pointer-events: none;
+    }
+
+    #txtTitle {
+      position: absolute;
+      left: 0; right: 0;
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+      font-weight: bold;
+      letter-spacing: 1px;
+      background: linear-gradient(180deg, #f2dca8, #d8b878 40%, #b89850 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+    }
+
+    #txtSub {
+      position: absolute;
+      left: 10%; right: 10%;
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+      font-style: italic;
+      color: #c8b898;
+      letter-spacing: 0px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 8px rgba(140,110,60,0.2);
     }
 
     #clickNochmal {
@@ -51,20 +75,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font: bold 18px Arial;
       color: #e0d8c8;
       letter-spacing: 0.5px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.8);
       background: transparent;
       border: none;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div id="wrap">
     <img id="bgImg" src="tschuess.webp" alt="Tschüss">
-    <div id="txtTitle" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none;z-index:5;font-weight:bold;color:#d4a843;letter-spacing:1px;text-shadow:0 2px 4px rgba(0,0,0,0.7),0 0 12px rgba(160,120,40,0.3);background:linear-gradient(180deg,#f2dca8,#d8b878 40%,#b89850 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.7));">BIS BALD!</div>
-    <div id="txtSub" style="position:absolute;left:10%;right:10%;text-align:center;pointer-events:none;z-index:5;font-style:italic;color:#c8b898;letter-spacing:0px;text-shadow:0 1px 3px rgba(0,0,0,0.6),0 0 8px rgba(140,110,60,0.2);">Danke für's Spielen.</div>
+    <div id="txtTitle">BIS BALD!</div>
+    <div id="txtSub">Danke für's Spielen.</div>
     <div id="clickNochmal"></div>
   </div>
 
@@ -84,32 +108,31 @@
     document.getElementById("txtSub").textContent = t.s;
     document.getElementById("clickNochmal").textContent = t.b;
 
-    function positionButton() {
-      // Positionen gemessen aus Referenzbild (625x1536):
-      // BIS BALD! Mitte: y=39% → 540*0.39=210px
-      // Danke: Mitte: y=43.5% → 540*0.435=235px
-      // Button: y=52%-55.5%, x=21%-78%
+    function layout() {
       var vw = window.innerWidth;
-      var scale = vw / 360;
+      var imgH = vw * 1.5; // 360→540 proportional
 
-      var title = document.getElementById("txtTitle");
-      title.style.top = Math.round(215 * scale) + "px";
-      title.style.fontSize = Math.round(30 * scale) + "px";
-
-      var sub = document.getElementById("txtSub");
-      sub.style.top = Math.round(247 * scale) + "px";
-      sub.style.fontSize = Math.round(17 * scale) + "px";
-
+      // Button gemessen: y=281-316, x=73-284 in 360x540
       var btn = document.getElementById("clickNochmal");
-      btn.style.left   = Math.round(76 * scale) + "px";
-      btn.style.top    = Math.round(291 * scale) + "px";
-      btn.style.width  = Math.round(205 * scale) + "px";
-      btn.style.height = Math.round(19 * scale) + "px";
-      btn.style.fontSize = Math.round(14 * scale) + "px";
+      btn.style.left   = Math.round(73 / 360 * vw) + "px";
+      btn.style.top    = Math.round(281 / 540 * imgH) + "px";
+      btn.style.width  = Math.round(211 / 360 * vw) + "px";
+      btn.style.height = Math.round(35 / 540 * imgH) + "px";
+      btn.style.fontSize = Math.round(14 / 360 * vw) + "px";
+
+      // BIS BALD! zwischen Logo-Unterkante (~195px) und Button (281px), Mitte ~230px
+      var title = document.getElementById("txtTitle");
+      title.style.top = Math.round(225 / 540 * imgH) + "px";
+      title.style.fontSize = Math.round(26 / 360 * vw) + "px";
+
+      // Danke fürs Spielen: zwischen BIS BALD und Button, ~255px
+      var sub = document.getElementById("txtSub");
+      sub.style.top = Math.round(255 / 540 * imgH) + "px";
+      sub.style.fontSize = Math.round(16 / 360 * vw) + "px";
     }
 
-    positionButton();
-    window.addEventListener("resize", positionButton);
+    layout();
+    window.addEventListener("resize", layout);
 
     document.getElementById("clickNochmal").onclick = function() {
       location.href = "index.html";
