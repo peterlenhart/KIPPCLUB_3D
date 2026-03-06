@@ -3218,6 +3218,7 @@
     // "HIT"-Text an Karten-Position anzeigen (HTML-Overlay, von Osten lesbar)
     const hitTextEls = [];
     function showHitText(cardIdx) {
+      if (gamePhase !== 'kipp21') return; // Only during active play
       const cx = cardStartX + cardIdx * (cardWidth + cardGap);
       // 3D→Screen Projektion der Kartenmitte
       const pos3D = new THREE.Vector3(cx, cardY, cardZ);
@@ -4241,12 +4242,14 @@
       let dbg = document.getElementById('endDebug');
       if (dbg) dbg.textContent += ' | sEB(tut='+isTutorial+',rec='+isNewRecord+')';
       
-      // BULLETPROOF: Warten bis ALLE HITs wirklich existieren und sichtbar sind
-      // Dann ausblenden, DANN erst Buttons zeigen
+      // Wait for HIT texts only if they haven't been cleaned up yet
       let waitLoops = 0;
-      while (document.querySelectorAll('.hit-text-el').length < kipp21Done && waitLoops < 30) {
-        await sleep(100);
-        waitLoops++;
+      const existingHits = document.querySelectorAll('.hit-text-el').length;
+      if (existingHits > 0) {
+        while (document.querySelectorAll('.hit-text-el').length < kipp21Done && waitLoops < 30) {
+          await sleep(100);
+          waitLoops++;
+        }
       }
       // Score anzeigen (für nicht-Tutorial)
       if (!isTutorial) showLevelScore(kipp21Done, kipp21Fails);
@@ -4374,6 +4377,10 @@
           abtn.style.cssText = btnCSS(451, 18, 2.5);
           abtn.onclick = () => {
             hideAllEndBtns();
+            // Comprehensive cleanup before restart
+            document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+            hitTextEls.length = 0;
+            gamePhase = 'start'; // prevent late showHitText calls
             startBrainLevel();
           };
         } else {
@@ -4671,9 +4678,18 @@
           const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
           _boxTopPt.project(camera);
           const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
+          // Complete eye reset for clean state
+          _eyeIcon.style.cssText = '';
+          _eyeIcon.style.position = 'absolute';
           _eyeIcon.style.top = _eyeTopPx + 'px';
           _eyeIcon.style.left = '50%';
+          _eyeIcon.style.width = '156px';
+          _eyeIcon.style.height = 'auto';
           _eyeIcon.style.opacity = '1';
+          _eyeIcon.style.zIndex = '15';
+          _eyeIcon.style.cursor = 'pointer';
+          _eyeIcon.style.filter = 'drop-shadow(0 2px 6px rgba(255,255,255,0.4))';
+          _eyeIcon.style.transform = 'translateX(-50%)';
           _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
           _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
           _eyeIcon.style.display = 'block';
