@@ -2451,23 +2451,18 @@
           return;
         }
         
-        // ?skip=1 → TRAINING ohne Tutorial
-        if (urlParams.get('skip') === '1') {
-          sct.style.display = 'none';
-          document.getElementById('startOverlay').style.display = 'none';
-          unlockAndPlayBgMusic();
-          setTimeout(() => { startKipp21(false); }, 200);
-          return;
-        }
+        // ?skip=1 nicht mehr nötig — Buttons im Spiel
         
-        // Standard: TRAINING mit Tutorial
+        // Standard: SPIELEN / TUTORIAL Buttons einblenden
         sct.style.display = 'none';
-        
-        setTimeout(() => {
-          document.getElementById('startOverlay').style.display = 'none';
-          unlockAndPlayBgMusic();
-          startKipp21(true);
-        }, 0);
+        const _btnSp = document.getElementById('btnSpielen');
+        const _btnDm = document.getElementById('btnDemo');
+        _btnSp.disabled = false;
+        _btnDm.disabled = false;
+        _btnSp.style.display = 'block';
+        _btnDm.style.display = 'block';
+        _btnSp.style.opacity = '1';
+        _btnDm.style.opacity = '1';
       }
     }
 
@@ -8150,11 +8145,11 @@
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
-      handleStart(true);
+      handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
-      handleStart(true);
+      handleStart(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
@@ -8210,10 +8205,15 @@
       gamePhase = 'start';
       currentLevel = 1;
       
-      // startOverlay mit Level-Auswahl zeigen
+      // startOverlay mit SPIELEN/TUTORIAL Buttons zeigen
       document.getElementById('startOverlay').style.display = 'flex';
       document.getElementById('startChallengeText').style.display = 'none';
       document.getElementById('perfektGameText').style.display = 'none';
+      const _bSp = document.getElementById('btnSpielen');
+      const _bDm = document.getElementById('btnDemo');
+      _bSp.disabled = false; _bDm.disabled = false;
+      _bSp.style.display = 'block'; _bDm.style.display = 'block';
+      _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
