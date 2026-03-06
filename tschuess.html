@@ -121,25 +121,23 @@
 
     function layout() {
       var vw = window.innerWidth;
-      // Bild jetzt 360×800, Content-Bereich in oberen 540px
-      var scale = vw / 360;
-
-      var btn = document.getElementById("clickNochmal");
-      btn.style.left   = Math.round(73 * scale) + "px";
-      btn.style.top    = Math.round(281 * scale) + "px";
-      btn.style.width  = Math.round(211 * scale) + "px";
-      btn.style.height = Math.round(35 * scale) + "px";
-      btn.style.fontSize = Math.round(14 * scale) + "px";
+      var imgH = vw * 2.458; // 360x885
 
       var title = document.getElementById("txtTitle");
-      title.style.top = Math.round(225 * scale) + "px";
-      title.style.fontSize = Math.round(26 * scale) + "px";
+      title.style.top = Math.round(385 / 885 * imgH) + "px";
+      title.style.fontSize = Math.round(26 / 360 * vw) + "px";
 
       var sub = document.getElementById("txtSub");
-      sub.style.top = Math.round(255 * scale) + "px";
-      sub.style.fontSize = Math.round(16 * scale) + "px";
+      sub.style.top = Math.round(420 / 885 * imgH) + "px";
+      sub.style.fontSize = Math.round(16 / 360 * vw) + "px";
 
-      // Fade nicht mehr nötig
+      var btn = document.getElementById("clickNochmal");
+      btn.style.left   = Math.round(68 / 360 * vw) + "px";
+      btn.style.top    = Math.round(459 / 885 * imgH) + "px";
+      btn.style.width  = Math.round(219 / 360 * vw) + "px";
+      btn.style.height = Math.round(39 / 885 * imgH) + "px";
+      btn.style.fontSize = Math.round(14 / 360 * vw) + "px";
+
       var fade = document.getElementById("imgFade");
       if (fade) fade.style.display = "none";
     }
