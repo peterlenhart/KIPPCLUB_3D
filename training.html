@@ -2741,13 +2741,17 @@
       } catch(e) { console.error('[LOAD] RESTORE FAILED:', e.message, e.stack); deleteSavedGame(); return false; }
     }
 
+    let _savedKipp21Active = false;
     function showBestScores() {
       renderBestScores();
+      _savedKipp21Active = kipp21Active;
+      kipp21Active = false;
       document.getElementById('bestScoresOverlay').style.display = 'block';
     }
     
     document.getElementById('bestScoresClose').addEventListener('click', () => {
       document.getElementById('bestScoresOverlay').style.display = 'none';
+      kipp21Active = _savedKipp21Active;
     });
     
     document.getElementById('btnBestScores').addEventListener('click', () => {
