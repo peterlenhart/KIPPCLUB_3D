@@ -610,7 +610,10 @@
     function applyLevelLang() {
       const t = LVL_T[currentLang] || LVL_T.de;
       document.getElementById('lvlTitle').textContent = t.title;
-      document.getElementById('lvlKP').textContent = t.kp;
+      const kpEl = document.getElementById('lvlKP');
+      const kpImg = kpEl.querySelector('img');
+      kpEl.textContent = t.kp;
+      if (kpImg) kpEl.insertBefore(kpImg, kpEl.firstChild);
       document.getElementById('lvlSub3').textContent = t.s3;
       document.getElementById('modalTitle').textContent = t.mT;
       document.getElementById('modalSub').innerHTML = t.mS;
