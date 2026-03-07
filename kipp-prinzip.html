@@ -49,7 +49,7 @@
     }
     .tip p { font-size:14px; line-height:1.6; color:#d4c4a8; }
     .tip strong { color:#cedb25; }
-    .facts { display:flex; justify-content:space-around; margin:16px 0 20px; gap:8px; }
+    .facts { display:flex; justify-content:center; margin:16px auto 20px; gap:8px; max-width:340px; }
     .fact-box {
       flex:1; text-align:center;
       background: rgba(255,255,255,0.04);
@@ -99,7 +99,7 @@
         subtitle: "FÜR SUPERTÜFTLER",
         fl1: "WÜRFELFLÄCHEN", fl2: "RAHMENFELDER", fl3: "MÖGLICHKEITEN",
         sections: [
-          { t: "Der Würfel in der Box", p: "Ein Würfel mit drei sichtbaren Seiten, bestückt mit je vier Zahlen. Er kippt im Kreis \u2013 im oder gegen den Uhrzeigersinn. Das klingt simpel. Ist es aber nicht." },
+          { t: "Der Würfel in der Box", p: "Ein Würfel mit drei sichtbaren Seiten – je vier Felder. Er kippt im Kreis \u2013 im oder gegen den Uhrzeigersinn. Das klingt simpel. Ist es aber nicht." },
           { t: "Das Ziel", p: "Jedes Kippziel gibt dir ein Würfelfeld und ein Rahmenfeld vor. Deine Aufgabe: Kippe den Würfel so oft und in die richtige Richtung, dass genau dieses Würfelfeld am vorgegebenen Rahmenfeld zu liegen kommt." },
           { t: "1 bis 6 Kipps", p: "Jede Würfelfeld-Rahmenfeld-Kombination ist mit maximal 6 Kipps erreichbar \u2013 vorausgesetzt, die Richtung stimmt.<br><br>In die falsche Richtung wären es 7 bis 11 Kipps. Da die Zahlentastatur nur 1 bis 6 erlaubt, muss beides stimmen: Kippzahl und Kipprichtung." },
           { tip: true, p: "<strong>Jedes Kippziel hat genau eine richtige Lösung.</strong> Es gibt immer nur eine Kombination aus Anzahl und Richtung, die zum Treffer führt." },
@@ -117,7 +117,7 @@
         subtitle: "FOR SUPER PUZZLERS",
         fl1: "CUBE FACES", fl2: "BORDER FIELDS", fl3: "COMBINATIONS",
         sections: [
-          { t: "The Cube in the Box", p: "A cube with three visible faces, each bearing four numbers. It tilts in a circle \u2013 clockwise or counter-clockwise. Sounds simple. But it isn\u2019t." },
+          { t: "The Cube in the Box", p: "A cube with three visible faces – four fields each. It tilts in a circle \u2013 clockwise or counter-clockwise. Sounds simple. But it isn\u2019t." },
           { t: "The Goal", p: "Each tilt target specifies a cube field and a border field. Your task: tilt the cube the right number of times and in the right direction so that exactly this cube field ends up at the specified border field." },
           { t: "1 to 6 Tilts", p: "Every cube-field-border-field combination can be reached in at most 6 tilts \u2013 provided the direction is correct.<br><br>In the wrong direction it would take 7 to 11 tilts. Since the number pad only allows 1 to 6, both must be right: tilt count and direction." },
           { tip: true, p: "<strong>Every tilt target has exactly one correct solution.</strong> There is always only one combination of count and direction that leads to a hit." },
@@ -135,7 +135,7 @@
         subtitle: "PARA SUPER ENIGMISTAS",
         fl1: "CARAS DEL CUBO", fl2: "CAMPOS DEL BORDE", fl3: "COMBINACIONES",
         sections: [
-          { t: "El Cubo en la Caja", p: "Un cubo con tres caras visibles, cada una con cuatro números. Se vuelca en círculo \u2013 en sentido horario o antihorario. Suena simple. Pero no lo es." },
+          { t: "El Cubo en la Caja", p: "Un cubo con tres caras visibles – cuatro campos cada una. Se vuelca en círculo \u2013 en sentido horario o antihorario. Suena simple. Pero no lo es." },
           { t: "El Objetivo", p: "Cada objetivo de volcado especifica un campo del cubo y un campo del borde. Tu tarea: vuelca el cubo el número correcto de veces y en la dirección correcta para que ese campo del cubo termine en el campo del borde indicado." },
           { t: "1 a 6 Volcados", p: "Cada combinación de campo del cubo y campo del borde se puede alcanzar con máximo 6 volcados \u2013 si la dirección es correcta.<br><br>En la dirección equivocada serían 7 a 11 volcados. Como el teclado solo permite 1 a 6, ambos deben ser correctos: cantidad y dirección." },
           { tip: true, p: "<strong>Cada objetivo tiene exactamente una solución correcta.</strong> Siempre hay solo una combinación de cantidad y dirección que lleva al acierto." },
@@ -153,7 +153,7 @@
         subtitle: "POUR SUPER CASSE-TÊTES",
         fl1: "FACES DU CUBE", fl2: "CASES DU CADRE", fl3: "COMBINAISONS",
         sections: [
-          { t: "Le Cube dans la Boîte", p: "Un cube avec trois faces visibles, chacune portant quatre chiffres. Il bascule en cercle \u2013 dans le sens horaire ou antihoraire. Ça semble simple. Mais ça ne l\u2019est pas." },
+          { t: "Le Cube dans la Boîte", p: "Un cube avec trois faces visibles – quatre cases chacune. Il bascule en cercle \u2013 dans le sens horaire ou antihoraire. Ça semble simple. Mais ça ne l\u2019est pas." },
           { t: "L'Objectif", p: "Chaque cible de bascule indique une case du cube et une case du cadre. Ta mission : bascule le cube le bon nombre de fois et dans la bonne direction pour que cette case du cube se retrouve sur la case du cadre indiquée." },
           { t: "1 à 6 Bascules", p: "Chaque combinaison case du cube / case du cadre est atteignable en 6 bascules maximum \u2013 à condition que la direction soit correcte.<br><br>Dans la mauvaise direction, il faudrait 7 à 11 bascules. Comme le clavier n'autorise que 1 à 6, les deux doivent être justes : nombre et direction." },
           { tip: true, p: "<strong>Chaque cible a exactement une solution correcte.</strong> Il n\u2019y a toujours qu\u2019une seule combinaison de nombre et direction qui mène au coup réussi." },
@@ -167,11 +167,11 @@
         closer: "Beaucoup de suspense, de plaisir et de casse-tête<br>avec <strong>KIPP CLUB</strong>."
       },
       it: {
-        title: "PRINCIPIO RIBALTAMENTO",
+        title: "PRINCIPIO KIPP",
         subtitle: "PER SUPER ROMPICAPI",
         fl1: "FACCE DEL CUBO", fl2: "CAMPI DEL BORDO", fl3: "COMBINAZIONI",
         sections: [
-          { t: "Il Cubo nella Scatola", p: "Un cubo con tre facce visibili, ciascuna con quattro numeri. Si ribalta in cerchio \u2013 in senso orario o antiorario. Sembra semplice. Ma non lo è." },
+          { t: "Il Cubo nella Scatola", p: "Un cubo con tre facce visibili – quattro campi ciascuna. Si ribalta in cerchio \u2013 in senso orario o antiorario. Sembra semplice. Ma non lo è." },
           { t: "L'Obiettivo", p: "Ogni obiettivo di ribaltamento indica un campo del cubo e un campo del bordo. Il tuo compito: ribalta il cubo il numero giusto di volte e nella giusta direzione affinché quel campo del cubo arrivi sul campo del bordo indicato." },
           { t: "1 a 6 Ribaltamenti", p: "Ogni combinazione campo del cubo / campo del bordo è raggiungibile con massimo 6 ribaltamenti \u2013 a condizione che la direzione sia corretta.<br><br>Nella direzione sbagliata servirebbero 7 a 11 ribaltamenti. Poiché la tastiera permette solo 1 a 6, entrambi devono essere giusti: numero e direzione." },
           { tip: true, p: "<strong>Ogni obiettivo ha esattamente una soluzione corretta.</strong> C\u2019è sempre una sola combinazione di numero e direzione che porta al colpo riuscito." },
@@ -189,7 +189,7 @@
         subtitle: "SÜPER BULMACACILAR \u0130Ç\u0130N",
         fl1: "KÜP YÜZLER\u0130", fl2: "ÇERÇEVE ALANLARI", fl3: "KOMB\u0130NASYONLAR",
         sections: [
-          { t: "Kutudaki Küp", p: "Her biri dört sayı taşıyan üç görünür yüzü olan bir küp. Daire içinde devrilir \u2013 saat yönünde veya tersine. Basit görünür. Ama değil." },
+          { t: "Kutudaki Küp", p: "Üç görünür yüzü olan bir küp – her biri dört alan. Daire içinde devrilir \u2013 saat yönünde veya tersine. Basit görünür. Ama değil." },
           { t: "Hedef", p: "Her devirme hedefi bir küp alanı ve bir çerçeve alanı belirtir. Görevin: küpü doğru sayıda ve doğru yönde devirerek o küp alanını belirtilen çerçeve alanına getirmek." },
           { t: "1'den 6'ya Devirme", p: "Her küp alanı-çerçeve alanı kombinasyonu en fazla 6 devirme ile ulaşılabilir \u2013 yön doğru olduğu sürece.<br><br>Yanlış yönde 7 ile 11 devirme gerekir. Tuş takımı yalnızca 1-6 izin verdiğinden, ikisi de doğru olmalı: sayı ve yön." },
           { tip: true, p: "<strong>Her hedefin tam olarak bir doğru çözümü vardır.</strong> Hedefe ulaştıran her zaman yalnızca bir sayı ve yön kombinasyonu vardır." },
