@@ -315,11 +315,6 @@
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
-        <!-- Themen-Texte -->
-        <div id="txtSkins" style="position:absolute;font:bold 16px Arial;color:rgb(217,216,215);text-align:center;pointer-events:none;letter-spacing:1px;">SKINS / THEMEN</div>
-        <div id="txtZahlen" style="position:absolute;font:bold 18px Arial;color:rgb(217,216,215);text-align:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.7);">Zahlen</div>
-        <div id="txtMotive" style="position:absolute;font:bold 18px Arial;color:rgb(217,216,215);text-align:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.7);">Motive</div>
-
         <!-- Unsichtbare Klickbereiche für Icons -->
         <div id="closeBtn" class="iconClickArea"></div>
         <div id="legalBtn" class="iconClickArea"></div>
@@ -429,37 +424,19 @@
       const btnWidth = cellPx * 5;
       const btnHeight = cellPx;
 
-      // Zahlen (training.html): Zeilen 7/8, Spalten B-D
+      // Zahlen (training.html): Zeile 7, Spalten B-D
       const zahlenTop = ((7 + HEADER_ROW_OFFSET - 1) * cellPx);
-      const zahlenHeight = cellPx * 2;
+      const zahlenHeight = cellPx;
       clickColor.style.left = (cellPx * 1) + "px";
       clickColor.style.top = zahlenTop + "px";
       clickColor.style.width = (cellPx * 3) + "px";
       clickColor.style.height = zahlenHeight + "px";
 
-      // Motive (coloricon.html): Zeilen 7/8, Spalten E-G
+      // Motive (coloricon.html): Zeile 7, Spalten E-G
       clickCard.style.left = (cellPx * 4) + "px";
       clickCard.style.top = zahlenTop + "px";
       clickCard.style.width = (cellPx * 3) + "px";
       clickCard.style.height = zahlenHeight + "px";
-
-      // Text "SKINS / THEMEN": Zeile 5 obere Hälfte, mittig
-      const txtSkins = document.getElementById("txtSkins");
-      txtSkins.style.left = "0";
-      txtSkins.style.width = (cellPx * 8) + "px";
-      txtSkins.style.top = ((5 + HEADER_ROW_OFFSET - 1) * cellPx) + "px";
-
-      // Text "Zahlen": Mitte Zeilen 7/8, über Spalte C
-      const txtZahlen = document.getElementById("txtZahlen");
-      txtZahlen.style.left = (cellPx * 2.5) + "px";
-      txtZahlen.style.top = ((7.5 + HEADER_ROW_OFFSET - 1) * cellPx) + "px";
-      txtZahlen.style.transform = "translate(-50%, -50%)";
-
-      // Text "Motive": Mitte Zeilen 7/8, über Spalte F
-      const txtMotive = document.getElementById("txtMotive");
-      txtMotive.style.left = (cellPx * 5.5) + "px";
-      txtMotive.style.top = ((7.5 + HEADER_ROW_OFFSET - 1) * cellPx) + "px";
-      txtMotive.style.transform = "translate(-50%, -50%)";
 
       // KIPP QUEEN: Zeile 10
       const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
