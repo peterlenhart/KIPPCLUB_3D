@@ -79,7 +79,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      background-image: url("digikipp_starts_k21.webp");
+      background-image: url("themenseite.webp");
       background-repeat: no-repeat;
       background-size: 100% auto;
       background-position:
@@ -315,6 +315,11 @@
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
+        <!-- Themen-Texte -->
+        <div id="txtSkins" style="position:absolute;font:bold 16px Arial;color:rgb(217,216,215);text-align:center;pointer-events:none;letter-spacing:1px;">SKINS / THEMEN</div>
+        <div id="txtZahlen" style="position:absolute;font:bold 18px Arial;color:rgb(217,216,215);text-align:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.7);">Zahlen</div>
+        <div id="txtMotive" style="position:absolute;font:bold 18px Arial;color:rgb(217,216,215);text-align:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.7);">Motive</div>
+
         <!-- Unsichtbare Klickbereiche für Icons -->
         <div id="closeBtn" class="iconClickArea"></div>
         <div id="legalBtn" class="iconClickArea"></div>
@@ -346,7 +351,7 @@
     <div class="lvl-btn" onclick="window.location='training.html'"><img class="lvl-bg" src="button_lang_braun.webp">TRAINING</div>
     <div class="lvl-btn" onclick="window.location='brainy.html'"><img class="lvl-bg" src="button_lang_rotbraun_glow.webp">BRAINY</div>
     <div class="lvl-btn" onclick="window.location='brain.html'"><img class="lvl-bg" src="button_lang_orange_glow.webp">BRAIN</div>
-    <div class="lvl-btn" id="lvlK21" onclick="document.getElementById('kippcOverlay').style.display='flex'"><img class="lvl-bg" src="button_lang_gold_glow.webp">KIPP COLOR</div>
+    <div class="lvl-btn" id="lvlK21" onclick="window.location='kipp21.html'"><img class="lvl-bg" src="button_lang_gold_glow.webp">MASTER BRAIN</div>
     <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
       <div class="lvl-btn" id="lvlKP" onclick="window.location='kipp-prinzip.html'"><img class="lvl-bg" src="button_lang_grau.webp">KIPP PRINZIP</div>
       <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
@@ -354,14 +359,6 @@
   </div>
 
   <!-- Modal -->
-  <!-- KIPP COLOR Auswahl-Overlay (provisorisch) -->
-  <div id="kippcOverlay" style="position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;backdrop-filter:blur(4px);">
-    <div style="font:bold 24px Arial;color:#d4b48c;letter-spacing:3px;text-shadow:0 2px 6px rgba(0,0,0,0.8);margin-bottom:10px;">KIPP COLOR</div>
-    <div class="lvl-btn" style="background:url('button_lang.webp') center/contain no-repeat;width:320px;height:58px;" onclick="window.location='coloricon.html'">MOTIVE</div>
-    <div class="lvl-btn" style="background:url('button_lang.webp') center/contain no-repeat;width:320px;height:58px;" onclick="window.location='training.html'">ZAHLEN</div>
-    <div style="margin-top:20px;font:bold 14px Arial;color:#a08060;cursor:pointer;pointer-events:auto;" onclick="document.getElementById('kippcOverlay').style.display='none'">Zurück</div>
-  </div>
-
   <div id="closeModal" class="modalOverlay hidden">
     <div class="modalContainer">
       <img src="sicherheitsabfrage.webp" class="modalImage" alt="Sicherheitsabfrage">
@@ -432,19 +429,37 @@
       const btnWidth = cellPx * 5;
       const btnHeight = cellPx;
 
-      // KIPP COLOR: Zeile 5
-      const row5 = ((5 + HEADER_ROW_OFFSET - 1) * cellPx);
-      clickColor.style.left = btnLeft + "px";
-      clickColor.style.top = row5 + "px";
-      clickColor.style.width = btnWidth + "px";
-      clickColor.style.height = btnHeight + "px";
+      // Zahlen (training.html): Zeilen 7/8, Spalten B-D
+      const zahlenTop = ((7 + HEADER_ROW_OFFSET - 1) * cellPx);
+      const zahlenHeight = cellPx * 2;
+      clickColor.style.left = (cellPx * 1) + "px";
+      clickColor.style.top = zahlenTop + "px";
+      clickColor.style.width = (cellPx * 3) + "px";
+      clickColor.style.height = zahlenHeight + "px";
 
-      // KIPP CARD: zwischen Zeile 7 und 8 (Zeile 7.5)
-      const row75 = ((7.5 + HEADER_ROW_OFFSET - 1) * cellPx);
-      clickCard.style.left = btnLeft + "px";
-      clickCard.style.top = row75 + "px";
-      clickCard.style.width = btnWidth + "px";
-      clickCard.style.height = btnHeight + "px";
+      // Motive (coloricon.html): Zeilen 7/8, Spalten E-G
+      clickCard.style.left = (cellPx * 4) + "px";
+      clickCard.style.top = zahlenTop + "px";
+      clickCard.style.width = (cellPx * 3) + "px";
+      clickCard.style.height = zahlenHeight + "px";
+
+      // Text "SKINS / THEMEN": Zeile 5 obere Hälfte, mittig
+      const txtSkins = document.getElementById("txtSkins");
+      txtSkins.style.left = "0";
+      txtSkins.style.width = (cellPx * 8) + "px";
+      txtSkins.style.top = ((5 + HEADER_ROW_OFFSET - 1) * cellPx) + "px";
+
+      // Text "Zahlen": Mitte Zeilen 7/8, über Spalte C
+      const txtZahlen = document.getElementById("txtZahlen");
+      txtZahlen.style.left = (cellPx * 2.5) + "px";
+      txtZahlen.style.top = ((7.5 + HEADER_ROW_OFFSET - 1) * cellPx) + "px";
+      txtZahlen.style.transform = "translate(-50%, -50%)";
+
+      // Text "Motive": Mitte Zeilen 7/8, über Spalte F
+      const txtMotive = document.getElementById("txtMotive");
+      txtMotive.style.left = (cellPx * 5.5) + "px";
+      txtMotive.style.top = ((7.5 + HEADER_ROW_OFFSET - 1) * cellPx) + "px";
+      txtMotive.style.transform = "translate(-50%, -50%)";
 
       // KIPP QUEEN: Zeile 10
       const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
@@ -512,8 +527,8 @@
     window.addEventListener("resize", rebuild);
 
     // Game navigation
-    document.getElementById("clickColor").onclick = () => document.getElementById("levelOverlay").classList.add("show");
-    document.getElementById("clickCard").onclick  = () => location.href="kipp-card.html";
+    document.getElementById("clickColor").onclick = () => location.href="training.html";
+    document.getElementById("clickCard").onclick  = () => location.href="coloricon.html";
     // clickQueen und clickKing haben vorerst keine Funktion
 
     // Modal
