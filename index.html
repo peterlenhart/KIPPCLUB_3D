@@ -504,7 +504,7 @@
     window.addEventListener("resize", rebuild);
 
     // Game navigation
-    document.getElementById("clickColor").onclick = () => location.href="training.html";
+    document.getElementById("clickColor").onclick = () => document.getElementById("levelOverlay").classList.add("show");
     document.getElementById("clickCard").onclick  = () => location.href="coloricon.html";
     // clickQueen und clickKing haben vorerst keine Funktion
 
