@@ -2053,7 +2053,12 @@
     let motivsLoaded = 0;
     MOTIV_NAMES.forEach(name => {
       const img = new Image();
-      img.onload = () => { motivsLoaded++; };
+      img.onload = () => {
+        motivsLoaded++;
+        if (motivsLoaded >= MOTIV_NAMES.length && typeof updateAllFaceTextures === 'function') {
+          try { updateAllFaceTextures(); } catch(e) {}
+        }
+      };
       img.src = name + '_grau.png';
       motivImgs[name] = img;
     });
