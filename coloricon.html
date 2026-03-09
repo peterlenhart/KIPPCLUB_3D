@@ -2170,22 +2170,7 @@
           ctx.save();
           ctx.translate(cx, cy);
           ctx.rotate(rot);
-          // Abgerundeter Clip für Bevel-Effekt
-          const s = cell * 0.85;
-          const rad = s * 0.15;
-          ctx.beginPath();
-          ctx.moveTo(-s/2 + rad, -s/2);
-          ctx.lineTo(s/2 - rad, -s/2);
-          ctx.quadraticCurveTo(s/2, -s/2, s/2, -s/2 + rad);
-          ctx.lineTo(s/2, s/2 - rad);
-          ctx.quadraticCurveTo(s/2, s/2, s/2 - rad, s/2);
-          ctx.lineTo(-s/2 + rad, s/2);
-          ctx.quadraticCurveTo(-s/2, s/2, -s/2, s/2 - rad);
-          ctx.lineTo(-s/2, -s/2 + rad);
-          ctx.quadraticCurveTo(-s/2, -s/2, -s/2 + rad, -s/2);
-          ctx.closePath();
-          ctx.clip();
-          ctx.drawImage(img, -s/2, -s/2, s, s);
+          ctx.drawImage(img, -cell/2, -cell/2, cell, cell);
           ctx.restore();
         }
       }
