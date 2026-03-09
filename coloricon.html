@@ -2048,7 +2048,7 @@
     const cubeSize = 0.46875;
 
     // === MOTIV-SYSTEM (statt Zahlen) ===
-    const MOTIV_NAMES = ['tshirt','kerze','blume','buch','schmetterling','klecks','tasse','auto','giesskanne','wasserball','schuh','fisch'];
+    const MOTIV_NAMES = ['blume_voll','herz_voll','kreuz_voll','quadrat_voll','kreis_voll','dreieck_voll','blume_kont','herz_kont','kreuz_kont','quadrat_kont','kreis_kont','dreieck_kont'];
     const motivImgs = {};
     let motivsLoaded = 0;
     MOTIV_NAMES.forEach(name => {
@@ -2059,7 +2059,7 @@
           try { updateAllFaceTextures(); } catch(e) {}
         }
       };
-      img.src = name + '_grau.png';
+      img.src = name + '.png';
       motivImgs[name] = img;
     });
     // Zahl 1-12 → Motiv-Name
