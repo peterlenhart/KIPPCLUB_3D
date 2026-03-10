@@ -498,30 +498,29 @@
       z-index: 20;
     }
     .numBtn {
-      width: 42px;
+      min-width: 42px;
       height: 38px;
       display: flex;
       align-items: center;
       justify-content: center;
       font: bold 18px Arial;
       color: #2a1810;
-      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
-      border: 2px solid #8a7a66;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
       cursor: pointer;
       transition: all 0.12s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     .numBtn.selected {
-      background: linear-gradient(180deg, #3a2a1a 0%, #2a1810 100%);
-      border-color: #5a4a36;
+      background: #2a1810;
       color: #e8dcc8;
-      box-shadow: 0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4);
     }
-    .numBtn:active {
-      transform: scale(0.92);
+    .numBtn.center {
+      font-weight: 900;
+      font-size: 22px;
     }
 
     /* BRAINY Level Animations */
@@ -1079,15 +1078,22 @@
     <button id="backButton">↻</button>
     
 
-    <!-- Kippanzahl: 6 Tasten in 2×3 Grid -->
+    <!-- Kippanzahl: Scrollband 1-11 -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div style="display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(2,38px); gap:4px;">
-        <div class="numBtn" data-num="1">1</div>
-        <div class="numBtn" data-num="2">2</div>
-        <div class="numBtn" data-num="3">3</div>
-        <div class="numBtn" data-num="4">4</div>
-        <div class="numBtn" data-num="5">5</div>
-        <div class="numBtn" data-num="6">6</div>
+      <div id="scrollBandWrap" style="width:180px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%);">
+        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease;">
+          <div class="numBtn" data-num="1">1</div>
+          <div class="numBtn" data-num="2">2</div>
+          <div class="numBtn" data-num="3">3</div>
+          <div class="numBtn" data-num="4">4</div>
+          <div class="numBtn" data-num="5">5</div>
+          <div class="numBtn" data-num="6">6</div>
+          <div class="numBtn" data-num="7">7</div>
+          <div class="numBtn" data-num="8">8</div>
+          <div class="numBtn" data-num="9">9</div>
+          <div class="numBtn" data-num="10">10</div>
+          <div class="numBtn" data-num="11">11</div>
+        </div>
       </div>
     </div>
 
@@ -10141,15 +10147,34 @@
       pulseRichtungButtons(false);
     }
 
-    // === KIPPANZAHL-BUTTONS (6 Tasten) ===
+    // === SCROLLBAND (1-11, Grundstellung 6) ===
     (function() {
-      const btns = document.querySelectorAll('.numBtn');
-      if (!btns.length) return;
+      const strip = document.getElementById('scrollBandStrip');
+      const wrap = document.getElementById('scrollBandWrap');
+      if (!strip || !wrap) return;
       
+      const CELL_W = 42;
+      const TOTAL = 11;
+      let bandIdx = 5; // 0-basiert, 5 = Zahl 6
       let currentNum = null;
+      let touchStartX = 0;
+      let touchStartIdx = 0;
+      
+      function updateBandPos(animate) {
+        const wrapW = wrap.offsetWidth || 180;
+        const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        strip.style.transition = animate ? 'transform 0.25s ease' : 'none';
+        strip.style.transform = 'translateX(' + offset + 'px)';
+        // Center highlight
+        const btns = strip.querySelectorAll('.numBtn');
+        btns.forEach((b, i) => {
+          b.classList.toggle('center', i === bandIdx);
+        });
+      }
       
       function selectNum(n) {
         currentNum = n;
+        const btns = strip.querySelectorAll('.numBtn');
         btns.forEach(b => {
           if (parseInt(b.dataset.num) === n) b.classList.add('selected');
           else b.classList.remove('selected');
@@ -10158,39 +10183,68 @@
       
       function clearSelection() {
         currentNum = null;
-        btns.forEach(b => b.classList.remove('selected'));
+        strip.querySelectorAll('.numBtn').forEach(b => b.classList.remove('selected'));
       }
       
-      btns.forEach(btn => {
-        // Prevent touch from bleeding through to canvas
-        btn.addEventListener('touchstart', (e) => { e.stopPropagation(); window._numBtnTouchActive = true; }, { passive: false });
-        btn.addEventListener('touchend', (e) => { e.stopPropagation(); setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: false });
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const n = parseInt(btn.dataset.num);
-          selectNum(n);
-          
-          // Zahl an Spiellogik melden
-          if (gamePhase === 'kipp21' && window._onNumBtn) {
-            window._onNumBtn(n);
-          } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
-            selectedAnzahl = n;
-            startRichtungWarten();
-          }
-        });
+      function resetBand() {
+        bandIdx = 5;
+        clearSelection();
+        updateBandPos(true);
+      }
+      
+      // Touch: Swipe to scroll
+      wrap.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        window._numBtnTouchActive = true;
+        touchStartX = e.touches[0].clientX;
+        touchStartIdx = bandIdx;
+        strip.style.transition = 'none';
+      }, { passive: false });
+      
+      wrap.addEventListener('touchmove', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const dx = e.touches[0].clientX - touchStartX;
+        const idxDelta = Math.round(-dx / CELL_W);
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
+        updateBandPos(false);
+      }, { passive: false });
+      
+      wrap.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        setTimeout(() => { window._numBtnTouchActive = false; }, 100);
+        updateBandPos(true);
+      }, { passive: false });
+      
+      // Tap center number → activate + trigger CW kipp
+      wrap.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const n = bandIdx + 1; // 1-basiert
+        selectNum(n);
+        
+        if (gamePhase === 'kipp21' && window._onNumBtn) {
+          window._onNumBtn(n);
+        } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
+          selectedAnzahl = n;
+          // Immer CW → direkt Kipp auslösen
+          triggerKipp('cw');
+        }
       });
       
-      // Global: Zahl auswählen (für Tutorial)
-      window._scrollBandToNum = function(n) { selectNum(n); };
-      
-      // Global: Reset
-      window._resetScrollBand = function() { clearSelection(); };
-      
-      // Highlight (für Tutorial-Anzeige)
-      window._highlightNum = function(n) {
-        if (n === null) { clearSelection(); return; }
+      // Global API
+      window._scrollBandToNum = function(n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
         selectNum(n);
       };
+      window._resetScrollBand = function() { resetBand(); };
+      window._highlightNum = function(n) {
+        if (n === null) { clearSelection(); return; }
+        window._scrollBandToNum(n);
+      };
+      
+      // Initial position
+      updateBandPos(false);
     })();
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
@@ -10263,7 +10317,7 @@
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      el.style.top = '527px';
+      el.style.top = '569px';
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
