@@ -8255,7 +8255,18 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      startKipp21(withTutorial);
+      
+      // ICONS UI einblenden
+      const ikr = document.getElementById('iconKippzielRow');
+      if (ikr) ikr.classList.remove('hidden');
+      const nb = document.getElementById('numBtns');
+      if (nb) nb.classList.remove('hidden');
+      gamePhase = 'spielen';
+      isAnimating = false;
+      selectedAnzahl = null;
+      kippDirection = 'cw';
+      
+      // Kein startKipp21 — ICONS hat eigenen Spielablauf
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
@@ -10166,12 +10177,18 @@
       function updateBandPos(animate) {
         const wrapW = wrap.offsetWidth || 180;
         const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
-        strip.style.transition = animate ? 'transform 0.25s ease' : 'none';
+        strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
-        // Center highlight
+        // Center highlight + size
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
-          b.classList.toggle('center', i === bandIdx);
+          if (i === bandIdx) {
+            b.classList.add('center');
+            b.style.fontSize = '21px';
+          } else {
+            b.classList.remove('center');
+            b.style.fontSize = '18px';
+          }
         });
       }
       
@@ -10196,11 +10213,13 @@
       }
       
       // Touch: Swipe to scroll
+      let touchMoved = false;
       wrap.addEventListener('touchstart', (e) => {
         e.stopPropagation();
         window._numBtnTouchActive = true;
         touchStartX = e.touches[0].clientX;
         touchStartIdx = bandIdx;
+        touchMoved = false;
         strip.style.transition = 'none';
       }, { passive: false });
       
@@ -10208,29 +10227,63 @@
         e.stopPropagation();
         e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 5) touchMoved = true;
+        // Smooth pixel-based scrolling during drag
+        const wrapW = wrap.offsetWidth || 180;
+        const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
+        // Update bandIdx for snap on release
         const idxDelta = Math.round(-dx / CELL_W);
         bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
-        updateBandPos(false);
       }, { passive: false });
       
       wrap.addEventListener('touchend', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
         updateBandPos(true);
+        
+        // Tap (kein Swipe) → Kipp auslösen
+        if (!touchMoved) {
+          const n = bandIdx + 1;
+          selectNum(n);
+          if (gamePhase === 'spielen' && !isAnimating) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+            })();
+          }
+        }
       }, { passive: false });
       
-      // Tap center number → activate + trigger CW kipp
+      // Desktop click fallback
       wrap.addEventListener('click', (e) => {
         e.stopPropagation();
-        const n = bandIdx + 1; // 1-basiert
+        const n = bandIdx + 1;
         selectNum(n);
-        
-        if (gamePhase === 'kipp21' && window._onNumBtn) {
-          window._onNumBtn(n);
-        } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
-          selectedAnzahl = n;
-          // Immer CW → direkt Kipp auslösen
-          triggerKipp('cw');
+        if (gamePhase === 'spielen' && !isAnimating) {
+          (async () => {
+            for (let i = 0; i < n; i++) {
+              let dir;
+              if (currentQuadrant === 0) dir = 'east';
+              else if (currentQuadrant === 1) dir = 'south_from_q1';
+              else if (currentQuadrant === 2) dir = 'west_from_q2';
+              else dir = 'north';
+              await performKipp(dir, 600);
+              advanceTopFace();
+              if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+            }
+            clearSelection();
+          })();
         }
       });
       
@@ -10252,22 +10305,41 @@
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
     async function triggerKipp(direction) {
-      if (gamePhase !== 'spielen') return;
-      if (selectedAnzahl === null) return;
+      try {
+        if (gamePhase !== 'spielen') return;
+        if (selectedAnzahl === null) return;
+        if (isAnimating) return;
 
-      const anzahl = selectedAnzahl;
-      stopAllenPulse();
-      setButtonsDisabled(true);
+        const anzahl = selectedAnzahl;
+        kippDirection = direction || 'cw';
+        isAnimating = true;
 
-      kippDirection = direction;
+        const T = getTiming();
+        for (let i = 0; i < anzahl; i++) {
+          const tStep = (anzahl <= 1) ? 0 : (i / (anzahl - 1));
+          const stepMul = lerp(1.0, STEP_MAX, tStep);
+          const kipTime = Math.max(40, Math.round(T.kipMs * stepMul));
+          const holdTime = Math.max(40, Math.round(T.wMs * stepMul));
 
-      await runKippSequence(anzahl);
+          let dir;
+          if (currentQuadrant === 0) dir = 'east';
+          else if (currentQuadrant === 1) dir = 'south_from_q1';
+          else if (currentQuadrant === 2) dir = 'west_from_q2';
+          else dir = 'north';
 
-      // Nach Kipp: Reset für nächsten Zug
-      selectedAnzahl = null;
-      if (window._resetScrollBand) window._resetScrollBand();
-      setButtonsDisabled(false);
-      startZahlWarten();
+          isAnimating = false;
+          await performKipp(dir, kipTime);
+          advanceTopFace();
+          await new Promise(r => setTimeout(r, holdTime));
+        }
+
+        isAnimating = false;
+        selectedAnzahl = null;
+        if (window._resetScrollBand) window._resetScrollBand();
+      } catch(e) {
+        isAnimating = false;
+        selectedAnzahl = null;
+      }
     }
 
     if (cwBtn) cwBtn.addEventListener('click', () => triggerKipp('cw'));
@@ -10304,7 +10376,7 @@
       const row = document.getElementById('iconKippzielRow');
       if (!row) return;
       row.style.top = '440px';
-      row.classList.remove('hidden');
+      // Bleibt hidden bis handleStart
       
       // Kippziel: eines der 3 Würfelmotive in Farbe wählen
       const faceVals = [deck[0], deck[4], deck[8]]; // je erstes Motiv pro Face
@@ -10316,14 +10388,7 @@
       const motivBase = targetMotiv.replace('_grau', '');
       document.getElementById('iconKippziel').src = motivBase + '_' + targetFarbe + '.png';
       
-      // Scrollband zeigen
-      const nb = document.getElementById('numBtns');
-      if (nb) nb.classList.remove('hidden');
-      
-      // Spielphase direkt auf 'spielen' setzen
-      gamePhase = 'spielen';
-      isAnimating = false;
-      selectedAnzahl = null;
+      // Scrollband bleibt hidden bis handleStart
       
       // Joker-Icon Click-Handler
       document.getElementById('iconEckblick').addEventListener('click', () => {
