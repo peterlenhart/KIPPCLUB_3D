@@ -10393,8 +10393,12 @@
     
     function generateIconKippziel() {
       const faceVals = [deck[0], deck[4], deck[8]];
-      iconTargetVal = faceVals[Math.floor(Math.random() * 3)];
-      iconTargetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
+      let attempts = 0;
+      do {
+        iconTargetVal = faceVals[Math.floor(Math.random() * 3)];
+        iconTargetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
+        attempts++;
+      } while (attempts < 50 && iconTargetVal === getTopFaceVal() && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant);
       const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
       document.getElementById('iconKippziel').src = motivBase + '_' + iconTargetFarbe + '.png';
       document.getElementById('iconKippziel').style.border = '3px solid #6b5040';
@@ -10419,14 +10423,51 @@
       
       if (isHit) {
         iconHits++;
-        // Gelber Rand + Pulse
-        kzEl.style.border = '4px solid #cedb25';
+        // Gelber Rand
+        kzEl.style.borderWidth = '4px';
+        kzEl.style.borderStyle = 'solid';
+        kzEl.style.borderColor = '#cedb25';
         kzEl.style.animation = 'iconHitPulse 0.4s ease-in-out 3';
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1300));
+        
+        // Fly onto cube: get cube screen position
+        const cubeScreenPos = new THREE.Vector3();
+        cube.getWorldPosition(cubeScreenPos);
+        cubeScreenPos.project(camera);
+        const cubeX = (cubeScreenPos.x * 0.5 + 0.5) * 360;
+        const cubeY = (-cubeScreenPos.y * 0.5 + 0.5) * 720;
+        
+        // Animate kippziel flying to cube
+        const kzRect = kzEl.getBoundingClientRect();
+        const overlay = kzEl.closest('#iconKippzielRow').parentElement;
+        const flyEl = kzEl.cloneNode(true);
+        flyEl.style.position = 'absolute';
+        flyEl.style.left = kzRect.left + 'px';
+        flyEl.style.top = kzRect.top + 'px';
+        flyEl.style.width = kzEl.offsetWidth + 'px';
+        flyEl.style.height = kzEl.offsetHeight + 'px';
+        flyEl.style.zIndex = '9999';
+        flyEl.style.transition = 'all 0.6s ease-in';
+        flyEl.style.animation = '';
+        document.body.appendChild(flyEl);
+        
+        kzEl.style.opacity = '0';
+        
+        requestAnimationFrame(() => {
+          flyEl.style.left = cubeX + 'px';
+          flyEl.style.top = cubeY + 'px';
+          flyEl.style.width = '60px';
+          flyEl.style.height = '60px';
+          flyEl.style.transform = 'translate(-50%, -50%)';
+          flyEl.style.opacity = '0.3';
+        });
+        
+        await new Promise(r => setTimeout(r, 700));
+        flyEl.remove();
+        kzEl.style.opacity = '1';
         kzEl.style.animation = '';
         
         if (iconHits >= 4) {
-          // Spiel Ende
           gamePhase = 'ende';
           showIconEndScreen();
           return;
@@ -10441,12 +10482,15 @@
         generateIconKippziel();
       } else {
         iconMisses++;
-        // Roter Rand + Pulse
-        kzEl.style.border = '4px solid #cc2222';
+        // Roter Rand
+        kzEl.style.borderWidth = '4px';
+        kzEl.style.borderStyle = 'solid';
+        kzEl.style.borderColor = '#cc2222';
         kzEl.style.animation = 'iconMissPulse 0.4s ease-in-out 2';
         await new Promise(r => setTimeout(r, 1200));
         kzEl.style.animation = '';
-        kzEl.style.border = '3px solid #6b5040';
+        kzEl.style.borderWidth = '3px';
+        kzEl.style.borderColor = '#6b5040';
         iconKippzielActive = true;
       }
     }
