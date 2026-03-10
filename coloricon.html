@@ -2171,8 +2171,8 @@
         const firstSlot = slotMap[keys[0]];
         const img = motivImgs[motivForVal(firstSlot.val)];
         if (img && img.complete) {
-          const s = 220; // fast formatfüllend
-          ctx.drawImage(img, (256 - s) / 2, (256 - s) / 2, s, s);
+          const s = 244; // bis zum Innenrand des 6px Rahmens
+          ctx.drawImage(img, 6, 6, s, s);
         }
       }
 
