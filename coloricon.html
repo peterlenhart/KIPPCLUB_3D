@@ -2163,11 +2163,35 @@
         ctx.restore();
       }
 
-      // Ein Motiv formatfüllend zentriert pro Fläche
+      // Motive auf der Fläche zeichnen (Level-abhängig)
       const alpha = (numberAlpha !== undefined) ? numberAlpha : 1;
       ctx.globalAlpha = alpha;
       const keys = Object.keys(slotMap);
-      if (keys.length > 0) {
+      const vals = keys.map(k => slotMap[k].val);
+
+      if (currentLevel >= 2 && vals.length >= 2) {
+        // BRAINY: 2 Motive pro Fläche, 50% Größe
+        // Diagonal: Top-Right und Bottom-Left (zwischen den Seitenwänden)
+        const s = 122; // halbe Innenfläche
+        const positions = [
+          { x: 128, y: 6 },   // Top-Right Quadrant
+          { x: 6, y: 128 }    // Bottom-Left Quadrant
+        ];
+        for (let i = 0; i < 2; i++) {
+          const img = motivImgs[motivForVal(vals[i])];
+          if (img && img.complete) {
+            ctx.save();
+            const cx = positions[i].x + s / 2;
+            const cy = positions[i].y + s / 2;
+            ctx.translate(cx, cy);
+            if (imgRotation) ctx.rotate(imgRotation);
+            ctx.rotate(Math.PI);
+            ctx.drawImage(img, -s / 2, -s / 2, s, s);
+            ctx.restore();
+          }
+        }
+      } else if (keys.length > 0) {
+        // TRAINING: 1 Motiv formatfüllend
         const firstSlot = slotMap[keys[0]];
         const img = motivImgs[motivForVal(firstSlot.val)];
         if (img && img.complete) {
@@ -2175,6 +2199,7 @@
           ctx.save();
           ctx.translate(128, 128);
           if (imgRotation) ctx.rotate(imgRotation);
+          ctx.rotate(Math.PI);
           ctx.drawImage(img, -s/2, -s/2, s, s);
           ctx.restore();
         }
