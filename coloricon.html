@@ -1085,6 +1085,13 @@
     <button id="backButton">↻</button>
     
 
+    <!-- ICONS Kippziel-Bereich -->
+    <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; align-items:center; gap:8px;">
+      <img id="iconEckblick" src="joker3.webp" style="width:85px; height:85px; cursor:pointer;">
+      <img id="iconKippziel" src="" style="width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4;">
+      <img id="iconKippblick" src="joker2.webp" style="width:85px; height:85px; cursor:pointer;">
+    </div>
+
     <!-- Kippanzahl: Scrollband 1-11 -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
       <div id="scrollBandWrap" style="width:180px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%);">
@@ -10257,45 +10264,21 @@
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
     async function triggerKipp(direction) {
       if (gamePhase !== 'spielen') return;
-      if (selectedAnzahl === null) return; // noch keine Zahl → nur Richtung anzeigen
+      if (selectedAnzahl === null) return;
 
       const anzahl = selectedAnzahl;
       stopAllenPulse();
       setButtonsDisabled(true);
 
       kippDirection = direction;
-      updateRichtungButtons();
-
-      // Zielkreis ausblenden während Kipp-Animation
-      document.getElementById('kippTarget').style.display = 'none';
-
-      // Kärtchen auf Original zurücksetzen - Image neu zeichnen
-      const card = gameCards[activeCardIdx];
-      const img = colorTargetImages[card.color.name];
-      
-      card.ctx.clearRect(0, 0, 85, 170);
-      card.ctx.drawImage(img, 0, 0, 85, 170);
-      
-      const displayText = displayNum(card.zahl).toString();
-      card.ctx.fillStyle = '#2a1810';
-      card.ctx.font = 'bold 56px Arial';
-      card.ctx.textAlign = 'center';
-      card.ctx.textBaseline = 'middle';
-      drawCenteredText(card.ctx, displayText, 42, 42);
-      card.texture.needsUpdate = true;
-      card.mesh.scale.set(1, 1, 1);
-      card.mesh.material.opacity = 1.0;
 
       await runKippSequence(anzahl);
 
-      // Treffer-Prüfung
-      const treffer = checkTreffer();
-      if (treffer) {
-        bereitsGetroffen.add(card.zahl + '_' + card.color.name);
-        animateTreffer(treffer);
-      } else {
-        animateNichtTreffer();
-      }
+      // Nach Kipp: Reset für nächsten Zug
+      selectedAnzahl = null;
+      if (window._resetScrollBand) window._resetScrollBand();
+      setButtonsDisabled(false);
+      startZahlWarten();
     }
 
     if (cwBtn) cwBtn.addEventListener('click', () => triggerKipp('cw'));
@@ -10325,6 +10308,27 @@
       const el = document.getElementById('numBtns');
       if (!el) return;
       el.style.top = '569px';
+    })();
+
+    // === ICONS: Kippziel-Bereich positionieren und initialisieren ===
+    (function() {
+      const row = document.getElementById('iconKippzielRow');
+      if (!row) return;
+      row.style.top = '440px';
+      row.classList.remove('hidden');
+      
+      // Kippziel: eines der 3 Würfelmotive wählen
+      const faceVals = [deck[0], deck[4], deck[8]]; // je erstes Motiv pro Face
+      const targetVal = faceVals[Math.floor(Math.random() * 3)];
+      const targetMotiv = motivForVal(targetVal);
+      document.getElementById('iconKippziel').src = targetMotiv + '.png';
+      
+      // Scrollband zeigen
+      const nb = document.getElementById('numBtns');
+      if (nb) nb.classList.remove('hidden');
+      
+      // Spielphase direkt auf 'spielen' setzen
+      gamePhase = 'spielen';
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
