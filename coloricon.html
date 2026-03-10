@@ -6146,10 +6146,10 @@
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff(skipOpenGuard) {
       console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
-      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
+      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen')) { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
+      if (gamePhase !== 'demo' && gamePhase !== 'spielen' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
       // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
-      if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (!skipOpenGuard && gamePhase !== 'demo' && gamePhase !== 'spielen' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -6242,10 +6242,10 @@
     
     async function runKipp21EckblickKniff(skipOpenGuard) {
       console.log('[ECKBLICK] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21EckblickUsed, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
-      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
+      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
+      if (gamePhase !== 'demo' && gamePhase !== 'spielen' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
       // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
-      if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (!skipOpenGuard && gamePhase !== 'demo' && gamePhase !== 'spielen' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
@@ -10136,19 +10136,8 @@
     }
 
     function startZahlWarten() {
-      if (!cwBtn || !ccwBtn) return;
       selectedAnzahl = null;
       if (window._resetScrollBand) window._resetScrollBand();
-      pulseZahlenButtons(true);
-      pulseRichtungButtons(false);
-      cwBtn.style.background = 'linear-gradient(180deg,#404040 0%,#303030 100%)';
-      cwBtn.style.color = '#c0b8a8';
-      cwBtn.style.borderColor = '#808080';
-      cwBtn.style.boxShadow = '';
-      ccwBtn.style.background = 'linear-gradient(180deg,#404040 0%,#303030 100%)';
-      ccwBtn.style.color = '#c0b8a8';
-      ccwBtn.style.borderColor = '#808080';
-      ccwBtn.style.boxShadow = '';
     }
 
     function startRichtungWarten() {
@@ -10317,11 +10306,15 @@
       row.style.top = '440px';
       row.classList.remove('hidden');
       
-      // Kippziel: eines der 3 Würfelmotive wählen
+      // Kippziel: eines der 3 Würfelmotive in Farbe wählen
       const faceVals = [deck[0], deck[4], deck[8]]; // je erstes Motiv pro Face
       const targetVal = faceVals[Math.floor(Math.random() * 3)];
       const targetMotiv = motivForVal(targetVal);
-      document.getElementById('iconKippziel').src = targetMotiv + '.png';
+      const KIPPZIEL_FARBEN = ['blau', 'gruen', 'orange', 'violett'];
+      const targetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
+      // Farbiges Kippziel: z.B. schuh_blau.png
+      const motivBase = targetMotiv.replace('_grau', '');
+      document.getElementById('iconKippziel').src = motivBase + '_' + targetFarbe + '.png';
       
       // Scrollband zeigen
       const nb = document.getElementById('numBtns');
@@ -10329,6 +10322,16 @@
       
       // Spielphase direkt auf 'spielen' setzen
       gamePhase = 'spielen';
+      isAnimating = false;
+      selectedAnzahl = null;
+      
+      // Joker-Icon Click-Handler
+      document.getElementById('iconEckblick').addEventListener('click', () => {
+        if (gamePhase === 'spielen') runKipp21EckblickKniff(true);
+      });
+      document.getElementById('iconKippblick').addEventListener('click', () => {
+        if (gamePhase === 'spielen') runKipp21WobbleKniff(true);
+      });
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
