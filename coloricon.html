@@ -510,10 +510,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font: bold 18px Arial;
+      font: bold 24px Arial;
       color: #2a1810;
       background: transparent;
       border: none;
+      border-right: 1px solid #8a7a66;
       border-radius: 0;
       box-shadow: none;
       cursor: pointer;
@@ -521,13 +522,16 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
+    .numBtn:last-child {
+      border-right: none;
+    }
     .numBtn.selected {
       background: #2a1810;
       color: #e8dcc8;
     }
     .numBtn.center {
       font-weight: 900;
-      font-size: 24px !important;
+      font-size: 28px !important;
     }
 
     @keyframes iconHitPulse {
@@ -1059,7 +1063,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_icon.png" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein_icon.png" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal_icon.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_icon.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -10200,10 +10204,10 @@
         btns.forEach((b, i) => {
           if (i === bandIdx) {
             b.classList.add('center');
-            b.style.fontSize = '24px';
+            b.style.fontSize = '28px';
           } else {
             b.classList.remove('center');
-            b.style.fontSize = '18px';
+            b.style.fontSize = '24px';
           }
         });
       }
@@ -10259,8 +10263,61 @@
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
         updateBandPos(true);
         
-        // Tap (kein Swipe) → Kipp auslösen
+        // Tap (kein Swipe)
         if (!touchMoved) {
+          // Welche Zahl wurde getippt?
+          const touch = e.changedTouches[0];
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = touch.clientX - wrapRect.left;
+          const wrapW = wrap.offsetWidth || 306;
+          const centerX = wrapW / 2;
+          const offsetFromCenter = tapX - centerX;
+          const tappedIdx = bandIdx + Math.round(offsetFromCenter / CELL_W);
+          const clampedIdx = Math.max(0, Math.min(TOTAL - 1, tappedIdx));
+          
+          if (clampedIdx !== bandIdx) {
+            // Nicht-Mitte getippt → nur scrollen, kein Kipp
+            bandIdx = clampedIdx;
+            updateBandPos(true);
+          } else {
+            // Mitte getippt → Kipp auslösen
+            const n = bandIdx + 1;
+            selectNum(n);
+            if (gamePhase === 'spielen' && !isAnimating) {
+              (async () => {
+                for (let i = 0; i < n; i++) {
+                  let dir;
+                  if (currentQuadrant === 0) dir = 'east';
+                  else if (currentQuadrant === 1) dir = 'south_from_q1';
+                  else if (currentQuadrant === 2) dir = 'west_from_q2';
+                  else dir = 'north';
+                  await performKipp(dir, 600);
+                  advanceTopFace();
+                  if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+                }
+                clearSelection();
+                await checkIconTreffer();
+              })();
+            }
+          }
+        }
+      }, { passive: false });
+      
+      // Desktop click fallback
+      wrap.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrapRect = wrap.getBoundingClientRect();
+        const tapX = e.clientX - wrapRect.left;
+        const wrapW = wrap.offsetWidth || 306;
+        const centerX = wrapW / 2;
+        const offsetFromCenter = tapX - centerX;
+        const tappedIdx = bandIdx + Math.round(offsetFromCenter / CELL_W);
+        const clampedIdx = Math.max(0, Math.min(TOTAL - 1, tappedIdx));
+        
+        if (clampedIdx !== bandIdx) {
+          bandIdx = clampedIdx;
+          updateBandPos(true);
+        } else {
           const n = bandIdx + 1;
           selectNum(n);
           if (gamePhase === 'spielen' && !isAnimating) {
@@ -10279,29 +10336,6 @@
               await checkIconTreffer();
             })();
           }
-        }
-      }, { passive: false });
-      
-      // Desktop click fallback
-      wrap.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const n = bandIdx + 1;
-        selectNum(n);
-        if (gamePhase === 'spielen' && !isAnimating) {
-          (async () => {
-            for (let i = 0; i < n; i++) {
-              let dir;
-              if (currentQuadrant === 0) dir = 'east';
-              else if (currentQuadrant === 1) dir = 'south_from_q1';
-              else if (currentQuadrant === 2) dir = 'west_from_q2';
-              else dir = 'north';
-              await performKipp(dir, 600);
-              advanceTopFace();
-              if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-            }
-            clearSelection();
-            await checkIconTreffer();
-          })();
         }
       });
       
