@@ -348,7 +348,7 @@
     <div class="lvl-btn" id="lvlBrain"><img class="lvl-bg" src="button_lang_orange_glow.webp">BRAIN</div>
     <div class="lvl-btn" id="lvlK21"><img class="lvl-bg" src="button_lang_gold_glow.webp">MASTER BRAIN</div>
     <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
-      <div class="lvl-btn" id="lvlKP" onclick="window.location='kipp-prinzip.html'"><img class="lvl-bg" src="button_lang_grau.webp">KIPP PRINZIP</div>
+      <div class="lvl-btn" id="lvlKP"><img class="lvl-bg" src="button_lang_grau.webp">KIPP PRINZIP</div>
       <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
     </div>
   </div>
@@ -518,10 +518,12 @@
     function updateLevelLinks() {
       const base = selectedSkin === 'icons' ? 'coloricon.html' : 'training.html';
       const mb = selectedSkin === 'icons' ? 'kipp21_icon.html' : 'kipp21.html';
+      const kp = selectedSkin === 'icons' ? 'kipp-prinzip-icon.html' : 'kipp-prinzip.html';
       document.getElementById('lvlTraining').onclick = () => location.href = base;
       document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
       document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
       document.getElementById('lvlK21').onclick = () => location.href = mb;
+      document.getElementById('lvlKP').onclick = () => location.href = kp;
     }
     updateLevelLinks();
     // clickQueen und clickKing haben vorerst keine Funktion
