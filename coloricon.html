@@ -1100,11 +1100,11 @@
 
     <!-- ICONS Kippziel-Stapel -->
     <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="iconCardStack" style="position:relative; width:140px; height:140px;">
-        <div class="iconCard" data-idx="3" style="position:absolute; left:0px; top:9px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 6px rgba(0,0,0,0.4);"></div>
-        <div class="iconCard" data-idx="2" style="position:absolute; left:5px; top:6px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 5px rgba(0,0,0,0.35);"></div>
-        <div class="iconCard" data-idx="1" style="position:absolute; left:10px; top:3px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 4px rgba(0,0,0,0.3);"></div>
-        <img id="iconKippziel" src="" style="position:absolute; left:15px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 4px rgba(0,0,0,0.25);">
+      <div id="iconCardStack" style="position:relative; width:140px; height:126px;">
+        <div class="iconCard" data-idx="3" style="position:absolute; left:0px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 6px rgba(0,0,0,0.4);"></div>
+        <div class="iconCard" data-idx="2" style="position:absolute; left:5px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 5px rgba(0,0,0,0.35);"></div>
+        <div class="iconCard" data-idx="1" style="position:absolute; left:10px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 4px rgba(0,0,0,0.3);"></div>
+        <img id="iconKippziel" src="" style="position:absolute; left:15px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 4px rgba(0,0,0,0.25);">
       </div>
     </div>
 
@@ -10459,12 +10459,12 @@
       // Stapel nach rechts schieben: neue obere Karte (Kippziel) wieder mittig
       const baseLeft = (3 - n) * 5;
       remaining.forEach((c, i) => {
-        c.style.transition = 'left 0.4s ease, top 0.4s ease';
+        c.style.transition = 'left 0.4s ease';
         c.style.left = (baseLeft + i * 5) + 'px';
-        c.style.top = ((n - i) * 3) + 'px';
+        c.style.top = '0px';
       });
       const kzEl = document.getElementById('iconKippziel');
-      kzEl.style.transition = 'left 0.4s ease, top 0.4s ease';
+      kzEl.style.transition = 'left 0.4s ease';
       kzEl.style.left = (baseLeft + n * 5) + 'px';
       kzEl.style.top = '0px';
     }
