@@ -1057,9 +1057,9 @@
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
   <div id="resetButtonWrap">
-    <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
-    <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <button id="resetButton"><img src="reset_icon.png" alt="Zurück"></button>
+    <button id="soundToggle"><img id="soundImg" src="tonein_icon.png" alt="Sound"></button>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal_icon.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -2854,7 +2854,7 @@
     }, { passive: false });
     
     function updateSoundIcon() {
-      soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
+      soundImg.src = soundEnabled ? 'tonein_icon.png' : 'tonaus_icon.png';
     }
     updateSoundIcon();
     
