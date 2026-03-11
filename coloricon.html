@@ -6079,7 +6079,7 @@
     let kipp21WobbleUsed = 0;
     let kipp21EckblickUsed = 0;
     const KNIFF_MAX_USES = 2; // 2 Eckblick (Karten 0,5), 2 Kippblick (Karten 2,3)
-    const KNIFF_SHOW_DURATION = 11500; // 11,5 Sekunden Showzeit
+    const KNIFF_SHOW_DURATION = 5750; // 11,5 Sekunden Showzeit
     
     function refreshKniffIcons() {
       const allImgs = document.querySelectorAll('#jokerIconsRow img');
@@ -6207,7 +6207,7 @@
       kippDirection = 'cw';
       
       for (let hw = 0; hw < 3; hw++) {
-        if (gamePhase !== 'kipp21' || kipp21KniffAbort) break;
+        if ((gamePhase !== 'kipp21' && gamePhase !== 'spielen') || kipp21KniffAbort) break;
         const wobbles = 3 - hw;
         const pause = (hw < 2) ? 300 : 100;
         await halfKippWithWobble(nextCwDir(), wobbles, pause);
@@ -6216,7 +6216,7 @@
       
       if (!kipp21KniffAbort) {
         const extra = Math.floor(Math.random() * 3);
-        if (extra === 1 && gamePhase === 'kipp21') {
+        if (extra === 1 && (gamePhase === 'kipp21' || gamePhase === 'spielen')) {
           kippDirection = 'cw';
           await sleep(300);
           if (!kipp21KniffAbort) await halfKippWithWobble(nextCwDir(), 2, 100);
@@ -6336,7 +6336,7 @@
       
       // === Würfel hebt ab (Y-Achse, näher zum Betrachter) ===
       const liftHeight = 0.25; // ~1.5 Zellen nach oben
-      const liftDur = 300;
+      const liftDur = 600;
       const origY = pivotGroup.position.y;
       await new Promise(resolve => {
         const startTime = performance.now();
@@ -6381,7 +6381,7 @@
       eckEye.style.opacity = '0';
       
       // === Würfel senkt sich zurück ===
-      const lowerDur = 300;
+      const lowerDur = 600;
       await new Promise(resolve => {
         const startTime = performance.now();
         function animLower() {
@@ -8274,6 +8274,9 @@
       isAnimating = false;
       selectedAnzahl = null;
       kippDirection = 'cw';
+      kipp21KniffActive = false;
+      kipp21WobbleUsed = 0;
+      kipp21EckblickUsed = 0;
       
       // Kein startKipp21 — ICONS hat eigenen Spielablauf
       setTimeout(() => { _startBtnLock = false; }, 1000);
@@ -10513,13 +10516,27 @@
       
       generateIconKippziel();
       
-      // Joker-Icon Click-Handler
-      document.getElementById('iconEckblick').addEventListener('click', () => {
+      // Joker-Icon Click + Touch-Handler
+      const eckEl = document.getElementById('iconEckblick');
+      const kbEl = document.getElementById('iconKippblick');
+      eckEl.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (gamePhase === 'spielen') runKipp21EckblickKniff(true);
       });
-      document.getElementById('iconKippblick').addEventListener('click', () => {
+      eckEl.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (gamePhase === 'spielen') runKipp21EckblickKniff(true);
+      }, { passive: false });
+      kbEl.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (gamePhase === 'spielen') runKipp21WobbleKniff(true);
       });
+      kbEl.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (gamePhase === 'spielen') runKipp21WobbleKniff(true);
+      }, { passive: false });
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
