@@ -10428,43 +10428,43 @@
         kzEl.style.borderStyle = 'solid';
         kzEl.style.borderColor = '#cedb25';
         kzEl.style.animation = 'iconHitPulse 0.4s ease-in-out 3';
-        await new Promise(r => setTimeout(r, 1300));
         
-        // Fly onto cube: get cube screen position
-        const cubeScreenPos = new THREE.Vector3();
-        cube.getWorldPosition(cubeScreenPos);
-        cubeScreenPos.project(camera);
-        const cubeX = (cubeScreenPos.x * 0.5 + 0.5) * 360;
-        const cubeY = (-cubeScreenPos.y * 0.5 + 0.5) * 720;
+        // Farbiges Motiv auf Würfelfläche einblenden (0% → 100% in 2.5s)
+        const colorMotivBase = motivForVal(iconTargetVal).replace('_grau', '');
+        const colorImg = new Image();
+        colorImg.src = colorMotivBase + '_' + iconTargetFarbe + '.png';
         
-        // Animate kippziel flying to cube
-        const kzRect = kzEl.getBoundingClientRect();
-        const overlay = kzEl.closest('#iconKippzielRow').parentElement;
-        const flyEl = kzEl.cloneNode(true);
-        flyEl.style.position = 'absolute';
-        flyEl.style.left = kzRect.left + 'px';
-        flyEl.style.top = kzRect.top + 'px';
-        flyEl.style.width = kzEl.offsetWidth + 'px';
-        flyEl.style.height = kzEl.offsetHeight + 'px';
-        flyEl.style.zIndex = '9999';
-        flyEl.style.transition = 'all 0.6s ease-in';
-        flyEl.style.animation = '';
-        document.body.appendChild(flyEl);
+        const matIdx = TOP_FACE_MAT_IDX[topFace];
+        const f = topFace === 'f0' ? faceSlots.f0 : (topFace === 'f1' ? faceSlots.f1 : faceSlots.f2);
         
-        kzEl.style.opacity = '0';
-        
-        requestAnimationFrame(() => {
-          flyEl.style.left = cubeX + 'px';
-          flyEl.style.top = cubeY + 'px';
-          flyEl.style.width = '60px';
-          flyEl.style.height = '60px';
-          flyEl.style.transform = 'translate(-50%, -50%)';
-          flyEl.style.opacity = '0.3';
+        await new Promise(resolve => {
+          const dur = 2500;
+          const startTime = performance.now();
+          function animFade() {
+            const t = Math.min((performance.now() - startTime) / dur, 1);
+            // Face-Textur neu zeichnen mit farbigem Overlay
+            const canvas = createFaceTexture(f.slotMap, f.imgRot, 1);
+            const ctx = canvas.getContext('2d');
+            if (colorImg.complete) {
+              ctx.globalAlpha = t;
+              const s = 244;
+              ctx.save();
+              ctx.translate(128, 128);
+              if (f.imgRot) ctx.rotate(f.imgRot);
+              ctx.rotate(Math.PI);
+              ctx.drawImage(colorImg, -s/2, -s/2, s, s);
+              ctx.restore();
+            }
+            cubeMaterial[matIdx].map = new THREE.CanvasTexture(canvas);
+            cubeMaterial[matIdx].needsUpdate = true;
+            if (t < 1) requestAnimationFrame(animFade);
+            else resolve();
+          }
+          if (colorImg.complete) animFade();
+          else colorImg.onload = animFade;
         });
         
-        await new Promise(r => setTimeout(r, 700));
-        flyEl.remove();
-        kzEl.style.opacity = '1';
+        await new Promise(r => setTimeout(r, 500));
         kzEl.style.animation = '';
         
         if (iconHits >= 4) {
