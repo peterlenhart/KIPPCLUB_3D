@@ -10268,10 +10268,13 @@
           const touch = e.changedTouches[0];
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = touch.clientX - wrapRect.left;
-          const wrapW = wrap.offsetWidth || 306;
+          const wrapW = wrapRect.width;
           const centerX = wrapW / 2;
+          // Actual rendered cell width from first numBtn
+          const firstBtn = strip.querySelector('.numBtn');
+          const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
           const offsetFromCenter = tapX - centerX;
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / CELL_W)));
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
           
           bandIdx = tappedIdx;
           updateBandPos(true);
@@ -10302,10 +10305,12 @@
         e.stopPropagation();
         const wrapRect = wrap.getBoundingClientRect();
         const tapX = e.clientX - wrapRect.left;
-        const wrapW = wrap.offsetWidth || 306;
+        const wrapW = wrapRect.width;
         const centerX = wrapW / 2;
+        const firstBtn = strip.querySelector('.numBtn');
+        const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
         const offsetFromCenter = tapX - centerX;
-        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / CELL_W)));
+        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
         
         bandIdx = tappedIdx;
         updateBandPos(true);
