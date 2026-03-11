@@ -6239,7 +6239,7 @@
       setTimeout(() => { wobEye.style.display = 'none'; }, 400);
       
       // Anti-Zufallstreffer: wenn Würfel jetzt auf HIT steht → neues Kippziel
-      if (iconKippzielActive && getTopFaceVal() === iconTargetVal && currentQuadrant === FARBE_QUADRANT[iconTargetFarbe]) {
+      if (iconKippzielActive && getTopFaceVals().includes(iconTargetVal) && currentQuadrant === FARBE_QUADRANT[iconTargetFarbe]) {
         generateIconKippziel();
       }
       
@@ -10424,23 +10424,38 @@
     let iconKippzielActive = false;
     
     function generateIconKippziel() {
-      const faceVals = [deck[0], deck[4], deck[8]];
+      // Collect actually visible motif vals from all 3 faces
+      const visibleVals = [];
+      ['f0','f1','f2'].forEach(fn => {
+        const f = faceSlots[fn];
+        const keys = Object.keys(f.slotMap);
+        const vals = keys.map(k => f.slotMap[k].val);
+        if (currentLevel >= 2 && vals.length >= 2) {
+          visibleVals.push(vals[0], vals[1]); // BRAINY: 2 per face
+        } else if (vals.length > 0) {
+          visibleVals.push(vals[0]); // TRAINING: 1 per face
+        }
+      });
+      if (visibleVals.length === 0) visibleVals.push(deck[0], deck[4], deck[8]);
+      
       let attempts = 0;
       do {
-        iconTargetVal = faceVals[Math.floor(Math.random() * 3)];
+        iconTargetVal = visibleVals[Math.floor(Math.random() * visibleVals.length)];
         iconTargetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
         attempts++;
-      } while (attempts < 50 && iconTargetVal === getTopFaceVal() && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant);
+      } while (attempts < 50 && getTopFaceVals().includes(iconTargetVal) && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant);
       const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
       document.getElementById('iconKippziel').src = motivBase + '_' + iconTargetFarbe + '.png';
       document.getElementById('iconKippziel').style.border = '3px solid #6b5040';
       iconKippzielActive = true;
     }
     
-    function getTopFaceVal() {
-      if (topFace === 'f0') return deck[0];
-      if (topFace === 'f1') return deck[4];
-      return deck[8]; // f2
+    function getTopFaceVals() {
+      const f = faceSlots[topFace];
+      const keys = Object.keys(f.slotMap);
+      const vals = keys.map(k => f.slotMap[k].val);
+      if (currentLevel >= 2 && vals.length >= 2) return [vals[0], vals[1]];
+      return vals.length > 0 ? [vals[0]] : [];
     }
     
     function updateIconStack() {
@@ -10473,9 +10488,9 @@
       if (!iconKippzielActive) return;
       iconKippzielActive = false;
       
-      const topVal = getTopFaceVal();
+      const topVals = getTopFaceVals();
       const requiredQ = FARBE_QUADRANT[iconTargetFarbe];
-      const isHit = (topVal === iconTargetVal && currentQuadrant === requiredQ);
+      const isHit = (topVals.includes(iconTargetVal) && currentQuadrant === requiredQ);
       
       const kzEl = document.getElementById('iconKippziel');
       
@@ -10580,12 +10595,12 @@
       const overlay = document.getElementById('uiOverlay');
       const btnWrap = document.createElement('div');
       btnWrap.id = 'iconEndButtons';
-      btnWrap.style.cssText = 'position:absolute; left:50%; top:460px; transform:translateX(-50%); display:flex; gap:16px; pointer-events:auto; z-index:30;';
+      btnWrap.style.cssText = 'position:absolute; left:50%; top:460px; transform:translateX(-50%); display:flex; flex-direction:column; gap:12px; align-items:center; pointer-events:auto; z-index:30;';
       
       const btnNochmal = document.createElement('div');
-      btnNochmal.style.cssText = 'position:relative; width:140px; height:42px; cursor:pointer;';
+      btnNochmal.style.cssText = 'position:relative; width:240px; height:52px; cursor:pointer;';
       btnNochmal.innerHTML = '<img src="button_lang_braun.webp" style="width:100%;height:100%;object-fit:contain;">' +
-        '<span style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font:bold 15px Arial;color:#e8dcc8;pointer-events:none;">' + (T.nml || 'NOCHMAL') + '</span>';
+        '<span style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font:bold 18px Arial;color:#e8dcc8;pointer-events:none;">' + (T.nml || 'NOCHMAL') + '</span>';
       btnNochmal.addEventListener('click', () => { location.reload(); });
       btnNochmal.addEventListener('touchend', (e) => { e.preventDefault(); location.reload(); }, { passive: false });
       
@@ -10597,9 +10612,9 @@
       const weiterText = (zuPrefix[lang] || 'zu ') + nextName + (zuSuffix[lang] || '');
       
       const btnWeiter = document.createElement('div');
-      btnWeiter.style.cssText = 'position:relative; width:140px; height:42px; cursor:pointer;';
+      btnWeiter.style.cssText = 'position:relative; width:240px; height:52px; cursor:pointer;';
       btnWeiter.innerHTML = '<img src="button_lang_rotbraun_glow.webp" style="width:100%;height:100%;object-fit:contain;">' +
-        '<span style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font:bold 15px Arial;color:#e8dcc8;pointer-events:none;">' + weiterText + '</span>';
+        '<span style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font:bold 18px Arial;color:#e8dcc8;pointer-events:none;">' + weiterText + '</span>';
       const nextLevelUrls = {
         1: 'coloricon.html?level=brainy',
         2: 'coloricon.html?level=brain',
