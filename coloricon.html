@@ -6336,7 +6336,7 @@
       
       // === Würfel hebt ab (Y-Achse, näher zum Betrachter) ===
       const liftHeight = 0.25; // ~1.5 Zellen nach oben
-      const liftDur = 600;
+      const liftDur = 300;
       const origY = pivotGroup.position.y;
       await new Promise(resolve => {
         const startTime = performance.now();
@@ -6381,7 +6381,7 @@
       eckEye.style.opacity = '0';
       
       // === Würfel senkt sich zurück ===
-      const lowerDur = 600;
+      const lowerDur = 300;
       await new Promise(resolve => {
         const startTime = performance.now();
         function animLower() {
@@ -10464,7 +10464,7 @@
           else colorImg.onload = animFade;
         });
         
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 2500));
         kzEl.style.animation = '';
         
         if (iconHits >= 4) {
