@@ -1095,10 +1095,8 @@
     
 
     <!-- ICONS Kippziel-Bereich -->
-    <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; align-items:center; gap:8px;">
-      <img id="iconEckblick" src="joker3.webp" style="width:85px; height:85px; cursor:pointer;">
+    <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; align-items:center; justify-content:center;">
       <img id="iconKippziel" src="" style="width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4;">
-      <img id="iconKippblick" src="joker2.webp" style="width:85px; height:85px; cursor:pointer;">
     </div>
 
     <!-- Kippanzahl: Scrollband 1-11 -->
@@ -6231,6 +6229,11 @@
       kipp21WobbleUsed++;
       setTimeout(() => { wobEye.style.display = 'none'; }, 400);
       
+      // Anti-Zufallstreffer: wenn Würfel jetzt auf HIT steht → neues Kippziel
+      if (iconKippzielActive && getTopFaceVal() === iconTargetVal && currentQuadrant === FARBE_QUADRANT[iconTargetFarbe]) {
+        generateIconKippziel();
+      }
+      
       // Joker-Status aktualisieren
       refreshKniffIcons();
       
@@ -8280,6 +8283,7 @@
       
       // Kein startKipp21 — ICONS hat eigenen Spielablauf
       setTimeout(() => { _startBtnLock = false; }, 1000);
+      autoEckblick();
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
       handleStart(false);
@@ -10483,6 +10487,7 @@
         
         // Neues Kippziel
         generateIconKippziel();
+        autoEckblick();
       } else {
         iconMisses++;
         // Roter Rand
@@ -10516,28 +10521,15 @@
       
       generateIconKippziel();
       
-      // Joker-Icon Click + Touch-Handler
-      const eckEl = document.getElementById('iconEckblick');
-      const kbEl = document.getElementById('iconKippblick');
-      eckEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (gamePhase === 'spielen') runKipp21EckblickKniff(true);
-      });
-      eckEl.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase === 'spielen') runKipp21EckblickKniff(true);
-      }, { passive: false });
-      kbEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (gamePhase === 'spielen') runKipp21WobbleKniff(true);
-      });
-      kbEl.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase === 'spielen') runKipp21WobbleKniff(true);
-      }, { passive: false });
     })();
+    
+    // Auto-Eckblick nach Kippziel
+    async function autoEckblick() {
+      await new Promise(r => setTimeout(r, 400));
+      kipp21EckblickUsed = 0;
+      kipp21KniffActive = false;
+      if (gamePhase === 'spielen') await runKipp21EckblickKniff(true);
+    }
 
     // DEBUG: If this text appears, the script reached the end without crash
 
