@@ -511,7 +511,7 @@
       align-items: center;
       justify-content: center;
       font: bold 30px Arial;
-      color: #2a1810;
+      color: #5a4a3a;
       background: transparent;
       border: none;
       border-right: 1px solid #8a7a66;
@@ -526,7 +526,7 @@
       border-right: none;
     }
     .numBtn.selected {
-      background: #2a1810;
+      background: #5a4a3a;
       color: #e8dcc8;
     }
     .numBtn.center {
@@ -1098,9 +1098,14 @@
     <button id="backButton">↻</button>
     
 
-    <!-- ICONS Kippziel-Bereich -->
-    <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; align-items:center; justify-content:center;">
-      <img id="iconKippziel" src="" style="width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4;">
+    <!-- ICONS Kippziel-Stapel -->
+    <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
+      <div id="iconCardStack" style="position:relative; width:140px; height:140px;">
+        <div class="iconCard" data-idx="3" style="position:absolute; left:0px; top:9px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 6px rgba(0,0,0,0.4);"></div>
+        <div class="iconCard" data-idx="2" style="position:absolute; left:5px; top:6px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 5px rgba(0,0,0,0.35);"></div>
+        <div class="iconCard" data-idx="1" style="position:absolute; left:10px; top:3px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 4px rgba(0,0,0,0.3);"></div>
+        <img id="iconKippziel" src="" style="position:absolute; left:15px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:2px 3px 4px rgba(0,0,0,0.25);">
+      </div>
     </div>
 
     <!-- Kippanzahl: Scrollband 1-11 -->
@@ -10406,7 +10411,7 @@
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      el.style.top = '545px';
+      el.style.top = '557px';
     })();
 
     // === ICONS: Kippziel-Bereich positionieren und initialisieren ===
@@ -10436,6 +10441,32 @@
       if (topFace === 'f0') return deck[0];
       if (topFace === 'f1') return deck[4];
       return deck[8]; // f2
+    }
+    
+    function updateIconStack() {
+      const stack = document.getElementById('iconCardStack');
+      const cards = Array.from(stack.querySelectorAll('.iconCard'));
+      
+      // Oberste Hintergrundkarte entfernen (die direkt unter dem Kippziel)
+      if (cards.length > 0) {
+        cards[cards.length - 1].remove();
+      }
+      
+      // Verbleibende Hintergrundkarten
+      const remaining = Array.from(stack.querySelectorAll('.iconCard'));
+      const n = remaining.length;
+      
+      // Stapel nach rechts schieben: neue obere Karte (Kippziel) wieder mittig
+      const baseLeft = (3 - n) * 5;
+      remaining.forEach((c, i) => {
+        c.style.transition = 'left 0.4s ease, top 0.4s ease';
+        c.style.left = (baseLeft + i * 5) + 'px';
+        c.style.top = ((n - i) * 3) + 'px';
+      });
+      const kzEl = document.getElementById('iconKippziel');
+      kzEl.style.transition = 'left 0.4s ease, top 0.4s ease';
+      kzEl.style.left = (baseLeft + n * 5) + 'px';
+      kzEl.style.top = '0px';
     }
     
     async function checkIconTreffer() {
@@ -10494,6 +10525,9 @@
         await new Promise(r => setTimeout(r, 2500));
         kzEl.style.animation = '';
         
+        // Stapel-Karte entfernen + nachrutschen
+        updateIconStack();
+        
         if (iconHits >= 4) {
           gamePhase = 'ende';
           showIconEndScreen();
@@ -10537,7 +10571,7 @@
     (function() {
       const row = document.getElementById('iconKippzielRow');
       if (!row) return;
-      row.style.top = '416px';
+      row.style.top = '428px';
       
       generateIconKippziel();
       
