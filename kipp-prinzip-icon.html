@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIPP PRINZIP</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a0e06">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      height:100%; overflow-y:auto; overflow-x:hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #1a0e06;
+      color: #d4c4a8;
+    }
+    body { display:flex; justify-content:center; }
+    .page { max-width:400px; width:100%; padding:20px 24px 40px; }
+    .back-btn {
+      position:fixed; top:12px; left:12px; z-index:100;
+      width:44px; height:44px; border:none; background:none;
+      cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent;
+    }
+    .back-btn img { width:100%; height:100%; object-fit:contain; }
+    h1 {
+      text-align:center; font-size:28px; font-weight:bold;
+      letter-spacing:4px; color:#d4a843;
+      text-shadow:0 2px 8px rgba(0,0,0,0.6), 0 0 20px rgba(212,168,67,0.15);
+      margin: 16px 0 6px;
+    }
+    .subtitle {
+      text-align:center; font-size:15px; letter-spacing:2px;
+      color:#a08060; margin-bottom:28px;
+    }
+    .section { margin-bottom:24px; }
+    .section h2 {
+      font-size:17px; font-weight:bold; letter-spacing:2px;
+      color:#cedb25; margin-bottom:8px;
+      text-shadow:0 1px 4px rgba(0,0,0,0.5);
+    }
+    .section p { font-size:15px; line-height:1.65; color:#c8b898; }
+    .section p + p { margin-top:10px; }
+    .tip {
+      background: rgba(206,219,37,0.08);
+      border-left: 3px solid #cedb25;
+      padding: 12px 14px; margin: 14px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .tip p { font-size:14px; line-height:1.6; color:#d4c4a8; }
+    .tip strong { color:#cedb25; }
+    .divider { border:none; border-top:1px solid rgba(138,122,102,0.2); margin:24px 0; }
+  </style>
+</head>
+<body>
+
+  <button class="back-btn" onclick="history.back()">
+    <img src="reset_icon.png" alt="Zurück">
+  </button>
+
+  <div class="page">
+    <h1 id="kpTitle"></h1>
+    <div class="subtitle" id="kpSubtitle"></div>
+
+    <div id="content"></div>
+  </div>
+
+  <script>
+    const T = {
+      de: {
+        title: "KIPP PRINZIP",
+        subtitle: "FÜR SUPERTÜFTLER",
+        
+        sections: [
+          { t: "Der Würfel in der Box", p: "Ein Würfel mit drei sichtbaren Seiten. Er kippt im Kreis \u2013 immer im Uhrzeigersinn. Das klingt simpel. Ist es aber nicht." },
+          { t: "Motive und Farben", p: "Jedes Motiv auf dem Würfel kann mit jeder der <b>4 Randfarben</b> kombiniert werden. Du kippst ausschließlich im Uhrzeigersinn. Dafür hast du das Scrollband von <b>1 bis 11 Kipps</b>. Die Frage ist: <b>Wie viele Kipps brauche ich?</b>" },
+          { t: "Der Logikkipp", p: "Dein Kippziel ist z.B. <b>Schuh an Blau</b> \u2013 und der Schuh ist bereits sichtbar auf dem Würfel? Dann brauchst du entweder <b>3, 6 oder 9 Kipps</b>. Wer versteht warum, hat einen entscheidenden Vorteil. Mehr wird nicht verraten." },
+          { t: "Der Uhrenvergleich", p: "Der Würfel in der Box ist wie ein Zeiger auf der Uhr. <b>12 Kipps</b>, und der Würfel liegt wieder genau so wie am Anfang. Jede Kippzahl von 1 bis 11 ergibt eine andere Würfellage. Und 1-mal zurückkippen? Das sind <b>11 Kipps</b> im Uhrzeigersinn. Gleich wie: Zeiger um 1 Stunde zurückstellen = 11 Stunden vor. 2-mal zurück? Das sind 10-mal vor." },
+          { t: "Eckblick nutzen \u2013 Motive merken", p: "Nach jedem neuen Kippziel wird der Würfel automatisch auf seine Ecke gestellt. Nutze diesen Moment! Du siehst dabei alle drei Motivseiten gleichzeitig. Merke dir, <b>welche Motive auf welchen Seiten liegen</b>. Merkfähigkeit trifft auf Logik." }
+        ],
+        footer: "100% Score ist immer möglich \u2013 mit Logik, Merkfähigkeit und räumlicher Vorstellungskraft.",
+        closer: "Viel Spannung, Spaß und Kopfzerbrechen<br>mit <strong>KIPP CLUB</strong>."
+      },
+      en: {
+        title: "TILT PRINCIPLE",
+        subtitle: "FOR SUPER PUZZLERS",
+        
+        sections: [
+          { t: "The Cube in the Box", p: "A cube with three visible faces. It tilts in a circle \u2013 always clockwise. Sounds simple. But it isn\u2019t." },
+          { t: "Motifs and Colors", p: "Each motif on the cube can be combined with any of the <b>4 border colors</b>. You tilt exclusively clockwise. For this you have the scroll band from <b>1 to 11 tilts</b>. The question is: <b>How many tilts do I need?</b>" },
+          { t: "The Logic Tilt", p: "Your target is e.g. <b>Shoe at Blue</b> \u2013 and the shoe is already visible on the cube? Then you need either <b>3, 6 or 9 tilts</b>. Understand why and you gain a crucial advantage. No more clues." },
+          { t: "The Clock Comparison", p: "The cube in the box is like a hand on a clock. <b>12 tilts</b>, and the cube is back exactly where it started. Each tilt count from 1 to 11 produces a different cube position. And 1 tilt backwards? That\u2019s <b>11 tilts</b> clockwise. Just like: moving the hand 1 hour back = 11 hours forward. 2 back? That\u2019s 10 forward." },
+          { t: "Use Corner View \u2013 Remember Motifs", p: "After each new tilt target, the cube automatically balances on its corner. Use this moment! You can see all three motif faces at once. Remember <b>which motifs are on which faces</b>. Memory meets logic." }
+        ],
+        footer: "100% score is always possible \u2013 with logic, memory and spatial awareness.",
+        closer: "Lots of suspense, fun and brainwork<br>with <strong>KIPP CLUB</strong>."
+      },
+      es: {
+        title: "PRINCIPIO VOLCADO",
+        subtitle: "PARA SUPER ENIGMISTAS",
+        
+        sections: [
+          { t: "El Cubo en la Caja", p: "Un cubo con tres caras visibles. Se vuelca en círculo \u2013 siempre en sentido horario. Suena simple. Pero no lo es." },
+          { t: "Motivos y Colores", p: "Cada motivo del cubo se puede combinar con cualquiera de los <b>4 colores del borde</b>. Volcas exclusivamente en sentido horario. Para ello tienes la banda de desplazamiento de <b>1 a 11 volcados</b>. La pregunta es: <b>¿Cuántos volcados necesito?</b>" },
+          { t: "El Volcado Lógico", p: "Tu objetivo es p.ej. <b>Zapato en Azul</b> \u2013 ¿y el zapato ya es visible en el cubo? Entonces necesitas <b>3, 6 o 9 volcados</b>. Quien entiende por qué, tiene una ventaja decisiva. No se dice más." },
+          { t: "La Comparación del Reloj", p: "El cubo en la caja es como una manecilla en el reloj. <b>12 volcados</b>, y el cubo vuelve exactamente a su posición inicial. Cada número de volcados del 1 al 11 produce una posición diferente. ¿Y 1 volcado hacia atrás? Son <b>11 volcados</b> en sentido horario. Igual que: retroceder la manecilla 1 hora = 11 horas adelante. ¿2 atrás? Son 10 adelante." },
+          { t: "Usa la Vista de Esquina \u2013 Recuerda los Motivos", p: "Después de cada nuevo objetivo, el cubo se coloca automáticamente sobre su esquina. ¡Aprovecha este momento! Puedes ver las tres caras con motivos a la vez. Recuerda <b>qué motivos están en qué caras</b>. La memoria se encuentra con la lógica." }
+        ],
+        footer: "100% de puntuación siempre es posible \u2013 con lógica, memoria y visión espacial.",
+        closer: "Mucha tensión, diversión y rompecabezas<br>con <strong>KIPP CLUB</strong>."
+      },
+      fr: {
+        title: "PRINCIPE BASCULE",
+        subtitle: "POUR SUPER CASSE-TÊTES",
+        
+        sections: [
+          { t: "Le Cube dans la Boîte", p: "Un cube avec trois faces visibles. Il bascule en cercle \u2013 toujours dans le sens horaire. Ça semble simple. Mais ça ne l\u2019est pas." },
+          { t: "Motifs et Couleurs", p: "Chaque motif sur le cube peut être combiné avec chacune des <b>4 couleurs du cadre</b>. Tu bascules exclusivement dans le sens horaire. Pour cela, tu disposes de la bande de défilement de <b>1 à 11 bascules</b>. La question est : <b>Combien de bascules me faut-il ?</b>" },
+          { t: "La Bascule Logique", p: "Ta cible est p.ex. <b>Chaussure au Bleu</b> \u2013 et la chaussure est déjà visible sur le cube ? Alors il te faut <b>3, 6 ou 9 bascules</b>. Qui comprend pourquoi a un avantage décisif. Pas d\u2019autre indice." },
+          { t: "La Comparaison de l\u2019Horloge", p: "Le cube dans la boîte est comme une aiguille sur l\u2019horloge. <b>12 bascules</b>, et le cube revient exactement à sa position de départ. Chaque nombre de bascules de 1 à 11 donne une position différente. Et 1 bascule en arrière ? Ce sont <b>11 bascules</b> dans le sens horaire. Tout comme : reculer l\u2019aiguille d\u20191 heure = 11 heures en avant. 2 en arrière ? C\u2019est 10 en avant." },
+          { t: "Utilise la Vue d\u2019Angle \u2013 Retiens les Motifs", p: "Après chaque nouvelle cible, le cube se place automatiquement sur son coin. Profite de ce moment ! Tu vois les trois faces de motifs en même temps. Retiens <b>quels motifs sont sur quelles faces</b>. La mémoire rencontre la logique." }
+        ],
+        footer: "100% de score est toujours possible \u2013 avec logique, mémoire et vision spatiale.",
+        closer: "Beaucoup de suspense, de plaisir et de casse-tête<br>avec <strong>KIPP CLUB</strong>."
+      },
+      it: {
+        title: "PRINCIPIO RIBALTAMENTO",
+        subtitle: "PER SUPER ROMPICAPI",
+        
+        sections: [
+          { t: "Il Cubo nella Scatola", p: "Un cubo con tre facce visibili. Si ribalta in cerchio \u2013 sempre in senso orario. Sembra semplice. Ma non lo è." },
+          { t: "Motivi e Colori", p: "Ogni motivo sul cubo può essere combinato con ciascuno dei <b>4 colori del bordo</b>. Ribalti esclusivamente in senso orario. Per questo hai la banda di scorrimento da <b>1 a 11 ribaltamenti</b>. La domanda è: <b>Quanti ribaltamenti mi servono?</b>" },
+          { t: "Il Ribaltamento Logico", p: "Il tuo obiettivo è ad es. <b>Scarpa al Blu</b> \u2013 e la scarpa è già visibile sul cubo? Allora ti servono <b>3, 6 o 9 ribaltamenti</b>. Chi capisce perché ha un vantaggio decisivo. Nessun altro indizio." },
+          { t: "Il Confronto con l\u2019Orologio", p: "Il cubo nella scatola è come una lancetta sull\u2019orologio. <b>12 ribaltamenti</b>, e il cubo torna esattamente alla posizione iniziale. Ogni numero di ribaltamenti da 1 a 11 produce una posizione diversa. E 1 ribaltamento all\u2019indietro? Sono <b>11 ribaltamenti</b> in senso orario. Come: spostare la lancetta indietro di 1 ora = 11 ore avanti. 2 indietro? Sono 10 avanti." },
+          { t: "Usa la Vista d\u2019Angolo \u2013 Ricorda i Motivi", p: "Dopo ogni nuovo obiettivo, il cubo si posiziona automaticamente sul suo angolo. Sfrutta questo momento! Puoi vedere tutte e tre le facce con i motivi contemporaneamente. Ricorda <b>quali motivi sono su quali facce</b>. La memoria incontra la logica." }
+        ],
+        footer: "Il 100% è sempre possibile \u2013 con logica, memoria e immaginazione spaziale.",
+        closer: "Tanta suspense, divertimento e rompicapi<br>con <strong>KIPP CLUB</strong>."
+      },
+      tr: {
+        title: "DEV\u0130RME PRENS\u0130B\u0130",
+        subtitle: "SÜPER BULMACACILAR \u0130Ç\u0130N",
+        
+        sections: [
+          { t: "Kutudaki Küp", p: "Üç görünür yüzü olan bir küp. Daire içinde devrilir \u2013 her zaman saat yönünde. Basit görünür. Ama değil." },
+          { t: "Motifler ve Renkler", p: "Küp üzerindeki her motif, <b>4 çerçeve renginden</b> herhangi biriyle birleştirilebilir. Yalnızca saat yönünde devirirsin. Bunun için <b>1\u2019den 11\u2019e kadar</b> kaydırma bandın var. Soru şu: <b>Kaç devirme gerekiyor?</b>" },
+          { t: "Mantık Devirmesi", p: "Hedefin örneğin <b>Ayakkabı, Mavi\u2019de</b> \u2013 ve ayakkabı zaten küpün üzerinde görünüyor mu? O zaman <b>3, 6 veya 9 devirme</b> gerekir. Nedenini anlayan, belirleyici avantaja sahip olur. Daha fazla ipucu yok." },
+          { t: "Saat Karşılaştırması", p: "Kutudaki küp, saatteki bir akrep gibidir. <b>12 devirme</b>, ve küp tam olarak başlangıç konumuna döner. 1\u2019den 11\u2019e kadar her devirme sayısı farklı bir küp konumu verir. Ve 1 kez geriye devirmek? Bu saat yönünde <b>11 devirme</b> demektir. Tıpkı: akrebi 1 saat geri almak = 11 saat ileri. 2 geri? 10 ileri demek." },
+          { t: "Köşe Görünümünü Kullan \u2013 Motifleri Hatırla", p: "Her yeni hedeften sonra küp otomatik olarak köşesi üzerinde durur. Bu anı değerlendir! Üç motif yüzünü aynı anda görürsün. <b>Hangi motiflerin hangi yüzlerde olduğunu</b> hatırla. Hafıza mantıkla buluşur." }
+        ],
+        footer: "100% skor her zaman mümkün \u2013 mantık, hafıza ve uzamsal hayal gücüyle.",
+        closer: "Kutudaki küple bol gerilim, eğlence ve kafa patlatma<br><strong>KIPP CLUB</strong> ile."
+      }
+    };
+
+    const lang = localStorage.getItem('digikipp_lang') || 'de';
+    const t = T[lang] || T.de;
+
+    document.getElementById('kpTitle').textContent = t.title;
+    document.getElementById('kpSubtitle').textContent = t.subtitle;
+
+    let html = '';
+    for (const s of t.sections) {
+      if (s.tip) {
+        html += '<div class="tip"><p>' + s.p + '</p></div>';
+      } else {
+        html += '<div class="section"><h2>' + s.t.toUpperCase() + '</h2><p>' + s.p + '</p></div>';
+      }
+    }
+    html += '<hr class="divider">';
+    html += '<div class="section" style="text-align:center;"><p>' + t.footer + '</p>';
+    html += '<p style="margin-top:18px;color:#d4a843;font-size:16px;letter-spacing:1px;">' + t.closer + '</p></div>';
+
+    document.getElementById('content').innerHTML = html;
+  </script>
+</body>
+</html>
