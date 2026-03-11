@@ -530,8 +530,8 @@
       color: #e8dcc8;
     }
     .numBtn.center {
-      font-weight: 900;
-      font-size: 32px !important;
+      
+      
     }
 
     @keyframes iconHitPulse {
@@ -10199,16 +10199,11 @@
         const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
-        // Center highlight + size
+        // Update band position
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
-          if (i === bandIdx) {
-            b.classList.add('center');
-            b.style.fontSize = '32px';
-          } else {
-            b.classList.remove('center');
-            b.style.fontSize = '30px';
-          }
+          b.classList.remove('center');
+          b.style.fontSize = '';
         });
       }
       
