@@ -2207,11 +2207,11 @@
 
       if (currentLevel >= 2 && vals.length >= 2) {
         // BRAINY: 2 Motive pro Fläche, 50% Größe
-        // Diagonal: Top-Left und Bottom-Right (die anderen beiden Quadranten)
-        const s = 122; // halbe Innenfläche
+        // Diagonal: Top-Left und Bottom-Right
+        const s = 122;
         const positions = [
-          { x: 6, y: 6 },     // Top-Left Quadrant
-          { x: 128, y: 128 }  // Bottom-Right Quadrant
+          { x: 6, y: 6 },       // Top-Left
+          { x: 128, y: 128 }    // Bottom-Right
         ];
         for (let i = 0; i < 2; i++) {
           const img = motivImgs[motivForVal(vals[i])];
