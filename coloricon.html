@@ -10699,17 +10699,18 @@
       const shiftX = { west: -0.28, east: 0.28, center: 0 };
       const shiftY = -0.55; // runter = näher ran
       const zoomZ = -0.25; // näher ran
+      const panZ = { west: 0, east: 0, center: -0.3125 }; // center: 90px nach Nord
       
       // --- KIPP 1 ---
       const k1 = cwDirs[currentQuadrant];
-      await doHalfKippZoom(k1.dir, k1.toQ, shiftX[k1.side], shiftY, zoomZ, camSave, lookBase);
+      await doHalfKippZoom(k1.dir, k1.toQ, shiftX[k1.side], shiftY, zoomZ, panZ[k1.side], camSave, lookBase);
       advanceTopFace();
       
       await new Promise(r => setTimeout(r, 600));
       
       // --- KIPP 2 ---
       const k2 = cwDirs[currentQuadrant];
-      await doHalfKippZoom(k2.dir, k2.toQ, shiftX[k2.side], shiftY, zoomZ, camSave, lookBase);
+      await doHalfKippZoom(k2.dir, k2.toQ, shiftX[k2.side], shiftY, zoomZ, panZ[k2.side], camSave, lookBase);
       advanceTopFace();
       
       // Kamera exakt zurücksetzen
@@ -10722,7 +10723,7 @@
       isAnimating = false;
     }
     
-    async function doHalfKippZoom(direction, toQ, xShift, yShift, zShift, camSave, lookBase) {
+    async function doHalfKippZoom(direction, toQ, xShift, yShift, zShift, zPan, camSave, lookBase) {
       // Setup pivot
       let pivotPoint, axis, targetRotation;
       if (direction === 'north') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; }
@@ -10757,8 +10758,8 @@
           else pivotGroup.rotation.z = e * halfRot;
           camera.position.x = camSave.px + xShift * e;
           camera.position.y = camSave.py + yShift * e;
-          camera.position.z = camSave.pz + zShift * e;
-          camera.lookAt(lookBase.x + xShift * e, lookBase.y, lookBase.z);
+          camera.position.z = camSave.pz + (zShift + zPan) * e;
+          camera.lookAt(lookBase.x + xShift * e, lookBase.y, lookBase.z + zPan * e);
           if (p < 1) requestAnimationFrame(a1);
           else resolve();
         })();
@@ -10782,8 +10783,8 @@
           // Camera zurück
           camera.position.x = camSave.px + xShift * (1 - eCam);
           camera.position.y = camSave.py + yShift * (1 - eCam);
-          camera.position.z = camSave.pz + zShift * (1 - eCam);
-          camera.lookAt(lookBase.x + xShift * (1 - eCam), lookBase.y, lookBase.z);
+          camera.position.z = camSave.pz + (zShift + zPan) * (1 - eCam);
+          camera.lookAt(lookBase.x + xShift * (1 - eCam), lookBase.y, lookBase.z + zPan * (1 - eCam));
           if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
           if (p < 1) requestAnimationFrame(a2);
           else resolve();
