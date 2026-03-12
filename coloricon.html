@@ -10694,20 +10694,21 @@
         2: { dir: 'west_from_q2', toQ: 3, side: 'west' }
       };
       
-      // Nur X-Shift + Z-Zoom, kein Drehen
+      // Nur X-Shift + Y-Zoom + Z-Zoom, kein Drehen
       const shiftX = { west: -0.28, east: 0.28 };
+      const shiftY = -0.55; // runter = näher ran
       const zoomZ = -0.25; // näher ran
       
       // --- KIPP 1 ---
       const k1 = cwDirs[currentQuadrant];
-      await doHalfKippZoom(k1.dir, k1.toQ, shiftX[k1.side], zoomZ, camSave, lookBase);
+      await doHalfKippZoom(k1.dir, k1.toQ, shiftX[k1.side], shiftY, zoomZ, camSave, lookBase);
       advanceTopFace();
       
       await new Promise(r => setTimeout(r, 300));
       
       // --- KIPP 2 ---
       const k2 = cwDirs[currentQuadrant];
-      await doHalfKippZoom(k2.dir, k2.toQ, shiftX[k2.side], zoomZ, camSave, lookBase);
+      await doHalfKippZoom(k2.dir, k2.toQ, shiftX[k2.side], shiftY, zoomZ, camSave, lookBase);
       advanceTopFace();
       
       // Kamera exakt zurücksetzen
@@ -10720,7 +10721,7 @@
       isAnimating = false;
     }
     
-    async function doHalfKippZoom(direction, toQ, xShift, zShift, camSave, lookBase) {
+    async function doHalfKippZoom(direction, toQ, xShift, yShift, zShift, camSave, lookBase) {
       // Setup pivot
       let pivotPoint, axis, targetRotation;
       if (direction === 'north') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; }
@@ -10753,9 +10754,8 @@
           const e = p * (2 - p); // ease-out
           if (axis === 'x') pivotGroup.rotation.x = e * halfRot;
           else pivotGroup.rotation.z = e * halfRot;
-          // Camera: nur X-verschieben + Z näher, Y bleibt
           camera.position.x = camSave.px + xShift * e;
-          camera.position.y = camSave.py;
+          camera.position.y = camSave.py + yShift * e;
           camera.position.z = camSave.pz + zShift * e;
           camera.lookAt(lookBase.x + xShift * e, lookBase.y, lookBase.z);
           if (p < 1) requestAnimationFrame(a1);
@@ -10780,7 +10780,7 @@
           else pivotGroup.rotation.z = rot;
           // Camera zurück
           camera.position.x = camSave.px + xShift * (1 - eCam);
-          camera.position.y = camSave.py;
+          camera.position.y = camSave.py + yShift * (1 - eCam);
           camera.position.z = camSave.pz + zShift * (1 - eCam);
           camera.lookAt(lookBase.x + xShift * (1 - eCam), lookBase.y, lookBase.z);
           if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
