@@ -2214,9 +2214,15 @@
           { x: 6, y: 6 },       // Top-Left
           { x: 128, y: 128 }    // Bottom-Right
         ];
+        // Bildboden zeigt zum Boxrand:
+        // TL (SW-Ecke der Fläche) → Bildboden nach Westen (X = -3 Zellen)
+        // BR (NE-Ecke der Fläche) → Bildboden nach Norden (Z = -3 Zellen)
+        // "Upright" = imgRotation + π (wie TRAINING)
+        // TL = upright - π/2 (CCW 90°) = imgRotation + π/2
+        // BR = upright + π (180°) = imgRotation
         const motifRots = [
-          imgRotation - Math.PI / 2,    // TL: Bildboden zur Wandseite
-          imgRotation + Math.PI / 2     // BR: Bildboden zur anderen Wandseite
+          imgRotation + Math.PI / 2,    // TL: Bildboden → West (Boxrand X = -3Z)
+          imgRotation                    // BR: Bildboden → Nord (Boxrand Z = -3Z)
         ];
         for (let i = 0; i < 2; i++) {
           const img = motivImgs[motivForVal(vals[i])];
@@ -10531,18 +10537,21 @@
               ctx.globalAlpha = t;
               ctx.save();
               if (currentLevel >= 2 && vals.length >= 2) {
-                // BRAINY: draw in correct quadrant
+                // BRAINY: draw in correct quadrant with correct rotation
                 const ms = 122;
                 const positions = [
                   { x: 6, y: 6 },
                   { x: 128, y: 128 }
                 ];
+                const hitRots = [
+                  f.imgRot + Math.PI / 2,   // TL: Bildboden → West
+                  f.imgRot                    // BR: Bildboden → Nord
+                ];
                 const pos = positions[targetSlotIdx] || positions[0];
                 const cx = pos.x + ms / 2;
                 const cy = pos.y + ms / 2;
                 ctx.translate(cx, cy);
-                if (f.imgRot) ctx.rotate(f.imgRot);
-                ctx.rotate(Math.PI);
+                ctx.rotate(hitRots[targetSlotIdx] || hitRots[0]);
                 ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
               } else {
                 // TRAINING: one big motif
