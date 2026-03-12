@@ -2214,16 +2214,19 @@
           { x: 6, y: 6 },       // Top-Left
           { x: 128, y: 128 }    // Bottom-Right
         ];
-        // Bildboden zeigt zum Boxrand:
-        // TL (SW-Ecke der Fläche) → Bildboden nach Westen (X = -3 Zellen)
-        // BR (NE-Ecke der Fläche) → Bildboden nach Norden (Z = -3 Zellen)
-        // "Upright" = imgRotation + π (wie TRAINING)
-        // TL = upright - π/2 (CCW 90°) = imgRotation + π/2
-        // BR = upright + π (180°) = imgRotation
-        const motifRots = [
-          imgRotation + Math.PI / 2,    // TL: Bildboden → West (Boxrand X = -3Z)
-          imgRotation                    // BR: Bildboden → Nord (Boxrand Z = -3Z)
-        ];
+        // Bildboden zeigt zum Boxrand — abgeleitet aus Slot-rot-Werten
+        // f2 (Q3, West+Süd): TL→West(π/2), BR→Süd(0)
+        // f0 (Q0, West+Nord): TL→Nord(π), BR→West(π/2)
+        // f1 (Q1, Nord+Ost): TL→Nord(π), BR→Ost(-π/2)
+        const BRAINY_ROTS = {
+          f2: [Math.PI / 2, 0],
+          f0: [Math.PI, Math.PI / 2],
+          f1: [Math.PI, -Math.PI / 2]
+        };
+        let faceKey = 'f2';
+        if (slotMap === faceSlots.f0.slotMap) faceKey = 'f0';
+        else if (slotMap === faceSlots.f1.slotMap) faceKey = 'f1';
+        const motifRots = BRAINY_ROTS[faceKey];
         for (let i = 0; i < 2; i++) {
           const img = motivImgs[motivForVal(vals[i])];
           if (img && img.complete) {
@@ -10537,21 +10540,23 @@
               ctx.globalAlpha = t;
               ctx.save();
               if (currentLevel >= 2 && vals.length >= 2) {
-                // BRAINY: draw in correct quadrant with correct rotation
+                // BRAINY: draw in correct quadrant with per-face rotation
                 const ms = 122;
                 const positions = [
                   { x: 6, y: 6 },
                   { x: 128, y: 128 }
                 ];
-                const hitRots = [
-                  f.imgRot + Math.PI / 2,   // TL: Bildboden → West
-                  f.imgRot                    // BR: Bildboden → Nord
-                ];
+                const BRAINY_ROTS = {
+                  f2: [Math.PI / 2, 0],
+                  f0: [Math.PI, Math.PI / 2],
+                  f1: [Math.PI, -Math.PI / 2]
+                };
+                const fRots = BRAINY_ROTS[topFace] || [0, Math.PI];
                 const pos = positions[targetSlotIdx] || positions[0];
                 const cx = pos.x + ms / 2;
                 const cy = pos.y + ms / 2;
                 ctx.translate(cx, cy);
-                ctx.rotate(hitRots[targetSlotIdx] || hitRots[0]);
+                ctx.rotate(fRots[targetSlotIdx] || fRots[0]);
                 ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
               } else {
                 // TRAINING: one big motif
