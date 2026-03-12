@@ -10565,7 +10565,7 @@
           else colorImg.onload = animFade;
         });
         
-        await new Promise(r => setTimeout(r, 5000));
+        await new Promise(r => setTimeout(r, 3000));
         kzEl.style.animation = '';
         
         // Stapel-Karte entfernen + nachrutschen
@@ -10821,9 +10821,10 @@
       cube.position.copy(cwp.clone().sub(pivotPoint));
       pivotGroup.add(cube);
       
-      // Halbkipp: 38° bei Nord-Süd (Perspektivausgleich), 45° bei Ost-West
+      // Halbkipp: Perspektivausgleich bei Nord-Süd
+      // Weg von Kamera (targetRot < 0): 38° | Zur Kamera (targetRot > 0): 52°
       const halfRot = (axis === 'x') 
-        ? targetRotation * (38 / 90)
+        ? targetRotation * ((targetRotation < 0 ? 38 : 52) / 90)
         : targetRotation / 2;
       const remainRot = targetRotation - halfRot;
       await new Promise(resolve => {
