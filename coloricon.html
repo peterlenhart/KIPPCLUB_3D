@@ -10699,7 +10699,8 @@
         2: { dir: 'west_from_q2', toQ: 3, keepEdges: ['top'] }
       };
       
-      const yShift = -0.55;
+      const yShiftFull = -0.55;
+      const yShiftCenter = -0.50; // 15px weniger heran bei mittiger Ansicht
       const baseZoomZ = -0.25;
       
       // Referenzpunkte am Boxrahmen (Außenkanten)
@@ -10709,7 +10710,7 @@
         top:   new THREE.Vector3(0, 0.468, -0.515)
       };
       
-      function computeShifts(keepEdges) {
+      function computeShifts(keepEdges, yShift) {
         camera.position.set(camSave.px, camSave.py, camSave.pz);
         camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
         camera.updateMatrixWorld();
@@ -10772,16 +10773,20 @@
       
       // --- KIPP 1 ---
       const k1 = cwDirs[currentQuadrant];
-      const s1 = computeShifts(k1.keepEdges);
-      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift, baseZoomZ, s1.zPan, camSave, lookBase);
+      const isCenter1 = !k1.keepEdges.includes('left') && !k1.keepEdges.includes('right');
+      const yShift1 = isCenter1 ? yShiftCenter : yShiftFull;
+      const s1 = computeShifts(k1.keepEdges, yShift1);
+      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, baseZoomZ, s1.zPan, camSave, lookBase);
       advanceTopFace();
       
       await new Promise(r => setTimeout(r, 600));
       
       // --- KIPP 2 ---
       const k2 = cwDirs[currentQuadrant];
-      const s2 = computeShifts(k2.keepEdges);
-      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift, baseZoomZ, s2.zPan, camSave, lookBase);
+      const isCenter2 = !k2.keepEdges.includes('left') && !k2.keepEdges.includes('right');
+      const yShift2 = isCenter2 ? yShiftCenter : yShiftFull;
+      const s2 = computeShifts(k2.keepEdges, yShift2);
+      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, baseZoomZ, s2.zPan, camSave, lookBase);
       advanceTopFace();
       
       // Kamera exakt zurücksetzen
