@@ -10702,6 +10702,7 @@
       const yShiftFull = -0.55;
       const yShiftCenter = -0.40; // 45px weniger heran bei mittiger Ansicht
       const baseZoomZ = -0.25;
+      const baseZoomZCenter = -0.12; // weniger Z-Zoom für mehr li/re Rand
       
       // Referenzpunkte am Boxrahmen (Außenkanten)
       const edgeRefs = {
@@ -10710,7 +10711,7 @@
         top:   new THREE.Vector3(0, 0.468, -0.515)
       };
       
-      function computeShifts(keepEdges, yShift) {
+      function computeShifts(keepEdges, yShift, zoomZ) {
         camera.position.set(camSave.px, camSave.py, camSave.pz);
         camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
         camera.updateMatrixWorld();
@@ -10730,7 +10731,7 @@
           const ref = edgeRefs[edgeKey];
           const targetX = targetNDC[edgeKey].x;
           
-          camera.position.set(camSave.px, camSave.py + yShift, camSave.pz + baseZoomZ);
+          camera.position.set(camSave.px, camSave.py + yShift, camSave.pz + zoomZ);
           camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
           camera.updateMatrixWorld();
           const ndc0 = ref.clone().project(camera).x;
@@ -10749,7 +10750,7 @@
           const ref = edgeRefs.top;
           const targetY = targetNDC.top.y;
           
-          camera.position.set(camSave.px + xShift, camSave.py + yShift, camSave.pz + baseZoomZ);
+          camera.position.set(camSave.px + xShift, camSave.py + yShift, camSave.pz + zoomZ);
           camera.lookAt(lookBase.x + xShift, lookBase.y, lookBase.z);
           camera.updateMatrixWorld();
           const ndc0 = ref.clone().project(camera).y;
@@ -10775,8 +10776,9 @@
       const k1 = cwDirs[currentQuadrant];
       const isCenter1 = !k1.keepEdges.includes('left') && !k1.keepEdges.includes('right');
       const yShift1 = isCenter1 ? yShiftCenter : yShiftFull;
-      const s1 = computeShifts(k1.keepEdges, yShift1);
-      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, baseZoomZ, s1.zPan, camSave, lookBase);
+      const zoomZ1 = isCenter1 ? baseZoomZCenter : baseZoomZ;
+      const s1 = computeShifts(k1.keepEdges, yShift1, zoomZ1);
+      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, zoomZ1, s1.zPan, camSave, lookBase);
       advanceTopFace();
       
       await new Promise(r => setTimeout(r, 600));
@@ -10785,8 +10787,9 @@
       const k2 = cwDirs[currentQuadrant];
       const isCenter2 = !k2.keepEdges.includes('left') && !k2.keepEdges.includes('right');
       const yShift2 = isCenter2 ? yShiftCenter : yShiftFull;
-      const s2 = computeShifts(k2.keepEdges, yShift2);
-      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, baseZoomZ, s2.zPan, camSave, lookBase);
+      const zoomZ2 = isCenter2 ? baseZoomZCenter : baseZoomZ;
+      const s2 = computeShifts(k2.keepEdges, yShift2, zoomZ2);
+      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, camSave, lookBase);
       advanceTopFace();
       
       // Kamera exakt zurücksetzen
