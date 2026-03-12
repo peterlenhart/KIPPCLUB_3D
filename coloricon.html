@@ -10699,10 +10699,10 @@
         2: { dir: 'west_from_q2', toQ: 3, keepEdges: ['top'] }
       };
       
-      const yShiftFull = -0.55;
-      const yShiftCenter = -0.40; // 45px weniger heran bei mittiger Ansicht
-      const baseZoomZ = -0.25;
-      const baseZoomZCenter = -0.12; // weniger Z-Zoom für mehr li/re Rand
+      const yShiftFull = 0;
+      const yShiftCenter = 0;
+      const baseZoomZ = 0;
+      const baseZoomZCenter = 0;
       
       // Referenzpunkte am Boxrahmen (Außenkanten)
       const edgeRefs = {
@@ -10778,7 +10778,7 @@
       const yShift1 = isCenter1 ? yShiftCenter : yShiftFull;
       const zoomZ1 = isCenter1 ? baseZoomZCenter : baseZoomZ;
       const s1 = computeShifts(k1.keepEdges, yShift1, zoomZ1);
-      const cubeLift1 = isCenter1 ? 0.15 : 0;
+      const cubeLift1 = 0.25;
       await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, zoomZ1, s1.zPan, cubeLift1, camSave, lookBase);
       advanceTopFace();
       
@@ -10790,7 +10790,7 @@
       const yShift2 = isCenter2 ? yShiftCenter : yShiftFull;
       const zoomZ2 = isCenter2 ? baseZoomZCenter : baseZoomZ;
       const s2 = computeShifts(k2.keepEdges, yShift2, zoomZ2);
-      const cubeLift2 = isCenter2 ? 0.15 : 0;
+      const cubeLift2 = 0.25;
       await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, cubeLift2, camSave, lookBase);
       advanceTopFace();
       
