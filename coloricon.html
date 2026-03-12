@@ -2208,10 +2208,15 @@
       if (currentLevel >= 2 && vals.length >= 2) {
         // BRAINY: 2 Motive pro Fläche, 50% Größe
         // Diagonal: Top-Left und Bottom-Right
+        // Bildboden zeigt jeweils zum nächsten Boxrand
         const s = 122;
         const positions = [
           { x: 6, y: 6 },       // Top-Left
           { x: 128, y: 128 }    // Bottom-Right
+        ];
+        const motifRots = [
+          imgRotation + Math.PI / 2,    // TL: Bildboden zur einen Wandseite
+          imgRotation - Math.PI / 2     // BR: Bildboden zur anderen Wandseite (90° versetzt)
         ];
         for (let i = 0; i < 2; i++) {
           const img = motivImgs[motivForVal(vals[i])];
@@ -2220,8 +2225,7 @@
             const cx = positions[i].x + s / 2;
             const cy = positions[i].y + s / 2;
             ctx.translate(cx, cy);
-            if (imgRotation) ctx.rotate(imgRotation);
-            ctx.rotate(Math.PI);
+            ctx.rotate(motifRots[i]);
             ctx.drawImage(img, -s / 2, -s / 2, s, s);
             // 3px Inlinerahmen
             ctx.strokeStyle = '#6b5040';
