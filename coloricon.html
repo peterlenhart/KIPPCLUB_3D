@@ -5751,7 +5751,7 @@
       // === Start BRAIN level ===
       currentLevel = 3;
       gamePhase = 'kipp21';
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 600));
       await waitForScoreClosed();
       startBrainLevel();
     }
@@ -5913,7 +5913,7 @@
         showHitText(brainyHits - 1);
 
         brainyCurrentZahl++;
-        await new Promise(r => setTimeout(r, 2500));
+        await new Promise(r => setTimeout(r, 5000));
 
         if (brainyActive && gamePhase === 'kipp21') {
           await brainyNextRound();
@@ -10559,7 +10559,7 @@
           else colorImg.onload = animFade;
         });
         
-        await new Promise(r => setTimeout(r, 2500));
+        await new Promise(r => setTimeout(r, 5000));
         kzEl.style.animation = '';
         
         // Stapel-Karte entfernen + nachrutschen
@@ -10686,16 +10686,17 @@
       // lookAt bleibt immer gleich ausgerichtet, nur X-Verschiebung
       const lookBase = { x: 0, y: 0.46875, z: 0.7 + southShift };
       
-      // CW directions
+      // CW directions - side bestimmt X-Shift
+      // north/south: Würfel an West/Ost-Seite → X-Shift nötig
+      // east/west: Würfel kippt über Mitte → kein X-Shift
       const cwDirs = {
         3: { dir: 'north', toQ: 0, side: 'west' },
-        0: { dir: 'east', toQ: 1, side: 'east' },
+        0: { dir: 'east', toQ: 1, side: 'center' },
         1: { dir: 'south_from_q1', toQ: 2, side: 'east' },
-        2: { dir: 'west_from_q2', toQ: 3, side: 'west' }
+        2: { dir: 'west_from_q2', toQ: 3, side: 'center' }
       };
       
-      // Nur X-Shift + Y-Zoom + Z-Zoom, kein Drehen
-      const shiftX = { west: -0.28, east: 0.28 };
+      const shiftX = { west: -0.28, east: 0.28, center: 0 };
       const shiftY = -0.55; // runter = näher ran
       const zoomZ = -0.25; // näher ran
       
@@ -10704,7 +10705,7 @@
       await doHalfKippZoom(k1.dir, k1.toQ, shiftX[k1.side], shiftY, zoomZ, camSave, lookBase);
       advanceTopFace();
       
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 600));
       
       // --- KIPP 2 ---
       const k2 = cwDirs[currentQuadrant];
@@ -10748,7 +10749,7 @@
       // Phase 1: 0° → 45° (500ms) + camera shift/zoom
       await new Promise(resolve => {
         const st = performance.now();
-        const dur = 500;
+        const dur = 1000;
         (function a1() {
           const p = Math.min((performance.now() - st) / dur, 1);
           const e = p * (2 - p); // ease-out
@@ -10764,12 +10765,12 @@
       });
       
       // Phase 2: Hold 2.5s
-      await new Promise(r => setTimeout(r, 2500));
+      await new Promise(r => setTimeout(r, 5000));
       
       // Phase 3: Camera back + complete 45° → 90° (500ms)
       await new Promise(resolve => {
         const st = performance.now();
-        const dur = 500;
+        const dur = 1000;
         let klackFired = false;
         (function a2() {
           const p = Math.min((performance.now() - st) / dur, 1);
