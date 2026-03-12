@@ -2206,37 +2206,30 @@
       const vals = keys.map(k => slotMap[k].val);
 
       if (currentLevel >= 2 && vals.length >= 2) {
-        // BRAINY: 2 Motive pro Fläche, 50% Größe
-        // Diagonal: Top-Left und Bottom-Right
-        // Bildboden zeigt jeweils zum nächsten Boxrand
+        // BRAINY: 2 Motive pro Fläche, diagonal, Bildboden am Boxrand
+        // Rotation = imgRotation + Slot-rot (wie TRAINING imgRot+π für "aufrecht")
+        // f2(imgRot=-π/2): TL→West(+π/2→total 0), BR→Süd(+0→total -π/2)
+        // f0(imgRot=0):    TR→Nord(+π→total π),    BL→West(+π/2→total π/2)
+        // f1(imgRot=π/2):  TL→Nord(+π→total -π/2), BR→Ost(-π/2→total 0)
         const s = 122;
-        const positions = [
-          { x: 6, y: 6 },       // Top-Left
-          { x: 128, y: 128 }    // Bottom-Right
-        ];
-        // Bildboden zeigt zum Boxrand — abgeleitet aus Slot-rot-Werten
-        // f2 (Q3, West+Süd): TL→West(π/2), BR→Süd(0)
-        // f0 (Q0, West+Nord): TL→Nord(π), BR→West(π/2)
-        // f1 (Q1, Nord+Ost): TL→Nord(π), BR→Ost(-π/2)
-        const BRAINY_ROTS = {
-          f2: [Math.PI / 2, 0],
-          f0: [Math.PI, Math.PI / 2],
-          f1: [Math.PI, -Math.PI / 2]
+        const BRAINY_LAYOUT = {
+          f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [0, -Math.PI/2] },
+          f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
+          f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [-Math.PI/2, 0] }
         };
         let faceKey = 'f2';
         if (slotMap === faceSlots.f0.slotMap) faceKey = 'f0';
         else if (slotMap === faceSlots.f1.slotMap) faceKey = 'f1';
-        const motifRots = BRAINY_ROTS[faceKey];
+        const layout = BRAINY_LAYOUT[faceKey];
         for (let i = 0; i < 2; i++) {
           const img = motivImgs[motivForVal(vals[i])];
           if (img && img.complete) {
             ctx.save();
-            const cx = positions[i].x + s / 2;
-            const cy = positions[i].y + s / 2;
+            const cx = layout.pos[i].x + s / 2;
+            const cy = layout.pos[i].y + s / 2;
             ctx.translate(cx, cy);
-            ctx.rotate(motifRots[i]);
+            ctx.rotate(layout.rots[i]);
             ctx.drawImage(img, -s / 2, -s / 2, s, s);
-            // 3px Inlinerahmen
             ctx.strokeStyle = '#6b5040';
             ctx.lineWidth = 3;
             ctx.strokeRect(-s / 2, -s / 2, s, s);
@@ -10540,23 +10533,18 @@
               ctx.globalAlpha = t;
               ctx.save();
               if (currentLevel >= 2 && vals.length >= 2) {
-                // BRAINY: draw in correct quadrant with per-face rotation
                 const ms = 122;
-                const positions = [
-                  { x: 6, y: 6 },
-                  { x: 128, y: 128 }
-                ];
-                const BRAINY_ROTS = {
-                  f2: [Math.PI / 2, 0],
-                  f0: [Math.PI, Math.PI / 2],
-                  f1: [Math.PI, -Math.PI / 2]
+                const BRAINY_LAYOUT = {
+                  f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [0, -Math.PI/2] },
+                  f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
+                  f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [-Math.PI/2, 0] }
                 };
-                const fRots = BRAINY_ROTS[topFace] || [0, Math.PI];
-                const pos = positions[targetSlotIdx] || positions[0];
+                const layout = BRAINY_LAYOUT[topFace] || BRAINY_LAYOUT.f2;
+                const pos = layout.pos[targetSlotIdx] || layout.pos[0];
                 const cx = pos.x + ms / 2;
                 const cy = pos.y + ms / 2;
                 ctx.translate(cx, cy);
-                ctx.rotate(fRots[targetSlotIdx] || fRots[0]);
+                ctx.rotate(layout.rots[targetSlotIdx] || layout.rots[0]);
                 ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
               } else {
                 // TRAINING: one big motif
@@ -10701,39 +10689,105 @@
       const camSave = { 
         px: camera.position.x, py: camera.position.y, pz: camera.position.z 
       };
-      // lookAt bleibt immer gleich ausgerichtet, nur X-Verschiebung
       const lookBase = { x: 0, y: 0.46875, z: 0.7 + southShift };
       
-      // CW directions - side bestimmt X-Shift
-      // north/south: Würfel an West/Ost-Seite → X-Shift nötig
-      // east/west: Würfel kippt über Mitte → kein X-Shift
+      // CW directions + welche Displayränder fixiert bleiben
       const cwDirs = {
-        3: { dir: 'north', toQ: 0, side: 'west' },
-        0: { dir: 'east', toQ: 1, side: 'center' },
-        1: { dir: 'south_from_q1', toQ: 2, side: 'east' },
-        2: { dir: 'west_from_q2', toQ: 3, side: 'center' }
+        3: { dir: 'north', toQ: 0, keepEdges: ['left','top'] },
+        0: { dir: 'east', toQ: 1, keepEdges: ['top'] },
+        1: { dir: 'south_from_q1', toQ: 2, keepEdges: ['right','top'] },
+        2: { dir: 'west_from_q2', toQ: 3, keepEdges: ['top'] }
       };
       
-      const shiftX = { west: -0.28, east: 0.28, center: 0 };
-      const shiftY = -0.55; // runter = näher ran
-      const zoomZ = -0.25; // näher ran
-      const panZ = { west: 0, east: 0, center: -0.486 }; // center: 140px nach Nord
+      const yShift = -0.55;
+      const baseZoomZ = -0.25;
+      
+      // Referenzpunkte am Boxrahmen (Außenkanten)
+      const edgeRefs = {
+        left:  new THREE.Vector3(-0.625, 0.234, 0.1105),
+        right: new THREE.Vector3(0.625, 0.234, 0.1105),
+        top:   new THREE.Vector3(0, 0.468, -0.515)
+      };
+      
+      function computeShifts(keepEdges) {
+        camera.position.set(camSave.px, camSave.py, camSave.pz);
+        camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
+        camera.updateMatrixWorld();
+        
+        const targetNDC = {};
+        for (const key of keepEdges) {
+          const p = edgeRefs[key].clone().project(camera);
+          targetNDC[key] = { x: p.x, y: p.y };
+        }
+        
+        let xShift = 0;
+        let zPan = 0;
+        
+        // X-Shift: left oder right fixieren
+        if (keepEdges.includes('left') || keepEdges.includes('right')) {
+          const edgeKey = keepEdges.includes('left') ? 'left' : 'right';
+          const ref = edgeRefs[edgeKey];
+          const targetX = targetNDC[edgeKey].x;
+          
+          camera.position.set(camSave.px, camSave.py + yShift, camSave.pz + baseZoomZ);
+          camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
+          camera.updateMatrixWorld();
+          const ndc0 = ref.clone().project(camera).x;
+          
+          camera.position.x = camSave.px + 0.1;
+          camera.lookAt(lookBase.x + 0.1, lookBase.y, lookBase.z);
+          camera.updateMatrixWorld();
+          const ndc1 = ref.clone().project(camera).x;
+          
+          const slope = (ndc1 - ndc0) / 0.1;
+          if (Math.abs(slope) > 0.001) xShift = (targetX - ndc0) / slope;
+        }
+        
+        // Z-Pan: top fixieren
+        if (keepEdges.includes('top')) {
+          const ref = edgeRefs.top;
+          const targetY = targetNDC.top.y;
+          
+          camera.position.set(camSave.px + xShift, camSave.py + yShift, camSave.pz + baseZoomZ);
+          camera.lookAt(lookBase.x + xShift, lookBase.y, lookBase.z);
+          camera.updateMatrixWorld();
+          const ndc0 = ref.clone().project(camera).y;
+          
+          camera.position.z -= 0.1;
+          camera.lookAt(lookBase.x + xShift, lookBase.y, lookBase.z - 0.1);
+          camera.updateMatrixWorld();
+          const ndc1 = ref.clone().project(camera).y;
+          
+          const slope = (ndc1 - ndc0) / (-0.1);
+          if (Math.abs(slope) > 0.001) zPan = (targetY - ndc0) / slope;
+        }
+        
+        // Kamera zurücksetzen
+        camera.position.set(camSave.px, camSave.py, camSave.pz);
+        camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
+        camera.updateMatrixWorld();
+        
+        return { xShift, zPan };
+      }
       
       // --- KIPP 1 ---
       const k1 = cwDirs[currentQuadrant];
-      await doHalfKippZoom(k1.dir, k1.toQ, shiftX[k1.side], shiftY, zoomZ, panZ[k1.side], camSave, lookBase);
+      const s1 = computeShifts(k1.keepEdges);
+      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift, baseZoomZ, s1.zPan, camSave, lookBase);
       advanceTopFace();
       
       await new Promise(r => setTimeout(r, 600));
       
       // --- KIPP 2 ---
       const k2 = cwDirs[currentQuadrant];
-      await doHalfKippZoom(k2.dir, k2.toQ, shiftX[k2.side], shiftY, zoomZ, panZ[k2.side], camSave, lookBase);
+      const s2 = computeShifts(k2.keepEdges);
+      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift, baseZoomZ, s2.zPan, camSave, lookBase);
       advanceTopFace();
       
       // Kamera exakt zurücksetzen
       camera.position.set(camSave.px, camSave.py, camSave.pz);
       camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
+      camera.updateMatrixWorld();
       
       // Kippziel wieder einblenden
       if (row) row.style.opacity = '1';
