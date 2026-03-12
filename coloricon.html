@@ -2518,26 +2518,20 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
-        // URL-Parameter Check: ?level=brainy → direkt BRAINY starten
+        // URL-Parameter Check: ?level=brainy → Level setzen, Startscreen zeigen
         const urlParams = new URLSearchParams(window.location.search);
         const levelParam = urlParams.get('level');
         if (levelParam === 'brainy') {
-          sct.style.display = 'none';
-          document.getElementById('startOverlay').style.display = 'none';
-          unlockAndPlayBgMusic();
           currentLevel = 2;
           for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
           updateFaceSlots();
           updateAllFaceTextures();
-          setTimeout(() => { startBrainyLevel(); }, 200);
-          return;
         }
         if (levelParam === 'brain') {
-          sct.style.display = 'none';
-          document.getElementById('startOverlay').style.display = 'none';
-          unlockAndPlayBgMusic();
-          setTimeout(() => { startBrainLevel(); }, 200);
-          return;
+          currentLevel = 3;
+          for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
+          updateFaceSlots();
+          updateAllFaceTextures();
         }
         
         // SPIELEN / TUTORIAL Buttons einblenden
@@ -10518,19 +10512,42 @@
         await new Promise(resolve => {
           const dur = 2500;
           const startTime = performance.now();
+          
+          // Find which slot position the target motif is at
+          const keys = Object.keys(f.slotMap);
+          const vals = keys.map(k => f.slotMap[k].val);
+          let targetSlotIdx = vals.indexOf(iconTargetVal);
+          if (targetSlotIdx < 0) targetSlotIdx = 0;
+          
           function animFade() {
             const t = Math.min((performance.now() - startTime) / dur, 1);
-            // Face-Textur neu zeichnen mit farbigem Overlay
             const canvas = createFaceTexture(f.slotMap, f.imgRot, 1);
             const ctx = canvas.getContext('2d');
             if (colorImg.complete) {
               ctx.globalAlpha = t;
-              const s = 244;
               ctx.save();
-              ctx.translate(128, 128);
-              if (f.imgRot) ctx.rotate(f.imgRot);
-              ctx.rotate(Math.PI);
-              ctx.drawImage(colorImg, -s/2, -s/2, s, s);
+              if (currentLevel >= 2 && vals.length >= 2) {
+                // BRAINY: draw in correct quadrant
+                const ms = 122;
+                const positions = [
+                  { x: 6, y: 6 },
+                  { x: 128, y: 128 }
+                ];
+                const pos = positions[targetSlotIdx] || positions[0];
+                const cx = pos.x + ms / 2;
+                const cy = pos.y + ms / 2;
+                ctx.translate(cx, cy);
+                if (f.imgRot) ctx.rotate(f.imgRot);
+                ctx.rotate(Math.PI);
+                ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
+              } else {
+                // TRAINING: one big motif
+                const ms = 244;
+                ctx.translate(128, 128);
+                if (f.imgRot) ctx.rotate(f.imgRot);
+                ctx.rotate(Math.PI);
+                ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
+              }
               ctx.restore();
             }
             cubeMaterial[matIdx].map = new THREE.CanvasTexture(canvas);
@@ -10643,9 +10660,145 @@
     // Auto-Eckblick nach Kippziel
     async function autoEckblick() {
       await new Promise(r => setTimeout(r, 400));
-      kipp21EckblickUsed = 0;
-      kipp21KniffActive = false;
-      if (gamePhase === 'spielen') await runKipp21EckblickKniff(true);
+      if (gamePhase !== 'spielen') return;
+      
+      if (currentLevel >= 2) {
+        await autoBrainyBlick();
+      } else {
+        kipp21EckblickUsed = 0;
+        kipp21KniffActive = false;
+        if (gamePhase === 'spielen') await runKipp21EckblickKniff(true);
+      }
+    }
+    
+    async function autoBrainyBlick() {
+      if (isAnimating) return;
+      isAnimating = true;
+      
+      // Save camera
+      const camSave = { 
+        px: camera.position.x, py: camera.position.y, pz: camera.position.z 
+      };
+      const lookSave = { x: 0, y: 0.46875, z: 0.7 + southShift };
+      
+      // Determine CW directions from current quadrant
+      const cwDirs = {
+        3: { dir: 'north', toQ: 0, side: 'west' },
+        0: { dir: 'east', toQ: 1, side: 'east' },
+        1: { dir: 'south_from_q1', toQ: 2, side: 'east' },
+        2: { dir: 'west_from_q2', toQ: 3, side: 'west' }
+      };
+      
+      // Camera targets for west/east zoom
+      const zoomTargets = {
+        west: { px: -0.32, py: camSave.py * 0.72, pz: camSave.pz * 0.65, lx: -0.25, ly: 0.30, lz: 0.15 + southShift },
+        east: { px: 0.32, py: camSave.py * 0.72, pz: camSave.pz * 0.65, lx: 0.25, ly: 0.30, lz: 0.15 + southShift }
+      };
+      
+      // --- KIPP 1: half-kipp + zoom + hold + unzoom + complete ---
+      const k1 = cwDirs[currentQuadrant];
+      await doHalfKippZoom(k1.dir, k1.toQ, zoomTargets[k1.side], camSave, lookSave);
+      advanceTopFace();
+      
+      // Short pause
+      await new Promise(r => setTimeout(r, 300));
+      
+      // --- KIPP 2: half-kipp + zoom + hold + unzoom + complete ---
+      const k2 = cwDirs[currentQuadrant];
+      await doHalfKippZoom(k2.dir, k2.toQ, zoomTargets[k2.side], camSave, lookSave);
+      advanceTopFace();
+      
+      isAnimating = false;
+    }
+    
+    async function doHalfKippZoom(direction, toQ, zoomTarget, camSave, lookSave) {
+      // Setup pivot
+      let pivotPoint, axis, targetRotation;
+      if (direction === 'north') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; }
+      else if (direction === 'south') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = Math.PI/2; }
+      else if (direction === 'east') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = -Math.PI/2; }
+      else if (direction === 'west') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = Math.PI/2; }
+      else if (direction === 'south_from_q1') { pivotPoint = new THREE.Vector3(0.234375, 0, 0.109375); axis = 'x'; targetRotation = Math.PI/2; }
+      else if (direction === 'north_from_q2') { pivotPoint = new THREE.Vector3(0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; }
+      else if (direction === 'west_from_q2') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = Math.PI/2; }
+      else if (direction === 'east_from_q3') { pivotPoint = new THREE.Vector3(0, 0, 0.343125); axis = 'z'; targetRotation = -Math.PI/2; }
+      
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(pivotPoint);
+      kipGroup.add(pivotGroup);
+      cube.updateMatrixWorld();
+      const cwp = new THREE.Vector3();
+      cube.getWorldPosition(cwp);
+      kipGroup.remove(cube);
+      cube.position.copy(cwp.clone().sub(pivotPoint));
+      pivotGroup.add(cube);
+      
+      const halfRot = targetRotation / 2;
+      
+      // Phase 1: 0° → 45° (500ms) + camera zoom simultaneously
+      await new Promise(resolve => {
+        const st = performance.now();
+        const dur = 500;
+        (function a1() {
+          const p = Math.min((performance.now() - st) / dur, 1);
+          const e = p * (2 - p); // ease-out
+          if (axis === 'x') pivotGroup.rotation.x = e * halfRot;
+          else pivotGroup.rotation.z = e * halfRot;
+          // Camera zoom in
+          camera.position.x = camSave.px + (zoomTarget.px - camSave.px) * e;
+          camera.position.y = camSave.py + (zoomTarget.py - camSave.py) * e;
+          camera.position.z = camSave.pz + (zoomTarget.pz - camSave.pz) * e;
+          camera.lookAt(
+            lookSave.x + (zoomTarget.lx - lookSave.x) * e,
+            lookSave.y + (zoomTarget.ly - lookSave.y) * e,
+            lookSave.z + (zoomTarget.lz - lookSave.z) * e
+          );
+          if (p < 1) requestAnimationFrame(a1);
+          else resolve();
+        })();
+      });
+      
+      // Phase 2: Hold 2.5s
+      await new Promise(r => setTimeout(r, 2500));
+      
+      // Phase 3: Camera back + complete 45° → 90° (500ms)
+      await new Promise(resolve => {
+        const st = performance.now();
+        const dur = 500;
+        let klackFired = false;
+        (function a2() {
+          const p = Math.min((performance.now() - st) / dur, 1);
+          const eKipp = p * p; // ease-in (gravity)
+          const eCam = p * (2 - p); // ease-out for smooth camera return
+          const rot = halfRot + eKipp * halfRot;
+          if (axis === 'x') pivotGroup.rotation.x = rot;
+          else pivotGroup.rotation.z = rot;
+          // Camera back
+          camera.position.x = zoomTarget.px + (camSave.px - zoomTarget.px) * eCam;
+          camera.position.y = zoomTarget.py + (camSave.py - zoomTarget.py) * eCam;
+          camera.position.z = zoomTarget.pz + (camSave.pz - zoomTarget.pz) * eCam;
+          camera.lookAt(
+            zoomTarget.lx + (lookSave.x - zoomTarget.lx) * eCam,
+            zoomTarget.ly + (lookSave.y - zoomTarget.ly) * eCam,
+            zoomTarget.lz + (lookSave.z - zoomTarget.lz) * eCam
+          );
+          if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
+          if (p < 1) requestAnimationFrame(a2);
+          else resolve();
+        })();
+      });
+      
+      // Finalize
+      cube.updateMatrixWorld();
+      const newWP = new THREE.Vector3();
+      cube.getWorldPosition(newWP);
+      const newWQ = new THREE.Quaternion();
+      cube.getWorldQuaternion(newWQ);
+      if (pivotGroup.parent) pivotGroup.parent.remove(pivotGroup);
+      cube.position.copy(newWP);
+      cube.quaternion.copy(newWQ);
+      kipGroup.add(cube);
+      currentQuadrant = toQ;
     }
 
     // DEBUG: If this text appears, the script reached the end without crash
