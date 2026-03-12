@@ -4494,7 +4494,7 @@
           let dbg2 = document.getElementById('endDebug');
           if (dbg2) dbg2.textContent += ' | CRASH:'+e.message;
           abtn.textContent = T.nm || 'NEUES SPIEL';
-          abtn.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);top:500px;width:280px;height:49px;background:#333;border:2px solid #d4a843;border-radius:8px;cursor:pointer;pointer-events:auto;z-index:15;font:bold 18px Arial;color:#d4a843;text-align:center;line-height:45px;';
+          abtn.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);top:500px;width:280px;height:49px;background:#333;border:2px solid #d4a843;border-radius:8px;cursor:pointer;pointer-events:auto;z-index:15;font:bold 17px Arial;letter-spacing:2.5px;text-transform:uppercase;color:#d4a843;text-align:center;line-height:45px;';
           abtn.onclick = () => { abtn.style.display='none'; startKipp21(false); };
         }
       }
@@ -10596,42 +10596,39 @@
         ' <span style="color:#ffffff;font:bold 20px Arial;">(</span><span style="font:bold 20px Arial;color:#cedb25;">' + iconHits + '</span><span style="color:#ffffff;font:bold 20px Arial;"> | </span><span style="font:bold 20px Arial;color:#e05050;">' + iconMisses + '</span><span style="color:#ffffff;font:bold 20px Arial;">)</span>';
       scoreEl.style.display = 'block';
       
-      // NOCHMAL + WEITER Buttons
-      const overlay = document.getElementById('uiOverlay');
-      const btnWrap = document.createElement('div');
-      btnWrap.id = 'iconEndButtons';
-      btnWrap.style.cssText = 'position:absolute; left:50%; top:460px; transform:translateX(-50%); display:flex; flex-direction:column; gap:12px; align-items:center; pointer-events:auto; z-index:30;';
-      
-      const btnNochmal = document.createElement('div');
-      btnNochmal.style.cssText = 'position:relative; width:240px; height:52px; cursor:pointer;';
-      btnNochmal.innerHTML = '<img src="button_lang_braun.webp" style="width:100%;height:100%;object-fit:contain;">' +
-        '<span style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font:bold 18px Arial;color:#e8dcc8;pointer-events:none;">' + (T.nml || 'NOCHMAL') + '</span>';
-      btnNochmal.addEventListener('click', () => { location.reload(); });
-      btnNochmal.addEventListener('touchend', (e) => { e.preventDefault(); location.reload(); }, { passive: false });
-      
+      // Bestehende Buttons wiederverwenden
       const levelNames = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTER BRAIN' };
       const zuPrefix = { de:'zu ', en:'to ', es:'a ', fr:'vers ', it:'a ', tr:'' };
       const zuSuffix = { de:'', en:'', es:'', fr:'', it:'', tr:"'ye" };
       const lang = _digikippLang || 'de';
       const nextName = levelNames[currentLevel] || 'BRAINY';
       const weiterText = (zuPrefix[lang] || 'zu ') + nextName + (zuSuffix[lang] || '');
-      
-      const btnWeiter = document.createElement('div');
-      btnWeiter.style.cssText = 'position:relative; width:240px; height:52px; cursor:pointer;';
-      btnWeiter.innerHTML = '<img src="button_lang_rotbraun_glow.webp" style="width:100%;height:100%;object-fit:contain;">' +
-        '<span style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font:bold 18px Arial;color:#e8dcc8;pointer-events:none;">' + weiterText + '</span>';
       const nextLevelUrls = {
         1: 'coloricon.html?level=brainy',
         2: 'coloricon.html?level=brain',
         3: 'kipp21_icon.html'
       };
       const nextUrl = nextLevelUrls[currentLevel] || 'coloricon.html?level=brainy';
-      btnWeiter.addEventListener('click', () => { window.location.href = nextUrl; });
-      btnWeiter.addEventListener('touchend', (e) => { e.preventDefault(); window.location.href = nextUrl; }, { passive: false });
       
-      btnWrap.appendChild(btnNochmal);
-      btnWrap.appendChild(btnWeiter);
-      overlay.appendChild(btnWrap);
+      const btnS = document.getElementById('btnSpielen');
+      const btnD = document.getElementById('btnDemo');
+      btnS.textContent = T.nml || 'NOCHMAL';
+      btnD.textContent = weiterText;
+      btnS.disabled = false;
+      btnD.disabled = false;
+      btnS.style.opacity = '1';
+      btnD.style.opacity = '1';
+      btnS.style.display = 'block';
+      btnD.style.display = 'block';
+      
+      // Startoverlay einblenden, Starttext verstecken
+      const sct = document.getElementById('startChallengeText');
+      if (sct) sct.style.display = 'none';
+      document.getElementById('startOverlay').style.display = 'block';
+      
+      // Neue Click-Handler
+      btnS.onclick = () => { location.reload(); };
+      btnD.onclick = () => { window.location.href = nextUrl; };
     }
     
     (function() {
