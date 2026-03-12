@@ -10828,7 +10828,6 @@
       pivotGroup.add(cube);
       
       const halfRot = targetRotation / 2;
-      const kipGroupSaveY = kipGroup.position.y;
       
       // Phase 1: 0° → 45° (500ms) + camera shift/zoom + cube lift
       await new Promise(resolve => {
@@ -10843,7 +10842,7 @@
           camera.position.y = camSave.py + yShift * e;
           camera.position.z = camSave.pz + (zShift + zPan) * e;
           camera.lookAt(lookBase.x + xShift * e, lookBase.y, lookBase.z + zPan * e);
-          if (cubeLift) kipGroup.position.y = kipGroupSaveY + cubeLift * e;
+          if (cubeLift) pivotGroup.position.y = pivotPoint.y + cubeLift * e;
           if (p < 1) requestAnimationFrame(a1);
           else resolve();
         })();
@@ -10869,7 +10868,7 @@
           camera.position.y = camSave.py + yShift * (1 - eCam);
           camera.position.z = camSave.pz + (zShift + zPan) * (1 - eCam);
           camera.lookAt(lookBase.x + xShift * (1 - eCam), lookBase.y, lookBase.z + zPan * (1 - eCam));
-          if (cubeLift) kipGroup.position.y = kipGroupSaveY + cubeLift * (1 - eCam);
+          if (cubeLift) pivotGroup.position.y = pivotPoint.y + cubeLift * (1 - eCam);
           if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
           if (p < 1) requestAnimationFrame(a2);
           else resolve();
@@ -10887,7 +10886,6 @@
       cube.quaternion.copy(newWQ);
       kipGroup.add(cube);
       currentQuadrant = toQ;
-      kipGroup.position.y = kipGroupSaveY;
     }
 
     // DEBUG: If this text appears, the script reached the end without crash
