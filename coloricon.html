@@ -2207,15 +2207,15 @@
 
       if (currentLevel >= 2 && vals.length >= 2) {
         // BRAINY: 2 Motive pro Fläche, diagonal, Bildboden am Boxrand
-        // Rotation = imgRotation + Slot-rot (wie TRAINING imgRot+π für "aufrecht")
-        // f2(imgRot=-π/2): TL→West(+π/2→total 0), BR→Süd(+0→total -π/2)
-        // f0(imgRot=0):    TR→Nord(+π→total π),    BL→West(+π/2→total π/2)
-        // f1(imgRot=π/2):  TL→Nord(+π→total -π/2), BR→Ost(-π/2→total 0)
+        // ctx.rotate: 0=bottom-down, π=bottom-up, -π/2=bottom-left, π/2=bottom-right
+        // f2: TL→West(canvas LEFT→-π/2), BR→South(canvas BOTTOM→0)
+        // f0: TR→North(canvas TOP→π),    BL→West(canvas LEFT→-π/2)
+        // f1: TL→North(canvas TOP→π),    BR→East(canvas RIGHT→π/2)
         const s = 122;
         const BRAINY_LAYOUT = {
-          f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [0, -Math.PI/2] },
-          f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
-          f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [-Math.PI/2, 0] }
+          f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [-Math.PI/2, 0] },
+          f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, -Math.PI/2] },
+          f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, Math.PI/2] }
         };
         let faceKey = 'f2';
         if (slotMap === faceSlots.f0.slotMap) faceKey = 'f0';
@@ -10535,9 +10535,9 @@
               if (currentLevel >= 2 && vals.length >= 2) {
                 const ms = 122;
                 const BRAINY_LAYOUT = {
-                  f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [0, -Math.PI/2] },
-                  f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
-                  f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [-Math.PI/2, 0] }
+                  f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [-Math.PI/2, 0] },
+                  f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, -Math.PI/2] },
+                  f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, Math.PI/2] }
                 };
                 const layout = BRAINY_LAYOUT[topFace] || BRAINY_LAYOUT.f2;
                 const pos = layout.pos[targetSlotIdx] || layout.pos[0];
