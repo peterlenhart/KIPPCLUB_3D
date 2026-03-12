@@ -10778,7 +10778,8 @@
       const yShift1 = isCenter1 ? yShiftCenter : yShiftFull;
       const zoomZ1 = isCenter1 ? baseZoomZCenter : baseZoomZ;
       const s1 = computeShifts(k1.keepEdges, yShift1, zoomZ1);
-      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, zoomZ1, s1.zPan, camSave, lookBase);
+      const cubeLift1 = isCenter1 ? 0.15 : 0;
+      await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, zoomZ1, s1.zPan, cubeLift1, camSave, lookBase);
       advanceTopFace();
       
       await new Promise(r => setTimeout(r, 600));
@@ -10789,7 +10790,8 @@
       const yShift2 = isCenter2 ? yShiftCenter : yShiftFull;
       const zoomZ2 = isCenter2 ? baseZoomZCenter : baseZoomZ;
       const s2 = computeShifts(k2.keepEdges, yShift2, zoomZ2);
-      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, camSave, lookBase);
+      const cubeLift2 = isCenter2 ? 0.15 : 0;
+      await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, cubeLift2, camSave, lookBase);
       advanceTopFace();
       
       // Kamera exakt zurücksetzen
@@ -10803,7 +10805,7 @@
       isAnimating = false;
     }
     
-    async function doHalfKippZoom(direction, toQ, xShift, yShift, zShift, zPan, camSave, lookBase) {
+    async function doHalfKippZoom(direction, toQ, xShift, yShift, zShift, zPan, cubeLift, camSave, lookBase) {
       // Setup pivot
       let pivotPoint, axis, targetRotation;
       if (direction === 'north') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; targetRotation = -Math.PI/2; }
@@ -10826,8 +10828,9 @@
       pivotGroup.add(cube);
       
       const halfRot = targetRotation / 2;
+      const kipGroupSaveY = kipGroup.position.y;
       
-      // Phase 1: 0° → 45° (500ms) + camera shift/zoom
+      // Phase 1: 0° → 45° (500ms) + camera shift/zoom + cube lift
       await new Promise(resolve => {
         const st = performance.now();
         const dur = 1000;
@@ -10840,6 +10843,7 @@
           camera.position.y = camSave.py + yShift * e;
           camera.position.z = camSave.pz + (zShift + zPan) * e;
           camera.lookAt(lookBase.x + xShift * e, lookBase.y, lookBase.z + zPan * e);
+          if (cubeLift) kipGroup.position.y = kipGroupSaveY + cubeLift * e;
           if (p < 1) requestAnimationFrame(a1);
           else resolve();
         })();
@@ -10865,6 +10869,7 @@
           camera.position.y = camSave.py + yShift * (1 - eCam);
           camera.position.z = camSave.pz + (zShift + zPan) * (1 - eCam);
           camera.lookAt(lookBase.x + xShift * (1 - eCam), lookBase.y, lookBase.z + zPan * (1 - eCam));
+          if (cubeLift) kipGroup.position.y = kipGroupSaveY + cubeLift * (1 - eCam);
           if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
           if (p < 1) requestAnimationFrame(a2);
           else resolve();
@@ -10882,6 +10887,7 @@
       cube.quaternion.copy(newWQ);
       kipGroup.add(cube);
       currentQuadrant = toQ;
+      kipGroup.position.y = kipGroupSaveY;
     }
 
     // DEBUG: If this text appears, the script reached the end without crash
