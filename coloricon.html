@@ -2213,9 +2213,9 @@
         // f1: TL→North(canvas TOP→π),    BR→East(canvas RIGHT→π/2)
         const s = 122;
         const BRAINY_LAYOUT = {
-          f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [-Math.PI/2, 0] },
-          f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, -Math.PI/2] },
-          f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, Math.PI/2] }
+          f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [Math.PI/2, 0] },
+          f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
+          f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, -Math.PI/2] }
         };
         let faceKey = 'f2';
         if (slotMap === faceSlots.f0.slotMap) faceKey = 'f0';
@@ -10535,9 +10535,9 @@
               if (currentLevel >= 2 && vals.length >= 2) {
                 const ms = 122;
                 const BRAINY_LAYOUT = {
-                  f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [-Math.PI/2, 0] },
-                  f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, -Math.PI/2] },
-                  f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, Math.PI/2] }
+                  f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [Math.PI/2, 0] },
+                  f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
+                  f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, -Math.PI/2] }
                 };
                 const layout = BRAINY_LAYOUT[topFace] || BRAINY_LAYOUT.f2;
                 const pos = layout.pos[targetSlotIdx] || layout.pos[0];
