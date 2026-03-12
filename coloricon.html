@@ -10827,9 +10827,11 @@
       cube.position.copy(cwp.clone().sub(pivotPoint));
       pivotGroup.add(cube);
       
-      const halfRot = targetRotation / 2;
-      
-      // Phase 1: 0° → 45° (500ms) + camera shift/zoom + cube lift
+      // Halbkipp: 38° bei Nord-Süd (Perspektivausgleich), 45° bei Ost-West
+      const halfRot = (axis === 'x') 
+        ? targetRotation * (38 / 90)
+        : targetRotation / 2;
+      const remainRot = targetRotation - halfRot;
       await new Promise(resolve => {
         const st = performance.now();
         const dur = 1000;
@@ -10860,7 +10862,7 @@
           const p = Math.min((performance.now() - st) / dur, 1);
           const eKipp = p * p; // ease-in (gravity)
           const eCam = p * (2 - p); // ease-out for smooth return
-          const rot = halfRot + eKipp * halfRot;
+          const rot = halfRot + eKipp * remainRot;
           if (axis === 'x') pivotGroup.rotation.x = rot;
           else pivotGroup.rotation.z = rot;
           // Camera zurück
