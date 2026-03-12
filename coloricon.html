@@ -10681,10 +10681,6 @@
       if (isAnimating) return;
       isAnimating = true;
       
-      // Kippziel ausblenden
-      const row = document.getElementById('iconKippzielRow');
-      if (row) row.style.opacity = '0';
-      
       // Save camera
       const camSave = { 
         px: camera.position.x, py: camera.position.y, pz: camera.position.z 
@@ -10799,8 +10795,6 @@
       camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
       camera.updateMatrixWorld();
       
-      // Kippziel wieder einblenden
-      if (row) row.style.opacity = '1';
       
       isAnimating = false;
     }
