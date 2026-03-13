@@ -10657,11 +10657,6 @@
       await new Promise(r => setTimeout(r, 400));
       if (gamePhase !== 'spielen') return;
       
-      // Auge einblenden
-      const eye = document.getElementById('eyeIcon');
-      eye.style.display = 'block';
-      eye.style.pointerEvents = 'none';
-      
       // Würfelblick (ändert currentQuadrant + topFace)
       if (currentLevel >= 2) {
         await autoBrainyBlick();
@@ -10670,9 +10665,6 @@
         kipp21KniffActive = false;
         if (gamePhase === 'spielen') await runKipp21EckblickKniff(true);
       }
-      
-      // Auge ausblenden
-      eye.style.display = 'none';
       
       // JETZT Kippziel generieren (nach Blick, gegen neue Position geprüft)
       generateIconKippziel();
