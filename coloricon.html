@@ -8277,11 +8277,7 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       
-      // ICONS UI einblenden
-      const ikr = document.getElementById('iconKippzielRow');
-      if (ikr) ikr.classList.remove('hidden');
-      const nb = document.getElementById('numBtns');
-      if (nb) nb.classList.remove('hidden');
+      // UI noch NICHT einblenden — erst nach Würfelblick
       gamePhase = 'spielen';
       isAnimating = false;
       selectedAnzahl = null;
@@ -8290,7 +8286,6 @@
       kipp21WobbleUsed = 0;
       kipp21EckblickUsed = 0;
       
-      // Kein startKipp21 — ICONS hat eigenen Spielablauf
       setTimeout(() => { _startBtnLock = false; }, 1000);
       autoEckblick();
     }
@@ -10429,38 +10424,33 @@
     let iconKippzielActive = false;
     
     function generateIconKippziel() {
-      // Collect actually visible motif vals from all 3 faces
+      // Visible motifs directly from deck indices
+      // TRAINING: 1 per face = deck[0], deck[4], deck[8]
+      // BRAINY:   2 per face = deck[0,1], deck[4,5], deck[8,9]
       const visibleVals = [];
-      ['f0','f1','f2'].forEach(fn => {
-        const f = faceSlots[fn];
-        const keys = Object.keys(f.slotMap);
-        const vals = keys.map(k => f.slotMap[k].val);
-        if (currentLevel >= 2 && vals.length >= 2) {
-          visibleVals.push(vals[0], vals[1]); // BRAINY: 2 per face
-        } else if (vals.length > 0) {
-          visibleVals.push(vals[0]); // TRAINING: 1 per face
-        }
-      });
-      if (visibleVals.length === 0) visibleVals.push(deck[0], deck[4], deck[8]);
+      if (currentLevel >= 2) {
+        visibleVals.push(deck[0], deck[1], deck[4], deck[5], deck[8], deck[9]);
+      } else {
+        visibleVals.push(deck[0], deck[4], deck[8]);
+      }
+      
+      // TopFace visible vals for anti-immediate-hit check
+      const topOff = topFace === 'f0' ? 0 : (topFace === 'f1' ? 4 : 8);
+      const topVals = currentLevel >= 2 ? [deck[topOff], deck[topOff+1]] : [deck[topOff]];
       
       let attempts = 0;
       do {
         iconTargetVal = visibleVals[Math.floor(Math.random() * visibleVals.length)];
         iconTargetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
         attempts++;
-      } while (attempts < 50 && getTopFaceVals().includes(iconTargetVal) && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant);
-      const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-      document.getElementById('iconKippziel').src = motivBase + '_' + iconTargetFarbe + '.png';
-      document.getElementById('iconKippziel').style.border = '3px solid #6b5040';
-      iconKippzielActive = true;
+      } while (attempts < 50 && topVals.includes(iconTargetVal) && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant);
+      // Nur Werte setzen — UI wird von autoEckblick gesteuert
     }
     
     function getTopFaceVals() {
-      const f = faceSlots[topFace];
-      const keys = Object.keys(f.slotMap);
-      const vals = keys.map(k => f.slotMap[k].val);
-      if (currentLevel >= 2 && vals.length >= 2) return [vals[0], vals[1]];
-      return vals.length > 0 ? [vals[0]] : [];
+      const topOff = topFace === 'f0' ? 0 : (topFace === 'f1' ? 4 : 8);
+      if (currentLevel >= 2) return [deck[topOff], deck[topOff+1]];
+      return [deck[topOff]];
     }
     
     function updateIconStack() {
@@ -10582,8 +10572,7 @@
         updateFaceSlots();
         updateAllFaceTextures();
         
-        // Neues Kippziel
-        generateIconKippziel();
+        // autoEckblick generiert Kippziel + zeigt verdeckt
         autoEckblick();
       } else {
         iconMisses++;
@@ -10658,9 +10647,6 @@
       const row = document.getElementById('iconKippzielRow');
       if (!row) return;
       row.style.top = '428px';
-      
-      generateIconKippziel();
-      
     })();
     
     // Auto-Eckblick nach Kippziel
@@ -10668,6 +10654,11 @@
       await new Promise(r => setTimeout(r, 400));
       if (gamePhase !== 'spielen') return;
       
+      // Auge einblenden
+      const eye = document.getElementById('eyeIcon');
+      eye.style.display = 'block';
+      
+      // Würfelblick (ändert currentQuadrant + topFace)
       if (currentLevel >= 2) {
         await autoBrainyBlick();
       } else {
@@ -10675,6 +10666,45 @@
         kipp21KniffActive = false;
         if (gamePhase === 'spielen') await runKipp21EckblickKniff(true);
       }
+      
+      // Auge ausblenden
+      eye.style.display = 'none';
+      
+      // JETZT Kippziel generieren (nach Blick, gegen neue Position geprüft)
+      generateIconKippziel();
+      
+      // Kartenstapel mit motiv_verdeckt.png einblenden
+      const kzEl = document.getElementById('iconKippziel');
+      kzEl.src = 'motiv_verdeckt.png';
+      kzEl.style.border = '3px solid #6b5040';
+      
+      const ikr = document.getElementById('iconKippzielRow');
+      if (ikr) ikr.classList.remove('hidden');
+      
+      // Scrollband noch versteckt
+      const nb = document.getElementById('numBtns');
+      if (nb) nb.classList.add('hidden');
+      
+      // Warten auf Tap zum Aufdecken
+      iconKippzielActive = false;
+      
+      function revealKippziel(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        kzEl.removeEventListener('click', revealKippziel);
+        kzEl.removeEventListener('touchend', revealKippziel);
+        
+        // Kippziel aufdecken
+        const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
+        kzEl.src = motivBase + '_' + iconTargetFarbe + '.png';
+        iconKippzielActive = true;
+        
+        // Scrollband einblenden
+        if (nb) nb.classList.remove('hidden');
+      }
+      
+      kzEl.addEventListener('click', revealKippziel);
+      kzEl.addEventListener('touchend', revealKippziel, { passive: false });
     }
     
     async function autoBrainyBlick() {
