@@ -291,7 +291,7 @@
       display: none !important;
     }
     #eyeIcon {
-      display: none !important;
+      top: 320px;
     }
     /* original kippTarget (overridden above) */
     #kippTarget_orig_disabled {
@@ -10555,8 +10555,11 @@
           else colorImg.onload = animFade;
         });
         
-        await new Promise(r => setTimeout(r, 3000));
+        await new Promise(r => setTimeout(r, 1500));
         kzEl.style.animation = '';
+        kzEl.src = 'motiv_verdeckt.png';
+        kzEl.style.borderColor = '#6b5040';
+        kzEl.style.borderWidth = '3px';
         
         // Stapel-Karte entfernen + nachrutschen
         updateIconStack();
@@ -10657,6 +10660,7 @@
       // Auge einblenden
       const eye = document.getElementById('eyeIcon');
       eye.style.display = 'block';
+      eye.style.pointerEvents = 'none';
       
       // Würfelblick (ändert currentQuadrant + topFace)
       if (currentLevel >= 2) {
