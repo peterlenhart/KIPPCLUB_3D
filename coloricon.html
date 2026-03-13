@@ -517,10 +517,11 @@
       border-right: 1px solid #8a7a66;
       border-radius: 0;
       box-shadow: none;
-      cursor: pointer;
-      transition: all 0.12s ease;
+      cursor: default;
+      transition: min-width 0.35s ease, font-size 0.35s ease, height 0.35s ease, opacity 0.35s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      pointer-events: none;
     }
     .numBtn:last-child {
       border-right: none;
@@ -530,8 +531,31 @@
       color: #e8dcc8;
     }
     .numBtn.center {
-      
-      
+      color: #2a1a0a;
+      font-weight: 900;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    #scrollBandWrap::before, #scrollBandWrap::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 35%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+    #scrollBandWrap::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(40,30,20,0.7) 0%, transparent 100%);
+    }
+    #scrollBandWrap::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(40,30,20,0.7) 0%, transparent 100%);
+    }
+    #scrollBandWrap {
+      position: relative;
     }
 
     @keyframes iconHitPulse {
@@ -1110,7 +1134,7 @@
 
     <!-- Kippanzahl: Scrollband 1-11 -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%);">
+      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); box-shadow:inset 40px 0 30px -20px rgba(30,20,10,0.4), inset -40px 0 30px -20px rgba(30,20,10,0.4);">
         <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease;">
           <div class="numBtn" data-num="1">1</div>
           <div class="numBtn" data-num="2">2</div>
@@ -6341,7 +6365,9 @@
         3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      const targetDir = new THREE.Vector3(0, 1, 0);
+      // Zielrichtung: leicht nach Süden (Kamera) geneigt für Perspektivausgleich
+      const tiltAngle = 8 * Math.PI / 180; // 8° Richtung Kamera
+      const targetDir = new THREE.Vector3(0, Math.cos(tiltAngle), Math.sin(tiltAngle)).normalize();
       const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
       
       // Animation: auf Ecke kippen
@@ -6375,16 +6401,6 @@
         animLift();
       });
       
-      // Auge-Icon über Boxmitte (3.5 Zellen über π1)
-      const eckEyePos = new THREE.Vector3(0, 7 * 0.15625, 0.109375);
-      eckEyePos.project(camera);
-      const eckEyeScreenX = (eckEyePos.x * 0.5 + 0.5) * 360;
-      const eckEyeScreenY = (-eckEyePos.y * 0.5 + 0.5) * 720;
-      const eckEye = document.getElementById('eyeIcon');
-      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
-      setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
-
-      
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
@@ -6400,10 +6416,6 @@
           }, 100);
         });
       }
-      
-      // Auge-Icon ausblenden
-
-      eckEye.style.opacity = '0';
       
       // === Würfel senkt sich zurück ===
       const lowerDur = 600;
@@ -6455,7 +6467,6 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
-      eckEye.style.display = 'none';
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
@@ -7195,7 +7206,8 @@
         3: new THREE.Vector3(-o, o,  o)
       };
       const relativePos = diagVecs[currentQuadrant].clone().normalize();
-      const targetDir = new THREE.Vector3(0, 1, 0);
+      const tiltAngle2 = 8 * Math.PI / 180;
+      const targetDir = new THREE.Vector3(0, Math.cos(tiltAngle2), Math.sin(tiltAngle2)).normalize();
       const targetQuat = new THREE.Quaternion().setFromUnitVectors(relativePos, targetDir);
       aufEckeTargetQuat = targetQuat.clone();
 
@@ -10211,15 +10223,35 @@
       let touchStartIdx = 0;
       
       function updateBandPos(animate) {
-        const wrapW = wrap.offsetWidth || 180;
-        const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        const wrapW = wrap.offsetWidth || 306;
+        const btns = strip.querySelectorAll('.numBtn');
+        
+        const widths = [];
+        const scales = [];
+        btns.forEach((b, i) => {
+          const dist = Math.abs(i - bandIdx);
+          const s = Math.max(0.4, 1 - dist * 0.18);
+          scales.push(s);
+          widths.push(56 * s);
+        });
+        
+        let centerOfActive = 0;
+        for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
+        centerOfActive += widths[bandIdx] / 2;
+        
+        const offset = wrapW / 2 - centerOfActive;
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
-        // Update band position
-        const btns = strip.querySelectorAll('.numBtn');
+        
         btns.forEach((b, i) => {
-          b.classList.remove('center');
-          b.style.fontSize = '';
+          const dist = Math.abs(i - bandIdx);
+          const s = scales[i];
+          b.style.minWidth = widths[i] + 'px';
+          b.style.fontSize = Math.round(30 * s) + 'px';
+          b.style.height = Math.round(38 * s) + 'px';
+          b.style.opacity = Math.max(0.2, 1 - dist * 0.25);
+          b.style.color = dist === 0 ? '#2a1a0a' : '#5a4a3a';
+          b.classList.toggle('center', dist === 0);
         });
       }
       
@@ -10259,13 +10291,11 @@
         e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
-        // Smooth pixel-based scrolling during drag
-        const wrapW = wrap.offsetWidth || 180;
-        const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
-        strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
-        // Update bandIdx for snap on release
-        const idxDelta = Math.round(-dx / CELL_W);
+        // Snap: average cell width ~45px accounts for variable scaling
+        const avgCellW = 45;
+        const idxDelta = Math.round(-dx / avgCellW);
         bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
+        updateBandPos(false);
       }, { passive: false });
       
       wrap.addEventListener('touchend', (e) => {
@@ -10274,62 +10304,26 @@
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
         updateBandPos(true);
         
-        // Tap (kein Swipe)
+        // Tap (kein Swipe) — nur zentrierte Zahl löst Kipp aus
         if (!touchMoved) {
-          const touch = e.changedTouches[0];
-          const wrapRect = wrap.getBoundingClientRect();
-          const tapX = touch.clientX - wrapRect.left;
-          const wrapW = wrapRect.width;
-          const centerX = wrapW / 2;
-          // Actual rendered cell width from first numBtn
-          const firstBtn = strip.querySelector('.numBtn');
-          const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
-          const offsetFromCenter = tapX - centerX;
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
-          
-          bandIdx = tappedIdx;
-          updateBandPos(true);
-          const n = bandIdx + 1;
-          selectNum(n);
-          
-          if (gamePhase === 'spielen' && !isAnimating) {
-            (async () => {
-              for (let i = 0; i < n; i++) {
-                let dir;
-                if (currentQuadrant === 0) dir = 'east';
-                else if (currentQuadrant === 1) dir = 'south_from_q1';
-                else if (currentQuadrant === 2) dir = 'west_from_q2';
-                else dir = 'north';
-                await performKipp(dir, 600);
-                advanceTopFace();
-                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-              }
-              clearSelection();
-              await checkIconTreffer();
-            })();
-          }
+          doKippFromBand();
         }
       }, { passive: false });
       
-      // Desktop click fallback
+      // Desktop: nur center-Button klickbar (per CSS pointer-events)
       wrap.addEventListener('click', (e) => {
         e.stopPropagation();
-        const wrapRect = wrap.getBoundingClientRect();
-        const tapX = e.clientX - wrapRect.left;
-        const wrapW = wrapRect.width;
-        const centerX = wrapW / 2;
-        const firstBtn = strip.querySelector('.numBtn');
-        const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
-        const offsetFromCenter = tapX - centerX;
-        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
-        
-        bandIdx = tappedIdx;
-        updateBandPos(true);
+        if (e.target && e.target.classList && e.target.classList.contains('center')) {
+          doKippFromBand();
+        }
+      });
+      
+      function doKippFromBand() {
         const n = bandIdx + 1;
         selectNum(n);
-        
         if (gamePhase === 'spielen' && !isAnimating) {
           (async () => {
+            isAnimating = true;
             for (let i = 0; i < n; i++) {
               let dir;
               if (currentQuadrant === 0) dir = 'east';
@@ -10344,7 +10338,7 @@
             await checkIconTreffer();
           })();
         }
-      });
+      }
       
       // Global API
       window._scrollBandToNum = function(n) {
