@@ -504,58 +504,8 @@
       pointer-events: auto;
       z-index: 20;
     }
-    .numBtn {
-      min-width: 56px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font: bold 30px Arial;
-      color: #5a4a3a;
-      background: transparent;
-      border: none;
-      border-right: 1px solid #8a7a66;
-      border-radius: 0;
-      box-shadow: none;
-      cursor: default;
-      transition: min-width 0.35s ease, font-size 0.35s ease, height 0.35s ease, opacity 0.35s ease;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      pointer-events: none;
-    }
-    .numBtn:last-child {
-      border-right: none;
-    }
-    .numBtn.selected {
-      background: #5a4a3a;
-      color: #e8dcc8;
-    }
-    .numBtn.center {
-      color: #2a1a0a;
-      font-weight: 900;
-      text-shadow: 0 1px 2px rgba(255,255,255,0.3);
-      cursor: pointer;
-      pointer-events: auto;
-    }
-    #scrollBandWrap::before, #scrollBandWrap::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      width: 35%;
-      height: 100%;
-      z-index: 2;
-      pointer-events: none;
-    }
-    #scrollBandWrap::before {
-      left: 0;
-      background: linear-gradient(to right, rgba(40,30,20,0.7) 0%, transparent 100%);
-    }
-    #scrollBandWrap::after {
-      right: 0;
-      background: linear-gradient(to left, rgba(40,30,20,0.7) 0%, transparent 100%);
-    }
-    #scrollBandWrap {
-      position: relative;
+    #wheelCanvas {
+      border-radius: 8px;
     }
 
     @keyframes iconHitPulse {
@@ -1132,23 +1082,9 @@
       </div>
     </div>
 
-    <!-- Kippanzahl: Scrollband 1-11 -->
+    <!-- Kippanzahl: 3D Rad -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); box-shadow:inset 40px 0 30px -20px rgba(30,20,10,0.4), inset -40px 0 30px -20px rgba(30,20,10,0.4);">
-        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease;">
-          <div class="numBtn" data-num="1">1</div>
-          <div class="numBtn" data-num="2">2</div>
-          <div class="numBtn" data-num="3">3</div>
-          <div class="numBtn" data-num="4">4</div>
-          <div class="numBtn" data-num="5">5</div>
-          <div class="numBtn" data-num="6">6</div>
-          <div class="numBtn" data-num="7">7</div>
-          <div class="numBtn" data-num="8">8</div>
-          <div class="numBtn" data-num="9">9</div>
-          <div class="numBtn" data-num="10">10</div>
-          <div class="numBtn" data-num="11">11</div>
-        </div>
-      </div>
+      <canvas id="wheelCanvas" width="612" height="180" style="display:block; width:306px; height:90px; cursor:pointer;"></canvas>
     </div>
 
   </div>
@@ -10209,118 +10145,217 @@
       pulseRichtungButtons(false);
     }
 
-    // === SCROLLBAND (1-11, Grundstellung 6) ===
+    // === ZAHLENRAD (Canvas, 1-11, Grundstellung 6) ===
     (function() {
-      const strip = document.getElementById('scrollBandStrip');
-      const wrap = document.getElementById('scrollBandWrap');
-      if (!strip || !wrap) return;
-      
-      const CELL_W = 56;
+      const cv = document.getElementById('wheelCanvas');
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      const W = cv.width;   // 612
+      const H = cv.height;  // 180
       const TOTAL = 11;
+      const R = 800;  // Radius auf Canvas (2x retina)
+      const CX = W / 2;
+      const CY = R + 30; // Radmitte unter dem Canvas
+      const CELL_ARC = 112; // 56px × 2 retina = Bogenlänge pro Zahl
+      const STEP_ANGLE = CELL_ARC / R; // ~0.14 rad ≈ 8° pro Zahl
+      
       let bandIdx = 5; // 0-basiert, 5 = Zahl 6
-      let currentNum = null;
+      let currentAngle = 0; // Offset relativ zu bandIdx=5
+      let targetAngle = 0;
+      let animating = false;
       let touchStartX = 0;
-      let touchStartIdx = 0;
-      
-      function updateBandPos(animate) {
-        const wrapW = wrap.offsetWidth || 306;
-        const btns = strip.querySelectorAll('.numBtn');
-        
-        const widths = [];
-        const scales = [];
-        btns.forEach((b, i) => {
-          const dist = Math.abs(i - bandIdx);
-          const s = Math.max(0.4, 1 - dist * 0.18);
-          scales.push(s);
-          widths.push(56 * s);
-        });
-        
-        let centerOfActive = 0;
-        for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
-        centerOfActive += widths[bandIdx] / 2;
-        
-        const offset = wrapW / 2 - centerOfActive;
-        strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
-        strip.style.transform = 'translateX(' + offset + 'px)';
-        
-        btns.forEach((b, i) => {
-          const dist = Math.abs(i - bandIdx);
-          const s = scales[i];
-          b.style.minWidth = widths[i] + 'px';
-          b.style.fontSize = Math.round(30 * s) + 'px';
-          b.style.height = Math.round(38 * s) + 'px';
-          b.style.opacity = Math.max(0.2, 1 - dist * 0.25);
-          b.style.color = dist === 0 ? '#2a1a0a' : '#5a4a3a';
-          b.classList.toggle('center', dist === 0);
-        });
-      }
-      
-      function selectNum(n) {
-        currentNum = n;
-        const btns = strip.querySelectorAll('.numBtn');
-        btns.forEach(b => {
-          if (parseInt(b.dataset.num) === n) b.classList.add('selected');
-          else b.classList.remove('selected');
-        });
-      }
-      
-      function clearSelection() {
-        currentNum = null;
-        strip.querySelectorAll('.numBtn').forEach(b => b.classList.remove('selected'));
-      }
-      
-      function resetBand() {
-        bandIdx = 5;
-        clearSelection();
-        updateBandPos(true);
-      }
-      
-      // Touch: Swipe to scroll
+      let touchStartAngle = 0;
       let touchMoved = false;
-      wrap.addEventListener('touchstart', (e) => {
+      
+      function angleForIdx(i) {
+        // Winkel relativ zur Mitte (bandIdx=5 bei Angle=0)
+        return (i - bandIdx) * STEP_ANGLE + currentAngle;
+      }
+      
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        
+        // Radoberfläche: Kreisbogen-Band
+        const bandH = 76; // Höhe des Bandes auf Canvas (38px display)
+        const innerR = R - bandH;
+        
+        // Hintergrund-Bogen zeichnen
+        const visAngle = Math.atan2(W / 2, R); // halber sichtbarer Winkel
+        const startA = -Math.PI / 2 - visAngle - 0.05;
+        const endA = -Math.PI / 2 + visAngle + 0.05;
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(CX, CY, R, startA, endA);
+        ctx.arc(CX, CY, innerR, endA, startA, true);
+        ctx.closePath();
+        
+        // Gradient: Holz-Ton
+        const grd = ctx.createLinearGradient(0, 0, 0, H);
+        grd.addColorStop(0, '#e8e0d4');
+        grd.addColorStop(1, '#c8b8a4');
+        ctx.fillStyle = grd;
+        ctx.fill();
+        
+        // Dünne Ober-/Unterkante
+        ctx.strokeStyle = '#8a7a66';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(CX, CY, R, startA, endA);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(CX, CY, innerR, startA, endA);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Zahlen zeichnen
+        for (let i = 0; i < TOTAL; i++) {
+          const a = angleForIdx(i);
+          const drawAngle = -Math.PI / 2 + a; // -π/2 = oben
+          const midR = R - bandH / 2;
+          const x = CX + Math.cos(drawAngle) * midR;
+          const y = CY + Math.sin(drawAngle) * midR;
+          
+          // Distanz zur Mitte für Styling
+          const distPx = Math.abs(a) * R;
+          const distNorm = Math.min(distPx / (W / 2), 1); // 0=Mitte, 1=Rand
+          
+          const alpha = Math.max(0.15, 1 - distNorm * 1.5);
+          const fontSize = Math.round(54 * (1 - distNorm * 0.35));
+          const isBold = distNorm < 0.15;
+          
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(drawAngle + Math.PI / 2); // Text tangential
+          ctx.globalAlpha = alpha;
+          ctx.font = (isBold ? '900 ' : 'bold ') + fontSize + 'px Arial';
+          ctx.fillStyle = isBold ? '#2a1a0a' : '#5a4a3a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(i + 1), 0, 0);
+          ctx.restore();
+          
+          // Trennlinie zwischen Zahlen
+          if (i < TOTAL - 1) {
+            const sepA = drawAngle + STEP_ANGLE / 2;
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.3;
+            ctx.strokeStyle = '#8a7a66';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(sepA) * R, CY + Math.sin(sepA) * R);
+            ctx.lineTo(CX + Math.cos(sepA) * innerR, CY + Math.sin(sepA) * innerR);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+        
+        // Schatten links + rechts (Vignette)
+        const shadW = W * 0.32;
+        const shadL = ctx.createLinearGradient(0, 0, shadW, 0);
+        shadL.addColorStop(0, 'rgba(30,20,10,0.75)');
+        shadL.addColorStop(1, 'rgba(30,20,10,0)');
+        ctx.fillStyle = shadL;
+        ctx.fillRect(0, 0, shadW, H);
+        
+        const shadR = ctx.createLinearGradient(W, 0, W - shadW, 0);
+        shadR.addColorStop(0, 'rgba(30,20,10,0.75)');
+        shadR.addColorStop(1, 'rgba(30,20,10,0)');
+        ctx.fillStyle = shadR;
+        ctx.fillRect(W - shadW, 0, shadW, H);
+        
+        // Mittelmarkierung (kleines Dreieck oben)
+        ctx.save();
+        ctx.fillStyle = '#cedb25';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(CX - 8, 0);
+        ctx.lineTo(CX + 8, 0);
+        ctx.lineTo(CX, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      // Snap-Animation
+      function animateSnap() {
+        const diff = targetAngle - currentAngle;
+        if (Math.abs(diff) < 0.001) {
+          currentAngle = targetAngle;
+          animating = false;
+          draw();
+          return;
+        }
+        currentAngle += diff * 0.2;
+        draw();
+        requestAnimationFrame(animateSnap);
+      }
+      
+      function snapToIdx(idx) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, idx));
+        targetAngle = 0;
+        if (!animating) {
+          animating = true;
+          animateSnap();
+        }
+      }
+      
+      // Touch
+      cv.addEventListener('touchstart', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         window._numBtnTouchActive = true;
         touchStartX = e.touches[0].clientX;
-        touchStartIdx = bandIdx;
+        touchStartAngle = currentAngle;
         touchMoved = false;
-        strip.style.transition = 'none';
       }, { passive: false });
       
-      wrap.addEventListener('touchmove', (e) => {
+      cv.addEventListener('touchmove', (e) => {
         e.stopPropagation();
         e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
-        // Snap: average cell width ~45px accounts for variable scaling
-        const avgCellW = 45;
-        const idxDelta = Math.round(-dx / avgCellW);
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
-        updateBandPos(false);
+        // dx in display px → angle: dx*2 (retina) / R
+        currentAngle = touchStartAngle + (dx * 2) / R;
+        // Clamp: don't scroll past 1 or 11
+        const minAngle = -(bandIdx) * STEP_ANGLE;
+        const maxAngle = (TOTAL - 1 - bandIdx) * STEP_ANGLE;
+        currentAngle = Math.max(-maxAngle, Math.min(-minAngle, currentAngle));
+        draw();
       }, { passive: false });
       
-      wrap.addEventListener('touchend', (e) => {
+      cv.addEventListener('touchend', (e) => {
         e.stopPropagation();
         e.preventDefault();
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-        updateBandPos(true);
+        // Snap to nearest
+        const idxOffset = Math.round(-currentAngle / STEP_ANGLE);
+        const newIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + idxOffset));
+        currentAngle = currentAngle + idxOffset * STEP_ANGLE; // residual after idx change
+        bandIdx = newIdx;
+        snapToIdx(newIdx);
         
-        // Tap (kein Swipe) — nur zentrierte Zahl löst Kipp aus
         if (!touchMoved) {
-          doKippFromBand();
+          doKippFromWheel();
         }
       }, { passive: false });
       
-      // Desktop: nur center-Button klickbar (per CSS pointer-events)
-      wrap.addEventListener('click', (e) => {
+      // Desktop click
+      cv.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (e.target && e.target.classList && e.target.classList.contains('center')) {
-          doKippFromBand();
-        }
+        doKippFromWheel();
       });
       
-      function doKippFromBand() {
+      // Desktop scroll
+      cv.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dir = e.deltaY > 0 ? 1 : -1;
+        snapToIdx(bandIdx + dir);
+      }, { passive: false });
+      
+      function doKippFromWheel() {
         const n = bandIdx + 1;
-        selectNum(n);
         if (gamePhase === 'spielen' && !isAnimating) {
           (async () => {
             isAnimating = true;
@@ -10334,7 +10369,6 @@
               advanceTopFace();
               if (i < n - 1) await new Promise(r => setTimeout(r, 200));
             }
-            clearSelection();
             await checkIconTreffer();
           })();
         }
@@ -10343,17 +10377,23 @@
       // Global API
       window._scrollBandToNum = function(n) {
         bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
-        updateBandPos(true);
-        selectNum(n);
+        currentAngle = 0;
+        targetAngle = 0;
+        draw();
       };
-      window._resetScrollBand = function() { resetBand(); };
+      window._resetScrollBand = function() {
+        bandIdx = 5;
+        currentAngle = 0;
+        targetAngle = 0;
+        draw();
+      };
       window._highlightNum = function(n) {
-        if (n === null) { clearSelection(); return; }
+        if (n === null) return;
         window._scrollBandToNum(n);
       };
       
-      // Initial position
-      updateBandPos(false);
+      // Initial draw
+      draw();
     })();
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
