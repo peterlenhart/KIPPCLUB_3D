@@ -524,6 +524,7 @@
       document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
       document.getElementById('lvlK21').onclick = () => location.href = mb;
       document.getElementById('lvlKP').onclick = () => location.href = kp;
+      document.getElementById('lvlK21').style.display = selectedSkin === 'icons' ? 'none' : '';
     }
     updateLevelLinks();
     // clickQueen und clickKing haben vorerst keine Funktion
