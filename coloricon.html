@@ -8285,6 +8285,9 @@
       kipp21KniffActive = false;
       kipp21WobbleUsed = 0;
       kipp21EckblickUsed = 0;
+      iconHits = 0;
+      iconMisses = 0;
+      iconUsedCombos = new Set();
       
       setTimeout(() => { _startBtnLock = false; }, 1000);
       autoEckblick();
@@ -10422,11 +10425,10 @@
     let iconHits = 0;
     let iconMisses = 0;
     let iconKippzielActive = false;
+    let iconUsedCombos = new Set();
     
     function generateIconKippziel() {
       // Visible motifs directly from deck indices
-      // TRAINING: 1 per face = deck[0], deck[4], deck[8]
-      // BRAINY:   2 per face = deck[0,1], deck[4,5], deck[8,9]
       const visibleVals = [];
       if (currentLevel >= 2) {
         visibleVals.push(deck[0], deck[1], deck[4], deck[5], deck[8], deck[9]);
@@ -10434,7 +10436,7 @@
         visibleVals.push(deck[0], deck[4], deck[8]);
       }
       
-      // TopFace visible vals for anti-immediate-hit check
+      // TopFace vals + current quadrant = currently fulfilled combos
       const topOff = topFace === 'f0' ? 0 : (topFace === 'f1' ? 4 : 8);
       const topVals = currentLevel >= 2 ? [deck[topOff], deck[topOff+1]] : [deck[topOff]];
       
@@ -10443,8 +10445,10 @@
         iconTargetVal = visibleVals[Math.floor(Math.random() * visibleVals.length)];
         iconTargetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
         attempts++;
-      } while (attempts < 50 && topVals.includes(iconTargetVal) && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant);
-      // Nur Werte setzen — UI wird von autoEckblick gesteuert
+      } while (attempts < 100 && (iconUsedCombos.has(iconTargetVal + '_' + iconTargetFarbe) || (topVals.includes(iconTargetVal) && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant)));
+      
+      // Kombi merken
+      iconUsedCombos.add(iconTargetVal + '_' + iconTargetFarbe);
     }
     
     function getTopFaceVals() {
@@ -10560,6 +10564,11 @@
         kzEl.src = 'motiv_verdeckt.png';
         kzEl.style.borderColor = '#6b5040';
         kzEl.style.borderWidth = '3px';
+        
+        // Würfelfläche zurück auf grau (farbiges Overlay entfernen)
+        const matIdx2 = TOP_FACE_MAT_IDX[topFace];
+        cubeMaterial[matIdx2] = mat(f.slotMap, f.imgRot, 1);
+        cube.material = cubeMaterial;
         
         // Stapel-Karte entfernen + nachrutschen
         updateIconStack();
