@@ -10125,14 +10125,18 @@
       laufflCanvas.width = 2048;
       laufflCanvas.height = 128;
       const laufflCtx = laufflCanvas.getContext('2d');
+      laufflCtx.fillStyle = '#e8e0d4';
+      laufflCtx.fillRect(0, 0, 2048, 128);
       const laufflTex = new THREE.CanvasTexture(laufflCanvas);
-      laufflTex.encoding = THREE.sRGBEncoding;
       
       laufflImg.onload = () => {
+        // Canvas vertikal spiegeln (Zylinder-UV ist bottom-up)
+        laufflCtx.save();
+        laufflCtx.translate(0, 128);
+        laufflCtx.scale(1, -1);
         laufflCtx.drawImage(laufflImg, 0, 0, 2048, 128);
         const cellW = 2048 / TOTAL;
         for (let i = 0; i < TOTAL; i++) {
-          // Trennlinie
           if (i > 0) {
             laufflCtx.strokeStyle = 'rgba(138,122,102,0.5)';
             laufflCtx.lineWidth = 2;
@@ -10141,13 +10145,13 @@
             laufflCtx.lineTo(cellW * i, 128);
             laufflCtx.stroke();
           }
-          // Zahl
           laufflCtx.font = 'bold 64px Arial';
           laufflCtx.fillStyle = '#2a1a0a';
           laufflCtx.textAlign = 'center';
           laufflCtx.textBaseline = 'middle';
           laufflCtx.fillText(String(i + 1), cellW * i + cellW / 2, 64);
         }
+        laufflCtx.restore();
         laufflTex.needsUpdate = true;
       };
       
