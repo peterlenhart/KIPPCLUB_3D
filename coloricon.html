@@ -1375,7 +1375,6 @@
     renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.localClippingEnabled = true;
 
     
     document.getElementById('container').appendChild(renderer.domElement);
@@ -10176,6 +10175,37 @@
         wheelRotor.add(cap);
       }
       
+      // --- Schwarzer Outlinerahmen auf Y+3 (Spieltischebene) ---
+      const frameY = 0.46875 + 0.002;
+      const frameXhalf = 3.5 * 0.15625;  // ±3.5 Zellen
+      const frameZnorth = 0.1105 + 4.5 * 0.15625;
+      const frameZsouth = 0.1105 + 5.35 * 0.15625;
+      const frameW = frameXhalf * 2;
+      const frameD = frameZsouth - frameZnorth;
+      const lineW = 4 * (2.5 / 720); // 4px
+      const frameMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      
+      // Nord
+      const fN = new THREE.Mesh(new THREE.PlaneGeometry(frameW + lineW, lineW), frameMat);
+      fN.rotation.x = -Math.PI / 2;
+      fN.position.set(0, frameY, frameZnorth);
+      scene.add(fN);
+      // Süd
+      const fS = new THREE.Mesh(new THREE.PlaneGeometry(frameW + lineW, lineW), frameMat);
+      fS.rotation.x = -Math.PI / 2;
+      fS.position.set(0, frameY, frameZsouth);
+      scene.add(fS);
+      // West
+      const fW = new THREE.Mesh(new THREE.PlaneGeometry(lineW, frameD), frameMat);
+      fW.rotation.x = -Math.PI / 2;
+      fW.position.set(-frameXhalf, frameY, (frameZnorth + frameZsouth) / 2);
+      scene.add(fW);
+      // Ost
+      const fE = new THREE.Mesh(new THREE.PlaneGeometry(lineW, frameD), frameMat);
+      fE.rotation.x = -Math.PI / 2;
+      fE.position.set(frameXhalf, frameY, (frameZnorth + frameZsouth) / 2);
+      scene.add(fE);
+      
       // --- Scroll logic ---
       function snapTo(idx, animate) {
         bandIdx = Math.max(0, Math.min(TOTAL - 1, idx));
@@ -10207,17 +10237,21 @@
       let touchStartAngle = 0;
       let touchMoved = false;
       
-      // Wheel screen zone: Y 240-360px (um die projizierte Radposition)
+      // Wheel screen zone: dynamisch berechnet aus projizierter Radposition
       function isInWheelZone(touchY) {
+        const wheelPos = new THREE.Vector3(0, 0.49, 0.880);
+        wheelPos.project(camera);
+        const wheelScreenY = (-wheelPos.y * 0.5 + 0.5) * 720;
         const rect = renderer.domElement.getBoundingClientRect();
         const sy = ((touchY - rect.top) / rect.height) * 720;
-        return sy > 220 && sy < 380;
+        return Math.abs(sy - wheelScreenY) < 60;
       }
       
       renderer.domElement.addEventListener('touchstart', (e) => {
         if (!window._wheelActive) return;
         if (!isInWheelZone(e.touches[0].clientY)) return;
         e.preventDefault();
+        e.stopImmediatePropagation();
         wTouchActive = true;
         window._numBtnTouchActive = true;
         touchStartX = e.touches[0].clientX;
@@ -10231,7 +10265,7 @@
         e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
-        scrollAngle = touchStartAngle + dx * 0.008;
+        scrollAngle = touchStartAngle - dx * 0.008;
         const maxA = 5 * STEP;
         scrollAngle = Math.max(-maxA, Math.min(maxA, scrollAngle));
         wheelRotor.rotation.y = scrollAngle;
@@ -10341,7 +10375,9 @@
         window._wheelAnchor.visible = !!window._wheelActive;
       }
       
+      renderer.localClippingEnabled = true;
       renderer.render(scene, camera);
+      renderer.localClippingEnabled = false;
     }
 
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
