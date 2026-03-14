@@ -1355,18 +1355,18 @@
     );
     
     const baseY = 2.143;
-    const verticalAngle = -1.0;
+    const verticalAngle = -0.65;
     const horizontal = 0;
-    const radius = 1.25;
+    const radius = 1.549;
     const southShift = -0.143;
     
     camera.position.set(
       0 + Math.sin(horizontal) * 0.5,
       baseY + radius * Math.sin(-verticalAngle),
-      1.673 // Z+10 Zellen ab Boxmitte (Test)
+      radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
     );
     
-    camera.lookAt(0, 0.46875, 0.5011); // Z+2.5 Zellen ab Boxmitte
+    camera.lookAt(0, 0.46875, 0.7 + southShift);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
