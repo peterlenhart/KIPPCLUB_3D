@@ -10875,6 +10875,18 @@
       await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, cubeLift2, camSave, lookBase);
       advanceTopFace();
       
+      await new Promise(r => setTimeout(r, 600));
+      
+      // --- KIPP 3 ---
+      const k3 = cwDirs[currentQuadrant];
+      const isCenter3 = !k3.keepEdges.includes('left') && !k3.keepEdges.includes('right');
+      const yShift3 = isCenter3 ? yShiftCenter : yShiftFull;
+      const zoomZ3 = isCenter3 ? baseZoomZCenter : baseZoomZ;
+      const s3 = computeShifts(k3.keepEdges, yShift3, zoomZ3);
+      const cubeLift3 = 0.25;
+      await doHalfKippZoom(k3.dir, k3.toQ, s3.xShift, yShift3, zoomZ3, s3.zPan, cubeLift3, camSave, lookBase);
+      advanceTopFace();
+      
       // Kamera exakt zurücksetzen
       camera.position.set(camSave.px, camSave.py, camSave.pz);
       camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
@@ -10930,8 +10942,8 @@
         })();
       });
       
-      // Phase 2: Hold 2.5s
-      await new Promise(r => setTimeout(r, 5000));
+      // Phase 2: Hold 3s
+      await new Promise(r => setTimeout(r, 3000));
       
       // Phase 3: Camera back + complete 45° → 90° (500ms)
       await new Promise(resolve => {
