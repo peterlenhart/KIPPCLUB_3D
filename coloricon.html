@@ -9424,12 +9424,12 @@
         pauseDragActive = true;
         return;
       }
-      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'kipp21')) {
+      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'kipp21' || gamePhase === 'spielen')) {
         dismissKippenWarning();
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
         if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
-        if (cubeLocked && gamePhase !== 'kipp21') return;
+        if (cubeLocked && gamePhase !== 'kipp21' && gamePhase !== 'spielen') return;
         if (gamePhase === 'kipp21' && kipp21HitLock) return; // Treffer erkannt → Würfel gesperrt
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
         if (gamePhase === 'kipp21' && !brainyActive && kipp21CardStates.indexOf('offen') < 0) return;
@@ -9441,6 +9441,7 @@
         isSwiping = true;
         dragActive = false;
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        window._swipeEndPos = { x: touch.clientX, y: touch.clientY };
       }
     });
 
@@ -9477,7 +9478,15 @@
       }
       if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
       // TRAINING/ICONS: Kein Swipe-Kippen — Rad/Buttons steuern den Würfel
-      if (gamePhase === 'kipp21' || gamePhase === 'spielen') return;
+      if (gamePhase === 'kipp21' || gamePhase === 'spielen') {
+        // Capture last position for swipe direction detection
+        if (gamePhase === 'spielen') {
+          e.preventDefault();
+          const touch = e.touches[0];
+          window._swipeEndPos = { x: touch.clientX, y: touch.clientY };
+        }
+        return;
+      }
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -9594,6 +9603,41 @@
         pauseDragActive = false;
         return;
       }
+      
+      // SPIELEN: Swipe auf Würfel → Richtung + Rad-Zahl → Auto-Kipp
+      if (gamePhase === 'spielen' && isSwiping && !dragActive && window._swipeEndPos && window._wheelActive && iconKippzielActive && !isAnimating) {
+        isSwiping = false;
+        const dx = window._swipeEndPos.x - swipeStartX;
+        const dy = window._swipeEndPos.y - swipeStartY;
+        window._swipeEndPos = null;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 15) return;
+        
+        const direction = (Math.abs(dx) > Math.abs(dy)) ? (dx > 0 ? 'cw' : 'ccw') : (dy < 0 ? 'cw' : 'ccw');
+        const n = bandIdx + 1;
+        isAnimating = true;
+        (async () => {
+          for (let i = 0; i < n; i++) {
+            let dir;
+            if (direction === 'cw') {
+              if (currentQuadrant === 3) dir = 'north';
+              else if (currentQuadrant === 0) dir = 'east';
+              else if (currentQuadrant === 1) dir = 'south_from_q1';
+              else dir = 'west_from_q2';
+            } else {
+              if (currentQuadrant === 3) dir = 'east_from_q3';
+              else if (currentQuadrant === 2) dir = 'north_from_q2';
+              else if (currentQuadrant === 1) dir = 'west';
+              else dir = 'south';
+            }
+            await performKipp(dir, 600);
+            advanceTopFace();
+            if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+          }
+          await checkIconTreffer();
+        })();
+        return;
+      }
+      
       isSwiping = false;
       
       if (!dragActive) return;
@@ -10087,7 +10131,7 @@
       const wTouch = document.getElementById('wheelTouch');
       if (!wTouch) return;
       
-      const TOTAL = 11;
+      const TOTAL = 6;
       const WHEEL_R = 1.0;
       const BAND_DEPTH = 0.133;
       const STEP = 0.234375 / WHEEL_R; // 1.5 Zellen Bogenlänge pro Zahl
@@ -10095,7 +10139,7 @@
       const THETA_START = Math.PI - TOTAL_THETA / 2;
       const SEGS = 44;
       
-      let bandIdx = 5;
+      let bandIdx = 2; // Zahl 3 (Mitte)
       let scrollAngle = 0;
       let targetScrollAngle = 0;
       let isSnapping = false;
@@ -10130,8 +10174,16 @@
       laufflTex.center.set(0.5, 0.5);
       laufflTex.rotation = Math.PI;
       
-      laufflImg.onload = () => {
-        laufflCtx.drawImage(laufflImg, 0, 0, 2048, 128);
+      let laufflImgLoaded = false;
+      laufflImg.onload = () => { laufflImgLoaded = true; drawWheelTex(); };
+      
+      function drawWheelTex() {
+        if (!laufflImgLoaded) return;
+        laufflCtx.clearRect(0, 0, 2048, 128);
+        laufflCtx.fillStyle = '#e8e0d4';
+        laufflCtx.fillRect(0, 0, 2048, 128);
+        laufflCtx.drawImage(laufflImg, 0, 0, 1024, 128);
+        laufflCtx.drawImage(laufflImg, 1024, 0, 1024, 128);
         const cellW = 2048 / TOTAL;
         for (let i = 0; i < TOTAL; i++) {
           if (i > 0) {
@@ -10142,14 +10194,17 @@
             laufflCtx.lineTo(cellW * i, 128);
             laufflCtx.stroke();
           }
-          laufflCtx.font = 'bold 64px Arial';
+          const isCenter = (i === bandIdx);
+          laufflCtx.globalAlpha = isCenter ? 1.0 : 0.7;
+          laufflCtx.font = (isCenter ? '900' : 'bold') + ' 96px Arial';
           laufflCtx.fillStyle = '#2a1a0a';
           laufflCtx.textAlign = 'center';
           laufflCtx.textBaseline = 'middle';
           laufflCtx.fillText(String(i + 1), cellW * i + cellW / 2, 64);
         }
+        laufflCtx.globalAlpha = 1.0;
         laufflTex.needsUpdate = true;
-      };
+      }
       
       // Clipping plane at Y=0.46875 (Wandoberkante)
       const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
@@ -10182,34 +10237,42 @@
       const frameZsouth = 0.1105 + 5.35 * 0.15625;
       const frameW = frameXhalf * 2;
       const frameD = frameZsouth - frameZnorth;
-      const lineW = 4 * (2.5 / 720); // 4px
+      const lineW = 9 * (2.5 / 720); // 9px
       const frameMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
       
+      const wheelFrameParts = [];
       // Nord
       const fN = new THREE.Mesh(new THREE.PlaneGeometry(frameW + lineW, lineW), frameMat);
       fN.rotation.x = -Math.PI / 2;
       fN.position.set(0, frameY, frameZnorth);
-      scene.add(fN);
+      fN.visible = false;
+      scene.add(fN); wheelFrameParts.push(fN);
       // Süd
       const fS = new THREE.Mesh(new THREE.PlaneGeometry(frameW + lineW, lineW), frameMat);
       fS.rotation.x = -Math.PI / 2;
       fS.position.set(0, frameY, frameZsouth);
-      scene.add(fS);
+      fS.visible = false;
+      scene.add(fS); wheelFrameParts.push(fS);
       // West
       const fW = new THREE.Mesh(new THREE.PlaneGeometry(lineW, frameD), frameMat);
       fW.rotation.x = -Math.PI / 2;
       fW.position.set(-frameXhalf, frameY, (frameZnorth + frameZsouth) / 2);
-      scene.add(fW);
+      fW.visible = false;
+      scene.add(fW); wheelFrameParts.push(fW);
       // Ost
       const fE = new THREE.Mesh(new THREE.PlaneGeometry(lineW, frameD), frameMat);
       fE.rotation.x = -Math.PI / 2;
       fE.position.set(frameXhalf, frameY, (frameZnorth + frameZsouth) / 2);
-      scene.add(fE);
+      fE.visible = false;
+      scene.add(fE); wheelFrameParts.push(fE);
+      
+      window._wheelFrameParts = wheelFrameParts;
       
       // --- Scroll logic ---
       function snapTo(idx, animate) {
         bandIdx = Math.max(0, Math.min(TOTAL - 1, idx));
-        targetScrollAngle = (5 - bandIdx) * STEP;
+        targetScrollAngle = (2 - bandIdx) * STEP;
+        drawWheelTex();
         if (animate) {
           if (!isSnapping) { isSnapping = true; animateSnap(); }
         } else {
@@ -10266,7 +10329,7 @@
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
         scrollAngle = touchStartAngle - dx * 0.008;
-        const maxA = 5 * STEP;
+        const maxA = (TOTAL - 1) * STEP;
         scrollAngle = Math.max(-maxA, Math.min(maxA, scrollAngle));
         wheelRotor.rotation.y = scrollAngle;
       }, { passive: false });
@@ -10275,7 +10338,7 @@
         if (!wTouchActive) return;
         wTouchActive = false;
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-        const rawIdx = 5 - Math.round(scrollAngle / STEP);
+        const rawIdx = 2 - Math.round(scrollAngle / STEP);
         snapTo(rawIdx, true);
         if (!touchMoved) doKippFromWheel();
       }, { passive: false });
@@ -10309,10 +10372,10 @@
       
       // Global API
       window._scrollBandToNum = function(n) { snapTo(n - 1, true); };
-      window._resetScrollBand = function() { snapTo(5, true); };
+      window._resetScrollBand = function() { snapTo(2, true); };
       window._highlightNum = function(n) { if (n !== null) snapTo(n - 1, true); };
       
-      snapTo(5, false);
+      snapTo(2, false);
     })();
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
@@ -10373,6 +10436,9 @@
       // Sync 3D wheel visibility with wheelActive flag
       if (window._wheelAnchor) {
         window._wheelAnchor.visible = !!window._wheelActive;
+      }
+      if (window._wheelFrameParts) {
+        window._wheelFrameParts.forEach(f => f.visible = !!window._wheelActive);
       }
       
       renderer.localClippingEnabled = true;
