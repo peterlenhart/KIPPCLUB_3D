@@ -1058,7 +1058,7 @@
 
     <!-- Kippanzahl: 3D Rad Touch-Overlay -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="wheelTouch" style="width:306px; height:80px; cursor:pointer;"></div>
+      <div id="wheelTouch" style="width:360px; height:120px; cursor:pointer;"></div>
     </div>
 
   </div>
@@ -10118,7 +10118,38 @@
       
       // --- Texturen laden ---
       const texLoader = new THREE.TextureLoader();
-      const laufflTex = texLoader.load('lauffl_icon.webp');
+      // Lauffläche: Textur laden, Zahlen drauf zeichnen
+      const laufflImg = new Image();
+      laufflImg.src = 'lauffl_icon.webp';
+      const laufflCanvas = document.createElement('canvas');
+      laufflCanvas.width = 2048;
+      laufflCanvas.height = 128;
+      const laufflCtx = laufflCanvas.getContext('2d');
+      const laufflTex = new THREE.CanvasTexture(laufflCanvas);
+      laufflTex.encoding = THREE.sRGBEncoding;
+      
+      laufflImg.onload = () => {
+        laufflCtx.drawImage(laufflImg, 0, 0, 2048, 128);
+        const cellW = 2048 / TOTAL;
+        for (let i = 0; i < TOTAL; i++) {
+          // Trennlinie
+          if (i > 0) {
+            laufflCtx.strokeStyle = 'rgba(138,122,102,0.5)';
+            laufflCtx.lineWidth = 2;
+            laufflCtx.beginPath();
+            laufflCtx.moveTo(cellW * i, 0);
+            laufflCtx.lineTo(cellW * i, 128);
+            laufflCtx.stroke();
+          }
+          // Zahl
+          laufflCtx.font = 'bold 64px Arial';
+          laufflCtx.fillStyle = '#2a1a0a';
+          laufflCtx.textAlign = 'center';
+          laufflCtx.textBaseline = 'middle';
+          laufflCtx.fillText(String(i + 1), cellW * i + cellW / 2, 64);
+        }
+        laufflTex.needsUpdate = true;
+      };
       
       // Clipping plane at Y=0.46875 (Wandoberkante)
       const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
@@ -10306,11 +10337,14 @@
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
     
-    // Numpad (1-6 Tasten) positionieren: feste Position
+    // Numpad positionieren: projiziere Radmitte auf Screen
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      el.style.top = '557px';
+      const wheelCenter3D = new THREE.Vector3(0, 0.50, 0.880);
+      wheelCenter3D.project(camera);
+      const screenY = Math.round((-wheelCenter3D.y * 0.5 + 0.5) * 720);
+      el.style.top = (screenY - 40) + 'px';
     })();
 
     // === ICONS: Kippziel-Bereich positionieren und initialisieren ===
