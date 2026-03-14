@@ -9597,7 +9597,7 @@
       setButtonsDisabled(false);
     }
 
-    renderer.domElement.addEventListener('touchend', () => {
+    renderer.domElement.addEventListener('touchend', (e) => {
       if (replayActive) return; // Tutorial: keine Interaktion
       if (gamePhase === 'pause') {
         pauseDragActive = false;
@@ -9605,11 +9605,14 @@
       }
       
       // SPIELEN: Swipe auf Würfel → Richtung + Rad-Zahl → Auto-Kipp
-      if (gamePhase === 'spielen' && isSwiping && !dragActive && window._swipeEndPos && window._wheelActive && iconKippzielActive && !isAnimating) {
+      if (gamePhase === 'spielen' && isSwiping && !dragActive && window._wheelActive && iconKippzielActive && !isAnimating) {
         isSwiping = false;
-        const dx = window._swipeEndPos.x - swipeStartX;
-        const dy = window._swipeEndPos.y - swipeStartY;
+        const endTouch = e.changedTouches ? e.changedTouches[0] : null;
+        const endPos = endTouch ? { x: endTouch.clientX, y: endTouch.clientY } : window._swipeEndPos;
         window._swipeEndPos = null;
+        if (!endPos) return;
+        const dx = endPos.x - swipeStartX;
+        const dy = endPos.y - swipeStartY;
         if (Math.max(Math.abs(dx), Math.abs(dy)) < 15) return;
         
         const direction = (Math.abs(dx) > Math.abs(dy)) ? (dx > 0 ? 'cw' : 'ccw') : (dy < 0 ? 'cw' : 'ccw');
@@ -10165,11 +10168,11 @@
       const laufflImg = new Image();
       laufflImg.src = 'lauffl_icon.webp';
       const laufflCanvas = document.createElement('canvas');
-      laufflCanvas.width = 2048;
+      laufflCanvas.width = 3072;
       laufflCanvas.height = 128;
       const laufflCtx = laufflCanvas.getContext('2d');
       laufflCtx.fillStyle = '#e8e0d4';
-      laufflCtx.fillRect(0, 0, 2048, 128);
+      laufflCtx.fillRect(0, 0, 3072, 128);
       const laufflTex = new THREE.CanvasTexture(laufflCanvas);
       laufflTex.center.set(0.5, 0.5);
       laufflTex.rotation = Math.PI;
@@ -10179,12 +10182,13 @@
       
       function drawWheelTex() {
         if (!laufflImgLoaded) return;
-        laufflCtx.clearRect(0, 0, 2048, 128);
+        laufflCtx.clearRect(0, 0, 3072, 128);
         laufflCtx.fillStyle = '#e8e0d4';
-        laufflCtx.fillRect(0, 0, 2048, 128);
+        laufflCtx.fillRect(0, 0, 3072, 128);
         laufflCtx.drawImage(laufflImg, 0, 0, 1024, 128);
         laufflCtx.drawImage(laufflImg, 1024, 0, 1024, 128);
-        const cellW = 2048 / TOTAL;
+        laufflCtx.drawImage(laufflImg, 2048, 0, 1024, 128);
+        const cellW = 3072 / TOTAL;
         for (let i = 0; i < TOTAL; i++) {
           if (i > 0) {
             laufflCtx.strokeStyle = 'rgba(138,122,102,0.5)';
