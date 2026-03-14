@@ -10102,7 +10102,6 @@
       const TOTAL = 11;
       const WHEEL_R = 1.0;
       const BAND_DEPTH = 0.133;
-      const THICK = 0.04;
       const STEP = 0.234375 / WHEEL_R; // 1.5 Zellen Bogenlänge pro Zahl
       const TOTAL_THETA = TOTAL * STEP;
       const THETA_START = Math.PI - TOTAL_THETA / 2;
@@ -10167,35 +10166,24 @@
       // Clipping plane at Y=0.46875 (Wandoberkante) — clips wheel below table surface
       const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
       
-      // --- Outer barrel (numbers) ---
-      const outerGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
-      const outerMat = new THREE.MeshStandardMaterial({
-        map: wheelTex, side: THREE.FrontSide, roughness: 0.7, metalness: 0.05,
-        clippingPlanes: wheelClipPlane
-      });
-      const outerMesh = new THREE.Mesh(outerGeo, outerMat);
-      wheelRotor.add(outerMesh);
+      // --- Texturen laden ---
+      const texLoader = new THREE.TextureLoader();
+      const laufflTex = texLoader.load('lauffl_icon.webp');
+      const deckflTex = texLoader.load('deckfl_icon.webp');
+      const deckflTex2 = texLoader.load('deckfl_icon.webp');
       
-      // --- Inner barrel ---
-      const innerGeo = new THREE.CylinderGeometry(WHEEL_R - THICK, WHEEL_R - THICK, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
-      const innerMat = new THREE.MeshStandardMaterial({
-        color: 0x3a2a1a, side: THREE.BackSide, roughness: 0.8, metalness: 0.1,
-        clippingPlanes: wheelClipPlane
-      });
-      const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-      wheelRotor.add(innerMesh);
-      
-      // --- End caps (ring segments) ---
-      for (let side = -1; side <= 1; side += 2) {
-        const capGeo = new THREE.RingGeometry(WHEEL_R - THICK, WHEEL_R, SEGS, 1, THETA_START, TOTAL_THETA);
-        const capMat = new THREE.MeshStandardMaterial({
-          color: 0xc8b8a4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.1,
-          clippingPlanes: wheelClipPlane
-        });
-        const cap = new THREE.Mesh(capGeo, capMat);
-        cap.position.y = side * BAND_DEPTH / 2;
-        wheelRotor.add(cap);
-      }
+      // --- Rad = geschlossene Scheibe (Zylindersegment) ---
+      const wheelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, false, THETA_START, TOTAL_THETA);
+      const wheelMats = [
+        // Mantelfläche (Lauffläche)
+        new THREE.MeshStandardMaterial({ map: laufflTex, roughness: 0.7, metalness: 0.05, clippingPlanes: wheelClipPlane }),
+        // Norddeckfläche
+        new THREE.MeshStandardMaterial({ map: deckflTex, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane }),
+        // Süddeckfläche
+        new THREE.MeshStandardMaterial({ map: deckflTex2, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane })
+      ];
+      const wheelMesh = new THREE.Mesh(wheelGeo, wheelMats);
+      wheelRotor.add(wheelMesh);
       
       // --- Scroll logic ---
       function snapTo(idx, animate) {
