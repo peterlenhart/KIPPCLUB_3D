@@ -1434,6 +1434,13 @@
     const fillLightSouth = new THREE.DirectionalLight(0xffffff, 0.28);
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
+    
+    // Licht von Süden für Stellrad-Deckfläche
+    const wheelSouthLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    wheelSouthLight.position.set(0, 0.5, 2);
+    wheelSouthLight.target.position.set(0, 0.469, 0.88);
+    scene.add(wheelSouthLight);
+    scene.add(wheelSouthLight.target);
 
     // =========================
     // TISCH (π1 Ebene)
