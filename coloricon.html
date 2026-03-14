@@ -10079,7 +10079,7 @@
       
       const TOTAL = 11;
       const WHEEL_R = 1.0;
-      const BAND_DEPTH = 38 * (2.5 / 720); // 38px = 0.132
+      const BAND_DEPTH = 0.133; // 0.85 Zellen = Z-Abstand P1-P3
       const THICK = 0.05; // Massiver als Boxwand
       const STEP = 0.15625 / WHEEL_R; // ~9° per number (1 cell arc at R=1.0)
       const TOTAL_THETA = TOTAL * STEP;
@@ -10095,7 +10095,7 @@
       // Cylinder default axis = Y. Rotate Z=-PI/2 → axis along X (horizontal)
       // Camera looks from south+above → top of wheel arc faces camera
       const wheelAnchor = new THREE.Group();
-      wheelAnchor.position.set(0, -WHEEL_R + 0.15, 1.184);
+      wheelAnchor.position.set(0, -WHEEL_R + 0.46875, 1.199);
       wheelAnchor.rotation.x = Math.PI / 2; // Achse entlang Z
       wheelAnchor.visible = false;
       scene.add(wheelAnchor);
