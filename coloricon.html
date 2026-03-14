@@ -10127,24 +10127,33 @@
       // Store reference for render loop visibility sync
       window._wheelAnchor = wheelAnchor;
       
+      // --- Texturen laden ---
+      const texLoader = new THREE.TextureLoader();
+      const laufflTex = texLoader.load('lauffl_icon.webp');
+      
       // Clipping plane at Y=0.46875 (Wandoberkante)
       const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
       
-      // --- Texturen laden ---
-      const texLoader = new THREE.TextureLoader();
-      let wheelMesh = null;
-      const laufflTex = texLoader.load('lauffl_icon.webp', () => { if (wheelMesh) wheelMesh.material[0].needsUpdate = true; });
-      const deckflTex = texLoader.load('deckfl_icon.webp', () => { if (wheelMesh) { wheelMesh.material[1].needsUpdate = true; wheelMesh.material[2].needsUpdate = true; } });
+      // --- Lauffläche (Segment-Barrel, openEnded) ---
+      const barrelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
+      const barrelMat = new THREE.MeshStandardMaterial({
+        map: laufflTex, roughness: 0.7, metalness: 0.05, clippingPlanes: wheelClipPlane
+      });
+      wheelRotor.add(new THREE.Mesh(barrelGeo, barrelMat));
       
-      // --- Rad = geschlossene Scheibe (Zylindersegment) ---
-      const wheelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, false);
-      const wheelMats = [
-        new THREE.MeshStandardMaterial({ map: laufflTex, roughness: 0.7, metalness: 0.05, clippingPlanes: wheelClipPlane }),
-        new THREE.MeshStandardMaterial({ map: deckflTex, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane }),
-        new THREE.MeshStandardMaterial({ map: deckflTex, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane })
-      ];
-      wheelMesh = new THREE.Mesh(wheelGeo, wheelMats);
-      wheelRotor.add(wheelMesh);
+      // --- Abdeckflächen Nord + Süd (volle Kreise, geschlossen) ---
+      for (let side = -1; side <= 1; side += 2) {
+        const capGeo = new THREE.CircleGeometry(WHEEL_R, SEGS);
+        const capTex = texLoader.load('deckfl_icon.webp');
+        const capMat = new THREE.MeshStandardMaterial({
+          map: capTex, roughness: 0.6, metalness: 0.1,
+          side: THREE.DoubleSide, clippingPlanes: wheelClipPlane
+        });
+        const cap = new THREE.Mesh(capGeo, capMat);
+        cap.rotation.x = -Math.PI / 2;
+        cap.position.y = side * BAND_DEPTH / 2;
+        wheelRotor.add(cap);
+      }
       
       // --- Scroll logic ---
       function snapTo(idx, animate) {
