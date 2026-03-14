@@ -265,28 +265,6 @@
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
-    .eckeHaken {
-      position: absolute;
-      width: 40px; height: 40px;
-      display: none;
-      pointer-events: auto;
-      cursor: pointer;
-      z-index: 5;
-      border-radius: 6px;
-      background: rgba(20,14,8,0.6);
-      border: 2px solid rgba(212,180,140,0.5);
-      color: #cedb25;
-      font-size: 24px;
-      font-weight: bold;
-      line-height: 36px;
-      text-align: center;
-      text-shadow: 0 0 8px rgba(206,219,37,0.6);
-      animation: hakenPulse 2s ease-in-out infinite;
-    }
-    @keyframes hakenPulse {
-      0%, 100% { border-color: rgba(212,180,140,0.5); transform: scale(1); }
-      50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
-    }
     #kippTarget {
       display: none !important;
     }
@@ -1049,10 +1027,7 @@
     <div id="spielZielText"></div>
     <div id="entscheidungText"></div>
     <!-- kippTarget removed for ICONS -->
-    <div class="eckeHaken" id="hakenQ0">✓</div>
-    <div class="eckeHaken" id="hakenQ1">✓</div>
-    <div class="eckeHaken" id="hakenQ2">✓</div>
-    <div class="eckeHaken" id="hakenQ3">✓</div>
+    
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
@@ -4581,7 +4556,7 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
+      
       
       // === CHALLENGE TEXT zuerst zeigen (Inflate-Sequenz) ===
       const pgt = document.getElementById('perfektGameText');
@@ -7443,56 +7418,10 @@
 
     // === KNIFF ICONS: Show/Hide ===
     // === ECKE-HAKEN: Bestätigungsbuttons in den 4 Rahmenecken ===
-    const hakenEls = [
-      document.getElementById('hakenQ0'),
-      document.getElementById('hakenQ1'),
-      document.getElementById('hakenQ2'),
-      document.getElementById('hakenQ3')
-    ];
-    // 3D-Positionen der 4 Rahmenecken (auf Rahmen-Oberkante)
-    const hakenPos3D = [
-      new THREE.Vector3(-0.546875, 0.479, -0.437500), // Q0 NW
-      new THREE.Vector3( 0.546875, 0.479, -0.437500), // Q1 NE
-      new THREE.Vector3( 0.546875, 0.479,  0.658000), // Q2 SE
-      new THREE.Vector3(-0.546875, 0.479,  0.658000)  // Q3 SW
-    ];
-    
-    function positionEckeHaken() {
-      for (let i = 0; i < 4; i++) {
-        const p = hakenPos3D[i].clone().project(camera);
-        const sx = (p.x * 0.5 + 0.5) * 360 - 20; // zentriert (40px breit)
-        const sy = (-p.y * 0.5 + 0.5) * 720 - 20; // zentriert (40px hoch)
-        hakenEls[i].style.left = sx + 'px';
-        hakenEls[i].style.top = sy + 'px';
-      }
-    }
-    
-    function showEckeHaken() {
-      positionEckeHaken();
-      hakenEls.forEach(el => { el.style.display = 'block'; });
-    }
-    
-    function hideEckeHaken() {
-      hakenEls.forEach(el => { el.style.display = 'none'; });
-    }
-    
-    // Click-Handler für alle 4 Haken
-    hakenEls.forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        hideEckeHaken();
-        checkKippzielTap();
-      });
-      el.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        hideEckeHaken();
-        checkKippzielTap();
-      });
-    });
+    const hakenEls = [];
+    function positionEckeHaken() {}
+    function showEckeHaken() {}
+    function hideEckeHaken() {}
 
     function showKniffIcons() {
       // Kniff Icons 12px nördlich der alten Position
@@ -9485,7 +9414,7 @@
         pauseDragActive = true;
         return;
       }
-      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
+      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
@@ -9537,8 +9466,8 @@
         return;
       }
       if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
-      // TRAINING: Kein Swipe-Kippen — Buttons steuern den Würfel
-      if (gamePhase === 'kipp21') return;
+      // TRAINING/ICONS: Kein Swipe-Kippen — Rad/Buttons steuern den Würfel
+      if (gamePhase === 'kipp21' || gamePhase === 'spielen') return;
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -10150,7 +10079,7 @@
       
       const TOTAL = 11;
       const WHEEL_R = 1.0;
-      const BAND_DEPTH = 0.132; // = 38px (Höhe des alten 2D-Bands)
+      const BAND_DEPTH = 38 * (2.5 / 720); // 38px = 0.132
       const THICK = 0.05; // Massiver als Boxwand
       const STEP = 0.15625 / WHEEL_R; // ~9° per number (1 cell arc at R=1.0)
       const TOTAL_THETA = TOTAL * STEP;
@@ -10163,9 +10092,11 @@
       let isSnapping = false;
       
       // --- Wheel groups ---
+      // Cylinder default axis = Y. Rotate Z=-PI/2 → axis along X (horizontal)
+      // Camera looks from south+above → top of wheel arc faces camera
       const wheelAnchor = new THREE.Group();
-      wheelAnchor.position.set(0, -WHEEL_R + 0.08, 1.05);
-      wheelAnchor.rotation.x = Math.PI / 2;
+      wheelAnchor.position.set(0, -WHEEL_R + 0.15, 1.184);
+      wheelAnchor.rotation.x = Math.PI / 2; // Achse entlang Z
       wheelAnchor.visible = false;
       scene.add(wheelAnchor);
       
@@ -10214,24 +10145,32 @@
       // --- Outer barrel (numbers) ---
       const outerGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
       const outerMat = new THREE.MeshStandardMaterial({
-        map: wheelTex, side: THREE.FrontSide, roughness: 0.7, metalness: 0.05
+        map: wheelTex, side: THREE.FrontSide, roughness: 0.7, metalness: 0.05,
+        depthTest: false
       });
-      wheelRotor.add(new THREE.Mesh(outerGeo, outerMat));
+      const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+      outerMesh.renderOrder = 10;
+      wheelRotor.add(outerMesh);
       
       // --- Inner barrel ---
       const innerGeo = new THREE.CylinderGeometry(WHEEL_R - THICK, WHEEL_R - THICK, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
       const innerMat = new THREE.MeshStandardMaterial({
-        color: 0x3a2a1a, side: THREE.BackSide, roughness: 0.8, metalness: 0.1
+        color: 0x3a2a1a, side: THREE.BackSide, roughness: 0.8, metalness: 0.1,
+        depthTest: false
       });
-      wheelRotor.add(new THREE.Mesh(innerGeo, innerMat));
+      const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+      innerMesh.renderOrder = 10;
+      wheelRotor.add(innerMesh);
       
       // --- End caps (ring segments) ---
       for (let side = -1; side <= 1; side += 2) {
         const capGeo = new THREE.RingGeometry(WHEEL_R - THICK, WHEEL_R, SEGS, 1, THETA_START, TOTAL_THETA);
         const capMat = new THREE.MeshStandardMaterial({
-          color: 0x8a7a66, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.1
+          color: 0x8a7a66, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.1,
+          depthTest: false
         });
         const cap = new THREE.Mesh(capGeo, capMat);
+        cap.renderOrder = 10;
         cap.rotation.x = -Math.PI / 2;
         cap.position.y = side * BAND_DEPTH / 2;
         wheelRotor.add(cap);
