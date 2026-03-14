@@ -1363,16 +1363,17 @@
     camera.position.set(
       0 + Math.sin(horizontal) * 0.5,
       baseY + radius * Math.sin(-verticalAngle),
-      radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
+      1.673 // Z+10 Zellen ab Boxmitte (Test)
     );
     
-    camera.lookAt(0, 0.46875, 0.7 + southShift);
+    camera.lookAt(0, 0.46875, 0.5011); // Z+2.5 Zellen ab Boxmitte
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
     renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.localClippingEnabled = true;
 
     
     document.getElementById('container').appendChild(renderer.domElement);
@@ -8176,6 +8177,7 @@
       iconHits = 0;
       iconMisses = 0;
       iconUsedCombos = new Set();
+      iconCardsRemaining = 4;
       
       setTimeout(() => { _startBtnLock = false; }, 1000);
       autoEckblick();
@@ -10079,11 +10081,11 @@
       
       const TOTAL = 11;
       const WHEEL_R = 1.0;
-      const BAND_DEPTH = 0.133; // 0.85 Zellen = Z-Abstand P1-P3
-      const THICK = 0.05; // Massiver als Boxwand
-      const STEP = 0.15625 / WHEEL_R; // ~9° per number (1 cell arc at R=1.0)
+      const BAND_DEPTH = 0.133;
+      const THICK = 0.05;
+      const STEP = 0.234375 / WHEEL_R; // 1.5 Zellen Bogenlänge pro Zahl
       const TOTAL_THETA = TOTAL * STEP;
-      const THETA_START = Math.PI / 2 - TOTAL_THETA / 2;
+      const THETA_START = Math.PI - TOTAL_THETA / 2;
       const SEGS = 44;
       
       let bandIdx = 5;
@@ -10095,7 +10097,7 @@
       // Cylinder default axis = Y. Rotate Z=-PI/2 → axis along X (horizontal)
       // Camera looks from south+above → top of wheel arc faces camera
       const wheelAnchor = new THREE.Group();
-      wheelAnchor.position.set(0, -WHEEL_R + 0.46875, 1.199);
+      wheelAnchor.position.set(0, -0.368, 0.880);
       wheelAnchor.rotation.x = Math.PI / 2; // Achse entlang Z
       wheelAnchor.visible = false;
       scene.add(wheelAnchor);
@@ -10142,24 +10144,25 @@
       
       const wheelTex = new THREE.CanvasTexture(texCv);
       
+      // Clipping plane at Y=0.46875 (Wandoberkante) — clips wheel below table surface
+      const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
+      
       // --- Outer barrel (numbers) ---
       const outerGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
       const outerMat = new THREE.MeshStandardMaterial({
         map: wheelTex, side: THREE.FrontSide, roughness: 0.7, metalness: 0.05,
-        depthTest: false
+        clippingPlanes: wheelClipPlane
       });
       const outerMesh = new THREE.Mesh(outerGeo, outerMat);
-      outerMesh.renderOrder = 10;
       wheelRotor.add(outerMesh);
       
       // --- Inner barrel ---
       const innerGeo = new THREE.CylinderGeometry(WHEEL_R - THICK, WHEEL_R - THICK, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
       const innerMat = new THREE.MeshStandardMaterial({
         color: 0x3a2a1a, side: THREE.BackSide, roughness: 0.8, metalness: 0.1,
-        depthTest: false
+        clippingPlanes: wheelClipPlane
       });
       const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-      innerMesh.renderOrder = 10;
       wheelRotor.add(innerMesh);
       
       // --- End caps (ring segments) ---
@@ -10167,10 +10170,9 @@
         const capGeo = new THREE.RingGeometry(WHEEL_R - THICK, WHEEL_R, SEGS, 1, THETA_START, TOTAL_THETA);
         const capMat = new THREE.MeshStandardMaterial({
           color: 0x8a7a66, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.1,
-          depthTest: false
+          clippingPlanes: wheelClipPlane
         });
         const cap = new THREE.Mesh(capGeo, capMat);
-        cap.renderOrder = 10;
         cap.rotation.x = -Math.PI / 2;
         cap.position.y = side * BAND_DEPTH / 2;
         wheelRotor.add(cap);
@@ -10355,6 +10357,97 @@
     let iconKippzielActive = false;
     let iconUsedCombos = new Set();
     
+    // === 3D KÄRTCHENSTAPEL ===
+    const CARD3D_SIZE = 2 * 0.15625; // 2 Zellen = 0.3125
+    const CARD3D_THICK = 0.043 * 0.15625; // 0.00672
+    const CARD3D_Z = 0.1105 + 6.6 * 0.15625; // Z-Mitte: +6.6 Zellen, Nordkante +5.6
+    const CARD3D_Y_BASE = 0.46875; // Y=3 Zellen (Tischoberfläche)
+    const CARD3D_X_OFFSET = 0.25 * 0.15625; // 0.25 Zellen Versatz pro Karte
+    const CARD3D_INITIAL_X = [ // Mitte X pro Karte (Zellen × 0.15625)
+      -0.75 * 0.15625,  // Karte 4 (unten)
+      -0.50 * 0.15625,  // Karte 3
+      -0.25 * 0.15625,  // Karte 2
+       0.00             // Karte 1 (oben)
+    ];
+    
+    const iconCard3D = [];
+    let iconCardsRemaining = 4;
+    
+    // Textur-Loader
+    const cardBackTex = new THREE.TextureLoader().load('motiv_verdeckt.png');
+    
+    for (let i = 0; i < 4; i++) {
+      const geo = new THREE.BoxGeometry(CARD3D_SIZE, CARD3D_THICK, CARD3D_SIZE);
+      const cardColor = (i === 3) ? 0xe8e0d4 : 0xd8d0c4; // Oberste heller
+      const mat = [
+        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 }), // +X
+        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 }), // -X
+        new THREE.MeshStandardMaterial({ color: cardColor, roughness: 0.6, metalness: 0.05 }), // +Y (oben)
+        new THREE.MeshStandardMaterial({ color: 0xc8b8a4, roughness: 0.8 }), // -Y (unten)
+        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 }), // +Z
+        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 })  // -Z
+      ];
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(
+        CARD3D_INITIAL_X[i],
+        CARD3D_Y_BASE + CARD3D_THICK / 2 + i * CARD3D_THICK,
+        CARD3D_Z
+      );
+      mesh.visible = false;
+      mesh.castShadow = true;
+      scene.add(mesh);
+      iconCard3D.push(mesh);
+    }
+    
+    // Oberstes Kärtchen: Textur auf +Y Face setzen
+    function setTopCardTex(src) {
+      const img = new Image();
+      img.onload = () => {
+        const cv = document.createElement('canvas');
+        cv.width = 256; cv.height = 256;
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#e8e0d4';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.drawImage(img, 8, 8, 240, 240);
+        // Rand
+        ctx.strokeStyle = '#6b5040';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, 250, 250);
+        const tex = new THREE.CanvasTexture(cv);
+        iconCard3D[3].material[2].map = tex;
+        iconCard3D[3].material[2].needsUpdate = true;
+      };
+      img.src = src;
+    }
+    
+    function showIconCards3D() {
+      for (let i = 0; i < 4; i++) {
+        iconCard3D[i].visible = (i < iconCardsRemaining);
+        // Position zurücksetzen
+        const shift = (4 - iconCardsRemaining) * CARD3D_X_OFFSET;
+        iconCard3D[i].position.x = CARD3D_INITIAL_X[i] + shift;
+      }
+      // Oberste Karte: verdeckt
+      setTopCardTex('motiv_verdeckt.png');
+    }
+    
+    function hideIconCards3D() {
+      iconCard3D.forEach(m => m.visible = false);
+    }
+    
+    function updateIconStack3D() {
+      iconCardsRemaining--;
+      // Verbleibende Karten X+0.25 nachrücken (Animation)
+      const shift = (4 - iconCardsRemaining) * CARD3D_X_OFFSET;
+      iconCard3D.forEach((m, i) => {
+        if (i >= iconCardsRemaining) {
+          m.visible = false;
+        } else {
+          m.position.x = CARD3D_INITIAL_X[i] + shift;
+        }
+      });
+    }
+    
     function generateIconKippziel() {
       // Visible motifs directly from deck indices
       const visibleVals = [];
@@ -10511,8 +10604,8 @@
         cubeMaterial[matIdx2] = mat(f.slotMap, f.imgRot, 1);
         cube.material = cubeMaterial;
         
-        // Stapel-Karte entfernen + nachrutschen
-        updateIconStack();
+        // Stapel-Karte entfernen + nachrutschen (3D)
+        updateIconStack3D();
         
         if (iconHits >= 4) {
           gamePhase = 'ende';
@@ -10538,6 +10631,7 @@
     }
     
     function showIconEndScreen() {
+      hideIconCards3D();
       const row = document.getElementById('iconKippzielRow');
       if (row) row.classList.add('hidden');
       const nb = document.getElementById('numBtns');
@@ -10594,7 +10688,7 @@
     (function() {
       const row = document.getElementById('iconKippzielRow');
       if (!row) return;
-      row.style.top = '428px';
+      row.style.display = 'none'; // 3D Kärtchen ersetzen HTML-Stapel
     })();
     
     // Auto-Eckblick nach Kippziel
@@ -10614,38 +10708,43 @@
       // JETZT Kippziel generieren (nach Blick, gegen neue Position geprüft)
       generateIconKippziel();
       
-      // Kartenstapel mit motiv_verdeckt.png einblenden
-      const kzEl = document.getElementById('iconKippziel');
-      kzEl.src = 'motiv_verdeckt.png';
-      kzEl.style.border = '3px solid #6b5040';
-      
-      const ikr = document.getElementById('iconKippzielRow');
-      if (ikr) ikr.classList.remove('hidden');
+      // 3D Kärtchenstapel einblenden mit motiv_verdeckt
+      showIconCards3D();
       
       // Scrollband noch versteckt
       const nb = document.getElementById('numBtns');
       if (nb) nb.classList.add('hidden');
       
-      // Warten auf Tap zum Aufdecken
+      // Warten auf Tap zum Aufdecken (Raycasting auf oberstes Kärtchen)
       iconKippzielActive = false;
       
-      function revealKippziel(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        kzEl.removeEventListener('click', revealKippziel);
-        kzEl.removeEventListener('touchend', revealKippziel);
-        
-        // Kippziel aufdecken
-        const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-        kzEl.src = motivBase + '_' + iconTargetFarbe + '.png';
-        iconKippzielActive = true;
-        
-        // Scrollband einblenden
-        if (nb) nb.classList.remove('hidden');
+      const topCard = iconCard3D[iconCardsRemaining - 1];
+      
+      function onRevealTouch(e) {
+        if (!topCard || !topCard.visible) return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        const touch = e.changedTouches ? e.changedTouches[0] : e;
+        const mx = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+        const my = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+        const rc = new THREE.Raycaster();
+        rc.setFromCamera(new THREE.Vector2(mx, my), camera);
+        const hits = rc.intersectObject(topCard);
+        if (hits.length > 0) {
+          renderer.domElement.removeEventListener('click', onRevealTouch);
+          renderer.domElement.removeEventListener('touchend', onRevealTouch);
+          
+          // Kippziel aufdecken
+          const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
+          setTopCardTex(motivBase + '_' + iconTargetFarbe + '.png');
+          iconKippzielActive = true;
+          
+          // Scrollband einblenden
+          if (nb) nb.classList.remove('hidden');
+        }
       }
       
-      kzEl.addEventListener('click', revealKippziel);
-      kzEl.addEventListener('touchend', revealKippziel, { passive: false });
+      renderer.domElement.addEventListener('click', onRevealTouch);
+      renderer.domElement.addEventListener('touchend', onRevealTouch, { passive: false });
     }
     
     async function autoBrainyBlick() {
