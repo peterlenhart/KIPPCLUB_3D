@@ -1058,7 +1058,7 @@
 
     <!-- Kippanzahl: 3D Rad Touch-Overlay -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="wheelTouch" style="width:360px; height:120px; cursor:pointer;"></div>
+      <div id="wheelTouch" style="width:360px; height:120px; cursor:pointer; border:2px solid red;"></div>
     </div>
 
   </div>
@@ -10128,12 +10128,10 @@
       laufflCtx.fillStyle = '#e8e0d4';
       laufflCtx.fillRect(0, 0, 2048, 128);
       const laufflTex = new THREE.CanvasTexture(laufflCanvas);
+      laufflTex.center.set(0.5, 0.5);
+      laufflTex.rotation = Math.PI;
       
       laufflImg.onload = () => {
-        // Canvas vertikal spiegeln (Zylinder-UV ist bottom-up)
-        laufflCtx.save();
-        laufflCtx.translate(0, 128);
-        laufflCtx.scale(1, -1);
         laufflCtx.drawImage(laufflImg, 0, 0, 2048, 128);
         const cellW = 2048 / TOTAL;
         for (let i = 0; i < TOTAL; i++) {
@@ -10151,7 +10149,6 @@
           laufflCtx.textBaseline = 'middle';
           laufflCtx.fillText(String(i + 1), cellW * i + cellW / 2, 64);
         }
-        laufflCtx.restore();
         laufflTex.needsUpdate = true;
       };
       
@@ -10222,7 +10219,7 @@
         e.stopPropagation(); e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
-        scrollAngle = touchStartAngle + dx * 0.004;
+        scrollAngle = touchStartAngle + dx * 0.008;
         const maxA = 5 * STEP;
         scrollAngle = Math.max(-maxA, Math.min(maxA, scrollAngle));
         wheelRotor.rotation.y = scrollAngle;
