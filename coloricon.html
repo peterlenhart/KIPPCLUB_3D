@@ -10102,7 +10102,7 @@
       const TOTAL = 11;
       const WHEEL_R = 1.0;
       const BAND_DEPTH = 0.133;
-      const THICK = 0.05;
+      const THICK = 0.04;
       const STEP = 0.234375 / WHEEL_R; // 1.5 Zellen Bogenlänge pro Zahl
       const TOTAL_THETA = TOTAL * STEP;
       const THETA_START = Math.PI - TOTAL_THETA / 2;
@@ -10189,11 +10189,10 @@
       for (let side = -1; side <= 1; side += 2) {
         const capGeo = new THREE.RingGeometry(WHEEL_R - THICK, WHEEL_R, SEGS, 1, THETA_START, TOTAL_THETA);
         const capMat = new THREE.MeshStandardMaterial({
-          color: 0x8a7a66, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.1,
+          color: 0xc8b8a4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.1,
           clippingPlanes: wheelClipPlane
         });
         const cap = new THREE.Mesh(capGeo, capMat);
-        cap.rotation.x = -Math.PI / 2;
         cap.position.y = side * BAND_DEPTH / 2;
         wheelRotor.add(cap);
       }
