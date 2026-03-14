@@ -10127,62 +10127,23 @@
       // Store reference for render loop visibility sync
       window._wheelAnchor = wheelAnchor;
       
-      // --- Canvas Texture ---
-      const texCv = document.createElement('canvas');
-      texCv.width = 1024;
-      texCv.height = 128;
-      const tCtx = texCv.getContext('2d');
-      
-      (function drawTex() {
-        const grd = tCtx.createLinearGradient(0, 0, 0, 128);
-        grd.addColorStop(0, '#e8e0d4');
-        grd.addColorStop(1, '#c8b8a4');
-        tCtx.fillStyle = grd;
-        tCtx.fillRect(0, 0, 1024, 128);
-        const cellW = 1024 / TOTAL;
-        for (let i = 0; i < TOTAL; i++) {
-          if (i > 0) {
-            tCtx.strokeStyle = 'rgba(138,122,102,0.5)';
-            tCtx.lineWidth = 2;
-            tCtx.beginPath();
-            tCtx.moveTo(cellW * i, 0);
-            tCtx.lineTo(cellW * i, 128);
-            tCtx.stroke();
-          }
-          tCtx.font = 'bold 64px Arial';
-          tCtx.fillStyle = '#2a1a0a';
-          tCtx.textAlign = 'center';
-          tCtx.textBaseline = 'middle';
-          tCtx.fillText(String(i + 1), cellW * i + cellW / 2, 64);
-        }
-        tCtx.strokeStyle = '#8a7a66';
-        tCtx.lineWidth = 3;
-        tCtx.beginPath(); tCtx.moveTo(0, 0); tCtx.lineTo(1024, 0); tCtx.stroke();
-        tCtx.beginPath(); tCtx.moveTo(0, 128); tCtx.lineTo(1024, 128); tCtx.stroke();
-      })();
-      
-      const wheelTex = new THREE.CanvasTexture(texCv);
-      
-      // Clipping plane at Y=0.46875 (Wandoberkante) — clips wheel below table surface
+      // Clipping plane at Y=0.46875 (Wandoberkante)
       const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
       
       // --- Texturen laden ---
       const texLoader = new THREE.TextureLoader();
-      const laufflTex = texLoader.load('lauffl_icon.webp');
-      const deckflTex = texLoader.load('deckfl_icon.webp');
-      const deckflTex2 = texLoader.load('deckfl_icon.webp');
+      let wheelMesh = null;
+      const laufflTex = texLoader.load('lauffl_icon.webp', () => { if (wheelMesh) wheelMesh.material[0].needsUpdate = true; });
+      const deckflTex = texLoader.load('deckfl_icon.webp', () => { if (wheelMesh) { wheelMesh.material[1].needsUpdate = true; wheelMesh.material[2].needsUpdate = true; } });
       
       // --- Rad = geschlossene Scheibe (Zylindersegment) ---
-      const wheelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, false, THETA_START, TOTAL_THETA);
+      const wheelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, false);
       const wheelMats = [
-        // Mantelfläche (Lauffläche)
         new THREE.MeshStandardMaterial({ map: laufflTex, roughness: 0.7, metalness: 0.05, clippingPlanes: wheelClipPlane }),
-        // Norddeckfläche
         new THREE.MeshStandardMaterial({ map: deckflTex, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane }),
-        // Süddeckfläche
-        new THREE.MeshStandardMaterial({ map: deckflTex2, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane })
+        new THREE.MeshStandardMaterial({ map: deckflTex, roughness: 0.6, metalness: 0.1, clippingPlanes: wheelClipPlane })
       ];
-      const wheelMesh = new THREE.Mesh(wheelGeo, wheelMats);
+      wheelMesh = new THREE.Mesh(wheelGeo, wheelMats);
       wheelRotor.add(wheelMesh);
       
       // --- Scroll logic ---
@@ -10793,7 +10754,7 @@
       const nb = document.getElementById('numBtns');
       if (nb) nb.classList.add('hidden');
       
-      // Warten auf Tap zum Aufdecken (Raycasting auf oberstes Kärtchen)
+      // Warten auf Tap zum Aufdecken (Screen-Bereich des obersten Kärtchens)
       iconKippzielActive = false;
       
       const topCard = iconCard3D[iconCardsRemaining - 1];
@@ -10802,12 +10763,18 @@
         if (!topCard || !topCard.visible) return;
         const rect = renderer.domElement.getBoundingClientRect();
         const touch = e.changedTouches ? e.changedTouches[0] : e;
-        const mx = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
-        const my = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
-        const rc = new THREE.Raycaster();
-        rc.setFromCamera(new THREE.Vector2(mx, my), camera);
-        const hits = rc.intersectObject(topCard);
-        if (hits.length > 0) {
+        const tapX = ((touch.clientX - rect.left) / rect.width) * 360;
+        const tapY = ((touch.clientY - rect.top) / rect.height) * 720;
+        
+        // Projiziere Kartenmitte auf Screen
+        const cardPos = new THREE.Vector3();
+        topCard.getWorldPosition(cardPos);
+        cardPos.project(camera);
+        const cardSX = (cardPos.x * 0.5 + 0.5) * 360;
+        const cardSY = (-cardPos.y * 0.5 + 0.5) * 720;
+        
+        // Tap innerhalb ~80px der Kartenmitte?
+        if (Math.abs(tapX - cardSX) < 80 && Math.abs(tapY - cardSY) < 80) {
           renderer.domElement.removeEventListener('click', onRevealTouch);
           renderer.domElement.removeEventListener('touchend', onRevealTouch);
           
@@ -10816,7 +10783,7 @@
           setTopCardTex(motivBase + '_' + iconTargetFarbe + '.png');
           iconKippzielActive = true;
           
-          // Scrollband einblenden
+          // Rad einblenden
           if (nb) nb.classList.remove('hidden');
         }
       }
