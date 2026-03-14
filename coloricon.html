@@ -1058,7 +1058,7 @@
 
     <!-- Kippanzahl: 3D Rad Touch-Overlay -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="wheelTouch" style="width:360px; height:120px; cursor:pointer; border:2px solid red;"></div>
+      <div id="wheelTouch" style="width:360px; height:120px; cursor:pointer; "></div>
     </div>
 
   </div>
@@ -10201,13 +10201,24 @@
         requestAnimationFrame(animateSnap);
       }
       
-      // --- Touch ---
+      // --- Touch (direkt auf Canvas, Bereich um Rad) ---
+      let wTouchActive = false;
       let touchStartX = 0;
       let touchStartAngle = 0;
       let touchMoved = false;
       
-      wTouch.addEventListener('touchstart', (e) => {
-        e.stopPropagation(); e.preventDefault();
+      // Wheel screen zone: Y 240-360px (um die projizierte Radposition)
+      function isInWheelZone(touchY) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const sy = ((touchY - rect.top) / rect.height) * 720;
+        return sy > 220 && sy < 380;
+      }
+      
+      renderer.domElement.addEventListener('touchstart', (e) => {
+        if (!window._wheelActive) return;
+        if (!isInWheelZone(e.touches[0].clientY)) return;
+        e.preventDefault();
+        wTouchActive = true;
         window._numBtnTouchActive = true;
         touchStartX = e.touches[0].clientX;
         touchStartAngle = scrollAngle;
@@ -10215,8 +10226,9 @@
         isSnapping = false;
       }, { passive: false });
       
-      wTouch.addEventListener('touchmove', (e) => {
-        e.stopPropagation(); e.preventDefault();
+      renderer.domElement.addEventListener('touchmove', (e) => {
+        if (!wTouchActive) return;
+        e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
         scrollAngle = touchStartAngle + dx * 0.008;
@@ -10225,8 +10237,9 @@
         wheelRotor.rotation.y = scrollAngle;
       }, { passive: false });
       
-      wTouch.addEventListener('touchend', (e) => {
-        e.stopPropagation(); e.preventDefault();
+      renderer.domElement.addEventListener('touchend', (e) => {
+        if (!wTouchActive) return;
+        wTouchActive = false;
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
         const rawIdx = 5 - Math.round(scrollAngle / STEP);
         snapTo(rawIdx, true);
@@ -10234,12 +10247,9 @@
       }, { passive: false });
       
       // Desktop
-      wTouch.addEventListener('click', (e) => {
-        e.stopPropagation();
-        doKippFromWheel();
-      });
-      wTouch.addEventListener('wheel', (e) => {
-        e.preventDefault(); e.stopPropagation();
+      renderer.domElement.addEventListener('wheel', (e) => {
+        if (!window._wheelActive) return;
+        e.preventDefault();
         snapTo(bandIdx + (e.deltaY > 0 ? 1 : -1), true);
       }, { passive: false });
       
@@ -10326,10 +10336,9 @@
         verdecktesMat.opacity = 1 - 0.4 * pulse;
       }
       
-      // Sync 3D wheel visibility with numBtns div
+      // Sync 3D wheel visibility with wheelActive flag
       if (window._wheelAnchor) {
-        const nb = document.getElementById('numBtns');
-        window._wheelAnchor.visible = nb && !nb.classList.contains('hidden');
+        window._wheelAnchor.visible = !!window._wheelActive;
       }
       
       renderer.render(scene, camera);
@@ -10635,7 +10644,7 @@
       const row = document.getElementById('iconKippzielRow');
       if (row) row.classList.add('hidden');
       const nb = document.getElementById('numBtns');
-      if (nb) nb.classList.add('hidden');
+      window._wheelActive = false;
       
       saveBestScore(currentLevel, iconHits, iconMisses);
       
@@ -10713,7 +10722,7 @@
       
       // Scrollband noch versteckt
       const nb = document.getElementById('numBtns');
-      if (nb) nb.classList.add('hidden');
+      window._wheelActive = false;
       
       // Warten auf Tap zum Aufdecken (Screen-Bereich des obersten Kärtchens)
       iconKippzielActive = false;
@@ -10745,7 +10754,7 @@
           iconKippzielActive = true;
           
           // Rad einblenden
-          if (nb) nb.classList.remove('hidden');
+          window._wheelActive = true;
         }
       }
       
