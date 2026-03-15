@@ -265,6 +265,28 @@
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
+    .eckeHaken {
+      position: absolute;
+      width: 40px; height: 40px;
+      display: none;
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 5;
+      border-radius: 6px;
+      background: rgba(20,14,8,0.6);
+      border: 2px solid rgba(212,180,140,0.5);
+      color: #cedb25;
+      font-size: 24px;
+      font-weight: bold;
+      line-height: 36px;
+      text-align: center;
+      text-shadow: 0 0 8px rgba(206,219,37,0.6);
+      animation: hakenPulse 2s ease-in-out infinite;
+    }
+    @keyframes hakenPulse {
+      0%, 100% { border-color: rgba(212,180,140,0.5); transform: scale(1); }
+      50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
+    }
     #kippTarget {
       display: none !important;
     }
@@ -482,7 +504,35 @@
       pointer-events: auto;
       z-index: 20;
     }
-    /* 3D wheel styled via Three.js */
+    .numBtn {
+      min-width: 56px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: bold 30px Arial;
+      color: #5a4a3a;
+      background: transparent;
+      border: none;
+      border-right: 1px solid #8a7a66;
+      border-radius: 0;
+      box-shadow: none;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .numBtn:last-child {
+      border-right: none;
+    }
+    .numBtn.selected {
+      background: #5a4a3a;
+      color: #e8dcc8;
+    }
+    .numBtn.center {
+      
+      
+    }
 
     @keyframes iconHitPulse {
       0%, 100% { transform: scale(1); }
@@ -1027,7 +1077,10 @@
     <div id="spielZielText"></div>
     <div id="entscheidungText"></div>
     <!-- kippTarget removed for ICONS -->
-    
+    <div class="eckeHaken" id="hakenQ0">✓</div>
+    <div class="eckeHaken" id="hakenQ1">✓</div>
+    <div class="eckeHaken" id="hakenQ2">✓</div>
+    <div class="eckeHaken" id="hakenQ3">✓</div>
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
@@ -1044,7 +1097,6 @@
     <button id="actionButton"></button>
     <button id="backButton">↻</button>
     
-    
 
     <!-- ICONS Kippziel-Stapel -->
     <div id="iconKippzielRow" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
@@ -1056,9 +1108,23 @@
       </div>
     </div>
 
-    <!-- Kippanzahl: 3D Rad Touch-Overlay -->
+    <!-- Kippanzahl: Scrollband 1-11 -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="wheelTouch" style="width:360px; height:120px; cursor:pointer; "></div>
+      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%);">
+        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease;">
+          <div class="numBtn" data-num="1">1</div>
+          <div class="numBtn" data-num="2">2</div>
+          <div class="numBtn" data-num="3">3</div>
+          <div class="numBtn" data-num="4">4</div>
+          <div class="numBtn" data-num="5">5</div>
+          <div class="numBtn" data-num="6">6</div>
+          <div class="numBtn" data-num="7">7</div>
+          <div class="numBtn" data-num="8">8</div>
+          <div class="numBtn" data-num="9">9</div>
+          <div class="numBtn" data-num="10">10</div>
+          <div class="numBtn" data-num="11">11</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1355,12 +1421,11 @@
       100
     );
     
-    // === KAMERA (fix, senkrecht über Laufflächen-Mitte) ===
     const baseY = 2.143;
     const verticalAngle = -1.0;
     const horizontal = 0;
     const radius = 1.25;
-    const southShift = -0.095; // Kamera Z = Laufflächen Z-Mitte (0.880)
+    const southShift = -0.143;
     
     camera.position.set(
       0 + Math.sin(horizontal) * 0.5,
@@ -1415,13 +1480,6 @@
     const fillLightSouth = new THREE.DirectionalLight(0xffffff, 0.28);
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
-    
-    // Licht von Süden für Stellrad-Deckfläche
-    const wheelSouthLight = new THREE.DirectionalLight(0xffffff, 0.2);
-    wheelSouthLight.position.set(0, 0.5, 2);
-    wheelSouthLight.target.position.set(0, 0.469, 0.88);
-    scene.add(wheelSouthLight);
-    scene.add(wheelSouthLight.target);
 
     // =========================
     // TISCH (π1 Ebene)
@@ -4565,7 +4623,7 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      
+      document.querySelectorAll('.eckeHaken').forEach(el => el.style.display = 'none');
       
       // === CHALLENGE TEXT zuerst zeigen (Inflate-Sequenz) ===
       const pgt = document.getElementById('perfektGameText');
@@ -6283,9 +6341,7 @@
         3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      // Zielrichtung: leicht nach Süden (Kamera) geneigt für Perspektivausgleich
-      const tiltAngle = 8 * Math.PI / 180; // 8° Richtung Kamera
-      const targetDir = new THREE.Vector3(0, Math.cos(tiltAngle), Math.sin(tiltAngle)).normalize();
+      const targetDir = new THREE.Vector3(0, 1, 0);
       const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
       
       // Animation: auf Ecke kippen
@@ -6319,6 +6375,16 @@
         animLift();
       });
       
+      // Auge-Icon über Boxmitte (3.5 Zellen über π1)
+      const eckEyePos = new THREE.Vector3(0, 7 * 0.15625, 0.109375);
+      eckEyePos.project(camera);
+      const eckEyeScreenX = (eckEyePos.x * 0.5 + 0.5) * 360;
+      const eckEyeScreenY = (-eckEyePos.y * 0.5 + 0.5) * 720;
+      const eckEye = document.getElementById('eyeIcon');
+      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
+      setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
+
+      
       // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
@@ -6334,6 +6400,10 @@
           }, 100);
         });
       }
+      
+      // Auge-Icon ausblenden
+
+      eckEye.style.opacity = '0';
       
       // === Würfel senkt sich zurück ===
       const lowerDur = 600;
@@ -6385,6 +6455,7 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
+      eckEye.style.display = 'none';
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
@@ -7124,8 +7195,7 @@
         3: new THREE.Vector3(-o, o,  o)
       };
       const relativePos = diagVecs[currentQuadrant].clone().normalize();
-      const tiltAngle2 = 8 * Math.PI / 180;
-      const targetDir = new THREE.Vector3(0, Math.cos(tiltAngle2), Math.sin(tiltAngle2)).normalize();
+      const targetDir = new THREE.Vector3(0, 1, 0);
       const targetQuat = new THREE.Quaternion().setFromUnitVectors(relativePos, targetDir);
       aufEckeTargetQuat = targetQuat.clone();
 
@@ -7427,10 +7497,56 @@
 
     // === KNIFF ICONS: Show/Hide ===
     // === ECKE-HAKEN: Bestätigungsbuttons in den 4 Rahmenecken ===
-    const hakenEls = [];
-    function positionEckeHaken() {}
-    function showEckeHaken() {}
-    function hideEckeHaken() {}
+    const hakenEls = [
+      document.getElementById('hakenQ0'),
+      document.getElementById('hakenQ1'),
+      document.getElementById('hakenQ2'),
+      document.getElementById('hakenQ3')
+    ];
+    // 3D-Positionen der 4 Rahmenecken (auf Rahmen-Oberkante)
+    const hakenPos3D = [
+      new THREE.Vector3(-0.546875, 0.479, -0.437500), // Q0 NW
+      new THREE.Vector3( 0.546875, 0.479, -0.437500), // Q1 NE
+      new THREE.Vector3( 0.546875, 0.479,  0.658000), // Q2 SE
+      new THREE.Vector3(-0.546875, 0.479,  0.658000)  // Q3 SW
+    ];
+    
+    function positionEckeHaken() {
+      for (let i = 0; i < 4; i++) {
+        const p = hakenPos3D[i].clone().project(camera);
+        const sx = (p.x * 0.5 + 0.5) * 360 - 20; // zentriert (40px breit)
+        const sy = (-p.y * 0.5 + 0.5) * 720 - 20; // zentriert (40px hoch)
+        hakenEls[i].style.left = sx + 'px';
+        hakenEls[i].style.top = sy + 'px';
+      }
+    }
+    
+    function showEckeHaken() {
+      positionEckeHaken();
+      hakenEls.forEach(el => { el.style.display = 'block'; });
+    }
+    
+    function hideEckeHaken() {
+      hakenEls.forEach(el => { el.style.display = 'none'; });
+    }
+    
+    // Click-Handler für alle 4 Haken
+    hakenEls.forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
+        hideEckeHaken();
+        checkKippzielTap();
+      });
+      el.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
+        hideEckeHaken();
+        checkKippzielTap();
+      });
+    });
 
     function showKniffIcons() {
       // Kniff Icons 12px nördlich der alten Position
@@ -8185,7 +8301,6 @@
       iconHits = 0;
       iconMisses = 0;
       iconUsedCombos = new Set();
-      iconCardsRemaining = 4;
       
       setTimeout(() => { _startBtnLock = false; }, 1000);
       autoEckblick();
@@ -9424,12 +9539,12 @@
         pauseDragActive = true;
         return;
       }
-      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'kipp21' || gamePhase === 'spielen')) {
+      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
         if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
-        if (cubeLocked && gamePhase !== 'kipp21' && gamePhase !== 'spielen') return;
+        if (cubeLocked && gamePhase !== 'kipp21') return;
         if (gamePhase === 'kipp21' && kipp21HitLock) return; // Treffer erkannt → Würfel gesperrt
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
         if (gamePhase === 'kipp21' && !brainyActive && kipp21CardStates.indexOf('offen') < 0) return;
@@ -9441,7 +9556,6 @@
         isSwiping = true;
         dragActive = false;
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
-        window._swipeEndPos = { x: touch.clientX, y: touch.clientY };
       }
     });
 
@@ -9477,16 +9591,8 @@
         return;
       }
       if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
-      // TRAINING/ICONS: Kein Swipe-Kippen — Rad/Buttons steuern den Würfel
-      if (gamePhase === 'kipp21' || gamePhase === 'spielen') {
-        // Capture last position for swipe direction detection
-        if (gamePhase === 'spielen') {
-          e.preventDefault();
-          const touch = e.touches[0];
-          window._swipeEndPos = { x: touch.clientX, y: touch.clientY };
-        }
-        return;
-      }
+      // TRAINING: Kein Swipe-Kippen — Buttons steuern den Würfel
+      if (gamePhase === 'kipp21') return;
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -9597,50 +9703,12 @@
       setButtonsDisabled(false);
     }
 
-    renderer.domElement.addEventListener('touchend', (e) => {
+    renderer.domElement.addEventListener('touchend', () => {
       if (replayActive) return; // Tutorial: keine Interaktion
       if (gamePhase === 'pause') {
         pauseDragActive = false;
         return;
       }
-      
-      // SPIELEN: Swipe auf Würfel → Richtung + Rad-Zahl → Auto-Kipp
-      if (gamePhase === 'spielen' && isSwiping && !dragActive && window._wheelActive && iconKippzielActive && !isAnimating) {
-        isSwiping = false;
-        const endTouch = e.changedTouches ? e.changedTouches[0] : null;
-        const endPos = endTouch ? { x: endTouch.clientX, y: endTouch.clientY } : window._swipeEndPos;
-        window._swipeEndPos = null;
-        if (!endPos) return;
-        const dx = endPos.x - swipeStartX;
-        const dy = endPos.y - swipeStartY;
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < 15) return;
-        
-        const direction = (Math.abs(dx) > Math.abs(dy)) ? (dx > 0 ? 'cw' : 'ccw') : (dy < 0 ? 'cw' : 'ccw');
-        const n = bandIdx + 1;
-        isAnimating = true;
-        (async () => {
-          for (let i = 0; i < n; i++) {
-            let dir;
-            if (direction === 'cw') {
-              if (currentQuadrant === 3) dir = 'north';
-              else if (currentQuadrant === 0) dir = 'east';
-              else if (currentQuadrant === 1) dir = 'south_from_q1';
-              else dir = 'west_from_q2';
-            } else {
-              if (currentQuadrant === 3) dir = 'east_from_q3';
-              else if (currentQuadrant === 2) dir = 'north_from_q2';
-              else if (currentQuadrant === 1) dir = 'west';
-              else dir = 'south';
-            }
-            await performKipp(dir, 600);
-            advanceTopFace();
-            if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-          }
-          await checkIconTreffer();
-        })();
-        return;
-      }
-      
       isSwiping = false;
       
       if (!dragActive) return;
@@ -10129,248 +10197,139 @@
       pulseRichtungButtons(false);
     }
 
-    // === 3D ZAHLENRAD (Three.js Mesh in Szene) ===
+    // === SCROLLBAND (1-11, Grundstellung 6) ===
     (function() {
-      const wTouch = document.getElementById('wheelTouch');
-      if (!wTouch) return;
+      const strip = document.getElementById('scrollBandStrip');
+      const wrap = document.getElementById('scrollBandWrap');
+      if (!strip || !wrap) return;
       
-      const TOTAL = 6;
-      const WHEEL_R = 1.0;
-      const BAND_DEPTH = 0.133;
-      const STEP = 0.234375 / WHEEL_R; // 1.5 Zellen Bogenlänge pro Zahl
-      const TOTAL_THETA = TOTAL * STEP;
-      const THETA_START = Math.PI - TOTAL_THETA / 2;
-      const SEGS = 44;
-      
-      let bandIdx = 2; // Zahl 3 (Mitte)
-      let scrollAngle = 0;
-      let targetScrollAngle = 0;
-      let isSnapping = false;
-      
-      // --- Wheel groups ---
-      // Cylinder default axis = Y. Rotate Z=-PI/2 → axis along X (horizontal)
-      // Camera looks from south+above → top of wheel arc faces camera
-      const wheelAnchor = new THREE.Group();
-      wheelAnchor.position.set(0, -0.368, 0.880);
-      wheelAnchor.rotation.x = Math.PI / 2; // Achse entlang Z
-      wheelAnchor.visible = false;
-      scene.add(wheelAnchor);
-      
-      const wheelRotor = new THREE.Group();
-      wheelAnchor.add(wheelRotor);
-      
-      // Store reference for render loop visibility sync
-      window._wheelAnchor = wheelAnchor;
-      
-      // --- Texturen laden ---
-      const texLoader = new THREE.TextureLoader();
-      // Lauffläche: Textur laden, Zahlen drauf zeichnen
-      const laufflImg = new Image();
-      laufflImg.src = 'lauffl_icon.webp';
-      const laufflCanvas = document.createElement('canvas');
-      // Canvas-Größe wird in onload gesetzt
-      const laufflCtx = laufflCanvas.getContext('2d');
-      const laufflTex = new THREE.CanvasTexture(laufflCanvas);
-      laufflTex.center.set(0.5, 0.5);
-      laufflTex.rotation = Math.PI;
-      
-      let laufflImgLoaded = false;
-      laufflImg.onload = () => { laufflImgLoaded = true; drawWheelTex(); };
-      
-      function drawWheelTex() {
-        if (!laufflImgLoaded) return;
-        const iw = laufflImg.naturalWidth;  // 2050
-        const ih = laufflImg.naturalHeight; // 120
-        // Canvas = Barrel-Bogen in 3× Retina
-        const barrelPx = Math.ceil(BARREL_THETA * WHEEL_R / 0.15625 * 45 * 3);
-        laufflCanvas.width = barrelPx;
-        laufflCanvas.height = ih;
-        // Hintergrund füllen
-        laufflCtx.fillStyle = '#e8e0d4';
-        laufflCtx.fillRect(0, 0, barrelPx, ih);
-        // lauffl_icon.webp zentriert
-        const imgOffset = Math.round((barrelPx - iw) / 2);
-        laufflCtx.drawImage(laufflImg, imgOffset, 0);
-        // Zahlen: zentriert im TOTAL_THETA-Anteil
-        const numFrac = TOTAL_THETA / BARREL_THETA;
-        const padPx = (1 - numFrac) / 2 * barrelPx;
-        const cellW = (barrelPx * numFrac) / TOTAL;
-        for (let i = 0; i < TOTAL; i++) {
-          const cx = padPx + cellW * i + cellW / 2;
-          if (i > 0) {
-            laufflCtx.strokeStyle = 'rgba(138,122,102,0.5)';
-            laufflCtx.lineWidth = 3;
-            laufflCtx.beginPath();
-            laufflCtx.moveTo(padPx + cellW * i, 0);
-            laufflCtx.lineTo(padPx + cellW * i, ih);
-            laufflCtx.stroke();
-          }
-          const isCenter = (i === (TOTAL - 1 - bandIdx));
-          laufflCtx.globalAlpha = isCenter ? 1.0 : 0.7;
-          laufflCtx.font = (isCenter ? '900 ' : 'bold ') + '96px Arial';
-          laufflCtx.fillStyle = '#2a1a0a';
-          laufflCtx.textAlign = 'center';
-          laufflCtx.textBaseline = 'middle';
-          laufflCtx.fillText(String(TOTAL - i), cx, ih / 2);
-        }
-        laufflCtx.globalAlpha = 1.0;
-        laufflTex.needsUpdate = true;
-      }
-      
-      // Clipping plane at Y=0.46875 (Wandoberkante)
-      const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
-      
-      // --- Lauffläche (Segment-Barrel, openEnded) ---
-      // Barrel: Segment exakt passend, Zahlen mittig
-      // Benötigt: TOTAL_THETA + 2×0.58 = 2.566 rad, +Sicherheit = 2.7 rad
-      const BARREL_THETA = 3.2; // ~183° — viel Sicherheit
-      const BARREL_START = Math.PI - BARREL_THETA / 2;
-      const barrelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, BARREL_START, BARREL_THETA);
-      const barrelMat = new THREE.MeshStandardMaterial({
-        map: laufflTex, roughness: 0.7, metalness: 0.05, clippingPlanes: wheelClipPlane
-      });
-      wheelRotor.add(new THREE.Mesh(barrelGeo, barrelMat));
-      
-      // --- Abdeckflächen Nord + Süd (volle Kreise, geschlossen) ---
-      for (let side = -1; side <= 1; side += 2) {
-        const capGeo = new THREE.CircleGeometry(WHEEL_R, SEGS);
-        const capTex = texLoader.load('deckfl_icon.webp');
-        const capMat = new THREE.MeshStandardMaterial({
-          map: capTex, roughness: 0.6, metalness: 0.1,
-          side: THREE.DoubleSide, clippingPlanes: wheelClipPlane
-        });
-        const cap = new THREE.Mesh(capGeo, capMat);
-        cap.rotation.x = -Math.PI / 2;
-        cap.position.y = side * BAND_DEPTH / 2;
-        wheelRotor.add(cap);
-      }
-      
-      // --- Schwarzer Outlinerahmen auf Y+3 (Spieltischebene) ---
-      const frameY = 0.46875 + 0.002;
-      const frameXhalf = 3.5 * 0.15625;  // ±3.5 Zellen
-      const frameZnorth = 0.1105 + 4.5 * 0.15625;
-      const frameZsouth = 0.1105 + 5.35 * 0.15625;
-      const frameW = frameXhalf * 2;
-      const frameD = frameZsouth - frameZnorth;
-      const lineW = 9 * (2.5 / 720); // 9px
-      const frameMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-      
-      const wheelFrameParts = [];
-      // Nord
-      const fN = new THREE.Mesh(new THREE.PlaneGeometry(frameW + lineW, lineW), frameMat);
-      fN.rotation.x = -Math.PI / 2;
-      fN.position.set(0, frameY, frameZnorth);
-      fN.visible = false;
-      scene.add(fN); wheelFrameParts.push(fN);
-      // Süd
-      const fS = new THREE.Mesh(new THREE.PlaneGeometry(frameW + lineW, lineW), frameMat);
-      fS.rotation.x = -Math.PI / 2;
-      fS.position.set(0, frameY, frameZsouth);
-      fS.visible = false;
-      scene.add(fS); wheelFrameParts.push(fS);
-      // West
-      const fW = new THREE.Mesh(new THREE.PlaneGeometry(lineW, frameD), frameMat);
-      fW.rotation.x = -Math.PI / 2;
-      fW.position.set(-frameXhalf, frameY, (frameZnorth + frameZsouth) / 2);
-      fW.visible = false;
-      scene.add(fW); wheelFrameParts.push(fW);
-      // Ost
-      const fE = new THREE.Mesh(new THREE.PlaneGeometry(lineW, frameD), frameMat);
-      fE.rotation.x = -Math.PI / 2;
-      fE.position.set(frameXhalf, frameY, (frameZnorth + frameZsouth) / 2);
-      fE.visible = false;
-      scene.add(fE); wheelFrameParts.push(fE);
-      
-      window._wheelFrameParts = wheelFrameParts;
-      
-      // --- Scroll logic ---
-      function snapTo(idx, animate) {
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, idx));
-        targetScrollAngle = (2 - bandIdx) * STEP + STEP / 2;
-        drawWheelTex();
-        if (animate) {
-          if (!isSnapping) { isSnapping = true; animateSnap(); }
-        } else {
-          scrollAngle = targetScrollAngle;
-          wheelRotor.rotation.y = scrollAngle;
-        }
-      }
-      
-      function animateSnap() {
-        const diff = targetScrollAngle - scrollAngle;
-        if (Math.abs(diff) < 0.0005) {
-          scrollAngle = targetScrollAngle;
-          wheelRotor.rotation.y = scrollAngle;
-          isSnapping = false;
-          return;
-        }
-        scrollAngle += diff * 0.25;
-        wheelRotor.rotation.y = scrollAngle;
-        requestAnimationFrame(animateSnap);
-      }
-      
-      // --- Touch (direkt auf Canvas, Bereich um Rad) ---
-      let wTouchActive = false;
+      const CELL_W = 56;
+      const TOTAL = 11;
+      let bandIdx = 5; // 0-basiert, 5 = Zahl 6
+      let currentNum = null;
       let touchStartX = 0;
-      let touchStartAngle = 0;
-      let touchMoved = false;
+      let touchStartIdx = 0;
       
-      // Wheel screen zone: dynamisch berechnet aus projizierter Radposition
-      function isInWheelZone(touchY) {
-        const wheelPos = new THREE.Vector3(0, 0.49, 0.880);
-        wheelPos.project(camera);
-        const wheelScreenY = (-wheelPos.y * 0.5 + 0.5) * 720;
-        const rect = renderer.domElement.getBoundingClientRect();
-        const sy = ((touchY - rect.top) / rect.height) * 720;
-        return Math.abs(sy - wheelScreenY) < 60;
+      function updateBandPos(animate) {
+        const wrapW = wrap.offsetWidth || 180;
+        const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
+        strip.style.transform = 'translateX(' + offset + 'px)';
+        // Update band position
+        const btns = strip.querySelectorAll('.numBtn');
+        btns.forEach((b, i) => {
+          b.classList.remove('center');
+          b.style.fontSize = '';
+        });
       }
       
-      renderer.domElement.addEventListener('touchstart', (e) => {
-        if (!window._wheelActive) return;
-        if (!isInWheelZone(e.touches[0].clientY)) return;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        wTouchActive = true;
+      function selectNum(n) {
+        currentNum = n;
+        const btns = strip.querySelectorAll('.numBtn');
+        btns.forEach(b => {
+          if (parseInt(b.dataset.num) === n) b.classList.add('selected');
+          else b.classList.remove('selected');
+        });
+      }
+      
+      function clearSelection() {
+        currentNum = null;
+        strip.querySelectorAll('.numBtn').forEach(b => b.classList.remove('selected'));
+      }
+      
+      function resetBand() {
+        bandIdx = 5;
+        clearSelection();
+        updateBandPos(true);
+      }
+      
+      // Touch: Swipe to scroll
+      let touchMoved = false;
+      wrap.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
         window._numBtnTouchActive = true;
         touchStartX = e.touches[0].clientX;
-        touchStartAngle = scrollAngle;
+        touchStartIdx = bandIdx;
         touchMoved = false;
-        isSnapping = false;
+        strip.style.transition = 'none';
       }, { passive: false });
       
-      renderer.domElement.addEventListener('touchmove', (e) => {
-        if (!wTouchActive) return;
+      wrap.addEventListener('touchmove', (e) => {
+        e.stopPropagation();
         e.preventDefault();
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
-        scrollAngle = touchStartAngle - dx * 0.008;
-        const minA = -(TOTAL - 1 - 2) * STEP + STEP / 2; // bandIdx=5
-        const maxA = 2 * STEP + STEP / 2;               // bandIdx=0
-        scrollAngle = Math.max(minA, Math.min(maxA, scrollAngle));
-        wheelRotor.rotation.y = scrollAngle;
+        // Smooth pixel-based scrolling during drag
+        const wrapW = wrap.offsetWidth || 180;
+        const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
+        // Update bandIdx for snap on release
+        const idxDelta = Math.round(-dx / CELL_W);
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
       }, { passive: false });
       
-      renderer.domElement.addEventListener('touchend', (e) => {
-        if (!wTouchActive) return;
-        wTouchActive = false;
-        setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-        const rawIdx = 2 - Math.round((scrollAngle - STEP / 2) / STEP);
-        snapTo(rawIdx, true);
-        if (!touchMoved) doKippFromWheel();
-      }, { passive: false });
-      
-      // Desktop
-      renderer.domElement.addEventListener('wheel', (e) => {
-        if (!window._wheelActive) return;
+      wrap.addEventListener('touchend', (e) => {
+        e.stopPropagation();
         e.preventDefault();
-        snapTo(bandIdx + (e.deltaY > 0 ? 1 : -1), true);
+        setTimeout(() => { window._numBtnTouchActive = false; }, 100);
+        updateBandPos(true);
+        
+        // Tap (kein Swipe)
+        if (!touchMoved) {
+          const touch = e.changedTouches[0];
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = touch.clientX - wrapRect.left;
+          const wrapW = wrapRect.width;
+          const centerX = wrapW / 2;
+          // Actual rendered cell width from first numBtn
+          const firstBtn = strip.querySelector('.numBtn');
+          const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+          const offsetFromCenter = tapX - centerX;
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
+          
+          bandIdx = tappedIdx;
+          updateBandPos(true);
+          const n = bandIdx + 1;
+          selectNum(n);
+          
+          if (gamePhase === 'spielen' && !isAnimating) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+              await checkIconTreffer();
+            })();
+          }
+        }
       }, { passive: false });
       
-      function doKippFromWheel() {
+      // Desktop click fallback
+      wrap.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrapRect = wrap.getBoundingClientRect();
+        const tapX = e.clientX - wrapRect.left;
+        const wrapW = wrapRect.width;
+        const centerX = wrapW / 2;
+        const firstBtn = strip.querySelector('.numBtn');
+        const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+        const offsetFromCenter = tapX - centerX;
+        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
+        
+        bandIdx = tappedIdx;
+        updateBandPos(true);
         const n = bandIdx + 1;
+        selectNum(n);
+        
         if (gamePhase === 'spielen' && !isAnimating) {
           (async () => {
-            isAnimating = true;
             for (let i = 0; i < n; i++) {
               let dir;
               if (currentQuadrant === 0) dir = 'east';
@@ -10381,17 +10340,26 @@
               advanceTopFace();
               if (i < n - 1) await new Promise(r => setTimeout(r, 200));
             }
+            clearSelection();
             await checkIconTreffer();
           })();
         }
-      }
+      });
       
       // Global API
-      window._scrollBandToNum = function(n) { snapTo(n - 1, true); };
-      window._resetScrollBand = function() { snapTo(2, true); };
-      window._highlightNum = function(n) { if (n !== null) snapTo(n - 1, true); };
+      window._scrollBandToNum = function(n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
+        selectNum(n);
+      };
+      window._resetScrollBand = function() { resetBand(); };
+      window._highlightNum = function(n) {
+        if (n === null) { clearSelection(); return; }
+        window._scrollBandToNum(n);
+      };
       
-      snapTo(2, false);
+      // Initial position
+      updateBandPos(false);
     })();
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
@@ -10449,30 +10417,17 @@
         verdecktesMat.opacity = 1 - 0.4 * pulse;
       }
       
-      // Sync 3D wheel visibility with wheelActive flag
-      if (window._wheelAnchor) {
-        window._wheelAnchor.visible = !!window._wheelActive;
-      }
-      if (window._wheelFrameParts) {
-        window._wheelFrameParts.forEach(f => f.visible = !!window._wheelActive);
-      }
-      
-      renderer.localClippingEnabled = true;
       renderer.render(scene, camera);
-      renderer.localClippingEnabled = false;
     }
 
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
-    
-    // Numpad positionieren: projiziere Radmitte auf Screen
+
+    // Numpad (1-6 Tasten) positionieren: feste Position
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      const wheelCenter3D = new THREE.Vector3(0, 0.50, 0.880);
-      wheelCenter3D.project(camera);
-      const screenY = Math.round((-wheelCenter3D.y * 0.5 + 0.5) * 720);
-      el.style.top = (screenY - 40) + 'px';
+      el.style.top = '557px';
     })();
 
     // === ICONS: Kippziel-Bereich positionieren und initialisieren ===
@@ -10484,96 +10439,6 @@
     let iconMisses = 0;
     let iconKippzielActive = false;
     let iconUsedCombos = new Set();
-    
-    // === 3D KÄRTCHENSTAPEL ===
-    const CARD3D_SIZE = 2 * 0.15625; // 2 Zellen = 0.3125
-    const CARD3D_THICK = 0.043 * 0.15625; // 0.00672
-    const CARD3D_Z = 0.1105 + 6.6 * 0.15625; // Z-Mitte: +6.6 Zellen, Nordkante +5.6
-    const CARD3D_Y_BASE = 0.46875; // Y=3 Zellen (Tischoberfläche)
-    const CARD3D_X_OFFSET = 0.25 * 0.15625; // 0.25 Zellen Versatz pro Karte
-    const CARD3D_INITIAL_X = [ // Mitte X pro Karte (Zellen × 0.15625)
-      -0.75 * 0.15625,  // Karte 4 (unten)
-      -0.50 * 0.15625,  // Karte 3
-      -0.25 * 0.15625,  // Karte 2
-       0.00             // Karte 1 (oben)
-    ];
-    
-    const iconCard3D = [];
-    let iconCardsRemaining = 4;
-    
-    // motiv_verdeckt Textur für alle Kärtchen
-    const verdecktCardTex = new THREE.TextureLoader().load('motiv_verdeckt.png');
-    
-    for (let i = 0; i < 4; i++) {
-      const geo = new THREE.BoxGeometry(CARD3D_SIZE, CARD3D_THICK, CARD3D_SIZE);
-      const mat = [
-        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 }), // +X
-        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 }), // -X
-        new THREE.MeshStandardMaterial({ map: verdecktCardTex, roughness: 0.6, metalness: 0.05 }), // +Y (oben)
-        new THREE.MeshStandardMaterial({ color: 0xc8b8a4, roughness: 0.8 }), // -Y (unten)
-        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 }), // +Z
-        new THREE.MeshStandardMaterial({ color: 0x6b5040, roughness: 0.8 })  // -Z
-      ];
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(
-        CARD3D_INITIAL_X[i],
-        CARD3D_Y_BASE + CARD3D_THICK / 2 + i * CARD3D_THICK,
-        CARD3D_Z
-      );
-      mesh.visible = false;
-      mesh.castShadow = true;
-      scene.add(mesh);
-      iconCard3D.push(mesh);
-    }
-    
-    // Oberstes Kärtchen: Textur auf +Y Face setzen
-    function setTopCardTex(src) {
-      const img = new Image();
-      img.onload = () => {
-        const cv = document.createElement('canvas');
-        cv.width = 256; cv.height = 256;
-        const ctx = cv.getContext('2d');
-        ctx.fillStyle = '#e8e0d4';
-        ctx.fillRect(0, 0, 256, 256);
-        ctx.drawImage(img, 8, 8, 240, 240);
-        // Rand
-        ctx.strokeStyle = '#6b5040';
-        ctx.lineWidth = 6;
-        ctx.strokeRect(3, 3, 250, 250);
-        const tex = new THREE.CanvasTexture(cv);
-        iconCard3D[3].material[2].map = tex;
-        iconCard3D[3].material[2].needsUpdate = true;
-      };
-      img.src = src;
-    }
-    
-    function showIconCards3D() {
-      for (let i = 0; i < 4; i++) {
-        iconCard3D[i].visible = (i < iconCardsRemaining);
-        // Position zurücksetzen
-        const shift = (4 - iconCardsRemaining) * CARD3D_X_OFFSET;
-        iconCard3D[i].position.x = CARD3D_INITIAL_X[i] + shift;
-      }
-      // Oberste Karte: verdeckt
-      setTopCardTex('motiv_verdeckt.png');
-    }
-    
-    function hideIconCards3D() {
-      iconCard3D.forEach(m => m.visible = false);
-    }
-    
-    function updateIconStack3D() {
-      iconCardsRemaining--;
-      // Verbleibende Karten X+0.25 nachrücken (Animation)
-      const shift = (4 - iconCardsRemaining) * CARD3D_X_OFFSET;
-      iconCard3D.forEach((m, i) => {
-        if (i >= iconCardsRemaining) {
-          m.visible = false;
-        } else {
-          m.position.x = CARD3D_INITIAL_X[i] + shift;
-        }
-      });
-    }
     
     function generateIconKippziel() {
       // Visible motifs directly from deck indices
@@ -10731,8 +10596,8 @@
         cubeMaterial[matIdx2] = mat(f.slotMap, f.imgRot, 1);
         cube.material = cubeMaterial;
         
-        // Stapel-Karte entfernen + nachrutschen (3D)
-        updateIconStack3D();
+        // Stapel-Karte entfernen + nachrutschen
+        updateIconStack();
         
         if (iconHits >= 4) {
           gamePhase = 'ende';
@@ -10758,11 +10623,10 @@
     }
     
     function showIconEndScreen() {
-      hideIconCards3D();
       const row = document.getElementById('iconKippzielRow');
       if (row) row.classList.add('hidden');
       const nb = document.getElementById('numBtns');
-      window._wheelActive = false;
+      if (nb) nb.classList.add('hidden');
       
       saveBestScore(currentLevel, iconHits, iconMisses);
       
@@ -10815,7 +10679,7 @@
     (function() {
       const row = document.getElementById('iconKippzielRow');
       if (!row) return;
-      row.style.display = 'none'; // 3D Kärtchen ersetzen HTML-Stapel
+      row.style.top = '428px';
     })();
     
     // Auto-Eckblick nach Kippziel
@@ -10835,49 +10699,38 @@
       // JETZT Kippziel generieren (nach Blick, gegen neue Position geprüft)
       generateIconKippziel();
       
-      // 3D Kärtchenstapel einblenden mit motiv_verdeckt
-      showIconCards3D();
+      // Kartenstapel mit motiv_verdeckt.png einblenden
+      const kzEl = document.getElementById('iconKippziel');
+      kzEl.src = 'motiv_verdeckt.png';
+      kzEl.style.border = '3px solid #6b5040';
+      
+      const ikr = document.getElementById('iconKippzielRow');
+      if (ikr) ikr.classList.remove('hidden');
       
       // Scrollband noch versteckt
       const nb = document.getElementById('numBtns');
-      window._wheelActive = false;
+      if (nb) nb.classList.add('hidden');
       
-      // Warten auf Tap zum Aufdecken (Screen-Bereich des obersten Kärtchens)
+      // Warten auf Tap zum Aufdecken
       iconKippzielActive = false;
       
-      const topCard = iconCard3D[iconCardsRemaining - 1];
-      
-      function onRevealTouch(e) {
-        if (!topCard || !topCard.visible) return;
-        const rect = renderer.domElement.getBoundingClientRect();
-        const touch = e.changedTouches ? e.changedTouches[0] : e;
-        const tapX = ((touch.clientX - rect.left) / rect.width) * 360;
-        const tapY = ((touch.clientY - rect.top) / rect.height) * 720;
+      function revealKippziel(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        kzEl.removeEventListener('click', revealKippziel);
+        kzEl.removeEventListener('touchend', revealKippziel);
         
-        // Projiziere Kartenmitte auf Screen
-        const cardPos = new THREE.Vector3();
-        topCard.getWorldPosition(cardPos);
-        cardPos.project(camera);
-        const cardSX = (cardPos.x * 0.5 + 0.5) * 360;
-        const cardSY = (-cardPos.y * 0.5 + 0.5) * 720;
+        // Kippziel aufdecken
+        const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
+        kzEl.src = motivBase + '_' + iconTargetFarbe + '.png';
+        iconKippzielActive = true;
         
-        // Tap innerhalb ~80px der Kartenmitte?
-        if (Math.abs(tapX - cardSX) < 80 && Math.abs(tapY - cardSY) < 80) {
-          renderer.domElement.removeEventListener('click', onRevealTouch);
-          renderer.domElement.removeEventListener('touchend', onRevealTouch);
-          
-          // Kippziel aufdecken
-          const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-          setTopCardTex(motivBase + '_' + iconTargetFarbe + '.png');
-          iconKippzielActive = true;
-          
-          // Rad einblenden
-          window._wheelActive = true;
-        }
+        // Scrollband einblenden
+        if (nb) nb.classList.remove('hidden');
       }
       
-      renderer.domElement.addEventListener('click', onRevealTouch);
-      renderer.domElement.addEventListener('touchend', onRevealTouch, { passive: false });
+      kzEl.addEventListener('click', revealKippziel);
+      kzEl.addEventListener('touchend', revealKippziel, { passive: false });
     }
     
     async function autoBrainyBlick() {
@@ -10993,18 +10846,6 @@
       await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, cubeLift2, camSave, lookBase);
       advanceTopFace();
       
-      await new Promise(r => setTimeout(r, 600));
-      
-      // --- KIPP 3 ---
-      const k3 = cwDirs[currentQuadrant];
-      const isCenter3 = !k3.keepEdges.includes('left') && !k3.keepEdges.includes('right');
-      const yShift3 = isCenter3 ? yShiftCenter : yShiftFull;
-      const zoomZ3 = isCenter3 ? baseZoomZCenter : baseZoomZ;
-      const s3 = computeShifts(k3.keepEdges, yShift3, zoomZ3);
-      const cubeLift3 = 0.25;
-      await doHalfKippZoom(k3.dir, k3.toQ, s3.xShift, yShift3, zoomZ3, s3.zPan, cubeLift3, camSave, lookBase);
-      advanceTopFace();
-      
       // Kamera exakt zurücksetzen
       camera.position.set(camSave.px, camSave.py, camSave.pz);
       camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
@@ -11060,8 +10901,8 @@
         })();
       });
       
-      // Phase 2: Hold 3s
-      await new Promise(r => setTimeout(r, 3000));
+      // Phase 2: Hold 2.5s
+      await new Promise(r => setTimeout(r, 5000));
       
       // Phase 3: Camera back + complete 45° → 90° (500ms)
       await new Promise(resolve => {
