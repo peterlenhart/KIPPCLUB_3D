@@ -2008,6 +2008,28 @@
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
       
+      // === Box-Rahmenfarben Overlay (level-abhängig) ===
+      const boxOverlayFiles = { 2: 'box_icon_brainy.webp', 3: 'box_icon_brain.webp' };
+      window._boxOverlayMeshes = {};
+      for (const [lvl, file] of Object.entries(boxOverlayFiles)) {
+        new THREE.TextureLoader().load(file, (ovTex) => {
+          const ovAspect = ovTex.image.height / ovTex.image.width;
+          const ovH = SPIEL_WIDTH * ovAspect;
+          const ovGeo = new THREE.PlaneGeometry(SPIEL_WIDTH, ovH);
+          const ovMat = new THREE.MeshStandardMaterial({
+            map: ovTex, transparent: true, alphaTest: 0.1,
+            roughness: 0.8, metalness: 0.2, depthWrite: true
+          });
+          const ovMesh = new THREE.Mesh(ovGeo, ovMat);
+          ovMesh.rotation.x = -Math.PI / 2;
+          ovMesh.position.set(xCenter, yPos + 0.002, -0.828125 + ovH / 2);
+          ovMesh.renderOrder = 2;
+          ovMesh.visible = false;
+          scene.add(ovMesh);
+          window._boxOverlayMeshes[lvl] = ovMesh;
+        });
+      }
+      
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
       const dirBtnY = yPos + 0.003;
@@ -8253,6 +8275,14 @@
       iconUsedCombos = new Set();
       
       setTimeout(() => { _startBtnLock = false; }, 1000);
+      
+      // Box-Rahmenfarben Overlay aktivieren
+      if (window._boxOverlayMeshes) {
+        Object.values(window._boxOverlayMeshes).forEach(m => m.visible = false);
+        const ovKey = String(currentLevel);
+        if (window._boxOverlayMeshes[ovKey]) window._boxOverlayMeshes[ovKey].visible = true;
+      }
+      
       autoEckblick();
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
