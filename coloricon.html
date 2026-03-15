@@ -10724,7 +10724,11 @@
       btnS.style.opacity = '1';
       btnD.style.opacity = '1';
       btnS.style.display = 'block';
-      btnD.style.display = 'block';
+      if (currentLevel >= 3) {
+        btnD.style.display = 'none';
+      } else {
+        btnD.style.display = 'block';
+      }
       
       // Startoverlay einblenden, Starttext verstecken
       const sct = document.getElementById('startChallengeText');
