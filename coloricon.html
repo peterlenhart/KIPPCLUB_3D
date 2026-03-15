@@ -10448,17 +10448,17 @@
     // === BRAINY/BRAIN Treffererkennung ===
     // Statische Slot→V Zuordnung (verifiziert für alle 12 Kipp-Positionen)
     const BRAINY_SLOT_V = {
-      f0: ['V3', 'V1'],  // slot 0 = V3, slot 1 = V1
-      f1: ['V1', 'V3'],  // slot 0 = V1, slot 1 = V3
-      f2: ['V3', 'V1']   // slot 0 = V3, slot 1 = V1
+      f0: ['V3', 'V1', 'V2'],
+      f1: ['V1', 'V3', 'V2'],
+      f2: ['V3', 'V1', 'V2']
     };
     
     // V → Farbe pro Quadrant
     const V_COLORS = {
-      3: { V1: 'blau',    V3: 'gruen' },
-      0: { V1: 'violett', V3: 'orange' },
-      1: { V1: 'gruen',   V3: 'blau' },
-      2: { V1: 'orange',  V3: 'violett' }
+      3: { V1: 'blau',    V2: 'violett', V3: 'gruen' },
+      0: { V1: 'violett', V2: 'gruen',   V3: 'orange' },
+      1: { V1: 'gruen',   V2: 'orange',  V3: 'blau' },
+      2: { V1: 'orange',  V2: 'blau',    V3: 'violett' }
     };
     
     // Bestimme welches V ein Motiv belegt
