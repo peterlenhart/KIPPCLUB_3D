@@ -8285,6 +8285,14 @@
     // =========================
     let _startBtnLock = false;
     function handleStart(withTutorial) {
+      if (gamePhase === 'ende') {
+        if (withTutorial && window._endScreenNextUrl) {
+          window.location.href = window._endScreenNextUrl;
+        } else {
+          location.reload();
+        }
+        return;
+      }
       if (!texturesReady || _startBtnLock) return;
       _startBtnLock = true;
       unlockAndPlayBgMusic();
@@ -10671,13 +10679,11 @@
       if (sct) sct.style.display = 'none';
       document.getElementById('startOverlay').style.display = 'block';
       
-      // Neue Click-Handler (alte Listener entfernen durch Clone)
-      const btnSNew = btnS.cloneNode(true);
-      const btnDNew = btnD.cloneNode(true);
-      btnS.parentNode.replaceChild(btnSNew, btnS);
-      btnD.parentNode.replaceChild(btnDNew, btnD);
-      btnSNew.onclick = () => { location.reload(); };
-      btnDNew.onclick = () => { window.location.href = nextUrl; };
+      // Neue Click-Handler
+      window._endScreenNextUrl = nextUrl;
+      window._endScreenActive = true;
+      btnS.onclick = () => { location.reload(); };
+      btnD.onclick = () => { window.location.href = nextUrl; };
     }
     
     (function() {
