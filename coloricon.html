@@ -1132,8 +1132,9 @@
 
     <!-- Kippanzahl: Scrollband 1-11 -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%);">
-        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease;">
+      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); position:relative;">
+        <img src="lauffl_icon.webp" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0.69; pointer-events:none; object-fit:cover;">
+        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease; position:relative; z-index:1;">
           <div class="numBtn" data-num="1">1</div>
           <div class="numBtn" data-num="2">2</div>
           <div class="numBtn" data-num="3">3</div>
@@ -10309,32 +10310,33 @@
           const tapX = touch.clientX - wrapRect.left;
           const wrapW = wrapRect.width;
           const centerX = wrapW / 2;
-          // Actual rendered cell width from first numBtn
           const firstBtn = strip.querySelector('.numBtn');
           const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
           const offsetFromCenter = tapX - centerX;
           const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
           
-          bandIdx = tappedIdx;
-          updateBandPos(true);
-          const n = bandIdx + 1;
-          selectNum(n);
-          
-          if (gamePhase === 'spielen' && !isAnimating) {
-            (async () => {
-              for (let i = 0; i < n; i++) {
-                let dir;
-                if (currentQuadrant === 0) dir = 'east';
-                else if (currentQuadrant === 1) dir = 'south_from_q1';
-                else if (currentQuadrant === 2) dir = 'west_from_q2';
-                else dir = 'north';
-                await performKipp(dir, 600);
-                advanceTopFace();
-                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-              }
-              clearSelection();
-              await checkIconTreffer();
-            })();
+          if (tappedIdx !== bandIdx) {
+            // Nicht-mittige Zahl: nichts tun
+          } else {
+            // Mittige Zahl: Kipp auslösen
+            const n = bandIdx + 1;
+            selectNum(n);
+            if (gamePhase === 'spielen' && !isAnimating) {
+              (async () => {
+                for (let i = 0; i < n; i++) {
+                  let dir;
+                  if (currentQuadrant === 0) dir = 'east';
+                  else if (currentQuadrant === 1) dir = 'south_from_q1';
+                  else if (currentQuadrant === 2) dir = 'west_from_q2';
+                  else dir = 'north';
+                  await performKipp(dir, 600);
+                  advanceTopFace();
+                  if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+                }
+                clearSelection();
+                await checkIconTreffer();
+              })();
+            }
           }
         }
       }, { passive: false });
@@ -10351,26 +10353,27 @@
         const offsetFromCenter = tapX - centerX;
         const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
         
-        bandIdx = tappedIdx;
-        updateBandPos(true);
-        const n = bandIdx + 1;
-        selectNum(n);
-        
-        if (gamePhase === 'spielen' && !isAnimating) {
-          (async () => {
-            for (let i = 0; i < n; i++) {
-              let dir;
-              if (currentQuadrant === 0) dir = 'east';
-              else if (currentQuadrant === 1) dir = 'south_from_q1';
-              else if (currentQuadrant === 2) dir = 'west_from_q2';
-              else dir = 'north';
-              await performKipp(dir, 600);
-              advanceTopFace();
-              if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-            }
-            clearSelection();
-            await checkIconTreffer();
-          })();
+        if (tappedIdx !== bandIdx) {
+          // Nicht-mittige Zahl: nichts tun
+        } else {
+          const n = bandIdx + 1;
+          selectNum(n);
+          if (gamePhase === 'spielen' && !isAnimating) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+              await checkIconTreffer();
+            })();
+          }
         }
       });
       
