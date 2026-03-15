@@ -1118,6 +1118,11 @@
           <div class="numBtn" data-num="4">4</div>
           <div class="numBtn" data-num="5">5</div>
           <div class="numBtn" data-num="6">6</div>
+          <div class="numBtn" data-num="7">7</div>
+          <div class="numBtn" data-num="8">8</div>
+          <div class="numBtn" data-num="9">9</div>
+          <div class="numBtn" data-num="10">10</div>
+          <div class="numBtn" data-num="11">11</div>
         </div>
       </div>
     </div>
@@ -9539,7 +9544,7 @@
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
         if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
-        if (cubeLocked && gamePhase !== 'kipp21' && gamePhase !== 'spielen') return;
+        if (cubeLocked && gamePhase !== 'kipp21') return;
         if (gamePhase === 'kipp21' && kipp21HitLock) return; // Treffer erkannt → Würfel gesperrt
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
         if (gamePhase === 'kipp21' && !brainyActive && kipp21CardStates.indexOf('offen') < 0) return;
@@ -9551,7 +9556,6 @@
         isSwiping = true;
         dragActive = false;
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
-        window._swipeEndPos = { x: touch.clientX, y: touch.clientY };
       }
     });
 
@@ -9587,15 +9591,8 @@
         return;
       }
       if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
-      // TRAINING: Kein Swipe-Kippen
+      // TRAINING: Kein Swipe-Kippen — Buttons steuern den Würfel
       if (gamePhase === 'kipp21') return;
-      // SPIELEN: Kein Drag-Kippen, nur Richtung merken
-      if (gamePhase === 'spielen') {
-        e.preventDefault();
-        const touch = e.touches[0];
-        window._swipeEndPos = { x: touch.clientX, y: touch.clientY };
-        return;
-      }
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -9706,55 +9703,12 @@
       setButtonsDisabled(false);
     }
 
-    renderer.domElement.addEventListener('touchend', (e) => {
-      if (replayActive) return;
+    renderer.domElement.addEventListener('touchend', () => {
+      if (replayActive) return; // Tutorial: keine Interaktion
       if (gamePhase === 'pause') {
         pauseDragActive = false;
         return;
       }
-      
-      // SPIELEN: Swipe auf Würfel → Richtung erkennen → Auto-Kipp mit Band-Zahl
-      if (gamePhase === 'spielen' && isSwiping && !dragActive && !isAnimating && iconKippzielActive) {
-        isSwiping = false;
-        const endTouch = e.changedTouches ? e.changedTouches[0] : null;
-        const endPos = endTouch ? { x: endTouch.clientX, y: endTouch.clientY } : window._swipeEndPos;
-        window._swipeEndPos = null;
-        if (!endPos) return;
-        const dx = endPos.x - swipeStartX;
-        const dy = endPos.y - swipeStartY;
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < 15) return;
-        
-        // Richtung: horizontal oder vertikal dominant
-        const direction = (Math.abs(dx) > Math.abs(dy))
-          ? (dx > 0 ? 'cw' : 'ccw')
-          : (dy < 0 ? 'cw' : 'ccw');
-        
-        const n = window._selectedKippAnzahl || (bandIdx + 1);
-        isAnimating = true;
-        (async () => {
-          for (let i = 0; i < n; i++) {
-            let dir;
-            if (direction === 'cw') {
-              if (currentQuadrant === 3) dir = 'north';
-              else if (currentQuadrant === 0) dir = 'east';
-              else if (currentQuadrant === 1) dir = 'south_from_q1';
-              else dir = 'west_from_q2';
-            } else {
-              if (currentQuadrant === 3) dir = 'east_from_q3';
-              else if (currentQuadrant === 2) dir = 'north_from_q2';
-              else if (currentQuadrant === 1) dir = 'west';
-              else dir = 'south';
-            }
-            await performKipp(dir, 600);
-            advanceTopFace();
-            if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-          }
-          if (window._resetScrollBand) window._resetScrollBand();
-          await checkIconTreffer();
-        })();
-        return;
-      }
-      
       isSwiping = false;
       
       if (!dragActive) return;
@@ -10243,15 +10197,15 @@
       pulseRichtungButtons(false);
     }
 
-    // === SCROLLBAND (1-6, Grundstellung 3) ===
+    // === SCROLLBAND (1-11, Grundstellung 6) ===
     (function() {
       const strip = document.getElementById('scrollBandStrip');
       const wrap = document.getElementById('scrollBandWrap');
       if (!strip || !wrap) return;
       
       const CELL_W = 56;
-      const TOTAL = 6;
-      let bandIdx = 2; // 0-basiert, 2 = Zahl 3
+      const TOTAL = 11;
+      let bandIdx = 5; // 0-basiert, 5 = Zahl 6
       let currentNum = null;
       let touchStartX = 0;
       let touchStartIdx = 0;
@@ -10261,12 +10215,12 @@
         const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
+        // Update band position
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
           b.classList.remove('center');
           b.style.fontSize = '';
         });
-        window._selectedKippAnzahl = bandIdx + 1;
       }
       
       function selectNum(n) {
@@ -10284,7 +10238,7 @@
       }
       
       function resetBand() {
-        bandIdx = 2;
+        bandIdx = 5;
         clearSelection();
         updateBandPos(true);
       }
@@ -10320,13 +10274,14 @@
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
         updateBandPos(true);
         
-        // Tap (kein Swipe) — Zahl auswählen, KEIN Kipp
+        // Tap (kein Swipe)
         if (!touchMoved) {
           const touch = e.changedTouches[0];
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = touch.clientX - wrapRect.left;
           const wrapW = wrapRect.width;
           const centerX = wrapW / 2;
+          // Actual rendered cell width from first numBtn
           const firstBtn = strip.querySelector('.numBtn');
           const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
           const offsetFromCenter = tapX - centerX;
@@ -10336,7 +10291,23 @@
           updateBandPos(true);
           const n = bandIdx + 1;
           selectNum(n);
-          window._selectedKippAnzahl = n;
+          
+          if (gamePhase === 'spielen' && !isAnimating) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+              await checkIconTreffer();
+            })();
+          }
         }
       }, { passive: false });
       
@@ -10356,7 +10327,23 @@
         updateBandPos(true);
         const n = bandIdx + 1;
         selectNum(n);
-        window._selectedKippAnzahl = n;
+        
+        if (gamePhase === 'spielen' && !isAnimating) {
+          (async () => {
+            for (let i = 0; i < n; i++) {
+              let dir;
+              if (currentQuadrant === 0) dir = 'east';
+              else if (currentQuadrant === 1) dir = 'south_from_q1';
+              else if (currentQuadrant === 2) dir = 'west_from_q2';
+              else dir = 'north';
+              await performKipp(dir, 600);
+              advanceTopFace();
+              if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+            }
+            clearSelection();
+            await checkIconTreffer();
+          })();
+        }
       });
       
       // Global API
