@@ -6292,7 +6292,7 @@
       setTimeout(() => { wobEye.style.display = 'none'; }, 400);
       
       // Anti-Zufallstreffer: wenn Würfel jetzt auf HIT steht → neues Kippziel
-      if (iconKippzielActive && getTopFaceVals().includes(iconTargetVal) && currentQuadrant === FARBE_QUADRANT[iconTargetFarbe]) {
+      if (iconKippzielActive && isImmediateHit(iconTargetVal, iconTargetFarbe)) {
         generateIconKippziel();
       }
       
@@ -10445,6 +10445,95 @@
     let iconKippzielActive = false;
     let iconUsedCombos = new Set();
     
+    // === BRAINY/BRAIN Treffererkennung ===
+    // Face UV-Achsen in Cube-Lokalraum (vor Quaternion)
+    const FACE_UV_AXES = {
+      f2: { u: [1,0,0],  v: [0,0,1]  },   // +Y face: canvas-right=East, canvas-down=South
+      f0: { u: [1,0,0],  v: [0,-1,0] },   // +Z face: canvas-right=East, canvas-down=Down
+      f1: { u: [0,0,-1], v: [0,-1,0] }    // -X face: canvas-right=North, canvas-down=Down
+    };
+    
+    // Wand → V Zuordnung pro Quadrant
+    const WALL_TO_V = {
+      3: { S: 'V1', W: 'V3' },
+      0: { W: 'V1', N: 'V3' },
+      1: { N: 'V1', E: 'V3' },
+      2: { E: 'V1', S: 'V3' }
+    };
+    
+    // V → Farbe pro Quadrant (BRAINY + BRAIN)
+    const V_COLORS = {
+      3: { V1: 'blau',    V3: 'gruen' },
+      0: { V1: 'violett', V3: 'orange' },
+      1: { V1: 'gruen',   V3: 'blau' },
+      2: { V1: 'orange',  V3: 'violett' }
+    };
+    
+    // Bestimme welches V ein Motiv belegt (über Rotation + Quaternion)
+    function getMotifV(topFaceKey, targetVal) {
+      const f = faceSlots[topFaceKey];
+      const keys = Object.keys(f.slotMap);
+      const vals = keys.map(k => f.slotMap[k].val);
+      const slotIdx = vals.indexOf(targetVal);
+      if (slotIdx < 0) return null;
+      
+      // Layout-Rotation für diesen Slot
+      const BRAINY_L = {
+        f2: { rots: [Math.PI/2, 0] },
+        f0: { rots: [Math.PI, Math.PI/2] },
+        f1: { rots: [Math.PI, -Math.PI/2] }
+      };
+      const BRAIN_L = {
+        f2: { rots: [Math.PI/2, 0, 0] },
+        f0: { rots: [Math.PI, Math.PI/2, Math.PI/2] },
+        f1: { rots: [Math.PI, -Math.PI/2, Math.PI] }
+      };
+      const layout = (currentLevel >= 3) ? BRAIN_L[topFaceKey] : BRAINY_L[topFaceKey];
+      if (!layout || slotIdx >= layout.rots.length) return null;
+      
+      const rot = layout.rots[slotIdx];
+      
+      // UV-Achsen in Weltkoordinaten transformieren
+      const ax = FACE_UV_AXES[topFaceKey];
+      const uW = new THREE.Vector3(ax.u[0], ax.u[1], ax.u[2]).applyQuaternion(cube.quaternion);
+      const vW = new THREE.Vector3(ax.v[0], ax.v[1], ax.v[2]).applyQuaternion(cube.quaternion);
+      
+      // Motivunterkante-Richtung in Welt
+      const sinR = Math.sin(rot);
+      const cosR = Math.cos(rot);
+      const bottomDir = new THREE.Vector3(
+        -sinR * uW.x + cosR * vW.x,
+        -sinR * uW.y + cosR * vW.y,
+        -sinR * uW.z + cosR * vW.z
+      );
+      bottomDir.y = 0;
+      bottomDir.normalize();
+      
+      // Wand bestimmen
+      let wall;
+      if (Math.abs(bottomDir.x) > Math.abs(bottomDir.z)) {
+        wall = bottomDir.x > 0 ? 'E' : 'W';
+      } else {
+        wall = bottomDir.z > 0 ? 'S' : 'N';
+      }
+      
+      return WALL_TO_V[currentQuadrant] ? WALL_TO_V[currentQuadrant][wall] || null : null;
+    }
+    
+    // Prüfe ob Kombi sofortiger Treffer wäre
+    function isImmediateHit(val, farbe) {
+      const topVals = getTopFaceVals();
+      if (!topVals.includes(val)) return false;
+      
+      if (currentLevel === 1) {
+        return FARBE_QUADRANT[farbe] === currentQuadrant;
+      } else {
+        const v = getMotifV(topFace, val);
+        if (!v) return false;
+        return V_COLORS[currentQuadrant] && V_COLORS[currentQuadrant][v] === farbe;
+      }
+    }
+    
     function generateIconKippziel() {
       // Visible motifs directly from deck indices
       const visibleVals = [];
@@ -10465,7 +10554,7 @@
         iconTargetVal = visibleVals[Math.floor(Math.random() * visibleVals.length)];
         iconTargetFarbe = KIPPZIEL_FARBEN[Math.floor(Math.random() * 4)];
         attempts++;
-      } while (attempts < 100 && (iconUsedCombos.has(iconTargetVal + '_' + iconTargetFarbe) || (topVals.includes(iconTargetVal) && FARBE_QUADRANT[iconTargetFarbe] === currentQuadrant)));
+      } while (attempts < 100 && (iconUsedCombos.has(iconTargetVal + '_' + iconTargetFarbe) || isImmediateHit(iconTargetVal, iconTargetFarbe)));
       
       // Kombi merken
       iconUsedCombos.add(iconTargetVal + '_' + iconTargetFarbe);
@@ -10509,8 +10598,21 @@
       iconKippzielActive = false;
       
       const topVals = getTopFaceVals();
-      const requiredQ = FARBE_QUADRANT[iconTargetFarbe];
-      const isHit = (topVals.includes(iconTargetVal) && currentQuadrant === requiredQ);
+      let isHit = false;
+      
+      if (currentLevel === 1) {
+        // TRAINING: Quadrant-basiert
+        const requiredQ = FARBE_QUADRANT[iconTargetFarbe];
+        isHit = (topVals.includes(iconTargetVal) && currentQuadrant === requiredQ);
+      } else {
+        // BRAINY/BRAIN: V-Position + Farbzuordnung
+        if (topVals.includes(iconTargetVal)) {
+          const v = getMotifV(topFace, iconTargetVal);
+          if (v && V_COLORS[currentQuadrant]) {
+            isHit = (V_COLORS[currentQuadrant][v] === iconTargetFarbe);
+          }
+        }
+      }
       
       const kzEl = document.getElementById('iconKippziel');
       
