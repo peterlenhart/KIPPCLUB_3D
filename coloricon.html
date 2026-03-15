@@ -10671,9 +10671,13 @@
       if (sct) sct.style.display = 'none';
       document.getElementById('startOverlay').style.display = 'block';
       
-      // Neue Click-Handler
-      btnS.onclick = () => { location.reload(); };
-      btnD.onclick = () => { window.location.href = nextUrl; };
+      // Neue Click-Handler (alte Listener entfernen durch Clone)
+      const btnSNew = btnS.cloneNode(true);
+      const btnDNew = btnD.cloneNode(true);
+      btnS.parentNode.replaceChild(btnSNew, btnS);
+      btnD.parentNode.replaceChild(btnDNew, btnD);
+      btnSNew.onclick = () => { location.reload(); };
+      btnDNew.onclick = () => { window.location.href = nextUrl; };
     }
     
     (function() {
