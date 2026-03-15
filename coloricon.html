@@ -10828,6 +10828,8 @@
       const cubeLift1 = 0.25;
       await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, zoomZ1, s1.zPan, cubeLift1, camSave, lookBase);
       advanceTopFace();
+      camera.position.set(camSave.px, camSave.py, camSave.pz);
+      camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
       
       await new Promise(r => setTimeout(r, 600));
       
@@ -10840,6 +10842,8 @@
       const cubeLift2 = 0.25;
       await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, cubeLift2, camSave, lookBase);
       advanceTopFace();
+      camera.position.set(camSave.px, camSave.py, camSave.pz);
+      camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
       
       await new Promise(r => setTimeout(r, 600));
       
@@ -10934,7 +10938,12 @@
           if (cubeLift) pivotGroup.position.y = pivotPoint.y + cubeLift * (1 - eCam);
           if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
           if (p < 1) requestAnimationFrame(a2);
-          else resolve();
+          else {
+            camera.position.set(camSave.px, camSave.py, camSave.pz);
+            camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
+            if (cubeLift) pivotGroup.position.y = pivotPoint.y;
+            resolve();
+          }
         })();
       });
       
