@@ -514,11 +514,11 @@
       color: #5a4a3a;
       background: transparent;
       border: none;
-      border-right: 1px solid #8a7a66;
+      border-right: 1px solid rgba(138,122,102,0.4);
       border-radius: 0;
       box-shadow: none;
       cursor: pointer;
-      transition: all 0.12s ease;
+      transition: all 0.25s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
@@ -530,8 +530,30 @@
       color: #e8dcc8;
     }
     .numBtn.center {
-      
-      
+      font-weight: 900;
+      color: #2a1a0a;
+      border-left: 2px solid #5a4a3a;
+      border-right: 2px solid #5a4a3a;
+    }
+    #scrollBandWrap {
+      position: relative;
+    }
+    #scrollBandWrap::before, #scrollBandWrap::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 35%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+    #scrollBandWrap::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(40,30,20,0.6) 0%, transparent 100%);
+    }
+    #scrollBandWrap::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(40,30,20,0.6) 0%, transparent 100%);
     }
 
     @keyframes iconHitPulse {
@@ -10204,16 +10226,31 @@
       let touchStartIdx = 0;
       
       function updateBandPos(animate) {
-        const wrapW = wrap.offsetWidth || 180;
-        const offset = -(bandIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        const btns = strip.querySelectorAll('.numBtn');
+        // Progressive width: center = full, each step out = 5% narrower
+        const widths = [];
+        for (let i = 0; i < TOTAL; i++) {
+          const dist = Math.abs(i - bandIdx);
+          const scale = Math.max(0.55, 1 - dist * 0.05);
+          widths.push(Math.round(CELL_W * scale));
+        }
+        // Calculate offset to center active button
+        let centerOfActive = 0;
+        for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
+        centerOfActive += widths[bandIdx] / 2;
+        const wrapW = wrap.offsetWidth || 306;
+        const offset = wrapW / 2 - centerOfActive;
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
-        // Update band position
-        const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
-          b.classList.remove('center');
-          b.style.fontSize = '';
+          const dist = Math.abs(i - bandIdx);
+          b.style.minWidth = widths[i] + 'px';
+          b.style.maxWidth = widths[i] + 'px';
+          b.classList.toggle('center', dist === 0);
+          b.style.opacity = Math.max(0.4, 1 - dist * 0.15);
+          b.style.fontSize = Math.round(30 * Math.max(0.7, 1 - dist * 0.06)) + 'px';
         });
+        window._selectedKippAnzahl = bandIdx + 1;
       }
       
       function selectNum(n) {
@@ -10253,12 +10290,10 @@
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
         // Smooth pixel-based scrolling during drag
-        const wrapW = wrap.offsetWidth || 180;
-        const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
-        strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
-        // Update bandIdx for snap on release
-        const idxDelta = Math.round(-dx / CELL_W);
+        const avgCellW = 50;
+        const idxDelta = Math.round(-dx / avgCellW);
         bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
+        updateBandPos(false);
       }, { passive: false });
       
       wrap.addEventListener('touchend', (e) => {
