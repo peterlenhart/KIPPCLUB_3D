@@ -722,7 +722,7 @@
       text-transform: uppercase;
       color: #d0d0d0;
       text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
-      overflow: hidden;
+      overflow: visible;
       isolation: isolate;
     }
     .startClickZone::before {
@@ -733,9 +733,9 @@
       border-radius: 6px;
       z-index: -1;
     }
-    #btnSpielen::before { background: url('button_lang_icon_1.webp') center/cover no-repeat; }
-    #btnDemo::before { background: url('button_lang_icon_2.webp') center/cover no-repeat; }
-    #btnKippPrinzip::before { background: url('button_lang_icon_2.webp') center/cover no-repeat; }
+    #btnSpielen::before { background: url('button_lang_icon_1.webp') center/contain no-repeat; }
+    #btnDemo::before { background: url('button_lang_icon_2.webp') center/contain no-repeat; }
+    #btnKippPrinzip::before { background: url('button_lang_icon_2.webp') center/contain no-repeat; }
     .startClickZone {
       color: #3a2210;
       text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 -1px 1px rgba(0,0,0,0.2);
@@ -743,9 +743,9 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 530px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
-    #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnSpielen  { top: 451px; padding-top: 4px; font-size: 22px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 530px; padding-top: 4px; font-size: 20px; letter-spacing: 2px; }
+    #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 20px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
     @keyframes pokalPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
     #btnBestScores.pulsing { animation: pokalPulse 1.2s ease-in-out infinite; }
