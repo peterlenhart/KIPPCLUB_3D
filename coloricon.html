@@ -10828,8 +10828,6 @@
       const cubeLift1 = 0.25;
       await doHalfKippZoom(k1.dir, k1.toQ, s1.xShift, yShift1, zoomZ1, s1.zPan, cubeLift1, camSave, lookBase);
       advanceTopFace();
-      camera.position.set(camSave.px, camSave.py, camSave.pz);
-      camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
       
       await new Promise(r => setTimeout(r, 600));
       
@@ -10842,8 +10840,6 @@
       const cubeLift2 = 0.25;
       await doHalfKippZoom(k2.dir, k2.toQ, s2.xShift, yShift2, zoomZ2, s2.zPan, cubeLift2, camSave, lookBase);
       advanceTopFace();
-      camera.position.set(camSave.px, camSave.py, camSave.pz);
-      camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
       
       await new Promise(r => setTimeout(r, 600));
       
@@ -10902,23 +10898,16 @@
           const e = p * (2 - p); // ease-out
           if (axis === 'x') pivotGroup.rotation.x = e * halfRot;
           else pivotGroup.rotation.z = e * halfRot;
-          camera.position.x = camSave.px + xShift * e;
-          camera.position.y = camSave.py + yShift * e;
-          camera.position.z = camSave.pz + (zShift + zPan) * e;
-          camera.lookAt(lookBase.x + xShift * e, lookBase.y, lookBase.z + zPan * e);
           if (cubeLift) pivotGroup.position.y = pivotPoint.y + cubeLift * e;
           if (p < 1) requestAnimationFrame(a1);
           else resolve();
         })();
       });
       
-      // Phase 2: Hold 3s mit 8° Neigung Richtung Kamera
-      const tiltAngle = 0.14; // 8°
-      camera.position.z = camSave.pz + (zShift + zPan) - tiltAngle * 0.3;
-      camera.lookAt(lookBase.x + xShift, lookBase.y - 0.05, lookBase.z + zPan);
+      // Phase 2: Hold 3s
       await new Promise(r => setTimeout(r, 3000));
       
-      // Phase 3: Camera back + complete 45° → 90° (500ms)
+      // Phase 3: complete 45° → 90° (1000ms)
       await new Promise(resolve => {
         const st = performance.now();
         const dur = 1000;
@@ -10926,21 +10915,14 @@
         (function a2() {
           const p = Math.min((performance.now() - st) / dur, 1);
           const eKipp = p * p; // ease-in (gravity)
-          const eCam = p * (2 - p); // ease-out for smooth return
+          const eCam = p * (2 - p);
           const rot = halfRot + eKipp * remainRot;
           if (axis === 'x') pivotGroup.rotation.x = rot;
           else pivotGroup.rotation.z = rot;
-          // Camera zurück
-          camera.position.x = camSave.px + xShift * (1 - eCam);
-          camera.position.y = camSave.py + yShift * (1 - eCam);
-          camera.position.z = camSave.pz + (zShift + zPan) * (1 - eCam);
-          camera.lookAt(lookBase.x + xShift * (1 - eCam), lookBase.y, lookBase.z + zPan * (1 - eCam));
           if (cubeLift) pivotGroup.position.y = pivotPoint.y + cubeLift * (1 - eCam);
           if (!klackFired && eKipp > 0.75) { klackFired = true; playKlack(); }
           if (p < 1) requestAnimationFrame(a2);
           else {
-            camera.position.set(camSave.px, camSave.py, camSave.pz);
-            camera.lookAt(lookBase.x, lookBase.y, lookBase.z);
             if (cubeLift) pivotGroup.position.y = pivotPoint.y;
             resolve();
           }
