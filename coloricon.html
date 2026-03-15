@@ -10446,22 +10446,14 @@
     let iconUsedCombos = new Set();
     
     // === BRAINY/BRAIN Treffererkennung ===
-    // Face UV-Achsen in Cube-Lokalraum (vor Quaternion)
-    const FACE_UV_AXES = {
-      f2: { u: [1,0,0],  v: [0,0,1]  },   // +Y face: canvas-right=East, canvas-down=South
-      f0: { u: [1,0,0],  v: [0,-1,0] },   // +Z face: canvas-right=East, canvas-down=Down
-      f1: { u: [0,0,-1], v: [0,-1,0] }    // -X face: canvas-right=North, canvas-down=Down
+    // Statische Slot→V Zuordnung (verifiziert für alle 12 Kipp-Positionen)
+    const BRAINY_SLOT_V = {
+      f0: ['V3', 'V1'],  // slot 0 = V3, slot 1 = V1
+      f1: ['V1', 'V3'],  // slot 0 = V1, slot 1 = V3
+      f2: ['V3', 'V1']   // slot 0 = V3, slot 1 = V1
     };
     
-    // Wand → V Zuordnung pro Quadrant
-    const WALL_TO_V = {
-      3: { S: 'V1', W: 'V3' },
-      0: { W: 'V1', N: 'V3' },
-      1: { N: 'V1', E: 'V3' },
-      2: { E: 'V1', S: 'V3' }
-    };
-    
-    // V → Farbe pro Quadrant (BRAINY + BRAIN)
+    // V → Farbe pro Quadrant
     const V_COLORS = {
       3: { V1: 'blau',    V3: 'gruen' },
       0: { V1: 'violett', V3: 'orange' },
@@ -10469,55 +10461,16 @@
       2: { V1: 'orange',  V3: 'violett' }
     };
     
-    // Bestimme welches V ein Motiv belegt (über Rotation + Quaternion)
+    // Bestimme welches V ein Motiv belegt
     function getMotifV(topFaceKey, targetVal) {
-      const f = faceSlots[topFaceKey];
-      const keys = Object.keys(f.slotMap);
-      const vals = keys.map(k => f.slotMap[k].val);
-      const slotIdx = vals.indexOf(targetVal);
-      if (slotIdx < 0) return null;
-      
-      // Layout-Rotation für diesen Slot
-      const BRAINY_L = {
-        f2: { rots: [Math.PI/2, 0] },
-        f0: { rots: [Math.PI, Math.PI/2] },
-        f1: { rots: [Math.PI, -Math.PI/2] }
-      };
-      const BRAIN_L = {
-        f2: { rots: [Math.PI/2, 0, 0] },
-        f0: { rots: [Math.PI, Math.PI/2, Math.PI/2] },
-        f1: { rots: [Math.PI, -Math.PI/2, Math.PI] }
-      };
-      const layout = (currentLevel >= 3) ? BRAIN_L[topFaceKey] : BRAINY_L[topFaceKey];
-      if (!layout || slotIdx >= layout.rots.length) return null;
-      
-      const rot = layout.rots[slotIdx];
-      
-      // UV-Achsen in Weltkoordinaten transformieren
-      const ax = FACE_UV_AXES[topFaceKey];
-      const uW = new THREE.Vector3(ax.u[0], ax.u[1], ax.u[2]).applyQuaternion(cube.quaternion);
-      const vW = new THREE.Vector3(ax.v[0], ax.v[1], ax.v[2]).applyQuaternion(cube.quaternion);
-      
-      // Motivunterkante-Richtung in Welt
-      const sinR = Math.sin(rot);
-      const cosR = Math.cos(rot);
-      const bottomDir = new THREE.Vector3(
-        -sinR * uW.x + cosR * vW.x,
-        -sinR * uW.y + cosR * vW.y,
-        -sinR * uW.z + cosR * vW.z
-      );
-      bottomDir.y = 0;
-      bottomDir.normalize();
-      
-      // Wand bestimmen
-      let wall;
-      if (Math.abs(bottomDir.x) > Math.abs(bottomDir.z)) {
-        wall = bottomDir.x > 0 ? 'E' : 'W';
-      } else {
-        wall = bottomDir.z > 0 ? 'S' : 'N';
+      const topOff = topFaceKey === 'f0' ? 0 : (topFaceKey === 'f1' ? 4 : 8);
+      const numSlots = currentLevel >= 3 ? 3 : 2;
+      for (let s = 0; s < numSlots; s++) {
+        if (deck[topOff + s] === targetVal) {
+          return BRAINY_SLOT_V[topFaceKey][s] || null;
+        }
       }
-      
-      return WALL_TO_V[currentQuadrant] ? WALL_TO_V[currentQuadrant][wall] || null : null;
+      return null;
     }
     
     // Prüfe ob Kombi sofortiger Treffer wäre
