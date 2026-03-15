@@ -10171,6 +10171,8 @@
       // Canvas-Größe wird in onload gesetzt
       const laufflCtx = laufflCanvas.getContext('2d');
       const laufflTex = new THREE.CanvasTexture(laufflCanvas);
+      laufflTex.center.set(0.5, 0.5);
+      laufflTex.rotation = Math.PI;
       
       let laufflImgLoaded = false;
       laufflImg.onload = () => { laufflImgLoaded = true; drawWheelTex(); };
@@ -10203,13 +10205,13 @@
             laufflCtx.lineTo(padPx + cellW * i, ih);
             laufflCtx.stroke();
           }
-          const isCenter = (i === bandIdx);
+          const isCenter = (i === (TOTAL - 1 - bandIdx));
           laufflCtx.globalAlpha = isCenter ? 1.0 : 0.7;
           laufflCtx.font = (isCenter ? '900 ' : 'bold ') + '96px Arial';
           laufflCtx.fillStyle = '#2a1a0a';
           laufflCtx.textAlign = 'center';
           laufflCtx.textBaseline = 'middle';
-          laufflCtx.fillText(String(i + 1), cx, ih / 2);
+          laufflCtx.fillText(String(TOTAL - i), cx, ih / 2);
         }
         laufflCtx.globalAlpha = 1.0;
         laufflTex.needsUpdate = true;
@@ -10221,7 +10223,7 @@
       // --- Lauffläche (Segment-Barrel, openEnded) ---
       // Barrel: Segment exakt passend, Zahlen mittig
       // Benötigt: TOTAL_THETA + 2×0.58 = 2.566 rad, +Sicherheit = 2.7 rad
-      const BARREL_THETA = 2.7;
+      const BARREL_THETA = 3.2; // ~183° — viel Sicherheit
       const BARREL_START = Math.PI - BARREL_THETA / 2;
       const barrelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, BARREL_START, BARREL_THETA);
       const barrelMat = new THREE.MeshStandardMaterial({
@@ -10284,7 +10286,7 @@
       // --- Scroll logic ---
       function snapTo(idx, animate) {
         bandIdx = Math.max(0, Math.min(TOTAL - 1, idx));
-        targetScrollAngle = (2 - bandIdx) * STEP;
+        targetScrollAngle = (2 - bandIdx) * STEP + STEP / 2;
         drawWheelTex();
         if (animate) {
           if (!isSnapping) { isSnapping = true; animateSnap(); }
@@ -10302,7 +10304,7 @@
           isSnapping = false;
           return;
         }
-        scrollAngle += diff * 0.18;
+        scrollAngle += diff * 0.25;
         wheelRotor.rotation.y = scrollAngle;
         requestAnimationFrame(animateSnap);
       }
@@ -10342,8 +10344,9 @@
         const dx = e.touches[0].clientX - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
         scrollAngle = touchStartAngle - dx * 0.008;
-        const maxA = (TOTAL - 1) * STEP;
-        scrollAngle = Math.max(-maxA, Math.min(maxA, scrollAngle));
+        const minA = -(TOTAL - 1 - 2) * STEP + STEP / 2; // bandIdx=5
+        const maxA = 2 * STEP + STEP / 2;               // bandIdx=0
+        scrollAngle = Math.max(minA, Math.min(maxA, scrollAngle));
         wheelRotor.rotation.y = scrollAngle;
       }, { passive: false });
       
@@ -10351,7 +10354,7 @@
         if (!wTouchActive) return;
         wTouchActive = false;
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-        const rawIdx = 2 - Math.round(scrollAngle / STEP);
+        const rawIdx = 2 - Math.round((scrollAngle - STEP / 2) / STEP);
         snapTo(rawIdx, true);
         if (!touchMoved) doKippFromWheel();
       }, { passive: false });
