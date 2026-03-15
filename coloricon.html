@@ -10202,14 +10202,12 @@
       
       function updateBandPos(animate) {
         const btns = strip.querySelectorAll('.numBtn');
-        // Progressive width: center = full, each step out = 5% narrower
         const widths = [];
         for (let i = 0; i < TOTAL; i++) {
           const dist = Math.abs(i - bandIdx);
           const scale = Math.max(0.55, 1 - dist * 0.05);
           widths.push(Math.round(CELL_W * scale));
         }
-        // Calculate offset to center active button
         let centerOfActive = 0;
         for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
         centerOfActive += widths[bandIdx] / 2;
@@ -10217,10 +10215,16 @@
         const offset = wrapW / 2 - centerOfActive;
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
+        updateBandStyle();
+      }
+      
+      function updateBandStyle() {
+        const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
           const dist = Math.abs(i - bandIdx);
-          b.style.minWidth = widths[i] + 'px';
-          b.style.maxWidth = widths[i] + 'px';
+          const scale = Math.max(0.55, 1 - dist * 0.05);
+          b.style.minWidth = Math.round(CELL_W * scale) + 'px';
+          b.style.maxWidth = Math.round(CELL_W * scale) + 'px';
           b.classList.toggle('center', dist === 0);
           b.style.opacity = Math.max(0.4, 1 - dist * 0.15);
           b.style.fontSize = Math.round(30 * Math.max(0.7, 1 - dist * 0.06)) + 'px';
@@ -10248,34 +10252,61 @@
         updateBandPos(true);
       }
       
-      // Touch: Swipe to scroll
+      // Touch: Swipe with momentum
       let touchMoved = false;
+      let lastMoveX = 0;
+      let lastMoveTime = 0;
+      let velocity = 0;
+      let momentumAnim = null;
+      let pixelOffset = 0; // continuous pixel offset during drag
+      
       wrap.addEventListener('touchstart', (e) => {
         e.stopPropagation();
         window._numBtnTouchActive = true;
         touchStartX = e.touches[0].clientX;
         touchStartIdx = bandIdx;
         touchMoved = false;
+        lastMoveX = e.touches[0].clientX;
+        lastMoveTime = performance.now();
+        velocity = 0;
+        if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
         strip.style.transition = 'none';
+        pixelOffset = 0;
       }, { passive: false });
       
       wrap.addEventListener('touchmove', (e) => {
         e.stopPropagation();
         e.preventDefault();
-        const dx = e.touches[0].clientX - touchStartX;
+        const now = performance.now();
+        const x = e.touches[0].clientX;
+        const dx = x - touchStartX;
         if (Math.abs(dx) > 5) touchMoved = true;
-        // Smooth pixel-based scrolling during drag
-        const avgCellW = 50;
-        const idxDelta = Math.round(-dx / avgCellW);
+        
+        // Velocity tracking (geglättet)
+        const dt = now - lastMoveTime;
+        if (dt > 0) {
+          const instantV = (x - lastMoveX) / dt;
+          velocity = velocity * 0.6 + instantV * 0.4;
+        }
+        lastMoveX = x;
+        lastMoveTime = now;
+        
+        // Pixel-genaues Scrollen
+        pixelOffset = dx;
+        const wrapW = wrap.offsetWidth || 306;
+        const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
+        strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
+        
+        // bandIdx mitführen
+        const idxDelta = Math.round(-dx / CELL_W);
         bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
-        updateBandPos(false);
+        updateBandStyle();
       }, { passive: false });
       
       wrap.addEventListener('touchend', (e) => {
         e.stopPropagation();
         e.preventDefault();
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-        updateBandPos(true);
         
         // Tap (kein Swipe)
         if (!touchMoved) {
@@ -10312,6 +10343,29 @@
               })();
             }
           }
+        } else {
+          // Swipe: Momentum-Coast
+          const coastPx = velocity * 180; // Pixel die noch gleiten
+          const totalDx = pixelOffset + coastPx;
+          const idxDelta = Math.round(-totalDx / CELL_W);
+          const targetIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
+          bandIdx = targetIdx;
+          
+          // Geschmeidige Animation zum Snap
+          const wrapW = wrap.offsetWidth || 306;
+          const widths = [];
+          for (let i = 0; i < TOTAL; i++) {
+            const dist = Math.abs(i - bandIdx);
+            widths.push(Math.round(CELL_W * Math.max(0.55, 1 - dist * 0.05)));
+          }
+          let centerOfActive = 0;
+          for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
+          centerOfActive += widths[bandIdx] / 2;
+          const snapOffset = wrapW / 2 - centerOfActive;
+          strip.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+          strip.style.transform = 'translateX(' + snapOffset + 'px)';
+          updateBandStyle();
+          setTimeout(() => { updateBandStyle(); }, 520);
         }
       }, { passive: false });
       
