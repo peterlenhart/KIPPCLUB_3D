@@ -10168,34 +10168,36 @@
       const laufflImg = new Image();
       laufflImg.src = 'lauffl_icon.webp';
       const laufflCanvas = document.createElement('canvas');
-      laufflCanvas.width = 3072;
-      laufflCanvas.height = 128;
+      // Canvas-Größe wird in onload gesetzt
       const laufflCtx = laufflCanvas.getContext('2d');
-      laufflCtx.fillStyle = '#e8e0d4';
-      laufflCtx.fillRect(0, 0, 3072, 128);
       const laufflTex = new THREE.CanvasTexture(laufflCanvas);
-      laufflTex.center.set(0.5, 0.5);
-      laufflTex.rotation = Math.PI;
       
       let laufflImgLoaded = false;
       laufflImg.onload = () => { laufflImgLoaded = true; drawWheelTex(); };
       
       function drawWheelTex() {
         if (!laufflImgLoaded) return;
-        laufflCtx.clearRect(0, 0, 3072, 128);
+        const iw = laufflImg.naturalWidth;
+        const ih = laufflImg.naturalHeight;
+        laufflCanvas.width = iw;
+        laufflCanvas.height = ih;
+        // Hintergrund
         laufflCtx.fillStyle = '#e8e0d4';
-        laufflCtx.fillRect(0, 0, 3072, 128);
-        laufflCtx.drawImage(laufflImg, 0, 0, 1024, 128);
-        laufflCtx.drawImage(laufflImg, 1024, 0, 1024, 128);
-        laufflCtx.drawImage(laufflImg, 2048, 0, 1024, 128);
-        const cellW = 3072 / TOTAL;
+        laufflCtx.fillRect(0, 0, iw, ih);
+        laufflCtx.drawImage(laufflImg, 0, 0);
+        // Zahlen zentriert in der Mitte der Textur
+        const numFrac = TOTAL_THETA / (2 * Math.PI);
+        const padPx = (0.5 - numFrac / 2) * iw;
+        const numRegion = iw * numFrac;
+        const cellW = numRegion / TOTAL;
         for (let i = 0; i < TOTAL; i++) {
+          const cx = padPx + cellW * i + cellW / 2;
           if (i > 0) {
             laufflCtx.strokeStyle = 'rgba(138,122,102,0.5)';
             laufflCtx.lineWidth = 2;
             laufflCtx.beginPath();
-            laufflCtx.moveTo(cellW * i, 0);
-            laufflCtx.lineTo(cellW * i, 128);
+            laufflCtx.moveTo(padPx + cellW * i, 0);
+            laufflCtx.lineTo(padPx + cellW * i, ih);
             laufflCtx.stroke();
           }
           const isCenter = (i === bandIdx);
@@ -10204,7 +10206,7 @@
           laufflCtx.fillStyle = '#2a1a0a';
           laufflCtx.textAlign = 'center';
           laufflCtx.textBaseline = 'middle';
-          laufflCtx.fillText(String(i + 1), cellW * i + cellW / 2, 64);
+          laufflCtx.fillText(String(i + 1), cx, ih / 2);
         }
         laufflCtx.globalAlpha = 1.0;
         laufflTex.needsUpdate = true;
@@ -10214,7 +10216,9 @@
       const wheelClipPlane = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.46875)];
       
       // --- Lauffläche (Segment-Barrel, openEnded) ---
-      const barrelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true, THETA_START, TOTAL_THETA);
+      // Volles 360° Barrel — Textur wiederholt sich
+      const barrelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, BAND_DEPTH, SEGS, 1, true);
+      laufflTex.wrapS = THREE.RepeatWrapping;
       const barrelMat = new THREE.MeshStandardMaterial({
         map: laufflTex, roughness: 0.7, metalness: 0.05, clippingPlanes: wheelClipPlane
       });
