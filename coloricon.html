@@ -10831,53 +10831,59 @@
     async function autoEckblick() {
       await new Promise(r => setTimeout(r, 400));
       if (gamePhase !== 'spielen') return;
-      
-      // Würfelblick (ändert currentQuadrant + topFace)
-      if (currentLevel >= 2) {
-        kipp21EckblickUsed = 0;
-        kipp21KniffActive = false;
-        await runKipp21EckblickKniff(true);
-      } else {
-        kipp21EckblickUsed = 0;
-        kipp21KniffActive = false;
-        if (gamePhase === 'spielen') await runKipp21EckblickKniff(true);
-      }
-      
-      // JETZT Kippziel generieren (nach Blick, gegen neue Position geprüft)
+
+      // Kippziel VOR dem Eckblick generieren und verdeckt anzeigen
       generateIconKippziel();
-      
-      // Kartenstapel mit motiv_verdeckt.png einblenden
-      const kzEl = document.getElementById('iconKippziel');
-      kzEl.src = 'motiv_verdeckt.png';
-      kzEl.style.border = '3px solid #6b5040';
-      
-      const ikr = document.getElementById('iconKippzielRow');
+      const kzEl = document.getElementById('iconKippzielRow') && document.getElementById('iconKippziel');
+      const kzImgEl = document.getElementById('iconKippziel');
+      const ikr    = document.getElementById('iconKippzielRow');
+      const nb     = document.getElementById('numBtns');
+
+      if (kzImgEl) {
+        kzImgEl.src        = 'motiv_verdeckt.png';
+        kzImgEl.style.cssText = 'position:absolute;left:15px;top:0px;width:120px;height:120px;' +
+          'border:3px solid #6b5040;border-radius:6px;background:#e8e0d4;' +
+          'box-shadow:-3px 2px 4px rgba(0,0,0,0.25);cursor:pointer;';
+      }
       if (ikr) ikr.classList.remove('hidden');
-      
-      // Scrollband noch versteckt
-      const nb = document.getElementById('numBtns');
-      if (nb) nb.classList.add('hidden');
-      
-      // Warten auf Tap zum Aufdecken
+      if (nb)  nb.classList.add('hidden');
       iconKippzielActive = false;
-      
+
+      // Klick auf motiv_verdeckt → Eckblick abbrechen
+      function abortEckblick(e) {
+        e.preventDefault(); e.stopPropagation();
+        kipp21KniffAbort = true;
+      }
+      if (kzImgEl) {
+        kzImgEl.addEventListener('click',    abortEckblick);
+        kzImgEl.addEventListener('touchend', abortEckblick, { passive: false });
+      }
+
+      // Eckblick starten (alle Level)
+      kipp21EckblickUsed = 0;
+      kipp21KniffActive  = false;
+      await runKipp21EckblickKniff(true);
+
+      // Listener wieder entfernen
+      if (kzImgEl) {
+        kzImgEl.removeEventListener('click',    abortEckblick);
+        kzImgEl.removeEventListener('touchend', abortEckblick);
+      }
+
+      // Kippziel aufdeckbar machen (Tap → Motiv + Scrollband)
       function revealKippziel(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        kzEl.removeEventListener('click', revealKippziel);
-        kzEl.removeEventListener('touchend', revealKippziel);
-        
-        // Kippziel aufdecken
+        e.preventDefault(); e.stopPropagation();
+        kzImgEl.removeEventListener('click',    revealKippziel);
+        kzImgEl.removeEventListener('touchend', revealKippziel);
         const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-        kzEl.src = motivBase + '_' + iconTargetFarbe + '.png';
+        kzImgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
         iconKippzielActive = true;
-        
-        // Scrollband einblenden
         if (nb) nb.classList.remove('hidden');
       }
-      
-      kzEl.addEventListener('click', revealKippziel);
-      kzEl.addEventListener('touchend', revealKippziel, { passive: false });
+      if (kzImgEl) {
+        kzImgEl.addEventListener('click',    revealKippziel);
+        kzImgEl.addEventListener('touchend', revealKippziel, { passive: false });
+      }
     }
     
     async function autoBrainyBlick() {
