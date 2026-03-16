@@ -2567,6 +2567,7 @@
         // URL-Parameter Check: ?level=brainy → Level setzen, Startscreen zeigen
         const urlParams = new URLSearchParams(window.location.search);
         const levelParam = urlParams.get('level');
+        const autoStart  = urlParams.get('autostart') === '1';
         if (levelParam === 'brainy') {
           currentLevel = 2;
           for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
@@ -2588,10 +2589,16 @@
           if (window._boxOverlayMeshes[ovKey]) window._boxOverlayMeshes[ovKey].visible = true;
         }
         activateBoxOverlay();
-        // Auch verzögert, falls Textur noch lädt
         setTimeout(activateBoxOverlay, 500);
         setTimeout(activateBoxOverlay, 1500);
         window._activateBoxOverlay = activateBoxOverlay;
+
+        // autostart=1: Startoverlay überspringen, direkt ins Spiel
+        if (autoStart) {
+          document.getElementById('startOverlay').style.display = 'none';
+          handleStart(false);
+          return;
+        }
         
         // SPIELEN / TUTORIAL Buttons einblenden
         sct.style.display = 'none';
@@ -6386,7 +6393,7 @@
         3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      const targetDir = new THREE.Vector3(0, Math.cos(8 * Math.PI/180), Math.sin(8 * Math.PI/180));
+      const targetDir = new THREE.Vector3(0, Math.cos((currentLevel >= 2 ? 16 : 8) * Math.PI/180), Math.sin((currentLevel >= 2 ? 16 : 8) * Math.PI/180));
       const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
       
       // Animation: auf Ecke kippen
@@ -11351,11 +11358,6 @@
       const _btnS = document.getElementById('btnSpielen');
       const _btnD = document.getElementById('btnDemo');
 
-      // Score-Display aus Tutorial löschen
-      const _scoreEl = document.getElementById('levelScoreDisplay');
-      if (_scoreEl) _scoreEl.style.display = 'none';
-      document.getElementById('btnBestScores').classList.remove('pulsing');
-
       // replayBlocker JETZT deaktivieren — User kann Buttons sofort klicken
       disableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'auto';
@@ -11366,7 +11368,8 @@
         const _btnSClone = _btnS.cloneNode(true);
         _btnS.parentNode.replaceChild(_btnSClone, _btnS);
         _btnSClone.textContent = T.sp || 'SPIELEN';
-        _btnSClone.onclick = () => { location.reload(); };
+        // autostart=1: Seite lädt neu, aber überspringt Startoverlay direkt ins Spiel
+        _btnSClone.onclick = () => { window.location.href = 'coloricon.html?autostart=1'; };
       }
       if (_btnD) {
         const _btnDClone = _btnD.cloneNode(true);
