@@ -344,6 +344,7 @@
     <button id="levelClose" onclick="document.getElementById('levelOverlay').classList.remove('show')"><img src="rw.webp" alt="Zurück"></button>
     <h2 id="lvlTitle">WÄHLE DEIN LEVEL</h2>
     <div class="lvl-btn" id="lvlTraining"><img class="lvl-bg" src="button_lang_braun.webp">TRAINING</div>
+    <div class="lvl-sub" id="lvlSubTraining">mit TUTORIAL</div>
     <div class="lvl-btn" id="lvlBrainy"><img class="lvl-bg" src="button_lang_rotbraun_glow.webp">BRAINY</div>
     <div class="lvl-btn" id="lvlBrain"><img class="lvl-bg" src="button_lang_orange_glow.webp">BRAIN</div>
     <div class="lvl-btn" id="lvlK21"><img class="lvl-bg" src="button_lang_gold_glow.webp">MASTER BRAIN</div>
@@ -636,6 +637,7 @@
       kpEl.textContent = t.kp;
       if (kpImg) kpEl.insertBefore(kpImg, kpEl.firstChild);
       document.getElementById('lvlSub3').textContent = t.s3;
+      document.getElementById('lvlSubTraining').textContent = t.s1;
       document.getElementById('modalTitle').textContent = t.mT;
       document.getElementById('modalSub').innerHTML = t.mS;
       document.getElementById('modalAbbrechen').textContent = t.mA;
