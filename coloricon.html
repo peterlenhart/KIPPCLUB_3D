@@ -10420,6 +10420,12 @@
         updateBandPos(true);
         selectNum(n);
       };
+      // Scroll-only: bewegt Band ohne .selected zu setzen (für Tutorial-Hand-Animation)
+      window._scrollBandScrollOnly = function(n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
+        clearSelection();
+      };
       window._resetScrollBand = function() { resetBand(); };
       window._highlightNum = function(n) {
         if (n === null) { clearSelection(); return; }
@@ -11083,14 +11089,13 @@
     // ============================================================
 
     function setTutorialFixedCombo() {
-      // Fixiertes Kippziel: immer 3 CW-Schritte vom Start (Q3, f2)
-      // → Ergibt Q2, f2, deck[8] + 'blau'
-      const CW_NEXT_Q = { 0:1, 1:2, 2:3, 3:0 };
-      const CW_NEXT_F = { f2:'f0', f0:'f1', f1:'f2' };
-      const TOP_OFF   = { f0:0, f1:4, f2:8 };
+      // 5 CW-Schritte vom Start (Q3, f2) → Zielquadrant + Face berechnen
+      const CW_NEXT_Q  = { 0:1, 1:2, 2:3, 3:0 };
+      const CW_NEXT_F  = { f2:'f0', f0:'f1', f1:'f2' };
+      const TOP_OFF    = { f0:0, f1:4, f2:8 };
       const Q_TO_FARBE = { 0:'gruen', 1:'orange', 2:'blau', 3:'violett' };
       let q = currentQuadrant, f = topFace;
-      for (let i = 0; i < 3; i++) { q = CW_NEXT_Q[q]; f = CW_NEXT_F[f]; }
+      for (let i = 0; i < 5; i++) { q = CW_NEXT_Q[q]; f = CW_NEXT_F[f]; }
       iconTargetVal   = deck[TOP_OFF[f]];
       iconTargetFarbe = Q_TO_FARBE[q];
       iconUsedCombos.add(iconTargetVal + '_' + iconTargetFarbe);
@@ -11109,7 +11114,7 @@
       } catch(e) {}
     }
 
-    // Bewegt Hand UND scrollt Band gleichzeitig (FIX 1)
+    // Bewegt Hand UND scrollt Band gleichzeitig OHNE Selektion (FIX 1)
     function moveHandWithBand(toX, toY, durMs, fromNum, toNum) {
       const actualDur = durMs * (typeof HAND_SPEED_MUL !== 'undefined' ? HAND_SPEED_MUL : 1);
       return new Promise(resolve => {
@@ -11119,13 +11124,13 @@
           const t = Math.min((performance.now() - startT) / actualDur, 1);
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
-          // Band synchron interpolieren
-          if (window._scrollBandToNum) {
+          // Band synchron ohne Selektion
+          if (window._scrollBandScrollOnly) {
             const n = Math.round(fromNum + (toNum - fromNum) * e);
-            window._scrollBandToNum(n);
+            window._scrollBandScrollOnly(n);
           }
           if (t < 1) requestAnimationFrame(tick);
-          else { setHandPos(toX, toY); if (window._scrollBandToNum) window._scrollBandToNum(toNum); resolve(); }
+          else { setHandPos(toX, toY); if (window._scrollBandScrollOnly) window._scrollBandScrollOnly(toNum); resolve(); }
         }
         requestAnimationFrame(tick);
       });
@@ -11213,7 +11218,7 @@
 
       // SCHRITT 6: Scrollband einblenden
       if (nb) nb.classList.remove('hidden');
-      if (window._scrollBandToNum) window._scrollBandToNum(6); // Startposition Mitte
+      if (window._scrollBandScrollOnly) window._scrollBandScrollOnly(6); // Startposition, keine Selektion
       await sleep(300);
 
       // SCHRITT 7: Hand hebt sich, fährt zum Scrollband
@@ -11225,26 +11230,27 @@
       await moveHandSmooth(sbCenterX, sbY, 700);
       await sleep(300);
 
-      // SCHRITT 8: Hand wischt links→rechts — Band scrollt synchron 6→1 (FIX 1)
+      // SCHRITT 8: Hand wischt links→rechts — Band scrollt synchron 6→1 (kein select)
       await moveHandWithBand(sbRightX, sbY, 1200, 6, 1);
       await sleep(400);
 
-      // SCHRITT 9: Hand wischt rechts→links — Band scrollt synchron 1→11 (FIX 1)
+      // SCHRITT 9: Hand wischt rechts→links — Band scrollt synchron 1→11 (kein select)
       await moveHandWithBand(sbLeftX, sbY, 1000, 1, 11);
       await sleep(400);
 
-      // SCHRITT 10: Hand stellt korrekte Zahl ein 11→3, synchron (FIX 1)
-      await moveHandWithBand(sbCenterX, sbY, 700, 11, 3);
+      // SCHRITT 10: Hand stellt korrekte Zahl ein 11→5, synchron (kein select)
+      await moveHandWithBand(sbCenterX, sbY, 700, 11, 5);
       await sleep(600);
 
-      // SCHRITT 11: Hand tippt auf mittlere Zahl — Hand verschwindet
+      // SCHRITT 11: Hand tippt auf mittlere Zahl — JETZT erst select — Hand verschwindet
+      if (window._scrollBandToNum) window._scrollBandToNum(5);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(250);
 
-      // SCHRITT 12: Würfel kippt 3× CW
+      // SCHRITT 12: Würfel kippt 5× CW
       isAnimating = false;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 5; i++) {
         let dir;
         if      (currentQuadrant === 0) dir = 'east';
         else if (currentQuadrant === 1) dir = 'south_from_q1';
@@ -11252,7 +11258,7 @@
         else                            dir = 'north';
         await performKipp(dir, 600);
         advanceTopFace();
-        if (i < 2) await sleep(200);
+        if (i < 4) await sleep(200);
       }
       isAnimating = false;
 
@@ -11338,6 +11344,19 @@
 
       // saveBestScore() in showIconEndScreen hat einen zweiten 100%-Eintrag erzeugt → nochmals überschreiben
       injectTutorialFantasyScores();
+
+      // "SPIELEN" statt "NOCHMAL" im Tutorial-Endscreen
+      const _btnS = document.getElementById('btnSpielen');
+      const _btnD = document.getElementById('btnDemo');
+      if (_btnS) _btnS.textContent = T.sp || 'SPIELEN';
+
+      // Saubere Navigation zu BRAINY: localStorage-Scores vorher aufräumen
+      if (_btnD) {
+        _btnD.onclick = () => {
+          try { localStorage.removeItem('digikipp_bestscores_v2'); } catch(e) {}
+          window.location.href = 'coloricon.html?level=brainy';
+        };
+      }
       await sleep(900);
 
       // SCHRITT 17: Hand fährt zum Score
