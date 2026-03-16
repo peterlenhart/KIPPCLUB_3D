@@ -10900,11 +10900,20 @@
       }
 
       if (revealed) {
-        // Abort: Zustand jetzt korrekt restauriert → jetzt Kippziel generieren
-        // opacity zurück auf 1 (war beim Klick auf 0 gesetzt) damit CrossFade korrekt startet
-        if (kzImgEl) { kzImgEl.style.transition = 'none'; kzImgEl.style.opacity = '1'; }
+        // Abort: Zustand korrekt restauriert → Kippziel generieren
+        // motiv_verdeckt sofort unsichtbar schalten (kein Flash beim Zurücksetzen)
+        if (kzImgEl) { kzImgEl.style.transition = 'none'; kzImgEl.style.opacity = '0'; }
         generateIconKippziel();
-        doCrossFade();
+        // kzBgEl direkt einblenden (ohne ? fade-out — es ist schon weg)
+        const motivBase2 = motivForVal(iconTargetVal).replace('_grau', '');
+        if (kzBgEl) {
+          kzBgEl.style.transition = 'none'; kzBgEl.style.opacity = '0';
+          kzBgEl.src = motivBase2 + '_' + iconTargetFarbe + '.png';
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (kzBgEl)  { kzBgEl.style.transition = 'opacity 2s ease'; kzBgEl.style.opacity = '1'; }
+          if (kLeer)   { kLeer.style.transition = 'opacity 2s ease';  kLeer.style.opacity  = '0'; }
+        }));
       } else {
         // Eckblick natürlich beendet → ? bleibt, Spieler klickt selbst
         await new Promise(resolve => {
