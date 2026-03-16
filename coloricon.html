@@ -2220,6 +2220,69 @@
     }
     
     // Canvas-Textur: 3x3 Gitter, slotMap = { "row,col": { val, rot } }
+    // Hilfsfunktion: zeichnet ein einzelnes Motiv exakt so wie createFaceTexture es tut
+    function drawMotifOnCanvas(ctx, img, slotMap, targetVal, imgRotation) {
+      const keys = Object.keys(slotMap);
+      const vals = keys.map(k => slotMap[k].val);
+      let faceKey = 'f2';
+      if (slotMap === faceSlots.f0.slotMap) faceKey = 'f0';
+      else if (slotMap === faceSlots.f1.slotMap) faceKey = 'f1';
+
+      if (currentLevel >= 2 && vals.length >= 2) {
+        const s = 122;
+        let layout;
+        if (currentLevel >= 3 && vals.length >= 3) {
+          const BRAIN_LAYOUT = {
+            f2: { pos: [{x:6,y:6},{x:128,y:128},{x:6,y:128}],   rots: [Math.PI/2, 0, 0] },
+            f0: { pos: [{x:128,y:6},{x:6,y:128},{x:6,y:6}],      rots: [Math.PI, Math.PI/2, Math.PI/2] },
+            f1: { pos: [{x:6,y:6},{x:128,y:128},{x:128,y:6}],    rots: [Math.PI, -Math.PI/2, Math.PI] }
+          };
+          layout = BRAIN_LAYOUT[faceKey];
+        } else {
+          const BRAINY_LAYOUT = {
+            f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [Math.PI/2, 0] },
+            f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
+            f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, -Math.PI/2] }
+          };
+          layout = BRAINY_LAYOUT[faceKey];
+        }
+        const idx = targetVal !== undefined ? vals.indexOf(targetVal) : -1;
+        const motifCount = layout.pos.length;
+        // Zeichne nur das Zielmotiv (oder alle wenn kein targetVal angegeben)
+        for (let i = 0; i < motifCount; i++) {
+          if (targetVal !== undefined && i !== idx) continue;
+          const drawImg = targetVal !== undefined ? img : motivImgs[motivForVal(vals[i])];
+          if (!drawImg || !drawImg.complete) continue;
+          ctx.save();
+          const cx = layout.pos[i].x + s / 2;
+          const cy = layout.pos[i].y + s / 2;
+          ctx.translate(cx, cy);
+          ctx.rotate(layout.rots[i]);
+          ctx.drawImage(drawImg, -s / 2, -s / 2, s, s);
+          if (targetVal === undefined) {
+            ctx.strokeStyle = '#6b5040'; ctx.lineWidth = 3;
+            ctx.strokeRect(-s/2, -s/2, s, s);
+          }
+          ctx.restore();
+        }
+      } else {
+        // TRAINING: 1 Motiv formatfüllend
+        const drawImg = targetVal !== undefined ? img : (keys.length > 0 ? motivImgs[motivForVal(slotMap[keys[0]].val)] : null);
+        if (!drawImg || !drawImg.complete) return;
+        const s = 244;
+        ctx.save();
+        ctx.translate(128, 128);
+        if (imgRotation) ctx.rotate(imgRotation);
+        ctx.rotate(Math.PI);
+        ctx.drawImage(drawImg, -s/2, -s/2, s, s);
+        if (targetVal === undefined) {
+          ctx.strokeStyle = '#6b5040'; ctx.lineWidth = 3;
+          ctx.strokeRect(-s/2, -s/2, s, s);
+        }
+        ctx.restore();
+      }
+    }
+
     function createFaceTexture(slotMap, imgRotation, numberAlpha) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -2239,71 +2302,7 @@
       // Motive auf der Fläche zeichnen (Level-abhängig)
       const alpha = (numberAlpha !== undefined) ? numberAlpha : 1;
       ctx.globalAlpha = alpha;
-      const keys = Object.keys(slotMap);
-      const vals = keys.map(k => slotMap[k].val);
-
-      if (currentLevel >= 2 && vals.length >= 2) {
-        // BRAINY: 2 Motive pro Fläche, diagonal, Bildboden am Boxrand
-        // ctx.rotate: 0=bottom-down, π=bottom-up, -π/2=bottom-left, π/2=bottom-right
-        // f2: TL→West(canvas LEFT→-π/2), BR→South(canvas BOTTOM→0)
-        // f0: TR→North(canvas TOP→π),    BL→West(canvas LEFT→-π/2)
-        // f1: TL→North(canvas TOP→π),    BR→East(canvas RIGHT→π/2)
-        const s = 122;
-        let faceKey = 'f2';
-        if (slotMap === faceSlots.f0.slotMap) faceKey = 'f0';
-        else if (slotMap === faceSlots.f1.slotMap) faceKey = 'f1';
-        
-        let layout;
-        if (currentLevel >= 3 && vals.length >= 3) {
-          // BRAIN: 3 Motive pro Fläche
-          const BRAIN_LAYOUT = {
-            f2: { pos: [{x:6,y:6},{x:128,y:128},{x:6,y:128}],   rots: [Math.PI/2, 0, 0] },
-            f0: { pos: [{x:128,y:6},{x:6,y:128},{x:6,y:6}],      rots: [Math.PI, Math.PI/2, Math.PI/2] },
-            f1: { pos: [{x:6,y:6},{x:128,y:128},{x:128,y:6}],    rots: [Math.PI, -Math.PI/2, Math.PI] }
-          };
-          layout = BRAIN_LAYOUT[faceKey];
-        } else {
-          const BRAINY_LAYOUT = {
-            f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [Math.PI/2, 0] },
-            f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
-            f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, -Math.PI/2] }
-          };
-          layout = BRAINY_LAYOUT[faceKey];
-        }
-        const motifCount = layout.pos.length;
-        for (let i = 0; i < motifCount; i++) {
-          const img = motivImgs[motivForVal(vals[i])];
-          if (img && img.complete) {
-            ctx.save();
-            const cx = layout.pos[i].x + s / 2;
-            const cy = layout.pos[i].y + s / 2;
-            ctx.translate(cx, cy);
-            ctx.rotate(layout.rots[i]);
-            ctx.drawImage(img, -s / 2, -s / 2, s, s);
-            ctx.strokeStyle = '#6b5040';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(-s / 2, -s / 2, s, s);
-            ctx.restore();
-          }
-        }
-      } else if (keys.length > 0) {
-        // TRAINING: 1 Motiv formatfüllend
-        const firstSlot = slotMap[keys[0]];
-        const img = motivImgs[motivForVal(firstSlot.val)];
-        if (img && img.complete) {
-          const s = 244;
-          ctx.save();
-          ctx.translate(128, 128);
-          if (imgRotation) ctx.rotate(imgRotation);
-          ctx.rotate(Math.PI);
-          ctx.drawImage(img, -s/2, -s/2, s, s);
-          // 3px Inlinerahmen
-          ctx.strokeStyle = '#6b5040';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(-s/2, -s/2, s, s);
-          ctx.restore();
-        }
-      }
+      drawMotifOnCanvas(ctx, null, slotMap, undefined, imgRotation);
 
       // Rand
       ctx.globalAlpha = 1;
@@ -10710,12 +10709,6 @@
           const dur = 2500;
           const startTime = performance.now();
           
-          // Find which slot position the target motif is at
-          const keys = Object.keys(f.slotMap);
-          const vals = keys.map(k => f.slotMap[k].val);
-          let targetSlotIdx = vals.indexOf(iconTargetVal);
-          if (targetSlotIdx < 0) targetSlotIdx = 0;
-          
           function animFade() {
             const t = Math.min((performance.now() - startTime) / dur, 1);
             const canvas = createFaceTexture(f.slotMap, f.imgRot, 1);
@@ -10723,38 +10716,8 @@
             if (colorImg.complete) {
               ctx.globalAlpha = t;
               ctx.save();
-              if (currentLevel >= 2 && vals.length >= 2) {
-                const ms = 122;
-                let layout;
-                if (currentLevel >= 3 && vals.length >= 3) {
-                  const BRAIN_LAYOUT = {
-                    f2: { pos: [{x:6,y:6},{x:128,y:128},{x:6,y:128}],   rots: [Math.PI/2, 0, 0] },
-                    f0: { pos: [{x:128,y:6},{x:6,y:128},{x:6,y:6}],      rots: [Math.PI, Math.PI/2, Math.PI/2] },
-                    f1: { pos: [{x:6,y:6},{x:128,y:128},{x:128,y:6}],    rots: [Math.PI, -Math.PI/2, Math.PI] }
-                  };
-                  layout = BRAIN_LAYOUT[topFace] || BRAIN_LAYOUT.f2;
-                } else {
-                  const BRAINY_LAYOUT = {
-                    f2: { pos: [{x:6,y:6},{x:128,y:128}],   rots: [Math.PI/2, 0] },
-                    f0: { pos: [{x:128,y:6},{x:6,y:128}],    rots: [Math.PI, Math.PI/2] },
-                    f1: { pos: [{x:6,y:6},{x:128,y:128}],    rots: [Math.PI, -Math.PI/2] }
-                  };
-                  layout = BRAINY_LAYOUT[topFace] || BRAINY_LAYOUT.f2;
-                }
-                const pos = layout.pos[targetSlotIdx] || layout.pos[0];
-                const cx = pos.x + ms / 2;
-                const cy = pos.y + ms / 2;
-                ctx.translate(cx, cy);
-                ctx.rotate(layout.rots[targetSlotIdx] || layout.rots[0]);
-                ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
-              } else {
-                // TRAINING: one big motif
-                const ms = 244;
-                ctx.translate(128, 128);
-                if (f.imgRot) ctx.rotate(f.imgRot);
-                ctx.rotate(Math.PI);
-                ctx.drawImage(colorImg, -ms / 2, -ms / 2, ms, ms);
-              }
+              // Farbmotiv exakt mit derselben Funktion/Logik wie das graue zeichnen
+              drawMotifOnCanvas(ctx, colorImg, f.slotMap, iconTargetVal, f.imgRot);
               ctx.restore();
             }
             cubeMaterial[matIdx].map = new THREE.CanvasTexture(canvas);
