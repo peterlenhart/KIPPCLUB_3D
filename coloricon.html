@@ -10365,20 +10365,30 @@
             }
           }
         } else {
-          // Swipe: physikalisches Glide + Federschnapp
-          // Mehr Auslauf: Faktor 320 statt 180
+          // Swipe: Auslauf + schwingender Einschnapp
           const coastPx = velocity * 320;
           const totalDx = pixelOffset + coastPx;
           const idxDelta = Math.round(-totalDx / CELL_W);
           const targetIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
           bandIdx = targetIdx;
-          
+
+          // Zielposition berechnen
+          const wrapW = wrap.offsetWidth || 306;
+          const widths = [];
+          for (let i = 0; i < TOTAL; i++) {
+            const d = Math.abs(i - bandIdx);
+            widths.push(Math.round(CELL_W * Math.max(0.55, 1 - d * 0.05)));
+          }
+          let centerOfActive = 0;
+          for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
+          centerOfActive += widths[bandIdx] / 2;
+          const snapOffset = wrapW / 2 - centerOfActive;
+
           // Gedämpfte Schwingung: Pendel-Einschnapp
           const startX = parseFloat(strip.style.transform.replace(/[^0-9.\-]/g, '')) || 0;
           const dist = snapOffset - startX;
           const t0 = performance.now();
           const dur = 700;
-          // Dämpfungs-Parameter: Amplitude 0.18, 1.8 Schwingungen
           const A = 0.18;
           const omega = 1.8 * 2 * Math.PI;
           const damping = 5.5;
@@ -10394,11 +10404,9 @@
               updateBandStyle();
               return;
             }
-            // ease-out Grundbewegung + gedämpfte Sinusschwingung
             const ease = 1 - Math.pow(1 - t, 3);
             const swing = A * Math.exp(-damping * t) * Math.sin(omega * t);
-            const pos = startX + dist * (ease + swing);
-            strip.style.transform = 'translateX(' + pos + 'px)';
+            strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
             momentumAnim = requestAnimationFrame(pendulumSnap);
           }
           momentumAnim = requestAnimationFrame(pendulumSnap);
