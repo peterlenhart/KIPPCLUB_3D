@@ -10886,13 +10886,13 @@
         kzImgEl.style.opacity    = '0';
         kzImgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-        kzImgEl.style.transition = 'opacity 1s ease';
+        kzImgEl.style.transition = 'opacity 2s ease';
         kzImgEl.style.opacity    = '1';
         kzImgEl.style.cursor     = 'default';
         // kaertchen_leer gleichzeitig ausfaden
         const kLeer = document.getElementById('kaertchenLeer');
-        if (kLeer) { kLeer.style.transition = 'opacity 1s ease'; kLeer.style.opacity = '0'; }
-        await new Promise(r => setTimeout(r, 1000));
+        if (kLeer) { kLeer.style.transition = 'opacity 2s ease'; kLeer.style.opacity = '0'; }
+        await new Promise(r => setTimeout(r, 2000));
       }
 
       iconKippzielActive = true;
