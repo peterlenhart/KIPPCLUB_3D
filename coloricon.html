@@ -6436,7 +6436,7 @@
       // 2+3. Hochsteigen + Neigen kombiniert
       const liftHeight  = (currentLevel >= 2) ? 0.40625 : 0.25;
       const liftRiseDur = 800;
-      const tiltStart   = 0.75; // Tilt beginnt bei 75% der Höhe (25% vor Peak)
+      const tiltStart   = 0.40; // Tilt beginnt bei 40% — genug Zeit zum sanften Einschwingen
       const origY = pivotGroup.position.y;
 
       await new Promise(resolve => {
@@ -6446,7 +6446,8 @@
           const easeY = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * easeY;
           const tiltT = Math.max(0, (t - tiltStart) / (1 - tiltStart));
-          const easeTilt = tiltT < 0.5 ? 2*tiltT*tiltT : 1 - Math.pow(-2*tiltT+2, 2)/2;
+          // Cubic ease-in-out: sehr sanft anlaufen und ankommen
+          const easeTilt = tiltT < 0.5 ? 4*tiltT*tiltT*tiltT : 1 - Math.pow(-2*tiltT+2, 3)/2;
           pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, easeTilt));
           if (t < 1) requestAnimationFrame(animRise);
           else {
