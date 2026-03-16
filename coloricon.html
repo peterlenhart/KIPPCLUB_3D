@@ -6403,60 +6403,59 @@
         3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      const tiltDeg = (currentLevel >= 2 ? 16 : 8);
-      // Senkrecht-oben Quaternion (Körperdiagonale zeigt exakt nach oben, keine Neigung)
-      const upDir      = new THREE.Vector3(0, 1, 0);
+      // 8° Tilt für alle Level (mit 45° Y-Rotation kollisionsfrei nachgewiesen)
+      const tiltDeg = 8;
+      const upDir       = new THREE.Vector3(0, 1, 0);
+      // Schritt 1: Körperdiagonale → senkrecht (aufEcke)
       const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
-      // Neigungs-Quaternion (Körperdiagonale zeigt in targetDir mit tiltDeg Neigung)
-      const tiltDir    = new THREE.Vector3(0, Math.cos(tiltDeg * Math.PI/180), Math.sin(tiltDeg * Math.PI/180));
-      const tiltQuat   = new THREE.Quaternion().setFromUnitVectors(diag, tiltDir);
+      // Schritt 2: 45° Y-Rotation → eine Fläche parallel zur Südwand
+      const yRot45 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), Math.PI/4);
+      const aufEckeY45 = yRot45.clone().multiply(aufEckeQuat);
+      // Schritt 3: Tilt nach Süden (8°) — von der Y45-Lage aus
+      const xTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
+      const tiltQuat = xTilt.clone().multiply(aufEckeY45);
 
-      // 1. Auf Ecke kippen (senkrecht, keine Neigung)
+      // 1. Auf Ecke kippen (senkrecht + 45° Y gedreht)
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
           const t = Math.min((performance.now() - startTime) / aufEckeDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, ease));
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeY45, ease));
           if (t < 1) requestAnimationFrame(animate);
-          else { pivotGroup.quaternion.copy(aufEckeQuat); resolve(); }
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
         }
         animate();
       });
 
       eckblickPivot = pivotGroup;
 
-      // 2. Senkrecht hochsteigen (ohne Neigung)
-      const liftHeight = (currentLevel >= 2) ? 0.40625 : 0.25;
-      const liftDur = 600;
+      // 2+3. Hochsteigen + Neigen kombiniert
+      const liftHeight  = (currentLevel >= 2) ? 0.40625 : 0.25;
+      const liftRiseDur = 800;
+      const tiltStart   = 0.55;
       const origY = pivotGroup.position.y;
+
       await new Promise(resolve => {
         const startTime = performance.now();
-        function animLift() {
-          const t = Math.min((performance.now() - startTime) / liftDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.position.y = origY + liftHeight * ease;
-          if (t < 1) requestAnimationFrame(animLift);
-          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
+        function animRise() {
+          const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
+          const easeY = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * easeY;
+          const tiltT = Math.max(0, (t - tiltStart) / (1 - tiltStart));
+          const easeTilt = tiltT < 0.5 ? 2*tiltT*tiltT : 1 - Math.pow(-2*tiltT+2, 2)/2;
+          pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, easeTilt));
+          if (t < 1) requestAnimationFrame(animRise);
+          else {
+            pivotGroup.position.y = origY + liftHeight;
+            pivotGroup.quaternion.copy(tiltQuat);
+            resolve();
+          }
         }
-        animLift();
+        animRise();
       });
 
-      // 3. Neigung anwenden (oben angekommen, jetzt erst kippen)
-      const tiltInDur = 500;
-      await new Promise(resolve => {
-        const startTime = performance.now();
-        function animTilt() {
-          const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(tiltQuat, ease));
-          if (t < 1) requestAnimationFrame(animTilt);
-          else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
-        }
-        animTilt();
-      });
-
-      // 4. Halten (KNIFF_SHOW_DURATION oder Abort)
+      // 4. Halten
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
           kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
@@ -6471,42 +6470,37 @@
         });
       }
 
-      // 5. Neigung zurück (senkrecht)
-      const tiltOutDur = 400;
-      await new Promise(resolve => {
-        const startTime = performance.now();
-        function animUntilt() {
-          const t = Math.min((performance.now() - startTime) / tiltOutDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeQuat, ease));
-          if (t < 1) requestAnimationFrame(animUntilt);
-          else { pivotGroup.quaternion.copy(aufEckeQuat); resolve(); }
-        }
-        animUntilt();
-      });
+      // 5+6. Absinken + Neigung zurück kombiniert
+      const liftLowerDur = 800;
+      const untiltEnd    = 0.45;
 
-      // 6. Senkrecht absinken
-      const lowerDur = 600;
       await new Promise(resolve => {
         const startTime = performance.now();
         function animLower() {
-          const t = Math.min((performance.now() - startTime) / lowerDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.position.y = origY + liftHeight * (1 - ease);
+          const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
+          const easeY = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * (1 - easeY);
+          const untiltT = Math.min(1, t / untiltEnd);
+          const easeUntilt = untiltT < 0.5 ? 2*untiltT*untiltT : 1 - Math.pow(-2*untiltT+2, 2)/2;
+          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, easeUntilt));
           if (t < 1) requestAnimationFrame(animLower);
-          else { pivotGroup.position.y = origY; resolve(); }
+          else {
+            pivotGroup.position.y = origY;
+            pivotGroup.quaternion.copy(aufEckeY45);
+            resolve();
+          }
         }
         animLower();
       });
 
-      // 7. Von Ecke zurückfallen (Körperdiagonale zurück auf normal)
+      // 7. Von Ecke zurückfallen
       const fallDur = 800;
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
           const t = Math.min((performance.now() - startTime) / fallDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(new THREE.Quaternion(), ease));
+          pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(new THREE.Quaternion(), ease));
           if (t < 1) requestAnimationFrame(animate);
           else { pivotGroup.quaternion.set(0,0,0,1); resolve(); }
         }
