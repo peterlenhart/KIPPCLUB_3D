@@ -10365,11 +10365,11 @@
             }
           }
         } else {
-          // Swipe: Auslauf + schwingender Einschnapp
-          const coastPx = velocity * 320;
-          const totalDx = pixelOffset + coastPx;
-          const idxDelta = Math.round(-totalDx / CELL_W);
-          const targetIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
+          // Swipe: bandIdx ist bereits durch touchmove auf die visuell zentrierte Zahl gesetzt.
+          // Nur bei schnellem Schubs (velocity) eine Zahl weiter springen.
+          const coastPx = velocity * 120; // kleiner Auslauf für Schwung-Gefühl
+          const extraIdx = Math.round(-coastPx / CELL_W);
+          const targetIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + extraIdx));
           bandIdx = targetIdx;
 
           // Zielposition berechnen
