@@ -11128,8 +11128,17 @@
 
     async function runIconTutorial() {
       try { initHandEl(); } catch(e) {}
-      // FIX 3: Hand über allem (z-index 60, über Buttons/Score/Overlays)
-      if (handEl) handEl.style.zIndex = '60';
+
+      // Hand sofort in document.body (position:fixed, z-index:9999) —
+      // uiOverlay hat z-10, resetButtonWrap z-50: beide verlieren gegen body-level fixed z-9999
+      {
+        const cr = document.getElementById('container').getBoundingClientRect();
+        document.body.appendChild(handEl);
+        handEl.style.position = 'fixed';
+        handEl.style.left     = cr.left + 'px';
+        handEl.style.top      = '0px';
+        handEl.style.zIndex   = '9999';
+      }
       replayActive = true;
       enableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'none';
@@ -11306,19 +11315,6 @@
       // saveBestScore() in showIconEndScreen hat einen zweiten 100%-Eintrag erzeugt → nochmals überschreiben
       injectTutorialFantasyScores();
       await sleep(900);
-
-      // FIX 3: Hand nach Blur in #container umhängen (z-index 100)
-      // uiOverlay hat z-index:10, resetButtonWrap hat z-index:50 —
-      // handEl muss direkt in #container auf gleicher Ebene mit z-index 100 sitzen
-      if (handEl) {
-        const container = document.getElementById('container');
-        if (container && handEl.parentNode !== container) {
-          // Position erhalten: handEl ist absolut positioniert, transform bleibt
-          container.appendChild(handEl);
-          handEl.style.zIndex  = '100';
-          handEl.style.position = 'absolute';
-        }
-      }
 
       // SCHRITT 17: Hand fährt zum Score
       const scoreX = 180;
