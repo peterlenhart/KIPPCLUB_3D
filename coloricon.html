@@ -11092,17 +11092,44 @@
     }
 
     function injectTutorialFantasyScores() {
+      // FIX 4: Exakt die vereinbarten 3 Einträge — ALLE vorherigen ersetzen
       try {
-        const scores = loadBestScores();
-        scores.push({ level:2, hits:4, fails:3, pct:57, levelName:'BRAINY', ts: Date.now() - 30000 });
-        scores.push({ level:3, hits:4, fails:5, pct:44, levelName:'BRAIN',  ts: Date.now() - 60000 });
-        scores.sort((a,b) => b.pct - a.pct || a.fails - b.fails);
-        localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(scores.slice(0, 11)));
+        const now = Date.now();
+        const fixed = [
+          { level:1, hits:4, fails:0, pct:100, levelName:'TRAINING', ts: now },
+          { level:2, hits:4, fails:3, pct:57,  levelName:'BRAINY',   ts: now - 30000 },
+          { level:3, hits:4, fails:5, pct:44,  levelName:'BRAIN',    ts: now - 60000 }
+        ];
+        localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(fixed));
       } catch(e) {}
+    }
+
+    // Bewegt Hand UND scrollt Band gleichzeitig (FIX 1)
+    function moveHandWithBand(toX, toY, durMs, fromNum, toNum) {
+      const actualDur = durMs * (typeof HAND_SPEED_MUL !== 'undefined' ? HAND_SPEED_MUL : 1);
+      return new Promise(resolve => {
+        const sx = _handX, sy = _handY;
+        const startT = performance.now();
+        function tick() {
+          const t = Math.min((performance.now() - startT) / actualDur, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
+          // Band synchron interpolieren
+          if (window._scrollBandToNum) {
+            const n = Math.round(fromNum + (toNum - fromNum) * e);
+            window._scrollBandToNum(n);
+          }
+          if (t < 1) requestAnimationFrame(tick);
+          else { setHandPos(toX, toY); if (window._scrollBandToNum) window._scrollBandToNum(toNum); resolve(); }
+        }
+        requestAnimationFrame(tick);
+      });
     }
 
     async function runIconTutorial() {
       try { initHandEl(); } catch(e) {}
+      // FIX 3: Hand über allem (z-index 60, über Buttons/Score/Overlays)
+      if (handEl) handEl.style.zIndex = '60';
       replayActive = true;
       enableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'none';
@@ -11139,11 +11166,13 @@
       // Kippziel festlegen (Position nach Eckblick wiederhergestellt)
       setTutorialFixedCombo();
 
-      // Verdecktes Kippziel anzeigen
+      // FIX 2: Verdecktes Kippziel — kein Pulsieren, kein weißer Hintergrund
       const kzEl = document.getElementById('iconKippziel');
       kzEl.src             = 'motiv_verdeckt.png';
-      kzEl.style.border    = '3px solid #6b5040';
-      kzEl.style.animation = 'pulsate 1.5s ease-in-out infinite';
+      kzEl.style.cssText   = 'position:absolute;left:15px;top:0px;width:120px;height:120px;' +
+        'border:3px solid #6b5040;border-radius:6px;background:#e8e0d4;' +
+        'box-shadow:-3px 2px 4px rgba(0,0,0,0.25);';
+      kzEl.style.animation = '';   // FIX 2: kein Pulsieren
       const ikr = document.getElementById('iconKippzielRow');
       const nb  = document.getElementById('numBtns');
       if (ikr) ikr.classList.remove('hidden');
@@ -11165,12 +11194,12 @@
 
       // Kärtchen aufdecken
       const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-      kzEl.style.animation = '';
       kzEl.src = motivBase + '_' + iconTargetFarbe + '.png';
       iconKippzielActive = true;
 
       // SCHRITT 6: Scrollband einblenden
       if (nb) nb.classList.remove('hidden');
+      if (window._scrollBandToNum) window._scrollBandToNum(6); // Startposition Mitte
       await sleep(300);
 
       // SCHRITT 7: Hand hebt sich, fährt zum Scrollband
@@ -11182,19 +11211,16 @@
       await moveHandSmooth(sbCenterX, sbY, 700);
       await sleep(300);
 
-      // SCHRITT 8: Hand wischt links→rechts — Band scrollt zu 1
-      if (window._scrollBandToNum) window._scrollBandToNum(1);
-      await moveHandSmooth(sbRightX, sbY, 1200);
+      // SCHRITT 8: Hand wischt links→rechts — Band scrollt synchron 6→1 (FIX 1)
+      await moveHandWithBand(sbRightX, sbY, 1200, 6, 1);
       await sleep(400);
 
-      // SCHRITT 9: Hand wischt rechts→links — Band scrollt zu 11
-      if (window._scrollBandToNum) window._scrollBandToNum(11);
-      await moveHandSmooth(sbLeftX, sbY, 1000);
+      // SCHRITT 9: Hand wischt rechts→links — Band scrollt synchron 1→11 (FIX 1)
+      await moveHandWithBand(sbLeftX, sbY, 1000, 1, 11);
       await sleep(400);
 
-      // SCHRITT 10: Hand stellt korrekte Zahl ein (3)
-      if (window._scrollBandToNum) window._scrollBandToNum(3);
-      await moveHandSmooth(sbCenterX, sbY, 700);
+      // SCHRITT 10: Hand stellt korrekte Zahl ein 11→3, synchron (FIX 1)
+      await moveHandWithBand(sbCenterX, sbY, 700, 11, 3);
       await sleep(600);
 
       // SCHRITT 11: Hand tippt auf mittlere Zahl — Hand verschwindet
@@ -11257,9 +11283,10 @@
 
       // SCHRITT 14: Blur-Überblendung
       const blurOvl = document.createElement('div');
+      // FIX 3: Blur-Overlay unter Hand (z-index 58), Hand bleibt auf 60
       blurOvl.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
         'backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);' +
-        'background:rgba(10,5,0,0.5);z-index:25;opacity:0;' +
+        'background:rgba(10,5,0,0.5);z-index:58;opacity:0;' +
         'transition:opacity 0.9s ease;pointer-events:none;';
       document.getElementById('uiOverlay').appendChild(blurOvl);
       void blurOvl.offsetWidth;
@@ -11268,6 +11295,10 @@
       blurOvl.style.opacity = '0';
       await sleep(950);
       blurOvl.remove();
+
+      // FIX 4: Fantasy-Scores VOR showIconEndScreen setzen
+      // (showIconEndScreen ruft saveBestScore → würde echten Score reinschreiben)
+      injectTutorialFantasyScores();
 
       // SCHRITT 15-16: Spielende-Ansicht + Score "100% (4 | 0)"
       showIconEndScreen();
@@ -11294,8 +11325,7 @@
       updateHandShadow(0, 0, false);
       await sleep(250);
 
-      // SCHRITT 20: Scoretafel öffnet mit Fantasie-Einträgen
-      injectTutorialFantasyScores();
+      // SCHRITT 20: Scoretafel öffnet
       showBestScores();
 
       // Tutorial abgeschlossen
