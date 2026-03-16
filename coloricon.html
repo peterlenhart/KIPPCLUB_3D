@@ -1106,6 +1106,7 @@
         <div class="iconCard" data-idx="2" style="position:absolute; left:5px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 5px rgba(0,0,0,0.35);"></div>
         <div class="iconCard" data-idx="1" style="position:absolute; left:10px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 4px rgba(0,0,0,0.3);"></div>
         <img id="kaertchenLeer" src="kaertchen_leer.png" style="position:absolute; left:15px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; box-shadow:-3px 2px 4px rgba(0,0,0,0.25); opacity:1; pointer-events:none;">
+        <img id="iconKippzielBg" src="" style="position:absolute; left:15px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 4px rgba(0,0,0,0.25); opacity:0; pointer-events:none;">
         <img id="iconKippziel" src="" style="position:absolute; left:15px; top:0px; width:120px; height:120px; border:3px solid #6b5040; border-radius:6px; background:#e8e0d4; box-shadow:-3px 2px 4px rgba(0,0,0,0.25);">
       </div>
     </div>
@@ -10832,40 +10833,56 @@
       await new Promise(r => setTimeout(r, 400));
       if (gamePhase !== 'spielen') return;
 
-      generateIconKippziel();
-      const kzImgEl  = document.getElementById('iconKippziel');
-      const ikr      = document.getElementById('iconKippzielRow');
-      const nb       = document.getElementById('numBtns');
+      const kzImgEl = document.getElementById('iconKippziel');
+      const kzBgEl  = document.getElementById('iconKippzielBg');
+      const kLeer   = document.getElementById('kaertchenLeer');
+      const ikr     = document.getElementById('iconKippzielRow');
+      const nb      = document.getElementById('numBtns');
 
+      // Reset: motiv_verdeckt vorne sichtbar, Bg + kaertchen_leer sichtbar darunter
+      if (kLeer)  { kLeer.style.transition = 'none';  kLeer.style.opacity  = '1'; }
+      if (kzBgEl) { kzBgEl.style.transition = 'none'; kzBgEl.style.opacity = '0'; kzBgEl.src = ''; }
       if (kzImgEl) {
-        kzImgEl.src        = 'motiv_verdeckt.png';
+        kzImgEl.src = 'motiv_verdeckt.png';
         kzImgEl.style.cssText = 'position:absolute;left:15px;top:0px;width:120px;height:120px;' +
-          'border:3px solid #6b5040;border-radius:6px;background:#e8e0d4;' +
+          'border:3px solid #6b5040;border-radius:6px;background:transparent;' +
           'box-shadow:-3px 2px 4px rgba(0,0,0,0.25);cursor:pointer;opacity:1;' +
           'transition:opacity 2s ease;';
       }
-      // kaertchen_leer ist immer sichtbar (opacity:1 im HTML) — kein Code nötig
-      const kLeerReset = document.getElementById('kaertchenLeer');
-      if (kLeerReset) { kLeerReset.style.transition = 'none'; kLeerReset.style.opacity = '1'; }
       if (ikr) ikr.classList.remove('hidden');
       if (nb)  nb.classList.add('hidden');
       iconKippzielActive = false;
 
-      // Klick auf "?" → sofort ausfaden + Eckblick abbrechen
+      // Cross-Fade ausführen: ? aus, Kippziel rein — gleichzeitig
+      function doCrossFade() {
+        const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
+        if (kzBgEl) {
+          kzBgEl.style.transition = 'none';
+          kzBgEl.style.opacity = '0';
+          kzBgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (kzImgEl) kzImgEl.style.opacity = '0';       // ? fadet aus (2s)
+          if (kzBgEl)  { kzBgEl.style.transition = 'opacity 2s ease'; kzBgEl.style.opacity = '1'; } // Kippziel fadet ein
+          if (kLeer)   { kLeer.style.transition = 'opacity 2s ease';  kLeer.style.opacity  = '0'; } // kaertchen_leer weg
+        }));
+      }
+
+      // Klick auf "?" → Kippziel generieren + Cross-Fade + Eckblick abbrechen
       let revealed = false;
-      function abortEckblick(e) {
+      function abortAndReveal(e) {
         e.preventDefault(); e.stopPropagation();
         if (revealed) return;
         revealed = true;
-        kzImgEl.removeEventListener('click',    abortEckblick);
-        kzImgEl.removeEventListener('touchend', abortEckblick);
-        // "?" sofort ausfaden — visuelles Signal
-        kzImgEl.style.opacity = '0';
+        kzImgEl.removeEventListener('click',    abortAndReveal);
+        kzImgEl.removeEventListener('touchend', abortAndReveal);
+        generateIconKippziel();
+        doCrossFade();
         kipp21KniffAbort = true;
       }
       if (kzImgEl) {
-        kzImgEl.addEventListener('click',    abortEckblick);
-        kzImgEl.addEventListener('touchend', abortEckblick, { passive: false });
+        kzImgEl.addEventListener('click',    abortAndReveal);
+        kzImgEl.addEventListener('touchend', abortAndReveal, { passive: false });
       }
 
       // Eckblick läuft
@@ -10873,28 +10890,21 @@
       kipp21KniffActive  = false;
       await runKipp21EckblickKniff(true);
 
-      // Listener entfernen (falls Eckblick natürlich endete)
       if (kzImgEl) {
-        kzImgEl.removeEventListener('click',    abortEckblick);
-        kzImgEl.removeEventListener('touchend', abortEckblick);
+        kzImgEl.removeEventListener('click',    abortAndReveal);
+        kzImgEl.removeEventListener('touchend', abortAndReveal);
       }
 
-      // Jetzt Kippziel einblenden: Bild tauschen + einfaden, kaertchen_leer gleichzeitig ausfaden
-      const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-      if (kzImgEl) {
-        kzImgEl.style.transition = 'none';
-        kzImgEl.style.opacity    = '0';
-        kzImgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-        kzImgEl.style.transition = 'opacity 2s ease';
-        kzImgEl.style.opacity    = '1';
-        kzImgEl.style.cursor     = 'default';
-        // kaertchen_leer gleichzeitig ausfaden
-        const kLeer = document.getElementById('kaertchenLeer');
-        if (kLeer) { kLeer.style.transition = 'opacity 2s ease'; kLeer.style.opacity = '0'; }
-        await new Promise(r => setTimeout(r, 2000));
+      if (!revealed) {
+        // Eckblick natürlich beendet → Kippziel generieren + Cross-Fade
+        generateIconKippziel();
+        doCrossFade();
       }
 
+      // Warten bis Cross-Fade fertig (2s)
+      await new Promise(r => setTimeout(r, 2100));
+
+      if (kzImgEl) kzImgEl.style.cursor = 'default';
       iconKippzielActive = true;
       if (nb) nb.classList.remove('hidden');
     }
