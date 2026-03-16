@@ -11350,30 +11350,48 @@
       const _btnD = document.getElementById('btnDemo');
       if (_btnS) _btnS.textContent = T.sp || 'SPIELEN';
 
-      // Saubere Navigation zu BRAINY: localStorage-Scores vorher aufräumen
+      // replayBlocker JETZT deaktivieren — User kann Buttons sofort klicken
+      disableReplayBlocker();
+      renderer.domElement.style.pointerEvents = 'auto';
+      replayActive = false; // stoppt moveHandSmooth-Guard → wir nutzen eigene visuelle Bewegung
+
+      // Saubere Navigation zu BRAINY: scores + hand aufräumen, dann navigieren
       if (_btnD) {
         _btnD.onclick = () => {
+          if (handEl && handEl.parentNode) handEl.parentNode.removeChild(handEl);
           try { localStorage.removeItem('digikipp_bestscores_v2'); } catch(e) {}
           window.location.href = 'coloricon.html?level=brainy';
         };
       }
+
       await sleep(900);
 
-      // SCHRITT 17: Hand fährt zum Score
-      const scoreX = 180;
-      const scoreY = 35; // levelScoreDisplay: top:14, height:42 → Mitte ~35px
+      // Visuelle Hand-Animation ab hier ohne replayActive (eigene Promise-Bewegung)
+      function moveHandVisual(toX, toY, durMs) {
+        return new Promise(resolve => {
+          const sx = _handX, sy = _handY;
+          const t0 = performance.now();
+          function tick() {
+            const t = Math.min((performance.now() - t0) / durMs, 1);
+            const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+            setHandPos(sx + (toX-sx)*e, sy + (toY-sy)*e);
+            if (t < 1) requestAnimationFrame(tick); else resolve();
+          }
+          requestAnimationFrame(tick);
+        });
+      }
 
-      setHandPos(scoreX, 740);
+      // SCHRITT 17: Hand fährt zum Score
+      setHandPos(180, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(scoreX, 740, true);
-      await moveHandSmooth(scoreX, scoreY, 1200);
+      updateHandShadow(180, 740, true);
+      await moveHandVisual(180, 35, 1200);
       await sleep(1000);
 
-      // SCHRITT 18-19: Pokal pulsiert, Hand fährt hin und klickt
-      // btnBestScores: right:13, top:11, 45×45 → Zentrum x=325, y=33
+      // SCHRITT 18-19: Hand fährt zum Pokal
       const pokalX = 360 - 13 - 22;
       const pokalY = 11 + 22;
-      await moveHandSmooth(pokalX, pokalY, 700);
+      await moveHandVisual(pokalX, pokalY, 700);
       await sleep(400);
 
       handEl.style.opacity = '0';
@@ -11382,10 +11400,6 @@
 
       // SCHRITT 20: Scoretafel öffnet
       showBestScores();
-
-      // Tutorial abgeschlossen
-      replayCleanup(null);
-      renderer.domElement.style.pointerEvents = 'auto';
     }
 
 
