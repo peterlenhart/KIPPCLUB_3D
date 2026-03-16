@@ -6403,10 +6403,15 @@
         3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      const targetDir = new THREE.Vector3(0, Math.cos((currentLevel >= 2 ? 16 : 8) * Math.PI/180), Math.sin((currentLevel >= 2 ? 16 : 8) * Math.PI/180));
-      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
-      
-      // Animation: auf Ecke kippen
+      const tiltDeg = (currentLevel >= 2 ? 16 : 8);
+      // Senkrecht-oben Quaternion (Körperdiagonale zeigt exakt nach oben, keine Neigung)
+      const upDir      = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
+      // Neigungs-Quaternion (Körperdiagonale zeigt in targetDir mit tiltDeg Neigung)
+      const tiltDir    = new THREE.Vector3(0, Math.cos(tiltDeg * Math.PI/180), Math.sin(tiltDeg * Math.PI/180));
+      const tiltQuat   = new THREE.Quaternion().setFromUnitVectors(diag, tiltDir);
+
+      // 1. Auf Ecke kippen (senkrecht, keine Neigung)
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
@@ -6418,11 +6423,11 @@
         }
         animate();
       });
-      
+
       eckblickPivot = pivotGroup;
-      
-      // === Würfel hebt ab (Y-Achse, näher zum Betrachter) ===
-      const liftHeight = (currentLevel >= 2) ? 0.40625 : 0.25; // BRAINY/BRAIN: +45px näher
+
+      // 2. Senkrecht hochsteigen (ohne Neigung)
+      const liftHeight = (currentLevel >= 2) ? 0.40625 : 0.25;
       const liftDur = 600;
       const origY = pivotGroup.position.y;
       await new Promise(resolve => {
@@ -6436,12 +6441,25 @@
         }
         animLift();
       });
-      
-      // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
+
+      // 3. Neigung anwenden (oben angekommen, jetzt erst kippen)
+      const tiltInDur = 500;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animTilt() {
+          const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(tiltQuat, ease));
+          if (t < 1) requestAnimationFrame(animTilt);
+          else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
+        }
+        animTilt();
+      });
+
+      // 4. Halten (KNIFF_SHOW_DURATION oder Abort)
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
           kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
-          // Abort-Check alle 100ms
           const checkAbort = setInterval(() => {
             if (kipp21KniffAbort) {
               clearInterval(checkAbort);
@@ -6452,8 +6470,22 @@
           }, 100);
         });
       }
-      
-      // === Würfel senkt sich zurück ===
+
+      // 5. Neigung zurück (senkrecht)
+      const tiltOutDur = 400;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animUntilt() {
+          const t = Math.min((performance.now() - startTime) / tiltOutDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeQuat, ease));
+          if (t < 1) requestAnimationFrame(animUntilt);
+          else { pivotGroup.quaternion.copy(aufEckeQuat); resolve(); }
+        }
+        animUntilt();
+      });
+
+      // 6. Senkrecht absinken
       const lowerDur = 600;
       await new Promise(resolve => {
         const startTime = performance.now();
@@ -6466,11 +6498,9 @@
         }
         animLower();
       });
-      
-      // --- Von Ecke zurückfallen lassen ---
-      const inverseQuat = aufEckeQuat.clone().invert();
+
+      // 7. Von Ecke zurückfallen (Körperdiagonale zurück auf normal)
       const fallDur = 800;
-      
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
