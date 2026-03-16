@@ -9310,15 +9310,14 @@
 
     resetButton.addEventListener('click', () => {
       if (gamePhase === 'start') {
-        window.location.href = 'index.html';
+        window.location.href = 'index.html?noflash=1';
         return;
       }
-      // Aktives Spiel: Bestätigung zeigen
       if (gamePhase === 'kipp21') {
         document.getElementById('saveGameOverlay').style.display = 'block';
         return;
       }
-      window.location.href = 'index.html';
+      window.location.href = 'index.html?noflash=1';
     });
 
     function _doNukeAndReset() {
@@ -10842,7 +10841,7 @@
         kzImgEl.style.cssText = 'position:absolute;left:15px;top:0px;width:120px;height:120px;' +
           'border:3px solid #6b5040;border-radius:6px;background:#e8e0d4;' +
           'box-shadow:-3px 2px 4px rgba(0,0,0,0.25);cursor:pointer;opacity:1;' +
-          'transition:opacity 0.4s ease;';
+          'transition:opacity 1s ease;';
       }
       if (ikr) ikr.classList.remove('hidden');
       if (nb)  nb.classList.add('hidden');
@@ -10879,15 +10878,16 @@
       // Jetzt Kippziel einblenden: Bild tauschen + einfaden
       const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
       if (kzImgEl) {
+        // Sicherstellen opacity=0 ohne Transition (Bild ist evtl. noch bei 0 vom Abort)
         kzImgEl.style.transition = 'none';
         kzImgEl.style.opacity    = '0';
         kzImgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
-        // Kurz warten damit Browser das neue Bild lädt, dann einfaden
-        await new Promise(r => setTimeout(r, 60));
-        kzImgEl.style.transition = 'opacity 0.5s ease';
+        // 1 Frame warten damit Browser Bild + opacity:0 rendert, dann 1s einfaden
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        kzImgEl.style.transition = 'opacity 1s ease';
         kzImgEl.style.opacity    = '1';
         kzImgEl.style.cursor     = 'default';
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
       }
 
       iconKippzielActive = true;
