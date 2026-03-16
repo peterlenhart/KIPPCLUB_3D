@@ -10373,46 +10373,35 @@
           const targetIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
           bandIdx = targetIdx;
           
-          // Zielposition berechnen
-          const wrapW = wrap.offsetWidth || 306;
-          const widths = [];
-          for (let i = 0; i < TOTAL; i++) {
-            const dist = Math.abs(i - bandIdx);
-            widths.push(Math.round(CELL_W * Math.max(0.55, 1 - dist * 0.05)));
-          }
-          let centerOfActive = 0;
-          for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
-          centerOfActive += widths[bandIdx] / 2;
-          const snapOffset = wrapW / 2 - centerOfActive;
-
-          // Federnde Einschnapp-Kurve: erst überschießen, dann zurückfedern
-          const startX = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
+          // Gedämpfte Schwingung: Pendel-Einschnapp
+          const startX = parseFloat(strip.style.transform.replace(/[^0-9.\-]/g, '')) || 0;
           const dist = snapOffset - startX;
-          const dur = Math.min(600, Math.max(300, Math.abs(velocity) * 120 + 300));
           const t0 = performance.now();
-          
+          const dur = 700;
+          // Dämpfungs-Parameter: Amplitude 0.18, 1.8 Schwingungen
+          const A = 0.18;
+          const omega = 1.8 * 2 * Math.PI;
+          const damping = 5.5;
+
           strip.style.transition = 'none';
           updateBandStyle();
-          
-          function springSnap() {
-            const t = Math.min((performance.now() - t0) / dur, 1);
-            // Spring: cubic-bezier ähnlich — überschießt 8% dann federt zurück
-            const spring = t < 0.7
-              ? (t / 0.7) * (1 + 0.08 * Math.sin(t / 0.7 * Math.PI))
-              : 1 + 0.08 * Math.sin(Math.PI) * (1 - (t - 0.7) / 0.3);
-            const ease = 1 - Math.pow(1 - Math.min(t, 1), 3); // ease-out cubic
-            // Kombination: smooth glide mit federndem Überschwinger
-            const pos = startX + dist * (ease + 0.06 * Math.sin(t * Math.PI * 1.5) * (1 - t));
-            strip.style.transform = 'translateX(' + pos + 'px)';
-            if (t < 1) {
-              momentumAnim = requestAnimationFrame(springSnap);
-            } else {
+
+          function pendulumSnap() {
+            const t = (performance.now() - t0) / dur;
+            if (t >= 1) {
               strip.style.transform = 'translateX(' + snapOffset + 'px)';
               momentumAnim = null;
               updateBandStyle();
+              return;
             }
+            // ease-out Grundbewegung + gedämpfte Sinusschwingung
+            const ease = 1 - Math.pow(1 - t, 3);
+            const swing = A * Math.exp(-damping * t) * Math.sin(omega * t);
+            const pos = startX + dist * (ease + swing);
+            strip.style.transform = 'translateX(' + pos + 'px)';
+            momentumAnim = requestAnimationFrame(pendulumSnap);
           }
-          momentumAnim = requestAnimationFrame(springSnap);
+          momentumAnim = requestAnimationFrame(pendulumSnap);
         }
       }, { passive: false });
       
