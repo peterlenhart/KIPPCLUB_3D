@@ -379,10 +379,12 @@
     }
     
     function hideFlash() {
+      const noFlash = new URLSearchParams(window.location.search).get('noflash') === '1';
+      const delay = noFlash ? 0 : 2000;
       setTimeout(() => {
         flashOverlay.classList.add("hidden");
-        setTimeout(() => flashOverlay.style.display = "none", 600);
-      }, 2000);
+        setTimeout(() => flashOverlay.style.display = "none", noFlash ? 0 : 600);
+      }, delay);
     }
 
     const HEADER_ROW_OFFSET = 2;
