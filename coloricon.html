@@ -10872,7 +10872,7 @@
         }));
       }
 
-      // Klick auf "?" → Kippziel generieren + Cross-Fade + Eckblick abbrechen
+      // Klick auf "?" → nur Abort setzen + visuelles Fadeout; Kippziel nach Restore
       let revealed = false;
       function abortAndReveal(e) {
         e.preventDefault(); e.stopPropagation();
@@ -10880,8 +10880,8 @@
         revealed = true;
         kzImgEl.removeEventListener('click',    abortAndReveal);
         kzImgEl.removeEventListener('touchend', abortAndReveal);
-        generateIconKippziel();
-        doCrossFade();
+        // Nur visuelles Signal — generateIconKippziel NACH Eckblick-Restore
+        if (kzImgEl) kzImgEl.style.opacity = '0';
         kipp21KniffAbort = true;
       }
       if (kzImgEl) {
@@ -10889,7 +10889,7 @@
         kzImgEl.addEventListener('touchend', abortAndReveal, { passive: false });
       }
 
-      // Eckblick läuft
+      // Eckblick läuft — restauriert currentQuadrant + topFace am Ende
       kipp21EckblickUsed = 0;
       kipp21KniffActive  = false;
       await runKipp21EckblickKniff(true);
@@ -10899,7 +10899,13 @@
         kzImgEl.removeEventListener('touchend', abortAndReveal);
       }
 
-      if (!revealed) {
+      if (revealed) {
+        // Abort: Zustand jetzt korrekt restauriert → jetzt Kippziel generieren
+        // opacity zurück auf 1 (war beim Klick auf 0 gesetzt) damit CrossFade korrekt startet
+        if (kzImgEl) { kzImgEl.style.transition = 'none'; kzImgEl.style.opacity = '1'; }
+        generateIconKippziel();
+        doCrossFade();
+      } else {
         // Eckblick natürlich beendet → ? bleibt, Spieler klickt selbst
         await new Promise(resolve => {
           function playerReveal(e) {
