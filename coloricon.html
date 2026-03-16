@@ -10225,18 +10225,9 @@
       let touchStartIdx = 0;
       
       function updateBandPos(animate) {
-        const btns = strip.querySelectorAll('.numBtn');
-        const widths = [];
-        for (let i = 0; i < TOTAL; i++) {
-          const dist = Math.abs(i - bandIdx);
-          const scale = Math.max(0.55, 1 - dist * 0.05);
-          widths.push(Math.round(CELL_W * scale));
-        }
-        let centerOfActive = 0;
-        for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
-        centerOfActive += widths[bandIdx] / 2;
         const wrapW = wrap.offsetWidth || 306;
-        const offset = wrapW / 2 - centerOfActive;
+        // Alle Buttons haben fixe Breite CELL_W — Position ist immer exakt berechenbar
+        const offset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
         updateBandStyle();
@@ -10246,12 +10237,12 @@
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
           const dist = Math.abs(i - bandIdx);
-          const scale = Math.max(0.55, 1 - dist * 0.05);
-          b.style.minWidth = Math.round(CELL_W * scale) + 'px';
-          b.style.maxWidth = Math.round(CELL_W * scale) + 'px';
+          // Breite IMMER fix — nur font-size und opacity skalieren
+          b.style.minWidth = CELL_W + 'px';
+          b.style.maxWidth = CELL_W + 'px';
           b.classList.toggle('center', dist === 0);
-          b.style.opacity = Math.max(0.4, 1 - dist * 0.15);
-          b.style.fontSize = Math.round(30 * Math.max(0.7, 1 - dist * 0.06)) + 'px';
+          b.style.opacity = Math.max(0.35, 1 - dist * 0.18);
+          b.style.fontSize = Math.round(30 * Math.max(0.65, 1 - dist * 0.08)) + 'px';
         });
         window._selectedKippAnzahl = bandIdx + 1;
       }
@@ -10306,44 +10297,38 @@
         const dx = x - touchStartX;
         if (Math.abs(dx) > 4) touchMoved = true;
         
-        // Velocity: Exponential smoothing, nur letzte 60ms berücksichtigen
         const dt = now - lastMoveTime;
         if (dt > 0 && dt < 60) {
-          const instantV = (x - lastMoveX) / dt;
-          velocity = velocity * 0.5 + instantV * 0.5;
+          velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
         } else if (dt >= 60) {
-          velocity = 0; // abgebrochene Bewegung
+          velocity = 0;
         }
         lastMoveX = x;
         lastMoveTime = now;
-        
         pixelOffset = dx;
+
+        // Exakte Position: alle Zellen fix CELL_W breit
         const wrapW = wrap.offsetWidth || 306;
-        const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
-        strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
-        
-        const idxDelta = Math.round(-dx / CELL_W);
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
+        const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
+        strip.style.transform = 'translateX(' + tx + 'px)';
+
+        // Zentrierte Zahl direkt aus translateX
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
         updateBandStyle();
       }, { passive: false });
-      
+
       wrap.addEventListener('touchend', (e) => {
         e.stopPropagation();
         e.preventDefault();
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-        
+
         if (!touchMoved) {
           // Tap
           const touch = e.changedTouches[0];
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = touch.clientX - wrapRect.left;
           const wrapW = wrapRect.width;
-          const centerX = wrapW / 2;
-          const firstBtn = strip.querySelector('.numBtn');
-          const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
-          const offsetFromCenter = tapX - centerX;
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
-          
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / CELL_W) + bandIdx));
           if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
@@ -10351,10 +10336,10 @@
               (async () => {
                 for (let i = 0; i < n; i++) {
                   let dir;
-                  if (currentQuadrant === 0) dir = 'east';
+                  if      (currentQuadrant === 0) dir = 'east';
                   else if (currentQuadrant === 1) dir = 'south_from_q1';
                   else if (currentQuadrant === 2) dir = 'west_from_q2';
-                  else dir = 'north';
+                  else                            dir = 'north';
                   await performKipp(dir, 600);
                   advanceTopFace();
                   if (i < n - 1) await new Promise(r => setTimeout(r, 200));
@@ -10365,27 +10350,17 @@
             }
           }
         } else {
-          // Swipe: bandIdx ist bereits durch touchmove auf die visuell zentrierte Zahl gesetzt.
-          // Nur bei schnellem Schubs (velocity) eine Zahl weiter springen.
-          const coastPx = velocity * 120; // kleiner Auslauf für Schwung-Gefühl
-          const extraIdx = Math.round(-coastPx / CELL_W);
-          const targetIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + extraIdx));
-          bandIdx = targetIdx;
-
-          // Zielposition berechnen
+          // Schwung: aktuelle translateX + velocity-Auslauf → Ziel-Index
           const wrapW = wrap.offsetWidth || 306;
-          const widths = [];
-          for (let i = 0; i < TOTAL; i++) {
-            const d = Math.abs(i - bandIdx);
-            widths.push(Math.round(CELL_W * Math.max(0.55, 1 - d * 0.05)));
-          }
-          let centerOfActive = 0;
-          for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
-          centerOfActive += widths[bandIdx] / 2;
-          const snapOffset = wrapW / 2 - centerOfActive;
+          const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
+          const txCoasted = tx + velocity * 150;
+          bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
+
+          // Zielposition
+          const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
 
           // Gedämpfte Schwingung: Pendel-Einschnapp
-          const startX = parseFloat(strip.style.transform.replace(/[^0-9.\-]/g, '')) || 0;
+          const startX = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
           const dist = snapOffset - startX;
           const t0 = performance.now();
           const dur = 700;
