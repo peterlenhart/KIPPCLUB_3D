@@ -6403,17 +6403,20 @@
         3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      // 8° Tilt für alle Level (mit 45° Y-Rotation kollisionsfrei nachgewiesen)
-      const tiltDeg = 8;
+
+      // Mathematisch optimierte Y-Rotation + Tiltwinkel pro Quadrant:
+      // Alle 3 sichtbaren Flächen erscheinen für den Betrachter in exakt gleicher Schräge
+      const perQ = currentLevel >= 2
+        ? [{y:45,t:14.5},{y:75,t:14.5},{y:45,t:14.5},{y:15,t:14.5}]  // BRAINY/BRAIN
+        : [{y:75,t:14.0},{y:45,t:14.0},{y:15,t:14.0},{y: 0,t:14.0}]; // TRAINING
+      const { y: yDeg, t: tiltDeg } = perQ[currentQuadrant];
+
       const upDir       = new THREE.Vector3(0, 1, 0);
-      // Schritt 1: Körperdiagonale → senkrecht (aufEcke)
       const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
-      // Schritt 2: 45° Y-Rotation → eine Fläche parallel zur Südwand
-      const yRot45 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), Math.PI/4);
-      const aufEckeY45 = yRot45.clone().multiply(aufEckeQuat);
-      // Schritt 3: Tilt nach Süden (8°) — von der Y45-Lage aus
-      const xTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
-      const tiltQuat = xTilt.clone().multiply(aufEckeY45);
+      const yRot45      = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yDeg * Math.PI/180);
+      const aufEckeY45  = yRot45.clone().multiply(aufEckeQuat);
+      const xTilt       = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
+      const tiltQuat    = xTilt.clone().multiply(aufEckeY45);
 
       // 1. Auf Ecke kippen (senkrecht + 45° Y gedreht)
       await new Promise(resolve => {
