@@ -11353,13 +11353,14 @@
       // replayBlocker JETZT deaktivieren — User kann Buttons sofort klicken
       disableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'auto';
-      replayActive = false; // stoppt moveHandSmooth-Guard → wir nutzen eigene visuelle Bewegung
+      replayActive = false;
 
-      // Saubere Navigation zu BRAINY: scores + hand aufräumen, dann navigieren
+      // btnDemo: alten addEventListener('click', handleStart) entfernen via Clone,
+      // dann nur noch direkte Navigation zu BRAINY setzen
       if (_btnD) {
-        _btnD.onclick = () => {
-          if (handEl && handEl.parentNode) handEl.parentNode.removeChild(handEl);
-          try { localStorage.removeItem('digikipp_bestscores_v2'); } catch(e) {}
+        const _btnDClone = _btnD.cloneNode(true);
+        _btnD.parentNode.replaceChild(_btnDClone, _btnD);
+        _btnDClone.onclick = () => {
           window.location.href = 'coloricon.html?level=brainy';
         };
       }
