@@ -6436,7 +6436,8 @@
       // 2+3. Hochsteigen + Neigen kombiniert
       const liftHeight  = (currentLevel >= 2) ? 0.40625 : 0.25;
       const liftRiseDur = 800;
-      const tiltStart   = 0.75; // Tilt beginnt bei 75% der Höhe (25% vor Peak)      const origY = pivotGroup.position.y;
+      const tiltStart   = 0.75; // Tilt beginnt bei 75% der Höhe (25% vor Peak)
+      const origY = pivotGroup.position.y;
 
       await new Promise(resolve => {
         const startTime = performance.now();
