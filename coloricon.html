@@ -2597,8 +2597,13 @@
         sct.style.display = 'none';
         document.getElementById('btnSpielen').disabled = false;
         document.getElementById('btnSpielen').style.opacity = '1';
-        document.getElementById('btnDemo').disabled = false;
-        document.getElementById('btnDemo').style.opacity = '1';
+        // TUTORIAL-Button nur bei TRAINING (Level 1) zeigen
+        if (currentLevel <= 1) {
+          document.getElementById('btnDemo').disabled = false;
+          document.getElementById('btnDemo').style.opacity = '1';
+        } else {
+          document.getElementById('btnDemo').style.display = 'none';
+        }
       }
     }
 
@@ -11290,17 +11295,36 @@
       await sleep(1200);
       kzEl.style.animation = '';
 
-      // SCHRITT 14: Blur-Überblendung
+      // SCHRITT 14: Blur-Überblendung (+2s länger, mit Text)
+      const BLUR_TEXT = {
+        de: 'Nach 4 erkippten Motiven –\nBewertung / Score',
+        en: 'After 4 tipped motifs –\nRating / Score',
+        es: 'Tras 4 motivos volcados –\nEvaluación / Score',
+        fr: 'Après 4 motifs basculés –\nÉvaluation / Score',
+        it: 'Dopo 4 motivi ribaltati –\nValutazione / Score',
+        tr: '4 devrilmiş motifin ardından –\nDeğerlendirme / Skor'
+      };
+      const blurMsg = (BLUR_TEXT[_digikippLang] || BLUR_TEXT.de).replace('\n', '<br>');
       const blurOvl = document.createElement('div');
-      // FIX 3: Blur-Overlay unter Hand (z-index 58), Hand bleibt auf 60
       blurOvl.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
         'backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);' +
         'background:rgba(10,5,0,0.5);z-index:58;opacity:0;' +
-        'transition:opacity 0.9s ease;pointer-events:none;';
+        'transition:opacity 0.9s ease;pointer-events:none;' +
+        'display:flex;align-items:center;justify-content:center;';
+      const blurTxt = document.createElement('div');
+      blurTxt.innerHTML = blurMsg;
+      blurTxt.style.cssText = 'color:#e8dcc8;font:bold 20px Arial;text-align:center;' +
+        'text-shadow:0 1px 4px rgba(0,0,0,0.9);line-height:1.5;letter-spacing:0.5px;' +
+        'opacity:0;transition:opacity 0.6s ease;padding:0 30px;';
+      blurOvl.appendChild(blurTxt);
       document.getElementById('uiOverlay').appendChild(blurOvl);
       void blurOvl.offsetWidth;
       blurOvl.style.opacity = '1';
-      await sleep(1000);
+      await sleep(600);
+      blurTxt.style.opacity = '1';
+      await sleep(3000); // +2s gegenüber vorher
+      blurTxt.style.opacity = '0';
+      await sleep(400);
       blurOvl.style.opacity = '0';
       await sleep(950);
       blurOvl.remove();
