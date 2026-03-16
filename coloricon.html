@@ -10824,7 +10824,9 @@
       
       // Würfelblick (ändert currentQuadrant + topFace)
       if (currentLevel >= 2) {
-        await autoBrainyBlick();
+        kipp21EckblickUsed = 0;
+        kipp21KniffActive = false;
+        await runKipp21EckblickKniff(true);
       } else {
         kipp21EckblickUsed = 0;
         kipp21KniffActive = false;
