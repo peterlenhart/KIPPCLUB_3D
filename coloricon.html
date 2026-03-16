@@ -6405,7 +6405,7 @@
       eckblickPivot = pivotGroup;
       
       // === Würfel hebt ab (Y-Achse, näher zum Betrachter) ===
-      const liftHeight = 0.25; // ~1.5 Zellen nach oben
+      const liftHeight = (currentLevel >= 2) ? 0.40625 : 0.25; // BRAINY/BRAIN: +45px näher
       const liftDur = 600;
       const origY = pivotGroup.position.y;
       await new Promise(resolve => {
@@ -11350,15 +11350,24 @@
       // "SPIELEN" statt "NOCHMAL" im Tutorial-Endscreen
       const _btnS = document.getElementById('btnSpielen');
       const _btnD = document.getElementById('btnDemo');
-      if (_btnS) _btnS.textContent = T.sp || 'SPIELEN';
+
+      // Score-Display aus Tutorial löschen
+      const _scoreEl = document.getElementById('levelScoreDisplay');
+      if (_scoreEl) _scoreEl.style.display = 'none';
+      document.getElementById('btnBestScores').classList.remove('pulsing');
 
       // replayBlocker JETZT deaktivieren — User kann Buttons sofort klicken
       disableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'auto';
       replayActive = false;
 
-      // btnDemo: alten addEventListener('click', handleStart) entfernen via Clone,
-      // dann nur noch direkte Navigation zu BRAINY setzen
+      // Beide Buttons clonen → alte addEventListener('click', handleStart) weg
+      if (_btnS) {
+        const _btnSClone = _btnS.cloneNode(true);
+        _btnS.parentNode.replaceChild(_btnSClone, _btnS);
+        _btnSClone.textContent = T.sp || 'SPIELEN';
+        _btnSClone.onclick = () => { location.reload(); };
+      }
       if (_btnD) {
         const _btnDClone = _btnD.cloneNode(true);
         _btnD.parentNode.replaceChild(_btnDClone, _btnD);
