@@ -10274,7 +10274,7 @@
       let lastMoveTime = 0;
       let velocity = 0;
       let momentumAnim = null;
-      let pixelOffset = 0; // continuous pixel offset during drag
+      let pixelOffset = 0;
       
       wrap.addEventListener('touchstart', (e) => {
         e.stopPropagation();
@@ -10296,24 +10296,24 @@
         const now = performance.now();
         const x = e.touches[0].clientX;
         const dx = x - touchStartX;
-        if (Math.abs(dx) > 5) touchMoved = true;
+        if (Math.abs(dx) > 4) touchMoved = true;
         
-        // Velocity tracking (geglättet)
+        // Velocity: Exponential smoothing, nur letzte 60ms berücksichtigen
         const dt = now - lastMoveTime;
-        if (dt > 0) {
+        if (dt > 0 && dt < 60) {
           const instantV = (x - lastMoveX) / dt;
-          velocity = velocity * 0.6 + instantV * 0.4;
+          velocity = velocity * 0.5 + instantV * 0.5;
+        } else if (dt >= 60) {
+          velocity = 0; // abgebrochene Bewegung
         }
         lastMoveX = x;
         lastMoveTime = now;
         
-        // Pixel-genaues Scrollen
         pixelOffset = dx;
         const wrapW = wrap.offsetWidth || 306;
         const baseOffset = -(touchStartIdx * CELL_W) + (wrapW / 2 - CELL_W / 2);
         strip.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
         
-        // bandIdx mitführen
         const idxDelta = Math.round(-dx / CELL_W);
         bandIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
         updateBandStyle();
@@ -10324,8 +10324,8 @@
         e.preventDefault();
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
         
-        // Tap (kein Swipe)
         if (!touchMoved) {
+          // Tap
           const touch = e.changedTouches[0];
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = touch.clientX - wrapRect.left;
@@ -10336,10 +10336,7 @@
           const offsetFromCenter = tapX - centerX;
           const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
           
-          if (tappedIdx !== bandIdx) {
-            // Nicht-mittige Zahl: nichts tun
-          } else {
-            // Mittige Zahl: Kipp auslösen
+          if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
             if (gamePhase === 'spielen' && !isAnimating) {
@@ -10360,14 +10357,15 @@
             }
           }
         } else {
-          // Swipe: Momentum-Coast
-          const coastPx = velocity * 180; // Pixel die noch gleiten
+          // Swipe: physikalisches Glide + Federschnapp
+          // Mehr Auslauf: Faktor 320 statt 180
+          const coastPx = velocity * 320;
           const totalDx = pixelOffset + coastPx;
           const idxDelta = Math.round(-totalDx / CELL_W);
           const targetIdx = Math.max(0, Math.min(TOTAL - 1, touchStartIdx + idxDelta));
           bandIdx = targetIdx;
           
-          // Geschmeidige Animation zum Snap
+          // Zielposition berechnen
           const wrapW = wrap.offsetWidth || 306;
           const widths = [];
           for (let i = 0; i < TOTAL; i++) {
@@ -10378,10 +10376,35 @@
           for (let i = 0; i < bandIdx; i++) centerOfActive += widths[i];
           centerOfActive += widths[bandIdx] / 2;
           const snapOffset = wrapW / 2 - centerOfActive;
-          strip.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-          strip.style.transform = 'translateX(' + snapOffset + 'px)';
+
+          // Federnde Einschnapp-Kurve: erst überschießen, dann zurückfedern
+          const startX = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
+          const dist = snapOffset - startX;
+          const dur = Math.min(600, Math.max(300, Math.abs(velocity) * 120 + 300));
+          const t0 = performance.now();
+          
+          strip.style.transition = 'none';
           updateBandStyle();
-          setTimeout(() => { updateBandStyle(); }, 520);
+          
+          function springSnap() {
+            const t = Math.min((performance.now() - t0) / dur, 1);
+            // Spring: cubic-bezier ähnlich — überschießt 8% dann federt zurück
+            const spring = t < 0.7
+              ? (t / 0.7) * (1 + 0.08 * Math.sin(t / 0.7 * Math.PI))
+              : 1 + 0.08 * Math.sin(Math.PI) * (1 - (t - 0.7) / 0.3);
+            const ease = 1 - Math.pow(1 - Math.min(t, 1), 3); // ease-out cubic
+            // Kombination: smooth glide mit federndem Überschwinger
+            const pos = startX + dist * (ease + 0.06 * Math.sin(t * Math.PI * 1.5) * (1 - t));
+            strip.style.transform = 'translateX(' + pos + 'px)';
+            if (t < 1) {
+              momentumAnim = requestAnimationFrame(springSnap);
+            } else {
+              strip.style.transform = 'translateX(' + snapOffset + 'px)';
+              momentumAnim = null;
+              updateBandStyle();
+            }
+          }
+          momentumAnim = requestAnimationFrame(springSnap);
         }
       }, { passive: false });
       
