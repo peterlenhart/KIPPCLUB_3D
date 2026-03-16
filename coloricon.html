@@ -6433,31 +6433,39 @@
 
       eckblickPivot = pivotGroup;
 
-      // 2+3. Hochsteigen + Neigen kombiniert
+      // 2. Senkrecht hochsteigen (komplett, ohne Tilt)
       const liftHeight  = (currentLevel >= 2) ? 0.40625 : 0.25;
       const liftRiseDur = 800;
-      const tiltStart   = 0.40; // Tilt beginnt bei 40% — genug Zeit zum sanften Einschwingen
       const origY = pivotGroup.position.y;
 
       await new Promise(resolve => {
         const startTime = performance.now();
         function animRise() {
           const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
-          const easeY = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.position.y = origY + liftHeight * easeY;
-          const tiltT = Math.max(0, (t - tiltStart) / (1 - tiltStart));
-          // Cubic ease-in-out: sehr sanft anlaufen und ankommen
-          const easeTilt = tiltT < 0.5 ? 4*tiltT*tiltT*tiltT : 1 - Math.pow(-2*tiltT+2, 3)/2;
-          pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, easeTilt));
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * ease;
           if (t < 1) requestAnimationFrame(animRise);
-          else {
-            pivotGroup.position.y = origY + liftHeight;
-            pivotGroup.quaternion.copy(tiltQuat);
-            resolve();
-          }
+          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
         }
         animRise();
       });
+
+      // 3. Tilt separat — volle 1000ms, sanft
+      const tiltInDur = 1000;
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          const startTime = performance.now();
+          function animTilt() {
+            const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
+            // Cubic ease-in-out: sehr sanft anlaufen und ankommen
+            const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
+            if (t < 1) requestAnimationFrame(animTilt);
+            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
+          }
+          animTilt();
+        });
+      }
 
       // 4. Halten
       if (!kipp21KniffAbort) {
@@ -6474,25 +6482,30 @@
         });
       }
 
-      // 5+6. Absinken + Neigung zurück kombiniert
-      const liftLowerDur = 800;
-      const untiltEnd    = 0.45;
+      // 5. Tilt zurück — separat, volle 800ms
+      const untiltDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animUntilt() {
+          const t = Math.min((performance.now() - startTime) / untiltDur, 1);
+          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, ease));
+          if (t < 1) requestAnimationFrame(animUntilt);
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+        }
+        animUntilt();
+      });
 
+      // 6. Senkrecht absinken
+      const liftLowerDur = 800;
       await new Promise(resolve => {
         const startTime = performance.now();
         function animLower() {
           const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
-          const easeY = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.position.y = origY + liftHeight * (1 - easeY);
-          const untiltT = Math.min(1, t / untiltEnd);
-          const easeUntilt = untiltT < 0.5 ? 2*untiltT*untiltT : 1 - Math.pow(-2*untiltT+2, 2)/2;
-          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, easeUntilt));
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * (1 - ease);
           if (t < 1) requestAnimationFrame(animLower);
-          else {
-            pivotGroup.position.y = origY;
-            pivotGroup.quaternion.copy(aufEckeY45);
-            resolve();
-          }
+          else { pivotGroup.position.y = origY; resolve(); }
         }
         animLower();
       });
