@@ -10832,26 +10832,32 @@
       await new Promise(r => setTimeout(r, 400));
       if (gamePhase !== 'spielen') return;
 
-      // Kippziel VOR dem Eckblick generieren und verdeckt anzeigen
       generateIconKippziel();
-      const kzEl = document.getElementById('iconKippzielRow') && document.getElementById('iconKippziel');
       const kzImgEl = document.getElementById('iconKippziel');
-      const ikr    = document.getElementById('iconKippzielRow');
-      const nb     = document.getElementById('numBtns');
+      const ikr     = document.getElementById('iconKippzielRow');
+      const nb      = document.getElementById('numBtns');
 
       if (kzImgEl) {
         kzImgEl.src        = 'motiv_verdeckt.png';
         kzImgEl.style.cssText = 'position:absolute;left:15px;top:0px;width:120px;height:120px;' +
           'border:3px solid #6b5040;border-radius:6px;background:#e8e0d4;' +
-          'box-shadow:-3px 2px 4px rgba(0,0,0,0.25);cursor:pointer;';
+          'box-shadow:-3px 2px 4px rgba(0,0,0,0.25);cursor:pointer;opacity:1;' +
+          'transition:opacity 0.4s ease;';
       }
       if (ikr) ikr.classList.remove('hidden');
       if (nb)  nb.classList.add('hidden');
       iconKippzielActive = false;
 
-      // Klick auf motiv_verdeckt → Eckblick abbrechen
+      // Klick auf "?" → sofort ausfaden + Eckblick abbrechen
+      let revealed = false;
       function abortEckblick(e) {
         e.preventDefault(); e.stopPropagation();
+        if (revealed) return;
+        revealed = true;
+        kzImgEl.removeEventListener('click',    abortEckblick);
+        kzImgEl.removeEventListener('touchend', abortEckblick);
+        // "?" sofort ausfaden — visuelles Signal
+        kzImgEl.style.opacity = '0';
         kipp21KniffAbort = true;
       }
       if (kzImgEl) {
@@ -10859,31 +10865,33 @@
         kzImgEl.addEventListener('touchend', abortEckblick, { passive: false });
       }
 
-      // Eckblick starten (alle Level)
+      // Eckblick läuft
       kipp21EckblickUsed = 0;
       kipp21KniffActive  = false;
       await runKipp21EckblickKniff(true);
 
-      // Listener wieder entfernen
+      // Listener entfernen (falls Eckblick natürlich endete)
       if (kzImgEl) {
         kzImgEl.removeEventListener('click',    abortEckblick);
         kzImgEl.removeEventListener('touchend', abortEckblick);
       }
 
-      // Kippziel aufdeckbar machen (Tap → Motiv + Scrollband)
-      function revealKippziel(e) {
-        e.preventDefault(); e.stopPropagation();
-        kzImgEl.removeEventListener('click',    revealKippziel);
-        kzImgEl.removeEventListener('touchend', revealKippziel);
-        const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
-        kzImgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
-        iconKippzielActive = true;
-        if (nb) nb.classList.remove('hidden');
-      }
+      // Jetzt Kippziel einblenden: Bild tauschen + einfaden
+      const motivBase = motivForVal(iconTargetVal).replace('_grau', '');
       if (kzImgEl) {
-        kzImgEl.addEventListener('click',    revealKippziel);
-        kzImgEl.addEventListener('touchend', revealKippziel, { passive: false });
+        kzImgEl.style.transition = 'none';
+        kzImgEl.style.opacity    = '0';
+        kzImgEl.src = motivBase + '_' + iconTargetFarbe + '.png';
+        // Kurz warten damit Browser das neue Bild lädt, dann einfaden
+        await new Promise(r => setTimeout(r, 60));
+        kzImgEl.style.transition = 'opacity 0.5s ease';
+        kzImgEl.style.opacity    = '1';
+        kzImgEl.style.cursor     = 'default';
+        await new Promise(r => setTimeout(r, 500));
       }
+
+      iconKippzielActive = true;
+      if (nb) nb.classList.remove('hidden');
     }
     
     async function autoBrainyBlick() {
