@@ -10896,9 +10896,21 @@
       }
 
       if (!revealed) {
-        // Eckblick natürlich beendet → Kippziel generieren + Cross-Fade
-        generateIconKippziel();
-        doCrossFade();
+        // Eckblick natürlich beendet → ? bleibt, Spieler klickt selbst
+        await new Promise(resolve => {
+          function playerReveal(e) {
+            e.preventDefault(); e.stopPropagation();
+            kzImgEl.removeEventListener('click',    playerReveal);
+            kzImgEl.removeEventListener('touchend', playerReveal);
+            generateIconKippziel();
+            doCrossFade();
+            resolve();
+          }
+          if (kzImgEl) {
+            kzImgEl.addEventListener('click',    playerReveal);
+            kzImgEl.addEventListener('touchend', playerReveal, { passive: false });
+          }
+        });
       }
 
       // Warten bis Cross-Fade fertig (2s)
