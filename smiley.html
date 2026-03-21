@@ -996,6 +996,11 @@
   <!-- Leveltafel Overlay — A1 verankert, left:0 top:0 -->
   <div id="leveltafelOverlay">
     <img id="leveltafelImg" src="leveltafel.webp" alt="Leveltafel">
+    <!-- Hinweistext Zeilen 1-2 -->
+    <div style="position:absolute; left:0; top:0; width:360px; height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+      <div style="font-family:Arial,sans-serif; font-weight:bold; font-size:18px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.7);">Wähle 4 Smileys</div>
+      <div style="font-family:Arial,sans-serif; font-size:14px; color:#f0f0f0; text-shadow:0 1px 3px rgba(0,0,0,0.7);">(beliebige aus allen 16)</div>
+    </div>
     <!-- Zeile 4 -->
     <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:90px; top:135px;">
     <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:135px; top:135px;">
@@ -1016,6 +1021,10 @@
     <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:135px; top:405px;">
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:180px; top:405px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:225px; top:405px;">
+    <!-- Bereit Button Zeile 12 -->
+    <div style="position:absolute; left:0; top:495px; width:360px; height:45px; display:flex; align-items:center; justify-content:center;">
+      <button id="btnBereit" style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:226px; height:42px; font-family:Arial,sans-serif; font-weight:bold; font-size:18px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">BEREIT?</button>
+    </div>
   </div>
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
