@@ -312,6 +312,7 @@
         <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild -->
         <div id="clickColor" class="gameClickArea"></div>
         <div id="clickCard" class="gameClickArea"></div>
+        <div id="clickSmiley" class="gameClickArea"></div>
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
@@ -419,6 +420,7 @@
 
       const clickColor = document.getElementById("clickColor");
       const clickCard  = document.getElementById("clickCard");
+      const clickSmiley = document.getElementById("clickSmiley");
       const clickQueen = document.getElementById("clickQueen");
       const clickKing  = document.getElementById("clickKing");
 
@@ -447,6 +449,13 @@
       clickQueen.style.top = row10 + "px";
       clickQueen.style.width = btnWidth + "px";
       clickQueen.style.height = btnHeight + "px";
+
+      // KIPP SMILEY: Zeile 8
+      const row8 = ((8 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickSmiley.style.left = btnLeft + "px";
+      clickSmiley.style.top = row8 + "px";
+      clickSmiley.style.width = btnWidth + "px";
+      clickSmiley.style.height = btnHeight + "px";
 
       // KIPP KING: Zeile 12
       const row12 = ((12 + HEADER_ROW_OFFSET - 1) * cellPx);
@@ -517,6 +526,9 @@
       selectedSkin = 'icons';
       updateLevelLinks();
       document.getElementById("levelOverlay").classList.add("show");
+    };
+    document.getElementById("clickSmiley").onclick = () => {
+      location.href = 'smiley.html';
     };
     function updateLevelLinks() {
       const base = selectedSkin === 'icons' ? 'coloricon.html' : 'training.html';
