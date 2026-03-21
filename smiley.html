@@ -971,17 +971,17 @@
     #leveltafelOverlay {
       display: none;
       position: fixed;
-      left: 50%; top: 0;
+      top: 0;
+      left: 50%;
       transform: translateX(-50%);
-      width: 360px; height: 720px;
+      width: 360px;
       z-index: 9000;
     }
     #leveltafelOverlay.show { display: block; }
     #leveltafelImg {
-      position: absolute;
-      left: 0; top: 0;
-      width: 360px; height: 720px;
-      object-fit: cover;
+      display: block;
+      width: 360px;
+      height: auto;
     }
     .leveltafelSmiley {
       position: absolute;
@@ -992,13 +992,16 @@
 </head>
 <body>
   <div id="container"></div>
-  
-  <!-- START-OVERLAY -->
-  <!-- Leveltafel Overlay -->
+
+  <!-- Leveltafel Overlay — A1 verankert, left:0 top:0 -->
   <div id="leveltafelOverlay">
     <img id="leveltafelImg" src="leveltafel.webp" alt="Leveltafel">
-    <!-- Smiley C4: left=90px, top=135px -->
     <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:90px; top:135px;">
+  </div>
+  
+  <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
+  <div id="resetButtonWrap">
+    <button id="resetButton"><img src="reset_smiley.png" alt="Zurück"></button>
   </div>
 
   <div id="startOverlay">
