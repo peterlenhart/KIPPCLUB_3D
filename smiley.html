@@ -718,8 +718,8 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnSpielen  { top: 428.5px; padding-top: 4px; padding-bottom: 16px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 489px;   padding-top: 4px; padding-bottom: 16px; font-size: 16px; letter-spacing: 2px; }
+    #btnSpielen  { top: 428.5px; padding-top: 10px; padding-bottom: 10px; font-size: 19px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 489px;   padding-top: 10px; padding-bottom: 10px; font-size: 17px; letter-spacing: 2px; }
     #btnDemo::before { background: url('button_lang_smiley_gr.webp') center/cover no-repeat; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
@@ -996,35 +996,31 @@
   <!-- Leveltafel Overlay — A1 verankert, left:0 top:0 -->
   <div id="leveltafelOverlay">
     <img id="leveltafelImg" src="leveltafel.webp" alt="Leveltafel">
-    <!-- Hinweistext Zeilen 1-2 -->
-    <div style="position:absolute; left:0; top:12px; width:450px; height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;">
+    <!-- Hinweistext zwischen Buttons und Leveltafel -->
+    <div style="position:absolute; left:0; top:48px; width:450px; height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
       <div style="font-family:Arial,sans-serif; font-weight:bold; font-size:36px; color:#2a1810;">Wähle 4 Smileys</div>
       <div style="font-family:Arial,sans-serif; font-size:19px; font-weight:bold; color:#2a1810; letter-spacing:-0.5px;">(beliebige aus allen 16)</div>
     </div>
     <!-- Zeile 4 -->
-    <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:168.75px;">
-    <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:168.75px; top:168.75px;">
-    <img class="leveltafelSmiley" src="smiley_orange_13.png" style="left:225px; top:168.75px;">
-    <img class="leveltafelSmiley" src="smiley_orange_14.png" style="left:281.25px; top:168.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:213.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:168.75px; top:213.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_13.png" style="left:225px; top:213.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_14.png" style="left:281.25px; top:213.75px;">
     <!-- Zeile 6 -->
-    <img class="leveltafelSmiley" src="smiley_gruen_21.png" style="left:112.5px; top:281.25px;">
-    <img class="leveltafelSmiley" src="smiley_gruen_22.png" style="left:168.75px; top:281.25px;">
-    <img class="leveltafelSmiley" src="smiley_gruen_23.png" style="left:225px; top:281.25px;">
-    <img class="leveltafelSmiley" src="smiley_gruen_24.png" style="left:281.25px; top:281.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_21.png" style="left:112.5px; top:326.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_22.png" style="left:168.75px; top:326.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_23.png" style="left:225px; top:326.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_24.png" style="left:281.25px; top:326.25px;">
     <!-- Zeile 8 -->
-    <img class="leveltafelSmiley" src="smiley_blau_31.png" style="left:112.5px; top:393.75px;">
-    <img class="leveltafelSmiley" src="smiley_blau_32.png" style="left:168.75px; top:393.75px;">
-    <img class="leveltafelSmiley" src="smiley_blau_33.png" style="left:225px; top:393.75px;">
-    <img class="leveltafelSmiley" src="smiley_blau_34.png" style="left:281.25px; top:393.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_31.png" style="left:112.5px; top:438.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_32.png" style="left:168.75px; top:438.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_33.png" style="left:225px; top:438.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_34.png" style="left:281.25px; top:438.75px;">
     <!-- Zeile 10 -->
-    <img class="leveltafelSmiley" src="smiley_violett_41.png" style="left:112.5px; top:506.25px;">
-    <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:506.25px;">
-    <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
-    <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
-    <!-- Bereit Button Zeile 12 -->
-    <div style="position:absolute; left:0; top:588.75px; width:450px; height:56.25px; display:flex; align-items:center; justify-content:center;">
-      <button id="btnBereit" style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:18px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px;">BEREIT?</button>
-    </div>
+    <img class="leveltafelSmiley" src="smiley_violett_41.png" style="left:112.5px; top:551.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:551.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:551.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:551.25px;">
   </div>
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
