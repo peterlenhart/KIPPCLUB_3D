@@ -4395,7 +4395,7 @@
           abtn.onclick = () => {
             hideAllEndBtns();
             try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-            window.location.href = 'index.html';
+            window.location.href = 'index.html?noflash=1';
           };
         }
         
@@ -9138,16 +9138,16 @@
       document.getElementById('saveGameOverlay').style.display = 'none';
     }, { passive: false });
     document.getElementById('sgBtnQuit').addEventListener('click', () => {
-      window.location.href = 'index.html';
+      window.location.href = 'index.html?noflash=1';
     });
     document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
       e.preventDefault();
-      window.location.href = 'index.html';
+      window.location.href = 'index.html?noflash=1';
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
       if (gamePhase === 'start') {
-        window.location.href = 'index.html';
+        window.location.href = 'index.html?noflash=1';
         return;
       }
       // Aktives Spiel: Bestätigung zeigen
@@ -9155,7 +9155,7 @@
         document.getElementById('saveGameOverlay').style.display = 'block';
         return;
       }
-      window.location.href = 'index.html';
+      window.location.href = 'index.html?noflash=1';
     });
 
     function _doNukeAndReset() {
