@@ -710,7 +710,7 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: url('button_lang.webp') center/cover no-repeat;
+      background: url('button_lang_smiley_bl.webp') center/cover no-repeat;
       opacity: 0.87;
       border-radius: 6px;
       z-index: -1;
@@ -718,8 +718,9 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnSpielen  { top: 451px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 530px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnSpielen  { top: 428.5px; padding-top: 4px; font-size: 18px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 468px;   padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
+    #btnDemo::before { background: url('button_lang_smiley_gr.webp') center/cover no-repeat; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
     @keyframes pokalPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
@@ -2041,8 +2042,8 @@
     // =========================
     // Würfel-Textur WebP (für f0, f1, f2)
     const cubeTexImg  = new Image(); cubeTexImg.src  = 'f0_kippsm.webp';
-    const cubeTexImgF1 = new Image(); cubeTexImgF1.src = 'f1_kippsm.webp';
-    const cubeTexImgF2 = new Image(); cubeTexImgF2.src = 'f2_kippsm.webp';
+    const cubeTexImgF1 = cubeTexImg;
+    const cubeTexImgF2 = cubeTexImg;
 
     // Leere Würfelflächen-Textur wird weiter unten geladen
     const cubeSize = 0.46875;
