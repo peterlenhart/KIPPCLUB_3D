@@ -967,12 +967,40 @@
       0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
+    /* Leveltafel Overlay */
+    #leveltafelOverlay {
+      display: none;
+      position: fixed;
+      left: 50%; top: 0;
+      transform: translateX(-50%);
+      width: 360px; height: 720px;
+      z-index: 9000;
+    }
+    #leveltafelOverlay.show { display: block; }
+    #leveltafelImg {
+      position: absolute;
+      left: 0; top: 0;
+      width: 360px; height: 720px;
+      object-fit: cover;
+    }
+    .leveltafelSmiley {
+      position: absolute;
+      width: 45px; height: 45px;
+      object-fit: contain;
+    }
   </style>
 </head>
 <body>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
+  <!-- Leveltafel Overlay -->
+  <div id="leveltafelOverlay">
+    <img id="leveltafelImg" src="leveltafel.webp" alt="Leveltafel">
+    <!-- Smiley C4: left=90px, top=135px -->
+    <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:90px; top:135px;">
+  </div>
+
   <div id="startOverlay">
     <div id="startChallengeText">
       <div class="sctLine sctHead" id="sctHead"></div>
@@ -8160,16 +8188,27 @@
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
+    function showLeveltafel(withTutorial) {
+      const overlay = document.getElementById('leveltafelOverlay');
+      overlay.dataset.withTutorial = withTutorial ? '1' : '0';
+      overlay.classList.add('show');
+    }
+    document.getElementById('leveltafelOverlay').addEventListener('click', () => {
+      const overlay = document.getElementById('leveltafelOverlay');
+      overlay.classList.remove('show');
+      handleStart(overlay.dataset.withTutorial === '1');
+    });
+
     document.getElementById('btnSpielen').addEventListener('click', () => {
-      handleStart(false);
+      showLeveltafel(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
-      handleStart(false);
+      showLeveltafel(false);
     }, { passive: false });
-    document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
+    document.getElementById('btnDemo').addEventListener('click', () => showLeveltafel(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
-      e.preventDefault(); handleStart(true);
+      e.preventDefault(); showLeveltafel(true);
     }, { passive: false });
     
     
