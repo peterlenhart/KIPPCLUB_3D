@@ -967,7 +967,8 @@
       0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
-    /* Leveltafel Overlay */
+    /* SMILEY: Diese UIs werden nicht benötigt */
+    #richtungButtons, #numBtns, #kippTarget, #jokerIconsRow { display: none !important; }
     #leveltafelOverlay {
       display: none;
       position: fixed;
@@ -1010,24 +1011,34 @@
     #hintLine1 { font-size: 36px; opacity: 1; }
     #hintLine2 { font-size: 28px; opacity: 0; }
     .leveltafelSmiley.selected {
-      outline: 4px solid #FFD700;
       border-radius: 50%;
-      box-shadow: 0 0 10px rgba(255,215,0,0.8);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     #spielzielBox {
       position: absolute;
-      left: 0; top: 58px;
+      left: 0; top: 0;
       width: 450px;
-      height: 45px;
+      height: 100%;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
-      background: rgba(0,0,0,0.55);
-      pointer-events: none;
+      gap: 16px;
+      pointer-events: auto;
     }
     #spielzielBox.show { display: flex; }
+    #selectedSmileysRow {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+    #selectedSmileysRow img {
+      width: 56px; height: 56px;
+      object-fit: contain;
+      border-radius: 50%;
+    }
     .leveltafelSmiley { opacity: 0; transition: opacity 0.6s ease; }
     .leveltafelSmiley.visible { opacity: 1; }
     .leveltafelSmiley {
@@ -1048,10 +1059,7 @@
       <div id="hintLine1">WÄHLE 4 SMILEYS</div>
       <div id="hintLine2">(beliebig aus allen 16)</div>
     </div>
-    <div id="spielzielBox">
-      <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.8);">DEIN SPIELSTIL:</div>
-      <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:18px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.8);">SKILL / CHILL &nbsp; 78 / 22</div>
-    </div>
+    <!-- 16 Smileys auf Leveltafel -->
     <!-- Zeile 4 -->
     <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:168.75px;">
     <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:168.75px; top:168.75px;">
@@ -1072,9 +1080,16 @@
     <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
-    <!-- BEREIT Button unter Leveltafel -->
+    <div id="spielzielBox">
+      <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:22px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.8);">DEIN SPIELSTIL:</div>
+      <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.8);">SKILL / CHILL &nbsp; 78 / 22</div>
+      <div id="selectedSmileysRow"></div>
+      <button onclick="resetLeveltafel()" style="background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; margin-top:8px;">NEU WÄHLEN</button>
+      <button id="btnLosGehts" style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
+    </div>
+    <!-- FERTIG Button -->
     <div style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
-      <button id="btnBereit" disabled style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px; opacity:0.4; transition:opacity 0.3s;">LOS GEHT'S</button>
+      <button id="btnBereit" disabled style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px; opacity:0.4; transition:opacity 0.3s;">FERTIG</button>
     </div>
   </div>
   
@@ -6296,104 +6311,110 @@
     
     async function runKipp21EckblickKniff(skipOpenGuard) {
       console.log('[ECKBLICK] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21EckblickUsed, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
-      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
-      if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
+      if (gamePhase !== 'demo' && gamePhase !== 'spielen' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[ECKBLICK] BLOCKED: no verdeckt'); return false; }
+      if (!skipOpenGuard && gamePhase !== 'demo' && gamePhase !== 'spielen' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
-      
-      // "Würfel-Einblick wählen" sofort ausblenden
-      const jLabelEck = document.querySelector('#jokerIconsRow .jokerLabel');
-      if (jLabelEck) jLabelEck.style.display = 'none';
-      
-      // Icon-Layer mit Pulse ausblenden
-      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      kniffImgs.forEach(img => {
-        img.style.pointerEvents = 'none';
-        if (img.dataset.kniffIdx === '1') {
-          const targetLayer = (kipp21EckblickUsed === 0) ? 'top' : 'bottom';
-          if (img.dataset.layer === targetLayer) {
-            img.style.transition = 'transform 0.18s ease-out';
-            img.style.transform = 'translateX(-50%) scale(1.3)';
-            setTimeout(() => {
-              img.style.transform = 'translateX(-50%) scale(0.5)';
-              img.style.opacity = '0';
-              setTimeout(() => { img.style.transition = ''; }, 200);
-            }, 180);
-          }
-        }
-      });
-      
+
       // Position merken für Rückkehr
       const savedPos = cube.position.clone();
       const savedQuat = cube.quaternion.clone();
       const savedQ = currentQuadrant;
       const savedF = topFace;
-      
+
       // --- Auf Ecke stellen ---
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
       const aufEckeDur = 1200;
-      
+
       const pivotGroup = new THREE.Group();
       pivotGroup.position.copy(cornerPos);
       kipGroup.add(pivotGroup);
-      
+
       cube.updateMatrixWorld();
       const cubeWorldPos = new THREE.Vector3();
       cube.getWorldPosition(cubeWorldPos);
       const cubeWorldQuat = new THREE.Quaternion();
       cube.getWorldQuaternion(cubeWorldQuat);
-      
+
       kipGroup.remove(cube);
       cube.position.copy(cubeWorldPos.clone().sub(cornerPos));
       cube.quaternion.copy(cubeWorldQuat);
       pivotGroup.add(cube);
-      
-      // Exakter analytischer Vektor Ecke→Würfelmitte (Körperdiagonale)
-      // Jeder Quadrant hat eine der 4 Raumdiagonalen
-      const o = 0.234375; // offset = halbe Kantenlänge
+
+      const o = 0.234375;
       const diagVectors = {
-        0: new THREE.Vector3(-o,  o, -o), // Q0 NW
-        1: new THREE.Vector3( o,  o, -o), // Q1 NE
-        2: new THREE.Vector3( o,  o,  o), // Q2 SE
-        3: new THREE.Vector3(-o,  o,  o)  // Q3 SW
+        0: new THREE.Vector3(-o,  o, -o),
+        1: new THREE.Vector3( o,  o, -o),
+        2: new THREE.Vector3( o,  o,  o),
+        3: new THREE.Vector3(-o,  o,  o)
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-      const targetDir = new THREE.Vector3(0, 1, 0);
-      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
-      
-      // Animation: auf Ecke kippen
+
+      // Optimierte Y-Rotation + Tilt — alle 3 Flächen gleich sichtbar
+      const perQ = [{y:45,t:14.5},{y:75,t:14.5},{y:45,t:14.5},{y:15,t:14.5}];
+      const { y: yDeg, t: tiltDeg } = perQ[currentQuadrant];
+
+      const upDir       = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
+      const yRot45      = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yDeg * Math.PI/180);
+      const aufEckeY45  = yRot45.clone().multiply(aufEckeQuat);
+      const xTilt       = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
+      const tiltQuat    = xTilt.clone().multiply(aufEckeY45);
+
+      // 1. Auf Ecke kippen
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
           const t = Math.min((performance.now() - startTime) / aufEckeDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, ease));
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeY45, ease));
           if (t < 1) requestAnimationFrame(animate);
-          else { pivotGroup.quaternion.copy(aufEckeQuat); resolve(); }
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
         }
         animate();
       });
-      
-      eckblickPivot = pivotGroup;
-      
-      // Auge-Icon über Boxmitte (3.5 Zellen über π1)
-      const eckEyePos = new THREE.Vector3(0, 7 * 0.15625, 0.109375);
-      eckEyePos.project(camera);
-      const eckEyeScreenX = (eckEyePos.x * 0.5 + 0.5) * 360;
-      const eckEyeScreenY = (-eckEyePos.y * 0.5 + 0.5) * 720;
-      const eckEye = document.getElementById('eyeIcon');
-      eckEye.style.cssText = 'position:absolute; left:' + eckEyeScreenX + 'px; top:' + eckEyeScreenY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
-      setTimeout(() => { eckEye.style.opacity = '1'; }, 50);
 
-      
-      // Timeout starten: nach KNIFF_SHOW_DURATION automatisch zurückfallen
+      eckblickPivot = pivotGroup;
+
+      // 2. Senkrecht hochsteigen
+      const liftHeight  = 0.40625; // MASTERBRAIN-Stil: starkes Heben
+      const liftRiseDur = 800;
+      const origY = pivotGroup.position.y;
+
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animRise() {
+          const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * ease;
+          if (t < 1) requestAnimationFrame(animRise);
+          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
+        }
+        animRise();
+      });
+
+      // 3. Tilt nach Süden
+      const tiltInDur = 1000;
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          const startTime = performance.now();
+          function animTilt() {
+            const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
+            const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
+            if (t < 1) requestAnimationFrame(animTilt);
+            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
+          }
+          animTilt();
+        });
+      }
+
+      // 4. Halten
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
           kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
-          // Abort-Check alle 100ms
           const checkAbort = setInterval(() => {
             if (kipp21KniffAbort) {
               clearInterval(checkAbort);
@@ -6404,53 +6425,72 @@
           }, 100);
         });
       }
-      
-      // Auge-Icon ausblenden
 
-      eckEye.style.opacity = '0';
-      
-      // --- Von Ecke zurückfallen lassen ---
-      const inverseQuat = aufEckeQuat.clone().invert();
+      // 5. Tilt zurück
+      const untiltDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animUntilt() {
+          const t = Math.min((performance.now() - startTime) / untiltDur, 1);
+          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, ease));
+          if (t < 1) requestAnimationFrame(animUntilt);
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+        }
+        animUntilt();
+      });
+
+      // 6. Senkrecht absinken
+      const liftLowerDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animLower() {
+          const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * (1 - ease);
+          if (t < 1) requestAnimationFrame(animLower);
+          else { pivotGroup.position.y = origY; resolve(); }
+        }
+        animLower();
+      });
+
+      // 7. Von Ecke zurückfallen
       const fallDur = 800;
-      
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
           const t = Math.min((performance.now() - startTime) / fallDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(new THREE.Quaternion(), ease));
+          pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(new THREE.Quaternion(), ease));
           if (t < 1) requestAnimationFrame(animate);
           else { pivotGroup.quaternion.set(0,0,0,1); resolve(); }
         }
         animate();
       });
-      
-      // Cleanup: Cube zurück in kipGroup
+
+      // Cleanup
       cube.updateMatrixWorld();
       const newWorldPos = new THREE.Vector3();
       cube.getWorldPosition(newWorldPos);
       const newWorldQuat = new THREE.Quaternion();
       cube.getWorldQuaternion(newWorldQuat);
-      
+
       pivotGroup.remove(cube);
       kipGroup.remove(pivotGroup);
       cube.position.copy(savedPos);
       cube.quaternion.copy(savedQuat);
       kipGroup.add(cube);
-      
+
       currentQuadrant = savedQ;
       topFace = savedF;
       eckblickPivot = null;
-      
+
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
-      eckEye.style.display = 'none';
-      
-      // Joker-Status aktualisieren
+
       refreshKniffIcons();
-      
-      // Ausstehenden Card-Tap oder Auto-Open
+
       if (kipp21PendingCardTap >= 0) {
         const pending = kipp21PendingCardTap;
         kipp21PendingCardTap = -1;
@@ -8346,18 +8386,36 @@
       }
     }
 
+    const LEVEL_COLORS = {
+      'orange': '#e67814',
+      'gruen':  '#00a652',
+      'blau':   '#006bb3',
+      'violett':'#a41b85'
+    };
+
+    function getLevelColor(src) {
+      if (src.includes('orange')) return LEVEL_COLORS.orange;
+      if (src.includes('gruen'))  return LEVEL_COLORS.gruen;
+      if (src.includes('blau'))   return LEVEL_COLORS.blau;
+      if (src.includes('violett'))return LEVEL_COLORS.violett;
+      return '#FFD700';
+    }
+
     document.querySelectorAll('.leveltafelSmiley').forEach(el => {
       el.style.cursor = 'pointer';
       el.addEventListener('click', () => {
         const idx = selectedSmileys.indexOf(el);
         if (idx >= 0) {
-          // Abwählen
           selectedSmileys.splice(idx, 1);
           el.classList.remove('selected');
+          el.style.outline = '';
+          el.style.boxShadow = '';
         } else if (selectedSmileys.length < 4) {
-          // Auswählen
           selectedSmileys.push(el);
           el.classList.add('selected');
+          const col = getLevelColor(el.src);
+          el.style.outline = `4px solid ${col}`;
+          el.style.boxShadow = `0 0 10px ${col}88`;
         }
         updateBereitButton();
       });
@@ -8381,9 +8439,19 @@
       document.getElementById('leveltafelHint').style.display = 'none';
       document.getElementById('leveltafelImg').style.filter = 'blur(10px) saturate(0.2) brightness(0.7) sepia(0.6)';
       document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL   ' + sc;
+
+      // Ausgewählte Smileys in Zeile anzeigen
+      const row = document.getElementById('selectedSmileysRow');
+      row.innerHTML = '';
+      selectedSmileys.forEach(el => {
+        const img = document.createElement('img');
+        img.src = el.src;
+        row.appendChild(img);
+      });
+
       document.getElementById('spielzielBox').classList.add('show');
 
-      // 4 Smiley-Bilder + 8 Teufel, random auf 12 Slots verteilen
+      // Smiley-Bilder auf Würfel laden
       const smileyImgs = selectedSmileys.map(el => {
         const img = new Image(); img.src = el.src; return img;
       });
@@ -8411,14 +8479,48 @@
         });
         updateCubeMaterials();
       });
-
-      // Nach 2.5s Spiel starten
-      const overlay = document.getElementById('leveltafelOverlay');
-      setTimeout(() => {
-        overlay.classList.remove('show');
-        handleStart(overlay.dataset.withTutorial === '1');
-      }, 2500);
     });
+
+    // LOS GEHT'S — startet Spiel
+    document.getElementById('btnLosGehts').addEventListener('click', () => {
+      const overlay = document.getElementById('leveltafelOverlay');
+      overlay.classList.remove('show');
+      if (window._hintLoop) clearInterval(window._hintLoop);
+      handleStart(overlay.dataset.withTutorial === '1');
+    });
+
+    // WEITER — alter Handler nicht mehr nötig (btnBereit = FERTIG)
+    document.getElementById('btnBereit').addEventListener('click', function() {
+      // handled by main btnBereit click listener above
+    });
+
+    function resetLeveltafel() {
+      document.getElementById('spielzielBox').classList.remove('show');
+      document.getElementById('leveltafelImg').style.filter = 'none';
+      document.getElementById('leveltafelHint').style.display = 'flex';
+      document.getElementById('selectedSmileysRow').innerHTML = '';
+      // Smileys abwählen
+      selectedSmileys.forEach(el => {
+        el.classList.remove('selected');
+        el.style.outline = '';
+        el.style.boxShadow = '';
+      });
+      selectedSmileys = [];
+      // FERTIG Button zurücksetzen
+      const btn = document.getElementById('btnBereit');
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+      // Hint-Loop neu starten
+      let showingLine1 = true;
+      document.getElementById('hintLine1').style.opacity = '1';
+      document.getElementById('hintLine2').style.opacity = '0';
+      if (window._hintLoop) clearInterval(window._hintLoop);
+      window._hintLoop = setInterval(() => {
+        showingLine1 = !showingLine1;
+        document.getElementById('hintLine1').style.opacity = showingLine1 ? '1' : '0';
+        document.getElementById('hintLine2').style.opacity = showingLine1 ? '0' : '1';
+      }, 3000);
+    }
 
     document.getElementById('btnSpielen').addEventListener('click', () => {
       showLeveltafel(false);
