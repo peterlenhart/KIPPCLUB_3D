@@ -1094,7 +1094,7 @@
       <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
     </div>
     <!-- FERTIG Button -->
-    <div style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
+    <div id="btnBereitWrap" style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
       <button id="btnBereit" disabled style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px; opacity:0.4; transition:opacity 0.3s;">FERTIG</button>
     </div>
   </div>
@@ -8469,7 +8469,7 @@
       });
 
       document.getElementById('spielzielBox').classList.add('show');
-      document.getElementById('btnBereit').style.display = 'none';
+      document.getElementById('btnBereitWrap').style.display = 'none';
 
       // Smiley-Bilder auf Würfel laden
       const smileyImgs = selectedSmileys.map(el => {
@@ -8524,18 +8524,14 @@
         el.style.opacity = '1';
         el.style.pointerEvents = 'auto';
       });
-      // Smileys abwählen
-      selectedSmileys.forEach(el => {
-        el.classList.remove('selected');
-        el.style.outline = '';
-        el.style.boxShadow = '';
-      });
-      selectedSmileys = [];
-      // FERTIG Button zurücksetzen
+      // Smileys bleiben ausgewählt und eingekreist
+      // FERTIG Button wieder zeigen
+      const wrap = document.getElementById('btnBereitWrap');
+      wrap.style.display = 'flex';
       const btn = document.getElementById('btnBereit');
-      btn.style.display = 'flex';
-      btn.disabled = true;
-      btn.style.opacity = '0.4';
+      btn.disabled = selectedSmileys.length < 4;
+      btn.style.opacity = selectedSmileys.length >= 4 ? '1' : '0.4';
+      // Smileys bleiben ausgewählt — Kreise bleiben sichtbar
       // Hint-Loop neu starten
       let showingLine1 = true;
       document.getElementById('hintLine1').style.opacity = '1';
