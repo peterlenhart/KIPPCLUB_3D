@@ -2240,8 +2240,8 @@
       const ctx = canvas.getContext('2d');
       const cell = 256 / 3;
 
-      // Würfel-Textur als Hintergrund — je nach Face spezifisches Bild
-      let faceTexImg = cubeTexImg; // f0 default
+      // Würfel-Textur als Hintergrund
+      let faceTexImg = cubeTexImg;
       if (slotMap === faceSlots.f1.slotMap) faceTexImg = cubeTexImgF1;
       else if (slotMap === faceSlots.f2.slotMap) faceTexImg = cubeTexImgF2;
       ctx.save();
@@ -2249,33 +2249,38 @@
       if (imgRotation) ctx.rotate(imgRotation);
       ctx.drawImage(faceTexImg, -128, -128, 256, 256);
       ctx.restore();
-      
-      // Kontrast reduzieren mit semi-transparentem Overlay
+
       ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.fillRect(0, 0, 256, 256);
 
-      // Slot-Zellen beschriften
       const alpha = (numberAlpha !== undefined) ? numberAlpha : 1;
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#2a1810';
-      ctx.font = 'bold 56px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+
       for (const key in slotMap) {
         const [r, c] = key.split(',').map(Number);
-        const { val, rot } = slotMap[key];
-        if (slotMap[key].vis === false) continue; // Kantenpaar-Sichtbarkeit
+        const { val, rot, img } = slotMap[key];
+        if (slotMap[key].vis === false) continue;
         const cx = c * cell + cell / 2;
         const cy = r * cell + cell / 2;
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(rot);
-        const dVal = displayNum(val);
-        drawCenteredText(ctx, dVal, 0, 0);
+        if (img && img.complete) {
+          // Smiley-Bild zeichnen
+          const size = cell * 0.85;
+          ctx.drawImage(img, -size/2, -size/2, size, size);
+        } else {
+          // Zahl zeichnen
+          ctx.fillStyle = '#2a1810';
+          ctx.font = 'bold 56px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const dVal = displayNum(val);
+          drawCenteredText(ctx, dVal, 0, 0);
+        }
         ctx.restore();
       }
 
-      // Rand
       ctx.globalAlpha = 1;
       ctx.strokeStyle = '#6b5040';
       ctx.lineWidth = 6;
@@ -2306,6 +2311,13 @@
     // f0 (+Z): S1,S2 von Westen lesbar (-π/2), S3,S4 stehen Kopf (π)
     // f1 (-X): S1,S2 stehen Kopf (π), S3,S4 von Süden lesbar (π/2)
     let cubeMaterial = [];
+
+    function updateCubeMaterials() {
+      cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 1);
+      cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 1);
+      cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 1);
+      if (cube) cube.material = cubeMaterial;
+    }
     const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
     const offset = cubeSize / 2;
 
@@ -8364,17 +8376,48 @@
       });
       const key = `${mb}|${brain}|${brainy}|${bb}`;
       const sc = SKILL_CHILL[key] || '78/22';
-      // Blur + Spielziel anzeigen
+      // Blur + Spielstil anzeigen
       if (window._hintLoop) clearInterval(window._hintLoop);
       document.getElementById('leveltafelHint').style.display = 'none';
       document.getElementById('leveltafelImg').style.filter = 'blur(10px) saturate(0.2) brightness(0.7) sepia(0.6)';
       document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL   ' + sc;
       document.getElementById('spielzielBox').classList.add('show');
-    });
-    document.getElementById('leveltafelOverlay').addEventListener('click', () => {
+
+      // 4 Smiley-Bilder + 8 Teufel, random auf 12 Slots verteilen
+      const smileyImgs = selectedSmileys.map(el => {
+        const img = new Image(); img.src = el.src; return img;
+      });
+      const teufelImgs = Array(8).fill(null).map(() => {
+        const img = new Image(); img.src = 'smiley_teufel.png'; return img;
+      });
+      const allImgs = [...smileyImgs, ...teufelImgs];
+      for (let i = allImgs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allImgs[i], allImgs[j]] = [allImgs[j], allImgs[i]];
+      }
+      const slotKeys = {
+        f0: ['2,0','1,0','0,1','0,2'],
+        f1: ['0,0','0,1','1,2','2,2'],
+        f2: ['2,2','2,1','1,0','0,0']
+      };
+      Promise.all(allImgs.map(img => new Promise(res => {
+        if (img.complete) res(); else img.onload = res;
+      }))).then(() => {
+        let idx = 0;
+        ['f0','f1','f2'].forEach(face => {
+          slotKeys[face].forEach(k => {
+            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
+          });
+        });
+        updateCubeMaterials();
+      });
+
+      // Nach 2.5s Spiel starten
       const overlay = document.getElementById('leveltafelOverlay');
-      overlay.classList.remove('show');
-      handleStart(overlay.dataset.withTutorial === '1');
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        handleStart(overlay.dataset.withTutorial === '1');
+      }, 2500);
     });
 
     document.getElementById('btnSpielen').addEventListener('click', () => {
