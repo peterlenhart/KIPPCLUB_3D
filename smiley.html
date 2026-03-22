@@ -989,14 +989,25 @@
     #leveltafelImg.sharp { filter: blur(0); }
     #leveltafelHint {
       position: absolute;
-      left: 0; top: 180px;
+      left: 0; top: 45px;
       width: 450px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-      opacity: 1;
-      transition: opacity 0.5s ease;
+      height: 45px;
+      display: flex; align-items: center; justify-content: center;
       pointer-events: none;
     }
     #leveltafelHint.hidden { opacity: 0; }
+    #hintLine1, #hintLine2 {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+      transition: opacity 0.8s ease;
+    }
+    #hintLine1 { font-size: 36px; opacity: 1; }
+    #hintLine2 { font-size: 34px; opacity: 0; }
     .leveltafelSmiley { opacity: 0; transition: opacity 0.6s ease; }
     .leveltafelSmiley.visible { opacity: 1; }
     .leveltafelSmiley {
@@ -1014,8 +1025,8 @@
     <img id="leveltafelImg" src="leveltafel.webp" alt="Leveltafel">
     <!-- Hinweistext -->
     <div id="leveltafelHint">
-      <div style="font-family:Arial,sans-serif; font-weight:bold; font-size:36px; color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.8);">WÄHLE 4 SMILEYS</div>
-      <div style="font-family:Arial,sans-serif; font-size:34px; font-weight:bold; color:#ffffff; letter-spacing:-0.5px; text-shadow:0 2px 6px rgba(0,0,0,0.8);">(beliebige aus allen 16)</div>
+      <div id="hintLine1">WÄHLE 4 SMILEYS</div>
+      <div id="hintLine2">(beliebig aus allen 16)</div>
     </div>
     <!-- Zeile 4 -->
     <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:168.75px;">
@@ -8237,10 +8248,16 @@
       overlay.classList.add('show');
       // Smileys versteckt
       document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.remove('visible'));
-      // Hint sichtbar, Bild verschwommen
-      document.getElementById('leveltafelHint').classList.remove('hidden');
+      // Zeile 1 sichtbar, Zeile 2 versteckt
+      document.getElementById('hintLine1').style.opacity = '1';
+      document.getElementById('hintLine2').style.opacity = '0';
       document.getElementById('leveltafelImg').classList.remove('sharp');
-      // Nach 3.5s: Hint ausblenden, Bild scharf, Smileys einblenden
+      // Nach 2.5s: Crossfade Zeile 1 → Zeile 2
+      setTimeout(() => {
+        document.getElementById('hintLine1').style.opacity = '0';
+        document.getElementById('hintLine2').style.opacity = '1';
+      }, 2500);
+      // Nach 5s: Hints weg, Bild scharf, Smileys einblenden
       setTimeout(() => {
         document.getElementById('leveltafelHint').classList.add('hidden');
         document.getElementById('leveltafelImg').classList.add('sharp');
