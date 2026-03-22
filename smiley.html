@@ -1577,6 +1577,17 @@
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
 
+    // Smiley-Spotlight — beleuchtet die Smiley-Face beim Eckblick
+    const smileySpot = new THREE.SpotLight(0xfff8e0, 2.5, 4, Math.PI/7, 0.3, 1.5);
+    smileySpot.position.set(0, 3, 2.5); // von oben-südlich
+    smileySpot.castShadow = false;
+    smileySpot.visible = false;
+    const smileySpotTarget = new THREE.Object3D();
+    smileySpotTarget.position.set(0, 0.234375, 0.343125);
+    scene.add(smileySpotTarget);
+    scene.add(smileySpot);
+    smileySpot.target = smileySpotTarget;
+
     // =========================
     // TISCH (π1 Ebene)
     // =========================
@@ -6413,6 +6424,11 @@
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * ease;
           pivotGroup.position.z = cornerPos.z + southShift * ease;
+          // Spotlight verfolgt Würfelposition
+          const cubeWorldP = new THREE.Vector3();
+          cube.getWorldPosition(cubeWorldP);
+          smileySpotTarget.position.copy(cubeWorldP);
+          smileySpot.visible = true;
           if (t < 1) requestAnimationFrame(animRise);
           else { pivotGroup.position.y = origY + liftHeight; pivotGroup.position.z = cornerPos.z + southShift; resolve(); }
         }
@@ -6473,8 +6489,19 @@
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * (1 - ease);
           pivotGroup.position.z = cornerPos.z + southShift * (1 - ease);
+          // Spotlight folgt und dimmt
+          const cubeWorldP = new THREE.Vector3();
+          cube.getWorldPosition(cubeWorldP);
+          smileySpotTarget.position.copy(cubeWorldP);
+          smileySpot.intensity = 2.5 * (1 - ease);
           if (t < 1) requestAnimationFrame(animLower);
-          else { pivotGroup.position.y = origY; pivotGroup.position.z = cornerPos.z; resolve(); }
+          else {
+            pivotGroup.position.y = origY;
+            pivotGroup.position.z = cornerPos.z;
+            smileySpot.visible = false;
+            smileySpot.intensity = 2.5;
+            resolve();
+          }
         }
         animLower();
       });
