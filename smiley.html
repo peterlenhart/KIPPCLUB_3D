@@ -1066,22 +1066,22 @@
       <div id="hintLine2">(beliebig aus allen 16)</div>
     </div>
     <!-- 16 Smileys auf Leveltafel -->
-    <!-- Zeile 4 -->
+    <!-- Zeile 4 = MASTERBRAIN (orange, _1x) -->
     <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:168.75px;">
     <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:168.75px; top:168.75px;">
     <img class="leveltafelSmiley" src="smiley_orange_13.png" style="left:225px; top:168.75px;">
     <img class="leveltafelSmiley" src="smiley_orange_14.png" style="left:281.25px; top:168.75px;">
-    <!-- Zeile 6 -->
+    <!-- Zeile 6 = BRAIN (gruen, _2x) -->
     <img class="leveltafelSmiley" src="smiley_gruen_21.png" style="left:112.5px; top:281.25px;">
     <img class="leveltafelSmiley" src="smiley_gruen_22.png" style="left:168.75px; top:281.25px;">
     <img class="leveltafelSmiley" src="smiley_gruen_23.png" style="left:225px; top:281.25px;">
     <img class="leveltafelSmiley" src="smiley_gruen_24.png" style="left:281.25px; top:281.25px;">
-    <!-- Zeile 8 -->
+    <!-- Zeile 8 = BRAINY (blau, _3x) -->
     <img class="leveltafelSmiley" src="smiley_blau_31.png" style="left:112.5px; top:393.75px;">
     <img class="leveltafelSmiley" src="smiley_blau_32.png" style="left:168.75px; top:393.75px;">
     <img class="leveltafelSmiley" src="smiley_blau_33.png" style="left:225px; top:393.75px;">
     <img class="leveltafelSmiley" src="smiley_blau_34.png" style="left:281.25px; top:393.75px;">
-    <!-- Zeile 10 -->
+    <!-- Zeile 10 = BUMBLEBRAIN (violett, _4x) -->
     <img class="leveltafelSmiley" src="smiley_violett_41.png" style="left:112.5px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
@@ -6417,17 +6417,36 @@
         animRise();
       });
 
-      // 3. Tilt nach Süden
+      // 3. Tilt nach Süden — oder Smiley-Face zur Kamera drehen
       const tiltInDur = 1000;
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
           const startTime = performance.now();
+          let targetQ;
+          if (window._smileyFaceForEckblick) {
+            // Smiley-Face frontal zur Kamera drehen
+            const faceNormals = {
+              f0: new THREE.Vector3(0, 0, 1),
+              f1: new THREE.Vector3(-1, 0, 0),
+              f2: new THREE.Vector3(0, 1, 0)
+            };
+            const faceNorm = faceNormals[window._smileyFaceForEckblick] || new THREE.Vector3(0, 0, 1);
+            const camDir = camera.position.clone().normalize();
+            targetQ = aufEckeY45.clone().multiply(
+              new THREE.Quaternion().setFromUnitVectors(
+                faceNorm.clone().applyQuaternion(aufEckeY45),
+                camDir
+              )
+            );
+          } else {
+            targetQ = tiltQuat;
+          }
           function animTilt() {
             const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
             const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
+            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(targetQ, ease));
             if (t < 1) requestAnimationFrame(animTilt);
-            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
+            else { pivotGroup.quaternion.copy(targetQ); resolve(); }
           }
           animTilt();
         });
@@ -6510,6 +6529,7 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
+      window._smileyFaceForEckblick = null; // reset
 
       refreshKniffIcons();
 
@@ -8390,10 +8410,11 @@
     let selectedSmileys = [];
 
     function getCategory(src) {
-      if (src.includes('blau'))   return 'mb';
-      if (src.includes('gruen'))  return 'brain';
-      if (src.includes('orange')) return 'brainy';
-      if (src.includes('violett'))return 'bb';
+      // Zehnerstelle im Dateinamen = Level: 1=MASTERBRAIN, 2=BRAIN, 3=BRAINY, 4=BUMBLEBRAIN
+      if (src.includes('_1')) return 'mb';      // smiley_orange_1x = MASTERBRAIN
+      if (src.includes('_2')) return 'brain';   // smiley_gruen_2x  = BRAIN
+      if (src.includes('_3')) return 'brainy';  // smiley_blau_3x   = BRAINY
+      if (src.includes('_4')) return 'bb';      // smiley_violett_4x = BUMBLEBRAIN
       return null;
     }
 
@@ -8552,94 +8573,14 @@
         });
         updateCubeMaterials();
 
-        // Spiel starten dann Auto-Rise-Showtime
+        // Smiley-Face für Eckblick speichern, dann Eckblick starten
+        window._smileyFaceForEckblick = smileyFace;
         handleStart(overlay.dataset.withTutorial === '1');
         setTimeout(() => {
-          _smileyAutoRise(smileyFace);
+          runKipp21EckblickKniff(true);
         }, 800);
       });
     });
-
-    // Auto-Rise: Würfel steigt, dreht Smiley-Fläche frontal, hält 2.5s, senkt ab
-    async function _smileyAutoRise(smileyFace) {
-      if (!cube || !kipGroup) return;
-
-      const savedPos = cube.position.clone();
-      const savedQuat = cube.quaternion.clone();
-      const savedQ = currentQuadrant;
-      const savedF = topFace;
-
-      const liftHeight = 0.5; // hoch genug
-      const riseDur = 900;
-      const origY = kipGroup.position ? kipGroup.position.y : 0;
-
-      // 1. Aufsteigen
-      await new Promise(resolve => {
-        const start = performance.now();
-        function animRise() {
-          const t = Math.min((performance.now() - start) / riseDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-          cube.position.y = savedPos.y + liftHeight * ease;
-          if (t < 1) requestAnimationFrame(animRise);
-          else { cube.position.y = savedPos.y + liftHeight; resolve(); }
-        }
-        animRise();
-      });
-
-      // 2. Smiley-Fläche frontal drehen zur Kamera
-      // Kamera schaut von Süden/oben → Smiley-Fläche muss nach Süden/vorne zeigen
-      // f2 = +Y (oben), f0 = +Z (süd/vorne), f1 = -X (west)
-      // Ziel: Face normal zeigt Richtung Kamera (0, baseY, radius+southShift)
-      const faceNormals = {
-        f0: new THREE.Vector3(0, 0, 1),  // +Z = Süd = frontal ✓
-        f1: new THREE.Vector3(-1, 0, 0), // -X = West
-        f2: new THREE.Vector3(0, 1, 0)   // +Y = oben
-      };
-      // Zielrichtung: von Würfelzentrum zur Kamera
-      const camDir = camera.position.clone().sub(cube.position.clone().add(new THREE.Vector3(0, savedPos.y + liftHeight, 0))).normalize();
-      const faceNorm = faceNormals[smileyFace] || new THREE.Vector3(0, 0, 1);
-      const targetQuat = new THREE.Quaternion().setFromUnitVectors(faceNorm, camDir);
-
-      const rotateDur = 700;
-      const startQuat = cube.quaternion.clone();
-      await new Promise(resolve => {
-        const start = performance.now();
-        function animRot() {
-          const t = Math.min((performance.now() - start) / rotateDur, 1);
-          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
-          cube.quaternion.copy(startQuat.clone().slerp(targetQuat, ease));
-          if (t < 1) requestAnimationFrame(animRot);
-          else { cube.quaternion.copy(targetQuat); resolve(); }
-        }
-        animRot();
-      });
-
-      // 3. Halten 2.5s
-      await new Promise(resolve => setTimeout(resolve, 2500));
-
-      // 4. Absenken und zurück zur Ursprungsrotation
-      const lowerDur = 800;
-      const quatBeforeLower = cube.quaternion.clone();
-      await new Promise(resolve => {
-        const start = performance.now();
-        function animLower() {
-          const t = Math.min((performance.now() - start) / lowerDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-          cube.position.y = (savedPos.y + liftHeight) * (1 - ease) + savedPos.y * ease;
-          cube.quaternion.copy(quatBeforeLower.clone().slerp(savedQuat, ease));
-          if (t < 1) requestAnimationFrame(animLower);
-          else {
-            cube.position.copy(savedPos);
-            cube.quaternion.copy(savedQuat);
-            resolve();
-          }
-        }
-        animLower();
-      });
-
-      currentQuadrant = savedQ;
-      topFace = savedF;
-    }
 
     // WEITER — alter Handler nicht mehr nötig (btnBereit = FERTIG)
     document.getElementById('btnBereit').addEventListener('click', function() {
