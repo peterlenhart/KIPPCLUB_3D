@@ -8676,7 +8676,7 @@
     function showScrollband() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      el.style.top = '557px';
+      el.style.top = '497px';
       el.classList.remove('hidden');
       el.style.display = 'block';
     }
@@ -8686,6 +8686,24 @@
       if (!el) return;
       el.classList.add('hidden');
       el.style.display = 'none';
+    }
+
+    // Scrollband-Kipp: n Kipps CW ausführen
+    async function _smileyDoKipps(n) {
+      if (isAnimating || gamePhase !== 'spielen') return;
+      isAnimating = true;
+      for (let i = 0; i < n; i++) {
+        let dir;
+        if      (currentQuadrant === 0) dir = 'east';
+        else if (currentQuadrant === 1) dir = 'south_from_q1';
+        else if (currentQuadrant === 2) dir = 'west_from_q2';
+        else                            dir = 'north';
+        await performKipp(dir, 500);
+        advanceTopFace();
+        if (i < n - 1) await new Promise(r => setTimeout(r, 100));
+      }
+      isAnimating = false;
+      if (window._resetScrollBand) window._resetScrollBand();
     }
 
     // WEITER — alter Handler nicht mehr nötig (btnBereit = FERTIG)
@@ -10849,6 +10867,7 @@
             const n = bandIdx + 1;
             selectNum(n);
             window._selectedKippAnzahl = n;
+            _smileyDoKipps(n);
           } else {
             bandIdx = tappedIdx;
             updateBandPos(true);
@@ -10888,6 +10907,7 @@
           const n = bandIdx + 1;
           selectNum(n);
           window._selectedKippAnzahl = n;
+          _smileyDoKipps(n);
         } else {
           bandIdx = tappedIdx;
           updateBandPos(true);
@@ -10906,7 +10926,7 @@
     (function() {
       const el = document.getElementById('numBtns');
       if (!el) return;
-      el.style.top = '557px';
+      el.style.top = '497px';
     })();
 
     // DEBUG: If this text appears, the script reached the end without crash
