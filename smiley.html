@@ -982,8 +982,23 @@
       display: block;
       width: 450px;
       height: auto;
-      margin-top: 45px;
+      margin-top: 0;
+      filter: blur(6px);
+      transition: filter 0.6s ease;
     }
+    #leveltafelImg.sharp { filter: blur(0); }
+    #leveltafelHint {
+      position: absolute;
+      left: 0; top: 80px;
+      width: 450px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    #leveltafelHint.hidden { opacity: 0; }
+    .leveltafelSmiley { opacity: 0; transition: opacity 0.6s ease; }
+    .leveltafelSmiley.visible { opacity: 1; }
     .leveltafelSmiley {
       position: absolute;
       width: 56.25px; height: 56.25px;
@@ -997,31 +1012,31 @@
   <!-- Leveltafel Overlay — A1 verankert, left:0 top:0 -->
   <div id="leveltafelOverlay">
     <img id="leveltafelImg" src="leveltafel.webp" alt="Leveltafel">
-    <!-- Hinweistext zwischen Buttons und Leveltafel -->
-    <div style="position:absolute; left:0; top:48px; width:450px; height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+    <!-- Hinweistext -->
+    <div id="leveltafelHint">
       <div style="font-family:Arial,sans-serif; font-weight:bold; font-size:36px; color:#2a1810;">Wähle 4 Smileys</div>
       <div style="font-family:Arial,sans-serif; font-size:19px; font-weight:bold; color:#2a1810; letter-spacing:-0.5px;">(beliebige aus allen 16)</div>
     </div>
     <!-- Zeile 4 -->
-    <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:213.75px;">
-    <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:168.75px; top:213.75px;">
-    <img class="leveltafelSmiley" src="smiley_orange_13.png" style="left:225px; top:213.75px;">
-    <img class="leveltafelSmiley" src="smiley_orange_14.png" style="left:281.25px; top:213.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:168.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_12.png" style="left:168.75px; top:168.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_13.png" style="left:225px; top:168.75px;">
+    <img class="leveltafelSmiley" src="smiley_orange_14.png" style="left:281.25px; top:168.75px;">
     <!-- Zeile 6 -->
-    <img class="leveltafelSmiley" src="smiley_gruen_21.png" style="left:112.5px; top:326.25px;">
-    <img class="leveltafelSmiley" src="smiley_gruen_22.png" style="left:168.75px; top:326.25px;">
-    <img class="leveltafelSmiley" src="smiley_gruen_23.png" style="left:225px; top:326.25px;">
-    <img class="leveltafelSmiley" src="smiley_gruen_24.png" style="left:281.25px; top:326.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_21.png" style="left:112.5px; top:281.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_22.png" style="left:168.75px; top:281.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_23.png" style="left:225px; top:281.25px;">
+    <img class="leveltafelSmiley" src="smiley_gruen_24.png" style="left:281.25px; top:281.25px;">
     <!-- Zeile 8 -->
-    <img class="leveltafelSmiley" src="smiley_blau_31.png" style="left:112.5px; top:438.75px;">
-    <img class="leveltafelSmiley" src="smiley_blau_32.png" style="left:168.75px; top:438.75px;">
-    <img class="leveltafelSmiley" src="smiley_blau_33.png" style="left:225px; top:438.75px;">
-    <img class="leveltafelSmiley" src="smiley_blau_34.png" style="left:281.25px; top:438.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_31.png" style="left:112.5px; top:393.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_32.png" style="left:168.75px; top:393.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_33.png" style="left:225px; top:393.75px;">
+    <img class="leveltafelSmiley" src="smiley_blau_34.png" style="left:281.25px; top:393.75px;">
     <!-- Zeile 10 -->
-    <img class="leveltafelSmiley" src="smiley_violett_41.png" style="left:112.5px; top:551.25px;">
-    <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:551.25px;">
-    <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:551.25px;">
-    <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:551.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_41.png" style="left:112.5px; top:506.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:506.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
+    <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
   </div>
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
@@ -8220,6 +8235,17 @@
       const overlay = document.getElementById('leveltafelOverlay');
       overlay.dataset.withTutorial = withTutorial ? '1' : '0';
       overlay.classList.add('show');
+      // Smileys versteckt
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.remove('visible'));
+      // Hint sichtbar, Bild verschwommen
+      document.getElementById('leveltafelHint').classList.remove('hidden');
+      document.getElementById('leveltafelImg').classList.remove('sharp');
+      // Nach 3.5s: Hint ausblenden, Bild scharf, Smileys einblenden
+      setTimeout(() => {
+        document.getElementById('leveltafelHint').classList.add('hidden');
+        document.getElementById('leveltafelImg').classList.add('sharp');
+        document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.add('visible'));
+      }, 3500);
     }
     document.getElementById('leveltafelOverlay').addEventListener('click', () => {
       const overlay = document.getElementById('leveltafelOverlay');
