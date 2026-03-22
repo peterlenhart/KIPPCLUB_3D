@@ -718,8 +718,8 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnSpielen  { top: 428.5px; padding-top: 6px; padding-bottom: 14px; font-size: 19px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 489px;   padding-top: 6px; padding-bottom: 14px; font-size: 17px; letter-spacing: 2px; }
+    #btnSpielen  { top: 428.5px; padding-top: 9px; padding-bottom: 11px; font-size: 19px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 489px;   padding-top: 9px; padding-bottom: 11px; font-size: 17px; letter-spacing: 2px; }
     #btnDemo::before { background: url('button_lang_smiley_gr.webp') center/cover no-repeat; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
@@ -983,17 +983,18 @@
       width: 450px;
       height: auto;
       margin-top: 0;
-      filter: blur(12px) saturate(0.2) brightness(0.7) sepia(0.6);
-      transition: filter 0.6s ease;
+      filter: none;
+      transition: none;
     }
     #leveltafelImg.sharp { filter: blur(0); }
     #leveltafelHint {
       position: absolute;
-      left: 0; top: 45px;
+      left: 0; top: 55px;
       width: 450px;
       height: 45px;
       display: flex; align-items: center; justify-content: center;
       pointer-events: none;
+      background: rgba(0,0,0,0.45);
     }
     #leveltafelHint.hidden { opacity: 0; }
     #hintLine1, #hintLine2 {
@@ -1007,7 +1008,7 @@
       transition: opacity 0.8s ease;
     }
     #hintLine1 { font-size: 36px; opacity: 1; }
-    #hintLine2 { font-size: 34px; opacity: 0; }
+    #hintLine2 { font-size: 28px; opacity: 0; }
     .leveltafelSmiley { opacity: 0; transition: opacity 0.6s ease; }
     .leveltafelSmiley.visible { opacity: 1; }
     .leveltafelSmiley {
@@ -8251,7 +8252,7 @@
       // Zeile 1 sichtbar, Zeile 2 versteckt
       document.getElementById('hintLine1').style.opacity = '1';
       document.getElementById('hintLine2').style.opacity = '0';
-      document.getElementById('leveltafelImg').classList.remove('sharp');
+      document.getElementById('leveltafelImg').classList.add('sharp');
       // Nach 2.5s: Crossfade Zeile 1 → Zeile 2
       setTimeout(() => {
         document.getElementById('hintLine1').style.opacity = '0';
