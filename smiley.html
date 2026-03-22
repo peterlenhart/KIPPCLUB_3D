@@ -6374,7 +6374,7 @@
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
 
-      // Optimierte Y-Rotation + Tilt — alle 3 Flächen gleich sichtbar
+      // Optimierte Y-Rotation + Tilt — BRAIN-Level fix (für Smiley-Sichtbarkeit)
       const perQ = [{y:45,t:14.5},{y:75,t:14.5},{y:45,t:14.5},{y:15,t:14.5}];
       const { y: yDeg, t: tiltDeg } = perQ[currentQuadrant];
 
@@ -6400,8 +6400,9 @@
 
       eckblickPivot = pivotGroup;
 
-      // 2. Senkrecht hochsteigen
-      const liftHeight  = 0.40625; // MASTERBRAIN-Stil: starkes Heben
+      // 2. Senkrecht hochsteigen + südwärts — über Zeile 11 Mitte
+      const liftHeight  = 0.46875;   // 3 Zellen Y+
+      const southShift  = 0.234375;  // 1.5 Zellen Z+ (südwärts)
       const liftRiseDur = 800;
       const origY = pivotGroup.position.y;
 
@@ -6411,42 +6412,24 @@
           const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * ease;
+          pivotGroup.position.z = cornerPos.z + southShift * ease;
           if (t < 1) requestAnimationFrame(animRise);
-          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
+          else { pivotGroup.position.y = origY + liftHeight; pivotGroup.position.z = cornerPos.z + southShift; resolve(); }
         }
         animRise();
       });
 
-      // 3. Tilt nach Süden — oder Smiley-Face zur Kamera drehen
+      // 3. Tilt — exakt BRAIN-Level
       const tiltInDur = 1000;
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
           const startTime = performance.now();
-          let targetQ;
-          if (window._smileyFaceForEckblick) {
-            // Smiley-Face frontal zur Kamera drehen
-            const faceNormals = {
-              f0: new THREE.Vector3(0, 0, 1),
-              f1: new THREE.Vector3(-1, 0, 0),
-              f2: new THREE.Vector3(0, 1, 0)
-            };
-            const faceNorm = faceNormals[window._smileyFaceForEckblick] || new THREE.Vector3(0, 0, 1);
-            const camDir = camera.position.clone().normalize();
-            targetQ = aufEckeY45.clone().multiply(
-              new THREE.Quaternion().setFromUnitVectors(
-                faceNorm.clone().applyQuaternion(aufEckeY45),
-                camDir
-              )
-            );
-          } else {
-            targetQ = tiltQuat;
-          }
           function animTilt() {
             const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
             const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(targetQ, ease));
+            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
             if (t < 1) requestAnimationFrame(animTilt);
-            else { pivotGroup.quaternion.copy(targetQ); resolve(); }
+            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
           }
           animTilt();
         });
@@ -6489,8 +6472,9 @@
           const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * (1 - ease);
+          pivotGroup.position.z = cornerPos.z + southShift * (1 - ease);
           if (t < 1) requestAnimationFrame(animLower);
-          else { pivotGroup.position.y = origY; resolve(); }
+          else { pivotGroup.position.y = origY; pivotGroup.position.z = cornerPos.z; resolve(); }
         }
         animLower();
       });
