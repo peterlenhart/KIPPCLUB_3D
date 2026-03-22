@@ -968,12 +968,26 @@
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
     /* SMILEY: Diese UIs werden nicht benötigt */
-    #richtungButtons, #numBtns, #kippTarget, #jokerIconsRow { display: none !important; }
+    #richtungButtons, #kippTarget, #jokerIconsRow { display: none !important; }
     /* SMILEY: Alle Kippziel-Elemente verstecken */
     #verdecktesKippziel, #kippzielRow, #kippzielCards, #zumSpielBtn,
     #progressDots, #hintText, #instructionText, #tutorialText,
     #spielZielText, #entscheidungText, #demoSubtitle, #eyeIcon,
     #skipEndBtn, #countdown { display: none !important; }
+
+    /* Scrollband */
+    #scrollBandWrap::before, #scrollBandWrap::after {
+      content: ''; position:absolute; top:0; width:35%; height:100%;
+      z-index:2; pointer-events:none;
+    }
+    #scrollBandWrap::before { left:0; background:linear-gradient(to right, rgba(40,30,20,0.6) 0%, transparent 100%); }
+    #scrollBandWrap::after  { right:0; background:linear-gradient(to left, rgba(40,30,20,0.6) 0%, transparent 100%); }
+    .numBtn {
+      width:56px; height:52px; display:flex; align-items:center; justify-content:center;
+      font-family:Arial,sans-serif; font-weight:bold; font-size:26px; color:#2a1810;
+      cursor:pointer; flex-shrink:0; user-select:none;
+    }
+    .numBtn.selected { color:#c8a040; }
     #leveltafelOverlay {
       display: none;
       position: fixed;
@@ -1021,15 +1035,19 @@
     }
     #spielzielBox {
       position: absolute;
-      left: 0; top: 55px;
-      width: 450px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+      width: 360px;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       gap: 10px;
-      padding-top: 8px;
+      padding-top: 60px;
       pointer-events: auto;
+      z-index: 2;
+      background: url('overlaywiese_smiley.webp') center top / 100% auto no-repeat;
     }
     #spielzielBox.show { display: flex; }
     #selectedSmileysRow {
@@ -1086,6 +1104,7 @@
     <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
+    <img id="overlayWiese" src="overlaywiese_smiley.webp" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:0; width:360px; height:auto; z-index:1; pointer-events:none;">
     <div id="spielzielBox">
       <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);">DEIN SPIELSTIL:</div>
       <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);">SKILL / CHILL &nbsp; 78 / 22</div>
@@ -1213,14 +1232,30 @@
 
     <!-- Kippanzahl: 6 Tasten in 2×3 Grid -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div style="display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(2,38px); gap:4px;">
-        <div class="numBtn" data-num="1">1</div>
-        <div class="numBtn" data-num="2">2</div>
-        <div class="numBtn" data-num="3">3</div>
-        <div class="numBtn" data-num="4">4</div>
-        <div class="numBtn" data-num="5">5</div>
-        <div class="numBtn" data-num="6">6</div>
+      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); position:relative;">
+        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease; position:relative; z-index:1;">
+          <div class="numBtn" data-num="1">1</div>
+          <div class="numBtn" data-num="2">2</div>
+          <div class="numBtn" data-num="3">3</div>
+          <div class="numBtn" data-num="4">4</div>
+          <div class="numBtn" data-num="5">5</div>
+          <div class="numBtn" data-num="6">6</div>
+          <div class="numBtn" data-num="7">7</div>
+          <div class="numBtn" data-num="8">8</div>
+          <div class="numBtn" data-num="9">9</div>
+          <div class="numBtn" data-num="10">10</div>
+          <div class="numBtn" data-num="11">11</div>
+        </div>
+        <div id="scrollBandCenter" style="position:absolute; top:0; bottom:0; left:50%; transform:translateX(-50%); width:56px; border-left:2px solid rgba(90,60,20,0.55); border-right:2px solid rgba(90,60,20,0.55); pointer-events:none; z-index:3; box-shadow:inset 0 0 8px rgba(90,60,20,0.12);"></div>
       </div>
+    </div>
+
+    <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
+    <div id="handOverlays" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; display:none;">
+      <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+      <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+      <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+      <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
     </div>
 
   </div>
@@ -1576,17 +1611,6 @@
     const fillLightSouth = new THREE.DirectionalLight(0xffffff, 0.28);
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
-
-    // Smiley-Spotlight — beleuchtet die Smiley-Face beim Eckblick
-    const smileySpot = new THREE.SpotLight(0xfff8e0, 2.5, 4, Math.PI/7, 0.3, 1.5);
-    smileySpot.position.set(0, 3, 2.5); // von oben-südlich
-    smileySpot.castShadow = false;
-    smileySpot.visible = false;
-    const smileySpotTarget = new THREE.Object3D();
-    smileySpotTarget.position.set(0, 0.234375, 0.343125);
-    scene.add(smileySpotTarget);
-    scene.add(smileySpot);
-    smileySpot.target = smileySpotTarget;
 
     // =========================
     // TISCH (π1 Ebene)
@@ -6424,11 +6448,6 @@
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * ease;
           pivotGroup.position.z = cornerPos.z + southShift * ease;
-          // Spotlight verfolgt Würfelposition
-          const cubeWorldP = new THREE.Vector3();
-          cube.getWorldPosition(cubeWorldP);
-          smileySpotTarget.position.copy(cubeWorldP);
-          smileySpot.visible = true;
           if (t < 1) requestAnimationFrame(animRise);
           else { pivotGroup.position.y = origY + liftHeight; pivotGroup.position.z = cornerPos.z + southShift; resolve(); }
         }
@@ -6489,19 +6508,8 @@
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           pivotGroup.position.y = origY + liftHeight * (1 - ease);
           pivotGroup.position.z = cornerPos.z + southShift * (1 - ease);
-          // Spotlight folgt und dimmt
-          const cubeWorldP = new THREE.Vector3();
-          cube.getWorldPosition(cubeWorldP);
-          smileySpotTarget.position.copy(cubeWorldP);
-          smileySpot.intensity = 2.5 * (1 - ease);
           if (t < 1) requestAnimationFrame(animLower);
-          else {
-            pivotGroup.position.y = origY;
-            pivotGroup.position.z = cornerPos.z;
-            smileySpot.visible = false;
-            smileySpot.intensity = 2.5;
-            resolve();
-          }
+          else { pivotGroup.position.y = origY; pivotGroup.position.z = cornerPos.z; resolve(); }
         }
         animLower();
       });
@@ -6540,7 +6548,11 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
-      window._smileyFaceForEckblick = null; // reset
+      window._smileyFaceForEckblick = null;
+
+      // Hände und Scrollband einblenden
+      showSmileyHands();
+      showScrollband();
 
       refreshKniffIcons();
 
@@ -8421,11 +8433,10 @@
     let selectedSmileys = [];
 
     function getCategory(src) {
-      // Zehnerstelle im Dateinamen = Level: 1=MASTERBRAIN, 2=BRAIN, 3=BRAINY, 4=BUMBLEBRAIN
-      if (src.includes('_1')) return 'mb';      // smiley_orange_1x = MASTERBRAIN
-      if (src.includes('_2')) return 'brain';   // smiley_gruen_2x  = BRAIN
-      if (src.includes('_3')) return 'brainy';  // smiley_blau_3x   = BRAINY
-      if (src.includes('_4')) return 'bb';      // smiley_violett_4x = BUMBLEBRAIN
+      if (src.includes('orange'))  return 'mb';    // orange = MASTERBRAIN = Spalte 1
+      if (src.includes('gruen'))   return 'brain'; // gruen  = BRAIN       = Spalte 2
+      if (src.includes('blau'))    return 'brainy'; // blau   = BRAINY      = Spalte 3
+      if (src.includes('violett')) return 'bb';    // violett= BUMBLEBRAIN  = Spalte 4
       return null;
     }
 
@@ -8488,10 +8499,9 @@
       });
       const key = `${mb}|${brain}|${brainy}|${bb}`;
       const sc = SKILL_CHILL[key] || '78/22';
-      // Blur + Spielstil anzeigen
-      if (window._hintLoop) clearInterval(window._hintLoop);
-      document.getElementById('leveltafelHint').style.display = 'none';
-      document.getElementById('leveltafelImg').style.filter = 'blur(10px) saturate(0.2) brightness(0.7) sepia(0.6)';
+      // Overlaywiese statt Blur
+      document.getElementById('leveltafelImg').style.filter = 'none';
+      document.getElementById('overlayWiese').style.display = 'block';
       document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL = ' + sc;
 
       // 16 Smileys verstecken
@@ -8499,6 +8509,8 @@
         el.style.opacity = '0';
         el.style.pointerEvents = 'none';
       });
+      document.getElementById('leveltafelHint').style.display = 'none';
+      document.getElementById('leveltafelImg').style.filter = 'none';
 
       // Ausgewählte Smileys in Zeile anzeigen
       const row = document.getElementById('selectedSmileysRow');
@@ -8593,6 +8605,67 @@
       });
     });
 
+    // Farbfeld-Positionen in 3D für Hand-Overlays (X, Y, Z)
+    const HAND_FIELD_POS = {
+      orange:  [ [-0.078125, 0.4798, -0.437500], [0.078125, 0.4798, -0.437500],
+                 [-0.546875, 0.4798,  0.343750], [0.546875, 0.4798,  0.343750] ],
+      gruen:   [ [-0.234375, 0.4798, -0.437500], [-0.234375, 0.4798, 0.658000],
+                 [ 0.546875, 0.4798,  0.265625], [ 0.546875, 0.4798, 0.109375] ],
+      blau:    [ [ 0.234375, 0.4798, -0.437500], [ 0.234375, 0.4798, 0.658000],
+                 [-0.546875, 0.4798,  0.109375], [-0.546875, 0.4798, 0.265625] ],
+      violett: [ [-0.078125, 0.4798,  0.658000], [ 0.078125, 0.4798, 0.658000],
+                 [-0.546875, 0.4798, -0.046875], [ 0.546875, 0.4798,-0.046875] ]
+    };
+
+    function showSmileyHands() {
+      // Farbe des ersten gewählten Smileys bestimmen
+      if (!selectedSmileys || !selectedSmileys[0]) return;
+      const src = selectedSmileys[0].src;
+      let color = 'orange';
+      if (src.includes('gruen'))   color = 'gruen';
+      else if (src.includes('blau'))    color = 'blau';
+      else if (src.includes('violett')) color = 'violett';
+
+      const handFile = 'hand_' + color + '.png';
+      const positions = HAND_FIELD_POS[color];
+      const wrap = document.getElementById('handOverlays');
+      wrap.style.display = 'block';
+
+      positions.forEach((pos3D, i) => {
+        const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
+        v.project(camera);
+        const sx = (v.x * 0.5 + 0.5) * 360;
+        const sy = (-v.y * 0.5 + 0.5) * 720;
+        const el = document.getElementById('hand' + i);
+        el.src = handFile;
+        el.style.left = (sx - 22.5) + 'px';
+        el.style.top  = (sy - 22.5) + 'px';
+        el.style.display = 'block';
+      });
+    }
+
+    function hideSmileyHands() {
+      document.getElementById('handOverlays').style.display = 'none';
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('hand' + i).style.display = 'none';
+      }
+    }
+
+    function showScrollband() {
+      const el = document.getElementById('numBtns');
+      if (!el) return;
+      el.style.top = '620px';
+      el.classList.remove('hidden');
+      el.style.display = 'block';
+    }
+
+    function hideScrollband() {
+      const el = document.getElementById('numBtns');
+      if (!el) return;
+      el.classList.add('hidden');
+      el.style.display = 'none';
+    }
+
     // WEITER — alter Handler nicht mehr nötig (btnBereit = FERTIG)
     document.getElementById('btnBereit').addEventListener('click', function() {
       // handled by main btnBereit click listener above
@@ -8603,7 +8676,7 @@
       document.getElementById('leveltafelImg').style.filter = 'none';
       document.getElementById('leveltafelHint').style.display = 'flex';
       document.getElementById('selectedSmileysRow').innerHTML = '';
-      // 16 Smileys wieder einblenden
+      document.getElementById('overlayWiese').style.display = 'none';
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         el.style.opacity = '1';
         el.style.pointerEvents = 'auto';
