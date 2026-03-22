@@ -989,7 +989,7 @@
     #leveltafelImg.sharp { filter: blur(0); }
     #leveltafelHint {
       position: absolute;
-      left: 0; top: 55px;
+      left: 0; top: 58px;
       width: 450px;
       height: 45px;
       display: flex; align-items: center; justify-content: center;
@@ -8263,7 +8263,7 @@
         showingLine1 = !showingLine1;
         document.getElementById('hintLine1').style.opacity = showingLine1 ? '1' : '0';
         document.getElementById('hintLine2').style.opacity = showingLine1 ? '0' : '1';
-      }, 2500);
+      }, 3000);
     }
     document.getElementById('leveltafelOverlay').addEventListener('click', () => {
       const overlay = document.getElementById('leveltafelOverlay');
