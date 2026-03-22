@@ -1140,12 +1140,15 @@
     </div>
   </div>
   
+  <!-- Smiley Zoom Overlay -->
+  <div id="smileyZoomOverlay" style="display:none; position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; pointer-events:none; z-index:30; align-items:center; justify-content:center;">
+    <img id="smileyZoomImg" src="" style="width:220px; height:220px; object-fit:contain; filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7)); opacity:0; transition:opacity 0.35s ease, transform 0.35s ease; transform:scale(0.6);">
+  </div>
+
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_smiley.png" alt="Zurück"></button>
   </div>
-
-  <div id="startOverlay">
     <div id="startChallengeText">
       <div class="sctLine sctHead" id="sctHead"></div>
       <div class="sctLine sctSub" id="sctSub" style="display:none"></div>
@@ -2350,7 +2353,7 @@
           ctx.shadowOffsetX = 3;
           ctx.shadowOffsetY = 4;
           // Smiley-Bild zeichnen
-          const size = cell * 0.85;
+          const size = cell * 1.05;
           ctx.drawImage(img, -size/2, -size/2, size, size);
           ctx.shadowColor = 'transparent';
           ctx.shadowBlur = 0;
@@ -6575,18 +6578,10 @@
       // Hände und Scrollband einblenden
       showSmileyHands();
       showScrollband();
-
+      showSmileyZoom();
+      gamePhase = 'spielen';
+      kipp21KniffAbort = false;
       refreshKniffIcons();
-
-      if (kipp21PendingCardTap >= 0) {
-        const pending = kipp21PendingCardTap;
-        kipp21PendingCardTap = -1;
-        kipp21KniffAbort = false;
-        kipp21OnCardTap(pending, true);
-      } else {
-        kipp21KniffAbort = false;
-        kipp21EndKniffAndOpenCard();
-      }
     }
     
     // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
@@ -8678,14 +8673,34 @@
       if (!el) return;
       el.style.top = '497px';
       el.classList.remove('hidden');
-      el.style.display = 'block';
     }
 
     function hideScrollband() {
       const el = document.getElementById('numBtns');
       if (!el) return;
       el.classList.add('hidden');
-      el.style.display = 'none';
+    }
+
+    function showSmileyZoom() {
+      if (!selectedSmileys || !selectedSmileys[0]) return;
+      const overlay = document.getElementById('smileyZoomOverlay');
+      const img = document.getElementById('smileyZoomImg');
+      img.src = selectedSmileys[0].src;
+      overlay.style.display = 'flex';
+      // Einblenden
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        img.style.opacity = '1';
+        img.style.transform = 'scale(1)';
+      }));
+      // Nach 2s ausblenden
+      setTimeout(() => {
+        img.style.opacity = '0';
+        img.style.transform = 'scale(1.15)';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          img.style.transform = 'scale(0.6)';
+        }, 380);
+      }, 2000);
     }
 
     // Scrollband-Kipp: n Kipps CW ausführen
