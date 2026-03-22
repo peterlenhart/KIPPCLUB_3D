@@ -2287,9 +2287,18 @@
         ctx.translate(cx, cy);
         ctx.rotate(rot);
         if (img && img.complete) {
+          // Schlagschatten
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetX = 3;
+          ctx.shadowOffsetY = 4;
           // Smiley-Bild zeichnen
           const size = cell * 0.85;
           ctx.drawImage(img, -size/2, -size/2, size, size);
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         } else {
           // Zahl zeichnen
           ctx.fillStyle = '#2a1810';
@@ -8451,7 +8460,7 @@
       if (window._hintLoop) clearInterval(window._hintLoop);
       document.getElementById('leveltafelHint').style.display = 'none';
       document.getElementById('leveltafelImg').style.filter = 'blur(10px) saturate(0.2) brightness(0.7) sepia(0.6)';
-      document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL   ' + sc;
+      document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL = ' + sc;
 
       // 16 Smileys verstecken
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
@@ -8471,30 +8480,28 @@
       document.getElementById('spielzielBox').classList.add('show');
       document.getElementById('btnBereitWrap').style.display = 'none';
 
-      // Smiley-Bilder auf Würfel laden
-      const smileyImgs = selectedSmileys.map(el => {
-        const img = new Image(); img.src = el.src; return img;
-      });
-      const teufelImgs = Array(8).fill(null).map(() => {
+      // Erstgewählter Smiley auf Würfel, 11 Teufel
+      const firstSmileyImg = new Image(); firstSmileyImg.src = selectedSmileys[0].src;
+      const teufelImgsB = Array(11).fill(null).map(() => {
         const img = new Image(); img.src = 'smiley_teufel.png'; return img;
       });
-      const allImgs = [...smileyImgs, ...teufelImgs];
-      for (let i = allImgs.length - 1; i > 0; i--) {
+      const allImgsB = [firstSmileyImg, ...teufelImgsB];
+      for (let i = allImgsB.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [allImgs[i], allImgs[j]] = [allImgs[j], allImgs[i]];
+        [allImgsB[i], allImgsB[j]] = [allImgsB[j], allImgsB[i]];
       }
-      const slotKeys = {
+      const slotKeysB = {
         f0: ['2,0','1,0','0,1','0,2'],
         f1: ['0,0','0,1','1,2','2,2'],
         f2: ['2,2','2,1','1,0','0,0']
       };
-      Promise.all(allImgs.map(img => new Promise(res => {
+      Promise.all(allImgsB.map(img => new Promise(res => {
         if (img.complete) res(); else img.onload = res;
       }))).then(() => {
         let idx = 0;
         ['f0','f1','f2'].forEach(face => {
-          slotKeys[face].forEach(k => {
-            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
+          slotKeysB[face].forEach(k => {
+            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgsB[idx++], vis: true };
           });
         });
         updateCubeMaterials();
@@ -8506,8 +8513,133 @@
       const overlay = document.getElementById('leveltafelOverlay');
       overlay.classList.remove('show');
       if (window._hintLoop) clearInterval(window._hintLoop);
-      handleStart(overlay.dataset.withTutorial === '1');
+
+      // Erstgewählter Smiley auf Würfel, 11 Teufel
+      const firstSmiley = selectedSmileys[0];
+      const smileyImg = new Image(); smileyImg.src = firstSmiley.src;
+      const teufelImgs = Array(11).fill(null).map(() => {
+        const img = new Image(); img.src = 'smiley_teufel.png'; return img;
+      });
+      const allImgs = [smileyImg, ...teufelImgs];
+      // Fisher-Yates shuffle
+      for (let i = allImgs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allImgs[i], allImgs[j]] = [allImgs[j], allImgs[i]];
+      }
+      const slotKeys = {
+        f0: ['2,0','1,0','0,1','0,2'],
+        f1: ['0,0','0,1','1,2','2,2'],
+        f2: ['2,2','2,1','1,0','0,0']
+      };
+      // Ermittle welche Face den Smiley bekommt
+      let smileyFace = null, smileySlotKey = null;
+      let idx = 0;
+      ['f0','f1','f2'].forEach(face => {
+        slotKeys[face].forEach(k => {
+          if (allImgs[idx] === smileyImg) { smileyFace = face; smileySlotKey = k; }
+          idx++;
+        });
+      });
+
+      Promise.all(allImgs.map(img => new Promise(res => {
+        if (img.complete) res(); else img.onload = res;
+      }))).then(() => {
+        let imgIdx = 0;
+        ['f0','f1','f2'].forEach(face => {
+          slotKeys[face].forEach(k => {
+            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[imgIdx++], vis: true };
+          });
+        });
+        updateCubeMaterials();
+
+        // Spiel starten dann Auto-Rise-Showtime
+        handleStart(overlay.dataset.withTutorial === '1');
+        setTimeout(() => {
+          _smileyAutoRise(smileyFace);
+        }, 800);
+      });
     });
+
+    // Auto-Rise: Würfel steigt, dreht Smiley-Fläche frontal, hält 2.5s, senkt ab
+    async function _smileyAutoRise(smileyFace) {
+      if (!cube || !kipGroup) return;
+
+      const savedPos = cube.position.clone();
+      const savedQuat = cube.quaternion.clone();
+      const savedQ = currentQuadrant;
+      const savedF = topFace;
+
+      const liftHeight = 0.5; // hoch genug
+      const riseDur = 900;
+      const origY = kipGroup.position ? kipGroup.position.y : 0;
+
+      // 1. Aufsteigen
+      await new Promise(resolve => {
+        const start = performance.now();
+        function animRise() {
+          const t = Math.min((performance.now() - start) / riseDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          cube.position.y = savedPos.y + liftHeight * ease;
+          if (t < 1) requestAnimationFrame(animRise);
+          else { cube.position.y = savedPos.y + liftHeight; resolve(); }
+        }
+        animRise();
+      });
+
+      // 2. Smiley-Fläche frontal drehen zur Kamera
+      // Kamera schaut von Süden/oben → Smiley-Fläche muss nach Süden/vorne zeigen
+      // f2 = +Y (oben), f0 = +Z (süd/vorne), f1 = -X (west)
+      // Ziel: Face normal zeigt Richtung Kamera (0, baseY, radius+southShift)
+      const faceNormals = {
+        f0: new THREE.Vector3(0, 0, 1),  // +Z = Süd = frontal ✓
+        f1: new THREE.Vector3(-1, 0, 0), // -X = West
+        f2: new THREE.Vector3(0, 1, 0)   // +Y = oben
+      };
+      // Zielrichtung: von Würfelzentrum zur Kamera
+      const camDir = camera.position.clone().sub(cube.position.clone().add(new THREE.Vector3(0, savedPos.y + liftHeight, 0))).normalize();
+      const faceNorm = faceNormals[smileyFace] || new THREE.Vector3(0, 0, 1);
+      const targetQuat = new THREE.Quaternion().setFromUnitVectors(faceNorm, camDir);
+
+      const rotateDur = 700;
+      const startQuat = cube.quaternion.clone();
+      await new Promise(resolve => {
+        const start = performance.now();
+        function animRot() {
+          const t = Math.min((performance.now() - start) / rotateDur, 1);
+          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+          cube.quaternion.copy(startQuat.clone().slerp(targetQuat, ease));
+          if (t < 1) requestAnimationFrame(animRot);
+          else { cube.quaternion.copy(targetQuat); resolve(); }
+        }
+        animRot();
+      });
+
+      // 3. Halten 2.5s
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      // 4. Absenken und zurück zur Ursprungsrotation
+      const lowerDur = 800;
+      const quatBeforeLower = cube.quaternion.clone();
+      await new Promise(resolve => {
+        const start = performance.now();
+        function animLower() {
+          const t = Math.min((performance.now() - start) / lowerDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+          cube.position.y = (savedPos.y + liftHeight) * (1 - ease) + savedPos.y * ease;
+          cube.quaternion.copy(quatBeforeLower.clone().slerp(savedQuat, ease));
+          if (t < 1) requestAnimationFrame(animLower);
+          else {
+            cube.position.copy(savedPos);
+            cube.quaternion.copy(savedQuat);
+            resolve();
+          }
+        }
+        animLower();
+      });
+
+      currentQuadrant = savedQ;
+      topFace = savedF;
+    }
 
     // WEITER — alter Handler nicht mehr nötig (btnBereit = FERTIG)
     document.getElementById('btnBereit').addEventListener('click', function() {
