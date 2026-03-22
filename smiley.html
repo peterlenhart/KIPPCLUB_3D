@@ -718,8 +718,8 @@
     .startClickZone:active {
       filter: brightness(0.85);
     }
-    #btnSpielen  { top: 428.5px; padding-top: 10px; padding-bottom: 10px; font-size: 19px; letter-spacing: 2.5px; }
-    #btnDemo     { top: 489px;   padding-top: 10px; padding-bottom: 10px; font-size: 17px; letter-spacing: 2px; }
+    #btnSpielen  { top: 428.5px; padding-top: 6px; padding-bottom: 14px; font-size: 19px; letter-spacing: 2.5px; }
+    #btnDemo     { top: 489px;   padding-top: 6px; padding-bottom: 14px; font-size: 17px; letter-spacing: 2px; }
     #btnDemo::before { background: url('button_lang_smiley_gr.webp') center/cover no-repeat; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
@@ -983,7 +983,7 @@
       width: 450px;
       height: auto;
       margin-top: 0;
-      filter: blur(12px) saturate(0.2) brightness(0.7);
+      filter: blur(12px) saturate(0.2) brightness(0.7) sepia(0.6);
       transition: filter 0.6s ease;
     }
     #leveltafelImg.sharp { filter: blur(0); }
@@ -1015,7 +1015,7 @@
     <!-- Hinweistext -->
     <div id="leveltafelHint">
       <div style="font-family:Arial,sans-serif; font-weight:bold; font-size:36px; color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.8);">WÄHLE 4 SMILEYS</div>
-      <div style="font-family:Arial,sans-serif; font-size:36px; font-weight:bold; color:#ffffff; letter-spacing:-0.5px; text-shadow:0 2px 6px rgba(0,0,0,0.8);">(beliebige aus allen 16)</div>
+      <div style="font-family:Arial,sans-serif; font-size:34px; font-weight:bold; color:#ffffff; letter-spacing:-0.5px; text-shadow:0 2px 6px rgba(0,0,0,0.8);">(beliebige aus allen 16)</div>
     </div>
     <!-- Zeile 4 -->
     <img class="leveltafelSmiley" src="smiley_orange_11.png" style="left:112.5px; top:168.75px;">
@@ -8245,7 +8245,7 @@
         document.getElementById('leveltafelHint').classList.add('hidden');
         document.getElementById('leveltafelImg').classList.add('sharp');
         document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.add('visible'));
-      }, 3500);
+      }, 5000);
     }
     document.getElementById('leveltafelOverlay').addEventListener('click', () => {
       const overlay = document.getElementById('leveltafelOverlay');
