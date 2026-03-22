@@ -1049,6 +1049,10 @@
     <img class="leveltafelSmiley" src="smiley_violett_42.png" style="left:168.75px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
+    <!-- BEREIT Button unter Leveltafel -->
+    <div style="position:absolute; left:0; top:660px; width:450px; display:flex; align-items:center; justify-content:center;">
+      <button id="btnBereit" style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px;">BEREIT?</button>
+    </div>
   </div>
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
@@ -8247,23 +8251,19 @@
       const overlay = document.getElementById('leveltafelOverlay');
       overlay.dataset.withTutorial = withTutorial ? '1' : '0';
       overlay.classList.add('show');
-      // Smileys versteckt
-      document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.remove('visible'));
-      // Zeile 1 sichtbar, Zeile 2 versteckt
+      // Smileys sofort sichtbar
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.add('visible'));
+      document.getElementById('leveltafelImg').classList.add('sharp');
+      // Endlosschleife Crossfade
+      let showingLine1 = true;
       document.getElementById('hintLine1').style.opacity = '1';
       document.getElementById('hintLine2').style.opacity = '0';
-      document.getElementById('leveltafelImg').classList.add('sharp');
-      // Nach 2.5s: Crossfade Zeile 1 → Zeile 2
-      setTimeout(() => {
-        document.getElementById('hintLine1').style.opacity = '0';
-        document.getElementById('hintLine2').style.opacity = '1';
+      if (window._hintLoop) clearInterval(window._hintLoop);
+      window._hintLoop = setInterval(() => {
+        showingLine1 = !showingLine1;
+        document.getElementById('hintLine1').style.opacity = showingLine1 ? '1' : '0';
+        document.getElementById('hintLine2').style.opacity = showingLine1 ? '0' : '1';
       }, 2500);
-      // Nach 5s: Hints weg, Bild scharf, Smileys einblenden
-      setTimeout(() => {
-        document.getElementById('leveltafelHint').classList.add('hidden');
-        document.getElementById('leveltafelImg').classList.add('sharp');
-        document.querySelectorAll('.leveltafelSmiley').forEach(el => el.classList.add('visible'));
-      }, 5000);
     }
     document.getElementById('leveltafelOverlay').addEventListener('click', () => {
       const overlay = document.getElementById('leveltafelOverlay');
