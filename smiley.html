@@ -969,6 +969,11 @@
     }
     /* SMILEY: Diese UIs werden nicht benötigt */
     #richtungButtons, #numBtns, #kippTarget, #jokerIconsRow { display: none !important; }
+    /* SMILEY: Alle Kippziel-Elemente verstecken */
+    #verdecktesKippziel, #kippzielRow, #kippzielCards, #zumSpielBtn,
+    #progressDots, #hintText, #instructionText, #tutorialText,
+    #spielZielText, #entscheidungText, #demoSubtitle, #eyeIcon,
+    #skipEndBtn, #countdown { display: none !important; }
     #leveltafelOverlay {
       display: none;
       position: fixed;
@@ -1016,14 +1021,14 @@
     }
     #spielzielBox {
       position: absolute;
-      left: 0; top: 0;
+      left: 0; top: 55px;
       width: 450px;
-      height: 100%;
       display: none;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 16px;
+      justify-content: flex-start;
+      gap: 10px;
+      padding-top: 8px;
       pointer-events: auto;
     }
     #spielzielBox.show { display: flex; }
@@ -1041,6 +1046,7 @@
     }
     .leveltafelSmiley { opacity: 0; transition: opacity 0.6s ease; }
     .leveltafelSmiley.visible { opacity: 1; }
+    #leveltafelOverlay.spielstil .leveltafelSmiley { opacity: 0 !important; }
     .leveltafelSmiley {
       position: absolute;
       width: 56.25px; height: 56.25px;
@@ -1081,11 +1087,11 @@
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
     <div id="spielzielBox">
-      <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:22px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.8);">DEIN SPIELSTIL:</div>
-      <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.8);">SKILL / CHILL &nbsp; 78 / 22</div>
+      <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);">DEIN SPIELSTIL:</div>
+      <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);">SKILL / CHILL &nbsp; 78 / 22</div>
       <div id="selectedSmileysRow"></div>
-      <button onclick="resetLeveltafel()" style="background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; margin-top:8px;">NEU WÄHLEN</button>
-      <button id="btnLosGehts" style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
+      <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">NEU WÄHLEN</button>
+      <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
     </div>
     <!-- FERTIG Button -->
     <div style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
@@ -2213,7 +2219,7 @@
       }
     }
     let deck = generateBalancedDeck();
-    let visibleDeckIndices = pickEdgePairs();
+    let visibleDeckIndices = new Set(); // SMILEY: Zahlen alle unsichtbar
 
     // Slot-Zuordnung: welche Zelle auf welcher Face → deck-Index
     // f0: 7=S1, 4=S2, 2=S3, 3=S4
@@ -3972,8 +3978,8 @@
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       }
       function showButtons() {
-        if (window._dirCwMesh) window._dirCwMesh.visible = true;
-        if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (window._dirCwMesh) window._dirCwMesh.visible = false;
+        if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       }
       
@@ -4632,6 +4638,13 @@
       kipp21PendingCardTap = -1;
       kippenWarningActive = false;
       // ===== CLEANUP ENDE =====
+      // SMILEY: Alle 3D-Karten und BlickIcons verstecken
+      if (typeof gameCards !== 'undefined') {
+        gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
+      }
+      if (typeof blickIconMeshes !== 'undefined') {
+        blickIconMeshes.forEach(m => { if (m) m.visible = false; });
+      }
       
 
       kipp21WithTutorial = !!withTutorial;
@@ -4792,7 +4805,7 @@
             } else {
               for (let i = 0; i < numActiveCards; i++) {
                 gameCards[i].mesh.material.opacity = 1;
-                gameCards[i].mesh.material.transparent = false;
+                // SMILEY disabled:
                 gameCards[i].mesh.material.needsUpdate = true;
                 if (blickIconMeshes[i].visible) {
                   blickIconMeshes[i].material.opacity = 1;
@@ -4897,8 +4910,8 @@
         if (!kipp21WithTutorial || currentLevel >= 3) {
           showBlickIcons();
           for (let i = 0; i < numActiveCards; i++) {
-            gameCards[i].mesh.visible = true;
-            gameCards[i].mesh.material.transparent = false;
+            gameCards[i].mesh.visible = false; // SMILEY: Karten unsichtbar
+            // SMILEY disabled:
             gameCards[i].mesh.material.opacity = 1;
             gameCards[i].mesh.material.needsUpdate = true;
             if (blickIconMeshes[i].visible) {
@@ -5105,8 +5118,8 @@
       }
       
       function showAllTrainingUI() {
-        if (window._dirCwMesh) window._dirCwMesh.visible = true;
-        if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (window._dirCwMesh) window._dirCwMesh.visible = false;
+        if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
         if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
@@ -5937,8 +5950,8 @@
       brainySelectedNum = 0;
       brainySelectedDir = null;
       document.querySelectorAll('.numBtn').forEach(btn => btn.classList.remove('selected'));
-      if (window._dirCwMesh) window._dirCwMesh.visible = true;
-      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      if (window._dirCwMesh) window._dirCwMesh.visible = false;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       kipp21Active = true;
       brainyStartNumPulse();
@@ -6083,8 +6096,8 @@
       brainyHideGems();
 
       // Training-Buttons direkt zeigen (showAllTrainingUI existiert evtl. nicht bei Direktstart)
-      if (window._dirCwMesh) window._dirCwMesh.visible = true;
-      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      if (window._dirCwMesh) window._dirCwMesh.visible = false;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
 
@@ -8440,6 +8453,12 @@
       document.getElementById('leveltafelImg').style.filter = 'blur(10px) saturate(0.2) brightness(0.7) sepia(0.6)';
       document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL   ' + sc;
 
+      // 16 Smileys verstecken
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+      });
+
       // Ausgewählte Smileys in Zeile anzeigen
       const row = document.getElementById('selectedSmileysRow');
       row.innerHTML = '';
@@ -8450,6 +8469,7 @@
       });
 
       document.getElementById('spielzielBox').classList.add('show');
+      document.getElementById('btnBereit').style.display = 'none';
 
       // Smiley-Bilder auf Würfel laden
       const smileyImgs = selectedSmileys.map(el => {
@@ -8499,6 +8519,11 @@
       document.getElementById('leveltafelImg').style.filter = 'none';
       document.getElementById('leveltafelHint').style.display = 'flex';
       document.getElementById('selectedSmileysRow').innerHTML = '';
+      // 16 Smileys wieder einblenden
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+        el.style.opacity = '1';
+        el.style.pointerEvents = 'auto';
+      });
       // Smileys abwählen
       selectedSmileys.forEach(el => {
         el.classList.remove('selected');
@@ -8508,6 +8533,7 @@
       selectedSmileys = [];
       // FERTIG Button zurücksetzen
       const btn = document.getElementById('btnBereit');
+      btn.style.display = 'flex';
       btn.disabled = true;
       btn.style.opacity = '0.4';
       // Hint-Loop neu starten
