@@ -674,6 +674,7 @@
 
     /* === START-OVERLAY (transparent, Buttons über 3D-Szene) === */
     #startOverlay {
+      display: none;
       position: absolute;
       top: 0;
       width: 360px; height: 720px;
@@ -2689,8 +2690,9 @@
           return;
         }
         
-        // SMILEY: SPIELEN / TUTORIAL Buttons einblenden — Leveltafel erst bei Klick
+        // SMILEY: SPIELEN / TUTORIAL Buttons einblenden
         sct.style.display = 'none';
+        document.getElementById('startOverlay').style.display = 'block';
         document.getElementById('btnSpielen').disabled = false;
         document.getElementById('btnSpielen').style.opacity = '1';
         document.getElementById('btnDemo').disabled = false;
@@ -8591,11 +8593,12 @@
       });
       updateCubeMaterials();
 
-      // Kaertchen zeigen
+      // Kärtchen zeigen
       _showKaertchen(targetColor, targetEl.src);
 
-      // Spiel starten
-      handleStart(false);
+      // Spiel direkt starten — handleStart umgehen
+      document.getElementById('startOverlay').style.display = 'none';
+      startKipp21(false);
 
       // Wobble nach 800ms
       setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
