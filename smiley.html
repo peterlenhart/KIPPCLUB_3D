@@ -1143,17 +1143,19 @@
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
     <img id="overlayWiese" src="overlaywiese_smiley.webp" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:0; width:360px; height:auto; z-index:1; pointer-events:none;">
-    <div id="spielzielBox">
-      <img id="overlayWieseImg" src="overlaywiese_smiley.webp" alt="">
-      <div id="spielzielContent">
-        <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);">DEIN LEVEL-MIX:</div>
-        <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);">SKILL / CHILL = 78 / 22</div>
-        <div id="selectedSmileysRow"></div>
-        <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">NEU WÄHLEN</button>
-        <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
-      </div>
+  </div>
+
+  <!-- spielzielBox außerhalb leveltafelOverlay -->
+  <div id="spielzielBox">
+    <img id="overlayWieseImg" src="overlaywiese_smiley.webp" alt="">
+    <div id="spielzielContent">
+      <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);">DEIN LEVEL-MIX:</div>
+      <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);">SKILL / CHILL = 78 / 22</div>
+      <div id="selectedSmileysRow"></div>
+      <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">NEU WÄHLEN</button>
+      <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
     </div>
-    <!-- FERTIG Button -->
+  </div>
     <div id="btnBereitWrap" style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
       <button id="btnBereit" disabled style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px; opacity:0.4; transition:opacity 0.3s;">FERTIG</button>
     </div>
