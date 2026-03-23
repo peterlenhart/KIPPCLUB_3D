@@ -1167,6 +1167,20 @@
     <img id="smileyZoomImg" src="" style="width:220px; height:220px; object-fit:contain; filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7)); opacity:0; transition:opacity 0.35s ease, transform 0.35s ease; transform:scale(0.6);">
   </div>
 
+  <!-- Kippziel-Kärtchen -->
+  <div id="smileyKaertchenRow" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); top:450px; width:360px; z-index:20; pointer-events:none;">
+    <img id="smileyKaertchenImg" src="" style="position:absolute; left:50%; transform:translateX(-50%); width:180px; height:90px; object-fit:contain;">
+    <img id="smileyKaertchenSmiley" src="" style="position:absolute; left:50%; transform:translateX(calc(-50% + 39px)); width:49px; height:49px; object-fit:contain; top:20px;">
+    <img id="smileyKaertchenHand" src="" style="position:absolute; left:50%; transform:translateX(calc(-50% - 39px)); width:38px; height:38px; object-fit:contain; top:26px;">
+  </div>
+
+  <!-- Kärtchen Kippziel Row -->
+  <div id="smileyKaertchenRow" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); top:428px; width:360px; pointer-events:none; z-index:20;">
+    <img id="smileyKaertchenBg" src="" style="position:absolute; left:120px; top:0; width:120px; height:60px; border:2px solid #6b5040; border-radius:6px; box-shadow:-2px 2px 4px rgba(0,0,0,0.3);">
+    <img id="smileyKaertchenSmiley" src="" style="position:absolute; left:168px; top:-3px; width:66px; height:66px; object-fit:contain;">
+    <img id="smileyKaertchenHand" src="" style="position:absolute; left:75px; top:3px; width:51px; height:51px; object-fit:contain;">
+  </div>
+
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_smiley.png" alt="Zurück"></button>
@@ -8702,46 +8716,17 @@
       if (window._resetScrollBand) window._resetScrollBand();
     }
 
-    // Kaertchen-Kippziel als 3D-Mesh
-    let _kaertchenGroup = null;
+    // Kärtchen als HTML-Overlay
     function _showKaertchen(levelColor, targetSmileyUrl) {
-      if (_kaertchenGroup) { scene.remove(_kaertchenGroup); _kaertchenGroup = null; }
-      const group = new THREE.Group();
-      group.position.set(0, 0.002, 0.890625);
-
-      const loader = new THREE.TextureLoader();
-
-      // Kaertchen Hintergrund (2 Zellen × 1 Zelle, landscape)
       const levelKey = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'}[levelColor] || 'mbr';
-      loader.load('kaertchen_' + levelKey + '.png', tex => {
-        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.3125, 0.15625), mat);
-        mesh.rotation.x = -Math.PI / 2;
-        group.add(mesh);
-      });
+      document.getElementById('smileyKaertchenImg').src     = 'kaertchen_' + levelKey + '.png';
+      document.getElementById('smileyKaertchenSmiley').src  = targetSmileyUrl;
+      document.getElementById('smileyKaertchenHand').src    = 'hand' + levelKey + '.png';
+      document.getElementById('smileyKaertchenRow').classList.remove('hidden');
+    }
 
-      // Smiley auf E11 (X=+0.078125, Z relative=-0 since group at cardZ)
-      loader.load(targetSmileyUrl, tex => {
-        const s = 0.15625 * 1.1; // 110%
-        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(s, s), mat);
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.position.set(0.078125, 0.001, 0);
-        group.add(mesh);
-      });
-
-      // Hand auf D11 (X=-0.078125)
-      loader.load('hand' + levelKey + '.png', tex => {
-        const s = 0.15625 * 0.85; // 85%
-        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(s, s), mat);
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.position.set(-0.078125, 0.001, 0);
-        group.add(mesh);
-      });
-
-      scene.add(group);
-      _kaertchenGroup = group;
+    function _hideKaertchen() {
+      document.getElementById('smileyKaertchenRow').classList.add('hidden');
     }
 
     // Post-Wobble Korrektur: Target-Smiley auf korrekte Sichtbarkeit bringen
