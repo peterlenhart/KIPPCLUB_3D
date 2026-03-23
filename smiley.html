@@ -6364,9 +6364,10 @@
       kipp21KniffsUsed++;
       kipp21WobbleUsed++;
 
-      // SMILEY: Post-Wobble-Korrektur → dann Hände + Scrollband
-      await _smileyPostWobbleCorrection();
+      // SMILEY: Kärtchen + Hände einblenden, dann Post-Korrektur, dann Scrollband
+      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
       showSmileyHands();
+      await _smileyPostWobbleCorrection();
       showScrollband();
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
@@ -8575,6 +8576,7 @@
         if (f) { targetEl = f; targetColor = col; break; }
       }
       window._smileyTargetColor = targetColor;
+      window._smileyTargetSrc = targetEl.src;
 
       // 4 Smileys + 8 Teufel auf Würfel
       const allImgs = [
@@ -8594,11 +8596,7 @@
       });
       updateCubeMaterials();
 
-      // Kärtchen zeigen
-      _showKaertchen(targetColor, targetEl.src);
-
-      // Spiel direkt starten — handleStart umgehen
-      document.getElementById('startOverlay').style.display = 'none';
+      // Kärtchen kommt nach Wobble
       startKipp21(false);
 
       // Wobble nach 800ms
