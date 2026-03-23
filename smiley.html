@@ -6315,96 +6315,49 @@
     
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff(skipOpenGuard) {
-      console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
-      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
-      if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
+      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen')) { return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
-      
-      // "Würfel-Einblick wählen" sofort ausblenden
-      const jLabelWob = document.querySelector('#jokerIconsRow .jokerLabel');
-      if (jLabelWob) jLabelWob.style.display = 'none';
-      
-      // Icon-Layer mit Pulse ausblenden
-      const kniffImgs = document.querySelectorAll('#jokerIconsRow img');
-      kniffImgs.forEach(img => {
-        img.style.pointerEvents = 'none';
-        if (img.dataset.kniffIdx === '0') {
-          // 1. Nutzung: top verschwindet, 2. Nutzung: bottom verschwindet
-          const targetLayer = (kipp21WobbleUsed === 0) ? 'top' : 'bottom';
-          if (img.dataset.layer === targetLayer) {
-            img.style.transition = 'transform 0.18s ease-out';
-            img.style.transform = 'translateX(-50%) scale(1.3)';
-            setTimeout(() => {
-              img.style.transform = 'translateX(-50%) scale(0.5)';
-              img.style.opacity = '0';
-              setTimeout(() => { img.style.transition = ''; }, 200);
-            }, 180);
-          }
-        }
-      });
-      
-      // Auge-Icon über Boxmitte
-      const wobEyePos = new THREE.Vector3(0, 7 * 0.15625, 0.109375);
-      wobEyePos.project(camera);
-      const wobEyeX = (wobEyePos.x * 0.5 + 0.5) * 360;
-      const wobEyeY = (-wobEyePos.y * 0.5 + 0.5) * 720;
-      const wobEye = document.getElementById('eyeIcon');
-      wobEye.style.cssText = 'position:absolute; left:' + wobEyeX + 'px; top:' + wobEyeY + 'px; transform:translate(-50%,-50%); width:125px; pointer-events:none; display:block; opacity:0; transition:opacity 0.4s ease;';
-      setTimeout(() => { wobEye.style.opacity = '1'; }, 50);
 
-      
       function nextCwDir() {
         if (currentQuadrant === 3) return 'north';
         if (currentQuadrant === 0) return 'east';
         if (currentQuadrant === 1) return 'south_from_q1';
         return 'west_from_q2';
       }
-      
+
       const savedDir = kippDirection;
       kippDirection = 'cw';
-      
+
       for (let hw = 0; hw < 3; hw++) {
-        if (gamePhase !== 'kipp21' || kipp21KniffAbort) break;
+        if (kipp21KniffAbort) break;
         const wobbles = 3 - hw;
         const pause = (hw < 2) ? 300 : 100;
         await halfKippWithWobble(nextCwDir(), wobbles, pause);
         if (hw < 2 && !kipp21KniffAbort) await sleep(200);
       }
-      
+
       if (!kipp21KniffAbort) {
         const extra = Math.floor(Math.random() * 3);
-        if (extra === 1 && gamePhase === 'kipp21') {
+        if (extra === 1) {
           kippDirection = 'cw';
           await sleep(300);
           if (!kipp21KniffAbort) await halfKippWithWobble(nextCwDir(), 2, 100);
         }
       }
-      
-      kippDirection = savedDir;
 
-      wobEye.style.opacity = '0';
+      kippDirection = savedDir;
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21WobbleUsed++;
-      setTimeout(() => { wobEye.style.display = 'none'; }, 400);
-      
-      // Joker-Status aktualisieren
+
+      // SMILEY: Hände + Scrollband + gamePhase setzen
+      showSmileyHands();
+      showScrollband();
+      gamePhase = 'spielen';
+      kipp21KniffAbort = false;
       refreshKniffIcons();
-      
-      // Ausstehenden Card-Tap oder Auto-Open
-      if (kipp21PendingCardTap >= 0) {
-        const pending = kipp21PendingCardTap;
-        kipp21PendingCardTap = -1;
-        kipp21KniffAbort = false;
-        kipp21OnCardTap(pending, true);
-      } else {
-        kipp21KniffAbort = false;
-        kipp21EndKniffAndOpenCard();
-      }
     }
     
     // --- KNIFF 2: Eckblick (joker3, rechts) ---
@@ -6597,7 +6550,6 @@
       // Hände und Scrollband einblenden
       showSmileyHands();
       showScrollband();
-      showSmileyZoom();
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
       refreshKniffIcons();
@@ -8633,11 +8585,11 @@
         });
         updateCubeMaterials();
 
-        // Smiley-Face für Eckblick speichern, dann Eckblick starten
+        // Smiley-Face für Wobble speichern, dann Wobble-Blick starten
         window._smileyFaceForEckblick = smileyFace;
         handleStart(overlay.dataset.withTutorial === '1');
         setTimeout(() => {
-          runKipp21EckblickKniff(true);
+          runKipp21WobbleKniff(true);
         }, 800);
       });
     });
