@@ -8552,11 +8552,13 @@
     });
 
     document.getElementById('btnLosGehts').addEventListener('click', () => {
-      const overlay = document.getElementById('leveltafelOverlay');
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      const LEVEL_ORDER = ['violett','blau','gruen','orange'];
+      // Overlays weg
+      document.getElementById('spielzielBox').classList.remove('show');
+      document.getElementById('leveltafelOverlay').classList.remove('show');
 
+      const LEVEL_ORDER = ['violett','blau','gruen','orange'];
       function smileyColor(src) {
         if (src.includes('orange'))  return 'orange';
         if (src.includes('gruen'))   return 'gruen';
@@ -8564,67 +8566,39 @@
         if (src.includes('violett')) return 'violett';
         return 'orange';
       }
-
-      let targetEl = null, targetColor = 'orange';
+      let targetEl = selectedSmileys[0], targetColor = 'orange';
       for (const col of LEVEL_ORDER) {
-        const found = selectedSmileys.find(el => smileyColor(el.src) === col);
-        if (found) { targetEl = found; targetColor = col; break; }
+        const f = selectedSmileys.find(el => smileyColor(el.src) === col);
+        if (f) { targetEl = f; targetColor = col; break; }
       }
-      if (!targetEl) targetEl = selectedSmileys[0];
       window._smileyTargetColor = targetColor;
 
-      const smileyImgs = selectedSmileys.map(el => {
-        const img = new Image(); img.src = el.src; return img;
-      });
-      const teufelImgs = Array(8).fill(null).map(() => {
-        const img = new Image(); img.src = 'smiley_teufel.png'; return img;
-      });
-      const allImgs = [...smileyImgs, ...teufelImgs];
+      // 4 Smileys + 8 Teufel auf Würfel
+      const allImgs = [
+        ...selectedSmileys.map(el => { const i = new Image(); i.src = el.src; return i; }),
+        ...Array(8).fill(null).map(() => { const i = new Image(); i.src = 'smiley_teufel.png'; return i; })
+      ];
       for (let i = allImgs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [allImgs[i], allImgs[j]] = [allImgs[j], allImgs[i]];
       }
-
-      const slotKeys = {
-        f0: ['2,0','1,0','0,1','0,2'],
-        f1: ['0,0','0,1','1,2','2,2'],
-        f2: ['2,2','2,1','1,0','0,0']
-      };
-
-      const targetSrc = targetEl.src;
-      let targetFace = null;
-      let imgIdx2 = 0;
-      for (const face of ['f0','f1','f2']) {
-        for (const k of slotKeys[face]) {
-          if (allImgs[imgIdx2] && allImgs[imgIdx2].src === targetSrc && !targetFace) {
-            targetFace = face;
-          }
-          imgIdx2++;
-        }
-      }
-      window._smileyTargetFace = targetFace || 'f2';
-
-      Promise.all(allImgs.map(img => new Promise(res => {
-        if (img.complete) res(); else img.onload = res;
-      }))).then(() => {
-        let idx = 0;
-        ['f0','f1','f2'].forEach(face => {
-          slotKeys[face].forEach(k => {
-            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
-          });
+      const slotKeys = { f0:['2,0','1,0','0,1','0,2'], f1:['0,0','0,1','1,2','2,2'], f2:['2,2','2,1','1,0','0,0'] };
+      let idx = 0;
+      ['f0','f1','f2'].forEach(face => {
+        slotKeys[face].forEach(k => {
+          faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
         });
-        updateCubeMaterials();
-
-        // JETZT overlay verstecken
-        document.getElementById('spielzielBox').classList.remove('show');
-        overlay.classList.remove('show');
-
-        _showKaertchen(targetColor, targetEl.src);
-        handleStart(overlay.dataset.withTutorial === '1');
-        setTimeout(() => {
-          runKipp21WobbleKniff(true);
-        }, 800);
       });
+      updateCubeMaterials();
+
+      // Kaertchen zeigen
+      _showKaertchen(targetColor, targetEl.src);
+
+      // Spiel starten
+      handleStart(false);
+
+      // Wobble nach 800ms
+      setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
     });
 
     // Farbfeld-Positionen in 3D für Hand-Overlays (X, Y, Z)
