@@ -6311,7 +6311,14 @@
     
     // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
     async function runKipp21WobbleKniff(skipOpenGuard) {
-      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen')) { return false; }
+      if (kipp21KniffActive) { return false; }
+      // Warten bis gamePhase korrekt gesetzt ist
+      let waited = 0;
+      while (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen' && waited < 3000) {
+        await new Promise(r => setTimeout(r, 100));
+        waited += 100;
+      }
+      if (gamePhase !== 'kipp21' && gamePhase !== 'demo' && gamePhase !== 'spielen') { return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
