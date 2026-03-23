@@ -1168,17 +1168,10 @@
   </div>
 
   <!-- Kippziel-Kärtchen -->
-  <div id="smileyKaertchenRow" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); top:450px; width:360px; z-index:20; pointer-events:none;">
-    <img id="smileyKaertchenImg" src="" style="position:absolute; left:50%; transform:translateX(-50%); width:180px; height:90px; object-fit:contain;">
-    <img id="smileyKaertchenSmiley" src="" style="position:absolute; left:50%; transform:translateX(calc(-50% + 39px)); width:49px; height:49px; object-fit:contain; top:20px;">
-    <img id="smileyKaertchenHand" src="" style="position:absolute; left:50%; transform:translateX(calc(-50% - 39px)); width:38px; height:38px; object-fit:contain; top:26px;">
-  </div>
-
-  <!-- Kärtchen Kippziel Row -->
-  <div id="smileyKaertchenRow" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); top:428px; width:360px; pointer-events:none; z-index:20;">
-    <img id="smileyKaertchenBg" src="" style="position:absolute; left:120px; top:0; width:120px; height:60px; border:2px solid #6b5040; border-radius:6px; box-shadow:-2px 2px 4px rgba(0,0,0,0.3);">
-    <img id="smileyKaertchenSmiley" src="" style="position:absolute; left:168px; top:-3px; width:66px; height:66px; object-fit:contain;">
-    <img id="smileyKaertchenHand" src="" style="position:absolute; left:75px; top:3px; width:51px; height:51px; object-fit:contain;">
+  <div id="smileyKaertchenRow" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); top:428px; width:360px; z-index:20; pointer-events:none; height:90px;">
+    <img id="smileyKaertchenImg" src="" style="position:absolute; left:90px; top:0; width:180px; height:90px; object-fit:contain;">
+    <img id="smileyKaertchenSmiley" src="" style="position:absolute; left:213px; top:12px; width:55px; height:55px; object-fit:contain;">
+    <img id="smileyKaertchenHand" src="" style="position:absolute; left:93px; top:18px; width:47px; height:47px; object-fit:contain;">
   </div>
 
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
@@ -8592,10 +8585,25 @@
       window._smileyTargetColor = targetColor;
       window._smileyTargetSrc = targetEl.src;
 
-      // 4 Smileys + 8 Teufel auf Würfel
+      // Alle 16 Smileys
+      const ALL_SMILEYS = [
+        'smiley_orange_11.png','smiley_orange_12.png','smiley_orange_13.png','smiley_orange_14.png',
+        'smiley_gruen_21.png','smiley_gruen_22.png','smiley_gruen_23.png','smiley_gruen_24.png',
+        'smiley_blau_31.png','smiley_blau_32.png','smiley_blau_33.png','smiley_blau_34.png',
+        'smiley_violett_41.png','smiley_violett_42.png','smiley_violett_43.png','smiley_violett_44.png'
+      ];
+      const selectedSrcs = selectedSmileys.map(el => el.src.split('/').pop());
+      const nichtGewaehlt = ALL_SMILEYS.filter(s => !selectedSrcs.includes(s));
+      // 8 zufällige aus den nicht gewählten (mit Wiederholung falls nötig)
+      const fueller = Array(8).fill(null).map(() => {
+        const src = nichtGewaehlt[Math.floor(Math.random() * nichtGewaehlt.length)];
+        const i = new Image(); i.src = src; return i;
+      });
+
+      // 4 Smileys + 8 Füller auf Würfel
       const allImgs = [
         ...selectedSmileys.map(el => { const i = new Image(); i.src = el.src; return i; }),
-        ...Array(8).fill(null).map(() => { const i = new Image(); i.src = 'smiley_teufel.png'; return i; })
+        ...fueller
       ];
       for (let i = allImgs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
