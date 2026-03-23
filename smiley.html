@@ -1143,9 +1143,13 @@
     <img class="leveltafelSmiley" src="smiley_violett_43.png" style="left:225px; top:506.25px;">
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
     <img id="overlayWiese" src="overlaywiese_smiley.webp" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:0; width:360px; height:auto; z-index:1; pointer-events:none;">
+    <!-- FERTIG Button -->
+    <div id="btnBereitWrap" style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
+      <button id="btnBereit" disabled style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px; opacity:0.4; transition:opacity 0.3s;">FERTIG</button>
+    </div>
   </div>
 
-  <!-- spielzielBox außerhalb leveltafelOverlay -->
+  <!-- spielzielBox: außerhalb leveltafelOverlay, position:fixed, unabhängig -->
   <div id="spielzielBox">
     <img id="overlayWieseImg" src="overlaywiese_smiley.webp" alt="">
     <div id="spielzielContent">
@@ -1154,10 +1158,6 @@
       <div id="selectedSmileysRow"></div>
       <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">NEU WÄHLEN</button>
       <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
-    </div>
-  </div>
-    <div id="btnBereitWrap" style="position:absolute; left:0; top:580px; width:450px; display:flex; align-items:center; justify-content:center;">
-      <button id="btnBereit" disabled style="background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:4px; opacity:0.4; transition:opacity 0.3s;">FERTIG</button>
     </div>
   </div>
   
@@ -2689,8 +2689,12 @@
           return;
         }
         
-        // SMILEY: SPIELEN / TUTORIAL Buttons NICHT einblenden — Leveltafel stattdessen
-        showLeveltafel(false);
+        // SMILEY: SPIELEN / TUTORIAL Buttons einblenden — Leveltafel erst bei Klick
+        sct.style.display = 'none';
+        document.getElementById('btnSpielen').disabled = false;
+        document.getElementById('btnSpielen').style.opacity = '1';
+        document.getElementById('btnDemo').disabled = false;
+        document.getElementById('btnDemo').style.opacity = '1';
       }
     }
 
@@ -8547,16 +8551,11 @@
       });
     });
 
-    // LOS GEHT'S — startet Spiel
     document.getElementById('btnLosGehts').addEventListener('click', () => {
       const overlay = document.getElementById('leveltafelOverlay');
-      overlay.classList.remove('show');
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      // Niedrigstes Level bestimmen (BBr < Bry < Br < MBr)
-      const LEVEL_ORDER = ['violett','blau','gruen','orange']; // niedrig→hoch
-      const LEVEL_KEY   = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'};
-      const LEVEL_VIS   = {orange:0.216, gruen:0.183, blau:0.15, violett:0.117};
+      const LEVEL_ORDER = ['violett','blau','gruen','orange'];
 
       function smileyColor(src) {
         if (src.includes('orange'))  return 'orange';
@@ -8566,7 +8565,6 @@
         return 'orange';
       }
 
-      // Niedrigstes Level unter ausgewählten Smileys finden
       let targetEl = null, targetColor = 'orange';
       for (const col of LEVEL_ORDER) {
         const found = selectedSmileys.find(el => smileyColor(el.src) === col);
@@ -8575,7 +8573,6 @@
       if (!targetEl) targetEl = selectedSmileys[0];
       window._smileyTargetColor = targetColor;
 
-      // 4 Smileys + 8 Teufel random auf 12 Slots verteilen
       const smileyImgs = selectedSmileys.map(el => {
         const img = new Image(); img.src = el.src; return img;
       });
@@ -8594,7 +8591,6 @@
         f2: ['2,2','2,1','1,0','0,0']
       };
 
-      // Target-Smiley-Face ermitteln (erste Occurrence des targetEl-src)
       const targetSrc = targetEl.src;
       let targetFace = null;
       let imgIdx2 = 0;
@@ -8619,10 +8615,11 @@
         });
         updateCubeMaterials();
 
-        // Kaertchen-Kippziel einblenden
-        _showKaertchen(targetColor, targetEl.src);
+        // JETZT overlay verstecken
+        document.getElementById('spielzielBox').classList.remove('show');
+        overlay.classList.remove('show');
 
-        // Spiel starten + Wobble
+        _showKaertchen(targetColor, targetEl.src);
         handleStart(overlay.dataset.withTutorial === '1');
         setTimeout(() => {
           runKipp21WobbleKniff(true);
