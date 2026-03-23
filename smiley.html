@@ -1171,7 +1171,7 @@
   <div id="smileyKaertchenRow" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); top:406px; width:360px; height:90px; pointer-events:none; z-index:40;">
     <img id="smileyKaertchenImg" src="" style="position:absolute; left:90px; top:0; width:180px; height:90px; object-fit:contain; z-index:40;">
     <img id="smileyKaertchenSmiley" src="" style="position:absolute; left:180px; top:12px; width:49px; height:49px; object-fit:contain; z-index:42;">
-    <img id="smileyKaertchenHand" src="" style="position:absolute; left:135px; top:18px; width:38px; height:38px; object-fit:contain; z-index:42;">
+    <img id="smileyKaertchenHand" src="" style="position:absolute; left:135px; top:18px; width:41px; height:41px; object-fit:contain; z-index:42;">
   </div>
 
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
@@ -8620,19 +8620,14 @@
     };
 
     function showSmileyHands() {
-      // Farbe des ersten gewählten Smileys bestimmen
       if (!selectedSmileys || !selectedSmileys[0]) return;
-      const src = selectedSmileys[0].src;
-      let color = 'orange';
-      if (src.includes('gruen'))   color = 'gruen';
-      else if (src.includes('blau'))    color = 'blau';
-      else if (src.includes('violett')) color = 'violett';
-
-      const handFile = 'hand_' + color + '.png';
+      // Farbe des Ziel-Smileys (window._smileyTargetColor)
+      const color = window._smileyTargetColor || 'orange';
+      const levelKey = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'}[color] || 'mbr';
+      const handFile = 'hand' + levelKey + '.png';
       const positions = HAND_FIELD_POS[color];
       const wrap = document.getElementById('handOverlays');
       wrap.style.display = 'block';
-
       positions.forEach((pos3D, i) => {
         const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
         v.project(camera);
