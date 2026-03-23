@@ -2687,12 +2687,8 @@
           return;
         }
         
-        // SPIELEN / TUTORIAL Buttons einblenden
-        sct.style.display = 'none';
-        document.getElementById('btnSpielen').disabled = false;
-        document.getElementById('btnSpielen').style.opacity = '1';
-        document.getElementById('btnDemo').disabled = false;
-        document.getElementById('btnDemo').style.opacity = '1';
+        // SMILEY: SPIELEN / TUTORIAL Buttons NICHT einblenden — Leveltafel stattdessen
+        showLeveltafel(false);
       }
     }
 
@@ -6352,7 +6348,8 @@
       kipp21KniffsUsed++;
       kipp21WobbleUsed++;
 
-      // SMILEY: Hände + Scrollband + gamePhase setzen
+      // SMILEY: Post-Wobble-Korrektur → dann Hände + Scrollband
+      await _smileyPostWobbleCorrection();
       showSmileyHands();
       showScrollband();
       gamePhase = 'spielen';
@@ -8547,46 +8544,76 @@
       overlay.classList.remove('show');
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      // Erstgewählter Smiley auf Würfel, 11 Teufel
-      const firstSmiley = selectedSmileys[0];
-      const smileyImg = new Image(); smileyImg.src = firstSmiley.src;
-      const teufelImgs = Array(11).fill(null).map(() => {
+      // Niedrigstes Level bestimmen (BBr < Bry < Br < MBr)
+      const LEVEL_ORDER = ['violett','blau','gruen','orange']; // niedrig→hoch
+      const LEVEL_KEY   = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'};
+      const LEVEL_VIS   = {orange:0.216, gruen:0.183, blau:0.15, violett:0.117};
+
+      function smileyColor(src) {
+        if (src.includes('orange'))  return 'orange';
+        if (src.includes('gruen'))   return 'gruen';
+        if (src.includes('blau'))    return 'blau';
+        if (src.includes('violett')) return 'violett';
+        return 'orange';
+      }
+
+      // Niedrigstes Level unter ausgewählten Smileys finden
+      let targetEl = null, targetColor = 'orange';
+      for (const col of LEVEL_ORDER) {
+        const found = selectedSmileys.find(el => smileyColor(el.src) === col);
+        if (found) { targetEl = found; targetColor = col; break; }
+      }
+      if (!targetEl) targetEl = selectedSmileys[0];
+      window._smileyTargetColor = targetColor;
+
+      // 4 Smileys + 8 Teufel random auf 12 Slots verteilen
+      const smileyImgs = selectedSmileys.map(el => {
+        const img = new Image(); img.src = el.src; return img;
+      });
+      const teufelImgs = Array(8).fill(null).map(() => {
         const img = new Image(); img.src = 'smiley_teufel.png'; return img;
       });
-      const allImgs = [smileyImg, ...teufelImgs];
-      // Fisher-Yates shuffle
+      const allImgs = [...smileyImgs, ...teufelImgs];
       for (let i = allImgs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [allImgs[i], allImgs[j]] = [allImgs[j], allImgs[i]];
       }
+
       const slotKeys = {
         f0: ['2,0','1,0','0,1','0,2'],
         f1: ['0,0','0,1','1,2','2,2'],
         f2: ['2,2','2,1','1,0','0,0']
       };
-      // Ermittle welche Face den Smiley bekommt
-      let smileyFace = null, smileySlotKey = null;
-      let idx = 0;
-      ['f0','f1','f2'].forEach(face => {
-        slotKeys[face].forEach(k => {
-          if (allImgs[idx] === smileyImg) { smileyFace = face; smileySlotKey = k; }
-          idx++;
-        });
-      });
+
+      // Target-Smiley-Face ermitteln (erste Occurrence des targetEl-src)
+      const targetSrc = targetEl.src;
+      let targetFace = null;
+      let imgIdx2 = 0;
+      for (const face of ['f0','f1','f2']) {
+        for (const k of slotKeys[face]) {
+          if (allImgs[imgIdx2] && allImgs[imgIdx2].src === targetSrc && !targetFace) {
+            targetFace = face;
+          }
+          imgIdx2++;
+        }
+      }
+      window._smileyTargetFace = targetFace || 'f2';
 
       Promise.all(allImgs.map(img => new Promise(res => {
         if (img.complete) res(); else img.onload = res;
       }))).then(() => {
-        let imgIdx = 0;
+        let idx = 0;
         ['f0','f1','f2'].forEach(face => {
           slotKeys[face].forEach(k => {
-            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[imgIdx++], vis: true };
+            faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
           });
         });
         updateCubeMaterials();
 
-        // Smiley-Face für Wobble speichern, dann Wobble-Blick starten
-        window._smileyFaceForEckblick = smileyFace;
+        // Kaertchen-Kippziel einblenden
+        _showKaertchen(targetColor, targetEl.src);
+
+        // Spiel starten + Wobble
         handleStart(overlay.dataset.withTutorial === '1');
         setTimeout(() => {
           runKipp21WobbleKniff(true);
@@ -8691,6 +8718,83 @@
       }
       isAnimating = false;
       if (window._resetScrollBand) window._resetScrollBand();
+    }
+
+    // Kaertchen-Kippziel als 3D-Mesh
+    let _kaertchenGroup = null;
+    function _showKaertchen(levelColor, targetSmileyUrl) {
+      if (_kaertchenGroup) { scene.remove(_kaertchenGroup); _kaertchenGroup = null; }
+      const group = new THREE.Group();
+      group.position.set(0, 0.002, 0.890625);
+
+      const loader = new THREE.TextureLoader();
+
+      // Kaertchen Hintergrund (2 Zellen × 1 Zelle, landscape)
+      const levelKey = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'}[levelColor] || 'mbr';
+      loader.load('kaertchen_' + levelKey + '.png', tex => {
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.3125, 0.15625), mat);
+        mesh.rotation.x = -Math.PI / 2;
+        group.add(mesh);
+      });
+
+      // Smiley auf E11 (X=+0.078125, Z relative=-0 since group at cardZ)
+      loader.load(targetSmileyUrl, tex => {
+        const s = 0.15625 * 1.1; // 110%
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(s, s), mat);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(0.078125, 0.001, 0);
+        group.add(mesh);
+      });
+
+      // Hand auf D11 (X=-0.078125)
+      loader.load('hand' + levelKey + '.png', tex => {
+        const s = 0.15625 * 0.85; // 85%
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(s, s), mat);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(-0.078125, 0.001, 0);
+        group.add(mesh);
+      });
+
+      scene.add(group);
+      _kaertchenGroup = group;
+    }
+
+    // Post-Wobble Korrektur: Target-Smiley auf korrekte Sichtbarkeit bringen
+    async function _smileyPostWobbleCorrection() {
+      const targetFace = window._smileyTargetFace;
+      const targetColor = window._smileyTargetColor;
+      if (!targetFace || !targetColor) return;
+
+      const VISIBILITY = {orange:0.216, gruen:0.183, blau:0.15, violett:0.117};
+      const threshold = VISIBILITY[targetColor] || 0.183;
+
+      const isVisible = (topFace === targetFace);
+      const shouldBeVisible = Math.random() < threshold;
+
+      if (isVisible === shouldBeVisible) return; // passt schon
+
+      function nextCwDir() {
+        if (currentQuadrant === 3) return 'north';
+        if (currentQuadrant === 0) return 'east';
+        if (currentQuadrant === 1) return 'south_from_q1';
+        return 'west_from_q2';
+      }
+
+      if (isVisible && !shouldBeVisible) {
+        // Verstecken: 1 Kipp reicht
+        await performKipp(nextCwDir(), 800);
+        advanceTopFace();
+      } else if (!isVisible && shouldBeVisible) {
+        // Zeigen: kippen bis targetFace oben
+        for (let i = 0; i < 11; i++) {
+          if (topFace === targetFace) break;
+          await performKipp(nextCwDir(), 800);
+          advanceTopFace();
+        }
+      }
     }
 
     // WEITER — alter Handler nicht mehr nötig (btnBereit = FERTIG)
