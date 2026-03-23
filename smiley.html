@@ -1288,6 +1288,7 @@
     <!-- Kippanzahl: 6 Tasten in 2×3 Grid -->
     <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
       <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); position:relative;">
+        <img src="lauffl_icon.webp" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0.69; pointer-events:none; object-fit:cover;">
         <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease; position:relative; z-index:1;">
           <div class="numBtn" data-num="1">1</div>
           <div class="numBtn" data-num="2">2</div>
@@ -10764,19 +10765,19 @@
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
 
-    // === SCROLLBAND (1-11, Grundstellung 6) ===
+    // === SCROLLBAND (1-11, Grundstellung 6) — exakt wie coloricon ===
     (function() {
       const strip = document.getElementById('scrollBandStrip');
       const wrap = document.getElementById('scrollBandWrap');
       if (!strip || !wrap) return;
-
+      
       const CELL_W = 56;
       const TOTAL = 11;
       let bandIdx = 5;
       let currentNum = null;
       let touchStartX = 0;
       let touchStartIdx = 0;
-
+      
       function updateBandPos(animate) {
         const wrapW = wrap.offsetWidth || 306;
         const offset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
@@ -10784,7 +10785,7 @@
         strip.style.transform = 'translateX(' + offset + 'px)';
         updateBandStyle();
       }
-
+      
       function updateBandStyle() {
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
@@ -10797,32 +10798,34 @@
         });
         window._selectedKippAnzahl = bandIdx + 1;
       }
-
+      
       function selectNum(n) {
         currentNum = n;
-        strip.querySelectorAll('.numBtn').forEach(b => {
+        const btns = strip.querySelectorAll('.numBtn');
+        btns.forEach(b => {
           if (parseInt(b.dataset.num) === n) b.classList.add('selected');
           else b.classList.remove('selected');
         });
       }
-
+      
       function clearSelection() {
         currentNum = null;
         strip.querySelectorAll('.numBtn').forEach(b => b.classList.remove('selected'));
       }
-
+      
       function resetBand() {
         bandIdx = 5;
         clearSelection();
         updateBandPos(true);
       }
-
+      
       let touchMoved = false;
       let lastMoveX = 0;
       let lastMoveTime = 0;
       let velocity = 0;
       let momentumAnim = null;
-
+      let pixelOffset = 0;
+      
       wrap.addEventListener('touchstart', (e) => {
         e.stopPropagation();
         window._numBtnTouchActive = true;
@@ -10834,8 +10837,9 @@
         velocity = 0;
         if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
         strip.style.transition = 'none';
+        pixelOffset = 0;
       }, { passive: false });
-
+      
       wrap.addEventListener('touchmove', (e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -10844,10 +10848,14 @@
         const dx = x - touchStartX;
         if (Math.abs(dx) > 4) touchMoved = true;
         const dt = now - lastMoveTime;
-        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
-        else if (dt >= 60) velocity = 0;
+        if (dt > 0 && dt < 60) {
+          velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
+        } else if (dt >= 60) {
+          velocity = 0;
+        }
         lastMoveX = x;
         lastMoveTime = now;
+        pixelOffset = dx;
         const wrapW = wrap.offsetWidth || 306;
         const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
         strip.style.transform = 'translateX(' + tx + 'px)';
@@ -10859,6 +10867,7 @@
         e.stopPropagation();
         e.preventDefault();
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
+
         if (!touchMoved) {
           const touch = e.changedTouches[0];
           const wrapRect = wrap.getBoundingClientRect();
@@ -10868,8 +10877,21 @@
           if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
-            window._selectedKippAnzahl = n;
-            _smileyDoKipps(n);
+            if (gamePhase === 'spielen' && !isAnimating) {
+              (async () => {
+                for (let i = 0; i < n; i++) {
+                  let dir;
+                  if      (currentQuadrant === 0) dir = 'east';
+                  else if (currentQuadrant === 1) dir = 'south_from_q1';
+                  else if (currentQuadrant === 2) dir = 'west_from_q2';
+                  else                            dir = 'north';
+                  await performKipp(dir, 600);
+                  advanceTopFace();
+                  if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+                }
+                clearSelection();
+              })();
+            }
           } else {
             bandIdx = tappedIdx;
             updateBandPos(true);
@@ -10884,12 +10906,19 @@
           const dist = snapOffset - startX;
           const t0 = performance.now();
           const dur = 700;
-          const A = 0.18, omega = 1.8 * 2 * Math.PI, damping = 5.5;
+          const A = 0.18;
+          const omega = 1.8 * 2 * Math.PI;
+          const damping = 5.5;
           strip.style.transition = 'none';
           updateBandStyle();
           function pendulumSnap() {
             const t = (performance.now() - t0) / dur;
-            if (t >= 1) { strip.style.transform = 'translateX(' + snapOffset + 'px)'; momentumAnim = null; updateBandStyle(); return; }
+            if (t >= 1) {
+              strip.style.transform = 'translateX(' + snapOffset + 'px)';
+              momentumAnim = null;
+              updateBandStyle();
+              return;
+            }
             const ease = 1 - Math.pow(1 - t, 3);
             const swing = A * Math.exp(-damping * t) * Math.sin(omega * t);
             strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
@@ -10898,7 +10927,7 @@
           momentumAnim = requestAnimationFrame(pendulumSnap);
         }
       }, { passive: false });
-
+      
       wrap.addEventListener('click', (e) => {
         e.stopPropagation();
         const wrapRect = wrap.getBoundingClientRect();
@@ -10908,19 +10937,43 @@
         if (tappedIdx === bandIdx) {
           const n = bandIdx + 1;
           selectNum(n);
-          window._selectedKippAnzahl = n;
-          _smileyDoKipps(n);
+          if (gamePhase === 'spielen' && !isAnimating) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if      (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else                            dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+            })();
+          }
         } else {
           bandIdx = tappedIdx;
           updateBandPos(true);
         }
       });
-
-      window._scrollBandToNum = function(n) { bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1)); updateBandPos(true); selectNum(n); };
-      window._scrollBandScrollOnly = function(n) { bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1)); updateBandPos(true); clearSelection(); };
+      
+      window._scrollBandToNum = function(n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
+        selectNum(n);
+      };
+      window._scrollBandScrollOnly = function(n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
+        clearSelection();
+      };
       window._resetScrollBand = function() { resetBand(); };
-      window._highlightNum = function(n) { if (n === null) { clearSelection(); return; } window._scrollBandToNum(n); };
-
+      window._highlightNum = function(n) {
+        if (n === null) { clearSelection(); return; }
+        window._scrollBandToNum(n);
+      };
+      
       updateBandPos(false);
     })();
 
