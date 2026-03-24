@@ -265,7 +265,6 @@
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
-    .eckeHaken {
       position: absolute;
       width: 40px; height: 40px;
       display: none;
@@ -283,9 +282,7 @@
       text-shadow: 0 0 8px rgba(206,219,37,0.6);
       animation: hakenPulse 2s ease-in-out infinite;
     }
-    @keyframes hakenPulse {
-      0%, 100% { border-color: rgba(212,180,140,0.5); transform: scale(1); }
-      50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
+50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
     }
     #kippTarget {
       position: absolute;
@@ -489,37 +486,7 @@
     }
 
 
-    /* BUTTONS 1-6 */
-    #numBtns {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: auto;
-      z-index: 20;
-    }
-    .numBtn {
-      width: 42px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font: bold 18px Arial;
-      color: #2a1810;
-      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
-      border: 2px solid #8a7a66;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-      cursor: pointer;
-      transition: all 0.12s ease;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .numBtn.selected {
-      background: linear-gradient(180deg, #3a2a1a 0%, #2a1810 100%);
-      border-color: #5a4a36;
-      color: #e8dcc8;
-      box-shadow: 0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4);
-    }
+
     .numBtn:active {
       transform: scale(0.92);
     }
@@ -1264,10 +1231,6 @@
     <div id="spielZielText"></div>
     <div id="entscheidungText"></div>
     <div id="kippTarget"></div>
-    <div class="eckeHaken" id="hakenQ0">✓</div>
-    <div class="eckeHaken" id="hakenQ1">✓</div>
-    <div class="eckeHaken" id="hakenQ2">✓</div>
-    <div class="eckeHaken" id="hakenQ3">✓</div>
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
@@ -1306,13 +1269,7 @@
       </div>
     </div>
 
-    <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
-    <div id="handOverlays" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; display:none;">
-      <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-      <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-      <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-      <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-    </div>
+
 
   </div>
 
@@ -1620,7 +1577,7 @@
       radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
     );
     
-    camera.lookAt(0, 0.46875, 0.7 + southShift);
+    camera.lookAt(0, 0.480, 0.7 + southShift);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
@@ -2099,16 +2056,16 @@
     scene.add(zAxis1);
 
     const xAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-2.5, 0.46875, 0.109375),
-      new THREE.Vector3(2.5, 0.46875, 0.109375)
+      new THREE.Vector3(-2.5, 0.480, 0.109375),
+      new THREE.Vector3(2.5, 0.480, 0.109375)
     ]);
     const xAxis2 = new THREE.Line(xAxisGeometry2, axesMaterial);
     xAxis2.visible = false;
     scene.add(xAxis2);
 
     const zAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0.46875, -2.5),
-      new THREE.Vector3(0, 0.46875, 2.5)
+      new THREE.Vector3(0, 0.480, -2.5),
+      new THREE.Vector3(0, 0.480, 2.5)
     ]);
     const zAxis2 = new THREE.Line(zAxisGeometry2, axesMaterial);
     zAxis2.visible = false;
@@ -2119,7 +2076,7 @@
     // =========================
     const wallTexture = new THREE.TextureLoader().load('boxwand_smiley.webp');
     
-    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.46875, 0.0335);
+    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.480, 0.0335);
     const wallMaterial = new THREE.MeshBasicMaterial({ 
       map: wallTexture,
       color: 0x666666  // Dunkler (40% Helligkeit)
@@ -2137,7 +2094,7 @@
     wall2.receiveShadow = true;
     scene.add(wall2);
 
-    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.46875, 1.00675);
+    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.480, 1.00675);
     
     const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterial);
     wallLeft.position.set(-0.48550, 0.234375, 0.1105);
@@ -2174,22 +2131,35 @@
       
       spieltisch.rotation.x = -Math.PI / 2;
       
-      // Position ABSOLUT FINAL
+      // Position: original Berechnung
       const xCenter = -0.625 + SPIEL_WIDTH / 2;
       const zCenter = -0.828125 + height / 2;
       const yPos = 0.001 + 3 * 0.15625;
-      
+
       spieltisch.position.set(xCenter, yPos, zCenter);
       spieltisch.receiveShadow = true;
       spieltisch.castShadow = false;
       spieltisch.renderOrder = 1;
-      
-      // Matrix komplett einfrieren
       spieltisch.matrixAutoUpdate = false;
       spieltisch.updateMatrix();
-      
-      // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
+
+      // Rahmen: exakt gleiche Geometrie, Y + 0.001 drüber
+      new THREE.TextureLoader().load('rahmen_smiley.webp', (rahmenTex) => {
+        const rahmenMat = new THREE.MeshStandardMaterial({
+          map: rahmenTex,
+          transparent: true,
+          alphaTest: 0.05,
+          roughness: 0.8,
+          metalness: 0.2,
+          depthWrite: false
+        });
+        const rahmenMesh = new THREE.Mesh(spieltischGeometry, rahmenMat);
+        rahmenMesh.rotation.x = -Math.PI / 2;
+        rahmenMesh.position.set(xCenter, yPos + 0.003, zCenter);
+        rahmenMesh.renderOrder = 2;
+        scene.add(rahmenMesh);
+      });
       
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
@@ -7601,57 +7571,7 @@
     })();
 
     // === KNIFF ICONS: Show/Hide ===
-    // === ECKE-HAKEN: Bestätigungsbuttons in den 4 Rahmenecken ===
-    const hakenEls = [
-      document.getElementById('hakenQ0'),
-      document.getElementById('hakenQ1'),
-      document.getElementById('hakenQ2'),
-      document.getElementById('hakenQ3')
-    ];
-    // 3D-Positionen der 4 Rahmenecken (auf Rahmen-Oberkante)
-    const hakenPos3D = [
-      new THREE.Vector3(-0.546875, 0.479, -0.437500), // Q0 NW
-      new THREE.Vector3( 0.546875, 0.479, -0.437500), // Q1 NE
-      new THREE.Vector3( 0.546875, 0.479,  0.658000), // Q2 SE
-      new THREE.Vector3(-0.546875, 0.479,  0.658000)  // Q3 SW
-    ];
-    
-    function positionEckeHaken() {
-      for (let i = 0; i < 4; i++) {
-        const p = hakenPos3D[i].clone().project(camera);
-        const sx = (p.x * 0.5 + 0.5) * 360 - 20; // zentriert (40px breit)
-        const sy = (-p.y * 0.5 + 0.5) * 720 - 20; // zentriert (40px hoch)
-        hakenEls[i].style.left = sx + 'px';
-        hakenEls[i].style.top = sy + 'px';
-      }
-    }
-    
-    function showEckeHaken() {
-      positionEckeHaken();
-      hakenEls.forEach(el => { el.style.display = 'block'; });
-    }
-    
-    function hideEckeHaken() {
-      hakenEls.forEach(el => { el.style.display = 'none'; });
-    }
-    
-    // Click-Handler für alle 4 Haken
-    hakenEls.forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        hideEckeHaken();
-        checkKippzielTap();
-      });
-      el.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        hideEckeHaken();
-        checkKippzielTap();
-      });
-    });
+
 
     function showKniffIcons() {
       // Kniff Icons 12px nördlich der alten Position
@@ -8566,9 +8486,11 @@
     document.getElementById('btnLosGehts').addEventListener('click', () => {
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      // Overlays weg
+      // Overlays komplett weg
       document.getElementById('spielzielBox').classList.remove('show');
-      document.getElementById('leveltafelOverlay').classList.remove('show');
+      const lto = document.getElementById('leveltafelOverlay');
+      if (lto) lto.remove();
+
 
       // Zufälliger Smiley aus den 4 gewählten
       function smileyColor(src) {
@@ -8601,50 +8523,68 @@
       });
       updateCubeMaterials();
 
-      // Kärtchen kommt nach Wobble
+      // Kärtchen sofort einblenden — vor dem Wobble
+      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
+
       startKipp21(false);
 
       // Wobble nach 800ms
       setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
     });
 
-    // Farbfeld-Positionen in 3D für Hand-Overlays (X, Y, Z)
-    const HAND_FIELD_POS = {
-      orange:  [ [-0.078125, 0.4798, -0.437500], [0.078125, 0.4798, -0.437500],
-                 [-0.546875, 0.4798,  0.343750], [0.546875, 0.4798,  0.343750] ],
-      gruen:   [ [-0.234375, 0.4798, -0.437500], [-0.234375, 0.4798, 0.658000],
-                 [ 0.546875, 0.4798,  0.265625], [ 0.546875, 0.4798, 0.109375] ],
-      blau:    [ [ 0.234375, 0.4798, -0.437500], [ 0.234375, 0.4798, 0.658000],
-                 [-0.546875, 0.4798,  0.109375], [-0.546875, 0.4798, 0.265625] ],
-      violett: [ [-0.078125, 0.4798,  0.658000], [ 0.078125, 0.4798, 0.658000],
-                 [-0.546875, 0.4798, -0.046875], [ 0.546875, 0.4798,-0.046875] ]
+
+    // Hand-Overlays als 3D-Meshes auf dem Spieltisch
+    let _handMeshes = [];
+    const HAND_W = 0.15625;  // 1 Zelle = 45px
+    const HAND_H = 0.15625;  // 1 Zelle = 45px
+
+    // XZ-Positionen der 4 Farbfelder je Level — in Rasterzellen
+    // X = Spalte × 0.15625, Z = aus COLOR_FIELD_POS (exakte Werte)
+    const HAND_POS_3D = {
+      orange:  [ [-0.07813, -0.359375], [ 0.07813, -0.359375],
+                 [ 0.46875,  0.34375 ], [-0.46875,  0.34375 ] ],
+      gruen:   [ [-0.23438, -0.359375], [ 0.46875,  0.03125 ],
+                 [ 0.46875,  0.1875  ], [-0.23438,  0.580375] ],
+      blau:    [ [-0.46875,  0.03125 ], [ 0.23438, -0.359375],
+                 [ 0.23438,  0.580375], [-0.46875,  0.1875  ] ],
+      violett: [ [-0.46875, -0.125   ], [ 0.46875, -0.125   ],
+                 [ 0.07813,  0.580375], [-0.07813,  0.580375] ]
     };
 
     function showSmileyHands() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
       const color = window._smileyTargetColor || 'orange';
-      const handFile = 'hand_' + color + '.png';
-      const positions = HAND_FIELD_POS[color];
-      const wrap = document.getElementById('handOverlays');
-      wrap.style.display = 'block';
-      positions.forEach((pos3D, i) => {
-        const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
-        v.project(camera);
-        const sx = (v.x * 0.5 + 0.5) * 360;
-        const sy = (-v.y * 0.5 + 0.5) * 720;
-        const el = document.getElementById('hand' + i);
-        el.src = handFile;
-        el.style.left = (sx - 22.5) + 'px';
-        el.style.top  = (sy - 22.5) + 'px';
-        el.style.display = 'block';
+      const levelKey = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'}[color] || 'mbr';
+      const handFile = 'hand' + levelKey + '.png';
+      const positions = HAND_POS_3D[color];
+      const yPos = 0.001 + 3 * 0.15625 + 0.002; // knapp über Spieltisch
+
+      // Alte Meshes entfernen
+      _handMeshes.forEach(m => scene.remove(m));
+      _handMeshes = [];
+
+      const loader = new THREE.TextureLoader();
+      loader.load(handFile, (tex) => {
+        tex.minFilter = THREE.LinearFilter;
+        positions.forEach(([x, z]) => {
+          const mat = new THREE.MeshBasicMaterial({
+            map: tex, transparent: true, depthWrite: false
+          });
+          const mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(HAND_W, HAND_H), mat
+          );
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.position.set(x, yPos, z);
+          mesh.renderOrder = 3;
+          scene.add(mesh);
+          _handMeshes.push(mesh);
+        });
       });
     }
 
     function hideSmileyHands() {
-      document.getElementById('handOverlays').style.display = 'none';
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('hand' + i).style.display = 'none';
-      }
+      _handMeshes.forEach(m => scene.remove(m));
+      _handMeshes = [];
     }
 
     function showScrollband() {
@@ -8683,6 +8623,57 @@
     }
 
     // Scrollband-Kipp: n Kipps CW ausführen
+
+    // Smiley-Treffer-Check nach Kippen
+    async function _smileyCheckTreffer() {
+      const targetSrc  = window._smileyTargetSrc;
+      const targetColor = window._smileyTargetColor;
+      if (!targetSrc || !targetColor) return;
+
+      // Prüfen ob der Ziel-Smiley oben liegt (auf topFace sichtbar)
+      const f = faceSlots[topFace];
+      let isHit = false;
+      for (const key in f.slotMap) {
+        const slot = f.slotMap[key];
+        if (slot.img && slot.img.src && slot.img.src.includes(targetSrc.split('/').pop())) {
+          isHit = true; break;
+        }
+      }
+
+      const kaertchen = document.getElementById('smileyKaertchenRow');
+
+      if (isHit) {
+        // TREFFER — grüner Rahmen
+        kaertchen.style.outline = '4px solid #cedb25';
+        kaertchen.style.borderRadius = '8px';
+        await new Promise(r => setTimeout(r, 1500));
+        kaertchen.style.outline = '';
+        // Neues Kippziel generieren
+        _smileyNeuesKippziel();
+      } else {
+        // MISS — roter Rahmen
+        kaertchen.style.outline = '4px solid #cc2222';
+        kaertchen.style.borderRadius = '8px';
+        await new Promise(r => setTimeout(r, 1000));
+        kaertchen.style.outline = '';
+      }
+    }
+
+    function _smileyNeuesKippziel() {
+      // Zufälligen neuen Smiley aus den 4 gewählten nehmen
+      const next = selectedSmileys[Math.floor(Math.random() * selectedSmileys.length)];
+      function smileyColor(src) {
+        if (src.includes('orange'))  return 'orange';
+        if (src.includes('gruen'))   return 'gruen';
+        if (src.includes('blau'))    return 'blau';
+        if (src.includes('violett')) return 'violett';
+        return 'orange';
+      }
+      window._smileyTargetSrc   = next.src;
+      window._smileyTargetColor = smileyColor(next.src);
+      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
+      showSmileyHands();
+    }
 
     // Kärtchen als HTML-Overlay
     function _showKaertchen(levelColor, targetSmileyUrl) {
@@ -9960,7 +9951,7 @@
         pauseDragActive = true;
         return;
       }
-      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
+      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
@@ -10203,7 +10194,6 @@
             if (gamePhase === 'spielen' && !kippzielChecked) {
               kippCount++;
               // Bestätigungs-Haken in Ecken zeigen
-              showEckeHaken();
             }
             // KIPP 21: Kipp zählen + On-Target prüfen
             if (gamePhase === 'kipp21' && kipp21Active) {
@@ -10629,57 +10619,7 @@
       pulseRichtungButtons(false);
     }
 
-    // === KIPPANZAHL-BUTTONS (6 Tasten) ===
-    (function() {
-      const btns = document.querySelectorAll('.numBtn');
-      if (!btns.length) return;
-      
-      let currentNum = null;
-      
-      function selectNum(n) {
-        currentNum = n;
-        btns.forEach(b => {
-          if (parseInt(b.dataset.num) === n) b.classList.add('selected');
-          else b.classList.remove('selected');
-        });
-      }
-      
-      function clearSelection() {
-        currentNum = null;
-        btns.forEach(b => b.classList.remove('selected'));
-      }
-      
-      btns.forEach(btn => {
-        // Prevent touch from bleeding through to canvas
-        btn.addEventListener('touchstart', (e) => { e.stopPropagation(); window._numBtnTouchActive = true; }, { passive: false });
-        btn.addEventListener('touchend', (e) => { e.stopPropagation(); setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: false });
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const n = parseInt(btn.dataset.num);
-          selectNum(n);
-          
-          // Zahl an Spiellogik melden
-          if (gamePhase === 'kipp21' && window._onNumBtn) {
-            window._onNumBtn(n);
-          } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
-            selectedAnzahl = n;
-            startRichtungWarten();
-          }
-        });
-      });
-      
-      // Global: Zahl auswählen (für Tutorial)
-      window._scrollBandToNum = function(n) { selectNum(n); };
-      
-      // Global: Reset
-      window._resetScrollBand = function() { clearSelection(); };
-      
-      // Highlight (für Tutorial-Anzeige)
-      window._highlightNum = function(n) {
-        if (n === null) { clearSelection(); return; }
-        selectNum(n);
-      };
-    })();
+
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
     async function triggerKipp(direction) {
@@ -10859,7 +10799,7 @@
           if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
-            if (gamePhase === 'spielen' && !isAnimating) {
+            if (!isAnimating) { // SMILEY: gamePhase check removed
               (async () => {
                 for (let i = 0; i < n; i++) {
                   let dir;
@@ -10872,6 +10812,7 @@
                   if (i < n - 1) await new Promise(r => setTimeout(r, 200));
                 }
                 clearSelection();
+                await _smileyCheckTreffer();
               })();
             }
           } else {
@@ -10919,7 +10860,7 @@
         if (tappedIdx === bandIdx) {
           const n = bandIdx + 1;
           selectNum(n);
-          if (gamePhase === 'spielen' && !isAnimating) {
+          if (!isAnimating) { // SMILEY: gamePhase check removed
             (async () => {
               for (let i = 0; i < n; i++) {
                 let dir;
@@ -10932,6 +10873,7 @@
                 if (i < n - 1) await new Promise(r => setTimeout(r, 200));
               }
               clearSelection();
+              await _smileyCheckTreffer();
             })();
           }
         } else {
