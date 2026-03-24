@@ -2165,13 +2165,14 @@
           alphaTest: 0.5,
           roughness: 0.8,
           metalness: 0.2,
-          depthWrite: true
+          depthWrite: false,
+          depthTest: false
         });
         const rahmen = new THREE.Mesh(rahmenGeo, rahmenMat);
         rahmen.rotation.x = -Math.PI / 2;
         const rxCenter = -0.625 + SPIEL_WIDTH / 2;
         const rzCenter = -0.828125 + rHeight / 2;
-        rahmen.position.set(rxCenter, 0.47175, rzCenter);
+        rahmen.position.set(rxCenter, 0.46985, rzCenter);
         rahmen.receiveShadow = false;
         rahmen.castShadow = false;
         rahmen.renderOrder = 2;
