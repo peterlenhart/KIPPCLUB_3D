@@ -2153,7 +2153,7 @@
         const rHeight = SPIEL_WIDTH * rAspect;
         const rahmen = new THREE.Mesh(
           new THREE.PlaneGeometry(SPIEL_WIDTH, rHeight),
-          new THREE.MeshBasicMaterial({ map: rTex, transparent: true })
+          new THREE.MeshBasicMaterial({ map: rTex, transparent: true, alphaTest: 0.5 })
         );
         rahmen.rotation.x = -Math.PI / 2;
         const rzCenter = -0.828125 + rHeight / 2;
@@ -2170,7 +2170,7 @@
       const handGeo = new THREE.PlaneGeometry(handSize, handSize);
       window._handMeshes = [];
       for (let i = 0; i < 4; i++) {
-        const mesh = new THREE.Mesh(handGeo, new THREE.MeshBasicMaterial({ transparent: true }));
+        const mesh = new THREE.Mesh(handGeo, new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.5, side: THREE.DoubleSide }));
         mesh.rotation.x = -Math.PI / 2;
         mesh.visible = false;
         scene.add(mesh);
@@ -8576,7 +8576,7 @@
         mesh.material.needsUpdate = true;
         mesh.position.set(pos3D[0], pos3D[1], pos3D[2]);
         mesh.rotation.x = -Math.PI / 2;
-        mesh.rotation.y = (pos3D[3] || 0) * Math.PI / 180;
+        mesh.rotation.z = (pos3D[3] || 0) * Math.PI / 180;
         mesh.visible = true;
       });
       if (window._rahmenMesh) {
