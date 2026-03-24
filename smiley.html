@@ -265,7 +265,6 @@
       0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 2px 6px rgba(255,255,255,0.4)); }
       50% { transform: translateX(-50%) scale(1.12); filter: drop-shadow(0 2px 12px rgba(255,255,255,0.7)); }
     }
-    .eckeHaken {
       position: absolute;
       width: 40px; height: 40px;
       display: none;
@@ -283,9 +282,7 @@
       text-shadow: 0 0 8px rgba(206,219,37,0.6);
       animation: hakenPulse 2s ease-in-out infinite;
     }
-    @keyframes hakenPulse {
-      0%, 100% { border-color: rgba(212,180,140,0.5); transform: scale(1); }
-      50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
+50% { border-color: rgba(206,219,37,0.7); transform: scale(1.08); }
     }
     #kippTarget {
       position: absolute;
@@ -489,37 +486,7 @@
     }
 
 
-    /* BUTTONS 1-6 */
-    #numBtns {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: auto;
-      z-index: 20;
-    }
-    .numBtn {
-      width: 42px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font: bold 18px Arial;
-      color: #2a1810;
-      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
-      border: 2px solid #8a7a66;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-      cursor: pointer;
-      transition: all 0.12s ease;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .numBtn.selected {
-      background: linear-gradient(180deg, #3a2a1a 0%, #2a1810 100%);
-      border-color: #5a4a36;
-      color: #e8dcc8;
-      box-shadow: 0 0 8px rgba(42,24,16,0.6), 0 2px 4px rgba(0,0,0,0.4);
-    }
+
     .numBtn:active {
       transform: scale(0.92);
     }
@@ -1264,10 +1231,6 @@
     <div id="spielZielText"></div>
     <div id="entscheidungText"></div>
     <div id="kippTarget"></div>
-    <div class="eckeHaken" id="hakenQ0">✓</div>
-    <div class="eckeHaken" id="hakenQ1">✓</div>
-    <div class="eckeHaken" id="hakenQ2">✓</div>
-    <div class="eckeHaken" id="hakenQ3">✓</div>
     <div id="countdown">30</div>
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
@@ -7601,57 +7564,7 @@
     })();
 
     // === KNIFF ICONS: Show/Hide ===
-    // === ECKE-HAKEN: Bestätigungsbuttons in den 4 Rahmenecken ===
-    const hakenEls = [
-      document.getElementById('hakenQ0'),
-      document.getElementById('hakenQ1'),
-      document.getElementById('hakenQ2'),
-      document.getElementById('hakenQ3')
-    ];
-    // 3D-Positionen der 4 Rahmenecken (auf Rahmen-Oberkante)
-    const hakenPos3D = [
-      new THREE.Vector3(-0.546875, 0.479, -0.437500), // Q0 NW
-      new THREE.Vector3( 0.546875, 0.479, -0.437500), // Q1 NE
-      new THREE.Vector3( 0.546875, 0.479,  0.658000), // Q2 SE
-      new THREE.Vector3(-0.546875, 0.479,  0.658000)  // Q3 SW
-    ];
-    
-    function positionEckeHaken() {
-      for (let i = 0; i < 4; i++) {
-        const p = hakenPos3D[i].clone().project(camera);
-        const sx = (p.x * 0.5 + 0.5) * 360 - 20; // zentriert (40px breit)
-        const sy = (-p.y * 0.5 + 0.5) * 720 - 20; // zentriert (40px hoch)
-        hakenEls[i].style.left = sx + 'px';
-        hakenEls[i].style.top = sy + 'px';
-      }
-    }
-    
-    function showEckeHaken() {
-      positionEckeHaken();
-      hakenEls.forEach(el => { el.style.display = 'block'; });
-    }
-    
-    function hideEckeHaken() {
-      hakenEls.forEach(el => { el.style.display = 'none'; });
-    }
-    
-    // Click-Handler für alle 4 Haken
-    hakenEls.forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        hideEckeHaken();
-        checkKippzielTap();
-      });
-      el.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (gamePhase !== 'spielen' || kippzielChecked || kippCount < 1) return;
-        hideEckeHaken();
-        checkKippzielTap();
-      });
-    });
+
 
     function showKniffIcons() {
       // Kniff Icons 12px nördlich der alten Position
@@ -8687,6 +8600,57 @@
     }
 
     // Scrollband-Kipp: n Kipps CW ausführen
+
+    // Smiley-Treffer-Check nach Kippen
+    async function _smileyCheckTreffer() {
+      const targetSrc  = window._smileyTargetSrc;
+      const targetColor = window._smileyTargetColor;
+      if (!targetSrc || !targetColor) return;
+
+      // Prüfen ob der Ziel-Smiley oben liegt (auf topFace sichtbar)
+      const f = faceSlots[topFace];
+      let isHit = false;
+      for (const key in f.slotMap) {
+        const slot = f.slotMap[key];
+        if (slot.img && slot.img.src && slot.img.src.includes(targetSrc.split('/').pop())) {
+          isHit = true; break;
+        }
+      }
+
+      const kaertchen = document.getElementById('smileyKaertchenRow');
+
+      if (isHit) {
+        // TREFFER — grüner Rahmen
+        kaertchen.style.outline = '4px solid #cedb25';
+        kaertchen.style.borderRadius = '8px';
+        await new Promise(r => setTimeout(r, 1500));
+        kaertchen.style.outline = '';
+        // Neues Kippziel generieren
+        _smileyNeuesKippziel();
+      } else {
+        // MISS — roter Rahmen
+        kaertchen.style.outline = '4px solid #cc2222';
+        kaertchen.style.borderRadius = '8px';
+        await new Promise(r => setTimeout(r, 1000));
+        kaertchen.style.outline = '';
+      }
+    }
+
+    function _smileyNeuesKippziel() {
+      // Zufälligen neuen Smiley aus den 4 gewählten nehmen
+      const next = selectedSmileys[Math.floor(Math.random() * selectedSmileys.length)];
+      function smileyColor(src) {
+        if (src.includes('orange'))  return 'orange';
+        if (src.includes('gruen'))   return 'gruen';
+        if (src.includes('blau'))    return 'blau';
+        if (src.includes('violett')) return 'violett';
+        return 'orange';
+      }
+      window._smileyTargetSrc   = next.src;
+      window._smileyTargetColor = smileyColor(next.src);
+      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
+      showSmileyHands();
+    }
 
     // Kärtchen als HTML-Overlay
     function _showKaertchen(levelColor, targetSmileyUrl) {
@@ -9964,7 +9928,7 @@
         pauseDragActive = true;
         return;
       }
-      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
+      if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
@@ -10207,7 +10171,6 @@
             if (gamePhase === 'spielen' && !kippzielChecked) {
               kippCount++;
               // Bestätigungs-Haken in Ecken zeigen
-              showEckeHaken();
             }
             // KIPP 21: Kipp zählen + On-Target prüfen
             if (gamePhase === 'kipp21' && kipp21Active) {
@@ -10633,57 +10596,7 @@
       pulseRichtungButtons(false);
     }
 
-    // === KIPPANZAHL-BUTTONS (6 Tasten) ===
-    (function() {
-      const btns = document.querySelectorAll('.numBtn');
-      if (!btns.length) return;
-      
-      let currentNum = null;
-      
-      function selectNum(n) {
-        currentNum = n;
-        btns.forEach(b => {
-          if (parseInt(b.dataset.num) === n) b.classList.add('selected');
-          else b.classList.remove('selected');
-        });
-      }
-      
-      function clearSelection() {
-        currentNum = null;
-        btns.forEach(b => b.classList.remove('selected'));
-      }
-      
-      btns.forEach(btn => {
-        // Prevent touch from bleeding through to canvas
-        btn.addEventListener('touchstart', (e) => { e.stopPropagation(); window._numBtnTouchActive = true; }, { passive: false });
-        btn.addEventListener('touchend', (e) => { e.stopPropagation(); setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: false });
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const n = parseInt(btn.dataset.num);
-          selectNum(n);
-          
-          // Zahl an Spiellogik melden
-          if (gamePhase === 'kipp21' && window._onNumBtn) {
-            window._onNumBtn(n);
-          } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
-            selectedAnzahl = n;
-            startRichtungWarten();
-          }
-        });
-      });
-      
-      // Global: Zahl auswählen (für Tutorial)
-      window._scrollBandToNum = function(n) { selectNum(n); };
-      
-      // Global: Reset
-      window._resetScrollBand = function() { clearSelection(); };
-      
-      // Highlight (für Tutorial-Anzeige)
-      window._highlightNum = function(n) {
-        if (n === null) { clearSelection(); return; }
-        selectNum(n);
-      };
-    })();
+
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
     async function triggerKipp(direction) {
@@ -10876,6 +10789,7 @@
                   if (i < n - 1) await new Promise(r => setTimeout(r, 200));
                 }
                 clearSelection();
+                await _smileyCheckTreffer();
               })();
             }
           } else {
@@ -10936,6 +10850,7 @@
                 if (i < n - 1) await new Promise(r => setTimeout(r, 200));
               }
               clearSelection();
+              await _smileyCheckTreffer();
             })();
           }
         } else {
