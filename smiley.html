@@ -8601,23 +8601,25 @@
       });
       updateCubeMaterials();
 
-      // Kärtchen kommt nach Wobble
+      // Kärtchen sofort einblenden — vor dem Wobble
+      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
+
       startKipp21(false);
 
       // Wobble nach 800ms
       setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
     });
 
-    // Farbfeld-Positionen in 3D für Hand-Overlays (X, Y, Z)
+    // Farbfeld-Positionen in 3D + CSS-Rotation [X, Y, Z, rotDeg]
     const HAND_FIELD_POS = {
-      orange:  [ [-0.078125, 0.4798, -0.437500], [0.078125, 0.4798, -0.437500],
-                 [-0.546875, 0.4798,  0.343750], [0.546875, 0.4798,  0.343750] ],
-      gruen:   [ [-0.234375, 0.4798, -0.437500], [-0.234375, 0.4798, 0.658000],
-                 [ 0.546875, 0.4798,  0.265625], [ 0.546875, 0.4798, 0.109375] ],
-      blau:    [ [ 0.234375, 0.4798, -0.437500], [ 0.234375, 0.4798, 0.658000],
-                 [-0.546875, 0.4798,  0.109375], [-0.546875, 0.4798, 0.265625] ],
-      violett: [ [-0.078125, 0.4798,  0.658000], [ 0.078125, 0.4798, 0.658000],
-                 [-0.546875, 0.4798, -0.046875], [ 0.546875, 0.4798,-0.046875] ]
+      orange:  [ [-0.078125, 0.003, -0.437500,  90], [0.078125, 0.003, -0.437500,  90],
+                 [-0.546875, 0.003,  0.343750,   0], [0.546875, 0.003,  0.343750, 180] ],
+      gruen:   [ [-0.234375, 0.003, -0.437500,  90], [-0.234375, 0.003, 0.658000, -90],
+                 [ 0.546875, 0.003,  0.265625, 180], [ 0.546875, 0.003, 0.109375, 180] ],
+      blau:    [ [ 0.234375, 0.003, -0.437500,  90], [ 0.234375, 0.003, 0.658000, -90],
+                 [-0.546875, 0.003,  0.109375,   0], [-0.546875, 0.003, 0.265625,  0] ],
+      violett: [ [-0.078125, 0.003,  0.658000, -90], [ 0.078125, 0.003, 0.658000, -90],
+                 [-0.546875, 0.003, -0.046875,   0], [ 0.546875, 0.003,-0.046875, 180] ]
     };
 
     function showSmileyHands() {
@@ -8632,10 +8634,12 @@
         v.project(camera);
         const sx = (v.x * 0.5 + 0.5) * 360;
         const sy = (-v.y * 0.5 + 0.5) * 720;
+        const rot = pos3D[3] || 0;
         const el = document.getElementById('hand' + i);
         el.src = handFile;
         el.style.left = (sx - 22.5) + 'px';
         el.style.top  = (sy - 22.5) + 'px';
+        el.style.transform = 'rotate(' + rot + 'deg)';
         el.style.display = 'block';
       });
     }
@@ -10859,7 +10863,7 @@
           if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
-            if (gamePhase === 'spielen' && !isAnimating) {
+            if (!isAnimating) { // SMILEY: gamePhase check removed
               (async () => {
                 for (let i = 0; i < n; i++) {
                   let dir;
@@ -10919,7 +10923,7 @@
         if (tappedIdx === bandIdx) {
           const n = bandIdx + 1;
           selectNum(n);
-          if (gamePhase === 'spielen' && !isAnimating) {
+          if (!isAnimating) { // SMILEY: gamePhase check removed
             (async () => {
               for (let i = 0; i < n; i++) {
                 let dir;
