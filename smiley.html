@@ -2131,9 +2131,9 @@
       
       spieltisch.rotation.x = -Math.PI / 2;
       
-      // Position: original Berechnung
-      const xCenter = -0.625 + SPIEL_WIDTH / 2;
-      const zCenter = -0.828125 + height / 2;
+      // Position: Spielbereich-Zentrum X=0, Z=0.1105
+      const xCenter = 0;
+      const zCenter = 0.1105;
       const yPos = 0.001 + 3 * 0.15625;
 
       spieltisch.position.set(xCenter, yPos, zCenter);
