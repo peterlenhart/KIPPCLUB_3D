@@ -1270,17 +1270,13 @@
     </div>
 
     <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
-    <div id="handOverlays" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; pointer-events:none; z-index:16; display:none;">
+    <div id="handOverlays" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:16; display:none; background:transparent;">
       <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
     </div>
 
-    <!-- Rahmen Smiley — über Hände, unter Scrollband -->
-    <div id="rahmenSmileyOverlay" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; pointer-events:none; z-index:17; display:none;">
-      <img id="rahmenSmileyImg" src="rahmen_smiley.webp" style="position:absolute; top:0; left:0; width:360px; height:720px; object-fit:contain;">
-    </div>
 
   </div>
 
@@ -2142,15 +2138,32 @@
       
       spieltisch.rotation.x = -Math.PI / 2;
       
-      // Position ABSOLUT FINAL
-      const xCenter = -0.625 + SPIEL_WIDTH / 2;
-      const zCenter = -0.828125 + height / 2;
-      const yPos = 0.001 + 3 * 0.15625;
-      
-      spieltisch.position.set(xCenter, yPos, zCenter);
+      // Position: Boxinnenfläche abdecken
+      const yPos = 0.001 + 3 * 0.15625; // knapp über Spieltisch Y=0.46875
+      // X: center=0, Z: center=0.078125 (Mitte zwischen Nord -3 und Süd +4 Zellen)
+      spieltisch.position.set(0, yPos, 0.078125);
       spieltisch.receiveShadow = true;
       spieltisch.castShadow = false;
       spieltisch.renderOrder = 1;
+
+      scene.add(spieltisch);
+
+      // Rahmen: exakt gleiche Geometrie, Y + 0.001 drüber
+      new THREE.TextureLoader().load('rahmen_smiley.webp', (rahmenTex) => {
+        const rahmenMat = new THREE.MeshStandardMaterial({
+          map: rahmenTex,
+          transparent: true,
+          alphaTest: 0.05,
+          roughness: 0.8,
+          metalness: 0.2,
+          depthWrite: false
+        });
+        const rahmenMesh = new THREE.Mesh(spieltischGeometry, rahmenMat);
+        rahmenMesh.rotation.x = -Math.PI / 2;
+        rahmenMesh.position.set(0, yPos + 0.001, 0.078125);
+        rahmenMesh.renderOrder = 2;
+        scene.add(rahmenMesh);
+      });
       
       // Matrix komplett einfrieren
       spieltisch.matrixAutoUpdate = false;
@@ -8484,9 +8497,11 @@
     document.getElementById('btnLosGehts').addEventListener('click', () => {
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      // Overlays weg
+      // Overlays komplett weg
       document.getElementById('spielzielBox').classList.remove('show');
-      document.getElementById('leveltafelOverlay').classList.remove('show');
+      const lto = document.getElementById('leveltafelOverlay');
+      if (lto) lto.remove();
+
 
       // Zufälliger Smiley aus den 4 gewählten
       function smileyColor(src) {
@@ -8547,7 +8562,6 @@
       const positions = HAND_FIELD_POS[color];
       const wrap = document.getElementById('handOverlays');
       wrap.style.display = 'block';
-      document.getElementById('rahmenSmileyOverlay').style.display = 'block';
       positions.forEach((pos3D, i) => {
         const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
         v.project(camera);
@@ -8565,7 +8579,6 @@
 
     function hideSmileyHands() {
       document.getElementById('handOverlays').style.display = 'none';
-      document.getElementById('rahmenSmileyOverlay').style.display = 'none';
       for (let i = 0; i < 4; i++) {
         document.getElementById('hand' + i).style.display = 'none';
       }
