@@ -8622,10 +8622,8 @@
 
     function showSmileyHands() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
-      // Farbe des Ziel-Smileys (window._smileyTargetColor)
       const color = window._smileyTargetColor || 'orange';
-      const levelKey = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'}[color] || 'mbr';
-      const handFile = 'hand' + levelKey + '.png';
+      const handFile = 'hand_' + color + '.png';
       const positions = HAND_FIELD_POS[color];
       const wrap = document.getElementById('handOverlays');
       wrap.style.display = 'block';
@@ -8685,22 +8683,6 @@
     }
 
     // Scrollband-Kipp: n Kipps CW ausführen
-    async function _smileyDoKipps(n) {
-      if (isAnimating || gamePhase !== 'spielen') return;
-      isAnimating = true;
-      for (let i = 0; i < n; i++) {
-        let dir;
-        if      (currentQuadrant === 0) dir = 'east';
-        else if (currentQuadrant === 1) dir = 'south_from_q1';
-        else if (currentQuadrant === 2) dir = 'west_from_q2';
-        else                            dir = 'north';
-        await performKipp(dir, 500);
-        advanceTopFace();
-        if (i < n - 1) await new Promise(r => setTimeout(r, 100));
-      }
-      isAnimating = false;
-      if (window._resetScrollBand) window._resetScrollBand();
-    }
 
     // Kärtchen als HTML-Overlay
     function _showKaertchen(levelColor, targetSmileyUrl) {
