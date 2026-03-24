@@ -1217,7 +1217,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_smiley.png" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein_smiley.png" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:8px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_smiley.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_smiley.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -1269,7 +1269,13 @@
       </div>
     </div>
 
-
+    <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
+    <div id="handOverlays" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; display:none;">
+      <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+      <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+      <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+      <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+    </div>
 
   </div>
 
@@ -1577,7 +1583,7 @@
       radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
     );
     
-    camera.lookAt(0, 0.480, 0.7 + southShift);
+    camera.lookAt(0, 0.46875, 0.7 + southShift);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
@@ -2056,16 +2062,16 @@
     scene.add(zAxis1);
 
     const xAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-2.5, 0.480, 0.109375),
-      new THREE.Vector3(2.5, 0.480, 0.109375)
+      new THREE.Vector3(-2.5, 0.46875, 0.109375),
+      new THREE.Vector3(2.5, 0.46875, 0.109375)
     ]);
     const xAxis2 = new THREE.Line(xAxisGeometry2, axesMaterial);
     xAxis2.visible = false;
     scene.add(xAxis2);
 
     const zAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0.480, -2.5),
-      new THREE.Vector3(0, 0.480, 2.5)
+      new THREE.Vector3(0, 0.46875, -2.5),
+      new THREE.Vector3(0, 0.46875, 2.5)
     ]);
     const zAxis2 = new THREE.Line(zAxisGeometry2, axesMaterial);
     zAxis2.visible = false;
@@ -2076,7 +2082,7 @@
     // =========================
     const wallTexture = new THREE.TextureLoader().load('boxwand_smiley.webp');
     
-    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.480, 0.0335);
+    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.46875, 0.0335);
     const wallMaterial = new THREE.MeshBasicMaterial({ 
       map: wallTexture,
       color: 0x666666  // Dunkler (40% Helligkeit)
@@ -2094,7 +2100,7 @@
     wall2.receiveShadow = true;
     scene.add(wall2);
 
-    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.480, 1.00675);
+    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.46875, 1.00675);
     
     const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterial);
     wallLeft.position.set(-0.48550, 0.234375, 0.1105);
@@ -2131,35 +2137,22 @@
       
       spieltisch.rotation.x = -Math.PI / 2;
       
-      // Position: Spielbereich-Zentrum X=0, Z=0.1105
-      const xCenter = 0;
-      const zCenter = 0.1105;
+      // Position ABSOLUT FINAL
+      const xCenter = -0.625 + SPIEL_WIDTH / 2;
+      const zCenter = -0.828125 + height / 2;
       const yPos = 0.001 + 3 * 0.15625;
-
+      
       spieltisch.position.set(xCenter, yPos, zCenter);
       spieltisch.receiveShadow = true;
       spieltisch.castShadow = false;
       spieltisch.renderOrder = 1;
+      
+      // Matrix komplett einfrieren
       spieltisch.matrixAutoUpdate = false;
       spieltisch.updateMatrix();
+      
+      // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
-
-      // Rahmen: exakt gleiche Geometrie, Y + 0.001 drüber
-      new THREE.TextureLoader().load('rahmen_smiley.webp', (rahmenTex) => {
-        const rahmenMat = new THREE.MeshStandardMaterial({
-          map: rahmenTex,
-          transparent: true,
-          alphaTest: 0.05,
-          roughness: 0.8,
-          metalness: 0.2,
-          depthWrite: false
-        });
-        const rahmenMesh = new THREE.Mesh(spieltischGeometry, rahmenMat);
-        rahmenMesh.rotation.x = -Math.PI / 2;
-        rahmenMesh.position.set(xCenter, yPos + 0.003, zCenter);
-        rahmenMesh.renderOrder = 2;
-        scene.add(rahmenMesh);
-      });
       
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
@@ -8486,11 +8479,9 @@
     document.getElementById('btnLosGehts').addEventListener('click', () => {
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      // Overlays komplett weg
+      // Overlays weg
       document.getElementById('spielzielBox').classList.remove('show');
-      const lto = document.getElementById('leveltafelOverlay');
-      if (lto) lto.remove();
-
+      document.getElementById('leveltafelOverlay').classList.remove('show');
 
       // Zufälliger Smiley aus den 4 gewählten
       function smileyColor(src) {
@@ -8532,59 +8523,45 @@
       setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
     });
 
-
-    // Hand-Overlays als 3D-Meshes auf dem Spieltisch
-    let _handMeshes = [];
-    const HAND_W = 0.15625;  // 1 Zelle = 45px
-    const HAND_H = 0.15625;  // 1 Zelle = 45px
-
-    // XZ-Positionen der 4 Farbfelder je Level — in Rasterzellen
-    // X = Spalte × 0.15625, Z = aus COLOR_FIELD_POS (exakte Werte)
-    const HAND_POS_3D = {
-      orange:  [ [-0.07813, -0.359375], [ 0.07813, -0.359375],
-                 [ 0.46875,  0.34375 ], [-0.46875,  0.34375 ] ],
-      gruen:   [ [-0.23438, -0.359375], [ 0.46875,  0.03125 ],
-                 [ 0.46875,  0.1875  ], [-0.23438,  0.580375] ],
-      blau:    [ [-0.46875,  0.03125 ], [ 0.23438, -0.359375],
-                 [ 0.23438,  0.580375], [-0.46875,  0.1875  ] ],
-      violett: [ [-0.46875, -0.125   ], [ 0.46875, -0.125   ],
-                 [ 0.07813,  0.580375], [-0.07813,  0.580375] ]
+    // Farbfeld-Positionen in 3D + CSS-Rotation [X, Y, Z, rotDeg]
+    const HAND_FIELD_POS = {
+      orange:  [ [-0.078125, 0.003, -0.437500,  90], [0.078125, 0.003, -0.437500,  90],
+                 [-0.546875, 0.003,  0.343750,   0], [0.546875, 0.003,  0.343750, 180] ],
+      gruen:   [ [-0.234375, 0.003, -0.437500,  90], [-0.234375, 0.003, 0.658000, -90],
+                 [ 0.546875, 0.003,  0.265625, 180], [ 0.546875, 0.003, 0.109375, 180] ],
+      blau:    [ [ 0.234375, 0.003, -0.437500,  90], [ 0.234375, 0.003, 0.658000, -90],
+                 [-0.546875, 0.003,  0.109375,   0], [-0.546875, 0.003, 0.265625,  0] ],
+      violett: [ [-0.078125, 0.003,  0.658000, -90], [ 0.078125, 0.003, 0.658000, -90],
+                 [-0.546875, 0.003, -0.046875,   0], [ 0.546875, 0.003,-0.046875, 180] ]
     };
 
     function showSmileyHands() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
       const color = window._smileyTargetColor || 'orange';
-      const levelKey = {orange:'mbr', gruen:'br', blau:'bry', violett:'bbr'}[color] || 'mbr';
-      const handFile = 'hand' + levelKey + '.png';
-      const positions = HAND_POS_3D[color];
-      const yPos = 0.001 + 3 * 0.15625 + 0.002; // knapp über Spieltisch
-
-      // Alte Meshes entfernen
-      _handMeshes.forEach(m => scene.remove(m));
-      _handMeshes = [];
-
-      const loader = new THREE.TextureLoader();
-      loader.load(handFile, (tex) => {
-        tex.minFilter = THREE.LinearFilter;
-        positions.forEach(([x, z]) => {
-          const mat = new THREE.MeshBasicMaterial({
-            map: tex, transparent: true, depthWrite: false
-          });
-          const mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(HAND_W, HAND_H), mat
-          );
-          mesh.rotation.x = -Math.PI / 2;
-          mesh.position.set(x, yPos, z);
-          mesh.renderOrder = 3;
-          scene.add(mesh);
-          _handMeshes.push(mesh);
-        });
+      const handFile = 'hand_' + color + '.png';
+      const positions = HAND_FIELD_POS[color];
+      const wrap = document.getElementById('handOverlays');
+      wrap.style.display = 'block';
+      positions.forEach((pos3D, i) => {
+        const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
+        v.project(camera);
+        const sx = (v.x * 0.5 + 0.5) * 360;
+        const sy = (-v.y * 0.5 + 0.5) * 720;
+        const rot = pos3D[3] || 0;
+        const el = document.getElementById('hand' + i);
+        el.src = handFile;
+        el.style.left = (sx - 22.5) + 'px';
+        el.style.top  = (sy - 22.5) + 'px';
+        el.style.transform = 'rotate(' + rot + 'deg)';
+        el.style.display = 'block';
       });
     }
 
     function hideSmileyHands() {
-      _handMeshes.forEach(m => scene.remove(m));
-      _handMeshes = [];
+      document.getElementById('handOverlays').style.display = 'none';
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('hand' + i).style.display = 'none';
+      }
     }
 
     function showScrollband() {
