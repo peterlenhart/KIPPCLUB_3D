@@ -1270,11 +1270,16 @@
     </div>
 
     <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
-    <div id="handOverlays" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; display:none;">
+    <div id="handOverlays" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; pointer-events:none; z-index:16; display:none;">
       <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
+    </div>
+
+    <!-- Rahmen Smiley — über Hände, unter Scrollband -->
+    <div id="rahmenSmileyOverlay" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; pointer-events:none; z-index:17; display:none;">
+      <img id="rahmenSmileyImg" src="rahmen_smiley.webp" style="position:absolute; top:0; left:0; width:360px; height:720px; object-fit:contain;">
     </div>
 
   </div>
@@ -1583,7 +1588,7 @@
       radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
     );
     
-    camera.lookAt(0, 0.46875, 0.7 + southShift);
+    camera.lookAt(0, 0.480, 0.7 + southShift);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
@@ -2062,16 +2067,16 @@
     scene.add(zAxis1);
 
     const xAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-2.5, 0.46875, 0.109375),
-      new THREE.Vector3(2.5, 0.46875, 0.109375)
+      new THREE.Vector3(-2.5, 0.480, 0.109375),
+      new THREE.Vector3(2.5, 0.480, 0.109375)
     ]);
     const xAxis2 = new THREE.Line(xAxisGeometry2, axesMaterial);
     xAxis2.visible = false;
     scene.add(xAxis2);
 
     const zAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0.46875, -2.5),
-      new THREE.Vector3(0, 0.46875, 2.5)
+      new THREE.Vector3(0, 0.480, -2.5),
+      new THREE.Vector3(0, 0.480, 2.5)
     ]);
     const zAxis2 = new THREE.Line(zAxisGeometry2, axesMaterial);
     zAxis2.visible = false;
@@ -2082,7 +2087,7 @@
     // =========================
     const wallTexture = new THREE.TextureLoader().load('boxwand_smiley.webp');
     
-    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.46875, 0.0335);
+    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.480, 0.0335);
     const wallMaterial = new THREE.MeshBasicMaterial({ 
       map: wallTexture,
       color: 0x666666  // Dunkler (40% Helligkeit)
@@ -2100,7 +2105,7 @@
     wall2.receiveShadow = true;
     scene.add(wall2);
 
-    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.46875, 1.00675);
+    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.480, 1.00675);
     
     const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterial);
     wallLeft.position.set(-0.48550, 0.234375, 0.1105);
@@ -8525,14 +8530,14 @@
 
     // Farbfeld-Positionen in 3D + CSS-Rotation [X, Y, Z, rotDeg]
     const HAND_FIELD_POS = {
-      orange:  [ [-0.078125, 0.003, -0.437500,  90], [0.078125, 0.003, -0.437500,  90],
-                 [-0.546875, 0.003,  0.343750,   0], [0.546875, 0.003,  0.343750, 180] ],
-      gruen:   [ [-0.234375, 0.003, -0.437500,  90], [-0.234375, 0.003, 0.658000, -90],
-                 [ 0.546875, 0.003,  0.265625, 180], [ 0.546875, 0.003, 0.109375, 180] ],
-      blau:    [ [ 0.234375, 0.003, -0.437500,  90], [ 0.234375, 0.003, 0.658000, -90],
-                 [-0.546875, 0.003,  0.109375,   0], [-0.546875, 0.003, 0.265625,  0] ],
-      violett: [ [-0.078125, 0.003,  0.658000, -90], [ 0.078125, 0.003, 0.658000, -90],
-                 [-0.546875, 0.003, -0.046875,   0], [ 0.546875, 0.003,-0.046875, 180] ]
+      orange:  [ [-0.078125, 0.480, -0.437500,  90], [0.078125, 0.480, -0.437500,  90],
+                 [-0.546875, 0.480,  0.343750,   0], [0.546875, 0.480,  0.343750, 180] ],
+      gruen:   [ [-0.234375, 0.480, -0.437500,  90], [-0.234375, 0.480, 0.658000, -90],
+                 [ 0.546875, 0.480,  0.265625, 180], [ 0.546875, 0.480, 0.109375, 180] ],
+      blau:    [ [ 0.234375, 0.480, -0.437500,  90], [ 0.234375, 0.480, 0.658000, -90],
+                 [-0.546875, 0.480,  0.109375,   0], [-0.546875, 0.480, 0.265625,  0] ],
+      violett: [ [-0.078125, 0.480,  0.658000, -90], [ 0.078125, 0.480, 0.658000, -90],
+                 [-0.546875, 0.480, -0.046875,   0], [ 0.546875, 0.480,-0.046875, 180] ]
     };
 
     function showSmileyHands() {
@@ -8542,6 +8547,7 @@
       const positions = HAND_FIELD_POS[color];
       const wrap = document.getElementById('handOverlays');
       wrap.style.display = 'block';
+      document.getElementById('rahmenSmileyOverlay').style.display = 'block';
       positions.forEach((pos3D, i) => {
         const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
         v.project(camera);
@@ -8559,6 +8565,7 @@
 
     function hideSmileyHands() {
       document.getElementById('handOverlays').style.display = 'none';
+      document.getElementById('rahmenSmileyOverlay').style.display = 'none';
       for (let i = 0; i < 4; i++) {
         document.getElementById('hand' + i).style.display = 'none';
       }
