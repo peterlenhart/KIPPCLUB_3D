@@ -5325,20 +5325,19 @@
         }
       }
 
-      // MISS: Smiley→Teufel crossfade, Teufel fliegt zur Kamera und füllt Bildschirm, dann zurück
+      // MISS: 3x roter Puls am Slot, dann weiter
       function animateTeufelMiss(callback) {
         const targetSrc = window._smileyTargetSrc;
         if (!targetSrc) { if (callback) callback(); return; }
         const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
 
-        // Start-Position
+        // Slot-Position finden
         let startX = 180, startY = 360;
-        let foundKey = null;
         const slotMapObj = faceSlots[topFace].slotMap;
+        const _cr = document.getElementById('container').getBoundingClientRect();
         for (const key in slotMapObj) {
           const s = slotMapObj[key];
           if (s.img && s.img.src && s.img.src.replace(/^.*[\\/]/, '').split('?')[0] === targetFile) {
-            foundKey = key;
             const [r, c] = key.split(',').map(Number);
             const cell = 0.15625;
             const wp = new THREE.Vector3(
@@ -5347,83 +5346,44 @@
               cube.position.z + (r - 1) * cell
             );
             wp.project(camera);
-            startX = (wp.x * 0.5 + 0.5) * 360;
-            startY = (-wp.y * 0.5 + 0.5) * 720;
+            startX = _cr.left + (wp.x * 0.5 + 0.5) * 360;
+            startY = _cr.top + (-wp.y * 0.5 + 0.5) * 720;
             break;
           }
         }
 
-        // 1) Crossfade Slot → Teufel auf Würfel
-        if (foundKey) {
-          const teufelImg = new Image();
-          teufelImg.src = 'smiley_teufel.png';
-          teufelImg.onload = () => {
-            slotMapObj[foundKey].img = teufelImg;
-            updateCubeMaterials();
-          };
-        }
-
-        // 2) Teufel-Overlay
-        const flyEl = document.createElement('img');
-        flyEl.src = 'smiley_teufel.png';
-        const sz = 48;
-        flyEl.style.cssText = 'position:absolute;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
-          'pointer-events:none;z-index:50;border-radius:50%;opacity:0;' +
-          'box-shadow:0 0 15px #FF0000,0 0 30px #FF0000;' +
+        // Roter Glow-Ring über dem Slot
+        const sz = 56;
+        const glowEl = document.createElement('div');
+        glowEl.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;border-radius:50%;' +
+          'pointer-events:none;z-index:99;background:transparent;' +
+          'border:3px solid #FF0000;box-shadow:0 0 20px #FF0000,0 0 40px #FF0000;' +
           'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;' +
-          'transition:none;';
-        document.getElementById('container').appendChild(flyEl);
+          'transform:scale(1);';
+        document.body.appendChild(glowEl);
 
-        // 0-0.3s: Einblenden
-        requestAnimationFrame(() => {
-          flyEl.style.transition = 'opacity 0.3s';
-          flyEl.style.opacity = '1';
-        });
-
-        // 0.4-2.0s: Zur Kamera fliegen + wachsen → Bildschirm füllen
-        setTimeout(() => {
-          flyEl.style.transition = 'left 1.4s ease-in, top 1.4s ease-in, width 1.4s ease-in, height 1.4s ease-in';
-          flyEl.style.left = '-100px';
-          flyEl.style.top = '-100px';
-          flyEl.style.width = '560px';
-          flyEl.style.height = '920px';
-          flyEl.style.borderRadius = '0';
-          flyEl.style.boxShadow = '0 0 60px #FF0000, 0 0 120px #FF0000';
-        }, 400);
-
-        // 2.0-2.5s: Halten (Teufel füllt Screen)
-
-        // 2.5-3.5s: Zurückschrumpfen zum Slot
-        setTimeout(() => {
-          flyEl.style.transition = 'left 1s ease-out, top 1s ease-out, width 1s ease-out, height 1s ease-out, border-radius 0.5s';
-          flyEl.style.left = (startX - sz/2) + 'px';
-          flyEl.style.top = (startY - sz/2) + 'px';
-          flyEl.style.width = sz + 'px';
-          flyEl.style.height = sz + 'px';
-          flyEl.style.borderRadius = '50%';
-          flyEl.style.boxShadow = '0 0 15px #FF0000, 0 0 30px #FF0000';
-        }, 2500);
-
-        // 3.6-4.1s: Ausblenden + Slot wiederherstellen
-        setTimeout(() => {
-          flyEl.style.transition = 'opacity 0.4s';
-          flyEl.style.opacity = '0';
-
-          if (foundKey) {
-            const origImg = new Image();
-            origImg.src = targetSrc;
-            origImg.onload = () => {
-              slotMapObj[foundKey].img = origImg;
-              updateCubeMaterials();
-            };
+        // 3x Puls
+        let pulseCount = 0;
+        function doPulse() {
+          if (pulseCount >= 3) {
+            glowEl.style.transition = 'opacity 0.3s';
+            glowEl.style.opacity = '0';
+            setTimeout(() => {
+              glowEl.remove();
+              if (callback) callback();
+            }, 350);
+            return;
           }
-        }, 3600);
-
-        // 4.5s: Cleanup
-        setTimeout(() => {
-          flyEl.remove();
-          if (callback) callback();
-        }, 4500);
+          glowEl.style.transition = 'transform 0.2s ease-in-out, box-shadow 0.2s';
+          glowEl.style.transform = 'scale(1.4)';
+          glowEl.style.boxShadow = '0 0 30px #FF0000, 0 0 60px #FF0000';
+          setTimeout(() => {
+            glowEl.style.transform = 'scale(1.0)';
+            glowEl.style.boxShadow = '0 0 20px #FF0000, 0 0 40px #FF0000';
+            setTimeout(() => { pulseCount++; doPulse(); }, 200);
+          }, 200);
+        }
+        doPulse();
       }
 
       // HIT: 3x Puls am Slot → abheben Y+4 Zellen → fliegen zum Kärtchen → draufsetzen → 3x Puls
@@ -5432,10 +5392,11 @@
         if (!targetSrc) { if (callback) callback(); return; }
         const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
 
-        // Start-Position auf Würfel
+        // Start-Position auf Würfel (viewport coords für position:fixed)
         let startX = 180, startY = 360;
         let foundKey = null;
         const slotMapObj = faceSlots[topFace].slotMap;
+        const _contRect = document.getElementById('container').getBoundingClientRect();
         for (const key in slotMapObj) {
           const s = slotMapObj[key];
           if (s.img && s.img.src && s.img.src.replace(/^.*[\\/]/, '').split('?')[0] === targetFile) {
@@ -5448,41 +5409,40 @@
               cube.position.z + (r - 1) * cell
             );
             wp.project(camera);
-            startX = (wp.x * 0.5 + 0.5) * 360;
-            startY = (-wp.y * 0.5 + 0.5) * 720;
+            startX = _contRect.left + (wp.x * 0.5 + 0.5) * 360;
+            startY = _contRect.top + (-wp.y * 0.5 + 0.5) * 720;
             break;
           }
         }
 
-        // Höhenposition: Y+4 Zellen über Slot
+        // Höhenposition: Y+4 Zellen über Slot (viewport coords)
         const highPos = new THREE.Vector3(
           cube.position.x + (foundKey ? (parseInt(foundKey.split(',')[1]) - 1) * 0.15625 : 0),
           cube.position.y + 0.235 + 4 * 0.15625,
           cube.position.z + (foundKey ? (parseInt(foundKey.split(',')[0]) - 1) * 0.15625 : 0)
         );
         highPos.project(camera);
-        const highX = (highPos.x * 0.5 + 0.5) * 360;
-        const highY = (-highPos.y * 0.5 + 0.5) * 720;
+        const highX = _contRect.left + (highPos.x * 0.5 + 0.5) * 360;
+        const highY = _contRect.top + (-highPos.y * 0.5 + 0.5) * 720;
 
-        // Kärtchen-Smiley Position
+        // Kärtchen-Smiley Position (viewport coords for position:fixed)
         const kaertchenSmiley = document.getElementById('smileyKaertchenSmiley');
         let endX = 180, endY = 430;
         if (kaertchenSmiley) {
           const rect = kaertchenSmiley.getBoundingClientRect();
-          const contRect = document.getElementById('container').getBoundingClientRect();
-          endX = rect.left - contRect.left + rect.width / 2;
-          endY = rect.top - contRect.top + rect.height / 2;
+          endX = rect.left + rect.width / 2;
+          endY = rect.top + rect.height / 2;
         }
 
         // Fliegendes Element
         const flyEl = document.createElement('img');
         flyEl.src = targetSrc;
         const sz = 48;
-        flyEl.style.cssText = 'position:absolute;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
-          'pointer-events:none;z-index:30;border-radius:50%;' +
+        flyEl.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
+          'pointer-events:none;z-index:99;border-radius:50%;' +
           'box-shadow:0 0 20px #FFD700,0 0 40px #FFD700;' +
           'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;';
-        document.getElementById('container').appendChild(flyEl);
+        document.body.appendChild(flyEl);
 
         // Slot leeren (bleibt dauerhaft leer)
         if (foundKey) {
@@ -5490,6 +5450,9 @@
           slotMapObj[foundKey].vis = false;
           updateCubeMaterials();
         }
+        // Smiley als gefangen markieren
+        if (!window._capturedSmileys) window._capturedSmileys = [];
+        window._capturedSmileys.push(targetFile);
 
         // Phase 1: 3x Puls am Slot (0-0.9s)
         let pulseCount = 0;
@@ -8593,6 +8556,7 @@
       _smileyAttempts = 0;
       _smileyHits = 0;
       _smileyCurrentCardIdx = 0;
+      window._capturedSmileys = []; // Getroffene Smileys bleiben weg
 
       // Reihenfolge der 4 Smileys mischen
       const shuffledSmileys = [...selectedSmileys];
@@ -8867,6 +8831,24 @@
           faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
         });
       });
+
+      // Gefangene Smileys dauerhaft von Würfel entfernen
+      const captured = window._capturedSmileys || [];
+      if (captured.length > 0) {
+        ['f0','f1','f2'].forEach(face => {
+          for (const k in faceSlots[face].slotMap) {
+            const s = faceSlots[face].slotMap[k];
+            if (s.img && s.img.src) {
+              const fn = s.img.src.replace(/^.*[\\/]/, '').split('?')[0];
+              if (captured.includes(fn)) {
+                s.img = null;
+                s.vis = false;
+              }
+            }
+          }
+        });
+      }
+
       updateCubeMaterials();
 
       // Kärtchen aktualisieren
@@ -8942,6 +8924,7 @@
         _smileyAttempts = 0;
         _smileyHits = 0;
         _smileyCurrentCardIdx = 0;
+        window._capturedSmileys = [];
         hide3erPaket();
         showLeveltafel(false);
       };
