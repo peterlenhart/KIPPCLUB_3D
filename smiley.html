@@ -5325,13 +5325,13 @@
         }
       }
 
-      // MISS: Smiley crossfaded zu Teufel, Teufel hebt ab, schwebt hoch, kehrt zurück. 4.5s
+      // MISS: Smiley→Teufel crossfade, Teufel fliegt zur Kamera und füllt Bildschirm, dann zurück
       function animateTeufelMiss(callback) {
         const targetSrc = window._smileyTargetSrc;
         if (!targetSrc) { if (callback) callback(); return; }
         const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
 
-        // Start-Position: Smiley auf Würfel finden
+        // Start-Position
         let startX = 180, startY = 360;
         let foundKey = null;
         const slotMapObj = faceSlots[topFace].slotMap;
@@ -5353,13 +5353,7 @@
           }
         }
 
-        // Ziel: 1 Zelle über Koordinatenursprung
-        const topPos = new THREE.Vector3(0, 0.15625, 0.1105);
-        topPos.project(camera);
-        const topX = (topPos.x * 0.5 + 0.5) * 360;
-        const topY = (-topPos.y * 0.5 + 0.5) * 720;
-
-        // 1) Crossfade: Slot-Bild → Teufel auf Würfel-Textur
+        // 1) Crossfade Slot → Teufel auf Würfel
         if (foundKey) {
           const teufelImg = new Image();
           teufelImg.src = 'smiley_teufel.png';
@@ -5369,38 +5363,52 @@
           };
         }
 
-        // 2) Teufel-Overlay erstellen (an Slot-Position)
+        // 2) Teufel-Overlay
         const flyEl = document.createElement('img');
         flyEl.src = 'smiley_teufel.png';
-        flyEl.style.cssText = 'position:absolute;width:48px;height:48px;object-fit:contain;' +
-          'pointer-events:none;z-index:30;border-radius:50%;opacity:0;' +
+        const sz = 48;
+        flyEl.style.cssText = 'position:absolute;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
+          'pointer-events:none;z-index:50;border-radius:50%;opacity:0;' +
           'box-shadow:0 0 15px #FF0000,0 0 30px #FF0000;' +
-          'left:' + (startX - 24) + 'px;top:' + (startY - 24) + 'px;' +
-          'transition:left 1s ease-in-out,top 1s ease-in-out,opacity 0.4s;';
+          'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;' +
+          'transition:none;';
         document.getElementById('container').appendChild(flyEl);
 
-        // 0-0.4s: Einblenden
-        requestAnimationFrame(() => { flyEl.style.opacity = '1'; });
+        // 0-0.3s: Einblenden
+        requestAnimationFrame(() => {
+          flyEl.style.transition = 'opacity 0.3s';
+          flyEl.style.opacity = '1';
+        });
 
-        // 0.5-1.5s: Aufstieg
+        // 0.4-2.0s: Zur Kamera fliegen + wachsen → Bildschirm füllen
         setTimeout(() => {
-          flyEl.style.left = (topX - 24) + 'px';
-          flyEl.style.top = (topY - 24) + 'px';
-        }, 500);
+          flyEl.style.transition = 'left 1.4s ease-in, top 1.4s ease-in, width 1.4s ease-in, height 1.4s ease-in';
+          flyEl.style.left = '-100px';
+          flyEl.style.top = '-100px';
+          flyEl.style.width = '560px';
+          flyEl.style.height = '920px';
+          flyEl.style.borderRadius = '0';
+          flyEl.style.boxShadow = '0 0 60px #FF0000, 0 0 120px #FF0000';
+        }, 400);
 
-        // 1.5-2.5s: Halten oben (passiert automatisch)
+        // 2.0-2.5s: Halten (Teufel füllt Screen)
 
-        // 2.5-3.5s: Rückflug
+        // 2.5-3.5s: Zurückschrumpfen zum Slot
         setTimeout(() => {
-          flyEl.style.left = (startX - 24) + 'px';
-          flyEl.style.top = (startY - 24) + 'px';
+          flyEl.style.transition = 'left 1s ease-out, top 1s ease-out, width 1s ease-out, height 1s ease-out, border-radius 0.5s';
+          flyEl.style.left = (startX - sz/2) + 'px';
+          flyEl.style.top = (startY - sz/2) + 'px';
+          flyEl.style.width = sz + 'px';
+          flyEl.style.height = sz + 'px';
+          flyEl.style.borderRadius = '50%';
+          flyEl.style.boxShadow = '0 0 15px #FF0000, 0 0 30px #FF0000';
         }, 2500);
 
-        // 3.5-4.1s: Ausblenden + Slot wiederherstellen
+        // 3.6-4.1s: Ausblenden + Slot wiederherstellen
         setTimeout(() => {
+          flyEl.style.transition = 'opacity 0.4s';
           flyEl.style.opacity = '0';
 
-          // Original-Smiley zurück auf Slot
           if (foundKey) {
             const origImg = new Image();
             origImg.src = targetSrc;
@@ -5409,22 +5417,22 @@
               updateCubeMaterials();
             };
           }
-        }, 3500);
+        }, 3600);
 
-        // 4.5s: Cleanup + Callback
+        // 4.5s: Cleanup
         setTimeout(() => {
           flyEl.remove();
           if (callback) callback();
         }, 4500);
       }
 
-      // Smiley fliegt vom Würfel-Slot zum Kärtchen und pulsiert dort
+      // HIT: 3x Puls am Slot → abheben Y+4 Zellen → fliegen zum Kärtchen → draufsetzen → 3x Puls
       function animateSmileyFly(callback) {
         const targetSrc = window._smileyTargetSrc;
         if (!targetSrc) { if (callback) callback(); return; }
         const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
 
-        // 1) Start-Position: Smiley auf dem Würfel
+        // Start-Position auf Würfel
         let startX = 180, startY = 360;
         let foundKey = null;
         const slotMapObj = faceSlots[topFace].slotMap;
@@ -5446,62 +5454,102 @@
           }
         }
 
-        // 2) Ziel-Position: Kärtchen-Smiley
+        // Höhenposition: Y+4 Zellen über Slot
+        const highPos = new THREE.Vector3(
+          cube.position.x + (foundKey ? (parseInt(foundKey.split(',')[1]) - 1) * 0.15625 : 0),
+          cube.position.y + 0.235 + 4 * 0.15625,
+          cube.position.z + (foundKey ? (parseInt(foundKey.split(',')[0]) - 1) * 0.15625 : 0)
+        );
+        highPos.project(camera);
+        const highX = (highPos.x * 0.5 + 0.5) * 360;
+        const highY = (-highPos.y * 0.5 + 0.5) * 720;
+
+        // Kärtchen-Smiley Position
         const kaertchenSmiley = document.getElementById('smileyKaertchenSmiley');
-        const kr = document.getElementById('smileyKaertchenRow');
         let endX = 180, endY = 430;
-        if (kaertchenSmiley && kr) {
+        if (kaertchenSmiley) {
           const rect = kaertchenSmiley.getBoundingClientRect();
           const contRect = document.getElementById('container').getBoundingClientRect();
           endX = rect.left - contRect.left + rect.width / 2;
           endY = rect.top - contRect.top + rect.height / 2;
         }
 
-        // 3) Fliegendes Element erstellen
+        // Fliegendes Element
         const flyEl = document.createElement('img');
         flyEl.src = targetSrc;
-        flyEl.style.cssText = 'position:absolute;width:48px;height:48px;object-fit:contain;' +
+        const sz = 48;
+        flyEl.style.cssText = 'position:absolute;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
           'pointer-events:none;z-index:30;border-radius:50%;' +
           'box-shadow:0 0 20px #FFD700,0 0 40px #FFD700;' +
-          'left:' + (startX - 24) + 'px;top:' + (startY - 24) + 'px;' +
-          'transition:left 0.7s ease-in-out,top 0.7s ease-in-out,transform 0.7s ease-in-out;';
+          'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;';
         document.getElementById('container').appendChild(flyEl);
 
-        // 4) Slot auf dem Würfel leeren
+        // Slot leeren (bleibt dauerhaft leer)
         if (foundKey) {
           slotMapObj[foundKey].img = null;
           slotMapObj[foundKey].vis = false;
           updateCubeMaterials();
         }
 
-        // 5) Flug zum Kärtchen (0.7s)
-        requestAnimationFrame(() => {
-          flyEl.style.left = (endX - 24) + 'px';
-          flyEl.style.top = (endY - 24) + 'px';
-          flyEl.style.transform = 'scale(1.1)';
-        });
-
-        // 6) Nach Ankunft (0.8s): Pulsieren bis 4.1s, dann 0.4s fadeout = 4.5s gesamt
-        setTimeout(() => {
-          let phase = 0;
-          const pulseInterval = setInterval(() => {
-            phase += 0.15;
-            const s = 1.0 + 0.2 * Math.sin(phase * 2);
-            flyEl.style.transform = 'scale(' + s + ')';
-            flyEl.style.boxShadow = '0 0 ' + (20 + 15 * Math.sin(phase * 2)) + 'px #FFD700,0 0 ' + (40 + 20 * Math.sin(phase * 2)) + 'px #FFD700';
-          }, 30);
-
-          // 7) Bei 4.1s aufhören, 0.4s fadeout → 4.5s gesamt
+        // Phase 1: 3x Puls am Slot (0-0.9s)
+        let pulseCount = 0;
+        function doPulseSlot() {
+          if (pulseCount >= 3) { phase2(); return; }
+          flyEl.style.transition = 'transform 0.15s ease-in-out';
+          flyEl.style.transform = 'scale(1.35)';
           setTimeout(() => {
-            clearInterval(pulseInterval);
-            flyEl.style.transition = 'opacity 0.4s';
+            flyEl.style.transform = 'scale(1.0)';
+            setTimeout(() => { pulseCount++; doPulseSlot(); }, 150);
+          }, 150);
+        }
+
+        // Phase 2: Abheben auf Y+4 Zellen (0.9-1.5s)
+        function phase2() {
+          flyEl.style.transition = 'left 0.6s ease-out, top 0.6s ease-out';
+          flyEl.style.left = (highX - sz/2) + 'px';
+          flyEl.style.top = (highY - sz/2) + 'px';
+          setTimeout(phase3, 650);
+        }
+
+        // Phase 3: Horizontal zum Kärtchen fliegen (1.5-2.3s)
+        function phase3() {
+          // Über dem Kärtchen in gleicher Höhe
+          flyEl.style.transition = 'left 0.8s ease-in-out, top 0.8s ease-in-out';
+          flyEl.style.left = (endX - sz/2) + 'px';
+          flyEl.style.top = (endY - sz/2) + 'px';
+          setTimeout(phase4, 850);
+        }
+
+        // Phase 4: 3x Puls auf dem Kärtchen (2.3-3.2s)
+        function phase4() {
+          let p2 = 0;
+          function doPulseEnd() {
+            if (p2 >= 3) { phase5(); return; }
+            flyEl.style.transition = 'transform 0.15s ease-in-out';
+            flyEl.style.transform = 'scale(1.3)';
+            flyEl.style.boxShadow = '0 0 35px #FFD700, 0 0 60px #FFD700';
+            setTimeout(() => {
+              flyEl.style.transform = 'scale(1.0)';
+              flyEl.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700';
+              setTimeout(() => { p2++; doPulseEnd(); }, 150);
+            }, 150);
+          }
+          doPulseEnd();
+        }
+
+        // Phase 5: Ausblenden (3.2-4.5s — kurze Pause + fade)
+        function phase5() {
+          setTimeout(() => {
+            flyEl.style.transition = 'opacity 0.5s';
             flyEl.style.opacity = '0';
             setTimeout(() => {
               flyEl.remove();
               if (callback) callback();
-            }, 400);
-          }, 3300); // 0.8 + 3.3 + 0.4 = 4.5s
-        }, 800);
+            }, 500);
+          }, 800);
+        }
+
+        doPulseSlot();
       }
       window._checkTrainingResult = checkTrainingResult;
       
