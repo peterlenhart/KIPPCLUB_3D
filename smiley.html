@@ -8560,15 +8560,15 @@
       gruen:   [ [-0.23438,  HAND_Y, -0.4375,    90],  // Nord
                  [ 0.546875, HAND_Y,  0.03125,  180],  // Ost
                  [ 0.546875, HAND_Y,  0.1875,   180],  // Ost
-                 [-0.23438,  HAND_Y,  0.6585,   -90] ], // Süd
+                 [-0.23438,  HAND_Y,  0.6585,   270] ], // Süd
       blau:    [ [-0.546875, HAND_Y,  0.03125,    0],  // West
                  [ 0.23438,  HAND_Y, -0.4375,    90],  // Nord
-                 [ 0.23438,  HAND_Y,  0.6585,   -90],  // Süd
+                 [ 0.23438,  HAND_Y,  0.6585,   270],  // Süd
                  [-0.546875, HAND_Y,  0.1875,     0] ], // West
       violett: [ [-0.546875, HAND_Y, -0.125,      0],  // West
                  [ 0.546875, HAND_Y, -0.125,    180],  // Ost
-                 [ 0.07813,  HAND_Y,  0.6585,   -90],  // Süd
-                 [-0.07813,  HAND_Y,  0.6585,   -90] ]  // Süd
+                 [ 0.07813,  HAND_Y,  0.6585,   270],  // Süd
+                 [-0.07813,  HAND_Y,  0.6585,   270] ]  // Süd
     };
 
     // 3D-Hand-Meshes Array
@@ -8596,7 +8596,7 @@
             });
             const m = new THREE.Mesh(geo, mat);
             m.rotation.x = -Math.PI / 2;  // flach legen
-            m.rotation.z = pos3D[3] * Math.PI / 180;  // Y-Achse Drehung (nach x-Rotation ist lokal Z = Welt Y)
+            m.rotation.z = -pos3D[3] * Math.PI / 180;
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
             scene.add(m);
