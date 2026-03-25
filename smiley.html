@@ -2346,10 +2346,13 @@
       ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.fillRect(0, 0, 256, 256);
 
-      // Inline-Rahmen VOR den Smileys zeichnen (damit Smileys darüber liegen)
-      ctx.strokeStyle = '#6b5040';
-      ctx.lineWidth = 6;
-      ctx.strokeRect(3, 3, 250, 250);
+      // Inline-Rahmen nur zeichnen wenn keine Smiley-Bilder auf der Face
+      const hasSmileyImgs = Object.values(slotMap).some(s => s.img);
+      if (!hasSmileyImgs) {
+        ctx.strokeStyle = '#6b5040';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, 250, 250);
+      }
 
       const alpha = (numberAlpha !== undefined) ? numberAlpha : 1;
       ctx.globalAlpha = alpha;
@@ -8535,8 +8538,6 @@
       updateCubeMaterials();
 
       // === 3er-Paket einblenden: Spieltisch + Hände + Rahmen ===
-      if (spieltisch) spieltisch.visible = true;
-      if (window._rahmenMesh) window._rahmenMesh.visible = true;
       show3erPaket();
 
       // Kärtchen sofort einblenden — vor dem Wobble
@@ -8548,16 +8549,27 @@
       setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
     });
 
-    // Farbfeld-Positionen in 3D + Rotation [X, Y, Z, rotDeg] — exakt aus COLOR_FIELD_POS
+    // Farbfeld-Positionen auf dem RAHMEN [X, Y, Z, rotDeg]
+    // Y zwischen Spieltisch (0.46975) und Rahmen (0.47275)
+    // West=0°, Nord=90°, Ost=180°, Süd=-90°
+    const HAND_Y = 0.471;
     const HAND_FIELD_POS = {
-      orange:  [ [-0.07813, 0.47075, -0.359375,  90], [ 0.07813, 0.47075, -0.359375,  90],
-                 [ 0.46875, 0.47075,  0.34375,  180], [-0.46875, 0.47075,  0.34375,    0] ],
-      gruen:   [ [-0.23438, 0.47075, -0.359375,  90], [ 0.46875, 0.47075,  0.03125,  180],
-                 [ 0.46875, 0.47075,  0.1875,   180], [-0.23438, 0.47075,  0.580375, -90] ],
-      blau:    [ [-0.46875, 0.47075,  0.03125,    0], [ 0.23438, 0.47075, -0.359375,  90],
-                 [ 0.23438, 0.47075,  0.580375, -90], [-0.46875, 0.47075,  0.1875,     0] ],
-      violett: [ [-0.46875, 0.47075, -0.125,      0], [ 0.46875, 0.47075, -0.125,    180],
-                 [ 0.07813, 0.47075,  0.580375,  -90], [-0.07813, 0.47075,  0.580375, -90] ]
+      orange:  [ [-0.07813,  HAND_Y, -0.4375,    90],  // Nord
+                 [ 0.07813,  HAND_Y, -0.4375,    90],  // Nord
+                 [ 0.546875, HAND_Y,  0.34375,  180],  // Ost
+                 [-0.546875, HAND_Y,  0.34375,    0] ], // West
+      gruen:   [ [-0.23438,  HAND_Y, -0.4375,    90],  // Nord
+                 [ 0.546875, HAND_Y,  0.03125,  180],  // Ost
+                 [ 0.546875, HAND_Y,  0.1875,   180],  // Ost
+                 [-0.23438,  HAND_Y,  0.6585,   -90] ], // Süd
+      blau:    [ [-0.546875, HAND_Y,  0.03125,    0],  // West
+                 [ 0.23438,  HAND_Y, -0.4375,    90],  // Nord
+                 [ 0.23438,  HAND_Y,  0.6585,   -90],  // Süd
+                 [-0.546875, HAND_Y,  0.1875,     0] ], // West
+      violett: [ [-0.546875, HAND_Y, -0.125,      0],  // West
+                 [ 0.546875, HAND_Y, -0.125,    180],  // Ost
+                 [ 0.07813,  HAND_Y,  0.6585,   -90],  // Süd
+                 [-0.07813,  HAND_Y,  0.6585,   -90] ]  // Süd
     };
 
     // 3D-Hand-Meshes Array
