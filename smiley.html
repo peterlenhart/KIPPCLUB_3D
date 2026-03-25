@@ -2140,7 +2140,6 @@
       spieltisch.receiveShadow = true;
       spieltisch.castShadow = false;
       spieltisch.renderOrder = 1;
-      spieltisch.visible = false; // 3er-Paket: erst bei LOS GEHT'S
       
       // Matrix komplett einfrieren
       spieltisch.matrixAutoUpdate = false;
@@ -8596,8 +8595,8 @@
               depthWrite: false
             });
             const m = new THREE.Mesh(geo, mat);
-            m.rotation.x = -Math.PI / 2;
-            m.rotation.y = -(pos3D[3] || 0) * Math.PI / 180;
+            m.rotation.x = -Math.PI / 2;  // flach legen
+            m.rotation.z = pos3D[3] * Math.PI / 180;  // Y-Achse Drehung (nach x-Rotation ist lokal Z = Welt Y)
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
             scene.add(m);
@@ -8605,15 +8604,14 @@
           });
         });
       });
-      // Spieltisch + Rahmen sichtbar
-      if (spieltisch) spieltisch.visible = true;
+      // Rahmen sichtbar (spieltisch ist IMMER sichtbar)
       if (window._rahmenMesh) window._rahmenMesh.visible = true;
     }
 
     function hide3erPaket() {
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
-      if (spieltisch) spieltisch.visible = false;
+      // Rahmen aus (spieltisch bleibt IMMER sichtbar)
       if (window._rahmenMesh) window._rahmenMesh.visible = false;
     }
 
