@@ -1269,15 +1269,7 @@
       </div>
     </div>
 
-    <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
-    <div id="handOverlays" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; display:none;">
-      <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-      <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-      <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-      <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
-    </div>
-    <!-- Rahmen über Händen -->
-    <img id="rahmenImg" src="rahmen_smiley.webp" style="position:absolute; pointer-events:none; z-index:16;">
+    <!-- Hand-Overlays + Rahmen: jetzt als 3D-Meshes in der Szene -->
 
   </div>
 
@@ -2156,14 +2148,27 @@
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
 
-      // Rahmen-Bild einmalig positionieren (deckungsgleich mit Spieltisch)
-      const nw = new THREE.Vector3(xCenter - SPIEL_WIDTH / 2, yPos, zCenter - height / 2).project(camera);
-      const se = new THREE.Vector3(xCenter + SPIEL_WIDTH / 2, yPos, zCenter + height / 2).project(camera);
-      const ri = document.getElementById('rahmenImg');
-      ri.style.left = ((nw.x * 0.5 + 0.5) * 360) + 'px';
-      ri.style.top = ((-nw.y * 0.5 + 0.5) * 720) + 'px';
-      ri.style.width = (((se.x - nw.x) * 0.5) * 360) + 'px';
-      ri.style.height = (((nw.y - se.y) * 0.5) * 720) + 'px';
+      // Rahmen als 3D-Mesh (deckungsgleich mit Spieltisch, Y knapp über Händen)
+      new THREE.TextureLoader().load('rahmen_smiley.webp', (rahmenTex) => {
+        const rahmenGeo = new THREE.PlaneGeometry(SPIEL_WIDTH, height);
+        const rahmenMat = new THREE.MeshStandardMaterial({
+          map: rahmenTex,
+          transparent: true,
+          alphaTest: 0.5,
+          roughness: 0.8,
+          metalness: 0.2,
+          depthWrite: true
+        });
+        window._rahmenMesh = new THREE.Mesh(rahmenGeo, rahmenMat);
+        window._rahmenMesh.rotation.x = -Math.PI / 2;
+        window._rahmenMesh.position.set(xCenter, yPos + 0.003, zCenter);
+        window._rahmenMesh.receiveShadow = false;
+        window._rahmenMesh.castShadow = false;
+        window._rahmenMesh.renderOrder = 3;
+        window._rahmenMesh.matrixAutoUpdate = false;
+        window._rahmenMesh.updateMatrix();
+        scene.add(window._rahmenMesh);
+      });
       
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
@@ -8546,33 +8551,40 @@
                  [-0.546875, 0.47075, -0.125000,   0], [ 0.546875, 0.47075,-0.125000, 180] ]
     };
 
+    // 3D-Hand-Meshes Array
+    window._handMeshes3D = [];
+    const HAND_SIZE_3D = 0.15625; // 1 Zelle
+
     function showSmileyHands() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
+      hideSmileyHands(); // vorherige entfernen
       const color = window._smileyTargetColor || 'orange';
       const handFile = 'hand_' + color + '.png';
       const positions = HAND_FIELD_POS[color];
-      const wrap = document.getElementById('handOverlays');
-      wrap.style.display = 'block';
-      positions.forEach((pos3D, i) => {
-        const v = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2]);
-        v.project(camera);
-        const sx = (v.x * 0.5 + 0.5) * 360;
-        const sy = (-v.y * 0.5 + 0.5) * 720;
-        const rot = pos3D[3] || 0;
-        const el = document.getElementById('hand' + i);
-        el.src = handFile;
-        el.style.left = (sx - 22.5) + 'px';
-        el.style.top  = (sy - 22.5) + 'px';
-        el.style.transform = 'rotate(' + rot + 'deg)';
-        el.style.display = 'block';
+      new THREE.TextureLoader().load(handFile, (tex) => {
+        const geo = new THREE.PlaneGeometry(HAND_SIZE_3D, HAND_SIZE_3D);
+        positions.forEach((pos3D) => {
+          const mat = new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            alphaTest: 0.1,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          });
+          const m = new THREE.Mesh(geo, mat);
+          m.rotation.x = -Math.PI / 2;
+          m.rotation.y = -(pos3D[3] || 0) * Math.PI / 180;
+          m.position.set(pos3D[0], pos3D[1], pos3D[2]);
+          m.renderOrder = 2;
+          scene.add(m);
+          window._handMeshes3D.push(m);
+        });
       });
     }
 
     function hideSmileyHands() {
-      document.getElementById('handOverlays').style.display = 'none';
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('hand' + i).style.display = 'none';
-      }
+      window._handMeshes3D.forEach(m => { scene.remove(m); });
+      window._handMeshes3D = [];
     }
 
     function showScrollband() {
