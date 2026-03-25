@@ -5340,12 +5340,11 @@
         }
       }
 
-      // MISS: 3x roter Puls auf dem Kippziel-Kärtchen-Smiley
+      // MISS: 3x roter Puls — Ring + Kärtchen-Smiley synchron
       function animateTeufelMiss(callback) {
         const kaertchenSmiley = document.getElementById('smileyKaertchenSmiley');
         if (!kaertchenSmiley) { if (callback) callback(); return; }
 
-        // Roter Glow-Ring über dem Kärtchen-Smiley
         const rect = kaertchenSmiley.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -5354,27 +5353,37 @@
         glowEl.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;border-radius:50%;' +
           'pointer-events:none;z-index:99;background:transparent;' +
           'border:3px solid #FF0000;box-shadow:0 0 20px #FF0000,0 0 40px #FF0000;' +
-          'left:' + (cx - sz/2) + 'px;top:' + (cy - sz/2) + 'px;' +
-          'transform:scale(1);';
+          'left:' + (cx - sz/2) + 'px;top:' + (cy - sz/2) + 'px;';
         document.body.appendChild(glowEl);
+
+        // Original-Stil merken
+        const origTransition = kaertchenSmiley.style.transition;
+        const origTransform = kaertchenSmiley.style.transform;
 
         let pulseCount = 0;
         function doPulse() {
           if (pulseCount >= 3) {
             glowEl.style.transition = 'opacity 0.3s';
             glowEl.style.opacity = '0';
+            kaertchenSmiley.style.transition = origTransition;
+            kaertchenSmiley.style.transform = origTransform;
             setTimeout(() => {
               glowEl.remove();
               if (callback) callback();
             }, 350);
             return;
           }
+          // Ring pulsiert
           glowEl.style.transition = 'transform 0.2s ease-in-out, box-shadow 0.2s';
           glowEl.style.transform = 'scale(1.4)';
           glowEl.style.boxShadow = '0 0 30px #FF0000, 0 0 60px #FF0000';
+          // Smiley pulsiert synchron
+          kaertchenSmiley.style.transition = 'transform 0.2s ease-in-out';
+          kaertchenSmiley.style.transform = 'scale(1.35)';
           setTimeout(() => {
             glowEl.style.transform = 'scale(1.0)';
             glowEl.style.boxShadow = '0 0 20px #FF0000, 0 0 40px #FF0000';
+            kaertchenSmiley.style.transform = 'scale(1.0)';
             setTimeout(() => { pulseCount++; doPulse(); }, 200);
           }, 200);
         }
@@ -5419,67 +5428,84 @@
           endY = rect.top + rect.height / 2;
         }
 
-        // Fliegendes Element
-        const flyEl = document.createElement('img');
-        flyEl.src = targetSrc;
-        const sz = 48;
-        flyEl.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
-          'pointer-events:none;z-index:99;border-radius:50%;' +
-          'box-shadow:0 0 20px #FFD700,0 0 40px #FFD700;' +
-          'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;';
-        document.body.appendChild(flyEl);
-
-        // Slot leeren (bleibt dauerhaft leer)
-        if (foundKey) {
-          slotMapObj[foundKey].img = null;
-          slotMapObj[foundKey].vis = false;
-          updateCubeMaterials();
-        }
         // Smiley als gefangen markieren
         if (!window._capturedSmileys) window._capturedSmileys = [];
         window._capturedSmileys.push(targetFile);
+        const sz = 48;
 
-        // Phase 1: 5x deutlicher Puls am Slot (0-1.5s)
+        // Phase 1: Gold-Ring + Smiley-Overlay synchron pulsieren über dem Slot
+        const ringSz = 56;
+        const ringEl = document.createElement('div');
+        ringEl.style.cssText = 'position:fixed;width:' + ringSz + 'px;height:' + ringSz + 'px;border-radius:50%;' +
+          'pointer-events:none;z-index:99;background:transparent;' +
+          'border:3px solid #FFD700;box-shadow:0 0 20px #FFD700,0 0 40px #FFD700;' +
+          'left:' + (startX - ringSz/2) + 'px;top:' + (startY - ringSz/2) + 'px;';
+        document.body.appendChild(ringEl);
+
+        const smileyOv = document.createElement('img');
+        smileyOv.src = targetSrc;
+        smileyOv.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;' +
+          'pointer-events:none;z-index:100;border-radius:50%;' +
+          'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;';
+        document.body.appendChild(smileyOv);
+
         let pulseCount = 0;
         function doPulseSlot() {
-          if (pulseCount >= 5) { phase2(); return; }
-          flyEl.style.transition = 'transform 0.15s ease-in-out';
-          flyEl.style.transform = 'scale(1.4)';
-          flyEl.style.boxShadow = '0 0 35px #FFD700, 0 0 60px #FFD700';
+          if (pulseCount >= 5) {
+            ringEl.remove();
+            // Slot leeren — Smiley verschwindet vom Würfel
+            if (foundKey) {
+              slotMapObj[foundKey].img = null;
+              slotMapObj[foundKey].vis = false;
+              updateCubeMaterials();
+            }
+            // smileyOv wird jetzt zum Fly-Element
+            smileyOv.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700';
+            startFlight(smileyOv);
+            return;
+          }
+          // Ring pulsiert
+          ringEl.style.transition = 'transform 0.2s ease-in-out, box-shadow 0.2s';
+          ringEl.style.transform = 'scale(1.4)';
+          ringEl.style.boxShadow = '0 0 35px #FFD700, 0 0 60px #FFD700';
+          // Smiley pulsiert synchron
+          smileyOv.style.transition = 'transform 0.2s ease-in-out';
+          smileyOv.style.transform = 'scale(1.35)';
           setTimeout(() => {
-            flyEl.style.transform = 'scale(1.0)';
-            flyEl.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700';
-            setTimeout(() => { pulseCount++; doPulseSlot(); }, 150);
-          }, 150);
+            ringEl.style.transform = 'scale(1.0)';
+            ringEl.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700';
+            smileyOv.style.transform = 'scale(1.0)';
+            setTimeout(() => { pulseCount++; doPulseSlot(); }, 200);
+          }, 200);
         }
 
         // Phase 2: Direkter Flug zum Kärtchen-Smiley (2.0s)
-        function phase2() {
+        function startFlight(flyEl) {
           flyEl.style.transition = 'left 2.0s ease-in-out, top 2.0s ease-in-out';
           flyEl.style.left = (endX - sz/2) + 'px';
           flyEl.style.top = (endY - sz/2) + 'px';
-          setTimeout(phase3, 2100);
+          setTimeout(() => doPulseEnd(flyEl), 2100);
         }
 
         // Phase 3: 3x Puls auf dem Kärtchen
-        function phase3() {
+        function doPulseEnd(flyEl) {
           let p2 = 0;
-          function doPulseEnd() {
-            if (p2 >= 3) { phase4(); return; }
+          function tick() {
+            if (p2 >= 3) { doFadeOut(flyEl); return; }
             flyEl.style.transition = 'transform 0.15s ease-in-out';
             flyEl.style.transform = 'scale(1.3)';
             flyEl.style.boxShadow = '0 0 35px #FFD700, 0 0 60px #FFD700';
             setTimeout(() => {
               flyEl.style.transform = 'scale(1.0)';
               flyEl.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700';
-              setTimeout(() => { p2++; doPulseEnd(); }, 150);
+              setTimeout(() => { p2++; tick(); }, 150);
             }, 150);
           }
-          doPulseEnd();
+          tick();
         }
 
         // Phase 4: Ausblenden
-        function phase4() {
+        function doFadeOut(flyEl) {
           setTimeout(() => {
             flyEl.style.transition = 'opacity 0.5s';
             flyEl.style.opacity = '0';
