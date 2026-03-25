@@ -5266,7 +5266,7 @@
       
       function checkTrainingResult(cardIdx) {
         activeCardIdx = cardIdx;
-        const card = gameCards[cardIdx];
+        const card = gameCards[cardIdx] || null;
         _smileyAttempts++;
 
         const treffer = checkSmileyTreffer();
@@ -5275,8 +5275,8 @@
           // === SMILEY HIT ===
           _smileyHits++;
           kipp21Done++;
-          kipp21CardStates[cardIdx] = 'erledigt';
-          card.isHit = true;
+          if (kipp21CardStates[cardIdx] !== undefined) kipp21CardStates[cardIdx] = 'erledigt';
+          if (card) card.isHit = true;
           kipp21Active = false;
           hideAllTrainingUI();
           hideScrollband();
@@ -5301,6 +5301,8 @@
               await _smileyPostWobbleCorrection();
 
               showScrollband();
+              // Nächste Karte als "offen" markieren
+              if (kipp21CardStates[activeCardIdx] !== undefined) kipp21CardStates[activeCardIdx] = 'offen';
               kipp21Active = true;
               gamePhase = 'spielen';
               showAllTrainingUI();
@@ -5315,6 +5317,8 @@
           hideScrollband();
           animateTeufelMiss(() => {
             showScrollband();
+            // Karte bleibt "offen" für erneuten Versuch
+            if (kipp21CardStates[activeCardIdx] !== undefined) kipp21CardStates[activeCardIdx] = 'offen';
             kipp21Active = true;
             showAllTrainingUI();
           });
@@ -6371,6 +6375,8 @@
       }
 
       showScrollband();
+      // Smiley: Karte als "offen" markieren
+      if (kipp21CardStates[activeCardIdx] !== undefined) kipp21CardStates[activeCardIdx] = 'offen';
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
       refreshKniffIcons();
@@ -8600,6 +8606,9 @@
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
 
       startKipp21(false);
+
+      // Smiley-Modus: Karte sofort als "offen" markieren
+      if (kipp21CardStates[0] !== undefined) kipp21CardStates[0] = 'offen';
 
       // Wobble nach 800ms
       setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
@@ -11080,7 +11089,7 @@
                   if (i < n - 1) await new Promise(r => setTimeout(r, 200));
                 }
                 clearSelection();
-                const openIdx = kipp21CardStates.indexOf("offen"); if (openIdx >= 0 && window._checkTrainingResult) window._checkTrainingResult(openIdx);
+                if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
               })();
             }
           } else {
@@ -11141,7 +11150,7 @@
                 if (i < n - 1) await new Promise(r => setTimeout(r, 200));
               }
               clearSelection();
-              const openIdx = kipp21CardStates.indexOf("offen"); if (openIdx >= 0 && window._checkTrainingResult) window._checkTrainingResult(openIdx);
+              if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
             })();
           }
         } else {
