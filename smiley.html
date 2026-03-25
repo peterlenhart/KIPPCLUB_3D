@@ -2345,14 +2345,6 @@
       ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.fillRect(0, 0, 256, 256);
 
-      // Inline-Rahmen nur zeichnen wenn keine Smiley-Bilder auf der Face
-      const hasSmileyImgs = Object.values(slotMap).some(s => s.img);
-      if (!hasSmileyImgs) {
-        ctx.strokeStyle = '#6b5040';
-        ctx.lineWidth = 6;
-        ctx.strokeRect(3, 3, 250, 250);
-      }
-
       const alpha = (numberAlpha !== undefined) ? numberAlpha : 1;
       ctx.globalAlpha = alpha;
 
@@ -8471,12 +8463,24 @@
       document.getElementById('leveltafelImg').style.visibility = 'hidden';
       document.getElementById('btnBereitWrap').style.display = 'none';
 
-      // Erstgewählter Smiley auf Würfel, 11 Teufel
+      // Erstgewählter Smiley auf Würfel, 11 nicht-gewählte Smileys
       const firstSmileyImg = new Image(); firstSmileyImg.src = selectedSmileys[0].src;
-      const teufelImgsB = Array(11).fill(null).map(() => {
-        const img = new Image(); img.src = 'smiley_teufel.png'; return img;
+      const allSmileyEls = Array.from(document.querySelectorAll('.leveltafelSmiley'));
+      const selectedSrcs = selectedSmileys.map(el => el.src);
+      const nonSelectedB = allSmileyEls.filter(el => !selectedSrcs.includes(el.src));
+      for (let i = nonSelectedB.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nonSelectedB[i], nonSelectedB[j]] = [nonSelectedB[j], nonSelectedB[i]];
+      }
+      const fillImgsB = nonSelectedB.slice(0, 11).map(el => {
+        const img = new Image(); img.src = el.src; return img;
       });
-      const allImgsB = [firstSmileyImg, ...teufelImgsB];
+      // Falls weniger als 11 nicht-gewählte: mit Duplikaten auffüllen
+      while (fillImgsB.length < 11) {
+        const pick = nonSelectedB[Math.floor(Math.random() * nonSelectedB.length)];
+        const img = new Image(); img.src = pick.src; fillImgsB.push(img);
+      }
+      const allImgsB = [firstSmileyImg, ...fillImgsB];
       for (let i = allImgsB.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [allImgsB[i], allImgsB[j]] = [allImgsB[j], allImgsB[i]];
@@ -8519,10 +8523,24 @@
       window._smileyTargetColor = targetColor;
       window._smileyTargetSrc = targetEl.src;
 
-      // 4 Smileys + 8 Teufel auf Würfel
+      // 4 gewählte Smileys + 8 nicht-gewählte Smileys auf Würfel
+      const allSmileyElsG = Array.from(document.querySelectorAll('.leveltafelSmiley'));
+      const selectedSrcsG = selectedSmileys.map(el => el.src);
+      const nonSelectedG = allSmileyElsG.filter(el => !selectedSrcsG.includes(el.src));
+      for (let i = nonSelectedG.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nonSelectedG[i], nonSelectedG[j]] = [nonSelectedG[j], nonSelectedG[i]];
+      }
+      const fillImgsG = nonSelectedG.slice(0, 8).map(el => {
+        const img = new Image(); img.src = el.src; return img;
+      });
+      while (fillImgsG.length < 8) {
+        const pick = nonSelectedG[Math.floor(Math.random() * nonSelectedG.length)];
+        const img = new Image(); img.src = pick.src; fillImgsG.push(img);
+      }
       const allImgs = [
         ...selectedSmileys.map(el => { const i = new Image(); i.src = el.src; return i; }),
-        ...Array(8).fill(null).map(() => { const i = new Image(); i.src = 'smiley_teufel.png'; return i; })
+        ...fillImgsG
       ];
       for (let i = allImgs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -8576,27 +8594,107 @@
     window._handMeshes3D = [];
     const HAND_SIZE_3D = 0.15625; // 1 Zelle
 
+    // === SLOT-FINDER: Welchen Slot (S1-S4) belegt der Ziel-Smiley? ===
+    const GRID_TO_SLOT = {
+      f0: { '2,0': 'S1', '1,0': 'S2', '0,1': 'S3', '0,2': 'S4' },
+      f1: { '0,0': 'S1', '0,1': 'S2', '1,2': 'S3', '2,2': 'S4' },
+      f2: { '2,2': 'S1', '2,1': 'S2', '1,0': 'S3', '0,0': 'S4' }
+    };
+
+    function getTargetSmileySlot() {
+      const targetSrc = window._smileyTargetSrc;
+      if (!targetSrc) return null;
+      const targetFile = targetSrc.replace(/^.*\//, '');
+      for (const face of ['f0', 'f1', 'f2']) {
+        for (const key in faceSlots[face].slotMap) {
+          const slot = faceSlots[face].slotMap[key];
+          if (slot.img && slot.img.src && slot.img.src.replace(/^.*\//, '') === targetFile) {
+            return GRID_TO_SLOT[face][key];
+          }
+        }
+      }
+      return null;
+    }
+
+    // === HAND-TAUSCH: Welche Hand liegt auf welchem Feld? ===
+    // Index 0-3 in HAND_FIELD_POS = Quadrant 0-3 (identisch mit COLOR_FIELD_POS Reihenfolge)
+    function computeHandAssignment() {
+      const levelColor = window._smileyTargetColor;
+      const slotName = getTargetSmileySlot();
+      const allColors = ['orange', 'gruen', 'blau', 'violett'];
+
+      // Default: jede Hand auf eigenem Farbfeld
+      const assignment = {};
+      allColors.forEach(c => { assignment[c] = [c, c, c, c]; });
+
+      if (!slotName || !levelColor) return assignment;
+
+      // Erreichbare Felder: für jede Farbe, welcher Quadrant (= Index)
+      const reachable = {};
+      for (let q = 0; q < 4; q++) {
+        reachable[SLOT_NEIGHBOR_COLORS[q][slotName]] = q;
+      }
+
+      // Anzahl Tausche pro Level
+      const swapCount = { 'orange': 0, 'gruen': 1, 'blau': 2, 'violett': 3 };
+      const numSwaps = swapCount[levelColor];
+      if (numSwaps === 0) return assignment; // MBr: kein Tausch
+
+      // Farben deren erreichbares Feld übernommen wird
+      const colorsToTake = allColors.filter(c => c !== levelColor).slice(0, numSwaps);
+
+      // Unerreichbare Level-Felder (alle außer dem erreichbaren)
+      const reachableLevelIdx = reachable[levelColor];
+      const unreachable = [0, 1, 2, 3].filter(i => i !== reachableLevelIdx);
+      let ptr = 0;
+
+      for (const takeColor of colorsToTake) {
+        const takeIdx = reachable[takeColor]; // erreichbares Feld dieser Farbe
+        const giveIdx = unreachable[ptr++];   // unerreichbares Level-Feld
+
+        // Level-Hand auf erreichbares Fremdfarben-Feld
+        assignment[takeColor][takeIdx] = levelColor;
+        // Fremd-Hand auf unerreichbares Level-Feld
+        assignment[levelColor][giveIdx] = takeColor;
+      }
+
+      return assignment;
+    }
+
     function show3erPaket() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
-      // Hände refreshen (alte entfernen, neue laden)
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
-      const colors = ['orange', 'gruen', 'blau', 'violett'];
-      colors.forEach(color => {
-        const handFile = 'hand_' + color + '.png';
-        const positions = HAND_FIELD_POS[color];
-        new THREE.TextureLoader().load(handFile, (tex) => {
-          const geo = new THREE.PlaneGeometry(HAND_SIZE_3D, HAND_SIZE_3D);
-          positions.forEach((pos3D) => {
-            const mat = new THREE.MeshBasicMaterial({
-              map: tex,
+
+      const assignment = computeHandAssignment();
+      const allColors = ['orange', 'gruen', 'blau', 'violett'];
+
+      // Alle 4 Hand-Texturen laden, dann platzieren
+      const textures = {};
+      let loaded = 0;
+      allColors.forEach(color => {
+        new THREE.TextureLoader().load('hand_' + color + '.png', (tex) => {
+          textures[color] = tex;
+          loaded++;
+          if (loaded === 4) placeAllHands();
+        });
+      });
+
+      function placeAllHands() {
+        allColors.forEach(fieldColor => {
+          const positions = HAND_FIELD_POS[fieldColor];
+          positions.forEach((pos3D, idx) => {
+            const handColor = assignment[fieldColor][idx];
+            const geo = new THREE.PlaneGeometry(HAND_SIZE_3D, HAND_SIZE_3D);
+            const m3 = new THREE.MeshBasicMaterial({
+              map: textures[handColor],
               transparent: true,
               alphaTest: 0.1,
               side: THREE.DoubleSide,
               depthWrite: false
             });
-            const m = new THREE.Mesh(geo, mat);
-            m.rotation.x = -Math.PI / 2;  // flach legen
+            const m = new THREE.Mesh(geo, m3);
+            m.rotation.x = -Math.PI / 2;
             m.rotation.z = -pos3D[3] * Math.PI / 180;
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
@@ -8604,7 +8702,8 @@
             window._handMeshes3D.push(m);
           });
         });
-      });
+      }
+
       // Rahmen sichtbar (spieltisch ist IMMER sichtbar)
       if (window._rahmenMesh) window._rahmenMesh.visible = true;
     }
