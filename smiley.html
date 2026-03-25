@@ -5325,44 +5325,24 @@
         }
       }
 
-      // MISS: 3x roter Puls am Slot, dann weiter
+      // MISS: 3x roter Puls auf dem Kippziel-Kärtchen-Smiley
       function animateTeufelMiss(callback) {
-        const targetSrc = window._smileyTargetSrc;
-        if (!targetSrc) { if (callback) callback(); return; }
-        const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
+        const kaertchenSmiley = document.getElementById('smileyKaertchenSmiley');
+        if (!kaertchenSmiley) { if (callback) callback(); return; }
 
-        // Slot-Position finden
-        let startX = 180, startY = 360;
-        const slotMapObj = faceSlots[topFace].slotMap;
-        const _cr = document.getElementById('container').getBoundingClientRect();
-        for (const key in slotMapObj) {
-          const s = slotMapObj[key];
-          if (s.img && s.img.src && s.img.src.replace(/^.*[\\/]/, '').split('?')[0] === targetFile) {
-            const [r, c] = key.split(',').map(Number);
-            const cell = 0.15625;
-            const wp = new THREE.Vector3(
-              cube.position.x + (c - 1) * cell,
-              cube.position.y + 0.235,
-              cube.position.z + (r - 1) * cell
-            );
-            wp.project(camera);
-            startX = _cr.left + (wp.x * 0.5 + 0.5) * 360;
-            startY = _cr.top + (-wp.y * 0.5 + 0.5) * 720;
-            break;
-          }
-        }
-
-        // Roter Glow-Ring über dem Slot
-        const sz = 56;
+        // Roter Glow-Ring über dem Kärtchen-Smiley
+        const rect = kaertchenSmiley.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const sz = 58;
         const glowEl = document.createElement('div');
         glowEl.style.cssText = 'position:fixed;width:' + sz + 'px;height:' + sz + 'px;border-radius:50%;' +
           'pointer-events:none;z-index:99;background:transparent;' +
           'border:3px solid #FF0000;box-shadow:0 0 20px #FF0000,0 0 40px #FF0000;' +
-          'left:' + (startX - sz/2) + 'px;top:' + (startY - sz/2) + 'px;' +
+          'left:' + (cx - sz/2) + 'px;top:' + (cy - sz/2) + 'px;' +
           'transform:scale(1);';
         document.body.appendChild(glowEl);
 
-        // 3x Puls
         let pulseCount = 0;
         function doPulse() {
           if (pulseCount >= 3) {
@@ -5466,24 +5446,25 @@
           }, 150);
         }
 
-        // Phase 2: Abheben auf Y+4 Zellen (0.9-1.5s)
+        // Phase 2: Diagonal aufsteigen — gleichzeitig Y hoch + X/Z Richtung Kärtchen (1.2s)
         function phase2() {
-          flyEl.style.transition = 'left 0.6s ease-out, top 0.6s ease-out';
-          flyEl.style.left = (highX - sz/2) + 'px';
+          // Mittelpunkt zwischen Start und Ziel, aber auf Höhe highY
+          const midX = (startX + endX) / 2;
+          flyEl.style.transition = 'left 1.2s ease-out, top 1.2s ease-out';
+          flyEl.style.left = (midX - sz/2) + 'px';
           flyEl.style.top = (highY - sz/2) + 'px';
-          setTimeout(phase3, 650);
+          setTimeout(phase3, 1300);
         }
 
-        // Phase 3: Horizontal zum Kärtchen fliegen (1.5-2.3s)
+        // Phase 3: Horizontal zum Kärtchen fliegen + absenken (1.6s)
         function phase3() {
-          // Über dem Kärtchen in gleicher Höhe
-          flyEl.style.transition = 'left 0.8s ease-in-out, top 0.8s ease-in-out';
+          flyEl.style.transition = 'left 1.6s ease-in-out, top 1.6s ease-in-out';
           flyEl.style.left = (endX - sz/2) + 'px';
           flyEl.style.top = (endY - sz/2) + 'px';
-          setTimeout(phase4, 850);
+          setTimeout(phase4, 1700);
         }
 
-        // Phase 4: 3x Puls auf dem Kärtchen (2.3-3.2s)
+        // Phase 4: 3x Puls auf dem Kärtchen
         function phase4() {
           let p2 = 0;
           function doPulseEnd() {
@@ -5500,7 +5481,7 @@
           doPulseEnd();
         }
 
-        // Phase 5: Ausblenden (3.2-4.5s — kurze Pause + fade)
+        // Phase 5: Ausblenden
         function phase5() {
           setTimeout(() => {
             flyEl.style.transition = 'opacity 0.5s';
@@ -5509,7 +5490,7 @@
               flyEl.remove();
               if (callback) callback();
             }, 500);
-          }, 800);
+          }, 600);
         }
 
         doPulseSlot();
