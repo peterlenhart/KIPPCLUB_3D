@@ -1124,7 +1124,7 @@
       <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);">DEIN LEVEL-MIX:</div>
       <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);">SKILL / CHILL = 78 / 22</div>
       <div id="selectedSmileysRow"></div>
-      <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:5px;">NEU WÄHLEN</button>
+      <button id="btnNeuWaehlen" onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:5px;">NEU WÄHLEN</button>
       <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:5px;">LOS GEHT'S</button>
     </div>
   </div>
@@ -1302,7 +1302,8 @@
         d5a:"Tutorial wiederholen?<br>Oder die sechs", d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?", d5c:"Klick auf Beginn-Button,<br>unten links.",
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange",
         nml:"NOCHMAL", nxl:"NEXT LEVEL", sek:"Sek.", tout:"60 Sek.<br>\u00fcberschritten", h4b:"Mit 4 HITS ins BRAINY Level", h4r:"Mit 4 HITS ins BRAIN Level",
-        exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden"
+        exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden",
+        sw4:"WÄHLE 4 SMILEYS", sw4b:"(beliebig aus allen 16)", sNw:"NEU WÄHLEN", sLg:"LOS GEHT'S", sFe:"FERTIG", sLm:"DEIN LEVEL-MIX:"
       },
       "en": {
         s1:"OBJECTIVE", s2:"\u2022 Find the right number of tips and the correct direction so the cube hits the target. E.g. <b>{zahl}</b> to <b>{farbe}</b>.<br>It\u2019s never more than <b>6</b> tips if the direction is right.<br>\u2022 Use <b>LOOK</b> seconds efficiently.",
@@ -1323,7 +1324,8 @@
         d5a:"Repeat tutorial?<br>Or discover the six", d5b:"TILT-TRICK JOKERS?", d5c:"Click the Start button,<br>bottom left.",
         fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange",
         nml:"AGAIN", nxl:"NEXT LEVEL", sek:"sec.", tout:"60 sec.<br>exceeded", h4b:"4 HITS to reach BRAINY Level", h4r:"4 HITS to reach BRAIN Level",
-        exQ:"Really<br>quit the game?", exC:"Back", exE:"Quit"
+        exQ:"Really<br>quit the game?", exC:"Back", exE:"Quit",
+        sw4:"CHOOSE 4 SMILEYS", sw4b:"(any from all 16)", sNw:"CHOOSE AGAIN", sLg:"LET'S GO!", sFe:"DONE", sLm:"YOUR LEVEL MIX:"
       },
       "es": {
         s1:"OBJETIVO", s2:"\u2022 Encuentra el n\u00famero correcto de volcados y la direcci\u00f3n adecuada para que el cubo alcance el objetivo. P.ej. <b>{zahl}</b> a <b>{farbe}</b>.<br>Nunca son m\u00e1s de <b>6</b> volcados si la direcci\u00f3n es correcta.<br>\u2022 Usa los segundos de <b>MIRAR</b> eficientemente.",
@@ -1344,7 +1346,8 @@
         d5a:"\u00bfRepetir tutorial?<br>O conocer los seis", d5b:"JOKERS DE<br>TRUCO DE VUELCO?", d5c:"Pulsa el botón Inicio,<br>abajo a la izquierda.",
         fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja",
         nml:"OTRA VEZ", nxl:"SIGUIENTE NIVEL", sek:"seg.", tout:"60 seg.<br>superados", h4b:"4 HITS para el nivel BRAINY", h4r:"4 HITS para el nivel BRAIN",
-        exQ:"\u00bfRealmente<br>salir?", exC:"Volver", exE:"Salir"
+        exQ:"\u00bfRealmente<br>salir?", exC:"Volver", exE:"Salir",
+        sw4:"ELIGE 4 SMILEYS", sw4b:"(cualquiera de los 16)", sNw:"ELEGIR DE NUEVO", sLg:"\u00a1VAMOS!", sFe:"LISTO", sLm:"TU MEZCLA DE NIVEL:"
       },
       "fr": {
         s1:"OBJECTIF", s2:"\u2022 Trouve le bon nombre de basculements et la bonne direction pour que le cube atteigne la cible. Par ex. <b>{zahl}</b> \u00e0 <b>{farbe}</b>.<br>Jamais plus de <b>6</b> basculements si la direction est bonne.<br>\u2022 Utilise les secondes de <b>REGARD</b> efficacement.",
@@ -1365,7 +1368,8 @@
         d5a:"R\u00e9p\u00e9ter le tutorial ?<br>Ou d\u00e9couvrir les six", d5b:"JOKERS DE<br>TRUC DE BASCULE ?", d5c:"Clique sur le bouton Début,<br>en bas à gauche.",
         fV:"Violet", fB:"Bleu", fG:"Vert", fO:"Orange",
         nml:"ENCORE", nxl:"NIVEAU SUIVANT", sek:"sec.", tout:"60 sec.<br>d\u00e9pass\u00e9es", h4b:"4 HITS pour le niveau BRAINY", h4r:"4 HITS pour le niveau BRAIN",
-        exQ:"Vraiment<br>quitter ?", exC:"Retour", exE:"Quitter"
+        exQ:"Vraiment<br>quitter ?", exC:"Retour", exE:"Quitter",
+        sw4:"CHOISIS 4 SMILEYS", sw4b:"(n'importe lesquels)", sNw:"RECHOISIR", sLg:"C'EST PARTI !", sFe:"TERMIN\u00c9", sLm:"TON MIX DE NIVEAU :"
       },
       "it": {
         s1:"OBIETTIVO", s2:"\u2022 Trova il numero giusto di ribaltamenti e la direzione corretta affinch\u00e9 il cubo raggiunga il bersaglio. Es. <b>{zahl}</b> a <b>{farbe}</b>.<br>Non sono mai pi\u00f9 di <b>6</b> ribaltamenti se la direzione \u00e8 giusta.<br>\u2022 Usa i secondi di <b>GUARDA</b> in modo efficiente.",
@@ -1386,7 +1390,8 @@
         d5a:"Ripetere il tutorial?<br>O scoprire i sei", d5b:"JOKER DI<br>TRUCCO DI RIBALTAMENTO?", d5c:"Clicca sul pulsante Inizio,<br>in basso a sinistra.",
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione",
         nml:"ANCORA", nxl:"LIVELLO SUCCESSIVO", sek:"sec.", tout:"60 sec.<br>superati", h4b:"4 HITS per il livello BRAINY", h4r:"4 HITS per il livello BRAIN",
-        exQ:"Vuoi davvero<br>uscire?", exC:"Indietro", exE:"Esci"
+        exQ:"Vuoi davvero<br>uscire?", exC:"Indietro", exE:"Esci",
+        sw4:"SCEGLI 4 SMILEY", sw4b:"(qualsiasi tra i 16)", sNw:"SCEGLI DI NUOVO", sLg:"VIA!", sFe:"FATTO", sLm:"IL TUO MIX DI LIVELLO:"
       },
       "tr": {
         s1:"HEDEF", s2:"\u2022 K\u00fcp\u00fcn hedefe ula\u015fmas\u0131 i\u00e7in do\u011fru devrilme say\u0131s\u0131n\u0131 ve y\u00f6n\u00fcn\u00fc bul. \u00d6rn. <b>{zahl}</b> \u2192 <b>{farbe}</b>.<br>Y\u00f6n do\u011fruysa asla <b>6</b>\u2019dan fazla devrilme olmaz.<br>\u2022 <b>BAKMA</b> saniyelerini verimli kullan.",
@@ -1407,18 +1412,28 @@
         d5a:"Tutorial\u0131 tekrarla?<br>Veya alt\u0131", d5b:"DEVIRME-TRICK<br>JOKER\u0130 ke\u015ffet?", d5c:"Sol alttaki Başla butonuna<br>tıkla.",
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu",
         nml:"TEKRAR", nxl:"SONRAK0130 SEV0130YE", sek:"sn.", tout:"60 sn.<br>a\u015f\u0131ld\u0131", h4b:"BRAINY seviyesi i\u00e7in 4 HITS", h4r:"BRAIN seviyesi i\u00e7in 4 HITS",
-        exQ:"Oyundan \u00e7\u0131kmak<br>istiyor musun?", exC:"Geri", exE:"\u00c7\u0131k"
+        exQ:"Oyundan \u00e7\u0131kmak<br>istiyor musun?", exC:"Geri", exE:"\u00c7\u0131k",
+        sw4:"4 SM\u0130LEY SE\u00c7", sw4b:"(16'dan herhangi biri)", sNw:"YEN\u0130DEN SE\u00c7", sLg:"HAYDI!", sFe:"TAMAM", sLm:"SEV\u0130YE KARIŞIMIN:"
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
         ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
-        d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
+        d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange",
+        sw4:"WÄHLE 4 SMILEYS",sw4b:"(beliebig aus allen 16)",sNw:"NEU WÄHLEN",sLg:"LOS GEHT'S",sFe:"FERTIG",sLm:"DEIN LEVEL-MIX:"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
     // Exit overlay translations
     if (T.exQ) document.querySelector('.sgLine1').innerHTML = T.exQ;
     if (T.exC) document.getElementById('sgBtnSave').textContent = T.exC;
     if (T.exE) document.getElementById('sgBtnQuit').textContent = T.exE;
+    // Smiley-spezifische Texte
+    if (T.sw4) document.getElementById('hintLine1').textContent = T.sw4;
+    if (T.sw4b) document.getElementById('hintLine2').textContent = T.sw4b;
+    if (T.sFe) document.getElementById('btnBereit').textContent = T.sFe;
+    if (T.sLg) document.getElementById('btnLosGehts').textContent = T.sLg;
+    if (T.sLm) document.getElementById('spielzielLine1').textContent = T.sLm;
+    { const neuBtn = document.getElementById('btnNeuWaehlen');
+      if (neuBtn && T.sNw) neuBtn.textContent = T.sNw; }
     
     // Kipp-Prinzip Button Text & Overlay Content
     const KIPP_PRINZIP = {
@@ -5395,16 +5410,6 @@
           }
         }
 
-        // Höhenposition: Y+4 Zellen über Slot (viewport coords)
-        const highPos = new THREE.Vector3(
-          cube.position.x + (foundKey ? (parseInt(foundKey.split(',')[1]) - 1) * 0.15625 : 0),
-          cube.position.y + 0.235 + 4 * 0.15625,
-          cube.position.z + (foundKey ? (parseInt(foundKey.split(',')[0]) - 1) * 0.15625 : 0)
-        );
-        highPos.project(camera);
-        const highX = _contRect.left + (highPos.x * 0.5 + 0.5) * 360;
-        const highY = _contRect.top + (-highPos.y * 0.5 + 0.5) * 720;
-
         // Kärtchen-Smiley Position (viewport coords for position:fixed)
         const kaertchenSmiley = document.getElementById('smileyKaertchenSmiley');
         let endX = 180, endY = 430;
@@ -5434,41 +5439,33 @@
         if (!window._capturedSmileys) window._capturedSmileys = [];
         window._capturedSmileys.push(targetFile);
 
-        // Phase 1: 3x Puls am Slot (0-0.9s)
+        // Phase 1: 5x deutlicher Puls am Slot (0-1.5s)
         let pulseCount = 0;
         function doPulseSlot() {
-          if (pulseCount >= 3) { phase2(); return; }
+          if (pulseCount >= 5) { phase2(); return; }
           flyEl.style.transition = 'transform 0.15s ease-in-out';
-          flyEl.style.transform = 'scale(1.35)';
+          flyEl.style.transform = 'scale(1.4)';
+          flyEl.style.boxShadow = '0 0 35px #FFD700, 0 0 60px #FFD700';
           setTimeout(() => {
             flyEl.style.transform = 'scale(1.0)';
+            flyEl.style.boxShadow = '0 0 20px #FFD700, 0 0 40px #FFD700';
             setTimeout(() => { pulseCount++; doPulseSlot(); }, 150);
           }, 150);
         }
 
-        // Phase 2: Diagonal aufsteigen — gleichzeitig Y hoch + X/Z Richtung Kärtchen (1.2s)
+        // Phase 2: Direkter Flug zum Kärtchen-Smiley (2.0s)
         function phase2() {
-          // Mittelpunkt zwischen Start und Ziel, aber auf Höhe highY
-          const midX = (startX + endX) / 2;
-          flyEl.style.transition = 'left 1.2s ease-out, top 1.2s ease-out';
-          flyEl.style.left = (midX - sz/2) + 'px';
-          flyEl.style.top = (highY - sz/2) + 'px';
-          setTimeout(phase3, 1300);
-        }
-
-        // Phase 3: Horizontal zum Kärtchen fliegen + absenken (1.6s)
-        function phase3() {
-          flyEl.style.transition = 'left 1.6s ease-in-out, top 1.6s ease-in-out';
+          flyEl.style.transition = 'left 2.0s ease-in-out, top 2.0s ease-in-out';
           flyEl.style.left = (endX - sz/2) + 'px';
           flyEl.style.top = (endY - sz/2) + 'px';
-          setTimeout(phase4, 1700);
+          setTimeout(phase3, 2100);
         }
 
-        // Phase 4: 3x Puls auf dem Kärtchen
-        function phase4() {
+        // Phase 3: 3x Puls auf dem Kärtchen
+        function phase3() {
           let p2 = 0;
           function doPulseEnd() {
-            if (p2 >= 3) { phase5(); return; }
+            if (p2 >= 3) { phase4(); return; }
             flyEl.style.transition = 'transform 0.15s ease-in-out';
             flyEl.style.transform = 'scale(1.3)';
             flyEl.style.boxShadow = '0 0 35px #FFD700, 0 0 60px #FFD700';
@@ -5481,8 +5478,8 @@
           doPulseEnd();
         }
 
-        // Phase 5: Ausblenden
-        function phase5() {
+        // Phase 4: Ausblenden
+        function phase4() {
           setTimeout(() => {
             flyEl.style.transition = 'opacity 0.5s';
             flyEl.style.opacity = '0';
@@ -5490,7 +5487,7 @@
               flyEl.remove();
               if (callback) callback();
             }, 500);
-          }, 600);
+          }, 400);
         }
 
         doPulseSlot();
@@ -8464,6 +8461,7 @@
       document.getElementById('leveltafelImg').style.filter = 'none';
       document.getElementById('overlayWiese').style.display = 'block';
       document.getElementById('spielzielLine2').textContent = 'SKILL / CHILL = ' + sc;
+      document.getElementById('spielzielLine1').textContent = T.sLm || 'DEIN LEVEL-MIX:';
 
       // 16 Smileys verstecken
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
@@ -8894,7 +8892,7 @@
           'border:none;width:282px;height:52px;font-family:Arial,sans-serif;font-weight:bold;' +
           'font-size:20px;letter-spacing:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);' +
           'cursor:pointer;border-radius:6px;padding-bottom:5px;z-index:20;';
-        nochmalBtn.textContent = 'NOCHMAL';
+        nochmalBtn.textContent = T.nml || 'NOCHMAL';
         document.getElementById('container').appendChild(nochmalBtn);
       }
       nochmalBtn.style.display = 'block';
@@ -8918,7 +8916,7 @@
             const hs = stored.punkte || 0;
             const hm = stored.mix || '78/22';
             const sctHead = document.getElementById('sctHead');
-            if (sctHead) sctHead.textContent = 'HIGHSCORE: ' + hm + ' → ' + hs + 'P';
+            if (sctHead) sctHead.textContent = (T.bs || 'HIGHSCORE') + ': ' + hm + ' → ' + hs + 'P';
           } catch(e) {}
           document.getElementById('bestScoresOverlay').style.display = 'flex';
         };
