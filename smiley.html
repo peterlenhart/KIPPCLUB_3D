@@ -3238,9 +3238,79 @@
       return false;
     }
 
-    // =========================
-    // ON-TARGET Pulse: Kippziel-Karte pulsiert wenn Würfel richtig liegt
-    // =========================
+    // === SMILEY-SPEZIFISCH: Treffer-Check ===
+    // Prüft: Ist der Ziel-Smiley auf topFace UND liegt er neben einem Feld mit passender Level-Hand?
+    let _smileyAttempts = 0;
+    let _smileyHits = 0;
+    let _smileyCurrentCardIdx = 0;
+
+    function checkSmileyTreffer() {
+      const levelColor = window._smileyTargetColor;
+      const assignment = window._currentHandAssignment;
+      if (!levelColor || !assignment) return false;
+
+      // Finde den Ziel-Smiley auf dem aktuellen topFace
+      const targetSrc = window._smileyTargetSrc;
+      if (!targetSrc) return false;
+      const targetFile = targetSrc.replace(/^.*\//, '');
+
+      const slotMapObj = faceSlots[topFace].slotMap;
+      let foundSlot = null;
+      for (const key in slotMapObj) {
+        const s = slotMapObj[key];
+        if (s.img && s.img.src && s.img.src.replace(/^.*\//, '') === targetFile) {
+          foundSlot = GRID_TO_SLOT[topFace][key];
+          break;
+        }
+      }
+      if (!foundSlot) return false; // Smiley nicht auf sichtbarer Face
+
+      // Nachbarfarbe dieses Slots im aktuellen Quadranten
+      const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][foundSlot];
+
+      // Welche Hand liegt auf diesem Farbfeld? (Index = Quadrant)
+      // Finde den Index im COLOR_FIELD_POS für neighborColor, der zum currentQuadrant gehört
+      const cfp = COLOR_FIELD_POS[neighborColor];
+      let fieldIdx = -1;
+      for (let i = 0; i < cfp.length; i++) {
+        if (cfp[i].q === currentQuadrant) { fieldIdx = i; break; }
+      }
+      if (fieldIdx < 0) return false;
+
+      const handOnField = assignment[neighborColor][fieldIdx];
+      if (handOnField === levelColor) {
+        return { slot: foundSlot, quadrant: currentQuadrant, neighborColor: neighborColor };
+      }
+      return false;
+    }
+
+    // === SMILEY: Visuelles Feedback ===
+    function showSmileyFeedback(isHit, callback) {
+      const feedbackColor = isHit ? '#FFD700' : '#FF0000';
+      const feedbackShadow = isHit ? '0 0 30px #FFD700, 0 0 60px #FFD700' : '0 0 20px #FF0000, 0 0 40px #FF0000';
+
+      // Kärtchen-Glow
+      const kaertchen = document.getElementById('smileyKaertchenRow');
+      if (kaertchen) {
+        kaertchen.style.transition = 'box-shadow 0.3s';
+        kaertchen.style.boxShadow = feedbackShadow;
+        kaertchen.style.border = '3px solid ' + feedbackColor;
+      }
+
+      // Smiley auf Würfel: overlay circle
+      const feedbackEl = document.createElement('div');
+      feedbackEl.id = '_smileyFeedback';
+      feedbackEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:25;display:flex;align-items:center;justify-content:center;';
+      feedbackEl.innerHTML = '<div style="font-size:48px;font-weight:bold;color:' + feedbackColor + ';text-shadow:' + feedbackShadow + ';letter-spacing:4px;">' + (isHit ? 'HIT!' : 'MISS!') + '</div>';
+      document.getElementById('gameContainer').appendChild(feedbackEl);
+
+      setTimeout(() => {
+        if (kaertchen) { kaertchen.style.boxShadow = ''; kaertchen.style.border = ''; }
+        const fb = document.getElementById('_smileyFeedback');
+        if (fb) fb.remove();
+        if (callback) callback();
+      }, 2500);
+    }
     function checkOnTargetAfterKipp() {
       if (gamePhase !== 'kipp21' || !kipp21Active) return;
       if (!kipp21CardStates.includes('offen')) return;
@@ -5207,288 +5277,45 @@
       function checkTrainingResult(cardIdx) {
         activeCardIdx = cardIdx;
         const card = gameCards[cardIdx];
-        const treffer = checkTreffer();
+        _smileyAttempts++;
+
+        const treffer = checkSmileyTreffer();
         
         if (treffer) {
-          // HIT
+          // === SMILEY HIT ===
+          _smileyHits++;
           kipp21Done++;
           kipp21CardStates[cardIdx] = 'erledigt';
           card.isHit = true;
           drawGoldenBorder(card);
           card.texture.needsUpdate = true;
           updateProgressDots(kipp21Done, -1);
-          
-          // 1.5s Kärtchen liegen lassen, dann fliegen
-          setTimeout(() => {
-            animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-              showHitText(cardIdx);
-            });
-          }, 1500);
-          bereitsGetroffen.add(card.zahl + '_' + card.color.name);
-          
-          if (kipp21Done >= numActiveCards) {
-            kipp21Active = false;
-            hideAllTrainingUI();
-            
-            if (currentLevel === 1) {
-            // === BRAINY LEVEL TRANSITION ===
-            setTimeout(async () => {
-              // TRAINING Score speichern
-              saveBestScore(currentLevel, kipp21Done, kipp21Fails);
-              showLevelScore(kipp21Done, kipp21Fails);
 
-              
-              // UI-Buttons ausblenden, aber HIT-Texte bleiben sichtbar!
-              ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = 'none';
-              });
-              const _pd2 = document.getElementById('progressDots');
-              if (_pd2) _pd2.style.display = 'none';
-              
-              // 2.5s Endergebnis mit 4× HIT zeigen
-              await wait(2500);
-              
-              // Jetzt erst aufräumen
-              document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-              hitTextEls.length = 0;
-              gameCards.forEach(c => c.mesh.visible = false);
-              
-              // Würfel zurück in Startposition
-              kipGroup.add(cube);
-              cube.position.set(-offset, offset, 0.109375 + offset);
-              cube.quaternion.set(0, 0, 0, 1);
-              currentQuadrant = 3;
-              topFace = 'f2';
-              
-              // 1. Blur-Overlay
-              const blurOv = document.createElement('div');
-              blurOv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:28;' +
-                'backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);' +
-                'background:rgba(0,0,0,0);transition:all 0.8s ease-out;pointer-events:none;';
-              document.body.appendChild(blurOv);
-              
-              requestAnimationFrame(() => {
-                blurOv.style.backdropFilter = 'blur(8px)';
-                blurOv.style.webkitBackdropFilter = 'blur(8px)';
-                blurOv.style.background = 'rgba(0,0,0,0.45)';
-              });
-              
-              await wait(700);
-              
-              // 2. "BRAINY" groß einblenden (Inflate)
-              const brainyEl = document.createElement('div');
-              brainyEl.textContent = 'BRAINY';
-              brainyEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
-                'transform:translateY(-50%) scale(0.3);text-align:center;' +
-                'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
-                'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
-                'opacity:0;pointer-events:none;';
-              document.body.appendChild(brainyEl);
-              
-              // Inflate-Animation
-              requestAnimationFrame(() => {
-                brainyEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
-                brainyEl.style.opacity = '1';
-                brainyEl.style.transform = 'translateY(-50%) scale(1)';
-              });
-              
-              await wait(2200);
-              
-              // 3. Ausblenden
-              brainyEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
-              brainyEl.style.opacity = '0';
-              brainyEl.style.transform = 'translateY(-50%) scale(1.2)';
-              blurOv.style.backdropFilter = 'blur(0px)';
-              blurOv.style.webkitBackdropFilter = 'blur(0px)';
-              blurOv.style.background = 'rgba(0,0,0,0)';
-              
-              await wait(600);
-              brainyEl.remove();
-              blurOv.remove();
-              
-              // 4. Level hochschalten (BRAINY macht alle 12 sichtbar)
-              currentLevel = 2;
-              
-              // Texturen neu bauen (neue Zahlen sichtbar)
-              updateFaceSlots();
-              updateAllFaceTextures();
-              
-              // 5. Auge-Icon kurz zeigen
-              const _eyeIcon = document.getElementById('eyeIcon');
-              _eyeIcon.style.display = 'none';
-              
-              // Direkt BRAINY-Spiel starten (kein Demo)
-              gamePhase = 'kipp21';
-              await wait(300);
-              
-              // BRAINY-Spiel starten
-              await waitForScoreClosed();
-              startBrainyLevel();
-              
-            }, 7000); // 7s: HIT ~2.3s + 2.7s sichtbar + 2s Score
-            return;
-            
-            } else {
-              // BRAINY+ Level-Ende: Erfolgsmeldung
-              showLevelScore(kipp21Done, kipp21Fails);
-              setTimeout(() => {
-                gamePhase = 'ende';
-                ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
-                  const el = document.getElementById(id);
-                  if (el) el.style.display = 'none';
-                });
-                document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
-                showEndButtons(false, false);
-              }, 4000);
-              return;
-            }
-          }
-          // Nächstes Kippziel — warten bis HIT-Text 2.5s sichtbar war
-          setTimeout(() => {
-            if (gamePhase === 'kipp21') {
-              kipp21Active = true;
+          showSmileyFeedback(true, () => {
+            // Nach 2.5s Glow: nächstes Kippziel oder Spielende
+            if (_smileyHits >= 4) {
+              // === SPIELENDE ===
+              kipp21Active = false;
               hideAllTrainingUI();
-              showTrainingButtons(); // "Ein Kippziel öffnen" anzeigen
+              showSmileyEndScreen();
+            } else {
+              // Nächstes Kippziel generieren
+              _smileyCurrentCardIdx++;
+              generateNextSmileyTarget();
+              show3erPaket();
+              kipp21Active = true;
+              showAllTrainingUI();
             }
-          }, 5000);
-        } else {
-          // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
-          kipp21Fails++;
-          card.ctx.save();
-          card.ctx.strokeStyle = '#ff0000';
-          card.ctx.lineWidth = 8;
-          card.ctx.strokeRect(1, 1, 83, 168);
-          card.ctx.strokeStyle = '#ff6666';
-          card.ctx.lineWidth = 3;
-          card.ctx.strokeRect(5, 5, 75, 160);
-          card.ctx.restore();
-          card.texture.needsUpdate = true;
-          
-          // Finde Slot mit passender Farbe im aktuellen Quadranten
-          const cardColorName = card.color.name;
-          const neighborColors = SLOT_NEIGHBOR_COLORS[currentQuadrant];
-          let failSlot = 'S1';
-          for (const [slot, color] of Object.entries(neighborColors)) {
-            if (color === cardColorName) { failSlot = slot; break; }
-          }
-          
-          // 1.5s Kärtchen liegen lassen, dann fliegen
-          setTimeout(() => {
-          animateCardFly(card, currentQuadrant, failSlot, true).then(async () => {
-            // Karte liegt jetzt auf dem Farbfeld
-            // Material halbtransparent → Würfelzahl scheint durch
-            card.mesh.material.transparent = true;
-            card.mesh.material.opacity = 0.35;
-            card.mesh.material.depthWrite = false;
-            card.mesh.material.needsUpdate = true;
-            
-            // 3D-Position → Screen für Overlay-Elemente
-            const target = HIT_TARGETS[currentQuadrant][failSlot];
-            const tPos = new THREE.Vector3(target.x, 0.48, target.z);
-            tPos.project(camera);
-            const sx = Math.round((tPos.x * 0.5 + 0.5) * 360);
-            const sy = Math.round((-tPos.y * 0.5 + 0.5) * 720);
-            
-            // 2 Sek halten
-            await sleep(2000);
-            
-            // Nein-Geste: Hand-Element über dem Kippziel
-            const neinHand = document.createElement('img');
-            neinHand.src = 'handsilber.webp';
-            neinHand.style.cssText = 'position:absolute;width:70px;height:auto;pointer-events:none;z-index:25;' +
-              'transform-origin:bottom center;opacity:0;';
-            neinHand.style.left = (sx - 35) + 'px';
-            document.getElementById('uiOverlay').appendChild(neinHand);
-            // Warten bis Bild geladen, dann Fingerspitze (Unterkante) auf sy setzen
-            await new Promise(r => {
-              if (neinHand.naturalHeight > 0) r();
-              else neinHand.onload = r;
-            });
-            const handH = neinHand.offsetHeight || neinHand.naturalHeight * (70 / neinHand.naturalWidth);
-            neinHand.style.top = (sy - handH + 140) + 'px';
-            neinHand.style.opacity = '1';
-            
-            // Schwenk links-rechts-links (Nein-Geste)
-            const swingDur = 180;
-            function swing(angle) {
-              return new Promise(r => {
-                neinHand.style.transition = 'transform ' + swingDur + 'ms ease-in-out';
-                neinHand.style.transform = 'rotate(' + angle + 'deg)';
-                setTimeout(r, swingDur);
-              });
-            }
-            await swing(-18);
-            await swing(18);
-            await swing(-14);
-            await swing(10);
-            await swing(0);
-            await sleep(300);
-            
-            // Nein-Hand ausblenden
-            neinHand.style.transition = 'opacity 0.3s';
-            neinHand.style.opacity = '0';
-            
-            // Rotes Kreuz über dem Kippziel
-            const redX = document.createElement('div');
-            redX.textContent = '✕';
-            redX.style.cssText = 'position:absolute;z-index:26;pointer-events:none;' +
-              'font:bold 40px Arial;color:#ff0000;' +
-              'text-shadow:0 0 8px rgba(255,0,0,0.8),0 2px 4px rgba(0,0,0,0.5);' +
-              'transform:translate(-50%,-50%) scale(0.3);opacity:0;' +
-              'transition:transform 0.3s ease-out, opacity 0.2s ease-out;';
-            redX.style.left = sx + 'px';
-            redX.style.top = sy + 'px';
-            document.getElementById('uiOverlay').appendChild(redX);
-            
-            requestAnimationFrame(() => {
-              redX.style.opacity = '1';
-              redX.style.transform = 'translate(-50%,-50%) scale(1)';
-            });
-            
-            await sleep(1200);
-            
-            // Alles zusammen ausfaden
-            const fadeStartOp = card.mesh.material.opacity; // 0.55
-            const fadeStart = performance.now();
-            const fadeDur = 600;
-            function fadeTick(now) {
-              const t = Math.min((now - fadeStart) / fadeDur, 1);
-              card.mesh.material.opacity = fadeStartOp * (1 - t);
-              card.mesh.material.needsUpdate = true;
-              redX.style.opacity = String(1 - t);
-              if (t < 1) requestAnimationFrame(fadeTick);
-              else {
-                // Cleanup
-                neinHand.remove();
-                redX.remove();
-                card.mesh.visible = true;
-                card.mesh.material.transparent = false;
-                card.mesh.material.opacity = 1;
-                card.mesh.material.depthWrite = true;
-                card.mesh.material.needsUpdate = true;
-                card.mesh.position.set(cardStartX + cardIdx * (cardWidth + cardGap), cardY, cardZ);
-                card.mesh.rotation.set(-Math.PI / 2, 0, 0);
-                card.mesh.scale.set(1, 1, 1);
-                
-                kipp21CardStates[cardIdx] = 'verdeckt';
-                card.zahl = null;
-                card.color = null;
-                card.isHit = false;
-                card.isMiss = false;
-                
-                card.ctx.clearRect(0, 0, 85, 170);
-                card.ctx.drawImage(leerImage, 0, 0, 85, 170);
-                card.texture.needsUpdate = true;
-                
-                showBlickIcons();
-                kipp21Active = true;
-                showTrainingButtons();
-              }
-            }
-            requestAnimationFrame(fadeTick);
           });
-          }, 1500); // Ende 1.5s Verzögerung
+
+        } else {
+          // === SMILEY MISS ===
+          kipp21Fails++;
+          showSmileyFeedback(false, () => {
+            // Karte bleibt liegen — Spieler darf erneut versuchen
+            kipp21Active = true;
+            showAllTrainingUI();
+          });
         }
       }
       window._checkTrainingResult = checkTrainingResult;
@@ -8437,6 +8264,7 @@
       });
       const key = `${mb}|${brain}|${brainy}|${bb}`;
       const sc = SKILL_CHILL[key] || '78/22';
+      window._storedSkillChill = sc;
       // Overlaywiese statt Blur
       document.getElementById('leveltafelImg').style.filter = 'none';
       document.getElementById('overlayWiese').style.display = 'block';
@@ -8510,6 +8338,19 @@
       document.getElementById('spielzielBox').classList.remove('show');
       document.getElementById('leveltafelOverlay').classList.remove('show');
 
+      // Smiley-Spielstand zurücksetzen
+      _smileyAttempts = 0;
+      _smileyHits = 0;
+      _smileyCurrentCardIdx = 0;
+
+      // Reihenfolge der 4 Smileys mischen
+      const shuffledSmileys = [...selectedSmileys];
+      for (let i = shuffledSmileys.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledSmileys[i], shuffledSmileys[j]] = [shuffledSmileys[j], shuffledSmileys[i]];
+      }
+      window._smileyOrder = shuffledSmileys;
+
       // Zufälliger Smiley aus den 4 gewählten
       function smileyColor(src) {
         if (src.includes('orange'))  return 'orange';
@@ -8518,7 +8359,7 @@
         if (src.includes('violett')) return 'violett';
         return 'orange';
       }
-      const targetEl = selectedSmileys[Math.floor(Math.random() * selectedSmileys.length)];
+      const targetEl = window._smileyOrder[0];
       const targetColor = smileyColor(targetEl.src);
       window._smileyTargetColor = targetColor;
       window._smileyTargetSrc = targetEl.src;
@@ -8661,12 +8502,16 @@
       return assignment;
     }
 
+    // Globale Hand-Zuweisung (wird bei show3erPaket gesetzt)
+    window._currentHandAssignment = null;
+
     function show3erPaket() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
 
       const assignment = computeHandAssignment();
+      window._currentHandAssignment = assignment;
       const allColors = ['orange', 'gruen', 'blau', 'violett'];
 
       // Alle 4 Hand-Texturen laden, dann platzieren
@@ -8711,8 +8556,145 @@
     function hide3erPaket() {
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
-      // Rahmen aus (spieltisch bleibt IMMER sichtbar)
       if (window._rahmenMesh) window._rahmenMesh.visible = false;
+    }
+
+    // === SMILEY: Nächstes Kippziel generieren ===
+    function generateNextSmileyTarget() {
+      if (_smileyCurrentCardIdx >= (window._smileyOrder || selectedSmileys).length) return;
+      const nextEl = (window._smileyOrder || selectedSmileys)[_smileyCurrentCardIdx];
+      function smileyColor(src) {
+        if (src.includes('orange'))  return 'orange';
+        if (src.includes('gruen'))   return 'gruen';
+        if (src.includes('blau'))    return 'blau';
+        if (src.includes('violett')) return 'violett';
+        return 'orange';
+      }
+      window._smileyTargetColor = smileyColor(nextEl.src);
+      window._smileyTargetSrc = nextEl.src;
+
+      // Würfel neu bestücken: 4 gewählte + 8 nicht-gewählte
+      const allSmileyEls = Array.from(document.querySelectorAll('.leveltafelSmiley'));
+      const selectedSrcs = selectedSmileys.map(el => el.src);
+      const nonSelected = allSmileyEls.filter(el => !selectedSrcs.includes(el.src));
+      for (let i = nonSelected.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nonSelected[i], nonSelected[j]] = [nonSelected[j], nonSelected[i]];
+      }
+      const fillImgs = nonSelected.slice(0, 8).map(el => {
+        const img = new Image(); img.src = el.src; return img;
+      });
+      while (fillImgs.length < 8) {
+        const pick = nonSelected[Math.floor(Math.random() * nonSelected.length)];
+        const img = new Image(); img.src = pick.src; fillImgs.push(img);
+      }
+      const allImgs = [
+        ...selectedSmileys.map(el => { const i = new Image(); i.src = el.src; return i; }),
+        ...fillImgs
+      ];
+      for (let i = allImgs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allImgs[i], allImgs[j]] = [allImgs[j], allImgs[i]];
+      }
+      const slotKeys = { f0:['2,0','1,0','0,1','0,2'], f1:['0,0','0,1','1,2','2,2'], f2:['2,2','2,1','1,0','0,0'] };
+      let idx = 0;
+      ['f0','f1','f2'].forEach(face => {
+        slotKeys[face].forEach(k => {
+          faceSlots[face].slotMap[k] = { ...faceSlots[face].slotMap[k], img: allImgs[idx++], vis: true };
+        });
+      });
+      updateCubeMaterials();
+
+      // Kärtchen aktualisieren
+      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
+    }
+
+    // === SMILEY: Endscreen ===
+    function showSmileyEndScreen() {
+      gamePhase = 'ende';
+
+      // UI ausblenden
+      ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const kaertchen = document.getElementById('smileyKaertchenRow');
+      if (kaertchen) kaertchen.classList.add('hidden');
+
+      // Punkte berechnen: 4 / Gesamtversuche * 100
+      const punkte = Math.round(4 / _smileyAttempts * 100);
+
+      // SKILL/CHILL aus der Auswahl holen
+      let mb=0, brain=0, brainy=0, bb=0;
+      selectedSmileys.forEach(el => {
+        const cat = getCategory(el.src);
+        if (cat==='mb') mb++;
+        else if (cat==='brain') brain++;
+        else if (cat==='brainy') brainy++;
+        else if (cat==='bb') bb++;
+      });
+      const key = `${mb}|${brain}|${brainy}|${bb}`;
+      const sc = SKILL_CHILL[key] || '78/22';
+
+      // Score oben anzeigen (zwischen Ton-Button und Pokal)
+      const scoreDisp = document.getElementById('levelScoreDisplay');
+      scoreDisp.style.display = 'block';
+      scoreDisp.innerHTML = '<span style="font-size:14px;font-weight:bold;color:#FFD700;text-shadow:0 1px 4px rgba(0,0,0,0.8);">MIX ' + sc + ' → ' + punkte + 'P</span>';
+
+      // Pokal blinken
+      const pokal = document.getElementById('btnBestScores');
+      if (pokal) pokal.classList.add('pulsing');
+
+      // Highscore speichern
+      try {
+        const stored = JSON.parse(localStorage.getItem('smiley_highscore') || '{}');
+        if (!stored.punkte || punkte > stored.punkte) {
+          stored.punkte = punkte;
+          stored.mix = sc;
+          stored.hits = _smileyHits;
+          stored.attempts = _smileyAttempts;
+          localStorage.setItem('smiley_highscore', JSON.stringify(stored));
+        }
+      } catch(e) {}
+
+      // NOCHMAL Button einblenden
+      let nochmalBtn = document.getElementById('btnNochmal');
+      if (!nochmalBtn) {
+        nochmalBtn = document.createElement('button');
+        nochmalBtn.id = 'btnNochmal';
+        nochmalBtn.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:497px;' +
+          'background:url("button_lang_smiley_bl.webp") center/cover no-repeat;' +
+          'border:none;width:282px;height:52px;font-family:Arial,sans-serif;font-weight:bold;' +
+          'font-size:20px;letter-spacing:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);' +
+          'cursor:pointer;border-radius:6px;padding-bottom:5px;z-index:20;';
+        nochmalBtn.textContent = 'NOCHMAL';
+        document.getElementById('gameContainer').appendChild(nochmalBtn);
+      }
+      nochmalBtn.style.display = 'block';
+      nochmalBtn.onclick = () => {
+        nochmalBtn.style.display = 'none';
+        scoreDisp.style.display = 'none';
+        if (pokal) pokal.classList.remove('pulsing');
+        _smileyAttempts = 0;
+        _smileyHits = 0;
+        _smileyCurrentCardIdx = 0;
+        hide3erPaket();
+        showLeveltafel(false);
+      };
+
+      // Pokal → Scoretafel
+      if (pokal) {
+        pokal.onclick = () => {
+          try {
+            const stored = JSON.parse(localStorage.getItem('smiley_highscore') || '{}');
+            const hs = stored.punkte || 0;
+            const hm = stored.mix || '78/22';
+            const sctHead = document.getElementById('sctHead');
+            if (sctHead) sctHead.textContent = 'HIGHSCORE: ' + hm + ' → ' + hs + 'P';
+          } catch(e) {}
+          document.getElementById('bestScoresOverlay').style.display = 'flex';
+        };
+      }
     }
 
     function showScrollband() {
