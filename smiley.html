@@ -1124,8 +1124,8 @@
       <div id="spielzielLine1" style="font-family:Arial,sans-serif;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);">DEIN LEVEL-MIX:</div>
       <div id="spielzielLine2" style="font-family:Arial,sans-serif;font-weight:bold;font-size:27px;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);">SKILL / CHILL = 78 / 22</div>
       <div id="selectedSmileysRow"></div>
-      <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">NEU WÄHLEN</button>
-      <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px;">LOS GEHT'S</button>
+      <button onclick="resetLeveltafel()" style="margin-top:8px;background:url('button_lang_smiley_gr.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:5px;">NEU WÄHLEN</button>
+      <button id="btnLosGehts" style="margin-top:6px;background:url('button_lang_smiley_bl.webp') center/cover no-repeat; border:none; width:282px; height:52px; font-family:Arial,sans-serif; font-weight:bold; font-size:20px; letter-spacing:2px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; border-radius:6px; padding-bottom:5px;">LOS GEHT'S</button>
     </div>
   </div>
   
@@ -1217,7 +1217,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_smiley.png" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein_smiley.png" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_smiley.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:8px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_smiley.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -1270,13 +1270,14 @@
     </div>
 
     <!-- Hand-Overlays: 4 Hände auf Farbfeldern -->
-    <div id="handOverlays" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:16; display:none; background:transparent;">
+    <div id="handOverlays" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; display:none;">
       <img id="hand0" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand1" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand2" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
       <img id="hand3" src="" style="position:absolute; width:45px; height:45px; object-fit:contain; display:none;">
     </div>
-
+    <!-- Rahmen über Händen -->
+    <img id="rahmenImg" src="rahmen_smiley.webp" style="position:absolute; pointer-events:none; z-index:16;">
 
   </div>
 
@@ -1584,7 +1585,7 @@
       radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
     );
     
-    camera.lookAt(0, 0.480, 0.7 + southShift);
+    camera.lookAt(0, 0.46875, 0.7 + southShift);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
@@ -2063,16 +2064,16 @@
     scene.add(zAxis1);
 
     const xAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-2.5, 0.480, 0.109375),
-      new THREE.Vector3(2.5, 0.480, 0.109375)
+      new THREE.Vector3(-2.5, 0.46875, 0.109375),
+      new THREE.Vector3(2.5, 0.46875, 0.109375)
     ]);
     const xAxis2 = new THREE.Line(xAxisGeometry2, axesMaterial);
     xAxis2.visible = false;
     scene.add(xAxis2);
 
     const zAxisGeometry2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0.480, -2.5),
-      new THREE.Vector3(0, 0.480, 2.5)
+      new THREE.Vector3(0, 0.46875, -2.5),
+      new THREE.Vector3(0, 0.46875, 2.5)
     ]);
     const zAxis2 = new THREE.Line(zAxisGeometry2, axesMaterial);
     zAxis2.visible = false;
@@ -2083,7 +2084,7 @@
     // =========================
     const wallTexture = new THREE.TextureLoader().load('boxwand_smiley.webp');
     
-    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.480, 0.0335);
+    const wallGeometry = new THREE.BoxGeometry(0.9375, 0.46875, 0.0335);
     const wallMaterial = new THREE.MeshBasicMaterial({ 
       map: wallTexture,
       color: 0x666666  // Dunkler (40% Helligkeit)
@@ -2101,7 +2102,7 @@
     wall2.receiveShadow = true;
     scene.add(wall2);
 
-    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.480, 1.00675);
+    const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.46875, 1.00675);
     
     const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterial);
     wallLeft.position.set(-0.48550, 0.234375, 0.1105);
@@ -2138,32 +2139,15 @@
       
       spieltisch.rotation.x = -Math.PI / 2;
       
-      // Position: Boxinnenfläche abdecken
-      const yPos = 0.001 + 3 * 0.15625; // knapp über Spieltisch Y=0.46875
-      // X: center=0, Z: center=0.078125 (Mitte zwischen Nord -3 und Süd +4 Zellen)
-      spieltisch.position.set(0, yPos, 0.078125);
+      // Position ABSOLUT FINAL
+      const xCenter = -0.625 + SPIEL_WIDTH / 2;
+      const zCenter = -0.828125 + height / 2;
+      const yPos = 0.001 + 3 * 0.15625;
+      
+      spieltisch.position.set(xCenter, yPos, zCenter);
       spieltisch.receiveShadow = true;
       spieltisch.castShadow = false;
       spieltisch.renderOrder = 1;
-
-      scene.add(spieltisch);
-
-      // Rahmen: exakt gleiche Geometrie, Y + 0.001 drüber
-      new THREE.TextureLoader().load('rahmen_smiley.webp', (rahmenTex) => {
-        const rahmenMat = new THREE.MeshStandardMaterial({
-          map: rahmenTex,
-          transparent: true,
-          alphaTest: 0.05,
-          roughness: 0.8,
-          metalness: 0.2,
-          depthWrite: false
-        });
-        const rahmenMesh = new THREE.Mesh(spieltischGeometry, rahmenMat);
-        rahmenMesh.rotation.x = -Math.PI / 2;
-        rahmenMesh.position.set(0, yPos + 0.001, 0.078125);
-        rahmenMesh.renderOrder = 2;
-        scene.add(rahmenMesh);
-      });
       
       // Matrix komplett einfrieren
       spieltisch.matrixAutoUpdate = false;
@@ -2171,6 +2155,15 @@
       
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
+
+      // Rahmen-Bild einmalig positionieren (deckungsgleich mit Spieltisch)
+      const nw = new THREE.Vector3(xCenter - SPIEL_WIDTH / 2, yPos, zCenter - height / 2).project(camera);
+      const se = new THREE.Vector3(xCenter + SPIEL_WIDTH / 2, yPos, zCenter + height / 2).project(camera);
+      const ri = document.getElementById('rahmenImg');
+      ri.style.left = ((nw.x * 0.5 + 0.5) * 360) + 'px';
+      ri.style.top = ((-nw.y * 0.5 + 0.5) * 720) + 'px';
+      ri.style.width = (((se.x - nw.x) * 0.5) * 360) + 'px';
+      ri.style.height = (((nw.y - se.y) * 0.5) * 720) + 'px';
       
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
@@ -8497,11 +8490,9 @@
     document.getElementById('btnLosGehts').addEventListener('click', () => {
       if (window._hintLoop) clearInterval(window._hintLoop);
 
-      // Overlays komplett weg
+      // Overlays weg
       document.getElementById('spielzielBox').classList.remove('show');
-      const lto = document.getElementById('leveltafelOverlay');
-      if (lto) lto.remove();
-
+      document.getElementById('leveltafelOverlay').classList.remove('show');
 
       // Zufälliger Smiley aus den 4 gewählten
       function smileyColor(src) {
@@ -8545,14 +8536,14 @@
 
     // Farbfeld-Positionen in 3D + CSS-Rotation [X, Y, Z, rotDeg]
     const HAND_FIELD_POS = {
-      orange:  [ [-0.078125, 0.480, -0.437500,  90], [0.078125, 0.480, -0.437500,  90],
-                 [-0.546875, 0.480,  0.343750,   0], [0.546875, 0.480,  0.343750, 180] ],
-      gruen:   [ [-0.234375, 0.480, -0.437500,  90], [-0.234375, 0.480, 0.658000, -90],
-                 [ 0.546875, 0.480,  0.265625, 180], [ 0.546875, 0.480, 0.109375, 180] ],
-      blau:    [ [ 0.234375, 0.480, -0.437500,  90], [ 0.234375, 0.480, 0.658000, -90],
-                 [-0.546875, 0.480,  0.109375,   0], [-0.546875, 0.480, 0.265625,  0] ],
-      violett: [ [-0.078125, 0.480,  0.658000, -90], [ 0.078125, 0.480, 0.658000, -90],
-                 [-0.546875, 0.480, -0.046875,   0], [ 0.546875, 0.480,-0.046875, 180] ]
+      orange:  [ [-0.078125, 0.47075, -0.437500,  90], [0.078125, 0.47075, -0.437500,  90],
+                 [-0.546875, 0.47075,  0.343750,   0], [0.546875, 0.47075,  0.343750, 180] ],
+      gruen:   [ [-0.234375, 0.47075, -0.437500,  90], [-0.234375, 0.47075, 0.658000, -90],
+                 [ 0.546875, 0.47075,  0.187500, 180], [ 0.546875, 0.47075, 0.031250, 180] ],
+      blau:    [ [ 0.234375, 0.47075, -0.437500,  90], [ 0.234375, 0.47075, 0.658000, -90],
+                 [-0.546875, 0.47075,  0.031250,   0], [-0.546875, 0.47075, 0.187500,  0] ],
+      violett: [ [-0.078125, 0.47075,  0.658000, -90], [ 0.078125, 0.47075, 0.658000, -90],
+                 [-0.546875, 0.47075, -0.125000,   0], [ 0.546875, 0.47075,-0.125000, 180] ]
     };
 
     function showSmileyHands() {
