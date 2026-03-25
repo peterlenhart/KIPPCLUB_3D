@@ -8941,56 +8941,7 @@
 
     // Scrollband-Kipp: n Kipps CW ausführen
 
-    // Smiley-Treffer-Check nach Kippen
-    async function _smileyCheckTreffer() {
-      const targetSrc  = window._smileyTargetSrc;
-      const targetColor = window._smileyTargetColor;
-      if (!targetSrc || !targetColor) return;
-
-      // Prüfen ob der Ziel-Smiley oben liegt (auf topFace sichtbar)
-      const f = faceSlots[topFace];
-      let isHit = false;
-      for (const key in f.slotMap) {
-        const slot = f.slotMap[key];
-        if (slot.img && slot.img.src && slot.img.src.includes(targetSrc.split('/').pop())) {
-          isHit = true; break;
-        }
-      }
-
-      const kaertchen = document.getElementById('smileyKaertchenRow');
-
-      if (isHit) {
-        // TREFFER — grüner Rahmen
-        kaertchen.style.outline = '4px solid #cedb25';
-        kaertchen.style.borderRadius = '8px';
-        await new Promise(r => setTimeout(r, 1500));
-        kaertchen.style.outline = '';
-        // Neues Kippziel generieren
-        _smileyNeuesKippziel();
-      } else {
-        // MISS — roter Rahmen
-        kaertchen.style.outline = '4px solid #cc2222';
-        kaertchen.style.borderRadius = '8px';
-        await new Promise(r => setTimeout(r, 1000));
-        kaertchen.style.outline = '';
-      }
-    }
-
-    function _smileyNeuesKippziel() {
-      // Zufälligen neuen Smiley aus den 4 gewählten nehmen
-      const next = selectedSmileys[Math.floor(Math.random() * selectedSmileys.length)];
-      function smileyColor(src) {
-        if (src.includes('orange'))  return 'orange';
-        if (src.includes('gruen'))   return 'gruen';
-        if (src.includes('blau'))    return 'blau';
-        if (src.includes('violett')) return 'violett';
-        return 'orange';
-      }
-      window._smileyTargetSrc   = next.src;
-      window._smileyTargetColor = smileyColor(next.src);
-      _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
-      show3erPaket();
-    }
+    // (alte _smileyCheckTreffer / _smileyNeuesKippziel entfernt — ersetzt durch checkTrainingResult)
 
     // Kärtchen als HTML-Overlay
     function _showKaertchen(levelColor, targetSmileyUrl) {
@@ -11129,7 +11080,7 @@
                   if (i < n - 1) await new Promise(r => setTimeout(r, 200));
                 }
                 clearSelection();
-                await _smileyCheckTreffer();
+                const openIdx = kipp21CardStates.indexOf("offen"); if (openIdx >= 0 && window._checkTrainingResult) window._checkTrainingResult(openIdx);
               })();
             }
           } else {
@@ -11190,7 +11141,7 @@
                 if (i < n - 1) await new Promise(r => setTimeout(r, 200));
               }
               clearSelection();
-              await _smileyCheckTreffer();
+              const openIdx = kipp21CardStates.indexOf("offen"); if (openIdx >= 0 && window._checkTrainingResult) window._checkTrainingResult(openIdx);
             })();
           }
         } else {
