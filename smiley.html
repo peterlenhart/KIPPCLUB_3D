@@ -3247,37 +3247,54 @@
     function checkSmileyTreffer() {
       const levelColor = window._smileyTargetColor;
       const assignment = window._currentHandAssignment;
-      if (!levelColor || !assignment) return false;
+      if (!levelColor || !assignment) {
+        console.warn('[SMILEY-CHECK] No levelColor or assignment!', levelColor, !!assignment);
+        return false;
+      }
 
       // Finde den Ziel-Smiley auf dem aktuellen topFace
       const targetSrc = window._smileyTargetSrc;
       if (!targetSrc) return false;
-      const targetFile = targetSrc.replace(/^.*\//, '');
+      const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
 
       const slotMapObj = faceSlots[topFace].slotMap;
       let foundSlot = null;
+      let foundKey = null;
       for (const key in slotMapObj) {
         const s = slotMapObj[key];
-        if (s.img && s.img.src && s.img.src.replace(/^.*\//, '') === targetFile) {
-          foundSlot = GRID_TO_SLOT[topFace][key];
-          break;
+        if (s.img && s.img.src) {
+          const slotFile = s.img.src.replace(/^.*[\\/]/, '').split('?')[0];
+          if (slotFile === targetFile) {
+            foundSlot = GRID_TO_SLOT[topFace][key];
+            foundKey = key;
+            break;
+          }
         }
       }
-      if (!foundSlot) return false; // Smiley nicht auf sichtbarer Face
+      if (!foundSlot) {
+        console.log('[SMILEY-CHECK] Target not on topFace=' + topFace, 'target=' + targetFile);
+        return false; // Smiley nicht auf sichtbarer Face
+      }
 
       // Nachbarfarbe dieses Slots im aktuellen Quadranten
       const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][foundSlot];
 
-      // Welche Hand liegt auf diesem Farbfeld? (Index = Quadrant)
-      // Finde den Index im COLOR_FIELD_POS für neighborColor, der zum currentQuadrant gehört
+      // Welche Hand liegt auf diesem Farbfeld?
       const cfp = COLOR_FIELD_POS[neighborColor];
       let fieldIdx = -1;
       for (let i = 0; i < cfp.length; i++) {
         if (cfp[i].q === currentQuadrant) { fieldIdx = i; break; }
       }
-      if (fieldIdx < 0) return false;
+      if (fieldIdx < 0) {
+        console.warn('[SMILEY-CHECK] fieldIdx not found for', neighborColor, 'q=' + currentQuadrant);
+        return false;
+      }
 
       const handOnField = assignment[neighborColor][fieldIdx];
+      console.log('[SMILEY-CHECK] Slot=' + foundSlot + ' Q=' + currentQuadrant +
+        ' neighbor=' + neighborColor + ' handOnField=' + handOnField + ' levelColor=' + levelColor +
+        ' → ' + (handOnField === levelColor ? 'HIT!' : 'MISS'));
+
       if (handOnField === levelColor) {
         return { slot: foundSlot, quadrant: currentQuadrant, neighborColor: neighborColor };
       }
@@ -3287,27 +3304,70 @@
     // === SMILEY: Visuelles Feedback ===
     function showSmileyFeedback(isHit, callback) {
       const feedbackColor = isHit ? '#FFD700' : '#FF0000';
-      const feedbackShadow = isHit ? '0 0 30px #FFD700, 0 0 60px #FFD700' : '0 0 20px #FF0000, 0 0 40px #FF0000';
+      const glowCSS = isHit
+        ? 'box-shadow:0 0 20px #FFD700,0 0 40px #FFD700,0 0 60px #FFD700;border:3px solid #FFD700;'
+        : 'box-shadow:0 0 15px #FF0000,0 0 30px #FF0000;border:3px solid #FF0000;';
 
-      // Kärtchen-Glow
-      const kaertchen = document.getElementById('smileyKaertchenRow');
-      if (kaertchen) {
-        kaertchen.style.transition = 'box-shadow 0.3s';
-        kaertchen.style.boxShadow = feedbackShadow;
-        kaertchen.style.border = '3px solid ' + feedbackColor;
+      // 1) Kärtchen-Smiley umranden
+      const kaertchenSmiley = document.getElementById('smileyKaertchenSmiley');
+      if (kaertchenSmiley) {
+        kaertchenSmiley.style.cssText += 'border-radius:50%;' + glowCSS;
       }
 
-      // Smiley auf Würfel: overlay circle
-      const feedbackEl = document.createElement('div');
-      feedbackEl.id = '_smileyFeedback';
-      feedbackEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:25;display:flex;align-items:center;justify-content:center;';
-      feedbackEl.innerHTML = '<div style="font-size:48px;font-weight:bold;color:' + feedbackColor + ';text-shadow:' + feedbackShadow + ';letter-spacing:4px;">' + (isHit ? 'HIT!' : 'MISS!') + '</div>';
-      document.getElementById('gameContainer').appendChild(feedbackEl);
+      // 2) Smiley auf Würfel: 3D-Position → Screen-Kreis
+      let circleEl = null;
+      const targetSrc = window._smileyTargetSrc;
+      if (targetSrc) {
+        const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
+        const slotMapObj = faceSlots[topFace].slotMap;
+        for (const key in slotMapObj) {
+          const s = slotMapObj[key];
+          if (s.img && s.img.src && s.img.src.replace(/^.*[\\/]/, '').split('?')[0] === targetFile) {
+            const [r, c] = key.split(',').map(Number);
+            const cell = 0.15625;
+            const cubePos = cube.position.clone();
+            // Slot-Zentrum relativ zum Würfel auf topFace (+Y Seite)
+            const localX = (c - 1) * cell;
+            const localZ = (r - 1) * cell;
+            const worldPos = new THREE.Vector3(
+              cubePos.x + localX,
+              cubePos.y + 0.235,
+              cubePos.z + localZ
+            );
+            worldPos.project(camera);
+            const sx = (worldPos.x * 0.5 + 0.5) * 360;
+            const sy = (-worldPos.y * 0.5 + 0.5) * 720;
+
+            circleEl = document.createElement('div');
+            circleEl.id = '_smileySlotCircle';
+            circleEl.style.cssText = 'position:absolute;width:52px;height:52px;border-radius:50%;' +
+              'pointer-events:none;z-index:25;' + glowCSS +
+              'left:' + (sx - 26) + 'px;top:' + (sy - 26) + 'px;background:transparent;';
+            document.getElementById('container').appendChild(circleEl);
+            break;
+          }
+        }
+      }
+
+      // 3) HIT/MISS Text
+      const textEl = document.createElement('div');
+      textEl.id = '_smileyFeedbackText';
+      textEl.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'pointer-events:none;z-index:26;font-size:52px;font-weight:bold;letter-spacing:4px;' +
+        'color:' + feedbackColor + ';text-shadow:0 0 30px ' + feedbackColor + ',0 2px 6px rgba(0,0,0,0.8);';
+      textEl.textContent = isHit ? 'HIT!' : 'MISS!';
+      document.getElementById('container').appendChild(textEl);
 
       setTimeout(() => {
-        if (kaertchen) { kaertchen.style.boxShadow = ''; kaertchen.style.border = ''; }
-        const fb = document.getElementById('_smileyFeedback');
-        if (fb) fb.remove();
+        // Aufräumen
+        if (kaertchenSmiley) {
+          kaertchenSmiley.style.border = '';
+          kaertchenSmiley.style.boxShadow = '';
+        }
+        const c1 = document.getElementById('_smileySlotCircle');
+        if (c1) c1.remove();
+        const t1 = document.getElementById('_smileyFeedbackText');
+        if (t1) t1.remove();
         if (callback) callback();
       }, 2500);
     }
@@ -5291,7 +5351,7 @@
           card.texture.needsUpdate = true;
           updateProgressDots(kipp21Done, -1);
 
-          showSmileyFeedback(true, () => {
+          showSmileyFeedback(true, async () => {
             // Nach 2.5s Glow: nächstes Kippziel oder Spielende
             if (_smileyHits >= 4) {
               // === SPIELENDE ===
@@ -5303,7 +5363,23 @@
               _smileyCurrentCardIdx++;
               generateNextSmileyTarget();
               show3erPaket();
+
+              // Wobble-Kipp für neues Kippziel
+              await runKipp21WobbleKniff(true);
+
+              // Anti-Sofort-Treffer: falls schon erfüllt, 1 Kipp weg
+              if (checkSmileyTreffer()) {
+                const cwDirs = {0:'east', 1:'south_from_q1', 2:'west_from_q2', 3:'north'};
+                await performKipp(cwDirs[currentQuadrant], 800);
+                advanceTopFace();
+              }
+
+              // Post-Wobble Sichtbarkeitskorrektur
+              await _smileyPostWobbleCorrection();
+
+              showScrollband();
               kipp21Active = true;
+              gamePhase = 'spielen';
               showAllTrainingUI();
             }
           });
@@ -6181,6 +6257,14 @@
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
       show3erPaket();
       await _smileyPostWobbleCorrection();
+
+      // Anti-Sofort-Treffer: falls Ausgangslage schon erfüllt, 1 Kipp weg
+      if (checkSmileyTreffer()) {
+        const cwDirs = {0:'east', 1:'south_from_q1', 2:'west_from_q2', 3:'north'};
+        await performKipp(cwDirs[currentQuadrant], 800);
+        advanceTopFace();
+      }
+
       showScrollband();
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
@@ -6376,6 +6460,14 @@
 
       // Hände und Scrollband einblenden
       show3erPaket();
+
+      // Anti-Sofort-Treffer nach Eckblick
+      if (checkSmileyTreffer()) {
+        const cwDirs = {0:'east', 1:'south_from_q1', 2:'west_from_q2', 3:'north'};
+        await performKipp(cwDirs[currentQuadrant], 800);
+        advanceTopFace();
+      }
+
       showScrollband();
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
@@ -8445,12 +8537,15 @@
     function getTargetSmileySlot() {
       const targetSrc = window._smileyTargetSrc;
       if (!targetSrc) return null;
-      const targetFile = targetSrc.replace(/^.*\//, '');
+      const targetFile = targetSrc.replace(/^.*[\\/]/, '').split('?')[0];
       for (const face of ['f0', 'f1', 'f2']) {
         for (const key in faceSlots[face].slotMap) {
           const slot = faceSlots[face].slotMap[key];
-          if (slot.img && slot.img.src && slot.img.src.replace(/^.*\//, '') === targetFile) {
-            return GRID_TO_SLOT[face][key];
+          if (slot.img && slot.img.src) {
+            const slotFile = slot.img.src.replace(/^.*[\\/]/, '').split('?')[0];
+            if (slotFile === targetFile) {
+              return GRID_TO_SLOT[face][key];
+            }
           }
         }
       }
@@ -8468,13 +8563,17 @@
       const assignment = {};
       allColors.forEach(c => { assignment[c] = [c, c, c, c]; });
 
-      if (!slotName || !levelColor) return assignment;
+      if (!slotName || !levelColor) {
+        console.warn('[HAND-ASSIGN] No slot or levelColor!', slotName, levelColor);
+        return assignment;
+      }
 
       // Erreichbare Felder: für jede Farbe, welcher Quadrant (= Index)
       const reachable = {};
       for (let q = 0; q < 4; q++) {
         reachable[SLOT_NEIGHBOR_COLORS[q][slotName]] = q;
       }
+      console.log('[HAND-ASSIGN] Slot=' + slotName + ' level=' + levelColor + ' reachable=', JSON.stringify(reachable));
 
       // Anzahl Tausche pro Level
       const swapCount = { 'orange': 0, 'gruen': 1, 'blau': 2, 'violett': 3 };
@@ -8499,6 +8598,7 @@
         assignment[levelColor][giveIdx] = takeColor;
       }
 
+      console.log('[HAND-ASSIGN] Final assignment:', JSON.stringify(assignment));
       return assignment;
     }
 
@@ -8618,8 +8718,8 @@
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      const kaertchen = document.getElementById('smileyKaertchenRow');
-      if (kaertchen) kaertchen.classList.add('hidden');
+      hideScrollband();
+      _hideKaertchen();
 
       // Punkte berechnen: 4 / Gesamtversuche * 100
       const punkte = Math.round(4 / _smileyAttempts * 100);
@@ -8668,7 +8768,7 @@
           'font-size:20px;letter-spacing:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);' +
           'cursor:pointer;border-radius:6px;padding-bottom:5px;z-index:20;';
         nochmalBtn.textContent = 'NOCHMAL';
-        document.getElementById('gameContainer').appendChild(nochmalBtn);
+        document.getElementById('container').appendChild(nochmalBtn);
       }
       nochmalBtn.style.display = 'block';
       nochmalBtn.onclick = () => {
