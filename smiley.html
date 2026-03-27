@@ -3095,7 +3095,7 @@
       // OK-Button
       const okBtn = document.createElement('button');
       okBtn.textContent = 'OK';
-      okBtn.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);bottom:120px;' +
+      okBtn.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:580px;' +
         'background:url("button_lang_smiley_bl.webp") center/cover no-repeat;' +
         'border:none;width:282px;height:52px;font-family:Arial,sans-serif;font-weight:bold;' +
         'font-size:20px;letter-spacing:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);' +
@@ -5487,7 +5487,7 @@
         const spieltischY = 0.001 + 3 * 0.15625; // Y+3 Zellen = 0.46975
         const pt = new THREE.Vector3(0, spieltischY, rowZ);
         pt.project(camera);
-        const sy = Math.round((-pt.y * 0.5 + 0.5) * 720) - 50;
+        const sy = Math.round((-pt.y * 0.5 + 0.5) * 720) - 44;
         row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
           'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
         row.innerHTML = '';
@@ -5643,9 +5643,12 @@
               'left:' + el.style.left + ';top:' + el.style.top + ';' +
               'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
               'font-size:40px;font-weight:bold;z-index:5;pointer-events:none;' +
-              'color:' + (el.dataset.played === 'hit' ? '#00c853' : '#ff1744') + ';' +
               'filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));';
-            mark.textContent = el.dataset.played === 'hit' ? '\u2714' : '\u2716';
+            if (el.dataset.played === 'hit') {
+              mark.innerHTML = '<span style="color:#00c853;">&#10004;</span>';
+            } else {
+              mark.innerHTML = '<span style="color:#ff1744;font-size:44px;">&#10008;</span>';
+            }
             el.parentElement.appendChild(mark);
           }
         });
