@@ -3052,41 +3052,39 @@
       e.preventDefault(); showBestScores();
     }, { passive: false });
 
-    // Smiley-Scorecard sofort global verfügbar
+    // Scorecard: Klick auf Pokal = IMMER leere leveltafel + Counts
+    window._scorecardOpen = false;
+    window._scorecardPrevOverlay = false;
     window._showSmileyScorecard = function() {
+      if (window._scorecardOpen) return;
+      window._scorecardOpen = true;
       const overlay = document.getElementById('leveltafelOverlay');
-      // Vorherigen Zustand merken
-      const wasOverlayOpen = overlay.classList.contains('show');
-      const savedSmileyStates = [];
-      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-        savedSmileyStates.push({ el: el, opacity: el.style.opacity, pe: el.style.pointerEvents });
-      });
-      const savedHint = document.getElementById('leveltafelHint').style.display;
-      const savedBereitWrap = document.getElementById('btnBereitWrap').style.display;
-      const savedBereitText = document.getElementById('btnBereit').textContent;
-      const savedBereitDisabled = document.getElementById('btnBereit').disabled;
-      const savedBereitOpacity = document.getElementById('btnBereit').style.opacity;
-      const savedNeuWaehlen = document.getElementById('btnNeuWaehlen').style.display;
-      const savedBereitOnclick = document.getElementById('btnBereit').onclick;
+      window._scorecardPrevOverlay = overlay.classList.contains('show');
 
-      // Scorecard anzeigen
+      // 1. Overlay öffnen
       overlay.classList.add('show');
+      overlay.dataset.scorecard = '1';
       document.getElementById('leveltafelImg').classList.add('sharp');
       document.getElementById('leveltafelImg').style.visibility = 'visible';
+
+      // 2. ALLES verstecken was nicht leveltafel.webp ist
       document.getElementById('leveltafelHint').style.display = 'none';
       document.getElementById('spielzielBox').classList.remove('show');
+      document.getElementById('btnNeuWaehlen').style.display = 'none';
+
+      // 3. ALLE Smileys unsichtbar — leere leveltafel
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+        el.style.visibility = 'hidden';
+        el.style.pointerEvents = 'none';
+      });
+
+      // 4. Counts aus localStorage anzeigen
       const card = (function() { try { return JSON.parse(localStorage.getItem('smiley_scorecard') || '{}'); } catch(e) { return {}; } })();
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-        el.classList.add('visible');
-        el.classList.remove('selected');
-        el.style.outline = '';
-        el.style.boxShadow = '';
-        el.style.pointerEvents = 'none';
         const old = el.querySelector('._scorecardCount');
         if (old) old.remove();
         const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
         const count = card[fn] || 0;
-        el.style.opacity = '0';
         if (count > 0) {
           const badge = document.createElement('div');
           badge.className = '_scorecardCount';
@@ -3096,31 +3094,29 @@
           el.appendChild(badge);
         }
       });
+
+      // 5. OK-Button
       const btn = document.getElementById('btnBereit');
       btn.textContent = 'OK';
       btn.disabled = false;
       btn.style.opacity = '1';
-      btn.style.display = '';
       document.getElementById('btnBereitWrap').style.display = 'flex';
-      document.getElementById('btnNeuWaehlen').style.display = 'none';
-      btn.onclick = () => {
-        // Badges entfernen
+      btn.onclick = function() {
+        // Aufräumen
         document.querySelectorAll('._scorecardCount').forEach(b => b.remove());
-        // Exakt einen Schritt zurück
-        if (!wasOverlayOpen) {
+        document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+          el.style.visibility = '';
+          el.style.pointerEvents = '';
+        });
+        overlay.dataset.scorecard = '';
+        btn.onclick = null;
+        btn.textContent = T.sFe || 'BEREIT';
+        document.getElementById('btnNeuWaehlen').style.display = '';
+        // Einen Schritt zurück
+        if (!window._scorecardPrevOverlay) {
           overlay.classList.remove('show');
         }
-        savedSmileyStates.forEach(s => {
-          s.el.style.opacity = s.opacity;
-          s.el.style.pointerEvents = s.pe;
-        });
-        document.getElementById('leveltafelHint').style.display = savedHint;
-        document.getElementById('btnBereitWrap').style.display = savedBereitWrap;
-        btn.textContent = savedBereitText;
-        btn.disabled = savedBereitDisabled;
-        btn.style.opacity = savedBereitOpacity;
-        btn.onclick = savedBereitOnclick;
-        document.getElementById('btnNeuWaehlen').style.display = savedNeuWaehlen;
+        window._scorecardOpen = false;
       };
     };
     
@@ -5615,52 +5611,6 @@
         catch(e) { return {}; }
       }
 
-      function showSmileyScorecard() {
-        window._scorecardReturnState = gamePhase;
-        const overlay = document.getElementById('leveltafelOverlay');
-        overlay.classList.add('show');
-        document.getElementById('leveltafelImg').classList.add('sharp');
-        document.getElementById('leveltafelImg').style.visibility = 'visible';
-        document.getElementById('leveltafelHint').style.display = 'none';
-        document.getElementById('spielzielBox').classList.remove('show');
-        const card = getSmileyScorecard();
-        document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-          el.classList.add('visible');
-          el.classList.remove('selected');
-          el.style.outline = '';
-          el.style.boxShadow = '';
-          el.style.opacity = '1';
-          el.style.pointerEvents = 'none';
-          const old = el.querySelector('._scorecardCount');
-          if (old) old.remove();
-          const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
-          const count = card[fn] || 0;
-          if (count > 0) {
-            const badge = document.createElement('div');
-            badge.className = '_scorecardCount';
-            badge.style.cssText = 'position:absolute;bottom:-2px;right:-2px;background:#FFD700;color:#000;font:bold 11px Arial;border-radius:8px;padding:1px 4px;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,0.5);';
-            badge.textContent = count + 'x';
-            el.style.position = 'relative';
-            el.appendChild(badge);
-          }
-        });
-        const btn = document.getElementById('btnBereit');
-        btn.textContent = 'OK';
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.display = '';
-        document.getElementById('btnBereitWrap').style.display = 'flex';
-        document.getElementById('btnNeuWaehlen').style.display = 'none';
-        btn.onclick = () => {
-          overlay.classList.remove('show');
-          document.querySelectorAll('._scorecardCount').forEach(b => b.remove());
-          document.querySelectorAll('.leveltafelSmiley').forEach(el => { el.style.pointerEvents = ''; });
-          btn.textContent = T.sFe || 'BEREIT';
-          btn.onclick = null;
-          document.getElementById('btnNeuWaehlen').style.display = '';
-        };
-      }
-
       function doNochmalReset() {
         const btn = document.getElementById('btnWeiter');
         if (btn) btn.style.display = 'none';
@@ -5688,9 +5638,6 @@
         hide3erPaket();
         showLeveltafel(false);
       }
-
-      // Expose scorecard to global scope for Pokal button
-      window._showSmileyScorecard = showSmileyScorecard;
 
       // Gespielte Smileys auf Leveltafel markieren
       function markPlayedSmileys() {
