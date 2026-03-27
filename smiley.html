@@ -3066,7 +3066,7 @@
       // leveltafel.webp gleich groß wie bei Auswahlseite
       const bgImg = document.createElement('img');
       bgImg.src = 'leveltafel.webp';
-      bgImg.style.cssText = 'display:block;width:450px;height:auto;';
+      bgImg.style.cssText = 'display:block;width:450px;height:auto;margin-top:-80px;';
       scOv.appendChild(bgImg);
 
       // Counts aus localStorage an den Smiley-Positionen (gleiche left/top wie .leveltafelSmiley)
@@ -3083,8 +3083,9 @@
         const count = card[fn] || 0;
         if (count > 0) {
           const lbl = document.createElement('div');
+          const lblTop = (parseFloat(el.style.top) - 80) + 'px';
           lbl.style.cssText = 'position:absolute;' +
-            'left:' + el.style.left + ';top:' + el.style.top + ';' +
+            'left:' + el.style.left + ';top:' + lblTop + ';' +
             'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
             'color:#FFD700;font:bold 27px Arial;text-shadow:0 1px 4px rgba(0,0,0,0.8);';
           lbl.textContent = count + 'x';
@@ -3095,7 +3096,7 @@
       // OK-Button
       const okBtn = document.createElement('button');
       okBtn.textContent = 'OK';
-      okBtn.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:580px;' +
+      okBtn.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:500px;' +
         'background:url("button_lang_smiley_bl.webp") center/cover no-repeat;' +
         'border:none;width:282px;height:52px;font-family:Arial,sans-serif;font-weight:bold;' +
         'font-size:20px;letter-spacing:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);' +
@@ -5647,7 +5648,7 @@
               'font-size:40px;font-weight:bold;z-index:5;pointer-events:none;' +
               'filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));';
             if (el.dataset.played === 'hit') {
-              mark.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40"><path d="M8 20 L16 28 L32 12" stroke="#00c853" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+              mark.innerHTML = '<svg width="48" height="48" viewBox="0 0 40 40" style="transform:rotate(-10deg);"><path d="M8 20 L16 28 L32 12" stroke="#00c853" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             } else {
               mark.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40"><path d="M10 10 L30 30 M30 10 L10 30" stroke="#ff1744" stroke-width="5" fill="none" stroke-linecap="round"/></svg>';
             }
