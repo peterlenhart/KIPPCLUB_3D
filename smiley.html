@@ -1217,7 +1217,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_smiley.png" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein_smiley.png" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:8px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_smiley.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:8px; top:10px; width:45px; height:45px; cursor:pointer; pointer-events:auto; z-index:25;"><img src="pokal_smiley.png" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -5610,6 +5610,12 @@
         if (scoreDisp) scoreDisp.style.display = 'none';
         const pokal = document.getElementById('btnBestScores');
         if (pokal) pokal.classList.remove('pulsing');
+        kipp21KniffActive = false;
+        kipp21Active = false;
+        window._scorecardOpen = false;
+        // Scorecard-Overlay entfernen falls vorhanden
+        const scOv = document.getElementById('_scorecardOverlay');
+        if (scOv) scOv.remove();
         _smileyAttempts = 0;
         _smileyHits = 0;
         _smileyCurrentCardIdx = 0;
