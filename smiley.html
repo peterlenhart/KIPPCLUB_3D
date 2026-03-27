@@ -3074,7 +3074,7 @@
         try {
           const c = JSON.parse(localStorage.getItem('smiley_scorecard') || '{}');
           // Reset wenn ein Smiley 99 erreicht
-          for (const k in c) { if (c[k] >= 99) { localStorage.removeItem('smiley_scorecard'); return {}; } }
+          for (const k in c) { if (c[k] >= 9) { localStorage.removeItem('smiley_scorecard'); return {}; } }
           return c;
         } catch(e) { return {}; }
       })();
@@ -5632,13 +5632,12 @@
       function markPlayedSmileys() {
         document.querySelectorAll('.leveltafelSmiley').forEach(el => {
           if (el.dataset.played) {
-            el.style.opacity = '0.4';
             el.style.pointerEvents = 'none';
             if (!el.querySelector('._playedMark')) {
               const mark = document.createElement('div');
               mark.className = '_playedMark';
-              mark.style.cssText = 'position:absolute;top:-2px;right:-2px;font-size:18px;z-index:5;' +
-                'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
+              mark.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
+                'font-size:36px;z-index:5;text-shadow:0 2px 4px rgba(0,0,0,0.6);pointer-events:none;';
               mark.textContent = el.dataset.played === 'hit' ? '✅' : '❌';
               el.appendChild(mark);
             }
