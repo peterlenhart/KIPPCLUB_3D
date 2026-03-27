@@ -3054,31 +3054,50 @@
 
     // Scorecard: Klick auf Pokal = IMMER leere leveltafel + Counts
     window._scorecardOpen = false;
-    window._scorecardPrevOverlay = false;
     window._showSmileyScorecard = function() {
       if (window._scorecardOpen) return;
       window._scorecardOpen = true;
-      const overlay = document.getElementById('leveltafelOverlay');
-      window._scorecardPrevOverlay = overlay.classList.contains('show');
 
-      // 1. Overlay öffnen
+      // === KOMPLETTEN ZUSTAND SICHERN ===
+      const overlay = document.getElementById('leveltafelOverlay');
+      const btn = document.getElementById('btnBereit');
+      const saved = {
+        overlayOpen: overlay.classList.contains('show'),
+        hint: document.getElementById('leveltafelHint').style.display,
+        bereitWrap: document.getElementById('btnBereitWrap').style.display,
+        bereitText: btn.textContent,
+        bereitDisabled: btn.disabled,
+        bereitOpacity: btn.style.opacity,
+        bereitOnclick: btn.onclick,
+        neuWaehlen: document.getElementById('btnNeuWaehlen').style.display,
+        smileys: []
+      };
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+        saved.smileys.push({
+          el: el,
+          visibility: el.style.visibility,
+          opacity: el.style.opacity,
+          pointerEvents: el.style.pointerEvents,
+          outline: el.style.outline,
+          boxShadow: el.style.boxShadow
+        });
+      });
+
+      // === SCORECARD ANZEIGEN ===
       overlay.classList.add('show');
-      overlay.dataset.scorecard = '1';
       document.getElementById('leveltafelImg').classList.add('sharp');
       document.getElementById('leveltafelImg').style.visibility = 'visible';
-
-      // 2. ALLES verstecken was nicht leveltafel.webp ist
       document.getElementById('leveltafelHint').style.display = 'none';
       document.getElementById('spielzielBox').classList.remove('show');
       document.getElementById('btnNeuWaehlen').style.display = 'none';
 
-      // 3. ALLE Smileys unsichtbar — leere leveltafel
+      // Alle Smileys weg
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         el.style.visibility = 'hidden';
         el.style.pointerEvents = 'none';
       });
 
-      // 4. Counts aus localStorage anzeigen
+      // Counts drauf
       const card = (function() { try { return JSON.parse(localStorage.getItem('smiley_scorecard') || '{}'); } catch(e) { return {}; } })();
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         const old = el.querySelector('._scorecardCount');
@@ -3095,25 +3114,33 @@
         }
       });
 
-      // 5. OK-Button
-      const btn = document.getElementById('btnBereit');
+      // OK-Button
       btn.textContent = 'OK';
       btn.disabled = false;
       btn.style.opacity = '1';
       document.getElementById('btnBereitWrap').style.display = 'flex';
+
       btn.onclick = function() {
-        // Aufräumen
+        // Badges weg
         document.querySelectorAll('._scorecardCount').forEach(b => b.remove());
-        document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-          el.style.visibility = '';
-          el.style.pointerEvents = '';
+
+        // === KOMPLETTEN ZUSTAND WIEDERHERSTELLEN ===
+        saved.smileys.forEach(s => {
+          s.el.style.visibility = s.visibility;
+          s.el.style.opacity = s.opacity;
+          s.el.style.pointerEvents = s.pointerEvents;
+          s.el.style.outline = s.outline;
+          s.el.style.boxShadow = s.boxShadow;
         });
-        overlay.dataset.scorecard = '';
-        btn.onclick = null;
-        btn.textContent = T.sFe || 'BEREIT';
-        document.getElementById('btnNeuWaehlen').style.display = '';
-        // Einen Schritt zurück
-        if (!window._scorecardPrevOverlay) {
+        document.getElementById('leveltafelHint').style.display = saved.hint;
+        document.getElementById('btnBereitWrap').style.display = saved.bereitWrap;
+        btn.textContent = saved.bereitText;
+        btn.disabled = saved.bereitDisabled;
+        btn.style.opacity = saved.bereitOpacity;
+        btn.onclick = saved.bereitOnclick;
+        document.getElementById('btnNeuWaehlen').style.display = saved.neuWaehlen;
+
+        if (!saved.overlayOpen) {
           overlay.classList.remove('show');
         }
         window._scorecardOpen = false;
