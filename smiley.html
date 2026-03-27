@@ -11411,7 +11411,7 @@
           if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
-            if (!isAnimating) { // SMILEY: gamePhase check removed
+            if (!isAnimating && !kipp21KniffActive) { // Gesperrt während Wobbelblick
               (async () => {
                 for (let i = 0; i < n; i++) {
                   let dir;
@@ -11472,7 +11472,7 @@
         if (tappedIdx === bandIdx) {
           const n = bandIdx + 1;
           selectNum(n);
-          if (!isAnimating) { // SMILEY: gamePhase check removed
+          if (!isAnimating && !kipp21KniffActive) { // Gesperrt während Wobbelblick
             (async () => {
               for (let i = 0; i < n; i++) {
                 let dir;
