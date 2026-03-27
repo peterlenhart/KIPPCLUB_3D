@@ -3070,7 +3070,14 @@
       scOv.appendChild(bgImg);
 
       // Counts aus localStorage an den Smiley-Positionen (gleiche left/top wie .leveltafelSmiley)
-      const card = (function() { try { return JSON.parse(localStorage.getItem('smiley_scorecard') || '{}'); } catch(e) { return {}; } })();
+      const card = (function() {
+        try {
+          const c = JSON.parse(localStorage.getItem('smiley_scorecard') || '{}');
+          // Reset wenn ein Smiley 99 erreicht
+          for (const k in c) { if (c[k] >= 99) { localStorage.removeItem('smiley_scorecard'); return {}; } }
+          return c;
+        } catch(e) { return {}; }
+      })();
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
         const count = card[fn] || 0;
@@ -3079,7 +3086,7 @@
           lbl.style.cssText = 'position:absolute;' +
             'left:' + el.style.left + ';top:' + el.style.top + ';' +
             'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
-            'color:#FFD700;font:bold 18px Arial;text-shadow:0 1px 4px rgba(0,0,0,0.8);';
+            'color:#FFD700;font:bold 27px Arial;text-shadow:0 1px 4px rgba(0,0,0,0.8);';
           lbl.textContent = count + 'x';
           scOv.appendChild(lbl);
         }
@@ -5627,14 +5634,12 @@
           if (el.dataset.played) {
             el.style.opacity = '0.4';
             el.style.pointerEvents = 'none';
-            // Haken oder Kreuz
             if (!el.querySelector('._playedMark')) {
               const mark = document.createElement('div');
               mark.className = '_playedMark';
               mark.style.cssText = 'position:absolute;top:-2px;right:-2px;font-size:18px;z-index:5;' +
                 'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
               mark.textContent = el.dataset.played === 'hit' ? '✅' : '❌';
-              el.style.position = 'relative';
               el.appendChild(mark);
             }
           }
@@ -8634,6 +8639,9 @@
         el.style.boxShadow = '';
         el.style.visibility = '';
         el.style.pointerEvents = '';
+        // Alte Haken/Kreuzchen entfernen
+        const oldMark = el.querySelector('._playedMark');
+        if (oldMark) oldMark.remove();
       });
       document.getElementById('leveltafelImg').classList.add('sharp');
       document.getElementById('spielzielBox').classList.remove('show');
