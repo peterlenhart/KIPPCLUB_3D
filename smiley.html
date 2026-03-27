@@ -3075,11 +3075,7 @@
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         saved.smileys.push({
           el: el,
-          visibility: el.style.visibility,
-          opacity: el.style.opacity,
-          pointerEvents: el.style.pointerEvents,
-          outline: el.style.outline,
-          boxShadow: el.style.boxShadow
+          cssText: el.style.cssText
         });
       });
 
@@ -3126,11 +3122,7 @@
 
         // === KOMPLETTEN ZUSTAND WIEDERHERSTELLEN ===
         saved.smileys.forEach(s => {
-          s.el.style.visibility = s.visibility;
-          s.el.style.opacity = s.opacity;
-          s.el.style.pointerEvents = s.pointerEvents;
-          s.el.style.outline = s.outline;
-          s.el.style.boxShadow = s.boxShadow;
+          s.el.style.cssText = s.cssText;
         });
         document.getElementById('leveltafelHint').style.display = saved.hint;
         document.getElementById('btnBereitWrap').style.display = saved.bereitWrap;
