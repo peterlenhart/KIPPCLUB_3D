@@ -5487,7 +5487,7 @@
         const spieltischY = 0.001 + 3 * 0.15625; // Y+3 Zellen = 0.46975
         const pt = new THREE.Vector3(0, spieltischY, rowZ);
         pt.project(camera);
-        const sy = Math.round((-pt.y * 0.5 + 0.5) * 720);
+        const sy = Math.round((-pt.y * 0.5 + 0.5) * 720) - 50;
         row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
           'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
         row.innerHTML = '';
@@ -5565,10 +5565,10 @@
         document.getElementById('overlayWiese').style.display = 'block';
         document.getElementById('spielzielLine1').textContent = '';
         document.getElementById('spielzielLine2').innerHTML =
-          '<div style="font-size:16px;line-height:1.5;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;">' +
+          '<div style="font-size:24px;line-height:1.5;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;">' +
           'Mit deinem Smiley-Mix<br>waren <b>' + _smileyMaxPoints + ' P</b> m\u00f6glich.<br>' +
           'Du hast <b style="color:#FFD700;">' + _smileyTotalPoints + ' P</b>.<br><br>' +
-          '<span style="font-size:13px;color:#ccc;">Max. Highscore = 100 P<br>(mit 4 \u00d7 M-BRAIN)</span></div>';
+          'Max. Highscore = 100 P<br>(mit 4 \u00d7 M-BRAIN)</div>';
         let losBtn = document.getElementById('btnLosGehts');
         if (losBtn) {
           losBtn.textContent = T.nml || 'NOCHMAL';
@@ -5642,9 +5642,9 @@
             mark.style.cssText = 'position:absolute;' +
               'left:' + el.style.left + ';top:' + el.style.top + ';' +
               'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
-              'font-size:40px;z-index:5;pointer-events:none;' +
+              'font-size:40px;font-weight:bold;z-index:5;pointer-events:none;' +
               'color:' + (el.dataset.played === 'hit' ? '#00c853' : '#ff1744') + ';' +
-              'text-shadow:0 2px 6px rgba(0,0,0,0.7);';
+              'filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));';
             mark.textContent = el.dataset.played === 'hit' ? '\u2714' : '\u2716';
             el.parentElement.appendChild(mark);
           }
