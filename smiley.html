@@ -3050,6 +3050,52 @@
     document.getElementById('btnBestScores').addEventListener('touchend', (e) => {
       e.preventDefault(); showBestScores();
     }, { passive: false });
+
+    // Smiley-Scorecard sofort global verfügbar
+    window._showSmileyScorecard = function() {
+      const overlay = document.getElementById('leveltafelOverlay');
+      overlay.classList.add('show');
+      document.getElementById('leveltafelImg').classList.add('sharp');
+      document.getElementById('leveltafelImg').style.visibility = 'visible';
+      document.getElementById('leveltafelHint').style.display = 'none';
+      document.getElementById('spielzielBox').classList.remove('show');
+      const card = (function() { try { return JSON.parse(localStorage.getItem('smiley_scorecard') || '{}'); } catch(e) { return {}; } })();
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+        el.classList.add('visible');
+        el.classList.remove('selected');
+        el.style.outline = '';
+        el.style.boxShadow = '';
+        el.style.opacity = '1';
+        el.style.pointerEvents = 'none';
+        const old = el.querySelector('._scorecardCount');
+        if (old) old.remove();
+        const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
+        const count = card[fn] || 0;
+        if (count > 0) {
+          const badge = document.createElement('div');
+          badge.className = '_scorecardCount';
+          badge.style.cssText = 'position:absolute;bottom:-2px;right:-2px;background:#FFD700;color:#000;font:bold 11px Arial;border-radius:8px;padding:1px 4px;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,0.5);';
+          badge.textContent = count + 'x';
+          el.style.position = 'relative';
+          el.appendChild(badge);
+        }
+      });
+      const btn = document.getElementById('btnBereit');
+      btn.textContent = 'OK';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.display = '';
+      document.getElementById('btnBereitWrap').style.display = 'flex';
+      document.getElementById('btnNeuWaehlen').style.display = 'none';
+      btn.onclick = () => {
+        overlay.classList.remove('show');
+        document.querySelectorAll('._scorecardCount').forEach(b => b.remove());
+        document.querySelectorAll('.leveltafelSmiley').forEach(el => { el.style.pointerEvents = ''; });
+        btn.textContent = T.sFe || 'BEREIT';
+        btn.onclick = null;
+        document.getElementById('btnNeuWaehlen').style.display = '';
+      };
+    };
     
     function updateSoundIcon() {
       soundImg.src = soundEnabled ? 'tonein_smiley.png' : 'tonaus_smiley.png';
@@ -5419,13 +5465,8 @@
         if (!row) {
           row = document.createElement('div');
           row.id = '_smileyResultRow';
-          // Exakt gleiche Z-Position wie die bisherigen Kippziel-Karten
-          const zPos = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720);
-          const yPos = 0.001 + 3 * 0.15625 + 0.002;
-          const pt = new THREE.Vector3(0, yPos, zPos);
-          pt.project(camera);
-          const sy = Math.round((-pt.y * 0.5 + 0.5) * 720);
-          row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
+          // Zwischen Zeile 11-12 = gleiche Höhe wie SPIELEN-Button (428.5px)
+          row.style.cssText = 'position:absolute;left:0;width:360px;top:472px;' +
             'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
           document.getElementById('container').appendChild(row);
         }
@@ -5435,8 +5476,8 @@
           wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
           const img = document.createElement('img');
           img.src = r.src;
-          img.style.cssText = 'width:49px;height:49px;object-fit:contain;border-radius:50%;' +
-            (r.hit ? 'box-shadow:0 0 10px #FFD700;' : 'opacity:0.7;');
+          img.style.cssText = 'width:49px;height:49px;object-fit:contain;' +
+            (r.hit ? 'filter:drop-shadow(0 0 6px #FFD700);' : 'opacity:0.7;');
           wrap.appendChild(img);
           const txt = document.createElement('div');
           txt.style.cssText = 'font:bold 28px Arial;margin-top:2px;color:' + (LEVEL_HEX[r.color] || '#fff') + ';' +
