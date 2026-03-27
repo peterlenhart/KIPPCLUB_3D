@@ -5566,7 +5566,7 @@
         document.getElementById('spielzielLine1').textContent = '';
         document.getElementById('spielzielLine2').innerHTML =
           '<div style="font-size:24px;line-height:1.5;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;">' +
-          'Mit deinem Smiley-Mix<br>waren <b>' + _smileyMaxPoints + '</b> m\u00f6glich.<br>' +
+          'Mit deinem Smiley-Mix<br>waren <b>' + _smileyMaxPoints + ' P</b> m\u00f6glich.<br>' +
           'Du hast <b style="color:#FFD700;">' + _smileyTotalPoints + '</b>.<br><br>' +
           '100 P m\u00f6glich mit<br>4 MASTER BRAIN Smileys.</div>';
         let losBtn = document.getElementById('btnLosGehts');
@@ -5647,9 +5647,9 @@
               'font-size:40px;font-weight:bold;z-index:5;pointer-events:none;' +
               'filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));';
             if (el.dataset.played === 'hit') {
-              mark.innerHTML = '<span style="color:#00c853;font-family:Arial,sans-serif;">&#10004;&#xFE0E;</span>';
+              mark.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40"><path d="M8 20 L16 28 L32 12" stroke="#00c853" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             } else {
-              mark.innerHTML = '<span style="color:#ff1744;font-family:Arial,sans-serif;font-size:44px;">&#10008;&#xFE0E;</span>';
+              mark.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40"><path d="M10 10 L30 30 M30 10 L10 30" stroke="#ff1744" stroke-width="5" fill="none" stroke-linecap="round"/></svg>';
             }
             el.parentElement.appendChild(mark);
           }
