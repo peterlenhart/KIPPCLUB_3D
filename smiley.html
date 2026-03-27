@@ -3054,6 +3054,21 @@
     // Smiley-Scorecard sofort global verfügbar
     window._showSmileyScorecard = function() {
       const overlay = document.getElementById('leveltafelOverlay');
+      // Vorherigen Zustand merken
+      const wasOverlayOpen = overlay.classList.contains('show');
+      const savedSmileyStates = [];
+      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
+        savedSmileyStates.push({ el: el, opacity: el.style.opacity, pe: el.style.pointerEvents });
+      });
+      const savedHint = document.getElementById('leveltafelHint').style.display;
+      const savedBereitWrap = document.getElementById('btnBereitWrap').style.display;
+      const savedBereitText = document.getElementById('btnBereit').textContent;
+      const savedBereitDisabled = document.getElementById('btnBereit').disabled;
+      const savedBereitOpacity = document.getElementById('btnBereit').style.opacity;
+      const savedNeuWaehlen = document.getElementById('btnNeuWaehlen').style.display;
+      const savedBereitOnclick = document.getElementById('btnBereit').onclick;
+
+      // Scorecard anzeigen
       overlay.classList.add('show');
       document.getElementById('leveltafelImg').classList.add('sharp');
       document.getElementById('leveltafelImg').style.visibility = 'visible';
@@ -3065,16 +3080,16 @@
         el.classList.remove('selected');
         el.style.outline = '';
         el.style.boxShadow = '';
-        el.style.opacity = '1';
         el.style.pointerEvents = 'none';
         const old = el.querySelector('._scorecardCount');
         if (old) old.remove();
         const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
         const count = card[fn] || 0;
+        el.style.opacity = '0';
         if (count > 0) {
           const badge = document.createElement('div');
           badge.className = '_scorecardCount';
-          badge.style.cssText = 'position:absolute;bottom:-2px;right:-2px;background:#FFD700;color:#000;font:bold 11px Arial;border-radius:8px;padding:1px 4px;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,0.5);';
+          badge.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#FFD700;font:bold 16px Arial;z-index:5;text-shadow:0 1px 4px rgba(0,0,0,0.8);white-space:nowrap;';
           badge.textContent = count + 'x';
           el.style.position = 'relative';
           el.appendChild(badge);
@@ -3088,12 +3103,23 @@
       document.getElementById('btnBereitWrap').style.display = 'flex';
       document.getElementById('btnNeuWaehlen').style.display = 'none';
       btn.onclick = () => {
-        overlay.classList.remove('show');
+        // Badges entfernen
         document.querySelectorAll('._scorecardCount').forEach(b => b.remove());
-        document.querySelectorAll('.leveltafelSmiley').forEach(el => { el.style.pointerEvents = ''; });
-        btn.textContent = T.sFe || 'BEREIT';
-        btn.onclick = null;
-        document.getElementById('btnNeuWaehlen').style.display = '';
+        // Exakt einen Schritt zurück
+        if (!wasOverlayOpen) {
+          overlay.classList.remove('show');
+        }
+        savedSmileyStates.forEach(s => {
+          s.el.style.opacity = s.opacity;
+          s.el.style.pointerEvents = s.pe;
+        });
+        document.getElementById('leveltafelHint').style.display = savedHint;
+        document.getElementById('btnBereitWrap').style.display = savedBereitWrap;
+        btn.textContent = savedBereitText;
+        btn.disabled = savedBereitDisabled;
+        btn.style.opacity = savedBereitOpacity;
+        btn.onclick = savedBereitOnclick;
+        document.getElementById('btnNeuWaehlen').style.display = savedNeuWaehlen;
       };
     };
     
@@ -5465,11 +5491,16 @@
         if (!row) {
           row = document.createElement('div');
           row.id = '_smileyResultRow';
-          // Zwischen Zeile 11-12 = gleiche Höhe wie SPIELEN-Button (428.5px)
-          row.style.cssText = 'position:absolute;left:0;width:360px;top:472px;' +
-            'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
           document.getElementById('container').appendChild(row);
         }
+        // Spieltisch-Position projizieren (Zeile 11-12 auf dem 3D-Spieltisch)
+        const cardZ = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720);
+        const cardY = 0.001 + 3 * 0.15625 + 0.002;
+        const pt = new THREE.Vector3(0, cardY, cardZ);
+        pt.project(camera);
+        const sy = Math.round((-pt.y * 0.5 + 0.5) * 720);
+        row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
+          'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
         row.innerHTML = '';
         _smileyResults.forEach(r => {
           const wrap = document.createElement('div');
