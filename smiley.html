@@ -3029,6 +3029,7 @@
       });
     }
     function showBestScores() {
+      if (kipp21KniffActive) return; // Während Wobbelblick gesperrt
       if (window._showSmileyScorecard) {
         window._showSmileyScorecard();
       } else {
@@ -5438,6 +5439,7 @@
             _smileyTotalPoints += points;
             _smileyMaxPoints += (LEVEL_POINTS[targetColor] || 0);
             if (window._smileyTargetEl) window._smileyTargetEl.dataset.played = 'hit';
+            updateSmileyScorecard(targetSrc);
             showResultSmileys();
 
             // 4. WEITER-Button
@@ -5493,10 +5495,12 @@
           row.id = '_smileyResultRow';
           document.getElementById('container').appendChild(row);
         }
-        // Spieltisch-Position projizieren (Zeile 11-12 auf dem 3D-Spieltisch)
-        const cardZ = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720);
-        const cardY = 0.001 + 3 * 0.15625 + 0.002;
-        const pt = new THREE.Vector3(0, cardY, cardZ);
+        // Zeile 11,5 auf dem Spieltisch (3D-projiziert)
+        // rowZ = wallInnerNorth + (row - 4) * cellSize + cellSize/2
+        // = -0.359375 + (11.5 - 4) * 0.15625 + 0.078125 = 0.890625
+        const rowZ = 0.890625;
+        const spieltischY = 0.001 + 3 * 0.15625; // Y+3 Zellen = 0.46975
+        const pt = new THREE.Vector3(0, spieltischY, rowZ);
         pt.project(camera);
         const sy = Math.round((-pt.y * 0.5 + 0.5) * 720);
         row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
@@ -5535,7 +5539,6 @@
 
         if (_smileyRound >= 4) {
           btn.style.display = 'none';
-          _smileyResults.forEach(r => { if (r.hit) updateSmileyScorecard(r.src); });
           try {
             const stored = JSON.parse(localStorage.getItem('smiley_highscore') || '{}');
             if (!stored.punkte || _smileyTotalPoints > stored.punkte) {
