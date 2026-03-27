@@ -5642,8 +5642,10 @@
             mark.style.cssText = 'position:absolute;' +
               'left:' + el.style.left + ';top:' + el.style.top + ';' +
               'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
-              'font-size:36px;z-index:5;text-shadow:0 2px 4px rgba(0,0,0,0.6);pointer-events:none;';
-            mark.textContent = el.dataset.played === 'hit' ? '✅' : '❌';
+              'font-size:40px;z-index:5;pointer-events:none;' +
+              'color:' + (el.dataset.played === 'hit' ? '#00c853' : '#ff1744') + ';' +
+              'text-shadow:0 2px 6px rgba(0,0,0,0.7);';
+            mark.textContent = el.dataset.played === 'hit' ? '\u2714' : '\u2716';
             el.parentElement.appendChild(mark);
           }
         });
@@ -9033,7 +9035,16 @@
           const positions = HAND_FIELD_POS[fieldColor];
           positions.forEach((pos3D, idx) => {
             const handColor = assignment[fieldColor][idx];
-            if (handColor !== levelColor) return; // nur Level-Hände zeigen
+            // Sichtbare Hände pro Level:
+            // MBr(orange)=alle, Brain(grün)=grün+blau+violett, Brainy(blau)=blau+violett, BBr(violett)=nur violett
+            const VISIBLE_HANDS = {
+              orange: ['orange','gruen','blau','violett'],
+              gruen: ['gruen','blau','violett'],
+              blau: ['blau','violett'],
+              violett: ['violett']
+            };
+            const visibleSet = VISIBLE_HANDS[levelColor] || [levelColor];
+            if (!visibleSet.includes(handColor)) return;
             const geo = new THREE.PlaneGeometry(HAND_SIZE_3D, HAND_SIZE_3D);
             const m3 = new THREE.MeshBasicMaterial({
               map: textures[handColor],
