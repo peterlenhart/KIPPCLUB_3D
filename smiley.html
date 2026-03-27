@@ -3058,18 +3058,18 @@
       if (window._scorecardOpen) return;
       window._scorecardOpen = true;
 
-      // Eigenes Overlay erstellen
+      // Overlay exakt wie leveltafelOverlay positioniert (450px)
       const scOv = document.createElement('div');
       scOv.id = '_scorecardOverlay';
-      scOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:360px;height:720px;z-index:60;';
+      scOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:450px;z-index:60;';
 
-      // leveltafel.webp als Hintergrund
+      // leveltafel.webp gleich groß wie bei Auswahlseite
       const bgImg = document.createElement('img');
       bgImg.src = 'leveltafel.webp';
-      bgImg.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:auto;';
+      bgImg.style.cssText = 'display:block;width:450px;height:auto;';
       scOv.appendChild(bgImg);
 
-      // Counts aus localStorage an den Smiley-Positionen
+      // Counts aus localStorage an den Smiley-Positionen (gleiche left/top wie .leveltafelSmiley)
       const card = (function() { try { return JSON.parse(localStorage.getItem('smiley_scorecard') || '{}'); } catch(e) { return {}; } })();
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
@@ -8625,10 +8625,15 @@
       const overlay = document.getElementById('leveltafelOverlay');
       overlay.dataset.withTutorial = withTutorial ? '1' : '0';
       overlay.classList.add('show');
-      // Smileys sofort sichtbar, alle abgewählt
+      // Smileys sofort sichtbar, alle abgewählt, inline-Styles aufräumen
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         el.classList.add('visible');
         el.classList.remove('selected');
+        el.style.opacity = '';
+        el.style.outline = '';
+        el.style.boxShadow = '';
+        el.style.visibility = '';
+        el.style.pointerEvents = '';
       });
       document.getElementById('leveltafelImg').classList.add('sharp');
       document.getElementById('spielzielBox').classList.remove('show');
