@@ -3052,91 +3052,54 @@
       e.preventDefault(); showBestScores();
     }, { passive: false });
 
-    // Scorecard: Klick auf Pokal = IMMER leere leveltafel + Counts
+    // Scorecard: eigenes Overlay über allem, berührt nichts darunter
     window._scorecardOpen = false;
     window._showSmileyScorecard = function() {
       if (window._scorecardOpen) return;
       window._scorecardOpen = true;
 
-      // === KOMPLETTEN ZUSTAND SICHERN ===
-      const overlay = document.getElementById('leveltafelOverlay');
-      const btn = document.getElementById('btnBereit');
-      const saved = {
-        overlayOpen: overlay.classList.contains('show'),
-        hint: document.getElementById('leveltafelHint').style.display,
-        bereitWrap: document.getElementById('btnBereitWrap').style.display,
-        bereitText: btn.textContent,
-        bereitDisabled: btn.disabled,
-        bereitOpacity: btn.style.opacity,
-        bereitOnclick: btn.onclick,
-        neuWaehlen: document.getElementById('btnNeuWaehlen').style.display,
-        smileys: []
-      };
-      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-        saved.smileys.push({
-          el: el,
-          cssText: el.style.cssText
-        });
-      });
+      // Eigenes Overlay erstellen
+      const scOv = document.createElement('div');
+      scOv.id = '_scorecardOverlay';
+      scOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:360px;height:720px;z-index:60;';
 
-      // === SCORECARD ANZEIGEN ===
-      overlay.classList.add('show');
-      document.getElementById('leveltafelImg').classList.add('sharp');
-      document.getElementById('leveltafelImg').style.visibility = 'visible';
-      document.getElementById('leveltafelHint').style.display = 'none';
-      document.getElementById('spielzielBox').classList.remove('show');
-      document.getElementById('btnNeuWaehlen').style.display = 'none';
+      // leveltafel.webp als Hintergrund
+      const bgImg = document.createElement('img');
+      bgImg.src = 'leveltafel.webp';
+      bgImg.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:auto;';
+      scOv.appendChild(bgImg);
 
-      // Alle Smileys weg
-      document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-        el.style.visibility = 'hidden';
-        el.style.pointerEvents = 'none';
-      });
-
-      // Counts drauf
+      // Counts aus localStorage an den Smiley-Positionen
       const card = (function() { try { return JSON.parse(localStorage.getItem('smiley_scorecard') || '{}'); } catch(e) { return {}; } })();
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
-        const old = el.querySelector('._scorecardCount');
-        if (old) old.remove();
         const fn = el.src.replace(/^.*[\\/]/, '').split('?')[0];
         const count = card[fn] || 0;
         if (count > 0) {
-          const badge = document.createElement('div');
-          badge.className = '_scorecardCount';
-          badge.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#FFD700;font:bold 16px Arial;z-index:5;text-shadow:0 1px 4px rgba(0,0,0,0.8);white-space:nowrap;';
-          badge.textContent = count + 'x';
-          el.style.position = 'relative';
-          el.appendChild(badge);
+          const lbl = document.createElement('div');
+          lbl.style.cssText = 'position:absolute;' +
+            'left:' + el.style.left + ';top:' + el.style.top + ';' +
+            'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
+            'color:#FFD700;font:bold 18px Arial;text-shadow:0 1px 4px rgba(0,0,0,0.8);';
+          lbl.textContent = count + 'x';
+          scOv.appendChild(lbl);
         }
       });
 
       // OK-Button
-      btn.textContent = 'OK';
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      document.getElementById('btnBereitWrap').style.display = 'flex';
-
-      btn.onclick = function() {
-        // Badges weg
-        document.querySelectorAll('._scorecardCount').forEach(b => b.remove());
-
-        // === KOMPLETTEN ZUSTAND WIEDERHERSTELLEN ===
-        saved.smileys.forEach(s => {
-          s.el.style.cssText = s.cssText;
-        });
-        document.getElementById('leveltafelHint').style.display = saved.hint;
-        document.getElementById('btnBereitWrap').style.display = saved.bereitWrap;
-        btn.textContent = saved.bereitText;
-        btn.disabled = saved.bereitDisabled;
-        btn.style.opacity = saved.bereitOpacity;
-        btn.onclick = saved.bereitOnclick;
-        document.getElementById('btnNeuWaehlen').style.display = saved.neuWaehlen;
-
-        if (!saved.overlayOpen) {
-          overlay.classList.remove('show');
-        }
+      const okBtn = document.createElement('button');
+      okBtn.textContent = 'OK';
+      okBtn.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);bottom:120px;' +
+        'background:url("button_lang_smiley_bl.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font-family:Arial,sans-serif;font-weight:bold;' +
+        'font-size:20px;letter-spacing:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);' +
+        'cursor:pointer;border-radius:6px;padding-bottom:5px;';
+      okBtn.onclick = function() {
+        scOv.remove();
         window._scorecardOpen = false;
       };
+      scOv.appendChild(okBtn);
+
+      document.body.appendChild(scOv);
     };
     
     function updateSoundIcon() {
