@@ -5630,17 +5630,21 @@
 
       // Gespielte Smileys auf Leveltafel markieren
       function markPlayedSmileys() {
+        // Alte Marks entfernen
+        document.querySelectorAll('._playedMark').forEach(m => m.remove());
+
         document.querySelectorAll('.leveltafelSmiley').forEach(el => {
           if (el.dataset.played) {
             el.style.pointerEvents = 'none';
-            if (!el.querySelector('._playedMark')) {
-              const mark = document.createElement('div');
-              mark.className = '_playedMark';
-              mark.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
-                'font-size:36px;z-index:5;text-shadow:0 2px 4px rgba(0,0,0,0.6);pointer-events:none;';
-              mark.textContent = el.dataset.played === 'hit' ? '✅' : '❌';
-              el.appendChild(mark);
-            }
+            // Overlay-Div über dem Smiley im gleichen Parent
+            const mark = document.createElement('div');
+            mark.className = '_playedMark';
+            mark.style.cssText = 'position:absolute;' +
+              'left:' + el.style.left + ';top:' + el.style.top + ';' +
+              'width:56.25px;height:56.25px;display:flex;align-items:center;justify-content:center;' +
+              'font-size:36px;z-index:5;text-shadow:0 2px 4px rgba(0,0,0,0.6);pointer-events:none;';
+            mark.textContent = el.dataset.played === 'hit' ? '✅' : '❌';
+            el.parentElement.appendChild(mark);
           }
         });
       }
@@ -8630,6 +8634,7 @@
       overlay.dataset.withTutorial = withTutorial ? '1' : '0';
       overlay.classList.add('show');
       // Smileys sofort sichtbar, alle abgewählt, inline-Styles aufräumen
+      document.querySelectorAll('._playedMark').forEach(m => m.remove());
       document.querySelectorAll('.leveltafelSmiley').forEach(el => {
         el.classList.add('visible');
         el.classList.remove('selected');
@@ -8638,13 +8643,13 @@
         el.style.boxShadow = '';
         el.style.visibility = '';
         el.style.pointerEvents = '';
-        // Alte Haken/Kreuzchen entfernen
-        const oldMark = el.querySelector('._playedMark');
-        if (oldMark) oldMark.remove();
       });
       document.getElementById('leveltafelImg').classList.add('sharp');
       document.getElementById('spielzielBox').classList.remove('show');
       document.getElementById('leveltafelHint').style.display = 'flex';
+      document.getElementById('btnBereitWrap').style.display = 'flex';
+      document.getElementById('btnNeuWaehlen').style.display = '';
+      document.getElementById('btnBereit').textContent = T.sFe || 'BEREIT';
       document.getElementById('btnBereit').disabled = true;
       document.getElementById('btnBereit').style.opacity = '0.4';
       selectedSmileys = [];
