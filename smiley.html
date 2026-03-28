@@ -9471,26 +9471,27 @@
       content.style.paddingBottom = '20px';
 
       // Titel
-      line1.innerHTML = '<span style="font-size:28px;letter-spacing:3px;text-transform:uppercase;color:#FFD700;' +
+      line1.innerHTML = '<span style="font-size:28px;letter-spacing:3px;text-transform:uppercase;color:#4a9eff;' +
         'text-shadow:0 2px 8px rgba(0,0,0,0.9);">' + (T.dm || 'ANLEITUNG') + '</span>';
 
       // Anleitungspunkte — typografisch gestaltet
       const steps = T.anl || [];
       const sections = {
-        de: ['VORBEREITUNG','BEOBACHTEN','HANDELN','ERGEBNIS'],
-        en: ['PREPARATION','OBSERVE','ACT','RESULT'],
-        es: ['PREPARACI\u00d3N','OBSERVAR','ACTUAR','RESULTADO'],
-        fr: ['PR\u00c9PARATION','OBSERVER','AGIR','R\u00c9SULTAT'],
-        it: ['PREPARAZIONE','OSSERVARE','AGIRE','RISULTATO'],
-        tr: ['HAZIRLIK','G\u00d6ZLEMLE','HAREKETE GE\u00c7','SONU\u00c7']
+        de: ['AUSWAHL','SCHAU GENAU','ENTSCHEIDEN','ERGEBNIS'],
+        en: ['CHOOSE','WATCH CLOSELY','DECIDE','RESULT'],
+        es: ['ELECCI\u00d3N','OBSERVA BIEN','DECIDIR','RESULTADO'],
+        fr: ['CHOIX','REGARDE BIEN','D\u00c9CIDER','R\u00c9SULTAT'],
+        it: ['SCELTA','GUARDA BENE','DECIDERE','RISULTATO'],
+        tr: ['SE\u00c7\u0130M','D\u0130KKATL\u0130 BAK','KARAR VER','SONU\u00c7']
       };
       const sec = sections[_digikippLang] || sections.de;
       let html = '<div style="width:300px;text-align:left;margin:0 auto;">';
 
+      const hColor = '#4a9eff';
       steps.forEach((txt, i) => {
         let heading = '';
         const hStyle = 'font-size:11px;letter-spacing:2px;text-transform:uppercase;' +
-          'color:#FFD700;margin-top:18px;margin-bottom:6px;font-weight:bold;' +
+          'color:' + hColor + ';margin-top:18px;margin-bottom:6px;font-weight:bold;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
         if (i === 0) heading = '<div style="' + hStyle + 'margin-top:16px;">\u25B6 ' + sec[0] + '</div>';
         if (i === 2) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[1] + '</div>';
@@ -9500,7 +9501,7 @@
         html += heading +
           '<div style="font-size:15px;line-height:1.45;color:#fff;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.7);margin-bottom:6px;">' +
-          '<span style="color:#FFD700;font-weight:bold;">' + (i + 1) + '.</span> ' + txt + '</div>';
+          '<span style="color:' + hColor + ';font-weight:bold;">' + (i + 1) + '.</span> ' + txt + '</div>';
       });
 
       html += '</div>';
@@ -9510,14 +9511,22 @@
 
       if (row) row.innerHTML = '';
       neuBtn.style.display = 'none';
+
+      // OK-Button außerhalb des scrollbaren Bereichs, fest unten
       losBtn.textContent = 'OK';
       losBtn.style.display = 'block';
+      losBtn.style.position = 'relative';
+      losBtn.style.zIndex = '5';
+      losBtn.style.marginTop = '16px';
       losBtn.onclick = () => {
         ov.classList.remove('show');
         wiese.style.display = 'none';
         wiese.style.minHeight = '';
         content.style.overflowY = '';
         content.style.maxHeight = '';
+        losBtn.style.position = '';
+        losBtn.style.zIndex = '';
+        losBtn.style.marginTop = '';
         losBtn.onclick = null;
       };
 
