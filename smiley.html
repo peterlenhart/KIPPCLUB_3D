@@ -1112,10 +1112,10 @@
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
 
     <!-- Punkte-Labels über den Smiley-Reihen -->
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:122px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">25 P</div>
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:235px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">15 P</div>
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:347px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">10 P</div>
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:460px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">5 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:114px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">25 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:227px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">15 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:339px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">10 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:452px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">5 P</div>
 
     <img id="overlayWiese" src="overlaywiese_smiley.webp" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:0; width:360px; height:auto; z-index:1; pointer-events:none;">
     <!-- FERTIG Button -->
@@ -2413,20 +2413,15 @@
         const [gr, gc] = glowSlotKey.split(',').map(Number);
         const gcx = gc * cell + cell / 2;
         const gcy = gr * cell + cell / 2;
-        const radius = cell * 0.55;
+        const radius = cell * 0.42;
         ctx.save();
         ctx.globalAlpha = glowIntensity;
         ctx.strokeStyle = _glowColor;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 5;
         ctx.shadowColor = _glowColor;
-        ctx.shadowBlur = 20 * glowIntensity;
+        ctx.shadowBlur = 12 * glowIntensity;
         ctx.beginPath();
         ctx.arc(gcx, gcy, radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.shadowBlur = 40 * glowIntensity;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(gcx, gcy, radius + 5, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
