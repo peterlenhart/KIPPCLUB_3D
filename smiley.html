@@ -9458,7 +9458,7 @@
       const ov = document.createElement('div');
       ov.id = '_anleitungOverlay';
       ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:720px;z-index:55;display:flex;flex-direction:column;';
+        'width:360px;height:' + window.innerHeight + 'px;z-index:55;display:flex;flex-direction:column;';
 
       // Hintergrund
       const bg = document.createElement('img');
@@ -9503,8 +9503,17 @@
           scroll.appendChild(h);
         }
         const p = document.createElement('div');
-        p.style.cssText = 'font:15px/1.45 Arial;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.7);margin-bottom:6px;';
-        p.innerHTML = '<span style="color:' + hColor + ';font-weight:bold;">' + (i+1) + '.</span> ' + txt;
+        p.style.cssText = 'font:15px/1.45 Arial;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
+          'margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;';
+        const num = document.createElement('span');
+        num.textContent = (i + 1);
+        num.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
+          'min-width:24px;height:24px;border-radius:50%;background:#FFD700;color:#000;' +
+          'font:bold 13px Arial;flex-shrink:0;margin-top:1px;';
+        const txtSpan = document.createElement('span');
+        txtSpan.innerHTML = txt;
+        p.appendChild(num);
+        p.appendChild(txtSpan);
         scroll.appendChild(p);
       });
 
