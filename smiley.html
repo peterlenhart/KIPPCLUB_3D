@@ -9243,19 +9243,7 @@
         showLeveltafel(false);
       };
 
-      // Pokal → Scoretafel
-      if (pokal) {
-        pokal.onclick = () => {
-          try {
-            const stored = JSON.parse(localStorage.getItem('smiley_highscore') || '{}');
-            const hs = stored.punkte || 0;
-            const hm = stored.mix || '78/22';
-            const sctHead = document.getElementById('sctHead');
-            if (sctHead) sctHead.textContent = (T.bs || 'HIGHSCORE') + ': ' + hm + ' → ' + hs + 'P';
-          } catch(e) {}
-          document.getElementById('bestScoresOverlay').style.display = 'flex';
-        };
-      }
+      // Pokal — wird über addEventListener + showBestScores gesteuert
     }
 
     function showScrollband() {
