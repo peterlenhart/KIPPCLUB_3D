@@ -9463,7 +9463,7 @@
       // Hintergrund
       const bg = document.createElement('img');
       bg.src = 'overlaywiese_smiley.webp';
-      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
       ov.appendChild(bg);
 
       // Scrollbarer Textbereich
@@ -9496,7 +9496,7 @@
         if (i === 0 || i === 2 || i === 3 || i === 4) {
           const secIdx = i === 0 ? 0 : i === 2 ? 1 : i === 3 ? 2 : 3;
           const h = document.createElement('div');
-          h.style.cssText = 'font:bold 11px Arial;letter-spacing:2px;text-transform:uppercase;' +
+          h.style.cssText = 'font:bold 18px Arial;letter-spacing:2px;text-transform:uppercase;' +
             'color:' + hColor + ';margin-top:' + (i === 0 ? '4' : '14') + 'px;margin-bottom:6px;' +
             'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
           h.textContent = '\u25B6 ' + sec[secIdx];
