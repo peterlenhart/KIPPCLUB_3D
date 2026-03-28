@@ -11666,13 +11666,36 @@
       _tutHandEl.style.opacity = '0';
       await sleep(300);
 
-      // === SCHRITT 3: Warten bis Wobble fertig ===
+      // === SCHRITT 3: Auge pulsiert während Wobble (wie coloricon) ===
+      const eyeEl = document.getElementById('eyeIcon');
+      const boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
+      boxTopPt.project(camera);
+      const eyeTopPx = Math.round((-boxTopPt.y * 0.5 + 0.5) * 720) - 50;
+      eyeEl.style.cssText   = '';
+      eyeEl.style.position  = 'absolute';
+      eyeEl.style.top       = eyeTopPx + 'px';
+      eyeEl.style.left      = '50%';
+      eyeEl.style.width     = '156px';
+      eyeEl.style.height    = 'auto';
+      eyeEl.style.opacity   = '1';
+      eyeEl.style.zIndex    = '15';
+      eyeEl.style.transform = 'translateX(-50%)';
+      eyeEl.style.filter    = 'drop-shadow(0 2px 6px rgba(255,255,255,0.4))';
+      eyeEl.style.animation = 'none'; void eyeEl.offsetWidth;
+      eyeEl.style.animation = 'eyePulse 1.5s ease-in-out infinite';
+      eyeEl.style.display   = 'block';
+      eyeEl.style.pointerEvents = 'none';
+
+      // Warten bis Wobble fertig
       await new Promise(resolve => {
         const check = setInterval(() => {
           if (!kipp21KniffActive) { clearInterval(check); resolve(); }
         }, 200);
       });
-      await sleep(800);
+
+      // Auge aus
+      eyeEl.style.display = 'none';
+      await sleep(500);
 
       // === SCHRITT 4: Hand am Scrollband (wie coloricon) ===
       const band = document.getElementById('scrollBandWrap');
