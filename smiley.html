@@ -9451,31 +9451,35 @@
     
     
     function showAnleitung() {
-      const ov = document.getElementById('spielzielBox');
-      const wiese = document.getElementById('overlayWiese');
-      const line1 = document.getElementById('spielzielLine1');
-      const line2 = document.getElementById('spielzielLine2');
-      const row = document.getElementById('selectedSmileysRow');
-      const neuBtn = document.getElementById('btnNeuWaehlen');
-      const losBtn = document.getElementById('btnLosGehts');
+      // Eigenes Overlay — volle Kontrolle
+      const old = document.getElementById('_anleitungOverlay');
+      if (old) old.remove();
 
-      // Overlaywiese vertikal strecken
-      wiese.style.display = 'block';
-      wiese.style.height = 'auto';
-      wiese.style.minHeight = '960px';
+      const ov = document.createElement('div');
+      ov.id = '_anleitungOverlay';
+      ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:720px;z-index:55;display:flex;flex-direction:column;';
 
-      // Container scrollbar
-      const content = document.getElementById('spielzielContent');
-      content.style.overflowY = 'auto';
-      content.style.maxHeight = '680px';
-      content.style.paddingBottom = '20px';
+      // Hintergrund
+      const bg = document.createElement('img');
+      bg.src = 'overlaywiese_smiley.webp';
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+      ov.appendChild(bg);
+
+      // Scrollbarer Textbereich
+      const scroll = document.createElement('div');
+      scroll.style.cssText = 'position:relative;z-index:1;flex:1;overflow-y:auto;' +
+        'padding:30px 30px 10px 30px;-webkit-overflow-scrolling:touch;' +
+        'background:rgba(0,0,0,0.45);';
 
       // Titel
-      line1.innerHTML = '<span style="font-size:28px;letter-spacing:3px;text-transform:uppercase;color:#4a9eff;' +
-        'text-shadow:0 2px 8px rgba(0,0,0,0.9);">' + (T.dm || 'ANLEITUNG') + '</span>';
+      const title = document.createElement('div');
+      title.style.cssText = 'font:bold 28px Arial;letter-spacing:3px;text-transform:uppercase;' +
+        'color:#FFD700;text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:18px;';
+      title.textContent = T.dm || 'ANLEITUNG';
+      scroll.appendChild(title);
 
-      // Anleitungspunkte — typografisch gestaltet
-      const steps = T.anl || [];
+      // Überschriften pro Sprache
       const sections = {
         de: ['AUSWAHL','SCHAU GENAU','ENTSCHEIDEN','ERGEBNIS'],
         en: ['CHOOSE','WATCH CLOSELY','DECIDE','RESULT'],
@@ -9485,52 +9489,41 @@
         tr: ['SE\u00c7\u0130M','D\u0130KKATL\u0130 BAK','KARAR VER','SONU\u00c7']
       };
       const sec = sections[_digikippLang] || sections.de;
-      let html = '<div style="width:300px;text-align:left;margin:0 auto;">';
+      const steps = T.anl || [];
+      const hColor = '#FFD700';
 
-      const hColor = '#4a9eff';
       steps.forEach((txt, i) => {
-        let heading = '';
-        const hStyle = 'font-size:11px;letter-spacing:2px;text-transform:uppercase;' +
-          'color:' + hColor + ';margin-top:18px;margin-bottom:6px;font-weight:bold;' +
-          'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
-        if (i === 0) heading = '<div style="' + hStyle + 'margin-top:16px;">\u25B6 ' + sec[0] + '</div>';
-        if (i === 2) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[1] + '</div>';
-        if (i === 3) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[2] + '</div>';
-        if (i === 4) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[3] + '</div>';
-
-        html += heading +
-          '<div style="font-size:15px;line-height:1.45;color:#fff;' +
-          'text-shadow:0 1px 3px rgba(0,0,0,0.7);margin-bottom:6px;">' +
-          '<span style="color:' + hColor + ';font-weight:bold;">' + (i + 1) + '.</span> ' + txt + '</div>';
+        if (i === 0 || i === 2 || i === 3 || i === 4) {
+          const secIdx = i === 0 ? 0 : i === 2 ? 1 : i === 3 ? 2 : 3;
+          const h = document.createElement('div');
+          h.style.cssText = 'font:bold 11px Arial;letter-spacing:2px;text-transform:uppercase;' +
+            'color:' + hColor + ';margin-top:' + (i === 0 ? '4' : '14') + 'px;margin-bottom:6px;' +
+            'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
+          h.textContent = '\u25B6 ' + sec[secIdx];
+          scroll.appendChild(h);
+        }
+        const p = document.createElement('div');
+        p.style.cssText = 'font:15px/1.45 Arial;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.7);margin-bottom:6px;';
+        p.innerHTML = '<span style="color:' + hColor + ';font-weight:bold;">' + (i+1) + '.</span> ' + txt;
+        scroll.appendChild(p);
       });
 
-      html += '</div>';
-      line2.innerHTML = html;
-      line2.style.fontSize = '';
-      line2.style.color = '';
+      ov.appendChild(scroll);
 
-      if (row) row.innerHTML = '';
-      neuBtn.style.display = 'none';
+      // OK-Button fest unten
+      const btnWrap = document.createElement('div');
+      btnWrap.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
+        'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
+      const btn = document.createElement('button');
+      btn.textContent = 'OK';
+      btn.style.cssText = 'background:url("button_lang_smiley_bl.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;padding-bottom:5px;';
+      btn.onclick = () => ov.remove();
+      btnWrap.appendChild(btn);
+      ov.appendChild(btnWrap);
 
-      // OK-Button außerhalb des scrollbaren Bereichs, fest unten
-      losBtn.textContent = 'OK';
-      losBtn.style.display = 'block';
-      losBtn.style.position = 'relative';
-      losBtn.style.zIndex = '5';
-      losBtn.style.marginTop = '16px';
-      losBtn.onclick = () => {
-        ov.classList.remove('show');
-        wiese.style.display = 'none';
-        wiese.style.minHeight = '';
-        content.style.overflowY = '';
-        content.style.maxHeight = '';
-        losBtn.style.position = '';
-        losBtn.style.zIndex = '';
-        losBtn.style.marginTop = '';
-        losBtn.onclick = null;
-      };
-
-      ov.classList.add('show');
+      document.body.appendChild(ov);
     }
 
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
