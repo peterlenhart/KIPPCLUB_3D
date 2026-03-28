@@ -8697,6 +8697,10 @@
         document.getElementById('hintLine1').style.opacity = showingLine1 ? '1' : '0';
         document.getElementById('hintLine2').style.opacity = showingLine1 ? '0' : '1';
       }, 3000);
+      // Tutorial starten wenn gewünscht
+      if (withTutorial && typeof runSmileyTutorial === 'function') {
+        setTimeout(() => runSmileyTutorial(), 500);
+      }
     }
 
     // Skill/Chill Lookup-Tabelle: [mb, brain, brainy, bb] → "skill/chill"
@@ -11524,6 +11528,24 @@
         if (n === null) { clearSelection(); return; }
         window._scrollBandToNum(n);
       };
+      // Tutorial: Kipp auslösen wie bei Center-Tap
+      window._tutTriggerKipp = async function(n) {
+        selectNum(n);
+        isAnimating = true;
+        for (let i = 0; i < n; i++) {
+          let dir;
+          if      (currentQuadrant === 0) dir = 'east';
+          else if (currentQuadrant === 1) dir = 'south_from_q1';
+          else if (currentQuadrant === 2) dir = 'west_from_q2';
+          else                            dir = 'north';
+          await performKipp(dir, 600);
+          advanceTopFace();
+          if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+        }
+        isAnimating = false;
+        clearSelection();
+        if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
+      };
       
       updateBandPos(false);
     })();
@@ -11537,6 +11559,134 @@
 
     // DEBUG: If this text appears, the script reached the end without crash
 
+
+    // === SMILEY TUTORIAL (Schritte 1–4) ===
+    window._smileyTutorialActive = false;
+    async function runSmileyTutorial() {
+      if (window._smileyTutorialActive) return;
+      window._smileyTutorialActive = true;
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+      // Tutorial-Hand erstellen (2D HTML, über allem)
+      let tutHand = document.getElementById('_tutHand');
+      if (tutHand) tutHand.remove();
+      tutHand = document.createElement('img');
+      tutHand.id = '_tutHand';
+      tutHand.src = handDemo.material.map.image.src;
+      tutHand.style.cssText = 'position:fixed;width:70px;height:70px;z-index:70;pointer-events:none;' +
+        'opacity:0;transition:opacity 0.4s ease;';
+      document.body.appendChild(tutHand);
+
+      // Fingerspitze: bei (34, 2) im 70px-Element
+      function pointAt(x, y, dur) {
+        tutHand.style.transition = 'opacity 0.4s ease, left ' + (dur||0.7) + 's ease, top ' + (dur||0.7) + 's ease';
+        tutHand.style.left = (x - 34) + 'px';
+        tutHand.style.top = (y - 2) + 'px';
+      }
+      function center(el) {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+      function showHand() { tutHand.style.opacity = '1'; }
+      function hideHand() { tutHand.style.opacity = '0'; }
+
+      // Während Tutorial: User-Interaktion blockieren
+      const overlay = document.getElementById('leveltafelOverlay');
+      overlay.style.pointerEvents = 'none';
+
+      await sleep(1000);
+
+      // === SCHRITT 1: Hand fährt suchend über MBr-Reihe ===
+      const mbrSmileys = Array.from(document.querySelectorAll('.leveltafelSmiley'))
+        .filter(el => el.src.includes('orange'));
+
+      // Hand erscheint links neben 1. MBr
+      const p0 = center(mbrSmileys[0]);
+      pointAt(p0.x - 40, p0.y, 0);
+      await sleep(100);
+      showHand();
+      await sleep(600);
+
+      // Gleite über 1., 2., 3. Smiley
+      pointAt(center(mbrSmileys[0]).x, center(mbrSmileys[0]).y, 0.6);
+      await sleep(800);
+      pointAt(center(mbrSmileys[1]).x, center(mbrSmileys[1]).y, 0.6);
+      await sleep(800);
+      pointAt(center(mbrSmileys[2]).x, center(mbrSmileys[2]).y, 0.6);
+      await sleep(800);
+
+      // Klick auf 3. MBr-Smiley
+      overlay.style.pointerEvents = '';
+      mbrSmileys[2].click();
+      overlay.style.pointerEvents = 'none';
+      await sleep(300);
+      // Kurzes "Drücken" (Hand etwas kleiner)
+      tutHand.style.transform = 'scale(0.9)';
+      await sleep(200);
+      tutHand.style.transform = '';
+      await sleep(600);
+
+      // === SCHRITT 2: Hand klickt auf BEREIT ===
+      const bereit = document.getElementById('btnBereit');
+      const pb = center(bereit);
+      pointAt(pb.x, pb.y, 0.8);
+      await sleep(1000);
+
+      // Klick auf BEREIT
+      tutHand.style.transform = 'scale(0.9)';
+      await sleep(200);
+      tutHand.style.transform = '';
+      overlay.style.pointerEvents = '';
+      bereit.click(); // startet Spiel + Wobble
+      await sleep(300);
+      hideHand();
+
+      // === SCHRITT 3: Warten bis Wobble fertig ===
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (!kipp21KniffActive) { clearInterval(check); resolve(); }
+        }, 200);
+      });
+      await sleep(800);
+
+      // === SCHRITT 4: Hand scrollt Scrollband, wählt falsche Zahl ===
+      const band = document.getElementById('scrollBandWrap');
+      if (!band) { window._smileyTutorialActive = false; return; }
+
+      // Band auf 1 scrollen, Hand erscheint
+      window._scrollBandScrollOnly(1);
+      await sleep(300);
+      const br = band.getBoundingClientRect();
+      pointAt(br.left + br.width / 2, br.top + br.height / 2, 0);
+      await sleep(100);
+      showHand();
+      await sleep(600);
+
+      // Hand "scrollt" suchend: 1 → 3 → 5 → 8 → zurück zu 3
+      for (const n of [3, 5, 8]) {
+        window._scrollBandScrollOnly(n);
+        await sleep(500);
+      }
+      // Zurück zur falschen Zahl 3
+      const wrongNum = 3;
+      window._scrollBandScrollOnly(wrongNum);
+      await sleep(600);
+
+      // Klick auf Band-Mitte (Center = aktuelle Zahl) → Kipp auslösen
+      tutHand.style.transform = 'scale(0.9)';
+      await sleep(200);
+      tutHand.style.transform = '';
+      hideHand();
+
+      // Kipp programmatisch auslösen
+      await window._tutTriggerKipp(wrongNum);
+
+      // Tutorial-Hand entfernen, Tutorial-Flag zurück
+      await sleep(500);
+      if (tutHand) tutHand.remove();
+      window._smileyTutorialActive = false;
+      // MISS-Szene wird automatisch durch checkTrainingResult gezeigt
+    }
 
     renderLoop();
   </script>
