@@ -9459,30 +9459,51 @@
       const neuBtn = document.getElementById('btnNeuWaehlen');
       const losBtn = document.getElementById('btnLosGehts');
 
-      // Overlaywiese vertikal strecken für scrollbaren Inhalt
+      // Overlaywiese vertikal strecken
       wiese.style.display = 'block';
       wiese.style.height = 'auto';
-      wiese.style.minHeight = '900px';
+      wiese.style.minHeight = '960px';
 
-      // Spielziel-Container scrollbar machen
+      // Container scrollbar
       const content = document.getElementById('spielzielContent');
       content.style.overflowY = 'auto';
       content.style.maxHeight = '680px';
       content.style.paddingBottom = '20px';
 
       // Titel
-      line1.textContent = T.dm || 'ANLEITUNG';
-      line1.style.fontSize = '26px';
-      line1.style.marginBottom = '12px';
+      line1.innerHTML = '<span style="font-size:28px;letter-spacing:3px;text-transform:uppercase;color:#FFD700;' +
+        'text-shadow:0 2px 8px rgba(0,0,0,0.9);">' + (T.dm || 'ANLEITUNG') + '</span>';
 
-      // Anleitungspunkte aus T.anl
+      // Anleitungspunkte — typografisch gestaltet
       const steps = T.anl || [];
-      let html = '';
+      const sections = {
+        de: ['VORBEREITUNG','BEOBACHTEN','HANDELN','ERGEBNIS'],
+        en: ['PREPARATION','OBSERVE','ACT','RESULT'],
+        es: ['PREPARACI\u00d3N','OBSERVAR','ACTUAR','RESULTADO'],
+        fr: ['PR\u00c9PARATION','OBSERVER','AGIR','R\u00c9SULTAT'],
+        it: ['PREPARAZIONE','OSSERVARE','AGIRE','RISULTATO'],
+        tr: ['HAZIRLIK','G\u00d6ZLEMLE','HAREKETE GE\u00c7','SONU\u00c7']
+      };
+      const sec = sections[_digikippLang] || sections.de;
+      let html = '<div style="width:300px;text-align:left;margin:0 auto;">';
+
       steps.forEach((txt, i) => {
-        html += '<div style="font-size:17px;line-height:1.4;color:#fff;text-align:left;' +
-          'text-shadow:0 1px 4px rgba(0,0,0,0.8);margin-bottom:10px;padding:0 10px;">' +
-          '<b>' + (i + 1) + '.</b> ' + txt + '</div>';
+        let heading = '';
+        const hStyle = 'font-size:11px;letter-spacing:2px;text-transform:uppercase;' +
+          'color:#FFD700;margin-top:18px;margin-bottom:6px;font-weight:bold;' +
+          'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
+        if (i === 0) heading = '<div style="' + hStyle + 'margin-top:16px;">\u25B6 ' + sec[0] + '</div>';
+        if (i === 2) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[1] + '</div>';
+        if (i === 3) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[2] + '</div>';
+        if (i === 4) heading = '<div style="' + hStyle + '">\u25B6 ' + sec[3] + '</div>';
+
+        html += heading +
+          '<div style="font-size:15px;line-height:1.45;color:#fff;' +
+          'text-shadow:0 1px 3px rgba(0,0,0,0.7);margin-bottom:6px;">' +
+          '<span style="color:#FFD700;font-weight:bold;">' + (i + 1) + '.</span> ' + txt + '</div>';
       });
+
+      html += '</div>';
       line2.innerHTML = html;
       line2.style.fontSize = '';
       line2.style.color = '';
