@@ -1112,10 +1112,10 @@
     <img class="leveltafelSmiley" src="smiley_violett_44.png" style="left:281.25px; top:506.25px;">
 
     <!-- Punkte-Labels über den Smiley-Reihen -->
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:114px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">25 P</div>
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:227px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">15 P</div>
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:339px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">10 P</div>
-    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:452px;color:#fff;font:bold 24px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">5 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:114px;color:#fff;font:bold 22px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">25 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:227px;color:#fff;font:bold 22px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">15 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:339px;color:#fff;font:bold 22px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">10 P</div>
+    <div class="levelPointLabel" style="position:absolute;left:112.5px;top:452px;color:#fff;font:bold 22px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;">5 P</div>
 
     <img id="overlayWiese" src="overlaywiese_smiley.webp" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:0; width:360px; height:auto; z-index:1; pointer-events:none;">
     <!-- FERTIG Button -->
@@ -2407,22 +2407,39 @@
 
       ctx.globalAlpha = 1;
 
-      // Gold-Glow auf markiertem Slot zeichnen
+      // Häkchen oder Kreuzchen auf markiertem Slot zeichnen
       if (glowSlotKey && glowIntensity > 0) {
         const _glowColor = glowColor || '#FFD700';
         const [gr, gc] = glowSlotKey.split(',').map(Number);
         const gcx = gc * cell + cell / 2;
         const gcy = gr * cell + cell / 2;
-        const radius = cell * 0.42;
+        const s = cell * 0.35;
         ctx.save();
         ctx.globalAlpha = glowIntensity;
-        ctx.strokeStyle = _glowColor;
-        ctx.lineWidth = 5;
-        ctx.shadowColor = _glowColor;
-        ctx.shadowBlur = 12 * glowIntensity;
-        ctx.beginPath();
-        ctx.arc(gcx, gcy, radius, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 2;
+        if (_glowColor === '#FF0000') {
+          // Rotes Kreuzchen
+          ctx.strokeStyle = '#ff1744';
+          ctx.beginPath();
+          ctx.moveTo(gcx - s, gcy - s);
+          ctx.lineTo(gcx + s, gcy + s);
+          ctx.moveTo(gcx + s, gcy - s);
+          ctx.lineTo(gcx - s, gcy + s);
+          ctx.stroke();
+        } else {
+          // Grünes Häkchen
+          ctx.strokeStyle = '#00c853';
+          ctx.beginPath();
+          ctx.moveTo(gcx - s, gcy);
+          ctx.lineTo(gcx - s * 0.2, gcy + s * 0.7);
+          ctx.lineTo(gcx + s, gcy - s * 0.7);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
