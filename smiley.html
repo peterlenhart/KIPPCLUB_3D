@@ -11560,37 +11560,72 @@
     // DEBUG: If this text appears, the script reached the end without crash
 
 
-    // === SMILEY TUTORIAL (Schritte 1–4) ===
+    // === SMILEY TUTORIAL ===
     window._smileyTutorialActive = false;
+    let _tutHandEl = null;
+    let _tutHandX = 0, _tutHandY = 0;
+
+    function initTutHand() {
+      if (_tutHandEl) return;
+      _tutHandEl = document.createElement('img');
+      _tutHandEl.src = handDemo.material.map.image.src;
+      _tutHandEl.style.cssText = 'position:fixed;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
+      document.body.appendChild(_tutHandEl);
+    }
+
+    function setTutHandPos(x, y) {
+      if (!_tutHandEl) return;
+      // Fingerspitze bei col≈44 (von 128), skaliert auf 90px → ~31px
+      _tutHandEl.style.transform = 'translate(' + Math.round(x - 31) + 'px,' + Math.round(y - 2) + 'px)';
+      _tutHandX = x; _tutHandY = y;
+    }
+
+    function moveTutHand(toX, toY, durMs) {
+      return new Promise(resolve => {
+        const sx = _tutHandX, sy = _tutHandY;
+        const startT = performance.now();
+        function tick() {
+          const t = Math.min((performance.now() - startT) / durMs, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          setTutHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
+          if (t < 1) requestAnimationFrame(tick);
+          else { setTutHandPos(toX, toY); resolve(); }
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function moveTutHandWithBand(toX, toY, durMs, fromNum, toNum) {
+      return new Promise(resolve => {
+        const sx = _tutHandX, sy = _tutHandY;
+        const startT = performance.now();
+        function tick() {
+          const t = Math.min((performance.now() - startT) / durMs, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          setTutHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
+          if (window._scrollBandScrollOnly) {
+            const n = Math.round(fromNum + (toNum - fromNum) * e);
+            window._scrollBandScrollOnly(n);
+          }
+          if (t < 1) requestAnimationFrame(tick);
+          else { setTutHandPos(toX, toY); if (window._scrollBandScrollOnly) window._scrollBandScrollOnly(toNum); resolve(); }
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function centerOf(el) {
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+
     async function runSmileyTutorial() {
       if (window._smileyTutorialActive) return;
       window._smileyTutorialActive = true;
       const sleep = ms => new Promise(r => setTimeout(r, ms));
+      initTutHand();
 
-      // Tutorial-Hand erstellen (2D HTML, über allem)
-      let tutHand = document.getElementById('_tutHand');
-      if (tutHand) tutHand.remove();
-      tutHand = document.createElement('img');
-      tutHand.id = '_tutHand';
-      tutHand.src = handDemo.material.map.image.src;
-      tutHand.style.cssText = 'position:fixed;width:70px;height:70px;z-index:70;pointer-events:none;' +
-        'opacity:0;transition:opacity 0.4s ease;';
-      document.body.appendChild(tutHand);
-
-      // Fingerspitze: bei (34, 2) im 70px-Element
-      function pointAt(x, y, dur) {
-        tutHand.style.transition = 'opacity 0.4s ease, left ' + (dur||0.7) + 's ease, top ' + (dur||0.7) + 's ease';
-        tutHand.style.left = (x - 34) + 'px';
-        tutHand.style.top = (y - 2) + 'px';
-      }
-      function center(el) {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      }
-      function showHand() { tutHand.style.opacity = '1'; }
-      function hideHand() { tutHand.style.opacity = '0'; }
-
-      // Während Tutorial: User-Interaktion blockieren
+      // User-Interaktion blockieren
       const overlay = document.getElementById('leveltafelOverlay');
       overlay.style.pointerEvents = 'none';
 
@@ -11601,45 +11636,35 @@
         .filter(el => el.src.includes('orange'));
 
       // Hand erscheint links neben 1. MBr
-      const p0 = center(mbrSmileys[0]);
-      pointAt(p0.x - 40, p0.y, 0);
-      await sleep(100);
-      showHand();
-      await sleep(600);
+      const p0 = centerOf(mbrSmileys[0]);
+      setTutHandPos(p0.x - 50, p0.y);
+      _tutHandEl.style.opacity = '1';
+      await sleep(400);
 
       // Gleite über 1., 2., 3. Smiley
-      pointAt(center(mbrSmileys[0]).x, center(mbrSmileys[0]).y, 0.6);
-      await sleep(800);
-      pointAt(center(mbrSmileys[1]).x, center(mbrSmileys[1]).y, 0.6);
-      await sleep(800);
-      pointAt(center(mbrSmileys[2]).x, center(mbrSmileys[2]).y, 0.6);
-      await sleep(800);
+      await moveTutHand(centerOf(mbrSmileys[0]).x, centerOf(mbrSmileys[0]).y, 600);
+      await sleep(300);
+      await moveTutHand(centerOf(mbrSmileys[1]).x, centerOf(mbrSmileys[1]).y, 600);
+      await sleep(300);
+      await moveTutHand(centerOf(mbrSmileys[2]).x, centerOf(mbrSmileys[2]).y, 600);
+      await sleep(500);
 
       // Klick auf 3. MBr-Smiley
       overlay.style.pointerEvents = '';
       mbrSmileys[2].click();
       overlay.style.pointerEvents = 'none';
-      await sleep(300);
-      // Kurzes "Drücken" (Hand etwas kleiner)
-      tutHand.style.transform = 'scale(0.9)';
-      await sleep(200);
-      tutHand.style.transform = '';
-      await sleep(600);
+      await sleep(800);
 
       // === SCHRITT 2: Hand klickt auf BEREIT ===
       const bereit = document.getElementById('btnBereit');
-      const pb = center(bereit);
-      pointAt(pb.x, pb.y, 0.8);
-      await sleep(1000);
+      const pb = centerOf(bereit);
+      await moveTutHand(pb.x, pb.y, 800);
+      await sleep(400);
 
-      // Klick auf BEREIT
-      tutHand.style.transform = 'scale(0.9)';
-      await sleep(200);
-      tutHand.style.transform = '';
       overlay.style.pointerEvents = '';
-      bereit.click(); // startet Spiel + Wobble
+      bereit.click(); // Startet Spiel + Wobble
+      _tutHandEl.style.opacity = '0';
       await sleep(300);
-      hideHand();
 
       // === SCHRITT 3: Warten bis Wobble fertig ===
       await new Promise(resolve => {
@@ -11649,41 +11674,50 @@
       });
       await sleep(800);
 
-      // === SCHRITT 4: Hand scrollt Scrollband, wählt falsche Zahl ===
+      // === SCHRITT 4: Hand am Scrollband (wie coloricon) ===
       const band = document.getElementById('scrollBandWrap');
       if (!band) { window._smileyTutorialActive = false; return; }
 
-      // Band auf 1 scrollen, Hand erscheint
-      window._scrollBandScrollOnly(1);
+      const sbCenterX = 180;
+      const sbRect = band.getBoundingClientRect();
+      const sbY = sbRect.top + sbRect.height / 2;
+      const sbRightX = sbCenterX + 100;
+      const sbLeftX = sbCenterX - 100;
+
+      // Band auf Mitte (6)
+      if (window._scrollBandScrollOnly) window._scrollBandScrollOnly(6);
       await sleep(300);
-      const br = band.getBoundingClientRect();
-      pointAt(br.left + br.width / 2, br.top + br.height / 2, 0);
-      await sleep(100);
-      showHand();
-      await sleep(600);
 
-      // Hand "scrollt" suchend: 1 → 3 → 5 → 8 → zurück zu 3
-      for (const n of [3, 5, 8]) {
-        window._scrollBandScrollOnly(n);
-        await sleep(500);
-      }
-      // Zurück zur falschen Zahl 3
+      // Hand erscheint von Süden, fährt zum Scrollband
+      setTutHandPos(sbCenterX, 740);
+      _tutHandEl.style.opacity = '1';
+      await moveTutHand(sbCenterX, sbY, 700);
+      await sleep(300);
+
+      // Hand wischt links→rechts, Band scrollt 6→1
+      await moveTutHandWithBand(sbRightX, sbY, 1200, 6, 1);
+      await sleep(400);
+
+      // Hand wischt rechts→links, Band scrollt 1→11
+      await moveTutHandWithBand(sbLeftX, sbY, 1000, 1, 11);
+      await sleep(400);
+
+      // Hand stellt falsche Zahl ein: 11→3 (synchron)
       const wrongNum = 3;
-      window._scrollBandScrollOnly(wrongNum);
+      await moveTutHandWithBand(sbCenterX, sbY, 700, 11, wrongNum);
       await sleep(600);
 
-      // Klick auf Band-Mitte (Center = aktuelle Zahl) → Kipp auslösen
-      tutHand.style.transform = 'scale(0.9)';
-      await sleep(200);
-      tutHand.style.transform = '';
-      hideHand();
+      // Hand tippt auf Mitte → select + Hand verschwindet
+      if (window._scrollBandToNum) window._scrollBandToNum(wrongNum);
+      _tutHandEl.style.opacity = '0';
+      await sleep(250);
 
-      // Kipp programmatisch auslösen
+      // Würfel kippt
       await window._tutTriggerKipp(wrongNum);
 
-      // Tutorial-Hand entfernen, Tutorial-Flag zurück
+      // Aufräumen
       await sleep(500);
-      if (tutHand) tutHand.remove();
+      if (_tutHandEl) { _tutHandEl.remove(); _tutHandEl = null; }
       window._smileyTutorialActive = false;
       // MISS-Szene wird automatisch durch checkTrainingResult gezeigt
     }
