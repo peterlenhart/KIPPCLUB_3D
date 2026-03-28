@@ -11568,15 +11568,15 @@
     function initTutHand() {
       if (_tutHandEl) return;
       _tutHandEl = document.createElement('img');
-      _tutHandEl.src = handDemo.material.map.image.src;
+      _tutHandEl.src = 'handsilber.webp';
       _tutHandEl.style.cssText = 'position:fixed;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
       document.body.appendChild(_tutHandEl);
     }
 
     function setTutHandPos(x, y) {
       if (!_tutHandEl) return;
-      // Fingerspitze bei col≈44 (von 128), skaliert auf 90px → ~31px
-      _tutHandEl.style.transform = 'translate(' + Math.round(x - 31) + 'px,' + Math.round(y - 2) + 'px)';
+      // Exakt wie coloricon: setHandPos mit x-23 Offset
+      _tutHandEl.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
       _tutHandX = x; _tutHandY = y;
     }
 
