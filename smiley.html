@@ -8247,25 +8247,15 @@
       if (wobblePause > 0) await sleep(wobblePause);
 
       // 3) Complete: animate from halfAngle to fullAngle — 500ms
-      // Exakt gleiche Schwerkraft-Easing + Klack wie performKipp
       await new Promise(resolve => {
         const startTime = performance.now();
         let klackFired = false;
         function tick() {
-          const elapsed = performance.now() - startTime;
-          const progress = Math.min(elapsed / 500, 1);
-          // Schwerkraft-realistisch: identisch mit performKipp
-          let eased;
-          if (progress < 0.5) {
-            const t = progress * 2;
-            eased = t * (2 - t) * 0.5;
-          } else {
-            const t = (progress - 0.5) * 2;
-            eased = 0.5 + t * t * 0.5;
-          }
-          setAngle(halfAngle + (fullAngle - halfAngle) * eased);
-          if (!klackFired && eased > 0.88) { klackFired = true; playKlack(); }
-          if (progress < 1) requestAnimationFrame(tick);
+          const t = Math.min((performance.now() - startTime) / 500, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          setAngle(halfAngle + (fullAngle - halfAngle) * ease);
+          if (!klackFired && ease > 0.88) { klackFired = true; playKlack(); }
+          if (t < 1) requestAnimationFrame(tick);
           else { setAngle(fullAngle); resolve(); }
         }
         requestAnimationFrame(tick);
