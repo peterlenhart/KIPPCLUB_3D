@@ -312,7 +312,7 @@
         <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild -->
         <div id="clickColor" class="gameClickArea"></div>
         <div id="clickCard" class="gameClickArea"></div>
-        <div id="clickSmiley" class="gameClickArea"></div>
+        <div id="clickKippCard" class="gameClickArea"></div>
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
@@ -420,7 +420,7 @@
 
       const clickColor = document.getElementById("clickColor");
       const clickCard  = document.getElementById("clickCard");
-      const clickSmiley = document.getElementById("clickSmiley");
+      const clickKippCard = document.getElementById("clickKippCard");
       const clickQueen = document.getElementById("clickQueen");
       const clickKing  = document.getElementById("clickKing");
 
@@ -443,18 +443,19 @@
       clickCard.style.width = (cellPx * 3) + "px";
       clickCard.style.height = zahlenHeight + "px";
 
+      // KIPP CARD: Zeile 8
+      const row8 = ((8 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickKippCard.style.left = btnLeft + "px";
+      clickKippCard.style.top = row8 + "px";
+      clickKippCard.style.width = btnWidth + "px";
+      clickKippCard.style.height = btnHeight + "px";
+
       // KIPP QUEEN: Zeile 10
       const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
       clickQueen.style.left = btnLeft + "px";
       clickQueen.style.top = row10 + "px";
       clickQueen.style.width = btnWidth + "px";
       clickQueen.style.height = btnHeight + "px";
-
-      // KIPP SMILEY: Zeile 9, top=(9-1)*142=1136px
-      clickSmiley.style.left = btnLeft + "px";
-      clickSmiley.style.top = (8 * cellPx) + "px";
-      clickSmiley.style.width = btnWidth + "px";
-      clickSmiley.style.height = cellPx + "px";
 
       // KIPP KING: Zeile 12
       const row12 = ((12 + HEADER_ROW_OFFSET - 1) * cellPx);
@@ -526,13 +527,21 @@
       updateLevelLinks();
       document.getElementById("levelOverlay").classList.add("show");
     };
-    document.getElementById("clickSmiley").onclick = () => {
-      location.href = 'smiley.html';
-    };
     function updateLevelLinks() {
-      const base = selectedSkin === 'icons' ? 'coloricon.html' : 'training.html';
-      const mb = selectedSkin === 'icons' ? 'kipp21_icon.html' : 'kipp21.html';
-      const kp = selectedSkin === 'icons' ? 'kipp-prinzip-icon.html' : 'kipp-prinzip.html';
+      let base, mb, kp;
+      if (selectedSkin === 'icons') {
+        base = 'coloricon.html';
+        mb = 'kipp21_icon.html';
+        kp = 'kipp-prinzip-icon.html';
+      } else if (selectedSkin === 'card') {
+        base = 'card.html';
+        mb = 'card.html?level=masterbrain';
+        kp = 'kipp-prinzip.html';
+      } else {
+        base = 'training.html';
+        mb = 'kipp21.html';
+        kp = 'kipp-prinzip.html';
+      }
       document.getElementById('lvlTraining').onclick = () => location.href = base;
       document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
       document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
@@ -542,6 +551,13 @@
     }
     updateLevelLinks();
     // clickQueen und clickKing haben vorerst keine Funktion
+
+    // KIPP CARD
+    document.getElementById("clickKippCard").onclick = () => {
+      selectedSkin = 'card';
+      updateLevelLinks();
+      document.getElementById("levelOverlay").classList.add("show");
+    };
 
     // Modal
     const closeBtn = document.getElementById("closeBtn");
