@@ -6741,11 +6741,11 @@
       }
 
       showScrollband();
-      // Spielführungs-Text Phase 2: Kippzahl wählen
+      // Spielführungs-Text Phase 2: nur bei erster Runde
       const guideText = document.getElementById('_smileyGuideText');
-      if (guideText) {
+      if (guideText && _smileyRound === 0) {
         guideText.style.display = '';
-        guideText.innerHTML = 'W\u00e4hle 1-11 Kipps!<br>Dein Smiley muss zur ausgew\u00e4hlten Hand.';
+        guideText.innerHTML = 'W\u00e4hle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.';
       }
       // Smiley: Karte als "offen" markieren
       if (kipp21CardStates[activeCardIdx] !== undefined) kipp21CardStates[activeCardIdx] = 'offen';
@@ -6952,11 +6952,11 @@
       }
 
       showScrollband();
-      // Spielführungs-Text Phase 2
+      // Spielführungs-Text Phase 2: nur bei erster Runde
       const guideText2 = document.getElementById('_smileyGuideText');
-      if (guideText2) {
+      if (guideText2 && _smileyRound === 0) {
         guideText2.style.display = '';
-        guideText2.innerHTML = 'W\u00e4hle 1-11 Kipps!<br>Dein Smiley muss zur ausgew\u00e4hlten Hand.';
+        guideText2.innerHTML = 'W\u00e4hle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.';
       }
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
@@ -8942,24 +8942,26 @@
       _guidePt.project(camera);
       const _guideSy = Math.round((-_guidePt.y * 0.5 + 0.5) * 720) - 42;
 
-      let guideText = document.getElementById('_smileyGuideText');
-      if (!guideText) {
-        guideText = document.createElement('div');
-        guideText.id = '_smileyGuideText';
-        document.getElementById('container').appendChild(guideText);
+      // Spielführungs-Text nur bei erster Auswahl
+      if (_smileyRound === 0) {
+        let guideText = document.getElementById('_smileyGuideText');
+        if (!guideText) {
+          guideText = document.createElement('div');
+          guideText.id = '_smileyGuideText';
+          document.getElementById('container').appendChild(guideText);
+        }
+        guideText.style.cssText = 'position:absolute;left:0;width:360px;top:' + (_guideSy + 6) + 'px;' +
+          'text-align:center;z-index:20;pointer-events:none;' +
+          'font:bold 21px Arial;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);line-height:1.1;';
+        guideText.innerHTML = 'Pass gut auf!<br>Schau auf deinen ausgew\u00e4hlten Smiley!';
       }
-      guideText.style.cssText = 'position:absolute;left:0;width:360px;top:' + (_guideSy + 6) + 'px;' +
-        'text-align:center;z-index:20;pointer-events:none;' +
-        'font:bold 21px Arial;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);line-height:1.1;';
-      guideText.innerHTML = 'Pass gut auf!<br>Schau auf deinen ausgew\u00e4hlten Smiley!';
 
-      // Scrollband SICHER verstecken
+      // Scrollband verstecken, LOS GEHT'S immer zeigen
       window._smileyWaitingForLos = true;
       hideScrollband();
       const _numBtns = document.getElementById('numBtns');
       if (_numBtns) { _numBtns.style.display = 'none'; _numBtns.classList.add('hidden'); }
 
-      // LOS GEHT'S Button
       let losBtn = document.getElementById('_smileyLosBtn');
       if (!losBtn) {
         losBtn = document.createElement('button');
@@ -8974,9 +8976,9 @@
         'padding-bottom:5px;z-index:25;pointer-events:auto;display:block;';
       losBtn.onclick = function() {
         losBtn.style.display = 'none';
-        guideText.style.display = 'none';
+        const gt = document.getElementById('_smileyGuideText');
+        if (gt) gt.style.display = 'none';
         window._smileyWaitingForLos = false;
-        // Kipp-Blick starten
         runKipp21WobbleKniff(true);
       };
     });
