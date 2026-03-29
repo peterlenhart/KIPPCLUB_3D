@@ -6745,7 +6745,7 @@
       const guideText = document.getElementById('_smileyGuideText');
       if (guideText) {
         guideText.style.display = '';
-        guideText.innerHTML = 'Kippzahl w\u00e4hlen!<br>Von 1\u201311 (im Uhrz.s)';
+        guideText.innerHTML = 'W\u00e4hle 1-11 Kipps!<br>Dein Smiley muss zur ausgew\u00e4hlten Hand.';
       }
       // Smiley: Karte als "offen" markieren
       if (kipp21CardStates[activeCardIdx] !== undefined) kipp21CardStates[activeCardIdx] = 'offen';
@@ -6956,7 +6956,7 @@
       const guideText2 = document.getElementById('_smileyGuideText');
       if (guideText2) {
         guideText2.style.display = '';
-        guideText2.innerHTML = 'Kippzahl w\u00e4hlen!<br>Von 1\u201311 (im Uhrz.s)';
+        guideText2.innerHTML = 'W\u00e4hle 1-11 Kipps!<br>Dein Smiley muss zur ausgew\u00e4hlten Hand.';
       }
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
@@ -8948,10 +8948,10 @@
         guideText.id = '_smileyGuideText';
         document.getElementById('container').appendChild(guideText);
       }
-      guideText.style.cssText = 'position:absolute;left:0;width:360px;top:' + _guideSy + 'px;' +
+      guideText.style.cssText = 'position:absolute;left:0;width:360px;top:' + (_guideSy + 10) + 'px;' +
         'text-align:center;z-index:20;pointer-events:none;' +
-        'font:bold 18px Arial;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);line-height:1.3;';
-      guideText.innerHTML = 'Wo ist dein Smiley?<br>SCHAU GENAU!';
+        'font:bold 21px Arial;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);line-height:1.3;';
+      guideText.innerHTML = 'Pass gut auf!<br>Schau auf deinen ausgew\u00e4hlten Smiley!';
 
       // Scrollband SICHER verstecken
       window._smileyWaitingForLos = true;
