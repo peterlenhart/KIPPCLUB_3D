@@ -1296,7 +1296,7 @@
         e1:"IMMER 2 OPTIONEN", e2:"Zuerst auf Augen-Icon \u2013 W\u00fcrfelschauen (empfohlen)", e3:"Gleich auf Kippziel \u2013 Kippzug machen",
         k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit.<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
-        ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"ANLEITUNG",
+        ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
         wh:"WIEDERHOLEN", nm:"NEUES SPIEL", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",
@@ -1472,7 +1472,7 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
-        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"ANLEITUNG",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange",
         sw4:"WÄHLE 1 SMILEY!",sw4b:"Merke dir Hand und Kopf.",sNw:"NEU WÄHLEN",sLg:"LOS GEHT'S",sFe:"BEREIT",sLm:"DEIN LEVEL-MIX:"};
     document.getElementById("btnSpielen").textContent = T.sp;
@@ -8757,10 +8757,10 @@
         document.getElementById('hintLine1').style.opacity = showingLine1 ? '1' : '0';
         document.getElementById('hintLine2').style.opacity = showingLine1 ? '0' : '1';
       }, 3000);
-      // Tutorial deaktiviert — Anleitung läuft über showAnleitung()
-      // if (withTutorial && typeof runSmileyTutorial === 'function') {
-      //   setTimeout(() => runSmileyTutorial(), 500);
-      // }
+      // Tutorial starten wenn gewünscht
+      if (withTutorial && typeof runSmileyTutorial === 'function') {
+        setTimeout(() => runSmileyTutorial(), 500);
+      }
     }
 
     // Skill/Chill Lookup-Tabelle: [mb, brain, brainy, bb] → "skill/chill"
@@ -9456,9 +9456,9 @@
       e.preventDefault();
       showLeveltafel(false);
     }, { passive: false });
-    document.getElementById('btnDemo').addEventListener('click', () => showAnleitung());
+    document.getElementById('btnDemo').addEventListener('click', () => showLeveltafel(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
-      e.preventDefault(); showAnleitung();
+      e.preventDefault(); showLeveltafel(true);
     }, { passive: false });
     
     
@@ -11714,7 +11714,9 @@
       if (_tutHandEl) return;
       _tutHandEl = document.createElement('img');
       _tutHandEl.src = 'handsilber.webp';
-      _tutHandEl.style.cssText = 'position:fixed;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
+      // Wie coloricon: position:fixed, left an Container ausrichten
+      const cr = document.getElementById('container').getBoundingClientRect();
+      _tutHandEl.style.cssText = 'position:fixed;left:' + cr.left + 'px;top:0;width:90px;height:auto;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
       document.body.appendChild(_tutHandEl);
     }
 
@@ -11761,7 +11763,8 @@
 
     function centerOf(el) {
       const r = el.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      const cr = document.getElementById('container').getBoundingClientRect();
+      return { x: r.left + r.width / 2 - cr.left, y: r.top + r.height / 2 };
     }
 
     async function runSmileyTutorial() {
@@ -11846,6 +11849,7 @@
       const band = document.getElementById('scrollBandWrap');
       if (!band) { window._smileyTutorialActive = false; return; }
 
+      // Hardcoded wie coloricon: centerX=180 (Mitte 360px Container)
       const sbCenterX = 180;
       const sbRect = band.getBoundingClientRect();
       const sbY = sbRect.top + sbRect.height / 2;
