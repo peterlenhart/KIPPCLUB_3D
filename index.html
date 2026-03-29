@@ -313,6 +313,7 @@
         <div id="clickColor" class="gameClickArea"></div>
         <div id="clickCard" class="gameClickArea"></div>
         <div id="clickKippCard" class="gameClickArea"></div>
+        <div id="clickSmiley" class="gameClickArea"></div>
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
@@ -421,6 +422,7 @@
       const clickColor = document.getElementById("clickColor");
       const clickCard  = document.getElementById("clickCard");
       const clickKippCard = document.getElementById("clickKippCard");
+      const clickSmiley = document.getElementById("clickSmiley");
       const clickQueen = document.getElementById("clickQueen");
       const clickKing  = document.getElementById("clickKing");
 
@@ -449,6 +451,13 @@
       clickKippCard.style.top = row8 + "px";
       clickKippCard.style.width = btnWidth + "px";
       clickKippCard.style.height = btnHeight + "px";
+
+      // KIPP SMILEY: Zeile 9
+      const row9 = ((9 + HEADER_ROW_OFFSET - 1) * cellPx);
+      clickSmiley.style.left = btnLeft + "px";
+      clickSmiley.style.top = row9 + "px";
+      clickSmiley.style.width = btnWidth + "px";
+      clickSmiley.style.height = btnHeight + "px";
 
       // KIPP QUEEN: Zeile 10
       const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
@@ -557,6 +566,11 @@
       selectedSkin = 'card';
       updateLevelLinks();
       document.getElementById("levelOverlay").classList.add("show");
+    };
+
+    // KIPP SMILEY
+    document.getElementById("clickSmiley").onclick = () => {
+      location.href = 'smiley.html';
     };
 
     // Modal
