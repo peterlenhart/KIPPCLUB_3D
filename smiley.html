@@ -5430,7 +5430,7 @@
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
+        if (kippButtons && !window._smileyWaitingForLos) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
@@ -5686,6 +5686,7 @@
         kipp21KniffActive = false;
         kipp21Active = false;
         window._scorecardOpen = false;
+        window._smileyWaitingForLos = false;
         // Scorecard-Overlay entfernen falls vorhanden
         const scOv = document.getElementById('_scorecardOverlay');
         if (scOv) scOv.remove();
@@ -8953,6 +8954,7 @@
       guideText.innerHTML = 'Wo ist dein Smiley?<br>SCHAU GENAU!';
 
       // Scrollband SICHER verstecken
+      window._smileyWaitingForLos = true;
       hideScrollband();
       const _numBtns = document.getElementById('numBtns');
       if (_numBtns) { _numBtns.style.display = 'none'; _numBtns.classList.add('hidden'); }
@@ -8973,6 +8975,7 @@
       losBtn.onclick = function() {
         losBtn.style.display = 'none';
         guideText.style.display = 'none';
+        window._smileyWaitingForLos = false;
         // Kipp-Blick starten
         runKipp21WobbleKniff(true);
       };
