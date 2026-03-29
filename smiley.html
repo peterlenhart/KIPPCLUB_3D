@@ -11716,7 +11716,7 @@
       _tutHandEl.src = 'handsilber.webp';
       // Wie coloricon: position:fixed, left an Container ausrichten
       const cr = document.getElementById('container').getBoundingClientRect();
-      _tutHandEl.style.cssText = 'position:fixed;left:' + cr.left + 'px;top:0;width:90px;height:auto;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
+      _tutHandEl.style.cssText = 'position:fixed;left:' + cr.left + 'px;top:' + cr.top + 'px;width:90px;height:auto;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
       document.body.appendChild(_tutHandEl);
     }
 
@@ -11764,7 +11764,7 @@
     function centerOf(el) {
       const r = el.getBoundingClientRect();
       const cr = document.getElementById('container').getBoundingClientRect();
-      return { x: r.left + r.width / 2 - cr.left, y: r.top + r.height / 2 };
+      return { x: r.left + r.width / 2 - cr.left, y: r.top + r.height / 2 - cr.top };
     }
 
     async function runSmileyTutorial() {
@@ -11852,7 +11852,8 @@
       // Hardcoded wie coloricon: centerX=180 (Mitte 360px Container)
       const sbCenterX = 180;
       const sbRect = band.getBoundingClientRect();
-      const sbY = sbRect.top + sbRect.height / 2;
+      const contRect = document.getElementById('container').getBoundingClientRect();
+      const sbY = sbRect.top + sbRect.height / 2 - contRect.top;
       const sbRightX = sbCenterX + 100;
       const sbLeftX = sbCenterX - 100;
 
