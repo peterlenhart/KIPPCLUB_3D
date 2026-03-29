@@ -445,17 +445,15 @@
       clickCard.style.width = (cellPx * 3) + "px";
       clickCard.style.height = zahlenHeight + "px";
 
-      // KIPP CARD: Zeile 8
-      const row8 = ((8 + HEADER_ROW_OFFSET - 1) * cellPx);
+      // KIPP CARD: Zeile 8, kein Offset
       clickKippCard.style.left = btnLeft + "px";
-      clickKippCard.style.top = row8 + "px";
+      clickKippCard.style.top = (7 * cellPx) + "px";
       clickKippCard.style.width = btnWidth + "px";
       clickKippCard.style.height = btnHeight + "px";
 
-      // KIPP SMILEY: Zeile 9
-      const row9 = ((9 + HEADER_ROW_OFFSET - 1) * cellPx);
+      // KIPP SMILEY: Zeile 9, kein Offset
       clickSmiley.style.left = btnLeft + "px";
-      clickSmiley.style.top = row9 + "px";
+      clickSmiley.style.top = (8 * cellPx) + "px";
       clickSmiley.style.width = btnWidth + "px";
       clickSmiley.style.height = btnHeight + "px";
 
