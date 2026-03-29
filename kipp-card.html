@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DigiKipp – KIPP CARD</title>
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DigiKipp">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#4a2418">
+
+  <style>
+    /* Noto Serif für Kartenwerte */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@700;900&display=swap');
+
+    :root{
+      --cols: 8;
+      --cell: 142px;
+      --grid-alpha: 0.18;
+
+      --violett: rgb(164, 27, 133);
+      --blau:    rgb(0, 107, 179);
+      --gruen:   rgb(0, 166, 82);
+      --orange:  rgb(249, 150, 30);
+
+      --colorSize: 126px;
+
+      --bg-off-x: 4px;
+      --bg-off-y: 5px;
+
+      --scale: 1;
+      --uiscale: 1;
+      --gridW: calc(var(--cols) * var(--cell));
+      --gridH: 100vh;
+
+      --ui-panel-bg: #4a2418;
+      --ui-text: #ead7be;
+      --btn-bg: #ead7be;
+      --btn-text: #2a160c;
+      --btn-border: rgba(0,0,0,0.35);
+      --slot-border: rgba(0,0,0,0.55);
+      --slot-border-w: 4px;
+
+      /* Würfel-Farben */
+      --cube-wood-base: #d7c2a4;
+      --cube-wood-deep: #c9b08f;
+      --cube-wood-warm: rgba(155, 70, 110, 0.10);
+      --cube-wood-gold: rgba(249, 150, 30, 0.10);
+      --w1-innerframe: rgba(122, 74, 52, 1);
+      --slot-fill: #ead7be;
+
+      --rotSign: 1;
+      --rot: 0deg;
+
+      /* Header-Skalierung für X und P00/80 (75%) */
+      --headerScale: 0.75;
+
+      /* CLIP: Schatten nur im Innenraum 2B–7G sichtbar */
+      --clipTop:    calc((2 - 1) * var(--cell));
+      --clipLeft:   calc((2 - 1) * var(--cell));
+      --clipRight:  calc((8 - 7) * var(--cell));
+      --clipBottom: calc(var(--gridH) - (7 * var(--cell)));
+
+      /* Neutrales Blau für Zwischenkipp-Zahlen (≈C86/M43) */
+      --rankBlue: rgb(36, 145, 255);
+    }
+
+    html, body{
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      touch-action: manipulation;
+    }
+
+    body{
+      background:
+        radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
+        repeating-linear-gradient(
+          90deg,
+          rgba(140,105,70,0.10) 0px,
+          rgba(140,105,70,0.10) 10px,
+          rgba(230,205,165,0.10) 10px,
+          rgba(230,205,165,0.10) 22px
+        ),
+        linear-gradient(180deg, #d9c3a2, #cdb28f);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .stage{
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .layout{
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      transform-origin: top center;
+      transform: translateX(-50%) scale(var(--scale));
+    }
+
+    /* Z-INDEX: 0 - Box Hintergrund PNG (CARD) */
+    .bgPNG{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      background-image: url("digikipp_card_hgr.webp");
+      background-repeat: no-repeat;
+      background-size: 100% auto;
+      background-position:
+        calc(0px + var(--bg-off-x))
+        calc(0px + var(--bg-off-y));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Stich-Grafiken über Hintergrund, unter Zielkarten */
+    .stichLayer{
+      position:absolute;
+      left:0;
+      top:0;
+      width:var(--gridW);
+      height:var(--gridH);
+      pointer-events:none;
+      z-index:1;
+    }
+    .stichLayer img{
+      position:absolute;
+      left:0;
+      top:0;
+      display:none;
+    }
+
+    /* Zielkarten-Layer direkt über Stich-Layer */
+    .targetLayer{
+      position:absolute;
+      left:0;
+      top:0;
+      width:var(--gridW);
+      height:var(--gridH);
+      z-index:2; /* über Stich, unter Kugel/Würfel */
+      pointer-events:none;
+      display:none; /* Start: unsichtbar */
+    }
+    .targetCard{
+      position:absolute;
+      left:0;
+      top:0;
+      display:none;
+    }
+    .targetCard-6{ z-index:1; }
+    .targetCard-5{ z-index:2; }
+    .targetCard-4{ z-index:3; }
+    .targetCard-3{ z-index:4; }
+    .targetCard-2{ z-index:5; }
+    .targetCard-1{ z-index:6; }
+    .targetCard-covered{
+      z-index:7;
+      pointer-events:auto;
+      cursor:pointer;
+    }
+
+    /* Z-INDEX: Kugel (unter dem Würfel, über den Zielkarten) */
+    .ball{
+      position: absolute;
+      left: calc(4 * var(--cell));
+      top: calc((4 + 2) * var(--cell));
+      width: calc(var(--cell) * 0.55);
+      height: calc(var(--cell) * 0.55);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
+        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
+        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
+      box-shadow: 0 5px 10px rgba(0,0,0,0.28);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .colors{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      pointer-events: none;
+      z-index: 10;
+      /* Farbfelder optisch komplett weg */
+      display:none;
+    }
+
+    .colorSq{
+      position:absolute;
+      width: var(--colorSize);
+      height: var(--colorSize);
+      border-radius: 0;
+    }
+    .c-gruen   { background: var(--gruen); }
+    .c-orange  { background: var(--orange); }
+    .c-blau    { background: var(--blau); }
+    .c-violett { background: var(--violett); }
+
+    /* Würfel-Schatten (clip 2B–7G) */
+    .cubeShadowLayer{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+    .cubeShadowLayer.visible{ opacity: 1; }
+
+    .cubeShadowClip{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
+    }
+
+    .cubeShadowInner{
+      position: absolute;
+      left: calc(1 * var(--cell));
+      top:  calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      background: transparent;
+      border-radius: 10px;
+      box-shadow:
+        18px 26px 34px rgba(0,0,0,0.36),
+        26px 38px 54px rgba(0,0,0,0.26),
+        34px 50px 78px rgba(0,0,0,0.18);
+    }
+
+    .grid{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 2;
+      pointer-events: none;
+      background-image:
+        repeating-linear-gradient(
+          to right,
+          rgba(255,255,255,var(--grid-alpha)) 0px,
+          rgba(255,255,255,var(--grid-alpha)) 1px,
+          rgba(255,255,255,0) 1px,
+          rgba(255,255,255,0) var(--cell)
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,var(--grid-alpha)) 0px,
+          rgba(255,255,255,var(--grid-alpha)) 1px,
+          rgba(255,255,255,0) 1px,
+          rgba(255,255,255,0) var(--cell)
+        );
+    }
+
+    /* Zwischenkipp-Schatten PNGs */
+    .zwischenKippSchattenLayer{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .zwischenKippSchatten{
+      position: absolute;
+      left: calc(1 * var(--cell));
+      top: calc(3 * var(--cell));
+      width: calc(6 * var(--cell));
+      height: calc(6 * var(--cell));
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      background-position: 0 0;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+    }
+    .zwischenKippSchatten.visible{ opacity: 1; }
+
+    #shadowQ0{ background-image: url("SchattenZwischenKipp_Q0.png"); }
+    #shadowQ1{ background-image: url("SchattenZwischenKipp_Q1.png"); }
+    #shadowQ2{ background-image: url("SchattenZwischenKipp_Q2.png"); }
+    #shadowQ3{ background-image: url("SchattenZwischenKipp_Q3.png"); }
+
+    /* Würfel Groups */
+    .wFaceGroup,
+    .kipGroup{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 4;
+      pointer-events: none;
+
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+
+    .cubeFace{
+      position: absolute;
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      box-sizing: border-box;
+      border-radius: 0;
+      background:
+        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
+        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
+        repeating-linear-gradient(
+          20deg,
+          rgba(0,0,0,0.02) 0px,
+          rgba(0,0,0,0.02) 17px,
+          rgba(255,255,255,0.02) 17px,
+          rgba(255,255,255,0.02) 30px
+        ),
+        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
+        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
+      box-shadow:
+        inset 0 0 0 5px var(--w1-innerframe),
+        0 0 0 2px rgba(255,255,255,0.08) inset;
+      z-index: 2;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+    }
+
+    .uiLayer{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* Zielzahlen am Rand: unsichtbar */
+    .targetNumber{ display: none !important; }
+
+    /* Button-Stil */
+    .squareBtn{
+      width: calc(44px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
+    .squareBtn[disabled]{ opacity: 1; pointer-events: none; filter: saturate(0.8); }
+
+    /* NEU: Kippzahl-Button während Lauf (braun + beige Zahl) */
+    .squareBtn.runSelected{
+      background: var(--ui-panel-bg) !important;
+      border-color: rgba(0,0,0,0.65);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.28),
+        0 0 0 1px rgba(255,255,255,0.08) inset;
+    }
+    .squareBtn.runSelected .anzahlText{
+      color: var(--ui-text) !important;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.40);
+    }
+
+    /* Rot-braune Schrift (wie vorher) */
+    .anzahlText{
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      font-size: calc(18px * var(--uiscale));
+      line-height: 1;
+    }
+
+    .startBtnWrap{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .startBtn{
+      pointer-events: auto;
+      width: calc(520px * var(--uiscale));
+      max-width: calc(7 * var(--cell));
+      height: calc(44px * var(--uiscale));
+    }
+
+    /* NEU: Scrollband für Kippanzahl (ersetzt 1–6 Buttons) */
+    .scrollBandWrap{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      z-index:50;
+      padding: calc(4px * var(--uiscale)) calc(8px * var(--uiscale));
+      background: rgba(234,215,190,0.55); /* beige Streifen */
+      border-radius: calc(18px * var(--uiscale));
+      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+    }
+    .scrollBandWrap.locked{
+      opacity:0.4; /* inaktiv, aber sichtbar */
+    }
+
+    .scrollBand{
+      pointer-events:auto;
+      display:flex;
+      gap:calc(7px * var(--uiscale));
+      overflow-x:auto;
+      padding:calc(4px * var(--uiscale)) calc(6px * var(--uiscale));
+      max-width:calc(6 * var(--cell)); /* bewusst enger, damit links/rechts abgeschnitten wird */
+      scrollbar-width:none;
+    }
+    .scrollBand::-webkit-scrollbar{
+      display:none;
+    }
+
+    /* Pendel-Animation West–Ost */
+    @keyframes scrollWiggle{
+      0%   { transform: translateX(-10px); }
+      100% { transform: translateX(10px); }
+    }
+    .scrollBand.wiggle{
+      animation: scrollWiggle 1.1s ease-in-out 0.3s infinite alternate;
+      will-change: transform;
+    }
+
+    .scrollItem{
+      min-width: calc(var(--cell) * 0.85);
+      height:    calc(var(--cell) * 0.85);
+      border-radius: calc(0.20 * var(--cell));
+      border:2px solid rgba(0,0,0,0.65);
+      background:rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:1000;
+      letter-spacing:0.06em;
+      color:#7a3f2b;
+      text-shadow:0 1px 0 rgba(255,255,255,0.35);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      cursor:pointer;
+      font-size: calc(var(--cell) * 0.55); /* große Zahlen, fast flächendeckend */
+    }
+    .scrollItem:active{
+      transform:scale(0.98);
+      filter:brightness(0.98);
+    }
+    .scrollItem.disabled{
+      opacity:0.5;
+      pointer-events:none;
+    }
+
+    @keyframes pulseScale{
+      0%   { transform: scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      100% { transform: scale(1.06); filter: drop-shadow(0 0 14px rgba(255,255,255,0.45)); }
+    }
+    .pulse{
+      animation: pulseScale 0.9s ease-in-out 0s infinite alternate;
+      will-change: transform, filter;
+    }
+
+    .hintTitle{
+      position: absolute;
+      left: 50%;
+      color: rgba(255,255,255,0.96);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.75),
+        0 10px 22px rgba(0,0,0,0.55);
+      white-space: nowrap;
+      z-index: 60;
+      pointer-events: none;
+      font-size: calc(18px * var(--uiscale));
+      transform: translate(-50%, -50%);
+      /* CARD: Hinweistext generell unsichtbar */
+      display: none !important;
+    }
+    .hintSmall{
+      font-size: calc(14px * var(--uiscale)) !important;
+      opacity: 0.96;
+    }
+
+    /* ALTES Zielpad – bleibt technisch da, ist aber immer versteckt */
+    .targetPadBtn{
+      position: absolute;
+      box-sizing: border-box;
+      border-radius: 0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill);
+      box-shadow:
+        inset 0 0 0 6px var(--w1-innerframe),
+        0 10px 18px rgba(0,0,0,0.22);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: none;
+      z-index: 80;
+      display: none !important; /* <— altes Zielpad weg */
+    }
+
+    .targetPadCircle{
+      width: 47px;
+      height: 47px;
+      border-radius: 50%;
+      border: 4px solid var(--w1-innerframe);
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+
+    .targetPadNum{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
+      font-size: calc(var(--cell) * 0.92);
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0;
+      font-family: "Noto Serif", serif;
+    }
+    .targetPadNum.twodigit{
+      letter-spacing: -0.16em !important;
+      transform: translateX(-0.10em);
+    }
+
+    /* Slots */
+    .slot{
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      box-sizing: border-box;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill);
+      border: var(--slot-border-w) solid var(--slot-border);
+      border-radius: 0;
+      z-index: 7;
+      box-shadow:
+        2px 2px 0 rgba(255,255,255,0.25) inset,
+        -2px -2px 0 rgba(0,0,0,0.15) inset,
+        0 6px 12px rgba(0,0,0,0.35),
+        4px 4px 7px -2px rgba(0,0,0,0.30);
+    }
+
+    .slot .num{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      z-index: 9;
+    }
+
+    .slot .num > span{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
+      font-size: calc(var(--cell) * 0.70);
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+      transform: rotate(var(--num-rot, 0deg));
+      transform-origin: 50% 50%;
+      position: relative;
+      line-height: 1;
+      font-family: "Noto Serif", serif;
+    }
+
+    /* Kartenfarben: Rot und Schwarz */
+    .slot .num > span.cardRed{
+      color: #d32f2f; /* Rot */
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+    }
+    .slot .num > span.cardBlack{
+      color: #212121; /* Schwarz */
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+    }
+
+    /* Verbrauchte Karten transparent */
+    .slot .num > span.used{
+      opacity: 0.25;
+    }
+
+    /* NEU: mehr Abstand für 10 am Würfelslot */
+    .slot .num > span.twodigit{
+      letter-spacing: 0.04em !important;
+      transform: rotate(var(--num-rot, 0deg)); /* kein negatives Zusammenziehen mehr */
+    }
+
+    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
+    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
+    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
+    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
+
+    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    .kipScale{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        scaleX(0.6666667)
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+
+    .kipShadow{ display: none; }
+
+    .kipEdgeCore{
+      position: absolute;
+      left: calc(4 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: 10px;
+      height: calc(3 * var(--cell));
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
+      z-index: 1;
+      opacity: 0.95;
+    }
+
+    .kipFaceQ0{
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
+
+    .kipFaceQ1{
+      left: calc(4 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
+
+    .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .k-2b{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .k-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    .k-3e{ left: calc(4 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .k-4e{ left: calc(4 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .k-2f{ left: calc(5 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .k-2g{ left: calc(6 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    .hidden{ display:none !important; }
+
+    /* Laufende Score-Anzeige Player (Zeile 8 A–B) */
+    .scoreRun{
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: translate(-50%, -50%);
+      font-weight: 1000;
+      letter-spacing: 0.10em;
+      color: rgb(214, 207, 3);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.75),
+        0 8px 18px rgba(0,0,0,0.60);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      z-index: 120;
+      pointer-events: none;
+    }
+
+    /* Laufende Score-Anzeige Bank (Zeile 8 G–H) */
+    .scoreDisplay{
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: translate(-50%, -50%) scale(1);
+      font-weight: 1000;
+      letter-spacing: 0.10em;
+      color: rgb(214, 207, 3);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.75),
+        0 8px 18px rgba(0,0,0,0.60);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      z-index: 120;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    .scoreDisplay.finalVisible{
+      opacity: 1;
+    }
+    @keyframes scorePulse{
+      0%{
+        transform: translate(-50%, -50%) scale(1.00);
+        filter: drop-shadow(0 -26px 0 rgba(0,0,0,0.0));
+      }
+      100%{
+        transform: translate(-50%, -50%) scale(1.08);
+        filter: drop-shadow(0 -38px 16px rgba(0,0,0,0.26));
+      }
+    }
+    .scoreDisplay.scorePulse{
+      animation: scorePulse 1.1s ease-in-out 0s infinite alternate;
+      will-change: transform, filter;
+    }
+
+    .titleLeft{
+      position: absolute;
+      top: 0;
+      font-size: clamp(100px, 14vmin, 180px);
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      text-align: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .kippAnzahlBtns{
+      position: absolute;
+      display: flex;
+      gap: calc(10px * var(--uiscale));
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      z-index: 80;
+    }
+    .kippAnzahlBtns.compact{ gap: calc(10px * var(--uiscale)); }
+
+    .navBtn{
+      position: absolute;
+      width: calc(56px * var(--uiscale));
+      height: calc(56px * var(--uiscale));
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      z-index: 100;
+      padding: 0;
+    }
+    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
+    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
+
+    .backIcon{
+      position: relative;
+      width: calc(40px * var(--uiscale));
+      height: calc(40px * var(--uiscale));
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+    }
+    .backIcon::before{
+      content:"";
+      position:absolute;
+      left: 50%;
+      top: 50%;
+      width: 35%;
+      height: calc(6px * var(--uiscale));
+      background: rgba(234,215,190,0.96);
+      border-radius: calc(3px * var(--uiscale));
+      transform: translateY(-50%);
+    }
+    .backIcon::after{
+      content:"";
+      position:absolute;
+      left: 15%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border-top: calc(12px * var(--uiscale)) solid transparent;
+      border-bottom: calc(12px * var(--uiscale)) solid transparent;
+      border-right: calc(16px * var(--uiscale)) solid rgba(234,215,190,0.96);
+      transform: translateY(-50%);
+    }
+
+    @keyframes kippPulseGlow{
+      0%   { transform: scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      100% { transform: scale(1.09); filter: drop-shadow(0 0 14px rgba(255,255,255,0.95)); }
+    }
+    .kippPulse{
+      animation: kippPulseGlow 0.22s ease-in-out 0s 10 alternate;
+    }
+
+    /* Intro Overlay (CARD-Variante) */
+    #introOverlay{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      background: rgb(0, 76, 28);
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: calc(32px * var(--uiscale));
+      transition: opacity 0.4s ease;
+    }
+    #introOverlay.hidden{
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .introTitle{
+      font-size: calc(48px * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      color: var(--ui-text);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.75),
+        0 10px 22px rgba(0,0,0,0.55);
+      text-transform: uppercase;
+      line-height: 1.1;
+      margin-bottom: calc(20px * var(--uiscale));
+      text-align: center;
+    }
+
+    .introText{
+      font-size: calc(22px * var(--uiscale));
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ui-text);
+      text-align: center;
+      line-height: 1.6;
+      opacity: 0.95;
+      max-width: calc(600px * var(--uiscale));
+    }
+
+    .introSub{
+      margin-top: calc(8px * var(--uiscale));
+      font-size: calc(18px * var(--uiscale));
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ui-text);
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    .introBtn{
+      margin-top: calc(20px * var(--uiscale));
+      width: calc(280px * var(--uiscale));
+      height: calc(50px * var(--uiscale));
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      font-size: calc(20px * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      transition: transform 0.1s ease, filter 0.1s ease;
+    }
+    .introBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    /* Zurück Button im Intro */
+    .introBackBtn{
+      margin-top: calc(10px * var(--uiscale));
+      margin-bottom: calc(10px * var(--uiscale));
+      width: calc(280px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
+      border-radius: calc(12px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.35);
+      background: rgba(234,215,190,0.75);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      font-size: calc(17px * var(--uiscale));
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      transition: transform 0.1s ease, filter 0.1s ease;
+    }
+    .introBackBtn:active{
+      transform: scale(0.97);
+      filter: brightness(0.96);
+    }
+
+    /* NEU: Random-Zielanzeige */
+    .targetRank10D{
+      position:absolute;
+      transform: translate(-50%, -50%);
+      font-family: "Noto Serif", serif;
+      font-weight: 900;
+      color:#111;
+      text-shadow:0 2px 0 rgba(255,255,255,0.35);
+      z-index:90;
+      pointer-events:none;
+      display:none;
+      line-height:1;
+    }
+
+    .targetSuitImg{
+      position:absolute;
+      z-index:8; /* über target_1..n, unter targetCovered */
+      display:none;
+      pointer-events:none;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="layout" id="layout">
+
+      <!-- Intro Overlay INNERHALB layout – CARD-Text -->
+      <div id="introOverlay">
+        <h1 style="font-size: 36px; margin-bottom: 20px;">DigiKipp – KIPP CARD</h1>
+        <div style="max-width: 500px; max-height: 60vh; overflow-y: auto; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; margin: 20px auto;">
+          <p style="font-size: 20px; font-weight: 700; margin-bottom: 15px; color: #ffeb3b;">WETTEN, du schaffst den Highscore 180 nicht?</p>
+          <p style="margin-bottom: 10px; text-align: left;"><strong>1.</strong> Klicke auf die pulsierende verdeckte Karte</p>
+          <p style="margin-bottom: 10px; text-align: left;"><strong>2.</strong> Damit deckst du die ausgespielte Karte der Bank auf</p>
+          <p style="margin-bottom: 10px; text-align: left;"><strong>3.</strong> Wähle eine Kipp-Anzahl von 0 bis 11 (scrollbares Band)</p>
+          <p style="margin-bottom: 10px; text-align: left;"><strong>4.</strong> Wenn du die richtige Kipp-Anzahl wählst, dann stichst du "höher mit gleicher Farbe"</p>
+          <p style="margin-top: 20px; margin-bottom: 10px; font-weight: 700; text-align: left;">SUPER Challenge: Wenn du immer genau mit dem nächst höheren Targetwert stichst, dann hast du alle 12 Stiche und den Highscore 180.</p>
+          <p style="margin-top: 15px; font-style: italic; text-align: left;">Mit Merkfähigkeit und Logik 100%-ig machbar, aber sehr sehr unwahrscheinlich.</p>
+        </div>
+        <button class="introBackBtn" id="introBackBtn">← Zur Auswahl</button>
+        <button class="introBtn" id="introStartBtn">LOS GEHT'S</button>
+      </div>
+
+      <div class="bgPNG" aria-hidden="true"></div>
+
+      <!-- Stich-Grafiken Player -->
+      <div class="stichLayer" id="stichLayerPL" aria-hidden="true">
+        <img id="stich1_pl" src="stich1_pl.webp" alt="">
+        <img id="stich2_pl" src="stich2_pl.webp" alt="">
+        <img id="stich3_pl" src="stich3_pl.webp" alt="">
+        <img id="stich4_pl" src="stich4_pl.webp" alt="">
+        <img id="stich5_pl" src="stich5_pl.webp" alt="">
+        <img id="stich6_pl" src="stich6_pl.webp" alt="">
+      </div>
+
+      <!-- Stich-Grafiken Bank -->
+      <div class="stichLayer" id="stichLayerB" aria-hidden="true">
+        <img id="stich1_b" src="stich1_b.webp" alt="">
+        <img id="stich2_b" src="stich2_b.webp" alt="">
+        <img id="stich3_b" src="stich3_b.webp" alt="">
+        <img id="stich4_b" src="stich4_b.webp" alt="">
+        <img id="stich5_b" src="stich5_b.webp" alt="">
+        <img id="stich6_b" src="stich6_b.webp" alt="">
+      </div>
+
+      <!-- Zielkarten WebP-Layer (über CARD & Stich, unter Kugel & Würfel) -->
+      <div class="targetLayer" id="targetLayer" aria-hidden="false">
+        <img id="target6" class="targetCard targetCard-6" src="target_6.webp" alt="">
+        <img id="target5" class="targetCard targetCard-5" src="target_5.webp" alt="">
+        <img id="target4" class="targetCard targetCard-4" src="target_4.webp" alt="">
+        <img id="target3" class="targetCard targetCard-3" src="target_3.webp" alt="">
+        <img id="target2" class="targetCard targetCard-2" src="target_2.webp" alt="">
+        <img id="target1" class="targetCard targetCard-1" src="target_1.webp" alt="">
+        <img id="targetCovered" class="targetCard targetCard-covered" src="target_verdeckt.webp" alt="">
+      </div>
+
+      <div class="ball" aria-label="Kugel"></div>
+      <div class="colors" id="colors" aria-hidden="true"></div>
+
+      <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
+        <div class="cubeShadowClip">
+          <div class="cubeShadowInner"></div>
+        </div>
+      </div>
+
+      <div class="zwischenKippSchattenLayer" aria-hidden="true">
+        <div id="shadowQ0" class="zwischenKippSchatten"></div>
+        <div id="shadowQ1" class="zwischenKippSchatten"></div>
+        <div id="shadowQ2" class="zwischenKippSchatten"></div>
+        <div id="shadowQ3" class="zwischenKippSchatten"></div>
+      </div>
+
+      <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
+        <div class="cubeFace" aria-label="Würfelfläche"></div>
+
+        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span></span></div></div>
+        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span></span></div></div>
+        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span></span></div></div>
+        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
+      </div>
+
+      <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="0_1" aria-label="Kipp Gruppe 0_1">
+        <div class="kipScale">
+          <div class="kipShadow" aria-hidden="true"></div>
+          <div class="kipEdgeCore" aria-hidden="true"></div>
+
+          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
+          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
+
+          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
+          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
+          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
+          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
+
+          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
+          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
+          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
+          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
+        </div>
+      </div>
+
+      <div id="kipGroup_1_2" class="kipGroup hidden" data-kip="1_2" aria-label="Kipp Gruppe 1_2">
+        <div class="kipScale">
+          <div class="kipShadow" aria-hidden="true"></div>
+          <div class="kipEdgeCore" aria-hidden="true"></div>
+
+          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
+          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
+
+          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
+          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
+          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
+          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
+
+          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
+          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
+          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
+          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
+        </div>
+      </div>
+
+      <div id="kipGroup_2_0" class="kipGroup hidden" data-kip="2_0" aria-label="Kipp Gruppe 2_0">
+        <div class="kipScale">
+          <div class="kipShadow" aria-hidden="true"></div>
+          <div class="kipEdgeCore" aria-hidden="true"></div>
+
+          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
+          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
+
+          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
+          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
+          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
+          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
+
+          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
+          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
+          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
+          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
+        </div>
+      </div>
+
+      <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <!-- Player-Score (Zeile 8 A–B) -->
+        <div class="scoreRun" id="scoreRun">000</div>
+        <!-- Bank-Score (Zeile 8 G–H) -->
+        <div class="scoreDisplay" id="scoreDisplay">000</div>
+
+        <!-- NEU: Random-Zielanzeige -->
+        <div id="targetRank10D" class="targetRank10D"></div>
+        <img id="targetSuitImg" class="targetSuitImg" src="" alt="">
+
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
+
+        <div class="hintTitle" id="hintTitle"></div>
+
+        <!-- START / ERGEBNIS: gleicher Maskenplatz -->
+        <div class="startBtnWrap" id="startBtnWrap">
+          <button id="btnSchauen" class="squareBtn startBtn" type="button">
+            <span class="anzahlText pulse" id="btnSchauenPulse">SCHAUEN &amp; MERKEN</span>
+          </button>
+
+          <button id="btnErgebnis" class="squareBtn startBtn hidden" type="button">
+            <span class="anzahlText" id="btnErgebnisText">NEU SPIELEN</span>
+          </button>
+        </div>
+
+        <!-- NEU: Scrollband für Kippanzahl (Zeile 13, gleiche Position wie Startbutton) -->
+        <div class="scrollBandWrap hidden" id="scrollBandWrap">
+          <div class="scrollBand" id="scrollBand"></div>
+        </div>
+
+        <button class="targetPadBtn hidden" id="targetPadBtn" type="button" aria-label="Ziel erzeugen">
+          <div class="targetPadCircle" id="targetPadCircle"></div>
+          <div class="targetPadNum" id="targetPadNum"></div>
+        </button>
+
+        <div id="kippAnzahlView" class="hidden">
+          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
+
+          <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
+            <span class="anzahlText">T</span>
+          </button>
+        </div>
+
+        <button class="navBtn" id="backBtn" aria-label="Zurück">
+          <div class="backIcon"></div>
+        </button>
+      </div>
+
+      <div class="grid" id="grid" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <script>
+    const colorsEl = document.getElementById("colors");
+
+    const btnSchauen      = document.getElementById("btnSchauen");
+    const btnSchauenPulse = document.getElementById("btnSchauenPulse");
+    const btnErgebnis     = document.getElementById("btnErgebnis");
+    const btnErgebnisText = document.getElementById("btnErgebnisText");
+    const startBtnWrap    = document.getElementById("startBtnWrap");
+    const hintTitle       = document.getElementById("hintTitle");
+
+    const kippAnzahlView  = document.getElementById("kippAnzahlView");
+    const kippAnzahlBtns  = document.getElementById("kippAnzahlBtns");
+
+    const backBtn  = document.getElementById("backBtn");
+
+    const testTargetBtn   = document.getElementById("testTargetBtn");
+
+    const targetPadBtn    = document.getElementById("targetPadBtn");
+    const targetPadCircle = document.getElementById("targetPadCircle");
+    const targetPadNum    = document.getElementById("targetPadNum");
+
+    const targetRank10D   = document.getElementById("targetRank10D");
+    const targetSuitImg   = document.getElementById("targetSuitImg");
+
+    const scrollBandWrap  = document.getElementById("scrollBandWrap");
+    const scrollBand      = document.getElementById("scrollBand");
+
+    const shadowQ0 = document.getElementById("shadowQ0");
+    const shadowQ1 = document.getElementById("shadowQ1");
+    const shadowQ2 = document.getElementById("shadowQ2");
+    const shadowQ3 = document.getElementById("shadowQ3");
+    const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
+
+    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
+
+    /* Target-Karten WebP-Elemente */
+    const targetLayer      = document.getElementById("targetLayer");
+    const targetImg1       = document.getElementById("target1");
+    const targetImg2       = document.getElementById("target2");
+    const targetImg3       = document.getElementById("target3");
+    const targetImg4       = document.getElementById("target4");
+    const targetImg5       = document.getElementById("target5");
+    const targetImg6       = document.getElementById("target6");
+    const targetImgCovered = document.getElementById("targetCovered");
+
+    /* Stich-Grafiken */
+    const stichPLImgs = [];
+    const stichBImgs  = [];
+    for(let i=1;i<=6;i++){
+      stichPLImgs[i] = document.getElementById(`stich${i}_pl`);
+      stichBImgs[i]  = document.getElementById(`stich${i}_b`);
+    }
+
+    function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
+
+    const wFaceGroup = document.getElementById("wFaceGroup");
+
+    const kipGroups = {
+      "0_1": document.getElementById("kipGroup_0_1"),
+      "1_2": document.getElementById("kipGroup_1_2"),
+      "2_0": document.getElementById("kipGroup_2_0"),
+    };
+
+    let activeKipId = "0_1";
+    function getKipId(fromFace, toFace){ return `${fromFace}_${toFace}`; }
+
+    function setActiveKipGroup(kipId){
+      activeKipId = kipId;
+      Object.entries(kipGroups).forEach(([id, el]) => {
+        if(!el) return;
+        if(id === kipId) el.classList.remove("hidden");
+        else el.classList.add("hidden");
+      });
+      updateShadowVisibility();
+    }
+
+    const slotTargetsW = [
+      wFaceGroup.querySelector('[data-slot="S1"] .num > span'),
+      wFaceGroup.querySelector('[data-slot="S2"] .num > span'),
+      wFaceGroup.querySelector('[data-slot="S3"] .num > span'),
+      wFaceGroup.querySelector('[data-slot="S4"] .num > span'),
+    ];
+
+    const slotElsW = [
+      wFaceGroup.querySelector('[data-slot="S1"]'),
+      wFaceGroup.querySelector('[data-slot="S2"]'),
+      wFaceGroup.querySelector('[data-slot="S3"]'),
+      wFaceGroup.querySelector('[data-slot="S4"]'),
+    ];
+
+    // =========================================================
+    // Hit-Memory – CARD-Version: keine Slot-Hintergrundfärbung mehr
+    // =========================================================
+    let lockedColorsByNumber = new Map(); // bleibt für spätere Varianten
+    function resetLockedColors(){ lockedColorsByNumber = new Map(); }
+
+    function applyPersistentFill(slotEl, n){
+      if(!slotEl) return;
+      // CARD: Slots behalten immer das neutrale Beige
+      slotEl.style.removeProperty("--slot-fill");
+    }
+
+    function clearHitPulse(){
+      document.querySelectorAll(".slot").forEach(el => {
+        el.classList.remove("kippPulse");
+        const s = el.querySelector(".num > span");
+        if(s) s.classList.remove("kippPulse");
+      });
+    }
+
+    const kipSlotCache = {};
+    function getKipSlots(kipId){
+      if(kipSlotCache[kipId]) return kipSlotCache[kipId];
+      const g = kipGroups[kipId];
+      if(!g){
+        kipSlotCache[kipId] = {
+          rightSpans:[null,null,null,null],
+          leftSpans:[null,null,null,null],
+          rightEls:[null,null,null,null],
+          leftEls:[null,null,null,null]
+        };
+        return kipSlotCache[kipId];
+      }
+
+      const rightEls = [
+        g.querySelector('[data-slot="W1_1"]'),
+        g.querySelector('[data-slot="W1_2"]'),
+        g.querySelector('[data-slot="W1_3"]'),
+        g.querySelector('[data-slot="W1_4"]'),
+      ];
+      const leftEls = [
+        g.querySelector('[data-slot="W2_A"]'),
+        g.querySelector('[data-slot="W2_B"]'),
+        g.querySelector('[data-slot="W2_C"]'),
+        g.querySelector('[data-slot="W2_D"]'),
+      ];
+
+      const rightSpans = [
+        g.querySelector('[data-slot="W1_1"] .num > span'),
+        g.querySelector('[data-slot="W1_2"] .num > span'),
+        g.querySelector('[data-slot="W1_3"] .num > span'),
+        g.querySelector('[data-slot="W1_4"] .num > span'),
+      ];
+      const leftSpans = [
+        g.querySelector('[data-slot="W2_A"] .num > span'),
+        g.querySelector('[data-slot="W2_B"] .num > span'),
+        g.querySelector('[data-slot="W2_C"] .num > span'),
+        g.querySelector('[data-slot="W2_D"] .num > span'),
+      ];
+
+      kipSlotCache[kipId] = { rightSpans, leftSpans, rightEls, leftEls };
+      return kipSlotCache[kipId];
+    }
+
+    // Textfarbe nach Suit (Rot bei Herz/Karo, sonst Schwarz)
+    function applySlotTextColor(spanEl, suitColor){
+      if(!spanEl) return;
+      
+      // ALLE Kartenwerte immer blau - einheitliche Farbe
+      spanEl.style.color = "rgba(38, 77, 120, 1.0)";
+    }
+
+    // Neutral-Blau für Zwischenkipp
+    function applyNeutralTextColor(spanEl){
+      if(!spanEl) return;
+      spanEl.style.color = "var(--rankBlue)";
+    }
+
+    const allColors = ["violett","blau","gruen","orange"];
+
+    /* Mapping Board-Farbe -> Suit-WebP (Karo=grün, Kreuz=orange, Herz=blau, Pik=violett) */
+    const SUIT_IMG_BY_COLOR = {
+      gruen:   "karo.webp",   // ♦
+      orange:  "kreuz.webp",  // ♣
+      blau:    "herz.webp",   // ♥
+      violett: "pik.webp"     // ♠
+    };
+
+    const HEADER_ROW_OFFSET = 2;
+    const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
+
+    function numVar(name){
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+    }
+
+    function coordToXY(coord){
+      const row = parseInt(coord, 10);
+      const colLetter = coord.replace(String(row), "");
+      return { row, col: colMap[colLetter], colLetter };
+    }
+
+    let currentTarget = null;
+
+    let targetRevealed = false;
+    let started = false;
+
+    let uiMode = "START"; // START | TARGET | COUNT | END
+
+    let attemptsForTarget = 0;
+    const MAX_ATTEMPTS_PER_TARGET = 12;
+
+    // Player-/Bank-Score
+    let playerScore = 0;
+    let bankScore   = 0;
+
+    // Player-/Bank-Stiche (noch ohne Logik)
+    let playerTricks = 0;
+    let bankTricks   = 0;
+
+    // Random Kartenfarben (rot/schwarz) - fix pro Spiel
+    let cardColors = {}; // { 1: "red", 2: "black", 3: "red", ... }
+
+    // Verbrauchte Karten (transparent, inaktiv)
+    let usedCards = new Set(); // Set mit Kartennummern die bereits gespielt wurden
+
+    function initRandomCardColors(){
+      cardColors = {};
+      for (let num = 1; num <= 12; num++){
+        cardColors[num] = Math.random() < 0.5 ? "red" : "black";
+      }
+    }
+
+    function updateScoresUI(){
+      const runEl   = document.getElementById("scoreRun");     // Player
+      const finalEl = document.getElementById("scoreDisplay"); // Bank
+      if (runEl){
+        runEl.textContent = String(playerScore).padStart(3, "0");
+      }
+      if (finalEl){
+        finalEl.textContent = String(bankScore).padStart(3, "0");
+      }
+    }
+
+    // aktuell nur Werte zurücksetzen – Stiche werden später mit WebP-Stichen verknüpft
+    function resetStichLayers(){
+      playerTricks = 0;
+      bankTricks   = 0;
+      for (let i = 1; i <= 6; i++){
+        const pl = document.getElementById(`stich${i}_pl`);
+        const b  = document.getElementById(`stich${i}_b`);
+        if (pl){
+          pl.style.display = "none";
+          pl.style.transform = "translateX(0px)";
+          pl.style.zIndex = "";
+        }
+        if (b){
+          b.style.display = "none";
+          b.style.transform = "translateX(0px)";
+          b.style.zIndex = "";
+        }
+      }
+    }
+
+    const ordinals = {
+      1:"Erstes",2:"Zweites",3:"Drittes",4:"Viertes",5:"Fünftes",6:"Sechstes",
+      7:"Siebtes",8:"Achtes",9:"Neuntes",10:"Zehntes",11:"Elftes",12:"Zwölftes"
+    };
+
+    const MAX_TARGETS = 12;
+
+    function getTargetHintText(){
+      const nextIndex = drawsCount + 1; // 1..MAX_TARGETS
+      if (nextIndex >= MAX_TARGETS) return "LETZTES KIPPZIEL";
+      return `${ordinals[nextIndex] || (nextIndex + ".")} KIPPZIEL VON ${MAX_TARGETS}`;
+    }
+
+    function showHint(text, small=false){
+      if (!hintTitle) return;
+      hintTitle.textContent = text;
+      hintTitle.classList.toggle("hintSmall", !!small);
+    }
+    function hideHint(){
+      if (!hintTitle) return;
+      hintTitle.textContent = "";
+    }
+
+    function hideStartUI(){
+      startBtnWrap.classList.add("hidden");
+      hideHint();
+    }
+
+    const ZS_COORDS_BY_ROT_ZSINDEX = [
+      ["4B","3B","2C","2D"],
+      ["2E","2F","3G","4G"],
+      ["5G","6G","7F","7E"],
+      ["7D","7C","6B","5B"],
+    ];
+    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4];
+
+    const colorFieldCoords = {
+      'violett': ['3A','8D','8E','3H'],
+      'blau':    ['1F','8F','4A','5A'],
+      'gruen':   ['1C','8C','4H','5H'],
+      'orange':  ['1D','1E','6A','6H']
+    };
+
+    const COLOR_BY_ZF_COORD = (() => {
+      const m = {};
+      for (const [c, arr] of Object.entries(colorFieldCoords)){
+        for (const coord of arr) m[coord] = c;
+      }
+      return m;
+    })();
+
+    function getAdjacentZFCoordForZS(zsCoord){
+      const p = coordToXY(zsCoord);
+      if (p.colLetter === "B") return `${p.row}A`;
+      if (p.colLetter === "G") return `${p.row}H`;
+      if (p.row === 2) return `1${p.colLetter}`;
+      if (p.row === 7) return `8${p.colLetter}`;
+      return null;
+    }
+
+    function getVisibleSlotInfos(){
+      const curr = sets[faceIndex];
+      const rot  = rotIndex;
+      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rot];
+      const out = [];
+      for (let i = 0; i < 4; i++){
+        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i];
+        const zsCoord = zsCoords[zsIndex - 1];
+        const zfCoord = getAdjacentZFCoordForZS(zsCoord);
+        const color   = zfCoord ? COLOR_BY_ZF_COORD[zfCoord] : null;
+        out.push({
+          slotEl: slotElsW[i],
+          spanEl: slotTargetsW[i],
+          num:    curr[i],
+          zsIndex,
+          zsCoord,
+          zfCoord,
+          color
+        });
+      }
+      return out;
+    }
+
+    function applyHitVisual(slotInfo){
+      slotInfo.slotEl.classList.add("kippPulse");
+      if (slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
+      setTimeout(() => {
+        slotInfo.slotEl.classList.remove("kippPulse");
+        if (slotInfo.spanEl) slotInfo.spanEl.classList.remove("kippPulse");
+      }, 2600);
+    }
+
+    // Karten-Visualisierung: 1–12 → 3–A
+    function getVisualRank(n){
+      switch (n){
+        case 12: return "A";
+        case 11: return "K";
+        case 10: return "Q";
+        case 9:  return "J";
+        case 8:  return "10";
+        case 7:  return "9";
+        case 6:  return "8";
+        case 5:  return "7";
+        case 4:  return "6";
+        case 3:  return "5";
+        case 2:  return "4";
+        case 1:  return "3";
+        default:
+          return (n === null || n === undefined) ? "" : String(n);
+      }
+    }
+
+    // Target-Karten: 2-K (intern 1-12)
+    function getTargetVisualRank(n){
+      switch (n){
+        case 12: return "K";
+        case 11: return "Q";
+        case 10: return "J";
+        case 9:  return "10";
+        case 8:  return "9";
+        case 7:  return "8";
+        case 6:  return "7";
+        case 5:  return "6";
+        case 4:  return "5";
+        case 3:  return "4";
+        case 2:  return "3";
+        case 1:  return "2";
+        default:
+          return (n === null || n === undefined) ? "" : String(n);
+      }
+    }
+
+    // Wert & Rang-Index für Vergleich und Punkte
+    function getCardInfo(n){
+      const rankStr = getVisualRank(n);
+      const order = ["3","4","5","6","7","8","9","10","J","Q","K","A"];
+      const rankIndex = order.indexOf(rankStr);
+
+      let value;
+      if (rankStr === "A"){
+        value = 14;
+      } else if (["K","Q","J","10"].includes(rankStr)){
+        value = 10;
+      } else {
+        const parsed = parseInt(rankStr, 10);
+        value = isNaN(parsed) ? 0 : parsed;
+      }
+
+      return { rank: rankStr, value, rankIndex };
+    }
+
+    // Target-Karten Info (2-K)
+    function getTargetCardInfo(n){
+      const rankStr = getTargetVisualRank(n);
+      const order = ["2","3","4","5","6","7","8","9","10","J","Q","K"];
+      const rankIndex = order.indexOf(rankStr);
+
+      let value;
+      if (["K","Q","J","10"].includes(rankStr)){
+        value = 10;
+      } else {
+        const parsed = parseInt(rankStr, 10);
+        value = isNaN(parsed) ? 0 : parsed;
+      }
+
+      return { rank: rankStr, value, rankIndex };
+    }
+
+    // Player-Karte auf Ziel-Farbe finden
+    function getPlayerCardOnTargetColor(){
+      if (!currentTarget) return null;
+      const infos = getVisibleSlotInfos();
+      for (const info of infos){
+        if (info.num == null) continue;
+        if (info.color === currentTarget.color){
+          return info;
+        }
+      }
+      return null;
+    }
+
+    // Treffererkennung + Score Player/Bank
+    function checkHitAndAnimate(){
+      if (!currentTarget) return false;
+
+      const info = getPlayerCardOnTargetColor();
+      if (!info) return false;
+
+      // *** Prüfe ob die Player-Karte bereits verbraucht ist ***
+      if (usedCards.has(info.num)) {
+        console.log("Karte", info.num, "ist bereits verbraucht - kein Treffer!");
+        return false;
+      }
+
+      const playerCard = getCardInfo(info.num);
+      const targetCard = getTargetCardInfo(currentTarget.num);
+
+      // Vergleich über gemeinsame Rang-Hierarchie
+      const allRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+      const targetRank = getTargetVisualRank(currentTarget.num);
+      const playerRank = getVisualRank(info.num);
+      const targetIdx = allRanks.indexOf(targetRank);
+      const playerIdx = allRanks.indexOf(playerRank);
+
+      let winner = "bank";
+      if (playerIdx > targetIdx){
+        winner = "player";
+      }
+
+      const roundPoints = playerCard.value + targetCard.value;
+
+      if (winner === "player"){
+        playerScore += roundPoints;
+        playerTricks++;
+      } else {
+        bankScore   += roundPoints;
+        bankTricks++;
+      }
+
+      updateScoresUI();
+      applyHitVisual(info);
+
+      // *** NUR die Player-Würfelkarte als verbraucht markieren ***
+      usedCards.add(info.num);
+      
+      // Rendering aktualisieren
+      renderW();
+
+      // *** STICH-STAPEL-LOGIK ***
+      updateStichDisplay(playerTricks, bankTricks);
+
+      // *** FIX: Bei JEDEM Stich (Player ODER Bank) true zurückgeben ***
+      return true;
+    }
+
+    // Stich-Stapel-Anzeige aktualisieren
+    function updateStichDisplay(plTricks, bTricks){
+      // Verstecke zuerst ALLE Stiche
+      for (let i = 1; i <= 6; i++){
+        if (stichPLImgs[i]) stichPLImgs[i].style.display = "none";
+        if (stichBImgs[i]) stichBImgs[i].style.display = "none";
+      }
+
+      // Player-Stiche anzeigen
+      if (plTricks > 0){
+        if (plTricks <= 6){
+          // Durchlauf 1: Zeige nur den aktuellen Stich
+          if (stichPLImgs[plTricks]){
+            stichPLImgs[plTricks].style.display = "block";
+            stichPLImgs[plTricks].style.transform = "translateX(0px)";
+            stichPLImgs[plTricks].style.zIndex = plTricks;
+          }
+        } else if (plTricks <= 11){
+          // Durchlauf 2: stich6 bleibt sichtbar, neuer Stich bei +20px
+          if (stichPLImgs[6]){
+            stichPLImgs[6].style.display = "block";
+            stichPLImgs[6].style.transform = "translateX(0px)";
+            stichPLImgs[6].style.zIndex = 6;
+          }
+          const currentStichIndex = ((plTricks - 7) % 6) + 1; // 7→1, 8→2, ..., 11→5
+          if (stichPLImgs[currentStichIndex]){
+            stichPLImgs[currentStichIndex].style.display = "block";
+            stichPLImgs[currentStichIndex].style.transform = "translateX(20px)";
+            stichPLImgs[currentStichIndex].style.zIndex = 6 + currentStichIndex;
+          }
+        } else if (plTricks === 12){
+          // Stich 12: stich6(0px) + stich5(+20px) + stich1(+40px)
+          if (stichPLImgs[6]){
+            stichPLImgs[6].style.display = "block";
+            stichPLImgs[6].style.transform = "translateX(0px)";
+            stichPLImgs[6].style.zIndex = 6;
+          }
+          if (stichPLImgs[5]){
+            stichPLImgs[5].style.display = "block";
+            stichPLImgs[5].style.transform = "translateX(20px)";
+            stichPLImgs[5].style.zIndex = 11;
+          }
+          if (stichPLImgs[1]){
+            stichPLImgs[1].style.display = "block";
+            stichPLImgs[1].style.transform = "translateX(40px)";
+            stichPLImgs[1].style.zIndex = 12;
+          }
+        }
+      }
+
+      // Bank-Stiche anzeigen (gleiche Logik)
+      if (bTricks > 0){
+        if (bTricks <= 6){
+          if (stichBImgs[bTricks]){
+            stichBImgs[bTricks].style.display = "block";
+            stichBImgs[bTricks].style.transform = "translateX(0px)";
+            stichBImgs[bTricks].style.zIndex = bTricks;
+          }
+        } else if (bTricks <= 11){
+          if (stichBImgs[6]){
+            stichBImgs[6].style.display = "block";
+            stichBImgs[6].style.transform = "translateX(0px)";
+            stichBImgs[6].style.zIndex = 6;
+          }
+          const currentStichIndex = ((bTricks - 7) % 6) + 1;
+          if (stichBImgs[currentStichIndex]){
+            stichBImgs[currentStichIndex].style.display = "block";
+            stichBImgs[currentStichIndex].style.transform = "translateX(20px)";
+            stichBImgs[currentStichIndex].style.zIndex = 6 + currentStichIndex;
+          }
+        } else if (bTricks === 12){
+          if (stichBImgs[6]){
+            stichBImgs[6].style.display = "block";
+            stichBImgs[6].style.transform = "translateX(0px)";
+            stichBImgs[6].style.zIndex = 6;
+          }
+          if (stichBImgs[5]){
+            stichBImgs[5].style.display = "block";
+            stichBImgs[5].style.transform = "translateX(20px)";
+            stichBImgs[5].style.zIndex = 11;
+          }
+          if (stichBImgs[1]){
+            stichBImgs[1].style.display = "block";
+            stichBImgs[1].style.transform = "translateX(40px)";
+            stichBImgs[1].style.zIndex = 12;
+          }
+        }
+      }
+    }
+
+    // Hilfsfunktionen usw. – von hier an unverändert
+
+    function getVisibleNumbersSet(){
+      return new Set(getVisibleSlotInfos().map(s => s.num).filter(n => n != null));
+    }
+
+    function getVisibleInfosAt(rotIdx, faceIdx){
+      const curr = sets[faceIdx];
+      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rotIdx];
+      const out = [];
+      for (let i=0;i<4;i++){
+        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i];
+        const zsCoord = zsCoords[zsIndex - 1];
+        const zfCoord = getAdjacentZFCoordForZS(zsCoord);
+        const col = zfCoord ? COLOR_BY_ZF_COORD[zfCoord] : null;
+        out.push({ num: curr[i], zsCoord, color: col });
+      }
+      return out;
+    }
+
+    function applyHitVisualNoop(){}
+
+    function isPairReachableWithin6(num, color){
+      let r = rotIndex;
+      let f = faceIndex;
+      for (let step=1; step<=6; step++){
+        r = (r + 1) % 4;
+        f = (f + 1) % 3;
+        const vis = getVisibleInfosAt(r, f);
+        for (const si of vis){
+          if (si.num == null) continue;
+          if (si.num === num && si.color === color) return true;
+        }
+      }
+      return false;
+    }
+
+    const TARGET_MIN = 0.55;
+    const STEP_MAX   = 0.80;
+
+    let targetTimeMul = 1;
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function lerp(a,b,t){ return a + (b - a) * t; }
+
+    function updateTargetTimeMulByDraws(){
+      const idx = clamp(drawsCount, 0, MAX_TARGETS);
+      if (idx <= 0){ targetTimeMul = 1; return; }
+      const t = (MAX_TARGETS <= 1) ? 1 : (idx - 1) / (MAX_TARGETS - 1);
+      targetTimeMul = lerp(1.0, TARGET_MIN, t);
+    }
+
+    const FIXED_SPEED = 3;
+
+    function getTiming(){
+      const v = FIXED_SPEED;
+
+      const baseHold = Math.max(520, Math.round(2400 - v * 450));
+      const baseKip  = Math.max(160, Math.round(baseHold * 0.50));
+      const baseW    = baseHold;
+
+      const mul = clamp(targetTimeMul || 1, TARGET_MIN, 1);
+
+      const hold = Math.max(260, Math.round(baseHold * mul));
+      const kip  = Math.max(120, Math.round(baseKip  * mul));
+      const wfull= Math.max(260, Math.round(baseW    * mul));
+
+      return { holdMs: hold, kipMs: kip, wMs: wfull };
+    }
+
+    const rotDeg = [0, 90, 180, 270];
+    let rotIndex  = 0;
+    let faceIndex = 0;
+
+    function setRotationSnap(){
+      const deg = rotDeg[rotIndex];
+      wFaceGroup.style.setProperty("--rot", deg + "deg");
+      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
+      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
+      updateShadowVisibility();
+    }
+
+    function advanceFullCW(){
+      rotIndex  = (rotIndex + 1) % 4;
+      faceIndex = (faceIndex + 1) % 3;
+      setRotationSnap();
+    }
+
+    function renderSlot(slotEl, spanEl, n, suitColor){
+      renderNumber(spanEl, n);
+      applyPersistentFill(slotEl, n);
+      
+      // Kartenfarben und verbrauchte Karten
+      if (spanEl && n != null) {
+        // Entferne alte Klassen
+        spanEl.classList.remove("cardRed", "cardBlack", "used");
+        
+        // Setze Kartenfarbe (rot/schwarz)
+        const cardColor = cardColors[n];
+        if (cardColor === "red") {
+          spanEl.classList.add("cardRed");
+        } else if (cardColor === "black") {
+          spanEl.classList.add("cardBlack");
+        }
+        
+        // Markiere verbrauchte Karten
+        if (usedCards.has(n)) {
+          spanEl.classList.add("used");
+        }
+      }
+      
+      applySlotTextColor(spanEl, suitColor);
+    }
+
+    function renderW(){
+      setRotationSnap();
+      const infos = getVisibleSlotInfos();
+      for (const info of infos){
+        renderSlot(info.slotEl, info.spanEl, info.num, info.color);
+      }
+    }
+
+    function renderKip(){
+      setRotationSnap();
+
+      const curr = sets[faceIndex];
+      const nextFaceIndex = (faceIndex + 1) % 3;
+      const next = sets[nextFaceIndex];
+
+      const kipId = getKipId(faceIndex, nextFaceIndex);
+      setActiveKipGroup(kipId);
+
+      const { rightSpans, leftSpans, rightEls, leftEls } = getKipSlots(kipId);
+
+      for (let i=0;i<4;i++) renderSlot(rightEls[i], rightSpans[i], curr[i], null);
+
+      const nextPreview = mapHiddenToVisible_CW(next);
+      for (let i=0;i<4;i++) renderSlot(leftEls[i], leftSpans[i], nextPreview[i], null);
+    }
+
+    function getUniqueRandomNumbers(count, min, max){
+      const pool = [];
+      for (let i=min; i<=max; i++) pool.push(i);
+      for (let i=pool.length-1; i>0; i--){
+        const j = Math.floor(Math.random() * (i+1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, count);
+    }
+
+    function mapHiddenToVisible_CW(face){
+      const [f1,f2,f3,f4] = face;
+      return [f4, f3, f2, f1];
+    }
+
+    function renderNumber(span, n){
+      if (!span) return;
+      span.classList.remove("twodigit");
+
+      if (n === null || n === undefined){
+        span.textContent = "";
+        span.style.letterSpacing = "";
+        return;
+      }
+
+      const text = getVisualRank(n);
+      span.textContent = text;
+
+      if (text.length >= 2){
+        span.classList.add("twodigit");
+      } else {
+        span.style.letterSpacing = "";
+      }
+    }
+
+    const HEADER_ROW_OFFSET_CONST = 2;
+
+    let runningKipp = false;
+    let previewToken = 0;
+    let endRestartMode = false;
+
+    function cancelPreview(){
+      previewToken++;
+      runningKipp = false;
+    }
+
+    async function waitOrPause(type, myToken, factor = 1){
+      const startTime = Date.now();
+      while (myToken === previewToken){
+        const T = getTiming();
+        const base = (type === "kip") ? T.kipMs : T.wMs;
+        const targetMs = Math.max(40, Math.round(base * (factor || 1)));
+
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= targetMs) break;
+        await sleep(50);
+      }
+      return (myToken === previewToken);
+    }
+
+    async function runSchauKippSequence(steps, opts = {}){
+      if (runningKipp) return;
+      runningKipp = true;
+
+      const kipFactor = (opts && opts.kipFactor) ? opts.kipFactor : 1;
+      const myToken = ++previewToken;
+
+      showW();
+      renderW();
+      if (!await waitOrPause("w", myToken, 1)){ runningKipp=false; return; }
+
+      const totalSteps = Math.max(1, steps);
+
+      for (let i=0;i<steps;i++){
+        const tStep = (totalSteps <= 1) ? 0 : (i / (totalSteps - 1));
+        const stepMul = lerp(1.0, STEP_MAX, tStep);
+
+        showKip();
+        renderKip();
+        if (!await waitOrPause("kip", myToken, kipFactor * stepMul)){ runningKipp=false; return; }
+
+        advanceFullCW();
+        showW();
+        renderW();
+        if (!await waitOrPause("w", myToken, stepMul)){ runningKipp=false; return; }
+      }
+
+      runningKipp = false;
+    }
+
+    function buildScrollBand(){
+      if (!scrollBand) return;
+      scrollBand.innerHTML = "";
+      for (let num = 0; num <= 11; num++){
+        const item = document.createElement("div");
+        item.className = "scrollItem";
+        item.dataset.anzahl = num;
+        item.textContent = String(num);
+        item.addEventListener("click", () => handleAnzahlClick(num, null));
+        scrollBand.appendChild(item);
+      }
+      scrollBand.classList.add("wiggle");
+    }
+
+    function setScrollBandLocked(locked){
+      if (!scrollBand) return;
+      scrollBand.querySelectorAll(".scrollItem").forEach(item => {
+        item.classList.toggle("disabled", !!locked);
+      });
+      if (scrollBandWrap){
+        scrollBandWrap.classList.toggle("locked", !!locked);
+      }
+    }
+
+    function buildKippAnzahlButtons(){
+      kippAnzahlBtns.innerHTML = "";
+      kippAnzahlBtns.classList.add("compact");
+    }
+
+    function setAnzahlButtonsLocked(locked){
+      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
+      testTargetBtn.disabled = locked;
+    }
+
+    function markRunSelected(btn){
+      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("runSelected"));
+      if (btn) btn.classList.add("runSelected");
+    }
+    function clearRunSelected(){
+      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("runSelected"));
+    }
+
+    function hideTargetRankAndSuit(){
+      if (targetRank10D){
+        targetRank10D.style.display = "none";
+        targetRank10D.textContent = "";
+      }
+      if (targetSuitImg){
+        targetSuitImg.style.display = "none";
+        targetSuitImg.removeAttribute("src");
+      }
+    }
+
+    function showTargetRankAndSuit(target){
+      if (!target) return;
+      const text = getTargetVisualRank(target.num);  // *** Target-Visualisierung ***
+      if (targetRank10D){
+        targetRank10D.textContent = text;
+        // Einheitliche blaue Farbe für Zielwert
+        targetRank10D.style.color = "rgba(38, 77, 120, 1.0)";
+        targetRank10D.style.display = "block";
+      }
+      if (targetSuitImg){
+        const src = SUIT_IMG_BY_COLOR[target.color] || "";
+        if (src){
+          targetSuitImg.src = src;
+          targetSuitImg.style.display = "block";
+        }
+      }
+    }
+
+    function resetToNewTargetChoice(){
+      attemptsForTarget = 0;
+      currentTarget     = null;
+      targetRevealed    = false;
+      clearHitPulse();
+      hideTargetRankAndSuit();
+      showTargetSelectView();
+    }
+
+    function clearAllUsedClasses(){
+      // Entferne "used"-Klasse von allen Slots (W-Face und alle Kipp-Gruppen)
+      document.querySelectorAll('.slot .num > span').forEach(span => {
+        span.classList.remove("used");
+      });
+    }
+
+    function resetGameToStart(){
+      endRestartMode = false;
+      playerScore = 0;
+      bankScore   = 0;
+      playerTricks = 0;
+      bankTricks   = 0;
+      updateScoresUI();
+      resetTargetDeck();
+      resetLockedColors();
+      resetStichLayers();
+      rotIndex = 0;
+
+      // *** FIX: Verbrauchte Karten zurücksetzen ***
+      usedCards.clear();
+      
+      // *** FIX: Entferne "used"-Klasse von allen DOM-Elementen ***
+      clearAllUsedClasses();
+      
+      // *** FIX: Neue zufällige Kartenfarben (Rot/Schwarz) ***
+      initRandomCardColors();
+
+      reroll12_keepAssigned();
+      renderW();
+
+      const scoreEl = document.getElementById("scoreDisplay");
+      scoreEl.classList.remove("finalVisible", "scorePulse");
+
+      showStartView();
+    }
+
+    function showEndResultView(){
+      uiMode = "END";
+
+      if (scrollBandWrap){
+        scrollBandWrap.classList.add("hidden");
+      }
+
+      startBtnWrap.classList.remove("hidden");
+      btnSchauen.classList.add("hidden");
+      btnErgebnis.classList.remove("hidden");
+      btnErgebnisText.textContent = "NEU SPIELEN";
+
+      // *** FIX: Alle Zielkarten ausblenden ***
+      if (targetLayer) targetLayer.style.display = "none";
+      [targetImg1, targetImg2, targetImg3, targetImg4, targetImg5, targetImg6].forEach(img => {
+        if (img) img.style.display = "none";
+      });
+      if (targetImgCovered){
+        targetImgCovered.style.display = "none";
+        targetImgCovered.classList.remove("pulse");
+      }
+      
+      // *** FIX: Random-Zielwert und Symbol ausblenden ***
+      hideTargetRankAndSuit();
+
+      showHint("ENDE – VERGLEICHE DIE SCORES", true);
+    }
+
+    function handleAnzahlClick(anzahl, clickedBtn){
+      if (!currentTarget) return;
+      if (runningKipp) return;
+      if (attemptsForTarget >= MAX_ATTEMPTS_PER_TARGET) return;
+
+      attemptsForTarget++;
+
+      markRunSelected(clickedBtn);
+      setScrollBandLocked(true);
+      runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(async () => {
+        clearHitPulse();
+        const hit = checkHitAndAnimate();
+
+        clearRunSelected();
+
+        // *** Bei verbrauchter Karte: Target bleibt, weiterspielen ***
+        if (!hit) {
+          attemptsForTarget--;
+          await sleep(500);
+          setScrollBandLocked(false);
+          return;
+        }
+
+        // *** Bei Stich: Prüfe ob Spiel zuende (12 Stiche gespielt) ***
+        const totalTricks = playerTricks + bankTricks;
+        const isGameOver = (totalTricks >= 12);
+
+        await sleep(900);
+
+        if (isGameOver){
+          showEndResultView();
+          return;
+        }
+
+        // *** Neues Target zeigen ***
+        resetToNewTargetChoice();
+        renderW();
+      });
+    }
+
+    function resetTargetPadUI(){
+      targetPadCircle.style.display = "block";
+      targetPadNum.style.opacity = "0";
+      targetPadNum.textContent = "";
+      targetPadNum.classList.remove("twodigit");
+    }
+
+    function showStartView(){
+      uiMode = "START";
+
+      startBtnWrap.classList.remove("hidden");
+      btnSchauen.classList.remove("hidden");
+      btnErgebnis.classList.add("hidden");
+
+      if (scrollBandWrap) scrollBandWrap.classList.add("hidden");
+
+      btnSchauenPulse.classList.add("pulse");
+
+      showHint("SCHAUKIPP-RUNDE", false);
+
+      kippAnzahlView.classList.add("hidden");
+
+      if (targetLayer) targetLayer.style.display = "none";
+      hideTargetRankAndSuit();
+
+      targetRevealed   = false;
+      started          = false;
+      currentTarget    = null;
+      attemptsForTarget= 0;
+
+      resetTargetPadUI();
+      clearHitPulse();
+
+      positionUI();
+    }
+
+    function showTargetSelectView(){
+      if (drawsCount >= MAX_TARGETS){
+        showEndResultView();
+        return;
+      }
+
+      uiMode = "TARGET";
+      showHint(getTargetHintText());
+
+      startBtnWrap.classList.add("hidden");
+
+      if (scrollBandWrap){
+        scrollBandWrap.classList.remove("hidden");
+        if (!scrollBand.innerHTML.trim()){
+          buildScrollBand();
+        }
+        setScrollBandLocked(true);
+      }
+
+      kippAnzahlView.classList.add("hidden");
+
+      hideTargetRankAndSuit();
+
+      if (targetLayer){
+        targetLayer.style.display = "block";
+      }
+
+      const imgs = [targetImg1, targetImg2, targetImg3, targetImg4, targetImg5, targetImg6];
+      imgs.forEach(img => { if (img) img.style.display = "none"; });
+
+      const nextIdx = drawsCount + 1;
+      // Targets 1-6 und 7-12 nutzen Bilder 1-6 zyklisch
+      const imgIndex = ((nextIdx - 1) % 6) + 1;
+      let activeImg = null;
+      switch (imgIndex){
+        case 1: activeImg = targetImg1; break;
+        case 2: activeImg = targetImg2; break;
+        case 3: activeImg = targetImg3; break;
+        case 4: activeImg = targetImg4; break;
+        case 5: activeImg = targetImg5; break;
+        case 6: activeImg = targetImg6; break;
+        default: activeImg = targetImg6; break;
+      }
+      if (activeImg){
+        activeImg.style.display = "block";
+      }
+
+      if (targetImgCovered){
+        targetImgCovered.style.display = "block";
+        targetImgCovered.classList.add("pulse");
+      }
+
+      targetRevealed    = false;
+      attemptsForTarget = 0;
+
+      positionUI();
+    }
+
+    function showKippCountView(){
+      uiMode = "COUNT";
+      showHint("KIPP-ANZAHL", false);
+
+      startBtnWrap.classList.add("hidden");
+      kippAnzahlView.classList.add("hidden");
+
+      if (scrollBandWrap){
+        scrollBandWrap.classList.remove("hidden");
+        setScrollBandLocked(false);
+      }
+
+      testTargetBtn.classList.add("hidden");
+      testTargetBtn.disabled = true;
+
+      clearHitPulse();
+
+      positionUI();
+    }
+
+    function setScaleToFitWidth(){
+      const cols = numVar("--cols") || 8;
+      const cell = numVar("--cell") || 142;
+
+      const gridW = cols * cell;
+      const vw = window.innerWidth;
+
+      const targetW = vw * 0.94;
+      const scale = Math.min(1, targetW / gridW);
+
+      document.documentElement.style.setProperty("--scale", scale.toFixed(4));
+      document.documentElement.style.setProperty("--gridW", gridW + "px");
+
+      const uiscale = 1 / (scale || 1);
+      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
+
+      return { cols, cell, gridW, scale };
+    }
+
+    function placeColorSquare(coord, cls, cellPx, sizePx){
+      const { row, col } = coordToXY(coord);
+      const visualRow = row + HEADER_ROW_OFFSET;
+
+      const leftCell = (col - 1) * cellPx;
+      const topCell  = (visualRow - 1) * cellPx;
+
+      const pad = (cellPx - sizePx) / 2;
+      const x = leftCell + pad;
+      const y = topCell  + pad;
+
+      const d = document.createElement("div");
+      d.className = "colorSq " + cls;
+      d.style.left = x + "px";
+      d.style.top  = y + "px";
+      colorsEl.appendChild(d);
+    }
+
+    function rebuildColors(){
+      colorsEl.innerHTML = "";
+
+      const cellPx = numVar("--cell") || 142;
+      const sizePx = numVar("--colorSize") || 126;
+
+      const placements = [
+        ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
+        ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
+        ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
+        ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
+      ];
+
+      // Farbflächen sind aktuell unsichtbar; Logik bleibt trotzdem erhalten
+      for (const [coord, cls] of placements){
+        // placeColorSquare(coord, cls, cellPx, sizePx);
+      }
+    }
+
+    function positionScoreRun(cellPx){
+      const run = document.getElementById("scoreRun");
+      if (!run) return;
+
+      const row = 8;
+      const colStart = 1;
+      const visualRow = row + HEADER_ROW_OFFSET;
+
+      const leftCell = (colStart - 1) * cellPx;
+      const topCell  = (visualRow - 1) * cellPx;
+
+      const centerX = leftCell + (2 * cellPx) / 2;
+      const centerY = topCell  + (cellPx / 2);
+
+      run.style.left = centerX + "px";
+      run.style.top  = centerY + "px";
+
+      const fontSize = cellPx * 0.70;
+      run.style.fontSize = fontSize + "px";
+    }
+
+    function positionScoreDisplay(cellPx){
+      const score = document.getElementById("scoreDisplay");
+      if (!score) return;
+
+      const row = 8;
+      const colStart = 7;
+      const visualRow = row + HEADER_ROW_OFFSET;
+
+      const leftCell = (colStart - 1) * cellPx;
+      const topCell  = (visualRow - 1) * cellPx;
+
+      const centerX = leftCell + (2 * cellPx) / 2;
+      const centerY = topCell  + (cellPx / 2);
+
+      score.style.left = centerX + "px";
+      score.style.top  = centerY + "px";
+
+      const fontSize = cellPx * 0.70;
+      score.style.fontSize = fontSize + "px";
+    }
+
+    function positionBackButton(cellPx){
+      const headerY = 1.0 * cellPx;
+      const left = cellPx / 2;
+      const top  = headerY;
+
+      backBtn.style.left = left + "px";
+      backBtn.style.top  = top + "px";
+      backBtn.style.transform = "translate(-50%, -50%)";
+    }
+
+    function positionTestButton(cellPx){
+      const row = 9;
+      const col = 8;
+      const visualRow = row + HEADER_ROW_OFFSET;
+
+      const left = (col - 1) * cellPx + cellPx/2;
+      const top  = (visualRow - 1) * cellPx + cellPx/2;
+
+      testTargetBtn.style.position = "absolute";
+      testTargetBtn.style.left = left + "px";
+      testTargetBtn.style.top  = top + "px";
+      testTargetBtn.style.transform = "translate(-50%, -50%)";
+      testTargetBtn.style.zIndex = "30";
+      testTargetBtn.style.pointerEvents = "auto";
+    }
+
+    function positionTargetCards(cellPx){
+      if (!targetLayer) return;
+      const coord = coordToXY("9A");
+      const visualRow = coord.row + HEADER_ROW_OFFSET;
+
+      const left = (coord.col - 1) * cellPx;
+      const top  = (visualRow - 1) * cellPx;
+
+      const imgs = [targetImg1, targetImg2, targetImg3, targetImg4, targetImg5, targetImg6, targetImgCovered];
+      imgs.forEach(img => {
+        if (!img) return;
+        img.style.left = left + "px";
+        img.style.top  = top  + "px";
+      });
+
+      if (targetSuitImg){
+        targetSuitImg.style.left = left + "px";
+        targetSuitImg.style.top  = top  + "px";
+      }
+    }
+
+    function positionStichCards(cellPx){
+      const coord = coordToXY("9A");
+      const visualRow = coord.row + HEADER_ROW_OFFSET;
+
+      const left = (coord.col - 1) * cellPx;
+      const top  = (visualRow - 1) * cellPx;
+
+      for (let i = 1; i <= 6; i++){
+        const plImg = stichPLImgs[i];
+        const bImg  = stichBImgs[i];
+        if (plImg){
+          plImg.style.left = left + "px";
+          plImg.style.top  = top  + "px";
+        }
+        if (bImg){
+          bImg.style.left = left + "px";
+          bImg.style.top  = top  + "px";
+        }
+      }
+    }
+
+    function positionTargetRank10D(cellPx){
+      if (!targetRank10D) return;
+      const coord = coordToXY("10D");
+      const visualRow = coord.row + HEADER_ROW_OFFSET;
+
+      const centerX = (coord.col - 1) * cellPx + cellPx / 2;
+      const centerY = (visualRow - 1) * cellPx + cellPx / 2;
+
+      targetRank10D.style.left = centerX + "px";
+      targetRank10D.style.top  = centerY + "px";
+      targetRank10D.style.fontSize = (cellPx * 0.90) + "px";
+    }
+
+    function positionUI(){
+      const cellPx = numVar("--cell") || 142;
+
+      const headerY = 1.0 * cellPx;
+
+      positionScoreRun(cellPx);
+      positionScoreDisplay(cellPx);
+      positionTargetRank10D(cellPx);
+
+      const title = document.getElementById("titleLeft");
+      title.style.left = "50%";
+      title.style.top  = headerY + "px";
+      title.style.transform = "translate(-50%, -50%)";
+
+      const row11VisualTop = (((11 + HEADER_ROW_OFFSET) - 1) * cellPx);
+      const row11CenterY   = row11VisualTop + (cellPx / 2);
+      const between10and11 = row11VisualTop;
+
+      const kippBtnsCenterY = between10and11;
+
+      kippAnzahlBtns.style.top  = kippBtnsCenterY + "px";
+      kippAnzahlBtns.style.left = "50%";
+      kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
+
+      const row13VisualTop = (((13 + HEADER_ROW_OFFSET) - 1) * cellPx);
+      const row13CenterY   = row13VisualTop + (cellPx / 2);
+      const startTop = (row13CenterY - (cellPx / 2));
+      startBtnWrap.style.top = (startTop + 5) + "px";
+
+      if (scrollBandWrap){
+        scrollBandWrap.style.top = (startTop - 11) + "px";
+      }
+
+      if (uiMode === "TARGET"){
+        hintTitle.style.top = row11CenterY + "px";
+      } else if (uiMode === "START" || uiMode === "COUNT" || uiMode === "END"){
+        const row9VisualTop  = (((9 + HEADER_ROW_OFFSET) - 1) * cellPx);
+        const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
+        const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
+        hintTitle.style.top = (midBetween9and10 + 40) + "px";
+      } else {
+        hintTitle.style.top = row11CenterY + "px";
+      }
+
+      positionTargetCards(cellPx);
+      positionStichCards(cellPx);
+      positionBackButton(cellPx);
+      positionTestButton(cellPx);
+    }
+
+    function rebuild(){
+      const { cell, scale } = setScaleToFitWidth();
+      const vh = window.innerHeight;
+      const effectiveLayoutHeight = vh / scale;
+      const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
+      const gridH = rows * cell;
+      document.documentElement.style.setProperty("--gridH", gridH + "px");
+
+      rebuildColors();
+      positionUI();
+      updateShadowVisibility();
+
+      if (!wFaceGroup.classList.contains("hidden")) renderW();
+      else renderKip();
+    }
+
+    let planned = [
+      [null,null,null,null],
+      [null,null,null,null],
+      [null,null,null,null],
+    ];
+    let sets = [
+      [null,null,null,null],
+      [null,null,null,null],
+      [null,null,null,null],
+    ];
+
+    function reroll12_keepAssigned(){
+      const twelve = getUniqueRandomNumbers(12, 1, 12);
+      planned[0] = twelve.slice(0,4);
+      planned[1] = twelve.slice(4,8);
+      planned[2] = twelve.slice(8,12);
+
+      sets = [
+        planned[0].slice(),
+        planned[1].slice(),
+        planned[2].slice(),
+      ];
+
+      rotIndex  = 0;
+      faceIndex = 0;
+      setRotationSnap();
+    }
+
+    function updateShadowVisibility(){
+      const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
+      const isWVisible   = !wFaceGroup.classList.contains("hidden");
+
+      if (isKipVisible){
+        allShadows.forEach((s, i) => {
+          if (i === rotIndex) s.classList.add("visible");
+          else s.classList.remove("visible");
+        });
+      } else {
+        allShadows.forEach(s => s.classList.remove("visible"));
+      }
+
+      if (isWVisible) cubeShadowLayer.classList.add("visible");
+      else cubeShadowLayer.classList.remove("visible");
+    }
+
+    function showW(){
+      Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
+      wFaceGroup.classList.remove("hidden");
+      updateShadowVisibility();
+    }
+
+    function showKip(){
+      wFaceGroup.classList.add("hidden");
+      updateShadowVisibility();
+    }
+
+    let usedNumbers = new Set();
+    let drawsCount  = 0;
+
+    function resetTargetDeck(){
+      usedNumbers = new Set();
+      drawsCount  = 0;
+      targetTimeMul = 1;
+    }
+
+    function pickRandom(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getForbiddenPairsForCurrentState(){
+      const forbidden = new Set();
+      const visibleSlots = getVisibleSlotInfos();
+      for (const si of visibleSlots){
+        if (si.num == null) continue;
+        if (!si.color) continue;
+        forbidden.add(`${si.num}|${si.color}`);
+      }
+      return forbidden;
+    }
+
+    function generateCardTarget(){
+      if (drawsCount >= MAX_TARGETS) return null;
+
+      const forbidden = getForbiddenPairsForCurrentState();
+      const candidates = [];
+
+      for (let n=1; n<=12; n++){
+        if (usedNumbers.has(n)) continue;
+        for (const c of allColors){
+          if (forbidden.has(`${n}|${c}`)) continue;
+          candidates.push({ num:n, color:c });
+        }
+      }
+
+      if (!candidates.length) return null;
+
+      const chosen = pickRandom(candidates);
+      usedNumbers.add(chosen.num);
+      drawsCount++;
+      updateTargetTimeMulByDraws();
+      return chosen;
+    }
+
+    function initPlayState(){
+      cancelPreview();
+
+      resetTargetDeck();
+      currentTarget     = null;
+      targetRevealed    = false;
+      started           = false;
+      attemptsForTarget = 0;
+
+      resetLockedColors();
+      resetStichLayers();
+      
+      // Random Kartenfarben initialisieren
+      initRandomCardColors();
+      // Verbrauchte Karten zurücksetzen
+      usedCards.clear();
+      
+      playerScore = 0;
+      bankScore   = 0;
+      playerTricks= 0;
+      bankTricks  = 0;
+      updateScoresUI();
+
+      endRestartMode = false;
+      const scoreEl = document.getElementById("scoreDisplay");
+      if (scoreEl){
+        scoreEl.classList.remove("finalVisible", "scorePulse");
+        scoreEl.style.removeProperty("opacity");
+      }
+
+      resetTargetPadUI();
+      hideTargetRankAndSuit();
+
+      reroll12_keepAssigned();
+      showW();
+      renderW();
+
+      if (targetLayer) targetLayer.style.display = "none";
+      [targetImg1, targetImg2, targetImg3, targetImg4, targetImg5, targetImg6].forEach(img => {
+        if (img) img.style.display = "none";
+      });
+      if (targetImgCovered){
+        targetImgCovered.style.display = "none";
+        targetImgCovered.classList.remove("pulse");
+      }
+
+      btnErgebnis.onclick = null;
+
+      showStartView();
+      updateShadowVisibility();
+    }
+
+    btnSchauen.addEventListener("click", async () => {
+      if (runningKipp) return;
+
+      started = true;
+
+      cancelPreview();
+      rotIndex  = 0;
+      faceIndex = 0;
+      setRotationSnap();
+      showW();
+      renderW();
+
+      hideStartUI();
+
+      kippAnzahlView.classList.add("hidden");
+      if (scrollBandWrap) scrollBandWrap.classList.add("hidden");
+
+      targetRevealed     = false;
+      currentTarget      = null;
+      attemptsForTarget  = 0;
+
+      resetTargetPadUI();
+      clearHitPulse();
+
+      await runSchauKippSequence(4, { kipFactor: 2 });
+
+      showTargetSelectView();
+    });
+
+    btnErgebnis.addEventListener("click", () => {
+      resetGameToStart();
+    });
+
+    backBtn.addEventListener("click", () => {
+      if (uiMode === "START"){
+        window.location.href = "index.html";
+      } else {
+        initPlayState();
+      }
+    });
+
+    window.addEventListener("load", () => {
+      rebuild();
+      initPlayState();
+    });
+
+    window.addEventListener("resize", rebuild);
+
+    document.addEventListener("touchmove", (e) => {
+      const inRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
+      const inScrollBand = e.target && e.target.closest && e.target.closest('#scrollBand');
+      if (inRange || inScrollBand) return;
+      e.preventDefault();
+    }, { passive:false });
+
+    const introOverlay  = document.getElementById("introOverlay");
+    const introStartBtn = document.getElementById("introStartBtn");
+    const introBackBtn  = document.getElementById("introBackBtn");
+
+    introStartBtn.addEventListener("click", () => {
+      introOverlay.classList.add("hidden");
+      setTimeout(() => {
+        introOverlay.remove();
+      }, 400);
+    });
+
+    introBackBtn.addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    if (targetImgCovered){
+      targetImgCovered.addEventListener("click", () => {
+        if (targetRevealed) return;
+
+        targetRevealed = true;
+
+        targetImgCovered.classList.remove("pulse");
+        targetImgCovered.style.display = "none";
+
+        currentTarget = generateCardTarget();
+        if (!currentTarget) return;
+
+        attemptsForTarget = 0;
+
+        showTargetRankAndSuit(currentTarget);
+        showKippCountView();
+      });
+    }
+    </script>
+</body>
+</html>
