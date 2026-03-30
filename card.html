@@ -1045,7 +1045,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_card.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein_card.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal_card.webp" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_card.webp" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -1968,6 +1968,26 @@
       
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
+
+      // Buttonoverlay deckungsgleich über Spieltisch
+      new THREE.TextureLoader().load('buttonoverlay_card.webp', (ovTex) => {
+        const ovGeometry = new THREE.PlaneGeometry(SPIEL_WIDTH, height);
+        const ovMaterial = new THREE.MeshStandardMaterial({
+          map: ovTex,
+          transparent: true,
+          alphaTest: 0.01,
+          roughness: 0.8,
+          metalness: 0.2,
+          depthWrite: false
+        });
+        window._buttonOverlay = new THREE.Mesh(ovGeometry, ovMaterial);
+        window._buttonOverlay.rotation.x = -Math.PI / 2;
+        window._buttonOverlay.position.set(xCenter, yPos + 0.002, zCenter);
+        window._buttonOverlay.receiveShadow = false;
+        window._buttonOverlay.castShadow = false;
+        window._buttonOverlay.renderOrder = 2;
+        scene.add(window._buttonOverlay);
+      });
       
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
@@ -8163,6 +8183,7 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
+      if (window._buttonOverlay) window._buttonOverlay.visible = false;
       startKipp21(withTutorial);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
