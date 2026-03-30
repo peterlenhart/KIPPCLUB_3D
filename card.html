@@ -1043,9 +1043,9 @@
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
   <div id="resetButtonWrap">
-    <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
-    <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
+    <button id="resetButton"><img src="reset_card.webp" alt="Zurück"></button>
+    <button id="soundToggle"><img id="soundImg" src="tonein_card.webp" alt="Sound"></button>
+    <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal_card.webp" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -1450,7 +1450,7 @@
     // TISCH (π1 Ebene)
     // =========================
     // Boxboden (6x6 Zellen, zentriert um Achsenmittelpunkt)
-    const boxbodenTexture = new THREE.TextureLoader().load('Boxboden.png');
+    const boxbodenTexture = new THREE.TextureLoader().load('boxboden_card.webp');
     const boxbodenSize = 6 * 0.15625; // 0.9375
     const boxbodenGeometry = new THREE.PlaneGeometry(boxbodenSize, boxbodenSize);
     const boxbodenMaterial = new THREE.MeshStandardMaterial({ 
@@ -1895,7 +1895,7 @@
     // =========================
     // WÄNDE mit Metallwand-Textur
     // =========================
-    const wallTexture = new THREE.TextureLoader().load('metallwand.webp');
+    const wallTexture = new THREE.TextureLoader().load('boxwand_card.webp');
     
     const wallGeometry = new THREE.BoxGeometry(0.9375, 0.46875, 0.0335);
     const wallMaterial = new THREE.MeshBasicMaterial({ 
@@ -2783,7 +2783,7 @@
     }, { passive: false });
     
     function updateSoundIcon() {
-      soundImg.src = soundEnabled ? 'tonein.webp' : 'tonaus.webp';
+      soundImg.src = soundEnabled ? 'tonein_card.webp' : 'tonaus_card.webp';
     }
     updateSoundIcon();
     
