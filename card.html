@@ -2118,10 +2118,10 @@
         case 10: return 'Q';
         case 9:  return 'J';
         case 8:  return '10';
-        case 7:  return '9';
+        case 7:  return '9.';
         case 6:  return '8';
         case 5:  return '7';
-        case 4:  return '6';
+        case 4:  return '6.';
         case 3:  return '5';
         case 2:  return '4';
         case 1:  return '3';
@@ -2134,17 +2134,31 @@
       ctx.font = '900 ' + size + 'px "Noto Serif"';
       if (txt.length <= 1) {
         ctx.fillText(txt, cx, cy);
+      } else if (txt.endsWith('.')) {
+        // Zahl mit Punkt (6., 9.): Punkt nah an Zahl, optisch an Zahl zentriert
+        var digit = txt.slice(0, -1);
+        var dotW = ctx.measureText('.').width;
+        var digitW = ctx.measureText(digit).width;
+        var dotGap = -2; // Punkt nah an Zahl
+        var totalW = digitW + dotGap + dotW;
+        // Optisch an der Ziffer zentrieren, nicht am Gesamttext
+        var offsetX = (dotGap + dotW) / 2;
+        ctx.textAlign = 'left';
+        var startX = cx - digitW / 2 - offsetX;
+        ctx.fillText(digit, startX, cy);
+        ctx.fillText('.', startX + digitW + dotGap, cy);
+        ctx.textAlign = 'center';
       } else {
         // Enger spationieren: Zeichen einzeln mit reduziertem Abstand
-        const spacing = -4; // negative = enger
-        const widths = [];
-        for (let i = 0; i < txt.length; i++) widths.push(ctx.measureText(txt[i]).width);
-        let totalW = 0;
-        for (let i = 0; i < widths.length; i++) totalW += widths[i];
-        totalW += spacing * (txt.length - 1);
-        let x = cx - totalW / 2;
+        var spacing = -4;
+        var widths = [];
+        for (var i = 0; i < txt.length; i++) widths.push(ctx.measureText(txt[i]).width);
+        var totalW2 = 0;
+        for (var i = 0; i < widths.length; i++) totalW2 += widths[i];
+        totalW2 += spacing * (txt.length - 1);
+        var x = cx - totalW2 / 2;
         ctx.textAlign = 'left';
-        for (let i = 0; i < txt.length; i++) {
+        for (var i = 0; i < txt.length; i++) {
           ctx.fillText(txt[i], x, cy);
           x += widths[i] + spacing;
         }
