@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiKipp – KIPP CARD</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
@@ -2061,18 +2062,9 @@
       return shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
     }
     function pickEdgePairs() {
-      // 3 Kanten, pro Kante 1 Zahlenpaar → 3 Paare = 6 sichtbar
-      // An jeder Kante: S1 einer Face liegt S4 der anderen gegenüber, S2↔S3
+      // KIPP CARD: Alle 12 Slots sichtbar
       const vis = new Set();
-      // Kante f0↔f1: entweder f0-S1(0)↔f1-S4(7) oder f0-S2(1)↔f1-S3(6)
-      if (Math.random() < 0.5) { vis.add(0); vis.add(7); }
-      else                     { vis.add(1); vis.add(6); }
-      // Kante f1↔f2: entweder f1-S1(4)↔f2-S4(11) oder f1-S2(5)↔f2-S3(10)
-      if (Math.random() < 0.5) { vis.add(4); vis.add(11); }
-      else                     { vis.add(5); vis.add(10); }
-      // Kante f2↔f0: entweder f2-S1(8)↔f0-S4(3) oder f2-S2(9)↔f0-S3(2)
-      if (Math.random() < 0.5) { vis.add(8); vis.add(3); }
-      else                     { vis.add(9); vis.add(2); }
+      for (let i = 0; i < 12; i++) vis.add(i);
       return vis;
     }
     
@@ -2096,11 +2088,27 @@
     // deck[0-3] → f0 Slots, deck[4-7] → f1 Slots, deck[8-11] → f2 Slots
 
     // === TRAINING: 3 Kantenpaare sichtbar (6 von 12 Zahlen, alle 1-12 möglich) ===
-    function displayNum(n) { return (n === 6 || n === 9) ? n + '.' : n.toString(); }
+    function displayNum(n) {
+      switch (n) {
+        case 12: return 'A';
+        case 11: return 'K';
+        case 10: return 'Q';
+        case 9:  return 'J';
+        case 8:  return '10';
+        case 7:  return '9';
+        case 6:  return '8';
+        case 5:  return '7';
+        case 4:  return '6';
+        case 3:  return '5';
+        case 2:  return '4';
+        case 1:  return '3';
+        default: return n == null ? '' : String(n);
+      }
+    }
     // Zeichnet Text zentriert, bei 2+ Zeichen enger spationiert
     function drawCenteredText(ctx, txt, cx, cy, size) {
       size = size || 56;
-      ctx.font = 'bold ' + size + 'px Arial';
+      ctx.font = '900 ' + size + 'px "Noto Serif"';
       if (txt.length <= 1) {
         ctx.fillText(txt, cx, cy);
       } else {
@@ -2143,8 +2151,8 @@
       // Slot-Zellen beschriften
       const alpha = (numberAlpha !== undefined) ? numberAlpha : 1;
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#2a1810';
-      ctx.font = 'bold 56px Arial';
+      ctx.fillStyle = 'rgb(36, 145, 255)';
+      ctx.font = '900 56px "Noto Serif"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (const key in slotMap) {
@@ -2247,8 +2255,9 @@
       cube.material = cubeMaterial;
     }
 
-    // Materialien erst wenn Textur-Image geladen
+    // Materialien erst wenn Textur-Image UND Font geladen
     cubeTexImg.onload = function() {
+      document.fonts.ready.then(function() {
       // Start mit unsichtbaren Zahlen (alpha=0)
       cubeMaterial = [
         matLeer(),                                    // [0] +X
@@ -2262,6 +2271,7 @@
       
       // === LOADING ANIMATION ===
       runLoadingAnimation();
+      });
     };
 
     // Kipp-Hilfsfunktion für Loading-Animation (leichtgewichtig, ohne Spiellogik)
