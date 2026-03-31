@@ -2028,8 +2028,8 @@
 
       // BEREIT-Button auf Zeile 15 (3D, Spieltisch)
       const bereitZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125; // Zeile 15 Mitte
-      const bereitBtnW = 4 * 0.15625; // 4 Zellen breit
-      const bereitBtnH = 0.8 * 0.15625; // 0.8 Zellen hoch
+      const bereitBtnW = 6 * 0.15625; // 6 Zellen breit
+      const bereitBtnH = 1.5 * 0.15625; // 1.5 Zellen hoch
       new THREE.TextureLoader().load('buttonfilz.webp', (btnTex) => {
         const btnGeo = new THREE.PlaneGeometry(bereitBtnW, bereitBtnH);
         const btnMat = new THREE.MeshBasicMaterial({
