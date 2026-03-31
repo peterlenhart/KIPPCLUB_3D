@@ -8225,13 +8225,56 @@
     // BUTTON EVENT LISTENERS
     // =========================
     let _startBtnLock = false;
+    let _cardModePhase = 0; // 0 = SPIELEN/TUTORIAL, 1 = OFFEN/VERDECKT
+
+    function showModeSelection() {
+      _cardModePhase = 1;
+      const btn1 = document.getElementById('btnSpielen');
+      const btn2 = document.getElementById('btnDemo');
+      btn1.textContent = 'OFFEN';
+      btn2.textContent = 'VERDECKT';
+
+      // Subtexte
+      let sub1 = document.getElementById('_cardSub1');
+      let sub2 = document.getElementById('_cardSub2');
+      if (!sub1) {
+        sub1 = document.createElement('div');
+        sub1.id = '_cardSub1';
+        sub1.style.cssText = 'position:absolute;left:0;width:360px;text-align:center;' +
+          'top:500px;font:bold 12px Arial;color:#e0d0b8;letter-spacing:1px;' +
+          'text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;z-index:15;';
+        sub1.textContent = 'KÖNNEN : GLÜCK = 6 : 6';
+        document.getElementById('startOverlay').appendChild(sub1);
+      }
+      sub1.style.display = '';
+      if (!sub2) {
+        sub2 = document.createElement('div');
+        sub2.id = '_cardSub2';
+        sub2.style.cssText = 'position:absolute;left:0;width:360px;text-align:center;' +
+          'top:579px;font:bold 12px Arial;color:#e0d0b8;letter-spacing:1px;' +
+          'text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;z-index:15;';
+        sub2.textContent = 'KÖNNEN : GLÜCK = 11 : 1';
+        document.getElementById('startOverlay').appendChild(sub2);
+      }
+      sub2.style.display = '';
+    }
+
     function handleStart(withTutorial) {
       if (!texturesReady || _startBtnLock) return;
+
+      if (_cardModePhase === 0) {
+        // Phase 1 → Phase 2: Texte ändern
+        showModeSelection();
+        return;
+      }
+
+      // Phase 2: Spiel starten
       _startBtnLock = true;
+      window._cardMode = withTutorial ? 'verdeckt' : 'offen';
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      startKipp21(withTutorial);
+      startKipp21(false);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
@@ -8302,6 +8345,13 @@
       const _bDm = document.getElementById('btnDemo');
       _bSp.disabled = false; _bDm.disabled = false;
       _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
+      _bSp.textContent = 'SPIELEN'; _bDm.textContent = 'TUTORIAL';
+      _cardModePhase = 0;
+      const _s1 = document.getElementById('_cardSub1');
+      const _s2 = document.getElementById('_cardSub2');
+      if (_s1) _s1.style.display = 'none';
+      if (_s2) _s2.style.display = 'none';
+      if (window._buttonOverlay) window._buttonOverlay.visible = true;
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
