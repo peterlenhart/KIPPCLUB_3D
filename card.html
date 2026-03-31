@@ -2002,7 +2002,7 @@
       
       const dirBtnGeo = new THREE.PlaneGeometry(dirBtnSize, dirBtnSize);
       
-      new THREE.TextureLoader().load('richtungcw_card.webp', (tex) => {
+      new THREE.TextureLoader().load('richtungcw_card.png', (tex) => {
         const mat = new THREE.MeshBasicMaterial({
           map: tex, transparent: true, depthWrite: true
         });
@@ -2015,7 +2015,7 @@
         scene.add(window._dirCwMesh);
       });
       
-      new THREE.TextureLoader().load('richtungccw_card.webp', (tex) => {
+      new THREE.TextureLoader().load('richtungccw_card.png', (tex) => {
         const mat = new THREE.MeshBasicMaterial({
           map: tex, transparent: true, depthWrite: true
         });
