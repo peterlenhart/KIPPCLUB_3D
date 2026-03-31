@@ -2026,43 +2026,47 @@
         if (window._dirCcwMesh) window._dirCcwMesh.rotation.z = rot;
       };
 
-      // BEREIT-Button auf Zeile 15 (3D, Spieltisch)
-      const bereitZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125; // Zeile 15 Mitte
-      const bereitBtnW = 6 * 0.15625; // 6 Zellen breit
-      const bereitBtnH = 1.5 * 0.15625; // 1.5 Zellen hoch
-      new THREE.TextureLoader().load('buttonfilz.webp', (btnTex) => {
-        const btnGeo = new THREE.PlaneGeometry(bereitBtnW, bereitBtnH);
-        const btnMat = new THREE.MeshBasicMaterial({
-          map: btnTex, transparent: true, depthWrite: false
-        });
-        window._bereitMesh = new THREE.Mesh(btnGeo, btnMat);
-        window._bereitMesh.rotation.x = -Math.PI / 2;
-        window._bereitMesh.position.set(0, yPos + 0.003, bereitZ);
-        window._bereitMesh.renderOrder = 3;
-        window._bereitMesh.visible = true;
-        scene.add(window._bereitMesh);
+      // PAUSE-Bereich auf Zeile 15 (3D, Spieltisch): reset_card links in Spalte A + "PAUSE" Text
+      const pauseZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125; // Zeile 15 Mitte
+      const pauseIconSize = 0.15625; // 1 Zelle
+      // Spalte A Mitte = -3.5 Zellen vom Zentrum
+      const pauseIconX = -3.5 * 0.15625;
 
-        // Text-Canvas für "BEREIT"
-        const tc = document.createElement('canvas');
-        tc.width = 512; tc.height = 128;
-        const tctx = tc.getContext('2d');
-        tctx.font = 'bold 48px Arial';
-        tctx.textAlign = 'center';
-        tctx.textBaseline = 'middle';
-        tctx.fillStyle = '#ffffff';
-        tctx.fillText('BEREIT', 256, 64);
-        const txtTex = new THREE.CanvasTexture(tc);
-        const txtGeo = new THREE.PlaneGeometry(bereitBtnW, bereitBtnH);
-        const txtMat = new THREE.MeshBasicMaterial({
-          map: txtTex, transparent: true, depthWrite: false
+      new THREE.TextureLoader().load('reset_card.webp', (iconTex) => {
+        const iconGeo = new THREE.PlaneGeometry(pauseIconSize, pauseIconSize);
+        const iconMat = new THREE.MeshBasicMaterial({
+          map: iconTex, transparent: true, depthWrite: false
         });
-        window._bereitTextMesh = new THREE.Mesh(txtGeo, txtMat);
-        window._bereitTextMesh.rotation.x = -Math.PI / 2;
-        window._bereitTextMesh.position.set(0, yPos + 0.004, bereitZ);
-        window._bereitTextMesh.renderOrder = 4;
-        window._bereitTextMesh.visible = true;
-        scene.add(window._bereitTextMesh);
+        window._pauseIconMesh = new THREE.Mesh(iconGeo, iconMat);
+        window._pauseIconMesh.rotation.x = -Math.PI / 2;
+        window._pauseIconMesh.position.set(pauseIconX, yPos + 0.003, pauseZ);
+        window._pauseIconMesh.renderOrder = 3;
+        window._pauseIconMesh.visible = false;
+        scene.add(window._pauseIconMesh);
       });
+
+      // "PAUSE" Text rechts neben Icon
+      const ptc = document.createElement('canvas');
+      ptc.width = 256; ptc.height = 64;
+      const ptctx = ptc.getContext('2d');
+      ptctx.font = 'bold 40px Arial';
+      ptctx.textAlign = 'left';
+      ptctx.textBaseline = 'middle';
+      ptctx.fillStyle = '#e0d0b8';
+      ptctx.fillText('PAUSE', 8, 32);
+      const pauseTxtTex = new THREE.CanvasTexture(ptc);
+      const pauseTxtW = 2.5 * 0.15625;
+      const pauseTxtH = 0.625 * 0.15625;
+      const pauseTxtGeo = new THREE.PlaneGeometry(pauseTxtW, pauseTxtH);
+      const pauseTxtMat = new THREE.MeshBasicMaterial({
+        map: pauseTxtTex, transparent: true, depthWrite: false
+      });
+      window._pauseTextMesh = new THREE.Mesh(pauseTxtGeo, pauseTxtMat);
+      window._pauseTextMesh.rotation.x = -Math.PI / 2;
+      window._pauseTextMesh.position.set(pauseIconX + 1.8 * 0.15625, yPos + 0.003, pauseZ);
+      window._pauseTextMesh.renderOrder = 3;
+      window._pauseTextMesh.visible = false;
+      scene.add(window._pauseTextMesh);
       
       // Numpad-Position: wird unten bei renderLoop-Start gesetzt
       // (hier ist die Kamera noch nicht fertig)
@@ -6723,43 +6727,19 @@
           return;
         }
         
-        // Karte OHNE Blick-Icon → direkt öffnen (kein Kniff)
+        // Karte OHNE Blick-Icon → KIPP CARD: immer Eckblick zuerst
         const iconSrc = CARD_BLICK_MAP[cardIdx];
-        if (!iconSrc) {
+        hideBlickIcon(cardIdx);
+        kipp21BlickTargetCard = cardIdx;
+
+        // Eckblick ZUERST, Kippziel öffnet sich DANACH
+        const onDone = () => {
           if (!kipp21GenerateTarget(cardIdx)) return;
           const mesh = gameCards[cardIdx].mesh;
           mesh.scale.set(1.15, 1.15, 1.15);
           setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
-          return;
-        }
-        
-        // Karte MIT Blick-Icon
-        hideBlickIcon(cardIdx);
-        const blickType = iconSrc.includes('joker2') ? 'wobble' : 'eckblick';
-        kipp21BlickTargetCard = cardIdx;
-        
-        if (currentLevel >= 3) {
-          // BRAIN: Animation ZUERST, Kippziel öffnet sich DANACH
-          const onDone = () => {
-            if (!kipp21GenerateTarget(cardIdx)) return;
-            const mesh = gameCards[cardIdx].mesh;
-            mesh.scale.set(1.15, 1.15, 1.15);
-            setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
-          };
-          if (blickType === 'wobble') {
-            runKipp21WobbleKniff(true).then(onDone);
-          } else {
-            runKipp21EckblickKniff(true).then(onDone);
-          }
-        } else {
-          // TRAINING: Kippziel sofort öffnen + Blick-Animation gleichzeitig
-          if (!kipp21GenerateTarget(cardIdx)) return;
-          const mesh2 = gameCards[cardIdx].mesh;
-          mesh2.scale.set(1.15, 1.15, 1.15);
-          setTimeout(() => { mesh2.scale.set(1, 1, 1); }, 180);
-          if (blickType === 'wobble') runKipp21WobbleKniff(true);
-          else runKipp21EckblickKniff(true);
-        }
+        };
+        runKipp21EckblickKniff(true).then(onDone);
         return;
       }
       
@@ -8241,7 +8221,7 @@
         sub1 = document.createElement('div');
         sub1.id = '_cardSub1';
         sub1.style.cssText = 'position:absolute;left:0;width:360px;text-align:center;' +
-          'top:500px;font:bold 12px Arial;color:#e0d0b8;letter-spacing:1px;' +
+          'top:500px;font:bold 16px Arial;color:#e0d0b8;letter-spacing:1px;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;z-index:15;';
         sub1.textContent = 'KÖNNEN : GLÜCK = 6 : 6';
         document.getElementById('startOverlay').appendChild(sub1);
@@ -8251,7 +8231,7 @@
         sub2 = document.createElement('div');
         sub2.id = '_cardSub2';
         sub2.style.cssText = 'position:absolute;left:0;width:360px;text-align:center;' +
-          'top:579px;font:bold 12px Arial;color:#e0d0b8;letter-spacing:1px;' +
+          'top:579px;font:bold 16px Arial;color:#e0d0b8;letter-spacing:1px;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.8);pointer-events:none;z-index:15;';
         sub2.textContent = 'KÖNNEN : GLÜCK = 11 : 1';
         document.getElementById('startOverlay').appendChild(sub2);
@@ -8274,6 +8254,9 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
+      // BEREIT-Button jetzt zeigen
+      if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
+      if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
       startKipp21(false);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
@@ -8291,6 +8274,49 @@
     
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
+    function showPauseDialog() {
+      const old = document.getElementById('_pauseDialog');
+      if (old) old.remove();
+
+      const ov = document.createElement('div');
+      ov.id = '_pauseDialog';
+      ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:200;' +
+        'display:flex;flex-direction:column;' +
+        'align-items:center;justify-content:center;gap:20px;';
+
+      const bg = document.createElement('img');
+      bg.src = 'overlay_card.webp';
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+      ov.appendChild(bg);
+
+      const btn1 = document.createElement('button');
+      btn1.innerHTML = 'EINFRIEREN &#10052;';
+      btn1.style.cssText = 'position:relative;z-index:1;background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
+      btn1.onclick = () => {
+        // Spielstand einfrieren (localStorage)
+        try {
+          const state = { cardMode: window._cardMode, phase: gamePhase, timestamp: Date.now() };
+          localStorage.setItem('digikipp_card_frozen', JSON.stringify(state));
+        } catch(e) {}
+        ov.remove();
+        backToStartScreen();
+      };
+
+      const btn2 = document.createElement('button');
+      btn2.textContent = 'WEITERKIPPEN';
+      btn2.style.cssText = 'position:relative;z-index:1;background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
+      btn2.onclick = () => ov.remove();
+
+      ov.appendChild(btn1);
+      ov.appendChild(btn2);
+      document.body.appendChild(ov);
+    }
+
     function backToStartScreen() {
       // KIPP-TIPP Overlay schließen falls offen
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
@@ -8352,6 +8378,8 @@
       if (_s1) _s1.style.display = 'none';
       if (_s2) _s2.style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = true;
+      if (window._pauseIconMesh) window._pauseIconMesh.visible = false;
+      if (window._pauseTextMesh) window._pauseTextMesh.visible = false;
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
@@ -8793,16 +8821,15 @@
         // Stellknopf: Tap auf Zahlen-Label → direkt wählen, Tap auf Knopf → weiterdrehen
       }
 
-      // BEREIT-Button (3D) → Eckblick starten
-      if (window._bereitMesh && window._bereitMesh.visible && lastTouchPos) {
+      // PAUSE-Button (3D) → Pause-Dialog
+      if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rect3 = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rect3.left) / rect3.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rect3.top) / rect3.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(window._bereitMesh).length > 0) {
-          window._bereitMesh.visible = false;
-          window._bereitTextMesh.visible = false;
-          runKipp21EckblickKniff(true);
+        if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
+            (window._pauseTextMesh && vkRaycaster.intersectObject(window._pauseTextMesh).length > 0)) {
+          showPauseDialog();
           lastTouchPos = null;
           return;
         }
@@ -8871,12 +8898,11 @@
         }
       }
       
-      // BEREIT-Button (3D) click → Eckblick (Desktop)
-      if (window._bereitMesh && window._bereitMesh.visible) {
-        if (vkRaycaster.intersectObject(window._bereitMesh).length > 0) {
-          window._bereitMesh.visible = false;
-          window._bereitTextMesh.visible = false;
-          runKipp21EckblickKniff(true);
+      // PAUSE-Button (3D) click (Desktop)
+      if (window._pauseIconMesh && window._pauseIconMesh.visible) {
+        if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
+            (window._pauseTextMesh && vkRaycaster.intersectObject(window._pauseTextMesh).length > 0)) {
+          showPauseDialog();
           return;
         }
       }
