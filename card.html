@@ -2030,7 +2030,7 @@
       const pauseZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125; // Zeile 15 Mitte
       const pauseIconSize = 0.15625; // 1 Zelle
       // Spalte A Mitte = -3.5 Zellen vom Zentrum
-      const pauseIconX = -3.5 * 0.15625;
+      const pauseIconX = -3.5 * 0.15625 + 0.076; // 22px östlicher
 
       new THREE.TextureLoader().load('reset_card.webp', (iconTex) => {
         const iconGeo = new THREE.PlaneGeometry(pauseIconSize, pauseIconSize);
@@ -8291,7 +8291,7 @@
       ov.appendChild(bg);
 
       const btn1 = document.createElement('button');
-      btn1.innerHTML = 'EINFRIEREN &#10052;';
+      btn1.innerHTML = 'EINFRIEREN <span style="font-size:1.2em">&#10052;</span>';
       btn1.style.cssText = 'position:relative;z-index:1;background:url("buttonfilz.webp") center/cover no-repeat;' +
         'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
@@ -10365,6 +10365,53 @@
 
     // DEBUG: If this text appears, the script reached the end without crash
 
+
+    // Eingefrorenen Spielstand prüfen
+    (function checkFrozenState() {
+      try {
+        const frozen = localStorage.getItem('digikipp_card_frozen');
+        if (!frozen) return;
+        const state = JSON.parse(frozen);
+        if (!state || !state.timestamp) return;
+
+        // Overlay zeigen
+        const ov = document.createElement('div');
+        ov.id = '_frozenOverlay';
+        ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+          'width:360px;height:' + window.innerHeight + 'px;z-index:200;' +
+          'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+
+        const bg = document.createElement('img');
+        bg.src = 'overlay_card.webp';
+        bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+        ov.appendChild(bg);
+
+        const btn1 = document.createElement('button');
+        btn1.textContent = 'FORTSETZEN';
+        btn1.style.cssText = 'position:relative;z-index:1;background:url("buttonfilz.webp") center/cover no-repeat;' +
+          'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
+        btn1.onclick = () => {
+          ov.remove();
+          // TODO: Spielstand wiederherstellen
+        };
+
+        const btn2 = document.createElement('button');
+        btn2.textContent = 'NEUES SPIEL';
+        btn2.style.cssText = 'position:relative;z-index:1;background:url("buttonfilz.webp") center/cover no-repeat;' +
+          'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
+        btn2.onclick = () => {
+          localStorage.removeItem('digikipp_card_frozen');
+          ov.remove();
+          backToStartScreen();
+        };
+
+        ov.appendChild(btn1);
+        ov.appendChild(btn2);
+        document.body.appendChild(ov);
+      } catch(e) {}
+    })();
 
     renderLoop();
   </script>
