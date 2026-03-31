@@ -1706,17 +1706,8 @@
     
     // Blick-Icons anzeigen/verstecken (nur Karten MIT Icon)
     function showBlickIcons() {
-      for (let i = 0; i < numActiveCards; i++) {
-        const src = CARD_BLICK_MAP[i];
-        if (src && jokerTextures[src]) {
-          blickIconMeshes[i].material.map = jokerTextures[src];
-          blickIconMeshes[i].material.needsUpdate = true;
-        }
-        blickIconMeshes[i].visible = (src !== null && kipp21CardStates[i] === 'verdeckt');
-        const cx = cardStartX + i * (cardWidth + cardGap);
-        blickIconMeshes[i].position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
-      }
-      for (let i = numActiveCards; i < 6; i++) blickIconMeshes[i].visible = false;
+      // KIPP CARD: Keine Joker-Icons auf Karten
+      for (let i = 0; i < 6; i++) blickIconMeshes[i].visible = false;
     }
     function hideBlickIcon(idx) {
       if (idx >= 0 && idx < 6) blickIconMeshes[idx].visible = false;
@@ -2034,6 +2025,44 @@
         if (window._dirCwMesh) window._dirCwMesh.rotation.z = rot;
         if (window._dirCcwMesh) window._dirCcwMesh.rotation.z = rot;
       };
+
+      // BEREIT-Button auf Zeile 15 (3D, Spieltisch)
+      const bereitZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125; // Zeile 15 Mitte
+      const bereitBtnW = 4 * 0.15625; // 4 Zellen breit
+      const bereitBtnH = 0.8 * 0.15625; // 0.8 Zellen hoch
+      new THREE.TextureLoader().load('buttonfilz.webp', (btnTex) => {
+        const btnGeo = new THREE.PlaneGeometry(bereitBtnW, bereitBtnH);
+        const btnMat = new THREE.MeshBasicMaterial({
+          map: btnTex, transparent: true, depthWrite: false
+        });
+        window._bereitMesh = new THREE.Mesh(btnGeo, btnMat);
+        window._bereitMesh.rotation.x = -Math.PI / 2;
+        window._bereitMesh.position.set(0, yPos + 0.003, bereitZ);
+        window._bereitMesh.renderOrder = 3;
+        window._bereitMesh.visible = true;
+        scene.add(window._bereitMesh);
+
+        // Text-Canvas für "BEREIT"
+        const tc = document.createElement('canvas');
+        tc.width = 512; tc.height = 128;
+        const tctx = tc.getContext('2d');
+        tctx.font = 'bold 48px Arial';
+        tctx.textAlign = 'center';
+        tctx.textBaseline = 'middle';
+        tctx.fillStyle = '#ffffff';
+        tctx.fillText('BEREIT', 256, 64);
+        const txtTex = new THREE.CanvasTexture(tc);
+        const txtGeo = new THREE.PlaneGeometry(bereitBtnW, bereitBtnH);
+        const txtMat = new THREE.MeshBasicMaterial({
+          map: txtTex, transparent: true, depthWrite: false
+        });
+        window._bereitTextMesh = new THREE.Mesh(txtGeo, txtMat);
+        window._bereitTextMesh.rotation.x = -Math.PI / 2;
+        window._bereitTextMesh.position.set(0, yPos + 0.004, bereitZ);
+        window._bereitTextMesh.renderOrder = 4;
+        window._bereitTextMesh.visible = true;
+        scene.add(window._bereitTextMesh);
+      });
       
       // Numpad-Position: wird unten bei renderLoop-Start gesetzt
       // (hier ist die Kamera noch nicht fertig)
@@ -6118,12 +6147,11 @@
       if (jLabel) { jLabel.style.animation = 'none'; jLabel.style.display = 'none'; }
     }
     
-    // --- KNIFF 1: Wobble-Kipp-Schau (joker2, links) ---
+    // --- KNIFF 1: Wobble deaktiviert für KIPP CARD ---
     async function runKipp21WobbleKniff(skipOpenGuard) {
-      console.log('[WOBBLE] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21WobbleUsed, 'nextV='+kipp21NextVerdeckt());
-      if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[WOBBLE] BLOCKED: active/phase'); return false; }
-      if (gamePhase !== 'demo' && !skipOpenGuard && kipp21NextVerdeckt() < 0) { console.warn('[WOBBLE] BLOCKED: no verdeckt'); return false; }
-      // Kippziel offen? Erst kippen! (bypass in demo/tutorial oder bei gleichzeitigem Öffnen)
+      return false;
+    }
+    /* --- WOBBLE BODY DEAKTIVIERT FÜR KIPP CARD ---
       if (!skipOpenGuard && gamePhase !== 'demo' && kipp21CardStates.includes('offen')) { showKippenWarning(); return false; }
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
@@ -6211,6 +6239,8 @@
         kipp21EndKniffAndOpenCard();
       }
     }
+    
+    --- ENDE WOBBLE BODY DEAKTIVIERT */
     
     // --- KNIFF 2: Eckblick (joker3, rechts) ---
     let eckblickPivot = null;
@@ -8712,6 +8742,21 @@
         
         // Stellknopf: Tap auf Zahlen-Label → direkt wählen, Tap auf Knopf → weiterdrehen
       }
+
+      // BEREIT-Button (3D) → Eckblick starten
+      if (window._bereitMesh && window._bereitMesh.visible && lastTouchPos) {
+        const rect3 = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rect3.left) / rect3.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rect3.top) / rect3.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._bereitMesh).length > 0) {
+          window._bereitMesh.visible = false;
+          window._bereitTextMesh.visible = false;
+          runKipp21EckblickKniff(true);
+          lastTouchPos = null;
+          return;
+        }
+      }
       
       if (!verdecktesMesh.visible || !lastTouchPos) { lastTouchPos = null; return; }
       if (dragActive) { lastTouchPos = null; return; }
@@ -8776,6 +8821,16 @@
         }
       }
       
+      // BEREIT-Button (3D) click → Eckblick (Desktop)
+      if (window._bereitMesh && window._bereitMesh.visible) {
+        if (vkRaycaster.intersectObject(window._bereitMesh).length > 0) {
+          window._bereitMesh.visible = false;
+          window._bereitTextMesh.visible = false;
+          runKipp21EckblickKniff(true);
+          return;
+        }
+      }
+
       if (!verdecktesMesh.visible) return;
       if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
         if (gamePhase === 'entscheidung' && !verdecktesMesh.userData.revealed) {
