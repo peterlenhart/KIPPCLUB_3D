@@ -9108,6 +9108,10 @@
         const touch = e.touches[0];
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
       }
+      // Immer Touch-Position für Pause/Target-Verdeckt
+      if (!lastTouchPos) {
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchmove', (e) => {
