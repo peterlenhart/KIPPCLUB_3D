@@ -723,6 +723,7 @@
     }
     #btnSpielen  { top: 455px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 534px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
+    #btnAnleitung { top: 613px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
     @keyframes pokalPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
@@ -984,6 +985,7 @@
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
+    <button class="startClickZone" id="btnAnleitung" disabled style="opacity:0">ANLEITUNG</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
   
@@ -1130,7 +1132,16 @@
         cOffen:"OFFEN", cVerdeckt:"VERDECKT",
         cSub1:"K\u00d6NNEN : GL\u00dcCK = 6 : 6", cSub2:"K\u00d6NNEN : GL\u00dcCK = 11 : 1",
         cEinfr:"EINFRIEREN", cWeiter:"WEITER",
-        cForts:"FORTSETZEN", cPause:"PAUSE"
+        cForts:"FORTSETZEN", cPause:"PAUSE",
+        cAnlSec:["ZIEL","AUFDECKEN","KIPPEN","STICH-WERTUNG","STRATEGIE"],
+        cAnl:[
+          "Stich die Bank! Der W\u00fcrfel tr\u00e4gt 12 Kartenwerte von 3 bis Ass. Pr\u00e4ge dir ihre Positionen ein.",
+          "Tippe auf die verdeckte Bankkarte. Sie zeigt einen Wert von 2 bis K\u00f6nig.",
+          "\u00dcberlege wie oft von 1 bis 6 und in welche Richtung du den W\u00fcrfel kippen musst, damit du einen h\u00f6heren Kartenwert an die Kartenfarbe der Bank-Karte (Target) bringst. Kippe dann mit dem Finger direkt durch Wischen auf dem W\u00fcrfel. Logge dein Kippergebnis ein, indem du auf die Bank-Karte (Target) tippst oder auf den Kartenwert am W\u00fcrfel, der neben der Bankkartenfarbe liegt.",
+          "H\u00f6her als die Bank = dein Stich. Niedriger, gleich und andere Farbe = Bank sticht.",
+          "Score-Anzeige links = Dein Score. Score-Anzeige rechts = Bank Score.",
+          "Jeder eingesetzte Kartenwert am W\u00fcrfel wird transparent \u2013 er ist weg. Setze deine Werte klug ein! Nur wer alle 12 Bank-Karten (Targets) genau um 1 h\u00f6her sticht, schafft den Highscore 180."
+        ]
       },
       "en": {
         s1:"OBJECTIVE", s2:"\u2022 Find the right number of tips and the correct direction so the cube hits the target. E.g. <b>{zahl}</b> to <b>{farbe}</b>.<br>It\u2019s never more than <b>6</b> tips if the direction is right.<br>\u2022 Use <b>LOOK</b> seconds efficiently.",
@@ -1155,7 +1166,16 @@
         cOffen:"OPEN", cVerdeckt:"HIDDEN",
         cSub1:"SKILL : LUCK = 6 : 6", cSub2:"SKILL : LUCK = 11 : 1",
         cEinfr:"FREEZE", cWeiter:"CONTINUE",
-        cForts:"CONTINUE", cPause:"PAUSE"
+        cForts:"CONTINUE", cPause:"PAUSE",
+        cAnlSec:["GOAL","REVEAL","TIP","TRICK SCORE","STRATEGY"],
+        cAnl:[
+          "Beat the bank! The cube carries 12 card values from 3 to Ace. Memorize their positions.",
+          "Tap the face-down bank card. It shows a value from 2 to King.",
+          "Figure out how many times (1 to 6) and in which direction to tip the cube so a higher card value lands next to the bank card\u2019s suit. Tip by swiping directly on the cube. Log your result by tapping the bank card (target) or the card value on the cube next to the bank suit.",
+          "Higher than the bank = your trick. Lower, equal or wrong suit = bank wins.",
+          "Score left = Your Score. Score right = Bank Score.",
+          "Each used card value on the cube becomes transparent \u2013 it\u2019s gone. Use your values wisely! Only those who beat all 12 bank cards (targets) by exactly 1 higher achieve the highscore of 180."
+        ]
       },
       "es": {
         s1:"OBJETIVO", s2:"\u2022 Encuentra el n\u00famero correcto de volcados y la direcci\u00f3n adecuada para que el cubo alcance el objetivo. P.ej. <b>{zahl}</b> a <b>{farbe}</b>.<br>Nunca son m\u00e1s de <b>6</b> volcados si la direcci\u00f3n es correcta.<br>\u2022 Usa los segundos de <b>MIRAR</b> eficientemente.",
@@ -1180,7 +1200,16 @@
         cOffen:"ABIERTO", cVerdeckt:"OCULTO",
         cSub1:"HABILIDAD : SUERTE = 6 : 6", cSub2:"HABILIDAD : SUERTE = 11 : 1",
         cEinfr:"CONGELAR", cWeiter:"SEGUIR",
-        cForts:"CONTINUAR", cPause:"PAUSA"
+        cForts:"CONTINUAR", cPause:"PAUSA",
+        cAnlSec:["OBJETIVO","DESCUBRIR","VOLCAR","PUNTUACI\u00d3N","ESTRATEGIA"],
+        cAnl:[
+          "\u00a1Gana a la banca! El cubo lleva 12 valores de carta del 3 al As. Memoriza sus posiciones.",
+          "Toca la carta boca abajo de la banca. Muestra un valor del 2 al Rey.",
+          "Calcula cu\u00e1ntas veces (1 a 6) y en qu\u00e9 direcci\u00f3n volcar el cubo para que un valor superior quede junto al palo de la carta de la banca. Vuelca deslizando el dedo sobre el cubo. Registra tu resultado tocando la carta de la banca o el valor en el cubo junto al palo.",
+          "Mayor que la banca = tu baza. Menor, igual u otro palo = la banca gana.",
+          "Puntuaci\u00f3n izquierda = Tu score. Puntuaci\u00f3n derecha = Score de la banca.",
+          "Cada valor usado en el cubo se vuelve transparente. \u00a1\u00dasalos con inteligencia! Solo quien supere las 12 cartas exactamente por 1 logra el highscore de 180."
+        ]
       },
       "fr": {
         s1:"OBJECTIF", s2:"\u2022 Trouve le bon nombre de basculements et la bonne direction pour que le cube atteigne la cible. Par ex. <b>{zahl}</b> \u00e0 <b>{farbe}</b>.<br>Jamais plus de <b>6</b> basculements si la direction est bonne.<br>\u2022 Utilise les secondes de <b>REGARD</b> efficacement.",
@@ -1205,7 +1234,16 @@
         cOffen:"OUVERT", cVerdeckt:"CACH\u00c9",
         cSub1:"COMP\u00c9TENCE : CHANCE = 6 : 6", cSub2:"COMP\u00c9TENCE : CHANCE = 11 : 1",
         cEinfr:"GELER", cWeiter:"CONTINUER",
-        cForts:"REPRENDRE", cPause:"PAUSE"
+        cForts:"REPRENDRE", cPause:"PAUSE",
+        cAnlSec:["OBJECTIF","D\u00c9COUVRIR","BASCULER","SCORE DU PLI","STRAT\u00c9GIE"],
+        cAnl:[
+          "Bats la banque ! Le cube porte 12 valeurs de carte du 3 \u00e0 l\u2019As. M\u00e9morise leurs positions.",
+          "Touche la carte face cach\u00e9e de la banque. Elle montre une valeur du 2 au Roi.",
+          "Calcule combien de fois (1 \u00e0 6) et dans quelle direction basculer le cube pour qu\u2019une valeur sup\u00e9rieure se retrouve \u00e0 c\u00f4t\u00e9 de la couleur de la carte de la banque. Bascule en glissant le doigt sur le cube. Enregistre ton r\u00e9sultat en touchant la carte de la banque ou la valeur sur le cube.",
+          "Plus haut que la banque = ton pli. Plus bas, \u00e9gal ou autre couleur = la banque gagne.",
+          "Score \u00e0 gauche = Ton score. Score \u00e0 droite = Score de la banque.",
+          "Chaque valeur utilis\u00e9e sur le cube devient transparente. Utilise tes valeurs avec intelligence ! Seul celui qui bat les 12 cartes exactement de 1 atteint le highscore de 180."
+        ]
       },
       "it": {
         s1:"OBIETTIVO", s2:"\u2022 Trova il numero giusto di ribaltamenti e la direzione corretta affinch\u00e9 il cubo raggiunga il bersaglio. Es. <b>{zahl}</b> a <b>{farbe}</b>.<br>Non sono mai pi\u00f9 di <b>6</b> ribaltamenti se la direzione \u00e8 giusta.<br>\u2022 Usa i secondi di <b>GUARDA</b> in modo efficiente.",
@@ -1230,7 +1268,16 @@
         cOffen:"APERTO", cVerdeckt:"NASCOSTO",
         cSub1:"ABILIT\u00c0 : FORTUNA = 6 : 6", cSub2:"ABILIT\u00c0 : FORTUNA = 11 : 1",
         cEinfr:"CONGELA", cWeiter:"CONTINUA",
-        cForts:"RIPRENDI", cPause:"PAUSA"
+        cForts:"RIPRENDI", cPause:"PAUSA",
+        cAnlSec:["OBIETTIVO","SCOPRIRE","RIBALTARE","PUNTEGGIO","STRATEGIA"],
+        cAnl:[
+          "Batti il banco! Il cubo porta 12 valori di carta dal 3 all\u2019Asso. Memorizza le loro posizioni.",
+          "Tocca la carta coperta del banco. Mostra un valore dal 2 al Re.",
+          "Calcola quante volte (da 1 a 6) e in quale direzione ribaltare il cubo per portare un valore superiore accanto al seme della carta del banco. Ribalta scorrendo il dito sul cubo. Registra il risultato toccando la carta del banco o il valore sul cubo accanto al seme.",
+          "Pi\u00f9 alto del banco = la tua presa. Pi\u00f9 basso, uguale o seme diverso = il banco vince.",
+          "Punteggio a sinistra = Il tuo score. Punteggio a destra = Score del banco.",
+          "Ogni valore usato sul cubo diventa trasparente. Usa i tuoi valori con intelligenza! Solo chi batte tutte le 12 carte esattamente di 1 raggiunge l\u2019highscore di 180."
+        ]
       },
       "tr": {
         s1:"HEDEF", s2:"\u2022 K\u00fcp\u00fcn hedefe ula\u015fmas\u0131 i\u00e7in do\u011fru devrilme say\u0131s\u0131n\u0131 ve y\u00f6n\u00fcn\u00fc bul. \u00d6rn. <b>{zahl}</b> \u2192 <b>{farbe}</b>.<br>Y\u00f6n do\u011fruysa asla <b>6</b>\u2019dan fazla devrilme olmaz.<br>\u2022 <b>BAKMA</b> saniyelerini verimli kullan.",
@@ -1255,7 +1302,16 @@
         cOffen:"A\u00c7IK", cVerdeckt:"G\u0130ZL\u0130",
         cSub1:"YETENEK : \u015eANS = 6 : 6", cSub2:"YETENEK : \u015eANS = 11 : 1",
         cEinfr:"DONDUR", cWeiter:"DEVAM",
-        cForts:"DEVAM ET", cPause:"MOLA"
+        cForts:"DEVAM ET", cPause:"MOLA",
+        cAnlSec:["HEDEF","A\u00c7","DEV\u0130R","EL PUANI","STRATEJ\u0130"],
+        cAnl:[
+          "Bankay\u0131 yen! K\u00fcp 3\u2019ten As\u2019a kadar 12 kart de\u011feri ta\u015f\u0131r. Pozisyonlar\u0131n\u0131 ezberle.",
+          "Bankan\u0131n kapal\u0131 kart\u0131na dokun. 2\u2019den Papaz\u2019a kadar bir de\u011fer g\u00f6sterir.",
+          "K\u00fcb\u00fc ka\u00e7 kez (1-6) ve hangi y\u00f6ne devirmeni gerekti\u011fini hesapla. Parmakla k\u00fcp \u00fczerinde kayd\u0131rarak devir. Sonucu banka kart\u0131na veya k\u00fcp \u00fczerindeki de\u011fere dokunarak kaydet.",
+          "Bankadan y\u00fcksek = senin elin. D\u00fc\u015f\u00fck, e\u015fit veya farkl\u0131 simge = banka kazan\u0131r.",
+          "Sol skor = Senin skorun. Sa\u011f skor = Banka skoru.",
+          "Kullan\u0131lan her kart de\u011feri saydam olur. De\u011ferlerini ak\u0131ll\u0131ca kullan! Sadece 12 banka kart\u0131n\u0131 tam 1 fazlas\u0131yla yenen ki\u015fi 180 rekoruna ula\u015f\u0131r."
+        ]
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
@@ -2562,6 +2618,8 @@
         document.getElementById('btnSpielen').style.opacity = '1';
         document.getElementById('btnDemo').disabled = false;
         document.getElementById('btnDemo').style.opacity = '1';
+        document.getElementById('btnAnleitung').disabled = false;
+        document.getElementById('btnAnleitung').style.opacity = '1';
       }
     }
 
@@ -8295,9 +8353,85 @@
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault(); handleStart(true);
     }, { passive: false });
+    document.getElementById('btnAnleitung').addEventListener('click', () => showCardAnleitung());
+    document.getElementById('btnAnleitung').addEventListener('touchend', (e) => {
+      e.preventDefault(); showCardAnleitung();
+    }, { passive: false });
     
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
+    function showCardAnleitung() {
+      const old = document.getElementById('_cardAnleitungOverlay');
+      if (old) old.remove();
+
+      const ov = document.createElement('div');
+      ov.id = '_cardAnleitungOverlay';
+      ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:55;display:flex;flex-direction:column;';
+
+      const bg = document.createElement('img');
+      bg.src = 'overlay_card.webp';
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
+      ov.appendChild(bg);
+
+      const scroll = document.createElement('div');
+      scroll.style.cssText = 'position:relative;z-index:1;flex:1;overflow-y:auto;' +
+        'padding:30px 30px 10px 30px;-webkit-overflow-scrolling:touch;' +
+        'background:rgba(0,0,0,0.45);';
+
+      const title = document.createElement('div');
+      title.style.cssText = 'font:bold 28px Arial;letter-spacing:3px;text-transform:uppercase;' +
+        'color:#e0d0b8;text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:18px;';
+      title.textContent = T.dm || 'ANLEITUNG';
+      scroll.appendChild(title);
+
+      const sections = T.cAnlSec || ['ZIEL','AUFDECKEN','KIPPEN','STICH-WERTUNG','STRATEGIE'];
+      const steps = T.cAnl || [];
+      // Zuordnung: Step 0→Sec 0, Step 1→Sec 1, Step 2+3→Sec 2, Step 4→Sec 3, Step 5→Sec 4
+      const secMap = [0, 1, 2, null, 3, 4];
+
+      steps.forEach((txt, i) => {
+        if (secMap[i] !== null && secMap[i] !== undefined) {
+          const h = document.createElement('div');
+          h.style.cssText = 'font:bold 18px Arial;letter-spacing:2px;text-transform:uppercase;' +
+            'color:#e0d0b8;margin-top:' + (i === 0 ? '4' : '14') + 'px;margin-bottom:6px;' +
+            'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
+          h.textContent = sections[secMap[i]];
+          scroll.appendChild(h);
+        }
+        const p = document.createElement('div');
+        p.style.cssText = 'font:15px/1.45 Arial;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
+          'margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;';
+        const num = document.createElement('span');
+        num.textContent = (i + 1);
+        num.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
+          'min-width:24px;height:24px;border-radius:50%;background:#e0d0b8;color:#000;' +
+          'font:bold 13px Arial;flex-shrink:0;margin-top:1px;';
+        const txtSpan = document.createElement('span');
+        txtSpan.innerHTML = txt;
+        p.appendChild(num);
+        p.appendChild(txtSpan);
+        scroll.appendChild(p);
+      });
+
+      ov.appendChild(scroll);
+
+      const btnWrap = document.createElement('div');
+      btnWrap.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
+        'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
+      const btn = document.createElement('button');
+      btn.textContent = 'OK';
+      btn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
+        'display:flex;align-items:center;justify-content:center;';
+      btn.onclick = () => ov.remove();
+      btnWrap.appendChild(btn);
+      ov.appendChild(btnWrap);
+
+      document.body.appendChild(ov);
+    }
+
     function showPauseDialog() {
       const old = document.getElementById('_pauseDialog');
       if (old) old.remove();
