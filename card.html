@@ -2118,7 +2118,7 @@
       };
 
       // PAUSE-Bereich auf Zeile 15 (3D, Spieltisch): reset_card links in Spalte A + "PAUSE" Text
-      const pauseZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125; // Zeile 15 Mitte
+      const pauseZ = -0.359375 + (15 - 4) * 0.15625 + 0.078125 + 0.007; // Zeile 15 Mitte + 2px südl.
       const pauseIconSize = 0.15625; // 1 Zelle
       // Spalte A Mitte = -3.5 Zellen vom Zentrum
       const pauseIconX = -3.5 * 0.15625 + 0.076; // 22px östlicher
@@ -2164,6 +2164,133 @@
       const a11Z = -0.359375 + (11 - 4) * 0.15625; // Nordkante Zeile 11
       const targetFiles = ['target_stapel2.webp','target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp','target_verdeckt.webp'];
       window._targetMeshes = {};
+
+      // Suit-Bilder (herz/karo/kreuz/pik) am selben Anker A11, unsichtbar
+      window._suitMeshes = {};
+      ['herz.png','karo.png','kreuz.png','pik.png'].forEach((file) => {
+        new THREE.TextureLoader().load(file, (tex) => {
+          const imgW = tex.image.width;
+          const imgH = tex.image.height;
+          const w3d = (imgW / 3) * (0.15625 / 45);
+          const h3d = (imgH / 3) * (0.15625 / 45);
+          const geo = new THREE.PlaneGeometry(w3d, h3d);
+          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.position.set(a11X + w3d / 2, yPos + 0.009, a11Z + h3d / 2);
+          mesh.renderOrder = 14;
+          mesh.visible = false;
+          scene.add(mesh);
+          window._suitMeshes[file] = mesh;
+        });
+      });
+
+      // Kartenstich-State
+      window._cardTargetState = {
+        usedNumbers: new Set(),
+        drawsCount: 0,
+        currentTarget: null,
+        round: 1 // 1 oder 2
+      };
+
+      // SUIT_IMG_BY_COLOR aus kipp-card.html
+      const SUIT_IMG_BY_COLOR = {
+        gruen: 'karo.png', orange: 'kreuz.png',
+        blau: 'herz.png', violett: 'pik.png'
+      };
+      const allTargetColors = ['violett','blau','gruen','orange'];
+
+      // Kartenwert-Anzeige (2-K) auf Zeile 12, Spalte D
+      const rank12D_X = -4 * 0.15625 + 3 * 0.15625 + 0.15625 / 2; // Spalte D Mitte
+      const rank12D_Z = -0.359375 + (12 - 4) * 0.15625 + 0.15625 / 2; // Zeile 12 Mitte
+      const rankCanvas = document.createElement('canvas');
+      rankCanvas.width = 128; rankCanvas.height = 128;
+      const rankCtx = rankCanvas.getContext('2d');
+      const rankTexture = new THREE.CanvasTexture(rankCanvas);
+      const rankGeo = new THREE.PlaneGeometry(0.15625, 0.15625); // 1 Zelle
+      const rankMat = new THREE.MeshBasicMaterial({ map: rankTexture, transparent: true, depthWrite: false });
+      window._targetRankMesh = new THREE.Mesh(rankGeo, rankMat);
+      window._targetRankMesh.rotation.x = -Math.PI / 2;
+      window._targetRankMesh.position.set(rank12D_X, yPos + 0.010, rank12D_Z);
+      window._targetRankMesh.renderOrder = 15;
+      window._targetRankMesh.visible = false;
+      scene.add(window._targetRankMesh);
+
+      function updateTargetRankDisplay(text) {
+        rankCtx.clearRect(0, 0, 128, 128);
+        rankCtx.font = '900 90px "Noto Serif"';
+        rankCtx.textAlign = 'center';
+        rankCtx.textBaseline = 'middle';
+        rankCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+        rankCtx.fillText(text, 64, 64);
+        rankTexture.needsUpdate = true;
+      }
+
+      // Target-Karten: intern 1-12 → visuell 2-K
+      function getTargetVisualRank(n) {
+        switch(n) {
+          case 12: return 'K'; case 11: return 'Q'; case 10: return 'J';
+          case 9: return '10'; case 8: return '9'; case 7: return '8';
+          case 6: return '7'; case 5: return '6'; case 4: return '5';
+          case 3: return '4'; case 2: return '3'; case 1: return '2';
+          default: return '';
+        }
+      }
+
+      // Forbidden pairs: Kombinationen die gerade sichtbar am Würfel liegen
+      function getForbiddenPairs3D() {
+        const forbidden = new Set();
+        for (const fk of ['f0','f1','f2']) {
+          const f = faceSlots[fk];
+          if (!f) continue;
+          for (const key in f.slotMap) {
+            const s = f.slotMap[key];
+            if (s.vis === false || s.val == null) continue;
+            // Farbe aus Quadrant bestimmen — vereinfacht: alle 4 Farben als forbidden
+            allTargetColors.forEach(c => forbidden.add(s.val + '|' + c));
+          }
+        }
+        return forbidden;
+      }
+
+      function generateCardTarget3D() {
+        const st = window._cardTargetState;
+        if (st.drawsCount >= 12) return null;
+        const forbidden = getForbiddenPairs3D();
+        const candidates = [];
+        for (let n = 1; n <= 12; n++) {
+          if (st.usedNumbers.has(n)) continue;
+          for (const c of allTargetColors) {
+            if (forbidden.has(n + '|' + c)) continue;
+            candidates.push({ num: n, color: c });
+          }
+        }
+        if (!candidates.length) return null;
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        st.usedNumbers.add(chosen.num);
+        st.drawsCount++;
+        st.currentTarget = chosen;
+        return chosen;
+      }
+
+      // Pulse-Animation für target_verdeckt
+      window._targetPulseActive = false;
+      function startTargetPulse() {
+        window._targetPulseActive = true;
+        const mesh = window._targetMeshes['target_verdeckt.webp'];
+        if (!mesh) return;
+        (function pulse() {
+          if (!window._targetPulseActive || !mesh.visible) return;
+          const t = (Math.sin(Date.now() * 0.004) + 1) / 2; // 0-1
+          mesh.material.opacity = 0.6 + 0.4 * t;
+          requestAnimationFrame(pulse);
+        })();
+      }
+      function stopTargetPulse() {
+        window._targetPulseActive = false;
+        const mesh = window._targetMeshes['target_verdeckt.webp'];
+        if (mesh) mesh.material.opacity = 1;
+      }
 
       targetFiles.forEach((file, idx) => {
         new THREE.TextureLoader().load(file, (tex) => {
@@ -8375,6 +8502,7 @@
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
       // Bankkarten sichtbar
       if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = true);
+      startTargetPulse();
       // BEREIT-Button jetzt zeigen
       if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
@@ -8578,6 +8706,15 @@
       if (window._pauseIconMesh) window._pauseIconMesh.visible = false;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = false;
       if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
+      if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
+      if (window._targetRankMesh) window._targetRankMesh.visible = false;
+      stopTargetPulse();
+      if (window._cardTargetState) {
+        window._cardTargetState.usedNumbers.clear();
+        window._cardTargetState.drawsCount = 0;
+        window._cardTargetState.currentTarget = null;
+        window._cardTargetState.round = 1;
+      }
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
@@ -9032,6 +9169,35 @@
           return;
         }
       }
+
+      // Target_verdeckt (3D) → Eckblick starten
+      if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
+          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
+        const rect4 = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rect4.left) / rect4.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rect4.top) / rect4.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
+          stopTargetPulse();
+          runKipp21EckblickKniff(true).then(() => {
+            const target = generateCardTarget3D();
+            if (target) {
+              window._targetMeshes['target_verdeckt.webp'].visible = false;
+              // Suit-Bild zeigen
+              Object.values(window._suitMeshes).forEach(m => m.visible = false);
+              const suitFile = SUIT_IMG_BY_COLOR[target.color];
+              if (suitFile && window._suitMeshes[suitFile]) {
+                window._suitMeshes[suitFile].visible = true;
+              }
+              // Kartenwert anzeigen
+              updateTargetRankDisplay(getTargetVisualRank(target.num));
+              window._targetRankMesh.visible = true;
+            }
+          });
+          lastTouchPos = null;
+          return;
+        }
+      }
       
       if (!verdecktesMesh.visible || !lastTouchPos) { lastTouchPos = null; return; }
       if (dragActive) { lastTouchPos = null; return; }
@@ -9101,6 +9267,28 @@
         if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
             (window._pauseTextMesh && vkRaycaster.intersectObject(window._pauseTextMesh).length > 0)) {
           showPauseDialog();
+          return;
+        }
+      }
+
+      // Target_verdeckt click → Eckblick (Desktop)
+      if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
+          window._targetMeshes['target_verdeckt.webp'].visible && !kipp21KniffActive) {
+        if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
+          stopTargetPulse();
+          runKipp21EckblickKniff(true).then(() => {
+            const target = generateCardTarget3D();
+            if (target) {
+              window._targetMeshes['target_verdeckt.webp'].visible = false;
+              Object.values(window._suitMeshes).forEach(m => m.visible = false);
+              const suitFile = SUIT_IMG_BY_COLOR[target.color];
+              if (suitFile && window._suitMeshes[suitFile]) {
+                window._suitMeshes[suitFile].visible = true;
+              }
+              updateTargetRankDisplay(getTargetVisualRank(target.num));
+              window._targetRankMesh.visible = true;
+            }
+          });
           return;
         }
       }
