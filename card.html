@@ -9119,7 +9119,49 @@
     
     renderer.domElement.addEventListener('touchend', (e) => {
       if (replayActive) return;
-      if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
+      if (window._numBtnTouchActive) return;
+
+      // PAUSE-Button (3D) → immer zuerst prüfen
+      if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
+        const rectP = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectP.left) / rectP.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectP.top) / rectP.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
+            (window._pauseTextMesh && vkRaycaster.intersectObject(window._pauseTextMesh).length > 0)) {
+          showPauseDialog();
+          lastTouchPos = null;
+          return;
+        }
+      }
+
+      // Target_verdeckt (3D) → Eckblick starten
+      if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
+          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
+        const rectT = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectT.left) / rectT.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectT.top) / rectT.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
+          stopTargetPulse();
+          runKipp21EckblickKniff(true).then(() => {
+            const target = generateCardTarget3D();
+            if (target) {
+              window._targetMeshes['target_verdeckt.webp'].visible = false;
+              Object.values(window._suitMeshes).forEach(m => m.visible = false);
+              const suitFile = SUIT_IMG_BY_COLOR[target.color];
+              if (suitFile && window._suitMeshes[suitFile]) {
+                window._suitMeshes[suitFile].visible = true;
+              }
+              updateTargetRankDisplay(getTargetVisualRank(target.num));
+              window._targetRankMesh.visible = true;
+            }
+          });
+          lastTouchPos = null;
+          return;
+        }
+      }
+
       // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
@@ -9158,49 +9200,6 @@
         }
         
         // Stellknopf: Tap auf Zahlen-Label → direkt wählen, Tap auf Knopf → weiterdrehen
-      }
-
-      // PAUSE-Button (3D) → Pause-Dialog
-      if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
-        const rect3 = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rect3.left) / rect3.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rect3.top) / rect3.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
-            (window._pauseTextMesh && vkRaycaster.intersectObject(window._pauseTextMesh).length > 0)) {
-          showPauseDialog();
-          lastTouchPos = null;
-          return;
-        }
-      }
-
-      // Target_verdeckt (3D) → Eckblick starten
-      if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
-          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
-        const rect4 = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rect4.left) / rect4.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rect4.top) / rect4.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
-          stopTargetPulse();
-          runKipp21EckblickKniff(true).then(() => {
-            const target = generateCardTarget3D();
-            if (target) {
-              window._targetMeshes['target_verdeckt.webp'].visible = false;
-              // Suit-Bild zeigen
-              Object.values(window._suitMeshes).forEach(m => m.visible = false);
-              const suitFile = SUIT_IMG_BY_COLOR[target.color];
-              if (suitFile && window._suitMeshes[suitFile]) {
-                window._suitMeshes[suitFile].visible = true;
-              }
-              // Kartenwert anzeigen
-              updateTargetRankDisplay(getTargetVisualRank(target.num));
-              window._targetRankMesh.visible = true;
-            }
-          });
-          lastTouchPos = null;
-          return;
-        }
       }
       
       if (!verdecktesMesh.visible || !lastTouchPos) { lastTouchPos = null; return; }
