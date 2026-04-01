@@ -2178,7 +2178,7 @@
           // Mesh-Zentrum so, dass li ob Ecke auf A11 li ob Ecke liegt
           mesh.position.set(a11X + w3d / 2, yPos + 0.001 + idx * 0.001, a11Z + h3d / 2);
           mesh.renderOrder = 5 + idx;
-          mesh.visible = true;
+          mesh.visible = false;
           scene.add(mesh);
           window._targetMeshes[file] = mesh;
         });
@@ -8373,6 +8373,8 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
+      // Bankkarten sichtbar
+      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = true);
       // BEREIT-Button jetzt zeigen
       if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
@@ -8575,6 +8577,7 @@
       if (window._buttonOverlay) window._buttonOverlay.visible = true;
       if (window._pauseIconMesh) window._pauseIconMesh.visible = false;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = false;
+      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
