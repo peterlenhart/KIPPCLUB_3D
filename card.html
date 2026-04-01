@@ -2113,7 +2113,7 @@
       // Spalte A Mitte = -3.5 Zellen vom Zentrum
       const pauseIconX = -3.5 * 0.15625 + 0.076; // 22px östlicher
 
-      new THREE.TextureLoader().load('reset_card.webp', (iconTex) => {
+      new THREE.TextureLoader().load('pause_card.webp', (iconTex) => {
         const iconGeo = new THREE.PlaneGeometry(pauseIconSize, pauseIconSize);
         const iconMat = new THREE.MeshBasicMaterial({
           map: iconTex, transparent: true, depthWrite: false
@@ -8294,6 +8294,7 @@
       _cardModePhase = 1;
       const btn1 = document.getElementById('btnSpielen');
       const btn2 = document.getElementById('btnDemo');
+      document.getElementById('btnAnleitung').style.display = 'none';
       btn1.textContent = T.cOffen || 'OFFEN';
       btn2.textContent = T.cVerdeckt || 'VERDECKT';
 
@@ -8530,6 +8531,7 @@
       _bSp.disabled = false; _bDm.disabled = false;
       _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
       _bSp.textContent = T.sp || 'SPIELEN'; _bDm.textContent = T.dm || 'TUTORIAL';
+      document.getElementById('btnAnleitung').style.display = '';
       _cardModePhase = 0;
       const _s1 = document.getElementById('_cardSub1');
       const _s2 = document.getElementById('_cardSub2');
