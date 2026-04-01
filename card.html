@@ -494,6 +494,7 @@
 
     /* BUTTONS 1-6 */
     #numBtns {
+      display: none !important;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -1570,19 +1571,28 @@
     // Kärtchen auf dem Spieltisch (π1, orange Raster)
     const cardWidth = 0.15625;   // 1 Zelle
     const cardHeight = 0.3125;   // 2 Zellen
-    let numActiveCards = 4;
-    let cardGap = (1.25 - 4 * cardWidth) / 3 - 4 * (2.5 / 720); // 4 Karten, Gap -4px
-    const cardY = 0.001 + 3 * 0.15625 + 0.002; // auf Spieltisch (3 Zellen über π1)
-    const cardZ = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720); // 4 Zeilen südlich, + 15px
+    let numActiveCards = 1;
+    let cardGap = 0;
+    const cardY = 0.001 + 3 * 0.15625 + 0.002;
+    const cardZ = 0.109375 + 4 * 0.15625 + 0.15625 + 15 * (2.5 / 720);
 
-    let totalCardsWidth = 4 * cardWidth + 3 * cardGap;
-    let cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+    // 1 Karte rechts außen (Position wie ehemals Karte 4 von 4)
+    let totalCardsWidth = 4 * cardWidth + 3 * ((1.25 - 4 * cardWidth) / 3 - 4 * (2.5 / 720));
+    let cardStartX = -totalCardsWidth / 2 + cardWidth / 2 + 3 * (cardWidth + (1.25 - 4 * cardWidth) / 3 - 4 * (2.5 / 720));
 
     function recalcCardLayout(n) {
       numActiveCards = n;
-      cardGap = (1.25 - n * cardWidth) / (n - 1) - 4 * (2.5 / 720);
-      totalCardsWidth = n * cardWidth + (n - 1) * cardGap;
-      cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+      if (n <= 1) {
+        // 1 Karte: rechts außen (Position wie ehemals Karte 4 von 4)
+        const origGap = (1.25 - 4 * cardWidth) / 3 - 4 * (2.5 / 720);
+        const origTotal = 4 * cardWidth + 3 * origGap;
+        cardStartX = -origTotal / 2 + cardWidth / 2 + 3 * (cardWidth + origGap);
+        cardGap = 0;
+      } else {
+        cardGap = (1.25 - n * cardWidth) / (n - 1) - 4 * (2.5 / 720);
+        totalCardsWidth = n * cardWidth + (n - 1) * cardGap;
+        cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
+      }
       for (let i = 0; i < 6; i++) {
         if (i < n) {
           gameCards[i].mesh.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
@@ -2149,6 +2159,31 @@
       window._pauseTextMesh.visible = false;
       scene.add(window._pauseTextMesh);
       
+      // === BANKKARTEN-STAPEL auf Spieltisch, Anker A11 (li ob Ecke) ===
+      const a11X = -4 * 0.15625; // linke Kante Spalte A
+      const a11Z = -0.359375 + (11 - 4) * 0.15625; // Nordkante Zeile 11
+      const targetFiles = ['target_stapel2.webp','target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp'];
+      window._targetMeshes = {};
+
+      targetFiles.forEach((file, idx) => {
+        new THREE.TextureLoader().load(file, (tex) => {
+          const imgW = tex.image.width;
+          const imgH = tex.image.height;
+          const w3d = (imgW / 3) * (0.15625 / 45); // px → 3D Einheiten (45px = 1 Zelle)
+          const h3d = (imgH / 3) * (0.15625 / 45);
+          const geo = new THREE.PlaneGeometry(w3d, h3d);
+          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = -Math.PI / 2;
+          // Mesh-Zentrum so, dass li ob Ecke auf A11 li ob Ecke liegt
+          mesh.position.set(a11X + w3d / 2, yPos + 0.001 + idx * 0.001, a11Z + h3d / 2);
+          mesh.renderOrder = 5 + idx;
+          mesh.visible = true;
+          scene.add(mesh);
+          window._targetMeshes[file] = mesh;
+        });
+      });
+
       // Numpad-Position: wird unten bei renderLoop-Start gesetzt
       // (hier ist die Kamera noch nicht fertig)
     });
@@ -3994,8 +4029,8 @@
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       }
       function showButtons() {
-        if (window._dirCwMesh) window._dirCwMesh.visible = true;
-        if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (window._dirCwMesh) window._dirCwMesh.visible = false;
+        if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       }
       
@@ -4660,10 +4695,10 @@
       // Level-dependent card layout
       if (currentLevel >= 3) {
         CARD_BLICK_MAP = CARD_BLICK_MAP_BRAIN;
-        if (numActiveCards !== 6) recalcCardLayout(6);
+        if (numActiveCards !== 1) recalcCardLayout(1);
       } else {
         CARD_BLICK_MAP = CARD_BLICK_MAP_TRAINING;
-        if (numActiveCards !== 4) recalcCardLayout(4);
+        if (numActiveCards !== 1) recalcCardLayout(1);
       }
       autoDemoActive = false; // Intro-Demo stoppen falls noch aktiv
       isAnimating = false;    // Sicherstellen
@@ -5127,8 +5162,8 @@
       }
       
       function showAllTrainingUI() {
-        if (window._dirCwMesh) window._dirCwMesh.visible = true;
-        if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+        if (window._dirCwMesh) window._dirCwMesh.visible = false;
+        if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
         if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
@@ -5959,8 +5994,8 @@
       brainySelectedNum = 0;
       brainySelectedDir = null;
       document.querySelectorAll('.numBtn').forEach(btn => btn.classList.remove('selected'));
-      if (window._dirCwMesh) window._dirCwMesh.visible = true;
-      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      if (window._dirCwMesh) window._dirCwMesh.visible = false;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       kipp21Active = true;
       brainyStartNumPulse();
@@ -6105,8 +6140,8 @@
       brainyHideGems();
 
       // Training-Buttons direkt zeigen (showAllTrainingUI existiert evtl. nicht bei Direktstart)
-      if (window._dirCwMesh) window._dirCwMesh.visible = true;
-      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      if (window._dirCwMesh) window._dirCwMesh.visible = false;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
 
@@ -6141,7 +6176,7 @@
       console.log('[BRAIN] Starting level - 6 cards, 12 numbers');
       currentLevel = 3;
       CARD_BLICK_MAP = CARD_BLICK_MAP_BRAIN;
-      recalcCardLayout(6);
+      recalcCardLayout(1);
       // All 12 numbers visible
       visibleDeckIndices.clear();
       for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
