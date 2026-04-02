@@ -6589,7 +6589,7 @@
       const savedQ = currentQuadrant;
       const savedF = topFace;
       
-      // --- 1. Auf Ecke stellen mit Y-Rotation ---
+      // --- Auf Ecke stellen ---
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
       const aufEckeDur = 1200;
       
@@ -6616,67 +6616,25 @@
         3: new THREE.Vector3(-o,  o,  o)
       };
       const diag = diagVectors[currentQuadrant].clone().normalize();
-
-      // Per-Quadrant Y-Rotation + Tiltwinkel (BRAIN-Level aus coloricon)
-      const perQ = [{y:45,t:14.5},{y:75,t:14.5},{y:45,t:14.5},{y:15,t:14.5}];
-      const { y: yDeg, t: tiltDeg } = perQ[currentQuadrant];
-
-      const upDir       = new THREE.Vector3(0, 1, 0);
-      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
-      const yRot45      = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yDeg * Math.PI/180);
-      const aufEckeY45  = yRot45.clone().multiply(aufEckeQuat);
-      const xTilt       = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
-      const tiltQuat    = xTilt.clone().multiply(aufEckeY45);
-
-      // 1. Auf Ecke kippen (senkrecht + Y gedreht)
+      const targetDir = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, targetDir);
+      
+      // Animation: auf Ecke kippen
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
           const t = Math.min((performance.now() - startTime) / aufEckeDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeY45, ease));
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, ease));
           if (t < 1) requestAnimationFrame(animate);
-          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+          else { pivotGroup.quaternion.copy(aufEckeQuat); resolve(); }
         }
         animate();
       });
-
+      
       eckblickPivot = pivotGroup;
-
-      // 2. Senkrecht hochsteigen
-      const liftHeight  = 0.40625;
-      const liftRiseDur = 800;
-      const origY = pivotGroup.position.y;
-
-      await new Promise(resolve => {
-        const startTime = performance.now();
-        function animRise() {
-          const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.position.y = origY + liftHeight * ease;
-          if (t < 1) requestAnimationFrame(animRise);
-          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
-        }
-        animRise();
-      });
-
-      // 3. Tilt separat — sanft
-      const tiltInDur = 1000;
-      if (!kipp21KniffAbort) {
-        await new Promise(resolve => {
-          const startTime = performance.now();
-          function animTilt() {
-            const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
-            const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
-            if (t < 1) requestAnimationFrame(animTilt);
-            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
-          }
-          animTilt();
-        });
-      }
-
-      // 4. Halten
+      
+      // Halten (mit Abort-Check)
       if (!kipp21KniffAbort) {
         await new Promise(resolve => {
           kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
@@ -6690,43 +6648,15 @@
           }, 100);
         });
       }
-
-      // 5. Tilt zurück
-      const untiltDur = 800;
-      await new Promise(resolve => {
-        const startTime = performance.now();
-        function animUntilt() {
-          const t = Math.min((performance.now() - startTime) / untiltDur, 1);
-          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, ease));
-          if (t < 1) requestAnimationFrame(animUntilt);
-          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
-        }
-        animUntilt();
-      });
-
-      // 6. Senkrecht absinken
-      const liftLowerDur = 800;
-      await new Promise(resolve => {
-        const startTime = performance.now();
-        function animLower() {
-          const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.position.y = origY + liftHeight * (1 - ease);
-          if (t < 1) requestAnimationFrame(animLower);
-          else { pivotGroup.position.y = origY; resolve(); }
-        }
-        animLower();
-      });
-
-      // 7. Von Ecke zurückfallen
+      
+      // Von Ecke zurückfallen
       const fallDur = 800;
       await new Promise(resolve => {
         const startTime = performance.now();
         function animate() {
           const t = Math.min((performance.now() - startTime) / fallDur, 1);
           const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(new THREE.Quaternion(), ease));
+          pivotGroup.quaternion.copy(aufEckeQuat.clone().slerp(new THREE.Quaternion(), ease));
           if (t < 1) requestAnimationFrame(animate);
           else { pivotGroup.quaternion.set(0,0,0,1); resolve(); }
         }
@@ -8616,12 +8546,15 @@
 
     // Tap auf target_verdeckt → Eckblick + Kippziel generieren
     function onTargetVerdecktTap() {
-      // Während Eckblick: Tap beendet ihn vorzeitig
+      // Während Eckblick: Tap beendet ihn vorzeitig (aber nicht sofort nach Start)
       if (kipp21KniffActive) {
-        kipp21KniffAbort = true;
+        if (window._eckblickStartTime && (Date.now() - window._eckblickStartTime) > 500) {
+          kipp21KniffAbort = true;
+        }
         return;
       }
       stopTargetPulse();
+      window._eckblickStartTime = Date.now();
       runKipp21EckblickKniff(true).then(() => {
         const target = generateCardTarget3D();
         if (target) {
@@ -8634,6 +8567,7 @@
           updateTargetRankDisplay(getTargetVisualRank(target.num));
           window._targetRankMesh.visible = true;
         }
+        window._eckblickStartTime = null;
       });
     }
     document.getElementById('eyeIcon').addEventListener('click', (e) => {
