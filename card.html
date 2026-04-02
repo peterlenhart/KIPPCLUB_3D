@@ -9238,6 +9238,23 @@
       if (replayActive) return;
       if (window._numBtnTouchActive) return;
 
+      // Eckblick: Tap auf den Würfel beendet den Eckblick sofort
+      if (kipp21KniffActive && eckblickPivot && lastTouchPos) {
+        const rectCube = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectCube.left) / rectCube.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectCube.top) / rectCube.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(cube, true).length > 0) {
+          kipp21KniffAbort = true;
+          if (kipp21KniffTimeout) {
+            clearTimeout(kipp21KniffTimeout);
+            kipp21KniffTimeout = null;
+          }
+          lastTouchPos = null;
+          return;
+        }
+      }
+
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rectP = renderer.domElement.getBoundingClientRect();
@@ -9339,7 +9356,19 @@
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       vkRaycaster.setFromCamera(vkMouse, camera);
-      
+
+      // Eckblick: Klick auf den Würfel beendet den Eckblick sofort
+      if (kipp21KniffActive && eckblickPivot) {
+        if (vkRaycaster.intersectObject(cube, true).length > 0) {
+          kipp21KniffAbort = true;
+          if (kipp21KniffTimeout) {
+            clearTimeout(kipp21KniffTimeout);
+            kipp21KniffTimeout = null;
+          }
+          lastTouchPos = null;
+          return;
+        }
+      }
       // KIPP 21: Card click detection (Desktop/Replay)
       if (gamePhase === 'kipp21' && kipp21Active && !kipp21CardTouchHandled) {
         // Pause-Button prüfen
