@@ -2332,17 +2332,17 @@
         return chosen;
       }
 
-      // Pulse-Animation für target_verdeckt (hebt sich leicht und schwenkt um die Y-Achse)
+      // Pulse-Animation für target_verdeckt (hebt sich leicht und schwenkt um die WELT-Y-Achse)
       window._targetPulseActive = false;
       window._targetPulseBaseY = null;
-      window._targetPulseBaseRotY = null;
+      window._targetPulseBaseQuat = null;
       window._targetPulseRAF = null;
       window.startTargetPulse = function() {
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (!mesh) return;
         window._targetPulseActive = true;
         if (window._targetPulseBaseY === null) window._targetPulseBaseY = mesh.position.y;
-        if (window._targetPulseBaseRotY === null) window._targetPulseBaseRotY = mesh.rotation.y;
+        if (!window._targetPulseBaseQuat) window._targetPulseBaseQuat = mesh.quaternion.clone();
         if (window._targetPulseRAF) cancelAnimationFrame(window._targetPulseRAF);
 
         (function pulse() {
@@ -2353,8 +2353,9 @@
           const now = Date.now();
           const lift = (Math.sin(now * 0.0032) + 1) / 2; // 0..1
           const sway = Math.sin(now * 0.0046) * THREE.MathUtils.degToRad(5); // -5°..+5°
+          const worldYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), sway);
           mesh.position.y = window._targetPulseBaseY + 0.012 + lift * 0.018;
-          mesh.rotation.y = window._targetPulseBaseRotY + sway;
+          mesh.quaternion.copy(worldYQuat).multiply(window._targetPulseBaseQuat);
           window._targetPulseRAF = requestAnimationFrame(pulse);
         })();
       }
@@ -2367,7 +2368,7 @@
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (mesh) {
           if (window._targetPulseBaseY !== null) mesh.position.y = window._targetPulseBaseY;
-          if (window._targetPulseBaseRotY !== null) mesh.rotation.y = window._targetPulseBaseRotY;
+          if (window._targetPulseBaseQuat) mesh.quaternion.copy(window._targetPulseBaseQuat);
         }
       }
 
@@ -6748,9 +6749,6 @@
       currentQuadrant = savedQ;
       topFace = savedF;
       eckblickPivot = null;
-
-      const wasAborted = !!kipp21KniffAbort;
-      const fromTargetVerdeckt = !!kipp21TargetVerdecktEckblickMode;
       
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
@@ -6758,11 +6756,6 @@
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
-
-      if (fromTargetVerdeckt) {
-        kipp21KniffAbort = false;
-        return !wasAborted;
-      }
       
       // Ausstehenden Card-Tap oder Auto-Open
       if (kipp21PendingCardTap >= 0) {
@@ -6774,7 +6767,6 @@
         kipp21KniffAbort = false;
         kipp21EndKniffAndOpenCard();
       }
-      return !wasAborted;
     }
     
     // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
@@ -8623,20 +8615,14 @@
     }
 
     // Tap auf target_verdeckt → Eckblick + Kippziel generieren
-    let kipp21TargetVerdecktEckblickMode = false;
     function onTargetVerdecktTap() {
+      // Während Eckblick: Tap beendet ihn vorzeitig
       if (kipp21KniffActive) {
-        if (kipp21TargetVerdecktEckblickMode) {
-          kipp21KniffAbort = true;
-          if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
-        }
+        kipp21KniffAbort = true;
         return;
       }
       stopTargetPulse();
-      kipp21TargetVerdecktEckblickMode = true;
-      runKipp21EckblickKniff(true).then((completed) => {
-        kipp21TargetVerdecktEckblickMode = false;
-        if (!completed) return;
+      runKipp21EckblickKniff(true).then(() => {
         const target = generateCardTarget3D();
         if (target) {
           window._targetMeshes['target_verdeckt.webp'].visible = false;
@@ -8648,8 +8634,6 @@
           updateTargetRankDisplay(getTargetVisualRank(target.num));
           window._targetRankMesh.visible = true;
         }
-      }).catch(() => {
-        kipp21TargetVerdecktEckblickMode = false;
       });
     }
     document.getElementById('eyeIcon').addEventListener('click', (e) => {
@@ -9274,7 +9258,7 @@
 
       // Target_verdeckt (3D) → Kippziel generieren
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
-          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
+          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos) {
         const rectT = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectT.left) / rectT.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rectT.top) / rectT.height) * 2 + 1;
@@ -9400,7 +9384,7 @@
 
       // Target_verdeckt click → Kippziel generieren (Desktop)
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
-          window._targetMeshes['target_verdeckt.webp'].visible && !kipp21KniffActive) {
+          window._targetMeshes['target_verdeckt.webp'].visible) {
         if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
           onTargetVerdecktTap();
           return;
