@@ -2200,6 +2200,65 @@
       };
       const allTargetColors = ['violett','blau','gruen','orange'];
 
+      // === SCORE-ANZEIGEN auf Zeile 10 (3D, Spieltisch) ===
+      const scoreZ = -0.359375 + (10 - 4) * 0.15625 + 0.15625 / 2; // Zeile 10 Mitte
+      const scoreW = 2 * 0.15625; // 2 Zellen breit
+      const scoreH = 0.15625; // 1 Zelle hoch
+      const scoreGeo = new THREE.PlaneGeometry(scoreW, scoreH);
+
+      // Player Score (Spalte A-B)
+      const scorePLCanvas = document.createElement('canvas');
+      scorePLCanvas.width = 256; scorePLCanvas.height = 64;
+      const scorePLCtx = scorePLCanvas.getContext('2d');
+      const scorePLTex = new THREE.CanvasTexture(scorePLCanvas);
+      const scorePLMat = new THREE.MeshBasicMaterial({ map: scorePLTex, transparent: true, depthWrite: false });
+      window._scorePLMesh = new THREE.Mesh(scoreGeo.clone(), scorePLMat);
+      window._scorePLMesh.rotation.x = -Math.PI / 2;
+      const scorePLX = -4 * 0.15625 + 0.15625; // Mitte A-B
+      window._scorePLMesh.position.set(scorePLX, yPos + 0.010, scoreZ);
+      window._scorePLMesh.renderOrder = 15;
+      window._scorePLMesh.visible = false;
+      scene.add(window._scorePLMesh);
+
+      // Bank Score (Spalte G-H)
+      const scoreBKCanvas = document.createElement('canvas');
+      scoreBKCanvas.width = 256; scoreBKCanvas.height = 64;
+      const scoreBKCtx = scoreBKCanvas.getContext('2d');
+      const scoreBKTex = new THREE.CanvasTexture(scoreBKCanvas);
+      const scoreBKMat = new THREE.MeshBasicMaterial({ map: scoreBKTex, transparent: true, depthWrite: false });
+      window._scoreBKMesh = new THREE.Mesh(scoreGeo.clone(), scoreBKMat);
+      window._scoreBKMesh.rotation.x = -Math.PI / 2;
+      const scoreBKX = -4 * 0.15625 + 7 * 0.15625; // Mitte G-H
+      window._scoreBKMesh.position.set(scoreBKX, yPos + 0.010, scoreZ);
+      window._scoreBKMesh.renderOrder = 15;
+      window._scoreBKMesh.visible = false;
+      scene.add(window._scoreBKMesh);
+
+      window._playerScore3D = 0;
+      window._bankScore3D = 0;
+
+      function updateScore3D(which, value) {
+        const ctx = (which === 'player') ? scorePLCtx : scoreBKCtx;
+        const canvas = (which === 'player') ? scorePLCanvas : scoreBKCanvas;
+        const tex = (which === 'player') ? scorePLTex : scoreBKTex;
+        ctx.clearRect(0, 0, 256, 64);
+        ctx.font = '900 48px system-ui, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgb(214, 207, 3)';
+        ctx.letterSpacing = '0.10em';
+        ctx.fillText(String(value).padStart(3, '0'), 128, 32);
+        tex.needsUpdate = true;
+      }
+
+      function initScores3D() {
+        window._playerScore3D = 0;
+        window._bankScore3D = 0;
+        updateScore3D('player', 0);
+        updateScore3D('bank', 0);
+      }
+      initScores3D();
+
       // Kartenwert-Anzeige (2-K) auf Zeile 12, Spalte D
       const rank12D_X = -4 * 0.15625 + 3 * 0.15625 + 0.15625 / 2; // Spalte D Mitte
       const rank12D_Z = -0.359375 + (12 - 4) * 0.15625 + 0.15625 / 2; // Zeile 12 Mitte
@@ -5081,7 +5140,7 @@
         if (!kipp21WithTutorial || currentLevel >= 3) {
           showBlickIcons();
           for (let i = 0; i < numActiveCards; i++) {
-            gameCards[i].mesh.visible = true;
+            gameCards[i].mesh.visible = false; // KIPP CARD: altes Kippziel nicht zeigen
             gameCards[i].mesh.material.transparent = false;
             gameCards[i].mesh.material.opacity = 1;
             gameCards[i].mesh.material.needsUpdate = true;
@@ -6957,34 +7016,7 @@
       const state = kipp21CardStates[cardIdx];
       
       if (state === 'verdeckt') {
-        // GUARD: Nie 2 Kippziele gleichzeitig offen
-        if (kipp21CardStates.indexOf('offen') >= 0) return;
-        // GUARD: Kein Kniff während anderer Kniff läuft
-        if (kipp21KniffActive) return;
-        
-        if (_fromReplay) {
-          // Nach Blick-Animation oder Tutorial: direkt öffnen
-          hideBlickIcon(cardIdx);
-          if (!kipp21GenerateTarget(cardIdx)) return;
-          const mesh = gameCards[cardIdx].mesh;
-          mesh.scale.set(1.15, 1.15, 1.15);
-          setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
-          return;
-        }
-        
-        // Karte OHNE Blick-Icon → KIPP CARD: immer Eckblick zuerst
-        const iconSrc = CARD_BLICK_MAP[cardIdx];
-        hideBlickIcon(cardIdx);
-        kipp21BlickTargetCard = cardIdx;
-
-        // Eckblick ZUERST, Kippziel öffnet sich DANACH
-        const onDone = () => {
-          if (!kipp21GenerateTarget(cardIdx)) return;
-          const mesh = gameCards[cardIdx].mesh;
-          mesh.scale.set(1.15, 1.15, 1.15);
-          setTimeout(() => { mesh.scale.set(1, 1, 1); }, 180);
-        };
-        runKipp21EckblickKniff(true).then(onDone);
+        // KIPP CARD: Eckblick wird über target_verdeckt getriggert, nicht über Karten-Tap
         return;
       }
       
@@ -7567,7 +7599,7 @@
       drawBeispiel();
       
       // Mesh sichtbar mit Beispiel, kein Puls
-      verdecktesMesh.visible = true;
+      verdecktesMesh.visible = false // KIPP CARD: nicht zeigen;
       verdecktesMesh.userData.revealed = true;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
@@ -7888,7 +7920,7 @@
       verdecktesMat.opacity = 1;
       verdecktesMat.needsUpdate = true;
       verdecktesMesh.material = verdecktesMat;
-      verdecktesMesh.visible = true;
+      verdecktesMesh.visible = false // KIPP CARD: nicht zeigen;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMesh.userData.revealed = true;
     }
@@ -8310,7 +8342,7 @@
       const posX = cardStartX + roundIdx * (cardWidth + cardGap);
       verdecktesMesh.position.set(posX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
-      verdecktesMesh.visible = true;
+      verdecktesMesh.visible = false // KIPP CARD: nicht zeigen;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
       verdecktesMat.transparent = true;
@@ -8500,10 +8532,13 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      // Bankkarten sichtbar
+      // Bankkarten sichtbar + target_verdeckt pulsiert
       if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = true);
-      // Augen-Icon zeigen (statt target_verdeckt pulsieren)
-      document.getElementById('eyeIcon').style.display = 'block';
+      startTargetPulse();
+      // Scores sichtbar
+      if (window._scorePLMesh) window._scorePLMesh.visible = true;
+      if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
+      initScores3D();
       // BEREIT-Button jetzt zeigen
       if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
@@ -8528,10 +8563,12 @@
 
     // Augen-Icon → Eckblick + Target aufdecken
     function onEyeIconTap() {
-      const eye = document.getElementById('eyeIcon');
-      if (!eye || eye.style.display === 'none') return;
+      // Nicht mehr verwendet - Eckblick wird über target_verdeckt getriggert
+    }
+
+    // Tap auf target_verdeckt → Eckblick + Kippziel generieren
+    function onTargetVerdecktTap() {
       if (kipp21KniffActive) return;
-      eye.style.display = 'none';
       stopTargetPulse();
       runKipp21EckblickKniff(true).then(() => {
         const target = generateCardTarget3D();
@@ -8737,6 +8774,8 @@
       if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
       if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
       if (window._targetRankMesh) window._targetRankMesh.visible = false;
+      if (window._scorePLMesh) window._scorePLMesh.visible = false;
+      if (window._scoreBKMesh) window._scoreBKMesh.visible = false;
       document.getElementById('eyeIcon').style.display = 'none';
       stopTargetPulse();
       if (window._cardTargetState) {
@@ -9165,7 +9204,7 @@
         }
       }
 
-      // Target_verdeckt (3D) → Eckblick starten
+      // Target_verdeckt (3D) → Kippziel generieren
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
           window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
         const rectT = renderer.domElement.getBoundingClientRect();
@@ -9173,20 +9212,7 @@
         vkMouse.y = -((lastTouchPos.y - rectT.top) / rectT.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
-          stopTargetPulse();
-          runKipp21EckblickKniff(true).then(() => {
-            const target = generateCardTarget3D();
-            if (target) {
-              window._targetMeshes['target_verdeckt.webp'].visible = false;
-              Object.values(window._suitMeshes).forEach(m => m.visible = false);
-              const suitFile = SUIT_IMG_BY_COLOR[target.color];
-              if (suitFile && window._suitMeshes[suitFile]) {
-                window._suitMeshes[suitFile].visible = true;
-              }
-              updateTargetRankDisplay(getTargetVisualRank(target.num));
-              window._targetRankMesh.visible = true;
-            }
-          });
+          onTargetVerdecktTap();
           lastTouchPos = null;
           return;
         }
@@ -9304,24 +9330,11 @@
         }
       }
 
-      // Target_verdeckt click → Eckblick (Desktop)
+      // Target_verdeckt click → Kippziel generieren (Desktop)
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
           window._targetMeshes['target_verdeckt.webp'].visible && !kipp21KniffActive) {
         if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
-          stopTargetPulse();
-          runKipp21EckblickKniff(true).then(() => {
-            const target = generateCardTarget3D();
-            if (target) {
-              window._targetMeshes['target_verdeckt.webp'].visible = false;
-              Object.values(window._suitMeshes).forEach(m => m.visible = false);
-              const suitFile = SUIT_IMG_BY_COLOR[target.color];
-              if (suitFile && window._suitMeshes[suitFile]) {
-                window._suitMeshes[suitFile].visible = true;
-              }
-              updateTargetRankDisplay(getTargetVisualRank(target.num));
-              window._targetRankMesh.visible = true;
-            }
-          });
+          onTargetVerdecktTap();
           return;
         }
       }
@@ -9525,7 +9538,7 @@
       verdecktesMesh.position.set(nextX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
       drawLeernohitOnVerdecktes();
-      verdecktesMesh.visible = true;
+      verdecktesMesh.visible = false // KIPP CARD: nicht zeigen;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
       
@@ -9635,7 +9648,7 @@
         verdecktesMesh.position.set(posX, cardY + 0.001, cardZ);
         verdecktesMesh.userData.revealed = false;
         drawLeernohitOnVerdecktes();
-        verdecktesMesh.visible = true;
+        verdecktesMesh.visible = false // KIPP CARD: nicht zeigen;
         verdecktesMesh.scale.set(1, 1, 1);
         verdecktesMat.opacity = 1;
         verdecktesMat.transparent = true;
@@ -9697,7 +9710,7 @@
           revealVerdecktesKippziel();
         }
       }, 30);
-      verdecktesMesh.visible = true;
+      verdecktesMesh.visible = false // KIPP CARD: nicht zeigen;
       verdecktesMesh.userData.revealed = false;
       verdecktesMesh.scale.set(1, 1, 1);
       verdecktesMat.opacity = 1;
