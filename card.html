@@ -8585,8 +8585,14 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      // Bankkarten sichtbar + target_verdeckt pulsiert
-      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = true);
+      // Bankkarten sichtbar: nur Stapel + target_verdeckt
+      if (window._targetMeshes) {
+        Object.entries(window._targetMeshes).forEach(([name, m]) => {
+          m.visible = (name === 'target_stapel2.webp' || name === 'target_verdeckt.webp');
+        });
+      }
+      if (window._targetRankMesh) window._targetRankMesh.visible = false;
+      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
       startTargetPulse();
       // Scores sichtbar
       if (window._scorePLMesh) window._scorePLMesh.visible = true;
@@ -8630,8 +8636,10 @@
 
       stopTargetPulse();
 
-      if (window._targetMeshes['target_verdeckt.webp']) {
-        window._targetMeshes['target_verdeckt.webp'].visible = false;
+      if (window._targetMeshes) {
+        Object.entries(window._targetMeshes).forEach(([name, m]) => {
+          m.visible = (name === 'target_stapel2.webp');
+        });
       }
       if (window._targetMeshes['target_1.webp']) {
         window._targetMeshes['target_1.webp'].visible = true;
