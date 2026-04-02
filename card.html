@@ -2194,11 +2194,11 @@
       };
 
       // SUIT_IMG_BY_COLOR aus kipp-card.html
-      const SUIT_IMG_BY_COLOR = {
+      window.SUIT_IMG_BY_COLOR = {
         gruen: 'karo.png', orange: 'kreuz.png',
         blau: 'herz.png', violett: 'pik.png'
       };
-      const allTargetColors = ['violett','blau','gruen','orange'];
+      window.allTargetColors = ['violett','blau','gruen','orange'];
 
       // === SCORE-ANZEIGEN auf Zeile 10 (3D, Spieltisch) ===
       const scoreZ = -0.359375 + (10 - 4) * 0.15625 + 0.15625 / 2; // Zeile 10 Mitte
@@ -2237,7 +2237,7 @@
       window._playerScore3D = 0;
       window._bankScore3D = 0;
 
-      function updateScore3D(which, value) {
+      window.updateScore3D = function(which, value) {
         const ctx = (which === 'player') ? scorePLCtx : scoreBKCtx;
         const canvas = (which === 'player') ? scorePLCanvas : scoreBKCanvas;
         const tex = (which === 'player') ? scorePLTex : scoreBKTex;
@@ -2251,7 +2251,7 @@
         tex.needsUpdate = true;
       }
 
-      function initScores3D() {
+      window.initScores3D = function() {
         window._playerScore3D = 0;
         window._bankScore3D = 0;
         updateScore3D('player', 0);
@@ -2275,7 +2275,7 @@
       window._targetRankMesh.visible = false;
       scene.add(window._targetRankMesh);
 
-      function updateTargetRankDisplay(text) {
+      window.updateTargetRankDisplay = function(text) {
         rankCtx.clearRect(0, 0, 128, 128);
         rankCtx.font = '900 90px "Noto Serif"';
         rankCtx.textAlign = 'center';
@@ -2286,7 +2286,7 @@
       }
 
       // Target-Karten: intern 1-12 → visuell 2-K
-      function getTargetVisualRank(n) {
+      window.getTargetVisualRank = function(n) {
         switch(n) {
           case 12: return 'K'; case 11: return 'Q'; case 10: return 'J';
           case 9: return '10'; case 8: return '9'; case 7: return '8';
@@ -2297,7 +2297,7 @@
       }
 
       // Forbidden pairs: Kombinationen die gerade sichtbar am Würfel liegen
-      function getForbiddenPairs3D() {
+      window.getForbiddenPairs3D = function() {
         const forbidden = new Set();
         for (const fk of ['f0','f1','f2']) {
           const f = faceSlots[fk];
@@ -2312,7 +2312,7 @@
         return forbidden;
       }
 
-      function generateCardTarget3D() {
+      window.generateCardTarget3D = function() {
         const st = window._cardTargetState;
         if (st.drawsCount >= 12) return null;
         const forbidden = getForbiddenPairs3D();
@@ -2334,7 +2334,7 @@
 
       // Pulse-Animation für target_verdeckt
       window._targetPulseActive = false;
-      function startTargetPulse() {
+      window.startTargetPulse = function() {
         window._targetPulseActive = true;
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (!mesh) return;
@@ -2345,7 +2345,7 @@
           requestAnimationFrame(pulse);
         })();
       }
-      function stopTargetPulse() {
+      window.stopTargetPulse = function() {
         window._targetPulseActive = false;
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (mesh) mesh.material.opacity = 1;
