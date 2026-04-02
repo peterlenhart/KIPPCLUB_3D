@@ -2332,17 +2332,17 @@
         return chosen;
       }
 
-      // Pulse-Animation für target_verdeckt (hebt sich leicht und schwenkt um die Y-Achse)
+      // Pulse-Animation für target_verdeckt (hebt sich leicht und schwenkt um die WELT-Y-Achse)
       window._targetPulseActive = false;
       window._targetPulseBaseY = null;
-      window._targetPulseBaseRotY = null;
+      window._targetPulseBaseQuat = null;
       window._targetPulseRAF = null;
       window.startTargetPulse = function() {
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (!mesh) return;
         window._targetPulseActive = true;
         if (window._targetPulseBaseY === null) window._targetPulseBaseY = mesh.position.y;
-        if (window._targetPulseBaseRotY === null) window._targetPulseBaseRotY = mesh.rotation.y;
+        if (!window._targetPulseBaseQuat) window._targetPulseBaseQuat = mesh.quaternion.clone();
         if (window._targetPulseRAF) cancelAnimationFrame(window._targetPulseRAF);
 
         (function pulse() {
@@ -2353,8 +2353,9 @@
           const now = Date.now();
           const lift = (Math.sin(now * 0.0032) + 1) / 2; // 0..1
           const sway = Math.sin(now * 0.0046) * THREE.MathUtils.degToRad(5); // -5°..+5°
+          const worldYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), sway);
           mesh.position.y = window._targetPulseBaseY + 0.012 + lift * 0.018;
-          mesh.rotation.y = window._targetPulseBaseRotY + sway;
+          mesh.quaternion.copy(worldYQuat).multiply(window._targetPulseBaseQuat);
           window._targetPulseRAF = requestAnimationFrame(pulse);
         })();
       }
@@ -2367,7 +2368,7 @@
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (mesh) {
           if (window._targetPulseBaseY !== null) mesh.position.y = window._targetPulseBaseY;
-          if (window._targetPulseBaseRotY !== null) mesh.rotation.y = window._targetPulseBaseRotY;
+          if (window._targetPulseBaseQuat) mesh.quaternion.copy(window._targetPulseBaseQuat);
         }
       }
 
