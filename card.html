@@ -6719,6 +6719,11 @@
         animLower();
       });
 
+      // Sobald der Würfel wieder in seiner Ecke liegt, Kippziel sichtbar machen
+      if (typeof window.revealGeneratedCardTarget3D === 'function') {
+        window.revealGeneratedCardTarget3D();
+      }
+
       // 7. Von Ecke zurückfallen
       const fallDur = 800;
       await new Promise(resolve => {
@@ -8615,22 +8620,39 @@
     }
 
     // Tap auf target_verdeckt → Eckblick + Kippziel generieren
+    window._pendingRevealAfterEckblick = false;
+    window.revealGeneratedCardTarget3D = function() {
+      if (!window._pendingRevealAfterEckblick) return false;
+      window._pendingRevealAfterEckblick = false;
+
+      const target = generateCardTarget3D();
+      if (!target) return false;
+
+      stopTargetPulse();
+
+      if (window._targetMeshes['target_verdeckt.webp']) {
+        window._targetMeshes['target_verdeckt.webp'].visible = false;
+      }
+      if (window._targetMeshes['target_1.webp']) {
+        window._targetMeshes['target_1.webp'].visible = true;
+      }
+
+      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+      const suitFile = SUIT_IMG_BY_COLOR[target.color];
+      if (suitFile && window._suitMeshes && window._suitMeshes[suitFile]) {
+        window._suitMeshes[suitFile].visible = true;
+      }
+
+      updateTargetRankDisplay(getTargetVisualRank(target.num));
+      if (window._targetRankMesh) window._targetRankMesh.visible = true;
+      return true;
+    };
+
     function onTargetVerdecktTap() {
       if (kipp21KniffActive) return;
       stopTargetPulse();
-      runKipp21EckblickKniff(true).then(() => {
-        const target = generateCardTarget3D();
-        if (target) {
-          window._targetMeshes['target_verdeckt.webp'].visible = false;
-          Object.values(window._suitMeshes).forEach(m => m.visible = false);
-          const suitFile = SUIT_IMG_BY_COLOR[target.color];
-          if (suitFile && window._suitMeshes[suitFile]) {
-            window._suitMeshes[suitFile].visible = true;
-          }
-          updateTargetRankDisplay(getTargetVisualRank(target.num));
-          window._targetRankMesh.visible = true;
-        }
-      });
+      window._pendingRevealAfterEckblick = true;
+      runKipp21EckblickKniff(true);
     }
     document.getElementById('eyeIcon').addEventListener('click', (e) => {
       e.stopPropagation(); onEyeIconTap();
