@@ -2332,25 +2332,43 @@
         return chosen;
       }
 
-      // Pulse-Animation für target_verdeckt (Y-Position pulsiert)
+      // Pulse-Animation für target_verdeckt (hebt sich leicht und schwenkt um die Y-Achse)
       window._targetPulseActive = false;
       window._targetPulseBaseY = null;
+      window._targetPulseBaseRotY = null;
+      window._targetPulseRAF = null;
       window.startTargetPulse = function() {
-        window._targetPulseActive = true;
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (!mesh) return;
+        window._targetPulseActive = true;
         if (window._targetPulseBaseY === null) window._targetPulseBaseY = mesh.position.y;
+        if (window._targetPulseBaseRotY === null) window._targetPulseBaseRotY = mesh.rotation.y;
+        if (window._targetPulseRAF) cancelAnimationFrame(window._targetPulseRAF);
+
         (function pulse() {
-          if (!window._targetPulseActive || !mesh.visible) return;
-          const t = (Math.sin(Date.now() * 0.004) + 1) / 2; // 0-1
-          mesh.position.y = window._targetPulseBaseY + t * 0.03;
-          requestAnimationFrame(pulse);
+          if (!window._targetPulseActive || !mesh.visible) {
+            window._targetPulseRAF = null;
+            return;
+          }
+          const now = Date.now();
+          const lift = (Math.sin(now * 0.0032) + 1) / 2; // 0..1
+          const sway = Math.sin(now * 0.0046) * THREE.MathUtils.degToRad(5); // -5°..+5°
+          mesh.position.y = window._targetPulseBaseY + 0.012 + lift * 0.018;
+          mesh.rotation.y = window._targetPulseBaseRotY + sway;
+          window._targetPulseRAF = requestAnimationFrame(pulse);
         })();
       }
       window.stopTargetPulse = function() {
         window._targetPulseActive = false;
+        if (window._targetPulseRAF) {
+          cancelAnimationFrame(window._targetPulseRAF);
+          window._targetPulseRAF = null;
+        }
         const mesh = window._targetMeshes['target_verdeckt.webp'];
-        if (mesh && window._targetPulseBaseY !== null) mesh.position.y = window._targetPulseBaseY;
+        if (mesh) {
+          if (window._targetPulseBaseY !== null) mesh.position.y = window._targetPulseBaseY;
+          if (window._targetPulseBaseRotY !== null) mesh.rotation.y = window._targetPulseBaseRotY;
+        }
       }
 
       targetFiles.forEach((file, idx) => {
