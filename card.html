@@ -2332,7 +2332,7 @@
         return chosen;
       }
 
-      // Schwenk-Animation für target_verdeckt (Z-Achse, ±10°)
+      // Schwenk-Animation für target_verdeckt (links-rechts ±10°)
       window._targetPulseActive = false;
       window.startTargetPulse = function() {
         window._targetPulseActive = true;
@@ -2341,14 +2341,14 @@
         (function pulse() {
           if (!window._targetPulseActive || !mesh.visible) return;
           const swing = Math.sin(Date.now() * 0.003) * (10 * Math.PI / 180);
-          mesh.rotation.y = swing;
+          mesh.rotation.z = swing;
           requestAnimationFrame(pulse);
         })();
       }
       window.stopTargetPulse = function() {
         window._targetPulseActive = false;
         const mesh = window._targetMeshes['target_verdeckt.webp'];
-        if (mesh) mesh.rotation.y = 0;
+        if (mesh) mesh.rotation.z = 0;
       }
 
       targetFiles.forEach((file, idx) => {
