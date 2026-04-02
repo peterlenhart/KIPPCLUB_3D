@@ -8616,11 +8616,7 @@
 
     // Tap auf target_verdeckt → Eckblick + Kippziel generieren
     function onTargetVerdecktTap() {
-      // Während Eckblick: Tap beendet ihn vorzeitig
-      if (kipp21KniffActive) {
-        kipp21KniffAbort = true;
-        return;
-      }
+      if (kipp21KniffActive) return;
       stopTargetPulse();
       runKipp21EckblickKniff(true).then(() => {
         const target = generateCardTarget3D();
@@ -9258,7 +9254,7 @@
 
       // Target_verdeckt (3D) → Kippziel generieren
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
-          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos) {
+          window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
         const rectT = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectT.left) / rectT.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rectT.top) / rectT.height) * 2 + 1;
@@ -9384,7 +9380,7 @@
 
       // Target_verdeckt click → Kippziel generieren (Desktop)
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
-          window._targetMeshes['target_verdeckt.webp'].visible) {
+          window._targetMeshes['target_verdeckt.webp'].visible && !kipp21KniffActive) {
         if (vkRaycaster.intersectObject(window._targetMeshes['target_verdeckt.webp']).length > 0) {
           onTargetVerdecktTap();
           return;
