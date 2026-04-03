@@ -3739,7 +3739,7 @@
     let kipp21HitLock = false; // Würfel gesperrt nach Auto-Treffer
     let kipp21Generation = 0; // Incrementiert bei jedem startKipp21, alte Async-Chains prüfen dagegen
     let replayGeneration = 0; // Wird bei Replay-Start auf kipp21Generation gesetzt
-    let kipp21KippCount = 0;
+    let resetSwipeKippState();
     let kipp21RoundKipps = 0;
     let kipp21RoundTimerStart = null;
     let kipp21TotalTime = 0;
@@ -5346,6 +5346,12 @@
         }
       }
       window._executeTrainingKipp = executeTrainingKipp;
+      function updateSwipeHint() {
+        if (gamePhase !== 'kipp21') return;
+        hintText.style.display = 'block';
+        const dirTxt = swipeLockDir ? (' · ' + swipeLockDir.toUpperCase()) : '';
+        hintText.innerHTML = 'KIPPS: ' + Math.min(kipp21KippCount, SWIPE_MAX_KIPPS) + ' / ' + SWIPE_MAX_KIPPS + dirTxt;
+      }
       
       function onDirBtn(dir) {
         if (!kipp21Active || gamePhase !== 'kipp21') return;
@@ -5392,7 +5398,7 @@
       function hideAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (kippButtons) { kippButtons.classList.add('hidden'); kippButtons.style.display = 'none'; }
+        if (kippButtons) kippButtons.classList.add('hidden');
         hintText.style.display = 'none';
       }
       
@@ -5694,7 +5700,7 @@
       window._checkTrainingResult = checkTrainingResult;
       
       function showTrainingButtons() {
-        // card.html nutzt hier die Finger-KIPP-Technik statt Zahlen-/Richtungsbuttons
+        // Buttons IMMER zeigen
         showAllTrainingUI();
         hintText.style.display = 'none';
       }
@@ -5715,7 +5721,7 @@
       showBlickIcons();
       
       kipp21Active = false; // Wird erst nach fadeInUIs() aktiviert
-      kipp21KippCount = 0;
+      resetSwipeKippState();
       
       // Würfel zurück in Startposition (Q3, f2)
       kipGroup.add(cube); // WICHTIG: Falls Cube noch in pivotGroup steckt
@@ -6351,7 +6357,7 @@
       brainyCurrentTarget = null;
       kipp21Done = 0;
       kipp21Fails = 0;
-      kipp21KippCount = 0;
+      resetSwipeKippState();
       kipp21Active = false;
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
@@ -6884,7 +6890,6 @@
           activeCardIdx = cardIdx;
           updateProgressDots(kipp21Done, cardIdx);
           kipp21RoundKipps = 0;
-          resetKipp21SwipeLock();
           kipp21HitLock = false;
           kipp21RoundTimerStart = null;
           kipp21TimerRunning = false;
@@ -6930,7 +6935,6 @@
           activeCardIdx = cardIdx;
           updateProgressDots(kipp21Done, cardIdx);
           kipp21RoundKipps = 0;
-          resetKipp21SwipeLock();
           kipp21HitLock = false;
           kipp21RoundTimerStart = null;
           kipp21TimerRunning = false;
@@ -10060,6 +10064,12 @@
     let dragToQ = 0;
     let dragCurrentAngle = 0;
     const DRAG_SENSITIVITY = 150; // px für volle 90°
+    let swipeLockDir = null; // 'cw' oder 'ccw' – erste Kipp-Richtung sperrt
+    const SWIPE_MAX_KIPPS = 6;
+    function resetSwipeKippState() {
+      swipeLockDir = null;
+      resetSwipeKippState();
+    }
 
     // =========================
     // PAUSE-PHASE: Ecke-Drehinteraktion
@@ -10192,11 +10202,12 @@
       }
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
+        if (gamePhase === 'kipp21' && kipp21KippCount >= SWIPE_MAX_KIPPS) return;
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
         if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
         if (cubeLocked && gamePhase !== 'kipp21') return;
-        if (gamePhase === 'kipp21' && (kipp21HitLock || kipp21RoundKipps >= KIPP21_MAX_SWIPES)) return; // Treffer erkannt oder 6 KIPPS voll → Würfel gesperrt
+        if (gamePhase === 'kipp21' && kipp21HitLock) return; // Treffer erkannt → Würfel gesperrt
         // Kipp21: Nur kippen wenn ein Kippziel aufgedeckt ist
         if (gamePhase === 'kipp21' && !brainyActive && kipp21CardStates.indexOf('offen') < 0) return;
         e.preventDefault();
@@ -10255,16 +10266,10 @@
 
         const direction = getValidDirection(deltaX, deltaY);
         if (!direction) { isSwiping = false; return; }
-
-        const logicalDir = dragDirToLogical(direction);
-        if (isKipp21SwipeBlocked(logicalDir)) {
-          isSwiping = false;
-          return;
-        }
-        if (gamePhase === 'kipp21' && !lockedKippDir && logicalDir) {
-          lockedKippDir = logicalDir; // erste Richtung sperrt CW/CCW
-        }
-
+        
+        // SPIELEN-Phase: freies Dragging wie in KIPPEN (kein Auto-Kipp mehr)
+        // → durchfallen lassen zu normalem Drag-Code
+        
         // Auto-Eval-Timer bei neuem Kipp abbrechen
         // Manueller Drag
         currentDragDir = direction;
@@ -10443,9 +10448,9 @@
             if (gamePhase === 'kipp21' && kipp21Active) {
               kipp21KippCount++;
               kipp21RoundKipps++;
-              hintText.innerHTML = formatKipps(kipp21KippCount);
-              if (kipp21RoundKipps >= KIPP21_MAX_SWIPES) {
-                kipp21HitLock = true; // nach 6 vollendeten KIPPS ist Bewegung gesperrt
+              updateSwipeHint();
+              if (kipp21KippCount >= SWIPE_MAX_KIPPS) {
+                isSwiping = false;
               }
               checkOnTargetAfterKipp();
             }
@@ -10776,25 +10781,6 @@
     const CCW_DIRS = new Set(['south', 'west', 'north_from_q2', 'east_from_q3']);
     let lockedKippDir = null; // null, 'cw', 'ccw'
     let currentDragDir = null;
-    const KIPP21_MAX_SWIPES = 6;
-
-    function dragDirToLogical(direction) {
-      if (!direction) return null;
-      return CW_DIRS.has(direction) ? 'cw' : (CCW_DIRS.has(direction) ? 'ccw' : null);
-    }
-
-    function resetKipp21SwipeLock() {
-      lockedKippDir = null;
-      currentDragDir = null;
-    }
-
-    function isKipp21SwipeBlocked(nextLogicalDir) {
-      if (gamePhase !== 'kipp21') return false;
-      if (!kipp21Active) return true;
-      if (kipp21RoundKipps >= KIPP21_MAX_SWIPES) return true;
-      if (lockedKippDir && nextLogicalDir && nextLogicalDir !== lockedKippDir) return true;
-      return false;
-    }
     
 
     const cwBtn = document.getElementById('cwBtn');
