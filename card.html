@@ -6719,11 +6719,6 @@
         animLower();
       });
 
-      // Sobald der Würfel wieder in seiner Ecke liegt, Kippziel sichtbar machen
-      if (typeof window.revealGeneratedCardTarget3D === 'function') {
-        window.revealGeneratedCardTarget3D(true);
-      }
-
       // 7. Von Ecke zurückfallen
       const fallDur = 800;
       await new Promise(resolve => {
@@ -6737,10 +6732,6 @@
         }
         animate();
       });
-
-      if (typeof window.revealGeneratedCardTarget3D === 'function') {
-        window.revealGeneratedCardTarget3D(true);
-      }
       
       // Cleanup: Cube zurück in kipGroup
       cube.updateMatrixWorld();
@@ -8589,14 +8580,8 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      // Bankkarten sichtbar: nur Stapel + target_verdeckt
-      if (window._targetMeshes) {
-        Object.entries(window._targetMeshes).forEach(([name, m]) => {
-          m.visible = (name === 'target_stapel2.webp' || name === 'target_verdeckt.webp');
-        });
-      }
-      if (window._targetRankMesh) window._targetRankMesh.visible = false;
-      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+      // Bankkarten sichtbar + target_verdeckt pulsiert
+      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = true);
       startTargetPulse();
       // Scores sichtbar
       if (window._scorePLMesh) window._scorePLMesh.visible = true;
@@ -8629,49 +8614,56 @@
       // Nicht mehr verwendet - Eckblick wird über target_verdeckt getriggert
     }
 
-    // Tap auf target_verdeckt → Eckblick + Kippziel generieren
-    window._pendingRevealAfterEckblick = false;
-    window.revealGeneratedCardTarget3D = function(forceReveal) {
-      if (!forceReveal && !window._pendingRevealAfterEckblick) return false;
-      window._pendingRevealAfterEckblick = false;
-
-      let target = generateCardTarget3D();
-      if (!target) {
-        const fallbackNum = 1 + Math.floor(Math.random() * 12);
-        const fallbackColor = allTargetColors[Math.floor(Math.random() * allTargetColors.length)];
-        target = { num: fallbackNum, color: fallbackColor };
+    function fadeInTargetReveal3D(target, duration = 420) {
+      if (!target) return;
+      Object.values(window._suitMeshes).forEach(m => {
+        m.visible = false;
+        if (m.material) {
+          m.material.transparent = true;
+          m.material.opacity = 0;
+        }
+      });
+      if (window._targetRankMesh && window._targetRankMesh.material) {
+        window._targetRankMesh.material.transparent = true;
+        window._targetRankMesh.material.opacity = 0;
+        window._targetRankMesh.visible = false;
       }
 
-      stopTargetPulse();
-
-      if (window._targetMeshes) {
-        Object.entries(window._targetMeshes).forEach(([name, m]) => {
-          m.visible = (name === 'target_stapel2.webp');
-        });
-        if (window._targetMeshes['target_verdeckt.webp']) {
-          window._targetMeshes['target_verdeckt.webp'].visible = false;
-        }
-        if (window._targetMeshes['target_1.webp']) {
-          window._targetMeshes['target_1.webp'].visible = true;
-        }
-      }
-
-      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
       const suitFile = SUIT_IMG_BY_COLOR[target.color];
-      if (suitFile && window._suitMeshes && window._suitMeshes[suitFile]) {
-        window._suitMeshes[suitFile].visible = true;
+      const suitMesh = suitFile ? window._suitMeshes[suitFile] : null;
+      updateTargetRankDisplay(getTargetVisualRank(target.num));
+
+      if (suitMesh) {
+        suitMesh.visible = true;
+        suitMesh.material.opacity = 0;
+      }
+      if (window._targetRankMesh) {
+        window._targetRankMesh.visible = true;
+        window._targetRankMesh.material.opacity = 0;
       }
 
-      updateTargetRankDisplay(getTargetVisualRank(target.num));
-      if (window._targetRankMesh) window._targetRankMesh.visible = true;
-      return true;
-    };
+      const start = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        if (suitMesh && suitMesh.material) suitMesh.material.opacity = eased;
+        if (window._targetRankMesh && window._targetRankMesh.material) window._targetRankMesh.material.opacity = eased;
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
 
+    // Tap auf target_verdeckt → Eckblick + Kippziel generieren
     function onTargetVerdecktTap() {
       if (kipp21KniffActive) return;
       stopTargetPulse();
-      window._pendingRevealAfterEckblick = true;
-      runKipp21EckblickKniff(true);
+      runKipp21EckblickKniff(true).then(() => {
+        const target = generateCardTarget3D();
+        if (target) {
+          window._targetMeshes['target_verdeckt.webp'].visible = false;
+          fadeInTargetReveal3D(target, 460);
+        }
+      });
     }
     document.getElementById('eyeIcon').addEventListener('click', (e) => {
       e.stopPropagation(); onEyeIconTap();
@@ -9279,23 +9271,6 @@
       if (replayActive) return;
       if (window._numBtnTouchActive) return;
 
-      // Eckblick: Tap auf den Würfel beendet den Eckblick sofort
-      if (kipp21KniffActive && eckblickPivot && lastTouchPos) {
-        const rectCube = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rectCube.left) / rectCube.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rectCube.top) / rectCube.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(cube, true).length > 0) {
-          kipp21KniffAbort = true;
-          if (kipp21KniffTimeout) {
-            clearTimeout(kipp21KniffTimeout);
-            kipp21KniffTimeout = null;
-          }
-          lastTouchPos = null;
-          return;
-        }
-      }
-
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rectP = renderer.domElement.getBoundingClientRect();
@@ -9397,19 +9372,7 @@
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       vkRaycaster.setFromCamera(vkMouse, camera);
-
-      // Eckblick: Klick auf den Würfel beendet den Eckblick sofort
-      if (kipp21KniffActive && eckblickPivot) {
-        if (vkRaycaster.intersectObject(cube, true).length > 0) {
-          kipp21KniffAbort = true;
-          if (kipp21KniffTimeout) {
-            clearTimeout(kipp21KniffTimeout);
-            kipp21KniffTimeout = null;
-          }
-          lastTouchPos = null;
-          return;
-        }
-      }
+      
       // KIPP 21: Card click detection (Desktop/Replay)
       if (gamePhase === 'kipp21' && kipp21Active && !kipp21CardTouchHandled) {
         // Pause-Button prüfen
