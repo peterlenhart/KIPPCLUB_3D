@@ -8630,6 +8630,31 @@
       e.preventDefault(); showCardAnleitung();
     }, { passive: false });
 
+
+    function fadeInMesh3D(mesh, duration, finalOpacity) {
+      if (!mesh || !mesh.material) return;
+      const dur = Math.max(1, duration || 600);
+      const targetOpacity = (finalOpacity == null) ? 1 : finalOpacity;
+      mesh.visible = true;
+      mesh.material.transparent = true;
+      mesh.material.opacity = 0;
+      mesh.material.needsUpdate = true;
+      const start = performance.now();
+      function tick(now) {
+        const t = Math.min((now - start) / dur, 1);
+        const e = t * t * (3 - 2 * t);
+        mesh.material.opacity = targetOpacity * e;
+        mesh.material.needsUpdate = true;
+        if (t < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          mesh.material.opacity = targetOpacity;
+          mesh.material.needsUpdate = true;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
     // Augen-Icon → Eckblick + Target aufdecken
     function onEyeIconTap() {
       // Nicht mehr verwendet - Eckblick wird über target_verdeckt getriggert
@@ -8650,26 +8675,45 @@
 
       stopTargetPulse();
 
+      // Erst alles verstecken, dann die neue Bankkarte weich einfaden
       if (window._targetMeshes) {
         Object.entries(window._targetMeshes).forEach(([name, m]) => {
           m.visible = (name === 'target_stapel2.webp');
+          if (m.material) {
+            m.material.opacity = (name === 'target_stapel2.webp') ? 1 : 0;
+            m.material.needsUpdate = true;
+          }
         });
-        if (window._targetMeshes['target_verdeckt.webp']) {
-          window._targetMeshes['target_verdeckt.webp'].visible = false;
-        }
-        if (window._targetMeshes['target_1.webp']) {
-          window._targetMeshes['target_1.webp'].visible = true;
+
+        const bankCardMesh = window._targetMeshes['target_1.webp'];
+        if (bankCardMesh) fadeInMesh3D(bankCardMesh, 700, 1);
+
+        const verdecktMesh = window._targetMeshes['target_verdeckt.webp'];
+        if (verdecktMesh) {
+          verdecktMesh.visible = false;
+          if (verdecktMesh.material) {
+            verdecktMesh.material.opacity = 0;
+            verdecktMesh.material.needsUpdate = true;
+          }
         }
       }
 
-      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+      Object.values(window._suitMeshes || {}).forEach(m => {
+        m.visible = false;
+        if (m.material) {
+          m.material.opacity = 0;
+          m.material.needsUpdate = true;
+        }
+      });
+
       const suitFile = SUIT_IMG_BY_COLOR[target.color];
       if (suitFile && window._suitMeshes && window._suitMeshes[suitFile]) {
-        window._suitMeshes[suitFile].visible = true;
+        fadeInMesh3D(window._suitMeshes[suitFile], 700, 1);
       }
 
       updateTargetRankDisplay(getTargetVisualRank(target.num));
-      if (window._targetRankMesh) window._targetRankMesh.visible = true;
+      if (window._targetRankMesh) fadeInMesh3D(window._targetRankMesh, 700, 1);
+
       return true;
     };
 
