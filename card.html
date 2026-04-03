@@ -9428,8 +9428,9 @@
 
       // STICH: Tap auf Würfel → Karte ausspielen
       if (gamePhase === 'kipp21' && lastTouchPos && !dragActive && !_stichLock &&
-          !_cardWarningActive && !kipp21KniffActive && !isSwiping &&
+          !kipp21KniffActive &&
           window._cardTargetState && window._cardTargetState.currentTarget) {
+        console.log('[STICH-CHECK] raycast...');
         const rectS = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectS.left) / rectS.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rectS.top) / rectS.height) * 2 + 1;
