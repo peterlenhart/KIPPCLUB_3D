@@ -2304,56 +2304,37 @@
           default: return '';
         }
       }
-      // Target-Randomlogik wie in kipp-card.html (2D), nur auf 3D-State bezogen
-      window.resetTargetDeck3D = function() {
-        const st = window._cardTargetState;
-        st.usedNumbers = new Set();
-        st.drawsCount = 0;
-        st.currentTarget = null;
-      }
 
-      window.pickRandomTarget3D = function(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
-      }
-
-      // Exakt wie in der 2D-Version:
-      // Verboten sind nur die aktuell erfüllten Zahl|Farbe-Kombinationen
-      // der vier sichtbaren Slots auf der aktuellen Oberseite.
+      // Forbidden pairs: Kombinationen die gerade sichtbar am Würfel liegen
       window.getForbiddenPairs3D = function() {
         const forbidden = new Set();
-        const faceOffset = { f0: 0, f1: 4, f2: 8 };
-        const off = faceOffset[topFace];
-        const slots = ['S1', 'S2', 'S3', 'S4'];
-
-        slots.forEach((slot, i) => {
-          const deckIdx = off + i;
-          const num = deck[deckIdx];
-          const color = SLOT_NEIGHBOR_COLORS?.[currentQuadrant]?.[slot];
-          if (num == null || !color) return;
-          forbidden.add(`${num}|${color}`);
-        });
-
+        for (const fk of ['f0','f1','f2']) {
+          const f = faceSlots[fk];
+          if (!f) continue;
+          for (const key in f.slotMap) {
+            const s = f.slotMap[key];
+            if (s.vis === false || s.val == null) continue;
+            // Farbe aus Quadrant bestimmen — vereinfacht: alle 4 Farben als forbidden
+            allTargetColors.forEach(c => forbidden.add(s.val + '|' + c));
+          }
+        }
         return forbidden;
       }
 
       window.generateCardTarget3D = function() {
         const st = window._cardTargetState;
         if (st.drawsCount >= 12) return null;
-
         const forbidden = getForbiddenPairs3D();
         const candidates = [];
-
         for (let n = 1; n <= 12; n++) {
           if (st.usedNumbers.has(n)) continue;
           for (const c of allTargetColors) {
-            if (forbidden.has(`${n}|${c}`)) continue;
+            if (forbidden.has(n + '|' + c)) continue;
             candidates.push({ num: n, color: c });
           }
         }
-
         if (!candidates.length) return null;
-
-        const chosen = pickRandomTarget3D(candidates);
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
         st.usedNumbers.add(chosen.num);
         st.drawsCount++;
         st.currentTarget = chosen;
@@ -3739,7 +3720,7 @@
     let kipp21HitLock = false; // Würfel gesperrt nach Auto-Treffer
     let kipp21Generation = 0; // Incrementiert bei jedem startKipp21, alte Async-Chains prüfen dagegen
     let replayGeneration = 0; // Wird bei Replay-Start auf kipp21Generation gesetzt
-    let resetSwipeKippState();
+    let kipp21KippCount = 0;
     let kipp21RoundKipps = 0;
     let kipp21RoundTimerStart = null;
     let kipp21TotalTime = 0;
@@ -5346,12 +5327,6 @@
         }
       }
       window._executeTrainingKipp = executeTrainingKipp;
-      function updateSwipeHint() {
-        if (gamePhase !== 'kipp21') return;
-        hintText.style.display = 'block';
-        const dirTxt = swipeLockDir ? (' · ' + swipeLockDir.toUpperCase()) : '';
-        hintText.innerHTML = 'KIPPS: ' + Math.min(kipp21KippCount, SWIPE_MAX_KIPPS) + ' / ' + SWIPE_MAX_KIPPS + dirTxt;
-      }
       
       function onDirBtn(dir) {
         if (!kipp21Active || gamePhase !== 'kipp21') return;
@@ -5405,7 +5380,7 @@
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (kippButtons) { kippButtons.classList.add('hidden'); kippButtons.style.display = 'none'; }
+        if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
@@ -5721,7 +5696,7 @@
       showBlickIcons();
       
       kipp21Active = false; // Wird erst nach fadeInUIs() aktiviert
-      resetSwipeKippState();
+      kipp21KippCount = 0;
       
       // Würfel zurück in Startposition (Q3, f2)
       kipGroup.add(cube); // WICHTIG: Falls Cube noch in pivotGroup steckt
@@ -6357,7 +6332,7 @@
       brainyCurrentTarget = null;
       kipp21Done = 0;
       kipp21Fails = 0;
-      resetSwipeKippState();
+      kipp21KippCount = 0;
       kipp21Active = false;
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
@@ -8655,31 +8630,6 @@
       e.preventDefault(); showCardAnleitung();
     }, { passive: false });
 
-
-    function fadeInMesh3D(mesh, duration, finalOpacity) {
-      if (!mesh || !mesh.material) return;
-      const dur = Math.max(1, duration || 600);
-      const targetOpacity = (finalOpacity == null) ? 1 : finalOpacity;
-      mesh.visible = true;
-      mesh.material.transparent = true;
-      mesh.material.opacity = 0;
-      mesh.material.needsUpdate = true;
-      const start = performance.now();
-      function tick(now) {
-        const t = Math.min((now - start) / dur, 1);
-        const e = t * t * (3 - 2 * t);
-        mesh.material.opacity = targetOpacity * e;
-        mesh.material.needsUpdate = true;
-        if (t < 1) {
-          requestAnimationFrame(tick);
-        } else {
-          mesh.material.opacity = targetOpacity;
-          mesh.material.needsUpdate = true;
-        }
-      }
-      requestAnimationFrame(tick);
-    }
-
     // Augen-Icon → Eckblick + Target aufdecken
     function onEyeIconTap() {
       // Nicht mehr verwendet - Eckblick wird über target_verdeckt getriggert
@@ -8692,48 +8642,53 @@
       window._pendingRevealAfterEckblick = false;
 
       let target = generateCardTarget3D();
-      if (!target) return false;
+      if (!target) {
+        const fallbackNum = 1 + Math.floor(Math.random() * 12);
+        const fallbackColor = allTargetColors[Math.floor(Math.random() * allTargetColors.length)];
+        target = { num: fallbackNum, color: fallbackColor };
+      }
 
       stopTargetPulse();
 
-      // Erst alles verstecken, dann die neue Bankkarte weich einfaden
       if (window._targetMeshes) {
         Object.entries(window._targetMeshes).forEach(([name, m]) => {
           m.visible = (name === 'target_stapel2.webp');
-          if (m.material) {
-            m.material.opacity = (name === 'target_stapel2.webp') ? 1 : 0;
-            m.material.needsUpdate = true;
-          }
         });
-
-        const bankCardMesh = window._targetMeshes['target_1.webp'];
-        if (bankCardMesh) fadeInMesh3D(bankCardMesh, 700, 1);
-
-        const verdecktMesh = window._targetMeshes['target_verdeckt.webp'];
-        if (verdecktMesh) {
-          verdecktMesh.visible = false;
-          if (verdecktMesh.material) {
-            verdecktMesh.material.opacity = 0;
-            verdecktMesh.material.needsUpdate = true;
-          }
+        if (window._targetMeshes['target_verdeckt.webp']) {
+          window._targetMeshes['target_verdeckt.webp'].visible = false;
+        }
+        if (window._targetMeshes['target_1.webp']) {
+          window._targetMeshes['target_1.webp'].visible = true;
         }
       }
 
-      Object.values(window._suitMeshes || {}).forEach(m => {
-        m.visible = false;
-        if (m.material) {
-          m.material.opacity = 0;
-          m.material.needsUpdate = true;
-        }
-      });
-
+      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
       const suitFile = SUIT_IMG_BY_COLOR[target.color];
       if (suitFile && window._suitMeshes && window._suitMeshes[suitFile]) {
-        fadeInMesh3D(window._suitMeshes[suitFile], 700, 1);
+        const suitMesh = window._suitMeshes[suitFile];
+        suitMesh.material.opacity = 0;
+        suitMesh.visible = true;
       }
 
       updateTargetRankDisplay(getTargetVisualRank(target.num));
-      if (window._targetRankMesh) fadeInMesh3D(window._targetRankMesh, 700, 1);
+      if (window._targetRankMesh) {
+        window._targetRankMesh.material.opacity = 0;
+        window._targetRankMesh.visible = true;
+      }
+
+      // Fade-in (600ms)
+      const fadeStart = performance.now();
+      (function fadeIn() {
+        const t = Math.min((performance.now() - fadeStart) / 600, 1);
+        const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+        if (suitFile && window._suitMeshes && window._suitMeshes[suitFile]) {
+          window._suitMeshes[suitFile].material.opacity = ease;
+        }
+        if (window._targetRankMesh) {
+          window._targetRankMesh.material.opacity = ease;
+        }
+        if (t < 1) requestAnimationFrame(fadeIn);
+      })();
 
       return true;
     };
@@ -8939,13 +8894,9 @@
       document.getElementById('eyeIcon').style.display = 'none';
       stopTargetPulse();
       if (window._cardTargetState) {
-        if (typeof window.resetTargetDeck3D === 'function') {
-          window.resetTargetDeck3D();
-        } else {
-          window._cardTargetState.usedNumbers.clear();
-          window._cardTargetState.drawsCount = 0;
-          window._cardTargetState.currentTarget = null;
-        }
+        window._cardTargetState.usedNumbers.clear();
+        window._cardTargetState.drawsCount = 0;
+        window._cardTargetState.currentTarget = null;
         window._cardTargetState.round = 1;
       }
     }
@@ -10064,12 +10015,6 @@
     let dragToQ = 0;
     let dragCurrentAngle = 0;
     const DRAG_SENSITIVITY = 150; // px für volle 90°
-    let swipeLockDir = null; // 'cw' oder 'ccw' – erste Kipp-Richtung sperrt
-    const SWIPE_MAX_KIPPS = 6;
-    function resetSwipeKippState() {
-      swipeLockDir = null;
-      resetSwipeKippState();
-    }
 
     // =========================
     // PAUSE-PHASE: Ecke-Drehinteraktion
@@ -10202,7 +10147,6 @@
       }
       if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
         dismissKippenWarning();
-        if (gamePhase === 'kipp21' && kipp21KippCount >= SWIPE_MAX_KIPPS) return;
         if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
         if (isAnimating || kipp21KniffActive) return;
         if (gamePhase === 'kipp21' && !kipp21Active) return; // Aufbau läuft noch
@@ -10253,6 +10197,8 @@
         return;
       }
       if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
+      // TRAINING: Kein Swipe-Kippen — Buttons steuern den Würfel
+      if (gamePhase === 'kipp21') return;
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -10448,10 +10394,7 @@
             if (gamePhase === 'kipp21' && kipp21Active) {
               kipp21KippCount++;
               kipp21RoundKipps++;
-              updateSwipeHint();
-              if (kipp21KippCount >= SWIPE_MAX_KIPPS) {
-                isSwiping = false;
-              }
+              hintText.innerHTML = formatKipps(kipp21KippCount);
               checkOnTargetAfterKipp();
             }
 
