@@ -9428,6 +9428,7 @@
 
       // STICH: Tap auf Würfel → Karte ausspielen
       if (gamePhase === 'kipp21' && lastTouchPos && !dragActive && !_stichLock &&
+          !_cardWarningActive && !kipp21KniffActive && !isSwiping &&
           window._cardTargetState && window._cardTargetState.currentTarget) {
         const rectS = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectS.left) / rectS.width) * 2 - 1;
@@ -9436,8 +9437,12 @@
         const cubeHits = vkRaycaster.intersectObject(cube);
         if (cubeHits.length > 0) {
           const hitLocal = cube.worldToLocal(cubeHits[0].point.clone());
+          console.log('[STICH-TAP] hitLocal:', hitLocal.x.toFixed(3), hitLocal.y.toFixed(3), hitLocal.z.toFixed(3), 'topFace:', topFace, 'Q:', currentQuadrant);
           const slotIdx = findTappedSlot(hitLocal);
+          console.log('[STICH-TAP] slotIdx:', slotIdx);
           if (slotIdx >= 0) {
+            const slotInfo = getSlotValueAndColor(slotIdx);
+            console.log('[STICH-TAP] slot:', slotInfo, 'target:', window._cardTargetState.currentTarget);
             handleStichConfirm(slotIdx);
             lastTouchPos = null;
             return;
@@ -9570,7 +9575,7 @@
       }
 
       // STICH: Click auf Würfel → Karte ausspielen (Desktop)
-      if (gamePhase === 'kipp21' && !_stichLock &&
+      if (gamePhase === 'kipp21' && !_stichLock && !_cardWarningActive && !kipp21KniffActive &&
           window._cardTargetState && window._cardTargetState.currentTarget) {
         const cubeHits = vkRaycaster.intersectObject(cube);
         if (cubeHits.length > 0) {
@@ -10335,6 +10340,7 @@
           if (swipeDir !== _cardLockedDir) {
             showCardKippWarning();
             isSwiping = false;
+            lastTouchPos = null;
             return;
           }
 
@@ -10342,6 +10348,7 @@
           if (_cardKippCount >= _CARD_MAX_KIPPS) {
             showCardKippWarning();
             isSwiping = false;
+            lastTouchPos = null;
             return;
           }
         }
@@ -10867,30 +10874,29 @@
     function showCardKippWarning() {
       if (_cardWarningActive) return;
       _cardWarningActive = true;
-      // Rote Overlay-Plane auf der Oberseite
       const warnGeo = new THREE.PlaneGeometry(cubeSize * 0.95, cubeSize * 0.95);
       const warnMat = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0, depthTest: false, side: THREE.DoubleSide });
       const warnMesh = new THREE.Mesh(warnGeo, warnMat);
       warnMesh.renderOrder = 100;
-      // Auf die sichtbare Oberseite setzen
       warnMesh.position.copy(cube.position.clone());
       warnMesh.position.y += cubeSize / 2 + 0.001;
       warnMesh.rotation.x = -Math.PI / 2;
       kipGroup.add(warnMesh);
 
       const start = performance.now();
-      (function pulse() {
-        const t = (performance.now() - start) / 600;
-        if (t >= 1) {
+      const duration = 2500; // 2,5 Sekunden
+      (function blink() {
+        const elapsed = performance.now() - start;
+        if (elapsed >= duration) {
           kipGroup.remove(warnMesh);
           warnGeo.dispose(); warnMat.dispose();
           _cardWarningActive = false;
           return;
         }
-        // Schnell auf 0.5, dann aus
-        const p = t < 0.3 ? t / 0.3 : 1 - (t - 0.3) / 0.7;
-        warnMat.opacity = p * 0.5;
-        requestAnimationFrame(pulse);
+        // Blinkt ~4× pro Sekunde (sin mit hoher Frequenz)
+        const phase = Math.sin(elapsed * 0.025) * 0.5 + 0.5;
+        warnMat.opacity = phase * 0.45;
+        requestAnimationFrame(blink);
       })();
     }
 
