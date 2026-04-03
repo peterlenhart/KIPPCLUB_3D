@@ -6721,7 +6721,7 @@
 
       // Sobald der Würfel wieder in seiner Ecke liegt, Kippziel sichtbar machen
       if (typeof window.revealGeneratedCardTarget3D === 'function') {
-        window.revealGeneratedCardTarget3D();
+        window.revealGeneratedCardTarget3D(true);
       }
 
       // 7. Von Ecke zurückfallen
@@ -6737,6 +6737,10 @@
         }
         animate();
       });
+
+      if (typeof window.revealGeneratedCardTarget3D === 'function') {
+        window.revealGeneratedCardTarget3D(true);
+      }
       
       // Cleanup: Cube zurück in kipGroup
       cube.updateMatrixWorld();
@@ -8627,12 +8631,16 @@
 
     // Tap auf target_verdeckt → Eckblick + Kippziel generieren
     window._pendingRevealAfterEckblick = false;
-    window.revealGeneratedCardTarget3D = function() {
-      if (!window._pendingRevealAfterEckblick) return false;
+    window.revealGeneratedCardTarget3D = function(forceReveal) {
+      if (!forceReveal && !window._pendingRevealAfterEckblick) return false;
       window._pendingRevealAfterEckblick = false;
 
-      const target = generateCardTarget3D();
-      if (!target) return false;
+      let target = generateCardTarget3D();
+      if (!target) {
+        const fallbackNum = 1 + Math.floor(Math.random() * 12);
+        const fallbackColor = allTargetColors[Math.floor(Math.random() * allTargetColors.length)];
+        target = { num: fallbackNum, color: fallbackColor };
+      }
 
       stopTargetPulse();
 
@@ -8640,9 +8648,12 @@
         Object.entries(window._targetMeshes).forEach(([name, m]) => {
           m.visible = (name === 'target_stapel2.webp');
         });
-      }
-      if (window._targetMeshes['target_1.webp']) {
-        window._targetMeshes['target_1.webp'].visible = true;
+        if (window._targetMeshes['target_verdeckt.webp']) {
+          window._targetMeshes['target_verdeckt.webp'].visible = false;
+        }
+        if (window._targetMeshes['target_1.webp']) {
+          window._targetMeshes['target_1.webp'].visible = true;
+        }
       }
 
       Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
