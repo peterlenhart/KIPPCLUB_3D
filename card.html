@@ -2164,26 +2164,71 @@
       const a11Z = -0.359375 + (11 - 4) * 0.15625; // Nordkante Zeile 11
       const targetFiles = ['target_stapel2.webp','target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp','target_verdeckt.webp'];
       window._targetMeshes = {};
-
-      // Suit-Bilder (herz/karo/kreuz/pik) am selben Anker A11, unsichtbar
+      window._targetCardStack = {};
+      window._targetCardOrder = [1,2,3,4,5,6];
+      window._targetTopIndex = 6;
+      window._targetStackReady = false;
       window._suitMeshes = {};
+      window._suitImages = {};
+
       ['herz.png','karo.png','kreuz.png','pik.png'].forEach((file) => {
-        new THREE.TextureLoader().load(file, (tex) => {
-          const imgW = tex.image.width;
-          const imgH = tex.image.height;
-          const w3d = (imgW / 3) * (0.15625 / 45);
-          const h3d = (imgH / 3) * (0.15625 / 45);
-          const geo = new THREE.PlaneGeometry(w3d, h3d);
-          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-          const mesh = new THREE.Mesh(geo, mat);
-          mesh.rotation.x = -Math.PI / 2;
-          mesh.position.set(a11X + w3d / 2, yPos + 0.009, a11Z + h3d / 2);
-          mesh.renderOrder = 14;
-          mesh.visible = false;
-          scene.add(mesh);
-          window._suitMeshes[file] = mesh;
-        });
+        const img = new Image();
+        img.onload = () => { window._suitImages[file] = img; };
+        img.src = file;
       });
+
+      window.drawTargetFaceOnCard3D = function(cardIdx, target) {
+        const card = window._targetCardStack && window._targetCardStack[cardIdx];
+        if (!card || !card.frontCtx || !card.baseFrontImage) return;
+        const ctx = card.frontCtx;
+        const canvas = card.frontCanvas;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.PI);
+        ctx.drawImage(card.baseFrontImage, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        ctx.restore();
+
+        const suitFile = SUIT_IMG_BY_COLOR[target.color];
+        const suitImg = suitFile ? window._suitImages[suitFile] : null;
+        const rankText = getTargetVisualRank(target.num);
+
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.PI);
+        ctx.font = '900 66px "Noto Serif"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+        ctx.fillText(rankText, 0, -28);
+        if (suitImg) {
+          const sw = 44;
+          const sh = suitImg.height * (sw / suitImg.width);
+          ctx.drawImage(suitImg, -sw/2, 8, sw, sh);
+        }
+        ctx.restore();
+        card.frontTexture.needsUpdate = true;
+      };
+
+      window.resetTargetStack3D = function() {
+        Object.values(window._targetCardStack || {}).forEach((card) => {
+          if (!card) return;
+          card.group.visible = true;
+          card.pivot.rotation.set(0,0,0);
+          card.pivot.position.y = card.baseY;
+          if (card.frontCtx && card.baseFrontImage) {
+            card.frontCtx.clearRect(0,0,card.frontCanvas.width,card.frontCanvas.height);
+            card.frontCtx.drawImage(card.baseFrontImage, 0, 0, card.frontCanvas.width, card.frontCanvas.height);
+            card.frontTexture.needsUpdate = true;
+          }
+        });
+        window._targetTopIndex = 6;
+        if (window._targetCardStack[6]) {
+          window._targetMeshes['target_verdeckt.webp'] = window._targetCardStack[6].backMesh;
+        }
+        Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+        if (window._targetRankMesh) window._targetRankMesh.visible = false;
+      };
 
       // Kartenstich-State
       window._cardTargetState = {
@@ -2332,63 +2377,115 @@
         return chosen;
       }
 
-      // Pulse-Animation für target_verdeckt (hebt sich leicht und schwenkt um die WELT-Y-Achse)
+      // Pulse-Animation für die sichtbare Kartenrückseite auf dem obersten Karten-Mesh
       window._targetPulseActive = false;
       window._targetPulseBaseY = null;
-      window._targetPulseBaseQuat = null;
       window._targetPulseRAF = null;
       window.startTargetPulse = function() {
         const mesh = window._targetMeshes['target_verdeckt.webp'];
         if (!mesh) return;
         window._targetPulseActive = true;
-        if (window._targetPulseBaseY === null) window._targetPulseBaseY = mesh.position.y;
-        if (!window._targetPulseBaseQuat) window._targetPulseBaseQuat = mesh.quaternion.clone();
+        window._targetPulseBaseY = mesh.position.y;
         if (window._targetPulseRAF) cancelAnimationFrame(window._targetPulseRAF);
-
         (function pulse() {
-          if (!window._targetPulseActive || !mesh.visible) {
-            window._targetPulseRAF = null;
-            return;
-          }
-          const now = Date.now();
-          const lift = (Math.sin(now * 0.0032) + 1) / 2; // 0..1
-          const sway = Math.sin(now * 0.0046) * THREE.MathUtils.degToRad(5); // -5°..+5°
-          const worldYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), sway);
-          mesh.position.y = window._targetPulseBaseY + 0.012 + lift * 0.018;
-          mesh.quaternion.copy(worldYQuat).multiply(window._targetPulseBaseQuat);
+          const currentMesh = window._targetMeshes['target_verdeckt.webp'];
+          if (!window._targetPulseActive || !currentMesh || !currentMesh.visible) return;
+          const t = (Math.sin(Date.now() * 0.004) + 1) / 2;
+          currentMesh.position.y = window._targetPulseBaseY + t * 0.01;
+          currentMesh.rotation.z = THREE.MathUtils.degToRad(Math.sin(Date.now() * 0.0035) * 5);
           window._targetPulseRAF = requestAnimationFrame(pulse);
         })();
       }
       window.stopTargetPulse = function() {
         window._targetPulseActive = false;
-        if (window._targetPulseRAF) {
-          cancelAnimationFrame(window._targetPulseRAF);
-          window._targetPulseRAF = null;
-        }
+        if (window._targetPulseRAF) cancelAnimationFrame(window._targetPulseRAF);
         const mesh = window._targetMeshes['target_verdeckt.webp'];
-        if (mesh) {
-          if (window._targetPulseBaseY !== null) mesh.position.y = window._targetPulseBaseY;
-          if (window._targetPulseBaseQuat) mesh.quaternion.copy(window._targetPulseBaseQuat);
+        if (mesh && window._targetPulseBaseY !== null) {
+          mesh.position.y = window._targetPulseBaseY;
+          mesh.rotation.z = 0;
         }
       }
 
-      targetFiles.forEach((file, idx) => {
-        new THREE.TextureLoader().load(file, (tex) => {
-          const imgW = tex.image.width;
-          const imgH = tex.image.height;
-          const w3d = (imgW / 3) * (0.15625 / 45); // px → 3D Einheiten (45px = 1 Zelle)
-          const h3d = (imgH / 3) * (0.15625 / 45);
-          const geo = new THREE.PlaneGeometry(w3d, h3d);
-          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-          const mesh = new THREE.Mesh(geo, mat);
-          mesh.rotation.x = -Math.PI / 2;
-          // Mesh-Zentrum so, dass li ob Ecke auf A11 li ob Ecke liegt
-          mesh.position.set(a11X + w3d / 2, yPos + 0.001 + idx * 0.001, a11Z + h3d / 2);
-          mesh.renderOrder = 5 + idx;
-          mesh.visible = false;
-          scene.add(mesh);
-          window._targetMeshes[file] = mesh;
-        });
+      // Unterster Stapel: target_stapel2.webp
+      new THREE.TextureLoader().load('target_stapel2.webp', (tex) => {
+        const imgW = tex.image.width;
+        const imgH = tex.image.height;
+        const w3d = (imgW / 3) * (0.15625 / 45);
+        const h3d = (imgH / 3) * (0.15625 / 45);
+        const geo = new THREE.PlaneGeometry(w3d, h3d);
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(a11X + w3d / 2, yPos + 0.001, a11Z + h3d / 2);
+        mesh.renderOrder = 5;
+        mesh.visible = false;
+        scene.add(mesh);
+        window._targetMeshes['target_stapel2.webp'] = mesh;
+      });
+
+      const backTextureLoader = new THREE.TextureLoader();
+      let sharedBackTexture = null;
+      backTextureLoader.load('target_verdeckt.webp', (backTex) => {
+        sharedBackTexture = backTex;
+        for (let cardIdx = 1; cardIdx <= 6; cardIdx++) {
+          new THREE.TextureLoader().load(`target_${cardIdx}.webp`, (frontTex) => {
+            const imgW = frontTex.image.width;
+            const imgH = frontTex.image.height;
+            const w3d = (imgW / 3) * (0.15625 / 45);
+            const h3d = (imgH / 3) * (0.15625 / 45);
+
+            const pivot = new THREE.Group();
+            const layerY = yPos + 0.002 + (cardIdx - 1) * 0.0015;
+            pivot.position.set(a11X + w3d / 2, layerY, a11Z);
+            pivot.visible = false;
+            scene.add(pivot);
+
+            const body = new THREE.Group();
+            body.position.set(0, 0, h3d / 2);
+            pivot.add(body);
+
+            const frontCanvas = document.createElement('canvas');
+            frontCanvas.width = frontTex.image.width;
+            frontCanvas.height = frontTex.image.height;
+            const frontCtx = frontCanvas.getContext('2d');
+            frontCtx.drawImage(frontTex.image, 0, 0, frontCanvas.width, frontCanvas.height);
+            const frontCanvasTex = new THREE.CanvasTexture(frontCanvas);
+            const frontMat = new THREE.MeshBasicMaterial({ map: frontCanvasTex, transparent: true, side: THREE.FrontSide, depthWrite: false });
+            const frontGeo = new THREE.PlaneGeometry(w3d, h3d);
+            const frontMesh = new THREE.Mesh(frontGeo, frontMat);
+            frontMesh.rotation.x = Math.PI / 2;
+            frontMesh.renderOrder = 8 + cardIdx * 2;
+            body.add(frontMesh);
+
+            const backMat = new THREE.MeshBasicMaterial({ map: sharedBackTexture, transparent: true, side: THREE.FrontSide, depthWrite: false });
+            const backMesh = new THREE.Mesh(frontGeo.clone(), backMat);
+            backMesh.rotation.x = -Math.PI / 2;
+            backMesh.renderOrder = 9 + cardIdx * 2;
+            body.add(backMesh);
+
+            window._targetCardStack[cardIdx] = {
+              pivot,
+              group: body,
+              frontMesh,
+              backMesh,
+              frontCanvas,
+              frontCtx,
+              frontTexture: frontCanvasTex,
+              baseFrontImage: frontTex.image,
+              baseY: layerY,
+              width: w3d,
+              height: h3d
+            };
+            window._targetMeshes[`target_${cardIdx}.webp`] = frontMesh;
+            if (cardIdx === 6) {
+              window._targetMeshes['target_verdeckt.webp'] = backMesh;
+            }
+            if (Object.keys(window._targetCardStack).length === 6) {
+              window._targetStackReady = true;
+              window.resetTargetStack3D();
+            }
+          });
+        }
       });
 
       // Numpad-Position: wird unten bei renderLoop-Start gesetzt
@@ -6719,11 +6816,6 @@
         animLower();
       });
 
-      // Sobald der Würfel wieder in seiner Ecke liegt, Kippziel sichtbar machen
-      if (typeof window.revealGeneratedCardTarget3D === 'function') {
-        window.revealGeneratedCardTarget3D(true);
-      }
-
       // 7. Von Ecke zurückfallen
       const fallDur = 800;
       await new Promise(resolve => {
@@ -6737,10 +6829,6 @@
         }
         animate();
       });
-
-      if (typeof window.revealGeneratedCardTarget3D === 'function') {
-        window.revealGeneratedCardTarget3D(true);
-      }
       
       // Cleanup: Cube zurück in kipGroup
       cube.updateMatrixWorld();
@@ -8589,14 +8677,10 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      // Bankkarten sichtbar: nur Stapel + target_verdeckt
-      if (window._targetMeshes) {
-        Object.entries(window._targetMeshes).forEach(([name, m]) => {
-          m.visible = (name === 'target_stapel2.webp' || name === 'target_verdeckt.webp');
-        });
-      }
-      if (window._targetRankMesh) window._targetRankMesh.visible = false;
-      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+      // Bankkarten sichtbar + target_verdeckt pulsiert
+      if (typeof window.resetTargetStack3D === 'function') window.resetTargetStack3D();
+      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => { if (m) m.visible = true; });
+      Object.values(window._targetCardStack || {}).forEach(card => { if (card) card.group.visible = true; });
       startTargetPulse();
       // Scores sichtbar
       if (window._scorePLMesh) window._scorePLMesh.visible = true;
@@ -8629,49 +8713,42 @@
       // Nicht mehr verwendet - Eckblick wird über target_verdeckt getriggert
     }
 
-    // Tap auf target_verdeckt → Eckblick + Kippziel generieren
-    window._pendingRevealAfterEckblick = false;
-    window.revealGeneratedCardTarget3D = function(forceReveal) {
-      if (!forceReveal && !window._pendingRevealAfterEckblick) return false;
-      window._pendingRevealAfterEckblick = false;
-
-      let target = generateCardTarget3D();
-      if (!target) {
-        const fallbackNum = 1 + Math.floor(Math.random() * 12);
-        const fallbackColor = allTargetColors[Math.floor(Math.random() * allTargetColors.length)];
-        target = { num: fallbackNum, color: fallbackColor };
-      }
-
-      stopTargetPulse();
-
-      if (window._targetMeshes) {
-        Object.entries(window._targetMeshes).forEach(([name, m]) => {
-          m.visible = (name === 'target_stapel2.webp');
-        });
-        if (window._targetMeshes['target_verdeckt.webp']) {
-          window._targetMeshes['target_verdeckt.webp'].visible = false;
-        }
-        if (window._targetMeshes['target_1.webp']) {
-          window._targetMeshes['target_1.webp'].visible = true;
-        }
-      }
-
-      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
-      const suitFile = SUIT_IMG_BY_COLOR[target.color];
-      if (suitFile && window._suitMeshes && window._suitMeshes[suitFile]) {
-        window._suitMeshes[suitFile].visible = true;
-      }
-
-      updateTargetRankDisplay(getTargetVisualRank(target.num));
-      if (window._targetRankMesh) window._targetRankMesh.visible = true;
-      return true;
-    };
-
+    // Tap auf target_verdeckt → Eckblick, danach obere Karten-Rückseite real aufdecken
     function onTargetVerdecktTap() {
       if (kipp21KniffActive) return;
       stopTargetPulse();
-      window._pendingRevealAfterEckblick = true;
-      runKipp21EckblickKniff(true);
+      runKipp21EckblickKniff(true).then(() => {
+        const target = generateCardTarget3D();
+        if (!target) return;
+
+        const cardIdx = Math.max(1, 7 - (window._cardTargetState ? window._cardTargetState.drawsCount : 1));
+        const activeCard = window._targetCardStack && window._targetCardStack[cardIdx];
+        if (!activeCard) return;
+
+        window.drawTargetFaceOnCard3D(cardIdx, target);
+        window._targetTopIndex = cardIdx;
+        window._targetMeshes['target_verdeckt.webp'] = activeCard.backMesh;
+        if (window._targetRankMesh) window._targetRankMesh.visible = false;
+        Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+
+        activeCard.pivot.rotation.x = 0;
+        activeCard.backMesh.visible = true;
+        activeCard.frontMesh.visible = true;
+
+        const revealDur = 700;
+        const startTime = performance.now();
+        (function animateFlip() {
+          const t = Math.min((performance.now() - startTime) / revealDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          activeCard.pivot.rotation.x = Math.PI * ease;
+          if (t < 1) {
+            requestAnimationFrame(animateFlip);
+          } else {
+            activeCard.pivot.rotation.x = Math.PI;
+            activeCard.backMesh.visible = false;
+          }
+        })();
+      });
     }
     document.getElementById('eyeIcon').addEventListener('click', (e) => {
       e.stopPropagation(); onEyeIconTap();
@@ -8860,7 +8937,8 @@
       if (window._buttonOverlay) window._buttonOverlay.visible = true;
       if (window._pauseIconMesh) window._pauseIconMesh.visible = false;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = false;
-      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
+      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => { if (m) m.visible = false; });
+      Object.values(window._targetCardStack || {}).forEach(card => { if (card) card.group.visible = false; });
       if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
       if (window._targetRankMesh) window._targetRankMesh.visible = false;
       if (window._scorePLMesh) window._scorePLMesh.visible = false;
@@ -9279,23 +9357,6 @@
       if (replayActive) return;
       if (window._numBtnTouchActive) return;
 
-      // Eckblick: Tap auf den Würfel beendet den Eckblick sofort
-      if (kipp21KniffActive && eckblickPivot && lastTouchPos) {
-        const rectCube = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rectCube.left) / rectCube.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rectCube.top) / rectCube.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(cube, true).length > 0) {
-          kipp21KniffAbort = true;
-          if (kipp21KniffTimeout) {
-            clearTimeout(kipp21KniffTimeout);
-            kipp21KniffTimeout = null;
-          }
-          lastTouchPos = null;
-          return;
-        }
-      }
-
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rectP = renderer.domElement.getBoundingClientRect();
@@ -9397,19 +9458,7 @@
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       vkMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       vkRaycaster.setFromCamera(vkMouse, camera);
-
-      // Eckblick: Klick auf den Würfel beendet den Eckblick sofort
-      if (kipp21KniffActive && eckblickPivot) {
-        if (vkRaycaster.intersectObject(cube, true).length > 0) {
-          kipp21KniffAbort = true;
-          if (kipp21KniffTimeout) {
-            clearTimeout(kipp21KniffTimeout);
-            kipp21KniffTimeout = null;
-          }
-          lastTouchPos = null;
-          return;
-        }
-      }
+      
       // KIPP 21: Card click detection (Desktop/Replay)
       if (gamePhase === 'kipp21' && kipp21Active && !kipp21CardTouchHandled) {
         // Pause-Button prüfen
