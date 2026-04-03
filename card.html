@@ -2345,12 +2345,15 @@
         // Zuordnung Slot-Position → Rahmenfarbe (pro Quadrant)
         // Reihenfolge der Slots im slotMap: S1, S2, S3, S4
         // Rahmenfarben: violett(Pik), blau(Herz), gruen(Karo), orange(Kreuz)
-        const colorByQuadrant = {
-          f2: { 3: ['blau','gruen','violett','orange'], 0: ['orange','blau','gruen','violett'], 1: ['violett','orange','blau','gruen'], 2: ['gruen','violett','orange','blau'] },
-          f0: { 3: ['violett','orange','blau','gruen'], 0: ['blau','gruen','violett','orange'], 1: ['gruen','violett','orange','blau'], 2: ['orange','blau','gruen','violett'] },
-          f1: { 3: ['orange','blau','gruen','violett'], 0: ['gruen','violett','orange','blau'], 1: ['blau','gruen','violett','orange'], 2: ['violett','orange','blau','gruen'] }
+        // Aus kipp-card.html abgeleitet: Farbe hängt NUR vom Quadranten ab
+        // Slot-Reihenfolge = slotMap Iterationsreihenfolge (DOM slot 0,1,2,3)
+        const QUADRANT_COLORS = {
+          3: ['violett','blau','gruen','orange'],
+          0: ['blau','orange','violett','gruen'],
+          1: ['orange','gruen','blau','violett'],
+          2: ['gruen','violett','orange','blau']
         };
-        const colors = (colorByQuadrant[topFace] || {})[currentQuadrant] || ['violett','blau','gruen','orange'];
+        const colors = QUADRANT_COLORS[currentQuadrant] || ['violett','blau','gruen','orange'];
 
         let i = 0;
         for (const key in face.slotMap) {
@@ -10965,12 +10968,13 @@
     function getSlotValueAndColor(slotIdx) {
       const face = faceSlots[topFace];
       if (!face) return null;
-      const colorByQuadrant = {
-        f2: { 3: ['blau','gruen','violett','orange'], 0: ['orange','blau','gruen','violett'], 1: ['violett','orange','blau','gruen'], 2: ['gruen','violett','orange','blau'] },
-        f0: { 3: ['violett','orange','blau','gruen'], 0: ['blau','gruen','violett','orange'], 1: ['gruen','violett','orange','blau'], 2: ['orange','blau','gruen','violett'] },
-        f1: { 3: ['orange','blau','gruen','violett'], 0: ['gruen','violett','orange','blau'], 1: ['blau','gruen','violett','orange'], 2: ['violett','orange','blau','gruen'] }
+      const QUADRANT_COLORS = {
+        3: ['violett','blau','gruen','orange'],
+        0: ['blau','orange','violett','gruen'],
+        1: ['orange','gruen','blau','violett'],
+        2: ['gruen','violett','orange','blau']
       };
-      const colors = (colorByQuadrant[topFace] || {})[currentQuadrant] || ['violett','blau','gruen','orange'];
+      const colors = QUADRANT_COLORS[currentQuadrant] || ['violett','blau','gruen','orange'];
       let i = 0;
       for (const key in face.slotMap) {
         if (i === slotIdx) {
@@ -10986,6 +10990,7 @@
       const targetPts = getScoreValue(targetVal);
       const sumPts = playerPts + targetPts;
 
+      // Gleiche Farbe UND höherer Wert → Playerstich
       if (playerColor === targetColor && playerVal > targetVal) {
         return { winner: 'player', points: sumPts };
       } else {
