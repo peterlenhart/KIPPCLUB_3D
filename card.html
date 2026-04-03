@@ -971,7 +971,16 @@
       0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
-  </style>
+  
+.fade-in-target {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+.fade-in-target.show {
+    opacity: 1;
+}
+</style>
+
 </head>
 <body>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
@@ -10962,5 +10971,24 @@
 
     renderLoop();
   </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const observer = new MutationObserver(() => {
+        const targets = document.querySelectorAll('.target, [id*="target"]');
+        targets.forEach(el => {
+            if (!el.classList.contains('fade-in-target')) {
+                el.classList.add('fade-in-target');
+                requestAnimationFrame(() => {
+                    el.classList.add('show');
+                });
+            }
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+</script>
+
 </body>
 </html>
