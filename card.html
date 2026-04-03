@@ -9428,28 +9428,21 @@
         }
       }
 
-      // STICH: Tap auf Würfel → Karte ausspielen
+      // STICH: Tap auf Würfel → Karte ausspielen (Screen-Projektion)
       if (gamePhase === 'kipp21' && lastTouchPos && !dragActive && !_stichLock &&
           !kipp21KniffActive &&
           window._cardTargetState && window._cardTargetState.currentTarget) {
-        console.log('[STICH-CHECK] raycast...');
         const rectS = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rectS.left) / rectS.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rectS.top) / rectS.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        const cubeHits = vkRaycaster.intersectObject(cube);
-        if (cubeHits.length > 0) {
-          const hitLocal = cube.worldToLocal(cubeHits[0].point.clone());
-          console.log('[STICH-TAP] hitLocal:', hitLocal.x.toFixed(3), hitLocal.y.toFixed(3), hitLocal.z.toFixed(3), 'topFace:', topFace, 'Q:', currentQuadrant);
-          const slotIdx = findTappedSlot(hitLocal);
-          console.log('[STICH-TAP] slotIdx:', slotIdx);
-          if (slotIdx >= 0) {
-            const slotInfo = getSlotValueAndColor(slotIdx);
-            console.log('[STICH-TAP] slot:', slotInfo, 'target:', window._cardTargetState.currentTarget);
-            handleStichConfirm(slotIdx);
-            lastTouchPos = null;
-            return;
-          }
+        const tapNdcX = ((lastTouchPos.x - rectS.left) / rectS.width) * 2 - 1;
+        const tapNdcY = -((lastTouchPos.y - rectS.top) / rectS.height) * 2 + 1;
+        const slotIdx = findTappedSlotByScreen(tapNdcX, tapNdcY);
+        if (slotIdx >= 0) {
+          const slotInfo = getSlotValueAndColor(slotIdx);
+          console.log('[STICH] Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
+            ' vs Target: ' + displayNum(window._cardTargetState.currentTarget.num) + ' ' + window._cardTargetState.currentTarget.color);
+          handleStichConfirm(slotIdx);
+          lastTouchPos = null;
+          return;
         }
       }
 
@@ -9578,16 +9571,12 @@
       }
 
       // STICH: Click auf Würfel → Karte ausspielen (Desktop)
-      if (gamePhase === 'kipp21' && !_stichLock && !_cardWarningActive && !kipp21KniffActive &&
+      if (gamePhase === 'kipp21' && !_stichLock && !kipp21KniffActive &&
           window._cardTargetState && window._cardTargetState.currentTarget) {
-        const cubeHits = vkRaycaster.intersectObject(cube);
-        if (cubeHits.length > 0) {
-          const hitLocal = cube.worldToLocal(cubeHits[0].point.clone());
-          const slotIdx = findTappedSlot(hitLocal);
-          if (slotIdx >= 0) {
-            handleStichConfirm(slotIdx);
-            return;
-          }
+        const slotIdx = findTappedSlotByScreen(vkMouse.x, vkMouse.y);
+        if (slotIdx >= 0) {
+          handleStichConfirm(slotIdx);
+          return;
         }
       }
 
@@ -10939,57 +10928,45 @@
       ]
     };
 
-    // Deck-Index des i-ten Slots auf dem aktuellen topFace
     function getDeckIndexForSlot(slotIdx) {
       const faceBase = { f0: 0, f1: 4, f2: 8 };
       return (faceBase[topFace] || 0) + slotIdx;
     }
 
-    function findTappedSlot(localHitPoint) {
+    // Screen-Projektion: Slot-Mittelpunkte → Bildschirm, nächsten zum Tap finden
+    function findTappedSlotByScreen(tapNdcX, tapNdcY) {
       const centers = SLOT_LOCAL_CENTERS[topFace];
       if (!centers) return -1;
       let bestIdx = -1, bestDist = Infinity;
-      for (let i = 0; i < centers.length; i++) {
+      for (let i = 0; i < 4; i++) {
+        const deckIdx = getDeckIndexForSlot(i);
+        if (window._playedSlots.has(deckIdx)) continue;
         const c = centers[i];
-        const dx = localHitPoint.x - c.x;
-        const dy = localHitPoint.y - c.y;
-        const dz = localHitPoint.z - c.z;
-        const d = dx*dx + dy*dy + dz*dz;
+        const worldPos = cube.localToWorld(new THREE.Vector3(c.x, c.y, c.z));
+        const ndc = worldPos.project(camera);
+        const dx = ndc.x - tapNdcX;
+        const dy = ndc.y - tapNdcY;
+        const d = dx*dx + dy*dy;
         if (d < bestDist) { bestDist = d; bestIdx = i; }
       }
-      if (bestDist > (2 * _cellSz) * (2 * _cellSz)) return -1;
-      // Bereits ausgespielt?
-      const deckIdx = getDeckIndexForSlot(bestIdx);
-      if (window._playedSlots.has(deckIdx)) return -1;
+      // Max Abstand ~0.3 in NDC (ca. 50px bei 360px Breite)
+      if (bestDist > 0.09) return -1;
       return bestIdx;
     }
 
     function getSlotValueAndColor(slotIdx) {
-      const face = faceSlots[topFace];
-      if (!face) return null;
-      const QUADRANT_COLORS = {
-        3: ['violett','gruen','orange','blau'],
-        0: ['blau','violett','gruen','orange'],
-        1: ['orange','blau','violett','gruen'],
-        2: ['gruen','orange','blau','violett']
-      };
-      const colors = QUADRANT_COLORS[currentQuadrant] || ['violett','blau','gruen','orange'];
-      let i = 0;
-      for (const key in face.slotMap) {
-        if (i === slotIdx) {
-          return { val: face.slotMap[key].val, color: colors[i] };
-        }
-        i++;
-      }
-      return null;
+      const faceBase = { f0: 0, f1: 4, f2: 8 };
+      const off = faceBase[topFace] || 0;
+      const val = deck[off + slotIdx];
+      const slotNames = ['S1','S2','S3','S4'];
+      const color = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotNames[slotIdx]];
+      return { val, color };
     }
 
     function evaluateStich(playerVal, playerColor, targetVal, targetColor) {
       const playerPts = getScoreValue(playerVal);
       const targetPts = getScoreValue(targetVal);
       const sumPts = playerPts + targetPts;
-
-      // Gleiche Farbe UND höherer Wert → Playerstich
       if (playerColor === targetColor && playerVal > targetVal) {
         return { winner: 'player', points: sumPts };
       } else {
