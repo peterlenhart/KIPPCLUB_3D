@@ -2345,13 +2345,12 @@
         // Zuordnung Slot-Position → Rahmenfarbe (pro Quadrant)
         // Reihenfolge der Slots im slotMap: S1, S2, S3, S4
         // Rahmenfarben: violett(Pik), blau(Herz), gruen(Karo), orange(Kreuz)
-        // Aus kipp-card.html abgeleitet: Farbe hängt NUR vom Quadranten ab
-        // Slot-Reihenfolge = slotMap Iterationsreihenfolge (DOM slot 0,1,2,3)
+        // Aus SLOT_NEIGHBOR_COLORS (S1=idx0, S2=idx1, S3=idx2, S4=idx3)
         const QUADRANT_COLORS = {
-          3: ['violett','blau','gruen','orange'],
-          0: ['blau','orange','violett','gruen'],
-          1: ['orange','gruen','blau','violett'],
-          2: ['gruen','violett','orange','blau']
+          3: ['violett','gruen','orange','blau'],
+          0: ['blau','violett','gruen','orange'],
+          1: ['orange','blau','violett','gruen'],
+          2: ['gruen','orange','blau','violett']
         };
         const colors = QUADRANT_COLORS[currentQuadrant] || ['violett','blau','gruen','orange'];
 
@@ -10927,8 +10926,8 @@
         { x: -_cellSz,  y: _half, z: -_cellSz }
       ],
       f0: [
-        { x: -_cellSz, y:  0,       z: _half },
-        { x: -_cellSz, y:  _cellSz, z: _half },
+        { x: -_cellSz, y: -_cellSz, z: _half },
+        { x: -_cellSz, y:  0,        z: _half },
         { x:  0,        y:  _cellSz, z: _half },
         { x:  _cellSz,  y:  _cellSz, z: _half }
       ],
@@ -10969,10 +10968,10 @@
       const face = faceSlots[topFace];
       if (!face) return null;
       const QUADRANT_COLORS = {
-        3: ['violett','blau','gruen','orange'],
-        0: ['blau','orange','violett','gruen'],
-        1: ['orange','gruen','blau','violett'],
-        2: ['gruen','violett','orange','blau']
+        3: ['violett','gruen','orange','blau'],
+        0: ['blau','violett','gruen','orange'],
+        1: ['orange','blau','violett','gruen'],
+        2: ['gruen','orange','blau','violett']
       };
       const colors = QUADRANT_COLORS[currentQuadrant] || ['violett','blau','gruen','orange'];
       let i = 0;
