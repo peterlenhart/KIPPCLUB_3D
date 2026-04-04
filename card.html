@@ -1152,22 +1152,22 @@
           "Score-Anzeige links = Dein Score. Score-Anzeige rechts = Bank Score.",
           "Jeder eingesetzte Kartenwert am W\u00fcrfel wird transparent \u2013 er ist weg. Setze deine Werte klug ein! Nur wer alle 12 Bank-Karten (Targets) genau um 1 h\u00f6her sticht, schafft den Highscore 180."
         ],
-        cAnlSecO:["SPIEL ABLAUF","KIPP ZUG","AUSSPIELEN","ZIEL","KARTENWERTE"],
+        cAnlSecO:["ZIEL","SPIEL ABLAUF","KIPP ZUG","AUSSPIELEN","KARTENWERTE"],
         cAnlO:[
+          "Highscore 180!\nChance mit reinem Gl\u00fcck-Kipps = 50%\nMit Merken & Logik immer zu 100% schaffbar.",
           "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte).\nDer W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\nTippe auf den W\u00fcrfel oder warte kurz, dann legt er sich wieder in die Box.",
           "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn.\nDu darfst bis zu 6 Kipps machen.\nZur\u00fcckkippen ist nicht m\u00f6glich.\nNach jedem Kipp liegen 4 Karten zur Auswahl:\n4 verschiedene Werte \u2013 4 verschiedene Farben.\nEine davon hat immer die Target-Farbe.",
           "Tippe lang auf den Kartenwert, den du ausspielen willst.\nH\u00f6herer Wert + gleiche Farbe = du stichst.\nSonst = Stich geht an die Bank.\nDer gespielte Kartenwert wird danach inaktiv \u2013 am W\u00fcrfel blass dargestellt \u2013 und kann nicht mehr verwendet werden.",
-          "Die Bank spielt 12 Target-Karten aus.\nMit deiner Kipp-Richtung entscheidest du, welche Karten dir zur Verf\u00fcgung stehen.\nIn der richtigen Richtung kommst du immer genau auf jene Karte, die das Target um +1 h\u00f6her sticht.\nSchaffst du alle 12 Targets mit +1, erreichst du den Highscore 180.\nOHNE Wissen = 50% Chance.",
           "1 \u2013 10 = 1 \u2013 10\nJ, Q, K = 10\nA = 14"
         ],
-        cAnlSecV:["SPIEL ABLAUF","KIPP ZUG","AUFDECKEN & SCHAUEN","AUSSPIELEN","STICHREGEL","ZIEL & STRATEGIE","KARTENWERTE"],
+        cAnlSecV:["ZIEL","SPIEL ABLAUF","KIPP ZUG","AUFDECKEN & SCHAUEN","AUSSPIELEN","STICHREGEL","KARTENWERTE"],
         cAnlV:[
+          "Highscore 180!\nChance mit reinem Gl\u00fcck-Kipps = 50%\nMit Merken & Logik immer zu 100% schaffbar.",
           "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte).\nDer W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\nTippe auf den W\u00fcrfel oder warte kurz, dann werden alle Kartenwerte wieder verdeckt und der W\u00fcrfel legt sich wieder in die Box.",
           "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn.\nDu darfst bis zu 6 Kipps machen.\nZur\u00fcckkippen ist nicht m\u00f6glich.\nNach jedem Kipp liegen 4 verdeckte Karten zur Auswahl.\nEs sind immer 4 verschiedene Werte.\nJeder Wert liegt an einer anderen Kartenfarbe.\nEiner davon immer an der Target-Farbe.",
           "Indem du auf ein verdecktes Kartensymbol auf dem W\u00fcrfel tippst, deckst du die Karte auf.\nWenn du sie nochmal antippst, verdeckst du sie wieder.\nDu darfst weiterkippen oder eine andere verdeckte Karte auf der aktuellen W\u00fcrfelfl\u00e4che antippen/aufdecken.\n(Du hast aber insgesamt nur max. 6 Kipps.)\nNach jedem Kipp darfst du \u201eAufdecken & Schauen\u201c. In der gesamten Partie allerdings nur 3-mal.\nDer Z\u00e4hler erscheint immer \u00fcber dem W\u00fcrfel.",
           "Indem du lange auf einen verdeckten oder bereits von dir aufgedeckten Kartenwert auf dem W\u00fcrfel tippst, spielst du aus.\nEine ausgespielte Karte steht dir danach nicht mehr zur Verf\u00fcgung.\nSie wird am W\u00fcrfel aufgedeckt und blass dargestellt.",
           "H\u00f6herer Wert + gleiche Farbe = du stichst.\nSonst = Stich geht an die Bank.",
-          "Die Bank spielt 12 Target-Karten aus.\nMit deiner Kipp-Richtung entscheidest du, welche Karten dir zur Verf\u00fcgung stehen.\nIn der richtigen Richtung kommst du immer genau auf jene Karte, die das Target um +1 h\u00f6her sticht.\nSchaffst du alle 12 Targets mit +1, erreichst du den Highscore 180.\nOHNE Wissen = 9% Chance.\nNur mit Aufmerksamkeit, Ged\u00e4chtnis, r\u00e4umlicher Vorstellung und Logik kannst du die Bank gezielt besiegen.",
           "1 \u2013 10 = 1 \u2013 10\nJ, Q, K = 10\nA = 14"
         ]
       },
@@ -6340,7 +6340,7 @@
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
           cube.position.lerpVectors(fallStartPos, targetPos, e);
           cube.quaternion.slerpQuaternions(fallStartQuat, targetQuat, e);
-          if (!klackFired && e > 0.85) { klackFired = true; playKlack(); }
+          if (!klackFired && e > 0.65) { klackFired = true; playKlack(); }
           if (t < 1) requestAnimationFrame(tick); else resolve();
         })();
       });
@@ -9006,11 +9006,35 @@
         'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
       btn1.onclick = () => {
-        // Spielstand einfrieren (localStorage)
+        // Vollständigen Spielstand einfrieren
         try {
-          const state = { cardMode: window._cardMode, phase: gamePhase, timestamp: Date.now() };
+          const stichVisible = {};
+          for (const key in (window._stichMeshes || {})) {
+            if (window._stichMeshes[key].visible) stichVisible[key] = true;
+          }
+          const state = {
+            cardMode: window._cardMode,
+            phase: gamePhase,
+            timestamp: Date.now(),
+            playerScore: window._playerScore3D || 0,
+            bankScore: window._bankScore3D || 0,
+            stichNum: window._stichNum || 0,
+            stichCycle: window._stichCycle || 0,
+            playedSlots: Array.from(window._playedSlots || []),
+            cardKippCount: _cardKippCount,
+            cardLockedDir: _cardLockedDir,
+            currentQuadrant,
+            topFace,
+            kippDirection,
+            deck: deck.slice(),
+            cubePos: [cube.position.x, cube.position.y, cube.position.z],
+            cubeQuat: [cube.quaternion.x, cube.quaternion.y, cube.quaternion.z, cube.quaternion.w],
+            kipp21KippCount,
+            stichVisible,
+            currentTarget: window._cardTargetState ? window._cardTargetState.currentTarget : null
+          };
           localStorage.setItem('digikipp_card_frozen', JSON.stringify(state));
-        } catch(e) {}
+        } catch(e) { console.error('[FREEZE]', e); }
         location.href = 'index.html';
       };
 
@@ -9580,10 +9604,8 @@
           !kipp21KniffActive &&
           window._cardTargetState && window._cardTargetState.currentTarget &&
           _stichTouchStart > 0 && (Date.now() - _stichTouchStart) >= 500) {
-        const rectS = renderer.domElement.getBoundingClientRect();
-        const tapNdcX = ((lastTouchPos.x - rectS.left) / rectS.width) * 2 - 1;
-        const tapNdcY = -((lastTouchPos.y - rectS.top) / rectS.height) * 2 + 1;
-        const slotIdx = findTappedSlotByScreen(tapNdcX, tapNdcY);
+        // Aktiven Slot suchen
+        const slotIdx = findTappedSlotByUV(lastTouchPos.x, lastTouchPos.y);
         if (slotIdx >= 0) {
           const slotInfo = getSlotValueAndColor(slotIdx);
           console.log('[STICH] Long-Press Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
@@ -9593,12 +9615,22 @@
           lastTouchPos = null;
           return;
         }
-        // Long-Press auf inaktiven Slot → Auto-Play auslösen
-        if (allVisibleSlotsInactive()) {
-          console.log('[AUTO-PLAY] Triggered by long-press on inactive slot');
+        // Inaktiven Slot getroffen?
+        const inactiveSlot = findTappedSlotByUV(lastTouchPos.x, lastTouchPos.y, true);
+        if (inactiveSlot >= 0) {
+          if (allVisibleSlotsInactive() && _cardKippCount >= _CARD_MAX_KIPPS) {
+            // Alle inaktiv + 6 Kipps verbraucht → Auto-Play
+            console.log('[AUTO-PLAY] Triggered by long-press on inactive (6 kipps used)');
+            _stichTouchStart = 0;
+            lastTouchPos = null;
+            executeAutoPlay();
+            return;
+          }
+          // Aktive Slots vorhanden ODER noch Kipps übrig → Rotsignal
+          console.log('[STICH] Inaktiven Slot angetippt → Rotsignal');
+          showCardKippWarning();
           _stichTouchStart = 0;
           lastTouchPos = null;
-          executeAutoPlay();
           return;
         }
       }
@@ -9731,7 +9763,7 @@
       // STICH: Click auf Würfel → Karte ausspielen (Desktop)
       if (gamePhase === 'kipp21' && !_stichLock && !kipp21KniffActive &&
           window._cardTargetState && window._cardTargetState.currentTarget) {
-        const slotIdx = findTappedSlotByScreen(vkMouse.x, vkMouse.y);
+        const slotIdx = findTappedSlotByUV(e.clientX, e.clientY);
         if (slotIdx >= 0) {
           handleStichConfirm(slotIdx);
           return;
@@ -10494,8 +10526,15 @@
             return;
           }
 
-          // Max 6 Kipps erreicht → Signal
+          // Max 6 Kipps erreicht
           if (_cardKippCount >= _CARD_MAX_KIPPS) {
+            if (allVisibleSlotsInactive()) {
+              // Alle inaktiv → Auto-Play statt Warnung
+              isSwiping = false;
+              lastTouchPos = null;
+              checkAutoPlayNeeded();
+              return;
+            }
             showCardKippWarning();
             isSwiping = false;
             lastTouchPos = null;
@@ -10645,7 +10684,7 @@
         }
 
         // Klack kurz VOR dem Aufsetzen (wie im Tutorial)
-        if (!dragKlackFired && eased > 0.88 && targetAngle !== 0) {
+        if (!dragKlackFired && eased > 0.68 && targetAngle !== 0) {
           dragKlackFired = true;
           playKlack();
         }
@@ -10807,7 +10846,7 @@
           }
           
           // Klack kurz VOR dem Aufsetzen (eased > 0.95 ≈ letzten 5% der Bewegung)
-          if (!klackFired && eased > 0.88) {
+          if (!klackFired && eased > 0.68) {
             klackFired = true;
             playKlack();
           }
@@ -10906,7 +10945,7 @@
           const rot = halfRot + e * halfRot;
           if (axis === 'x') pivotGroup.rotation.x = rot;
           else pivotGroup.rotation.z = rot;
-          if (!klackFired && e > 0.75) { klackFired = true; playKlack(); }
+          if (!klackFired && e > 0.55) { klackFired = true; playKlack(); }
           if (p < 1) requestAnimationFrame(a2);
           else resolve();
         })();
@@ -11103,26 +11142,49 @@
       return (faceBase[topFace] || 0) + slotIdx;
     }
 
-    // Finde getippten Slot per Screen-Projektion
-    function findTappedSlotByScreen(tapNdcX, tapNdcY) {
-      cube.updateMatrixWorld(true); // Matrix aktualisieren!
-      const centers = SLOT_LOCAL_CENTERS[topFace];
-      if (!centers) return -1;
-      let bestIdx = -1, bestDist = Infinity;
-      for (let i = 0; i < 4; i++) {
-        const deckIdx = getDeckIndexForSlot(i);
-        if (window._playedSlots.has(deckIdx)) continue;
-        const c = centers[i];
-        const worldPos = new THREE.Vector3(c.x, c.y, c.z);
-        cube.localToWorld(worldPos);
-        worldPos.project(camera);
-        const dx = worldPos.x - tapNdcX;
-        const dy = worldPos.y - tapNdcY;
-        const d = dx*dx + dy*dy;
-        if (d < bestDist) { bestDist = d; bestIdx = i; }
+    // UV-basierte Slot-Erkennung: Raycast → UV → Grid → Slot
+    // includeInactive: wenn true, gibt auch inaktive Slots zurück (mit .inactive Flag)
+    function findTappedSlotByUV(tapX, tapY, includeInactive) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const ndcX = ((tapX - rect.left) / rect.width) * 2 - 1;
+      const ndcY = -((tapY - rect.top) / rect.height) * 2 + 1;
+      const rc = new THREE.Raycaster();
+      rc.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+      const hits = rc.intersectObject(cube);
+      if (hits.length === 0) return -1;
+
+      const hit = hits[0];
+      const faceIdx = Math.floor(hit.faceIndex / 2);
+      const matToFace = { 1: 'f1', 2: 'f2', 4: 'f0' };
+      const faceKey = matToFace[faceIdx];
+      if (!faceKey || faceKey !== topFace) return -1;
+
+      const uv = hit.uv;
+      if (!uv) return -1;
+
+      const px = uv.x * 256;
+      const py = (1 - uv.y) * 256;
+      const cell = 256 / 3;
+      const col = Math.floor(px / cell);
+      const row = Math.floor(py / cell);
+      if (row < 0 || row > 2 || col < 0 || col > 2) return -1;
+
+      const gridKey = row + ',' + col;
+      const face = faceSlots[topFace];
+      if (!face) return -1;
+      let idx = 0;
+      for (const key in face.slotMap) {
+        if (key === gridKey) {
+          const deckIdx = getDeckIndexForSlot(idx);
+          if (window._playedSlots.has(deckIdx)) {
+            if (includeInactive) return idx; // inaktiv aber erkannt
+            return -1;
+          }
+          return idx;
+        }
+        idx++;
       }
-      if (bestDist > 0.15) return -1; // großzügiger Radius
-      return bestIdx;
+      return -1;
     }
 
     function getSlotValueAndColor(slotIdx) {
@@ -11185,7 +11247,8 @@
       const st = window._cardTargetState;
       if (!st || !st.currentTarget) return null;
       const targetColor = st.currentTarget.color;
-      const remaining = _CARD_MAX_KIPPS - _cardKippCount;
+      // Auto-Play darf das 6-Kipp-Limit überschreiten (max 6 Extra-Kipps)
+      const maxSearch = 6;
       const cwMap = { f2: 'f0', f0: 'f1', f1: 'f2' };
       const ccwMap = { f2: 'f1', f1: 'f0', f0: 'f2' };
       const faceBase = { f0: 0, f1: 4, f2: 8 };
@@ -11195,7 +11258,7 @@
       let best = null;
       for (const dir of dirs) {
         let face = topFace;
-        for (let k = 1; k <= remaining; k++) {
+        for (let k = 1; k <= maxSearch; k++) {
           face = (dir === 'cw') ? cwMap[face] : ccwMap[face];
           const off = faceBase[face];
           for (let si = 0; si < 4; si++) {
@@ -11210,11 +11273,11 @@
           }
         }
       }
-      // Fallback: wenn kein Nicht-Targetfarbe-Wert gefunden, nimm niedrigsten aktiven überhaupt
+      // Fallback: niedrigsten aktiven Wert an beliebiger Farbe
       if (!best) {
         for (const dir of dirs) {
           let face = topFace;
-          for (let k = 1; k <= remaining; k++) {
+          for (let k = 1; k <= maxSearch; k++) {
             face = (dir === 'cw') ? cwMap[face] : ccwMap[face];
             const off = faceBase[face];
             for (let si = 0; si < 4; si++) {
@@ -11648,7 +11711,81 @@
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
         btn1.onclick = () => {
           ov.remove();
-          // TODO: Spielstand wiederherstellen
+          try {
+            // Spielstand wiederherstellen
+            window._cardMode = state.cardMode || 'offen';
+            currentQuadrant = state.currentQuadrant;
+            topFace = state.topFace;
+            kippDirection = state.kippDirection;
+            _cardKippCount = state.cardKippCount || 0;
+            _cardLockedDir = state.cardLockedDir || null;
+            kipp21KippCount = state.kipp21KippCount || 0;
+            window._playerScore3D = state.playerScore || 0;
+            window._bankScore3D = state.bankScore || 0;
+            window._stichNum = state.stichNum || 0;
+            window._stichCycle = state.stichCycle || 0;
+            window._playedSlots = new Set(state.playedSlots || []);
+
+            if (state.deck) {
+              for (let i = 0; i < 12 && i < state.deck.length; i++) deck[i] = state.deck[i];
+            }
+
+            cube.position.set(state.cubePos[0], state.cubePos[1], state.cubePos[2]);
+            cube.quaternion.set(state.cubeQuat[0], state.cubeQuat[1], state.cubeQuat[2], state.cubeQuat[3]);
+
+            // Face-Texturen mit richtigen Alphas neu zeichnen
+            updateAllFaceTextures();
+
+            // Scores anzeigen
+            updateScore3D('player', window._playerScore3D);
+            updateScore3D('bank', window._bankScore3D);
+            if (window._scorePLMesh) window._scorePLMesh.visible = true;
+            if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
+
+            // Stich-Grafiken wiederherstellen
+            if (state.stichVisible) {
+              for (const key in state.stichVisible) {
+                if (window._stichMeshes && window._stichMeshes[key]) {
+                  window._stichMeshes[key].visible = true;
+                }
+              }
+            }
+
+            // Target wiederherstellen
+            if (state.currentTarget) {
+              window._cardTargetState.currentTarget = state.currentTarget;
+              const suitFile = SUIT_IMG_BY_COLOR[state.currentTarget.color];
+              if (suitFile && window._suitMeshes[suitFile]) {
+                window._suitMeshes[suitFile].visible = true;
+                window._suitMeshes[suitFile].material.opacity = 1;
+              }
+              updateTargetRankDisplay(getTargetVisualRank(state.currentTarget.num));
+              if (window._targetRankMesh) {
+                window._targetRankMesh.visible = true;
+                window._targetRankMesh.material.opacity = 1;
+              }
+            } else {
+              // Kein aktives Target → verdeckt zeigen
+              if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
+                window._targetMeshes['target_verdeckt.webp'].visible = true;
+                startTargetPulse();
+              }
+            }
+
+            // Aktuelle target_N Karte zeigen
+            const curTargetN = 'target_' + (window._stichNum + 1) + '.webp';
+            if (window._targetMeshes && window._targetMeshes[curTargetN]) {
+              window._targetMeshes[curTargetN].visible = true;
+            }
+
+            // Spielphase setzen
+            gamePhase = 'kipp21';
+            kipp21Active = true;
+            hintText.innerHTML = formatKipps(kipp21KippCount);
+
+            localStorage.removeItem('digikipp_card_frozen');
+            console.log('[RESTORE] Player:', window._playerScore3D, 'Bank:', window._bankScore3D, 'Stich:', window._stichNum);
+          } catch(e) { console.error('[RESTORE]', e); }
         };
 
         const btn2 = document.createElement('button');
