@@ -11814,14 +11814,33 @@
 
             // Aktuelle target_N Karte zeigen
             const curTargetN = 'target_' + (window._stichNum + 1) + '.webp';
-            if (window._targetMeshes && window._targetMeshes[curTargetN]) {
-              window._targetMeshes[curTargetN].visible = true;
+            if (window._targetMeshes) {
+              // Alle target_N erstmal verstecken
+              for (let i = 1; i <= 6; i++) {
+                const tn = 'target_' + i + '.webp';
+                if (window._targetMeshes[tn]) window._targetMeshes[tn].visible = false;
+              }
+              // Aktuelle zeigen
+              if (window._targetMeshes[curTargetN]) window._targetMeshes[curTargetN].visible = true;
+              // Stapel nur in Zyklus 0
+              if (window._targetMeshes['target_stapel2.webp']) {
+                window._targetMeshes['target_stapel2.webp'].visible = (window._stichCycle === 0);
+              }
             }
 
             // Spielphase setzen
             gamePhase = 'kipp21';
             kipp21Active = true;
             hintText.innerHTML = formatKipps(kipp21KippCount);
+
+            // UI: Startscreen weg, Spielelemente sichtbar
+            document.getElementById('startOverlay').style.display = 'none';
+            if (window._buttonOverlay) window._buttonOverlay.visible = false;
+            if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
+            if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
+
+            // Hintergrundmusik
+            unlockAndPlayBgMusic();
 
             localStorage.removeItem('digikipp_card_frozen');
             console.log('[RESTORE] Player:', window._playerScore3D, 'Bank:', window._bankScore3D, 'Stich:', window._stichNum, 'UsedNums:', window._cardTargetState.usedNumbers.size);
