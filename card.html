@@ -2298,12 +2298,15 @@
         const canvas = (which === 'player') ? scorePLCanvas : scoreBKCanvas;
         const tex = (which === 'player') ? scorePLTex : scoreBKTex;
         ctx.clearRect(0, 0, 256, 64);
+        ctx.save();
+        ctx.scale(1.1, 1); // +10% horizontal
         ctx.font = '900 50px system-ui, Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgb(214, 207, 3)';
         ctx.letterSpacing = '0.22em';
-        ctx.fillText(String(value).padStart(3, '0'), 128, 32);
+        ctx.fillText(String(value).padStart(3, '0'), 128 / 1.1, 32);
+        ctx.restore();
         tex.needsUpdate = true;
       }
 
@@ -2347,7 +2350,7 @@
         window._playerCardMesh = new THREE.Mesh(geo, mat);
         window._playerCardMesh.rotation.x = -Math.PI / 2;
         window._playerCardMesh.rotation.z = pCardRot;
-        window._playerCardMesh.position.set(a11X + w3d / 2 + pCardOffset, yPos + 0.011, a11Z + h3d / 2);
+        window._playerCardMesh.position.set(a11X + w3d / 2, yPos + 0.011, a11Z + h3d / 2);
         window._playerCardMesh.renderOrder = 25;
         window._playerCardMesh.visible = false;
         scene.add(window._playerCardMesh);
@@ -11186,7 +11189,7 @@
       if (pSuitFile && window._playerSuitMeshes[pSuitFile]) {
         window._playerSuitMeshes[pSuitFile].visible = true;
       }
-      updatePlayerRankDisplay(getPlayerVisualRank(slot.val));
+      updatePlayerRankDisplay(result.playerRank);
       if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
       const sNum = window._stichNum + 1;
