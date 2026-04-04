@@ -1151,6 +1151,24 @@
           "H\u00f6her als die Bank = dein Stich. Niedriger, gleich und andere Farbe = Bank sticht.",
           "Score-Anzeige links = Dein Score. Score-Anzeige rechts = Bank Score.",
           "Jeder eingesetzte Kartenwert am W\u00fcrfel wird transparent \u2013 er ist weg. Setze deine Werte klug ein! Nur wer alle 12 Bank-Karten (Targets) genau um 1 h\u00f6her sticht, schafft den Highscore 180."
+        ],
+        cAnlSecO:["SPIEL ABLAUF","KIPP ZUG","AUSSPIELEN","ZIEL","KARTENWERTE"],
+        cAnlO:[
+          "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte).\nDer W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\nTippe auf den W\u00fcrfel oder warte kurz, dann legt er sich wieder in die Box.",
+          "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn.\nDu darfst bis zu 6 Kipps machen.\nZur\u00fcckkippen ist nicht m\u00f6glich.\nNach jedem Kipp liegen 4 Karten zur Auswahl:\n4 verschiedene Werte \u2013 4 verschiedene Farben.\nEine davon hat immer die Target-Farbe.",
+          "Tippe lang auf den Kartenwert, den du ausspielen willst.\nH\u00f6herer Wert + gleiche Farbe \u2192 du stichst.\nSonst \u2192 Stich geht an die Bank.\nDer gespielte Kartenwert wird danach inaktiv \u2013 am W\u00fcrfel blass dargestellt \u2013 und kann nicht mehr verwendet werden.",
+          "Die Bank spielt 12 Target-Karten aus.\nMit deiner Kipp-Richtung entscheidest du, welche Karten dir zur Verf\u00fcgung stehen.\nIn der richtigen Richtung kommst du immer genau auf jene Karte, die das Target um +1 h\u00f6her sticht.\nSchaffst du alle 12 Targets mit +1, erreichst du den Highscore 180.\nOHNE Wissen = 50% Chance.",
+          "1 \u2013 10 = 1 \u2013 10\nJ, Q, K = 10\nA = 14"
+        ],
+        cAnlSecV:["SPIEL ABLAUF","KIPP ZUG","AUFDECKEN & SCHAUEN","AUSSPIELEN","STICHREGEL","ZIEL","KARTENWERTE"],
+        cAnlV:[
+          "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte).\nDer W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\nTippe auf den W\u00fcrfel oder warte kurz, dann werden alle Kartenwerte wieder verdeckt und der W\u00fcrfel legt sich wieder in die Box.",
+          "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn.\nDu darfst bis zu 6 Kipps machen.\nZur\u00fcckkippen ist nicht m\u00f6glich.\nNach jedem Kipp liegen 4 verdeckte Karten zur Auswahl.\nEs sind immer 4 verschiedene Werte.\nJeder Wert liegt an einer anderen Kartenfarbe.\nEine davon immer an der Target-Farbe.",
+          "Nur mit Aufmerksamkeit, Ged\u00e4chtnis, r\u00e4umlicher Vorstellung und Logik kannst du die Bank gezielt besiegen.\nDas WISSEN : GL\u00dcCK Verh\u00e4ltnis ist hier 11 : 1.\nIndem du auf ein verdecktes Kartensymbol auf dem W\u00fcrfel tippst, deckst du die Karte auf.\nWenn du sie nochmal antippst, verdeckst du sie wieder.\nDu darfst weiterkippen oder eine andere verdeckte Karte auf der aktuellen W\u00fcrfelfl\u00e4che antippen/aufdecken.\n(Du hast aber insgesamt nur max. 6 Kipps.)\nNach jedem Kipp darfst du \u201eAufdecken & Schauen\u201c. In der gesamten Partie allerdings nur 3-mal.\nDer Z\u00e4hler erscheint immer \u00fcber dem W\u00fcrfel.",
+          "Indem du lange auf eine verdeckte oder bereits aufgedeckte Karte tippst, spielst du sie aus.\nEine ausgespielte Karte steht dir danach nicht mehr zur Verf\u00fcgung.\nSie wird am W\u00fcrfel aufgedeckt und blass dargestellt.",
+          "H\u00f6herer Wert + gleiche Farbe \u2192 du stichst.\nSonst \u2192 Stich geht an die Bank.",
+          "Die Bank spielt 12 Target-Karten aus.\nMit deiner Kipp-Richtung entscheidest du, welche Karten dir zur Verf\u00fcgung stehen.\nIn der richtigen Richtung kommst du immer genau auf jene Karte, die das Target um +1 h\u00f6her sticht.\nSchaffst du alle 12 Targets mit +1, erreichst du den Highscore 180.\nOHNE Wissen = 9% Chance.",
+          "1 \u2013 10 = 1 \u2013 10\nJ, Q, K = 10\nA = 14"
         ]
       },
       "en": {
@@ -8787,62 +8805,114 @@
       bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
       ov.appendChild(bg);
 
-      const scroll = document.createElement('div');
-      scroll.style.cssText = 'position:relative;z-index:1;flex:1;overflow-y:auto;' +
-        'padding:30px 30px 10px 30px;-webkit-overflow-scrolling:touch;' +
-        'background:rgba(0,0,0,0.45);';
+      // === MODUS-AUSWAHL ===
+      const selectWrap = document.createElement('div');
+      selectWrap.style.cssText = 'position:relative;z-index:1;flex:1;display:flex;flex-direction:column;' +
+        'align-items:center;justify-content:center;gap:20px;background:rgba(0,0,0,0.45);padding:30px;';
 
       const title = document.createElement('div');
       title.style.cssText = 'font:bold 28px Arial;letter-spacing:3px;text-transform:uppercase;' +
-        'color:rgb(187,183,32);text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:18px;';
+        'color:rgb(187,183,32);text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:10px;';
       title.textContent = T.cAnlTitle || 'ANLEITUNG';
-      scroll.appendChild(title);
+      selectWrap.appendChild(title);
 
-      const sections = T.cAnlSec || ['ZIEL','AUFDECKEN','KIPPEN','STICH-WERTUNG','STRATEGIE'];
-      const steps = T.cAnl || [];
-      // Zuordnung: Step 0→Sec 0, Step 1→Sec 1, Step 2+3→Sec 2, Step 4→Sec 3, Step 5→Sec 4
-      const secMap = [0, 1, 2, null, 3, 4];
+      function makeBtn(label, sub, onClick) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;';
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+          'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
+          'display:flex;align-items:center;justify-content:center;';
+        btn.onclick = onClick;
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); onClick(); }, { passive: false });
+        wrap.appendChild(btn);
+        const subEl = document.createElement('div');
+        subEl.style.cssText = 'font:bold 14px Arial;color:#e0d0b8;letter-spacing:1px;' +
+          'text-shadow:0 1px 3px rgba(0,0,0,0.8);text-align:center;';
+        subEl.textContent = sub;
+        wrap.appendChild(subEl);
+        return wrap;
+      }
 
-      steps.forEach((txt, i) => {
-        if (secMap[i] !== null && secMap[i] !== undefined) {
+      selectWrap.appendChild(makeBtn(T.cOffen || 'OFFEN', T.cSub1 || 'KÖNNEN : GLÜCK = 6 : 6', () => showAnlContent('offen')));
+      selectWrap.appendChild(makeBtn(T.cVerdeckt || 'VERDECKT', T.cSub2 || 'KÖNNEN : GLÜCK = 11 : 1', () => showAnlContent('verdeckt')));
+
+      const backWrap = document.createElement('div');
+      backWrap.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
+        'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
+      const backBtn = document.createElement('button');
+      backBtn.textContent = 'OK';
+      backBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
+        'display:flex;align-items:center;justify-content:center;';
+      backBtn.onclick = () => ov.remove();
+      backWrap.appendChild(backBtn);
+
+      ov.appendChild(selectWrap);
+      ov.appendChild(backWrap);
+      document.body.appendChild(ov);
+
+      function showAnlContent(mode) {
+        selectWrap.remove();
+        backWrap.remove();
+
+        const sections = mode === 'verdeckt'
+          ? (T.cAnlSecV || T.cAnlSec || [])
+          : (T.cAnlSecO || T.cAnlSec || []);
+        const steps = mode === 'verdeckt'
+          ? (T.cAnlV || T.cAnl || [])
+          : (T.cAnlO || T.cAnl || []);
+
+        const scroll = document.createElement('div');
+        scroll.style.cssText = 'position:relative;z-index:1;flex:1;overflow-y:auto;' +
+          'padding:30px 30px 10px 30px;-webkit-overflow-scrolling:touch;' +
+          'background:rgba(0,0,0,0.45);';
+
+        const h1 = document.createElement('div');
+        h1.style.cssText = 'font:bold 28px Arial;letter-spacing:3px;text-transform:uppercase;' +
+          'color:rgb(187,183,32);text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:4px;';
+        h1.textContent = T.cAnlTitle || 'ANLEITUNG';
+        scroll.appendChild(h1);
+
+        const modeLabel = document.createElement('div');
+        modeLabel.style.cssText = 'font:bold 16px Arial;letter-spacing:2px;' +
+          'color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.8);text-align:center;margin-bottom:18px;';
+        modeLabel.textContent = mode === 'verdeckt' ? (T.cVerdeckt || 'VERDECKT') : (T.cOffen || 'OFFEN');
+        scroll.appendChild(modeLabel);
+
+        steps.forEach((txt, i) => {
           const h = document.createElement('div');
           h.style.cssText = 'font:bold 18px Arial;letter-spacing:2px;text-transform:uppercase;' +
             'color:rgb(187,183,32);margin-top:' + (i === 0 ? '4' : '14') + 'px;margin-bottom:6px;' +
             'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
-          h.textContent = sections[secMap[i]];
+          h.textContent = sections[i] || '';
           scroll.appendChild(h);
-        }
-        const p = document.createElement('div');
-        p.style.cssText = 'font:15px/1.45 Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
-          'margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;';
-        const num = document.createElement('span');
-        num.textContent = (i + 1);
-        num.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
-          'min-width:24px;height:24px;border-radius:50%;background:#e0d0b8;color:#000;' +
-          'font:bold 13px Arial;flex-shrink:0;margin-top:1px;';
-        const txtSpan = document.createElement('span');
-        txtSpan.innerHTML = txt;
-        p.appendChild(num);
-        p.appendChild(txtSpan);
-        scroll.appendChild(p);
-      });
 
-      ov.appendChild(scroll);
+          const p = document.createElement('div');
+          p.style.cssText = 'font:15px/1.55 Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
+            'margin-bottom:8px;white-space:pre-line;';
+          p.textContent = txt;
+          scroll.appendChild(p);
+        });
 
-      const btnWrap = document.createElement('div');
-      btnWrap.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
-        'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
-      const btn = document.createElement('button');
-      btn.textContent = 'OK';
-      btn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
-        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
-        'display:flex;align-items:center;justify-content:center;';
-      btn.onclick = () => ov.remove();
-      btnWrap.appendChild(btn);
-      ov.appendChild(btnWrap);
+        ov.appendChild(scroll);
 
-      document.body.appendChild(ov);
+        const btnWrap2 = document.createElement('div');
+        btnWrap2.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
+          'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
+        const okBtn = document.createElement('button');
+        okBtn.textContent = 'OK';
+        okBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+          'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
+          'display:flex;align-items:center;justify-content:center;';
+        okBtn.onclick = () => ov.remove();
+        btnWrap2.appendChild(okBtn);
+        ov.appendChild(btnWrap2);
+      }
     }
 
     function showPauseDialog() {
