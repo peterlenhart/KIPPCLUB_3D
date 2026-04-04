@@ -2311,6 +2311,7 @@
       }
 
       window.initScores3D = function() {
+        if (window._scoreRestoreActive) return; // Don't reset during restore
         window._playerScore3D = 0;
         window._bankScore3D = 0;
         updateScore3D('player', 0);
@@ -8993,11 +8994,11 @@
       ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
         'width:360px;height:' + window.innerHeight + 'px;z-index:200;' +
         'display:flex;flex-direction:column;' +
-        'align-items:center;justify-content:center;gap:20px;';
+        'align-items:center;justify-content:center;gap:20px;background:#000;';
 
       const bg = document.createElement('img');
       bg.src = 'overlay_card.webp';
-      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
       ov.appendChild(bg);
 
       const btn1 = document.createElement('button');
@@ -11695,16 +11696,19 @@
         const state = JSON.parse(frozen);
         if (!state || !state.timestamp) return;
 
+        // Sofort markieren: initScores3D darf nicht resetten
+        window._scoreRestoreActive = true;
+
         // Overlay zeigen
         const ov = document.createElement('div');
         ov.id = '_frozenOverlay';
         ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
           'width:360px;height:' + window.innerHeight + 'px;z-index:200;' +
-          'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+          'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#000;';
 
         const bg = document.createElement('img');
         bg.src = 'overlay_card.webp';
-        bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+        bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
         ov.appendChild(bg);
 
         const btn1 = document.createElement('button');
@@ -11754,18 +11758,29 @@
             // Face-Texturen mit richtigen Alphas neu zeichnen
             updateAllFaceTextures();
 
-            // Scores anzeigen (verzögert, damit init nicht überschreibt)
+            // Scores anzeigen (warten bis updateScore3D verfügbar)
             const _restorePlayerScore = window._playerScore3D;
             const _restoreBankScore = window._bankScore3D;
-            setTimeout(() => {
+            (function waitAndRestoreScores() {
+              if (typeof window.updateScore3D !== 'function' || !window._scorePLMesh) {
+                setTimeout(waitAndRestoreScores, 100);
+                return;
+              }
               window._playerScore3D = _restorePlayerScore;
               window._bankScore3D = _restoreBankScore;
               updateScore3D('player', _restorePlayerScore);
               updateScore3D('bank', _restoreBankScore);
-              if (window._scorePLMesh) window._scorePLMesh.visible = true;
-              if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
-              console.log('[RESTORE-SCORE] Player:', _restorePlayerScore, 'Bank:', _restoreBankScore);
-            }, 200);
+              window._scorePLMesh.visible = true;
+              window._scoreBKMesh.visible = true;
+              // Nochmal nach 500ms sicherstellen (falls init überschreibt)
+              setTimeout(() => {
+                window._playerScore3D = _restorePlayerScore;
+                window._bankScore3D = _restoreBankScore;
+                updateScore3D('player', _restorePlayerScore);
+                updateScore3D('bank', _restoreBankScore);
+                window._scoreRestoreActive = false;
+              }, 500);
+            })();
 
             // Stich-Grafiken wiederherstellen
             if (state.stichVisible) {
@@ -11819,6 +11834,7 @@
           'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
         btn2.onclick = () => {
+          window._scoreRestoreActive = false;
           localStorage.removeItem('digikipp_card_frozen');
           ov.remove();
           backToStartScreen();
