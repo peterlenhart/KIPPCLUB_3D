@@ -8839,7 +8839,6 @@
           window._targetRankMesh.material.opacity = ease;
         }
         if (t < 1) requestAnimationFrame(fadeIn);
-        else checkAutoPlayNeeded(); // Nach Fade-in prüfen ob Auto-Play nötig
       })();
 
       return true;
@@ -9592,6 +9591,14 @@
           handleStichConfirm(slotIdx);
           _stichTouchStart = 0;
           lastTouchPos = null;
+          return;
+        }
+        // Long-Press auf inaktiven Slot → Auto-Play auslösen
+        if (allVisibleSlotsInactive()) {
+          console.log('[AUTO-PLAY] Triggered by long-press on inactive slot');
+          _stichTouchStart = 0;
+          lastTouchPos = null;
+          executeAutoPlay();
           return;
         }
       }
@@ -10681,7 +10688,8 @@
               kipp21RoundKipps++;
               hintText.innerHTML = formatKipps(kipp21KippCount);
               checkOnTargetAfterKipp();
-              checkAutoPlayNeeded();
+              // Nach 6. Kipp: Auto-Play wenn alle 4 Slots inaktiv
+              if (_cardKippCount >= _CARD_MAX_KIPPS) checkAutoPlayNeeded();
             }
 
 
@@ -11224,7 +11232,7 @@
     }
 
     async function executeAutoPlay() {
-      if (_stichLock) return;
+      if (_stichLock || isAnimating || kipp21KniffActive) return;
       const candidate = findAutoPlayCandidate();
       if (!candidate) return;
       _stichLock = true;
@@ -11264,10 +11272,14 @@
 
     function checkAutoPlayNeeded() {
       if (_stichLock) return;
+      if (isAnimating) return;
+      if (kipp21KniffActive) return;
       if (!window._cardTargetState || !window._cardTargetState.currentTarget) return;
       if (!allVisibleSlotsInactive()) return;
-      // Kurze Verzögerung damit Spieler sieht was passiert
-      setTimeout(() => executeAutoPlay(), 800);
+      setTimeout(() => {
+        if (isAnimating || kipp21KniffActive || _stichLock) return;
+        executeAutoPlay();
+      }, 800);
     }
 
     // Score-Pulsieren (3×)
@@ -11336,7 +11348,7 @@
           window._stichMeshes[stichFile].visible = true;
         }
 
-        // t=3500ms: Score zurechnen + pulsieren
+        // t=4000+1000: Score zurechnen + pulsieren + nächste Runde sofort
         setTimeout(() => {
           if (result.winner === 'player') {
             window._playerScore3D = (window._playerScore3D || 0) + result.points;
@@ -11348,45 +11360,44 @@
             pulseScore('bank');
           }
 
-          // t=4700ms: Nächste Runde vorbereiten
-          setTimeout(() => {
-            // Aktuelles target_N ausblenden
-            const curTargetFile = 'target_' + sNum + '.webp';
-            if (window._targetMeshes[curTargetFile]) {
-              window._targetMeshes[curTargetFile].visible = false;
+          // Zeitgleich: aktuelles Target weg, nächstes + verdeckt zeigen
+          const curTargetFile = 'target_' + sNum + '.webp';
+          if (window._targetMeshes[curTargetFile]) {
+            window._targetMeshes[curTargetFile].visible = false;
+          }
+
+          window._stichNum++;
+
+          if (window._stichNum >= 6) {
+            window._stichNum = 0;
+            window._stichCycle++;
+
+            for (let i = 1; i <= 6; i++) {
+              if (window._stichMeshes['stich' + i + '_pl.webp']) window._stichMeshes['stich' + i + '_pl.webp'].visible = false;
+              if (window._stichMeshes['stich' + i + '_b.webp']) window._stichMeshes['stich' + i + '_b.webp'].visible = false;
             }
 
-            window._stichNum++;
-
-            if (window._stichNum >= 6) {
-              window._stichNum = 0;
-              window._stichCycle++;
-
-              for (let i = 1; i <= 6; i++) {
-                if (window._stichMeshes['stich' + i + '_pl.webp']) window._stichMeshes['stich' + i + '_pl.webp'].visible = false;
-                if (window._stichMeshes['stich' + i + '_b.webp']) window._stichMeshes['stich' + i + '_b.webp'].visible = false;
-              }
-
-              if (window._stichCycle >= 2) {
-                console.log('[STICH] Spiel beendet! Player:', window._playerScore3D, 'Bank:', window._bankScore3D);
-              } else {
-                if (window._targetMeshes['target_stapel2.webp']) window._targetMeshes['target_stapel2.webp'].visible = false;
-                if (window._targetMeshes['target_1.webp']) window._targetMeshes['target_1.webp'].visible = true;
-                if (window._targetMeshes['target_verdeckt.webp']) {
-                  window._targetMeshes['target_verdeckt.webp'].visible = true;
-                  startTargetPulse();
-                }
-              }
+            if (window._stichCycle >= 2) {
+              console.log('[STICH] Spiel beendet! Player:', window._playerScore3D, 'Bank:', window._bankScore3D);
+              _stichLock = false;
             } else {
-              const nextTargetFile = 'target_' + (window._stichNum + 1) + '.webp';
-              if (window._targetMeshes[nextTargetFile]) window._targetMeshes[nextTargetFile].visible = true;
+              if (window._targetMeshes['target_stapel2.webp']) window._targetMeshes['target_stapel2.webp'].visible = false;
+              if (window._targetMeshes['target_1.webp']) window._targetMeshes['target_1.webp'].visible = true;
               if (window._targetMeshes['target_verdeckt.webp']) {
                 window._targetMeshes['target_verdeckt.webp'].visible = true;
                 startTargetPulse();
               }
+              _stichLock = false;
+            }
+          } else {
+            const nextTargetFile = 'target_' + (window._stichNum + 1) + '.webp';
+            if (window._targetMeshes[nextTargetFile]) window._targetMeshes[nextTargetFile].visible = true;
+            if (window._targetMeshes['target_verdeckt.webp']) {
+              window._targetMeshes['target_verdeckt.webp'].visible = true;
+              startTargetPulse();
             }
             _stichLock = false;
-          }, 1200);
+          }
         }, 1000);
       }, 4000);
     }
