@@ -3364,14 +3364,14 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('colorloop.mp3');
+    const bgMusic = new Audio('brainloop.mp3');
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
     let bgMusicUnlocked = false;
     
     bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] colorloop.mp3 konnte nicht geladen werden!');
+      console.warn('[AUDIO] brainloop.mp3 konnte nicht geladen werden!');
     });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
@@ -11332,15 +11332,19 @@
       const sNum = window._stichNum + 1;
       st.currentTarget = null;
 
-      // t=3500ms: Spielerkarte + Targetkarte weg, Stich-Grafik zeigen
+      // t=4000ms: Spielerkarte + Targetkarte weg, Stich-Grafik + target_verdeckt zeigen
       setTimeout(() => {
         // Spielerkarte ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
         Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
         if (window._playerRankMesh) window._playerRankMesh.visible = false;
-        // Target Suit + Rank ausblenden
+        // Target Suit + Rank + target_N ausblenden
         Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
         if (window._targetRankMesh) window._targetRankMesh.visible = false;
+        const curTargetFile = 'target_' + sNum + '.webp';
+        if (window._targetMeshes[curTargetFile]) {
+          window._targetMeshes[curTargetFile].visible = false;
+        }
 
         // Stich-Grafik einblenden
         const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
@@ -11348,7 +11352,7 @@
           window._stichMeshes[stichFile].visible = true;
         }
 
-        // t=4000+1000: Score zurechnen + pulsieren + nächste Runde sofort
+        // t=4000+1000: Score zurechnen + pulsieren + nächste Runde
         setTimeout(() => {
           if (result.winner === 'player') {
             window._playerScore3D = (window._playerScore3D || 0) + result.points;
@@ -11360,12 +11364,7 @@
             pulseScore('bank');
           }
 
-          // Zeitgleich: aktuelles Target weg, nächstes + verdeckt zeigen
-          const curTargetFile = 'target_' + sNum + '.webp';
-          if (window._targetMeshes[curTargetFile]) {
-            window._targetMeshes[curTargetFile].visible = false;
-          }
-
+          // Nächste Runde vorbereiten (target_N bereits bei t=4s ausgeblendet)
           window._stichNum++;
 
           if (window._stichNum >= 6) {
