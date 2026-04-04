@@ -2211,14 +2211,13 @@
       };
       window.allTargetColors = ['violett','blau','gruen','orange'];
 
-      // === STICH-GRAFIKEN laden (stich1-6_pl und stich1-6_b) ===
+      // === STICH-GRAFIKEN laden (stich1-6_pl und stich1-6_b) am Anker A11 ===
       window._stichMeshes = {};
       const stichFiles = [];
       for (let i = 1; i <= 6; i++) {
         stichFiles.push('stich' + i + '_pl.webp');
         stichFiles.push('stich' + i + '_b.webp');
       }
-      const stichBaseZ = -0.359375 + (13 - 4) * 0.15625;
       stichFiles.forEach((file) => {
         new THREE.TextureLoader().load(file, (tex) => {
           const imgW = tex.image.width;
@@ -2226,13 +2225,13 @@
           const w3d = (imgW / 3) * (0.15625 / 45);
           const h3d = (imgH / 3) * (0.15625 / 45);
           const geo = new THREE.PlaneGeometry(w3d, h3d);
-          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-          const mesh = new THREE.Mesh(geo, mat);
+          const matl = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh = new THREE.Mesh(geo, matl);
           mesh.rotation.x = -Math.PI / 2;
+          // Alle am Anker A11, von unten nach oben gestapelt (1=unten, 6=oben)
           const num = parseInt(file.match(/\d/)[0]);
-          const stichX = -4 * 0.15625 + (num - 1) * 0.15625 + w3d / 2;
-          mesh.position.set(stichX, yPos + 0.008, stichBaseZ + h3d / 2);
-          mesh.renderOrder = 16;
+          mesh.position.set(a11X + w3d / 2, yPos + 0.012 + num * 0.001, a11Z + h3d / 2);
+          mesh.renderOrder = 17 + num;
           mesh.visible = false;
           scene.add(mesh);
           window._stichMeshes[file] = mesh;
@@ -10933,8 +10932,9 @@
       return (faceBase[topFace] || 0) + slotIdx;
     }
 
-    // Screen-Projektion: Slot-Mittelpunkte → Bildschirm, nächsten zum Tap finden
+    // Finde getippten Slot per Screen-Projektion
     function findTappedSlotByScreen(tapNdcX, tapNdcY) {
+      cube.updateMatrixWorld(true); // Matrix aktualisieren!
       const centers = SLOT_LOCAL_CENTERS[topFace];
       if (!centers) return -1;
       let bestIdx = -1, bestDist = Infinity;
@@ -10942,15 +10942,15 @@
         const deckIdx = getDeckIndexForSlot(i);
         if (window._playedSlots.has(deckIdx)) continue;
         const c = centers[i];
-        const worldPos = cube.localToWorld(new THREE.Vector3(c.x, c.y, c.z));
-        const ndc = worldPos.project(camera);
-        const dx = ndc.x - tapNdcX;
-        const dy = ndc.y - tapNdcY;
+        const worldPos = new THREE.Vector3(c.x, c.y, c.z);
+        cube.localToWorld(worldPos);
+        worldPos.project(camera);
+        const dx = worldPos.x - tapNdcX;
+        const dy = worldPos.y - tapNdcY;
         const d = dx*dx + dy*dy;
         if (d < bestDist) { bestDist = d; bestIdx = i; }
       }
-      // Max Abstand ~0.3 in NDC (ca. 50px bei 360px Breite)
-      if (bestDist > 0.09) return -1;
+      if (bestDist > 0.15) return -1; // großzügiger Radius
       return bestIdx;
     }
 
@@ -11008,19 +11008,27 @@
       const SUIT_SYMBOL = { violett:'♠', blau:'♥', gruen:'♦', orange:'♣' };
       const pSym = SUIT_SYMBOL[slot.color] || '?';
       const tSym = SUIT_SYMBOL[target.color] || '?';
-      const debugTxt = 'Du: ' + displayNum(slot.val) + pSym +
-        ' (intern ' + slot.val + ') vs Bank: ' + displayNum(target.num) + tSym +
-        ' (intern ' + target.num + ') → ' + result.winner.toUpperCase() +
-        ' [Q' + currentQuadrant + ' ' + topFace + ' S' + (slotIdx+1) + ']';
       
-      // Sichtbares Debug-Overlay (3 Sekunden)
+      // Alle 4 Slots anzeigen
+      let allSlots = '';
+      for (let si = 0; si < 4; si++) {
+        const sv = getSlotValueAndColor(si);
+        const sym = SUIT_SYMBOL[sv.color] || '?';
+        allSlots += 'S' + (si+1) + ':' + displayNum(sv.val) + sym + ' ';
+      }
+      
+      const debugTxt = 'GETIPPT: S' + (slotIdx+1) + ' = ' + displayNum(slot.val) + pSym +
+        '\nTARGET: ' + displayNum(target.num) + tSym +
+        '\nERGEBNIS: ' + result.winner.toUpperCase() + ' +' + result.points +
+        '\n[Q' + currentQuadrant + ' ' + topFace + '] ' + allSlots;
+      
       const dbg = document.createElement('div');
       dbg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
-        'background:rgba(0,0,0,0.85);color:#fff;padding:12px 16px;border-radius:8px;' +
-        'font:bold 14px Arial;z-index:999;text-align:center;max-width:320px;pointer-events:none;';
+        'background:rgba(0,0,0,0.9);color:#fff;padding:14px 18px;border-radius:8px;' +
+        'font:bold 13px monospace;z-index:999;text-align:left;white-space:pre;max-width:340px;pointer-events:none;';
       dbg.textContent = debugTxt;
       document.getElementById('container').appendChild(dbg);
-      setTimeout(() => dbg.remove(), 3000);
+      setTimeout(() => dbg.remove(), 10000);
 
       console.log('[STICH]', debugTxt);
 
