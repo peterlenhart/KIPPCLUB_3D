@@ -11115,15 +11115,24 @@
       return { val, color };
     }
 
-    function evaluateStich(playerVal, playerColor, targetVal, targetColor) {
-      const playerPts = getScoreValue(playerVal);
-      const targetPts = getScoreValue(targetVal);
+    function evaluateStich(playerIntern, playerColor, targetIntern, targetColor) {
+      // Player: intern 1-12 → visuell 3,4,5,6,7,8,9,10,J,Q,K,A
+      // Target: intern 1-12 → visuell 2,3,4,5,6,7,8,9,10,J,Q,K
+      const allRanks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+      const playerRank = displayNum(playerIntern).replace('.',''); // 6./9. → 6/9
+      const targetRank = (window.getTargetVisualRank ? window.getTargetVisualRank(targetIntern) : String(targetIntern));
+      const playerIdx = allRanks.indexOf(playerRank);
+      const targetIdx = allRanks.indexOf(targetRank);
+
+      const playerPts = getScoreValue(playerIntern);
+      const targetPts = getScoreValue(targetIntern);
       const sumPts = playerPts + targetPts;
-      if (playerColor === targetColor && playerVal > targetVal) {
-        return { winner: 'player', points: sumPts };
-      } else {
-        return { winner: 'bank', points: sumPts };
+
+      let winner = 'bank';
+      if (playerColor === targetColor && playerIdx > targetIdx) {
+        winner = 'player';
       }
+      return { winner, points: sumPts };
     }
 
     // Slot auf 25% setzen und Face-Textur neu zeichnen
@@ -11177,7 +11186,7 @@
 
       const target = st.currentTarget;
       const result = evaluateStich(slot.val, slot.color, target.num, target.color);
-      console.log('[STICH]', result.playerRank, slot.color, 'vs', result.targetRank, target.color, '→', result.winner, '+' + result.points);
+      console.log('[STICH] Player:', displayNum(slot.val), slot.color, '| Target:', getTargetVisualRank(target.num), target.color, '→', result.winner, '+' + result.points, '| SlotIdx:', slotIdx, topFace, 'Q' + currentQuadrant);
 
       // Slot als ausgespielt markieren (25% Deckkraft)
       markSlotAsPlayed(slotIdx);
@@ -11189,7 +11198,7 @@
       if (pSuitFile && window._playerSuitMeshes[pSuitFile]) {
         window._playerSuitMeshes[pSuitFile].visible = true;
       }
-      updatePlayerRankDisplay(result.playerRank);
+      updatePlayerRankDisplay(displayNum(slot.val));
       if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
       const sNum = window._stichNum + 1;
