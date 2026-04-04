@@ -8839,6 +8839,7 @@
           window._targetRankMesh.material.opacity = ease;
         }
         if (t < 1) requestAnimationFrame(fadeIn);
+        else checkAutoPlayNeeded(); // Nach Fade-in prüfen ob Auto-Play nötig
       })();
 
       return true;
@@ -10680,6 +10681,7 @@
               kipp21RoundKipps++;
               hintText.innerHTML = formatKipps(kipp21KippCount);
               checkOnTargetAfterKipp();
+              checkAutoPlayNeeded();
             }
 
 
@@ -11161,6 +11163,113 @@
       rebuildFaceMat(topFace, 1);
     }
 
+    // === AUTO-PLAY: Wenn alle 4 sichtbaren Slots inaktiv ===
+    function allVisibleSlotsInactive() {
+      const faceBase = { f0: 0, f1: 4, f2: 8 };
+      const off = faceBase[topFace] || 0;
+      for (let i = 0; i < 4; i++) {
+        if (!window._playedSlots.has(off + i)) return false;
+      }
+      return true;
+    }
+
+    function findAutoPlayCandidate() {
+      const st = window._cardTargetState;
+      if (!st || !st.currentTarget) return null;
+      const targetColor = st.currentTarget.color;
+      const remaining = _CARD_MAX_KIPPS - _cardKippCount;
+      const cwMap = { f2: 'f0', f0: 'f1', f1: 'f2' };
+      const ccwMap = { f2: 'f1', f1: 'f0', f0: 'f2' };
+      const faceBase = { f0: 0, f1: 4, f2: 8 };
+      const slotNames = ['S1','S2','S3','S4'];
+      const dirs = _cardLockedDir ? [_cardLockedDir] : ['cw', 'ccw'];
+
+      let best = null;
+      for (const dir of dirs) {
+        let face = topFace;
+        for (let k = 1; k <= remaining; k++) {
+          face = (dir === 'cw') ? cwMap[face] : ccwMap[face];
+          const off = faceBase[face];
+          for (let si = 0; si < 4; si++) {
+            const deckIdx = off + si;
+            if (window._playedSlots.has(deckIdx)) continue;
+            const val = deck[deckIdx];
+            const color = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotNames[si]];
+            if (color === targetColor) continue; // Nicht-Targetfarbe
+            if (!best || val < best.val) {
+              best = { val, kipps: k, dir, slotIdx: si, face, deckIdx };
+            }
+          }
+        }
+      }
+      // Fallback: wenn kein Nicht-Targetfarbe-Wert gefunden, nimm niedrigsten aktiven überhaupt
+      if (!best) {
+        for (const dir of dirs) {
+          let face = topFace;
+          for (let k = 1; k <= remaining; k++) {
+            face = (dir === 'cw') ? cwMap[face] : ccwMap[face];
+            const off = faceBase[face];
+            for (let si = 0; si < 4; si++) {
+              const deckIdx = off + si;
+              if (window._playedSlots.has(deckIdx)) continue;
+              const val = deck[deckIdx];
+              if (!best || val < best.val) {
+                best = { val, kipps: k, dir, slotIdx: si, face, deckIdx };
+              }
+            }
+          }
+        }
+      }
+      return best;
+    }
+
+    async function executeAutoPlay() {
+      if (_stichLock) return;
+      const candidate = findAutoPlayCandidate();
+      if (!candidate) return;
+      _stichLock = true;
+
+      console.log('[AUTO-PLAY] Kipping', candidate.kipps, candidate.dir, '→ Slot', candidate.slotIdx, 'Val', candidate.val);
+
+      // Richtung setzen
+      if (!_cardLockedDir) _cardLockedDir = candidate.dir;
+      kippDirection = candidate.dir;
+
+      // Auto-Kipps ausführen
+      for (let i = 0; i < candidate.kipps; i++) {
+        let direction;
+        if (kippDirection === 'cw') {
+          if (currentQuadrant === 0) direction = 'east';
+          else if (currentQuadrant === 1) direction = 'south_from_q1';
+          else if (currentQuadrant === 2) direction = 'west_from_q2';
+          else direction = 'north';
+        } else {
+          if (currentQuadrant === 0) direction = 'south';
+          else if (currentQuadrant === 1) direction = 'west';
+          else if (currentQuadrant === 2) direction = 'north_from_q2';
+          else direction = 'east_from_q3';
+        }
+        await performKipp(direction, 250);
+        advanceTopFace();
+        _cardKippCount++;
+        kipp21KippCount++;
+        hintText.innerHTML = formatKipps(kipp21KippCount);
+        await new Promise(r => setTimeout(r, 200));
+      }
+
+      // Karte automatisch ausspielen (immer Bankstich)
+      _stichLock = false;
+      handleStichConfirm(candidate.slotIdx);
+    }
+
+    function checkAutoPlayNeeded() {
+      if (_stichLock) return;
+      if (!window._cardTargetState || !window._cardTargetState.currentTarget) return;
+      if (!allVisibleSlotsInactive()) return;
+      // Kurze Verzögerung damit Spieler sieht was passiert
+      setTimeout(() => executeAutoPlay(), 800);
+    }
+
     // Score-Pulsieren (3×)
     function pulseScore(which) {
       const mesh = (which === 'player') ? window._scorePLMesh : window._scoreBKMesh;
@@ -11172,7 +11281,7 @@
         count++;
         const start = performance.now();
         (function anim() {
-          const t = (performance.now() - start) / 300;
+          const t = (performance.now() - start) / 600;
           if (t >= 1) { mesh.scale.set(1,1,1); mesh.position.y = baseY; setTimeout(doPulse, 80); return; }
           const s = 1 + 0.35 * Math.sin(t * Math.PI);
           mesh.scale.set(s, s, 1);
@@ -11279,7 +11388,7 @@
             _stichLock = false;
           }, 1200);
         }, 1000);
-      }, 3500);
+      }, 4000);
     }
 
     let lockedKippDir = null; // null, 'cw', 'ccw'
