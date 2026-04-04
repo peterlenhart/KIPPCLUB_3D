@@ -9021,6 +9021,9 @@
             stichNum: window._stichNum || 0,
             stichCycle: window._stichCycle || 0,
             playedSlots: Array.from(window._playedSlots || []),
+            usedNumbers: Array.from(window._cardTargetState.usedNumbers || []),
+            drawsCount: window._cardTargetState.drawsCount || 0,
+            targetRound: window._cardTargetState.round || 1,
             cardKippCount: _cardKippCount,
             cardLockedDir: _cardLockedDir,
             currentQuadrant,
@@ -11726,21 +11729,43 @@
             window._stichCycle = state.stichCycle || 0;
             window._playedSlots = new Set(state.playedSlots || []);
 
+            // Target-State wiederherstellen (usedNumbers, round)
+            window._cardTargetState.usedNumbers = new Set(state.usedNumbers || []);
+            window._cardTargetState.drawsCount = state.drawsCount || 0;
+            window._cardTargetState.round = state.targetRound || 1;
+
             if (state.deck) {
               for (let i = 0; i < 12 && i < state.deck.length; i++) deck[i] = state.deck[i];
             }
 
+            // Würfel sauber positionieren
+            // Erst aus aktuellem Parent entfernen, dann in kipGroup
+            if (cube.parent && cube.parent !== kipGroup) {
+              cube.parent.remove(cube);
+              kipGroup.add(cube);
+            }
             cube.position.set(state.cubePos[0], state.cubePos[1], state.cubePos[2]);
-            cube.quaternion.set(state.cubeQuat[0], state.cubeQuat[1], state.cubeQuat[2], state.cubeQuat[3]);
+            const q = new THREE.Quaternion(state.cubeQuat[0], state.cubeQuat[1], state.cubeQuat[2], state.cubeQuat[3]);
+            q.normalize();
+            cube.quaternion.copy(q);
+            cube.updateMatrixWorld(true);
+            isAnimating = false;
 
             // Face-Texturen mit richtigen Alphas neu zeichnen
             updateAllFaceTextures();
 
-            // Scores anzeigen
-            updateScore3D('player', window._playerScore3D);
-            updateScore3D('bank', window._bankScore3D);
-            if (window._scorePLMesh) window._scorePLMesh.visible = true;
-            if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
+            // Scores anzeigen (verzögert, damit init nicht überschreibt)
+            const _restorePlayerScore = window._playerScore3D;
+            const _restoreBankScore = window._bankScore3D;
+            setTimeout(() => {
+              window._playerScore3D = _restorePlayerScore;
+              window._bankScore3D = _restoreBankScore;
+              updateScore3D('player', _restorePlayerScore);
+              updateScore3D('bank', _restoreBankScore);
+              if (window._scorePLMesh) window._scorePLMesh.visible = true;
+              if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
+              console.log('[RESTORE-SCORE] Player:', _restorePlayerScore, 'Bank:', _restoreBankScore);
+            }, 200);
 
             // Stich-Grafiken wiederherstellen
             if (state.stichVisible) {
@@ -11784,7 +11809,7 @@
             hintText.innerHTML = formatKipps(kipp21KippCount);
 
             localStorage.removeItem('digikipp_card_frozen');
-            console.log('[RESTORE] Player:', window._playerScore3D, 'Bank:', window._bankScore3D, 'Stich:', window._stichNum);
+            console.log('[RESTORE] Player:', window._playerScore3D, 'Bank:', window._bankScore3D, 'Stich:', window._stichNum, 'UsedNums:', window._cardTargetState.usedNumbers.size);
           } catch(e) { console.error('[RESTORE]', e); }
         };
 
