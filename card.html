@@ -1163,11 +1163,11 @@
         cAnlSecV:["SPIEL ABLAUF","KIPP ZUG","AUFDECKEN & SCHAUEN","AUSSPIELEN","STICHREGEL","ZIEL & STRATEGIE","KARTENWERTE"],
         cAnlV:[
           "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte).\nDer W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\nTippe auf den W\u00fcrfel oder warte kurz, dann werden alle Kartenwerte wieder verdeckt und der W\u00fcrfel legt sich wieder in die Box.",
-          "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn.\nDu darfst bis zu 6 Kipps machen.\nZur\u00fcckkippen ist nicht m\u00f6glich.\nNach jedem Kipp liegen 4 verdeckte Karten zur Auswahl.\nEs sind immer 4 verschiedene Werte.\nJeder Wert liegt an einer anderen Kartenfarbe.\nEine davon immer an der Target-Farbe.",
+          "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn.\nDu darfst bis zu 6 Kipps machen.\nZur\u00fcckkippen ist nicht m\u00f6glich.\nNach jedem Kipp liegen 4 verdeckte Karten zur Auswahl.\nEs sind immer 4 verschiedene Werte.\nJeder Wert liegt an einer anderen Kartenfarbe.\nEiner davon immer an der Target-Farbe.",
           "Indem du auf ein verdecktes Kartensymbol auf dem W\u00fcrfel tippst, deckst du die Karte auf.\nWenn du sie nochmal antippst, verdeckst du sie wieder.\nDu darfst weiterkippen oder eine andere verdeckte Karte auf der aktuellen W\u00fcrfelfl\u00e4che antippen/aufdecken.\n(Du hast aber insgesamt nur max. 6 Kipps.)\nNach jedem Kipp darfst du \u201eAufdecken & Schauen\u201c. In der gesamten Partie allerdings nur 3-mal.\nDer Z\u00e4hler erscheint immer \u00fcber dem W\u00fcrfel.",
           "Indem du lange auf einen verdeckten oder bereits von dir aufgedeckten Kartenwert auf dem W\u00fcrfel tippst, spielst du aus.\nEine ausgespielte Karte steht dir danach nicht mehr zur Verf\u00fcgung.\nSie wird am W\u00fcrfel aufgedeckt und blass dargestellt.",
           "H\u00f6herer Wert + gleiche Farbe = du stichst.\nSonst = Stich geht an die Bank.",
-          "Die Bank spielt 12 Target-Karten aus.\nMit deiner Kipp-Richtung entscheidest du, welche Karten dir zur Verf\u00fcgung stehen.\nIn der richtigen Richtung kommst du immer genau auf jene Karte, die das Target um +1 h\u00f6her sticht.\nSchaffst du alle 12 Targets mit +1, erreichst du den Highscore 180.\nOHNE Wissen = 9% Chance.\nNur mit Aufmerksamkeit, Ged\u00e4chtnis, r\u00e4umlicher Vorstellung und Logik kannst du die Bank gezielt besiegen.\nDas WISSEN : GL\u00dcCK Verh\u00e4ltnis ist hier 11 : 1.",
+          "Die Bank spielt 12 Target-Karten aus.\nMit deiner Kipp-Richtung entscheidest du, welche Karten dir zur Verf\u00fcgung stehen.\nIn der richtigen Richtung kommst du immer genau auf jene Karte, die das Target um +1 h\u00f6her sticht.\nSchaffst du alle 12 Targets mit +1, erreichst du den Highscore 180.\nOHNE Wissen = 9% Chance.\nNur mit Aufmerksamkeit, Ged\u00e4chtnis, r\u00e4umlicher Vorstellung und Logik kannst du die Bank gezielt besiegen.",
           "1 \u2013 10 = 1 \u2013 10\nJ, Q, K = 10\nA = 14"
         ]
       },
@@ -2257,7 +2257,7 @@
       });
 
       // === SCORE-ANZEIGEN auf Zeile 10 (3D, Spieltisch) ===
-      const scoreZ = -0.359375 + (10 - 4) * 0.15625 + 0.15625 / 2; // Zeile 10 Mitte
+      const scoreZ = -0.359375 + (10 - 4) * 0.15625 + 0.15625 / 2 + 0.02083; // Zeile 10 Mitte + 6px südl.
       const scoreW = 2 * 0.15625; // 2 Zellen breit
       const scoreH = 0.15625; // 1 Zelle hoch
       const scoreGeo = new THREE.PlaneGeometry(scoreW, scoreH);
@@ -2298,11 +2298,11 @@
         const canvas = (which === 'player') ? scorePLCanvas : scoreBKCanvas;
         const tex = (which === 'player') ? scorePLTex : scoreBKTex;
         ctx.clearRect(0, 0, 256, 64);
-        ctx.font = '900 48px system-ui, Arial';
+        ctx.font = '900 50px system-ui, Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgb(214, 207, 3)';
-        ctx.letterSpacing = '0.10em';
+        ctx.letterSpacing = '0.22em';
         ctx.fillText(String(value).padStart(3, '0'), 128, 32);
         tex.needsUpdate = true;
       }
@@ -2330,6 +2330,74 @@
       window._targetRankMesh.renderOrder = 15;
       window._targetRankMesh.visible = false;
       scene.add(window._targetRankMesh);
+
+      // === PLAYER-KARTE (eingeloggte Karte) ===
+      const pCardOffset = 40 * 0.15625 / 45; // 40px östlich
+      const pCardRot = -6 * Math.PI / 180; // 6° CW
+
+      // playercard.webp Mesh
+      window._playerCardMesh = null;
+      new THREE.TextureLoader().load('playercard.webp', (tex) => {
+        const imgW = tex.image.width;
+        const imgH = tex.image.height;
+        const w3d = (imgW / 3) * (0.15625 / 45);
+        const h3d = (imgH / 3) * (0.15625 / 45);
+        const geo = new THREE.PlaneGeometry(w3d, h3d);
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+        window._playerCardMesh = new THREE.Mesh(geo, mat);
+        window._playerCardMesh.rotation.x = -Math.PI / 2;
+        window._playerCardMesh.rotation.z = pCardRot;
+        window._playerCardMesh.position.set(a11X + w3d / 2 + pCardOffset, yPos + 0.011, a11Z + h3d / 2);
+        window._playerCardMesh.renderOrder = 25;
+        window._playerCardMesh.visible = false;
+        scene.add(window._playerCardMesh);
+      });
+
+      // Player Rank Text Mesh (wie targetRankMesh, mit Offset)
+      const pRankCanvas = document.createElement('canvas');
+      pRankCanvas.width = 128; pRankCanvas.height = 128;
+      const pRankCtx = pRankCanvas.getContext('2d');
+      const pRankTexture = new THREE.CanvasTexture(pRankCanvas);
+      const pRankGeo = new THREE.PlaneGeometry(0.15625, 0.15625);
+      const pRankMat = new THREE.MeshBasicMaterial({ map: pRankTexture, transparent: true, depthWrite: false });
+      window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
+      window._playerRankMesh.rotation.x = -Math.PI / 2;
+      window._playerRankMesh.rotation.z = pCardRot;
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.012, rank12D_Z);
+      window._playerRankMesh.renderOrder = 26;
+      window._playerRankMesh.visible = false;
+      scene.add(window._playerRankMesh);
+
+      window.updatePlayerRankDisplay = function(text) {
+        pRankCtx.clearRect(0, 0, 128, 128);
+        pRankCtx.font = '900 90px "Noto Serif"';
+        pRankCtx.textAlign = 'center';
+        pRankCtx.textBaseline = 'middle';
+        pRankCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+        pRankCtx.fillText(text, 64, 64);
+        pRankTexture.needsUpdate = true;
+      }
+
+      // Player Suit Meshes (wie suitMeshes, mit Offset + Rotation)
+      window._playerSuitMeshes = {};
+      ['herz.png','karo.png','kreuz.png','pik.png'].forEach((file) => {
+        new THREE.TextureLoader().load(file, (tex) => {
+          const imgW = tex.image.width;
+          const imgH = tex.image.height;
+          const w3d = (imgW / 3) * (0.15625 / 45);
+          const h3d = (imgH / 3) * (0.15625 / 45);
+          const geo = new THREE.PlaneGeometry(w3d, h3d);
+          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.rotation.z = pCardRot;
+          mesh.position.set(a11X + w3d / 2 + pCardOffset, yPos + 0.013, a11Z + h3d / 2);
+          mesh.renderOrder = 27;
+          mesh.visible = false;
+          scene.add(mesh);
+          window._playerSuitMeshes[file] = mesh;
+        });
+      });
 
       window.updateTargetRankDisplay = function(text) {
         rankCtx.clearRect(0, 0, 128, 128);
@@ -6804,10 +6872,7 @@
         animLower();
       });
 
-      // Sobald der Würfel wieder in seiner Ecke liegt, Kippziel sichtbar machen
-      if (typeof window.revealGeneratedCardTarget3D === 'function') {
-        window.revealGeneratedCardTarget3D(true);
-      }
+      // Kippziel wird jetzt vor dem Eckblick angezeigt (in onTargetVerdecktTap)
 
       // 7. Von Ecke zurückfallen
       const fallDur = 800;
@@ -8779,7 +8844,8 @@
     function onTargetVerdecktTap() {
       if (kipp21KniffActive) return;
       stopTargetPulse();
-      window._pendingRevealAfterEckblick = true;
+      // Kippziel sofort zeigen, dann Eckblick
+      window.revealGeneratedCardTarget3D(true);
       runKipp21EckblickKniff(true);
     }
     document.getElementById('eyeIcon').addEventListener('click', (e) => {
@@ -8808,7 +8874,7 @@
       // === MODUS-AUSWAHL ===
       const selectWrap = document.createElement('div');
       selectWrap.style.cssText = 'position:relative;z-index:1;flex:1;display:flex;flex-direction:column;' +
-        'align-items:center;justify-content:center;gap:20px;background:rgba(0,0,0,0.45);padding:30px;';
+        'align-items:center;justify-content:center;gap:20px;background:rgba(0,0,0,0.45);padding:80px 30px 30px 30px;';
 
       const title = document.createElement('div');
       title.style.cssText = 'font:bold 28px Arial;letter-spacing:3px;text-transform:uppercase;' +
@@ -8868,7 +8934,7 @@
 
         const scroll = document.createElement('div');
         scroll.style.cssText = 'position:relative;z-index:1;flex:1;overflow-y:auto;' +
-          'padding:30px 30px 10px 30px;-webkit-overflow-scrolling:touch;' +
+          'padding:80px 30px 10px 30px;-webkit-overflow-scrolling:touch;' +
           'background:rgba(0,0,0,0.45);';
 
         const h1 = document.createElement('div');
@@ -8909,7 +8975,7 @@
           'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
-        okBtn.onclick = () => ov.remove();
+        okBtn.onclick = () => { ov.remove(); showCardAnleitung(); };
         btnWrap2.appendChild(okBtn);
         ov.appendChild(btnWrap2);
       }
@@ -9038,6 +9104,10 @@
         if (window._stichMeshes) {
           Object.values(window._stichMeshes).forEach(m => m.visible = false);
         }
+        // Spielerkarte ausblenden
+        if (window._playerCardMesh) window._playerCardMesh.visible = false;
+        if (window._playerRankMesh) window._playerRankMesh.visible = false;
+        Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
         // slotAlpha in allen Faces zurücksetzen
         for (const fk of ['f0','f1','f2']) {
           const f = faceSlots[fk];
@@ -9420,8 +9490,9 @@
     
     // Tap-auf-Würfel Flag
     let kippzielChecked = false;
-    let cubeLocked = false;  // Sperre nach 1s Auswertung - kein Kippen bis nächstes Kippziel
-    let kipp21CardTouchHandled = false; // Verhindert synthetischen Click nach Touchend
+    let cubeLocked = false;
+    let kipp21CardTouchHandled = false;
+    let _stichTouchStart = 0; // Zeitstempel für Long-Press Stich (500ms)
     
     // verdecktes Kippziel Tap-Erkennung (Raycaster)
     const vkRaycaster = new THREE.Raycaster();
@@ -9438,6 +9509,10 @@
         dismissKippenWarning();
         const touch = e.touches[0];
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        // Long-Press Timer für Stich starten
+        if (window._cardTargetState && window._cardTargetState.currentTarget) {
+          _stichTouchStart = Date.now();
+        }
       }
       // Immer Touch-Position für Pause/Target-Verdeckt
       if (!lastTouchPos) {
@@ -9497,23 +9572,26 @@
         }
       }
 
-      // STICH: Tap auf Würfel → Karte ausspielen (Screen-Projektion)
+      // STICH: Long-Press auf Würfel (≥500ms) → Karte ausspielen
       if (gamePhase === 'kipp21' && lastTouchPos && !dragActive && !_stichLock &&
           !kipp21KniffActive &&
-          window._cardTargetState && window._cardTargetState.currentTarget) {
+          window._cardTargetState && window._cardTargetState.currentTarget &&
+          _stichTouchStart > 0 && (Date.now() - _stichTouchStart) >= 500) {
         const rectS = renderer.domElement.getBoundingClientRect();
         const tapNdcX = ((lastTouchPos.x - rectS.left) / rectS.width) * 2 - 1;
         const tapNdcY = -((lastTouchPos.y - rectS.top) / rectS.height) * 2 + 1;
         const slotIdx = findTappedSlotByScreen(tapNdcX, tapNdcY);
         if (slotIdx >= 0) {
           const slotInfo = getSlotValueAndColor(slotIdx);
-          console.log('[STICH] Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
+          console.log('[STICH] Long-Press Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
             ' vs Target: ' + displayNum(window._cardTargetState.currentTarget.num) + ' ' + window._cardTargetState.currentTarget.color);
           handleStichConfirm(slotIdx);
+          _stichTouchStart = 0;
           lastTouchPos = null;
           return;
         }
       }
+      _stichTouchStart = 0;
 
       // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
@@ -10439,6 +10517,7 @@
         dragPivotGroup.add(cube);
 
         dragActive = true;
+        _stichTouchStart = 0; // Swipe = kein Stich
         dragCurrentAngle = 0;
         // KIPP 21: Timer starten bei Würfelberührung
         if (gamePhase === 'kipp21' && kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
@@ -11063,6 +11142,27 @@
       rebuildFaceMat(topFace, 1);
     }
 
+    // Score-Pulsieren (3×)
+    function pulseScore(which) {
+      const mesh = (which === 'player') ? window._scorePLMesh : window._scoreBKMesh;
+      if (!mesh) return;
+      let count = 0;
+      const baseY = mesh.position.y;
+      (function doPulse() {
+        if (count >= 3) { mesh.scale.set(1,1,1); mesh.position.y = baseY; return; }
+        count++;
+        const start = performance.now();
+        (function anim() {
+          const t = (performance.now() - start) / 300;
+          if (t >= 1) { mesh.scale.set(1,1,1); mesh.position.y = baseY; setTimeout(doPulse, 80); return; }
+          const s = 1 + 0.35 * Math.sin(t * Math.PI);
+          mesh.scale.set(s, s, 1);
+          mesh.position.y = baseY + 0.005 * Math.sin(t * Math.PI);
+          requestAnimationFrame(anim);
+        })();
+      })();
+    }
+
     function handleStichConfirm(slotIdx) {
       if (_stichLock) return;
       const st = window._cardTargetState;
@@ -11074,110 +11174,93 @@
 
       const target = st.currentTarget;
       const result = evaluateStich(slot.val, slot.color, target.num, target.color);
-
-      const SUIT_SYMBOL = { violett:'♠', blau:'♥', gruen:'♦', orange:'♣' };
-      const pSym = SUIT_SYMBOL[slot.color] || '?';
-      const tSym = SUIT_SYMBOL[target.color] || '?';
-      
-      // Alle 4 Slots anzeigen
-      let allSlots = '';
-      for (let si = 0; si < 4; si++) {
-        const sv = getSlotValueAndColor(si);
-        const sym = SUIT_SYMBOL[sv.color] || '?';
-        allSlots += 'S' + (si+1) + ':' + displayNum(sv.val) + sym + ' ';
-      }
-      
-      const debugTxt = 'GETIPPT: S' + (slotIdx+1) + ' = ' + displayNum(slot.val) + pSym +
-        '\nTARGET: ' + displayNum(target.num) + tSym +
-        '\nERGEBNIS: ' + result.winner.toUpperCase() + ' +' + result.points +
-        '\n[Q' + currentQuadrant + ' ' + topFace + '] ' + allSlots;
-      
-      const dbg = document.createElement('div');
-      dbg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
-        'background:rgba(0,0,0,0.9);color:#fff;padding:14px 18px;border-radius:8px;' +
-        'font:bold 13px monospace;z-index:999;text-align:left;white-space:pre;max-width:340px;pointer-events:none;';
-      dbg.textContent = debugTxt;
-      document.getElementById('container').appendChild(dbg);
-      setTimeout(() => dbg.remove(), 10000);
-
-      console.log('[STICH]', debugTxt);
-
-      if (result.winner === 'player') {
-        window._playerScore3D = (window._playerScore3D || 0) + result.points;
-      } else {
-        window._bankScore3D = (window._bankScore3D || 0) + result.points;
-      }
-      updateScore3D('player', window._playerScore3D);
-      updateScore3D('bank', window._bankScore3D);
+      console.log('[STICH]', result.playerRank, slot.color, 'vs', result.targetRank, target.color, '→', result.winner, '+' + result.points);
 
       // Slot als ausgespielt markieren (25% Deckkraft)
       markSlotAsPlayed(slotIdx);
 
-      // Stich-Grafik einblenden
-      const sNum = window._stichNum + 1; // 1-6
-      const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
-      if (window._stichMeshes[stichFile]) {
-        window._stichMeshes[stichFile].visible = true;
+      // t=0: Eingeloggte Spielerkarte anzeigen
+      if (window._playerCardMesh) window._playerCardMesh.visible = true;
+      Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+      const pSuitFile = SUIT_IMG_BY_COLOR[slot.color];
+      if (pSuitFile && window._playerSuitMeshes[pSuitFile]) {
+        window._playerSuitMeshes[pSuitFile].visible = true;
       }
+      updatePlayerRankDisplay(getPlayerVisualRank(slot.val));
+      if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
+      const sNum = window._stichNum + 1;
       st.currentTarget = null;
 
+      // t=2500ms: Spielerkarte + Targetkarte weg, Stich-Grafik zeigen
       setTimeout(() => {
-        // Kippziel (Suit + Rank) ausblenden
+        // Spielerkarte ausblenden
+        if (window._playerCardMesh) window._playerCardMesh.visible = false;
+        Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+        if (window._playerRankMesh) window._playerRankMesh.visible = false;
+        // Target Suit + Rank ausblenden
         Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
         if (window._targetRankMesh) window._targetRankMesh.visible = false;
 
-        // Aktuelles target_N ausblenden
-        const curTargetFile = 'target_' + sNum + '.webp';
-        if (window._targetMeshes[curTargetFile]) {
-          window._targetMeshes[curTargetFile].visible = false;
+        // Stich-Grafik einblenden
+        const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
+        if (window._stichMeshes[stichFile]) {
+          window._stichMeshes[stichFile].visible = true;
         }
 
-        window._stichNum++;
-
-        if (window._stichNum >= 6) {
-          // Zyklusende
-          window._stichNum = 0;
-          window._stichCycle++;
-
-          // Stich-Grafiken des Zyklus ausblenden
-          for (let i = 1; i <= 6; i++) {
-            const plFile = 'stich' + i + '_pl.webp';
-            const bFile = 'stich' + i + '_b.webp';
-            if (window._stichMeshes[plFile]) window._stichMeshes[plFile].visible = false;
-            if (window._stichMeshes[bFile]) window._stichMeshes[bFile].visible = false;
-          }
-
-          if (window._stichCycle >= 2) {
-            // Spiel beendet (2 × 6 = 12 Stiche)
-            console.log('[STICH] Spiel beendet! Player:', window._playerScore3D, 'Bank:', window._bankScore3D);
-            // TODO: Endscreen
+        // t=3500ms: Score zurechnen + pulsieren
+        setTimeout(() => {
+          if (result.winner === 'player') {
+            window._playerScore3D = (window._playerScore3D || 0) + result.points;
+            updateScore3D('player', window._playerScore3D);
+            pulseScore('player');
           } else {
-            // Zyklus 2: target_stapel2 ausblenden, target_1 neu starten
-            if (window._targetMeshes['target_stapel2.webp']) {
-              window._targetMeshes['target_stapel2.webp'].visible = false;
-            }
-            if (window._targetMeshes['target_1.webp']) {
-              window._targetMeshes['target_1.webp'].visible = true;
-            }
-            if (window._targetMeshes['target_verdeckt.webp']) {
-              window._targetMeshes['target_verdeckt.webp'].visible = true;
-              startTargetPulse();
-            }
+            window._bankScore3D = (window._bankScore3D || 0) + result.points;
+            updateScore3D('bank', window._bankScore3D);
+            pulseScore('bank');
           }
-        } else {
-          // Nächstes target_N einblenden + target_verdeckt pulsierend
-          const nextTargetFile = 'target_' + (window._stichNum + 1) + '.webp';
-          if (window._targetMeshes[nextTargetFile]) {
-            window._targetMeshes[nextTargetFile].visible = true;
-          }
-          if (window._targetMeshes['target_verdeckt.webp']) {
-            window._targetMeshes['target_verdeckt.webp'].visible = true;
-            startTargetPulse();
-          }
-        }
-        _stichLock = false;
-      }, 1200);
+
+          // t=4700ms: Nächste Runde vorbereiten
+          setTimeout(() => {
+            // Aktuelles target_N ausblenden
+            const curTargetFile = 'target_' + sNum + '.webp';
+            if (window._targetMeshes[curTargetFile]) {
+              window._targetMeshes[curTargetFile].visible = false;
+            }
+
+            window._stichNum++;
+
+            if (window._stichNum >= 6) {
+              window._stichNum = 0;
+              window._stichCycle++;
+
+              for (let i = 1; i <= 6; i++) {
+                if (window._stichMeshes['stich' + i + '_pl.webp']) window._stichMeshes['stich' + i + '_pl.webp'].visible = false;
+                if (window._stichMeshes['stich' + i + '_b.webp']) window._stichMeshes['stich' + i + '_b.webp'].visible = false;
+              }
+
+              if (window._stichCycle >= 2) {
+                console.log('[STICH] Spiel beendet! Player:', window._playerScore3D, 'Bank:', window._bankScore3D);
+              } else {
+                if (window._targetMeshes['target_stapel2.webp']) window._targetMeshes['target_stapel2.webp'].visible = false;
+                if (window._targetMeshes['target_1.webp']) window._targetMeshes['target_1.webp'].visible = true;
+                if (window._targetMeshes['target_verdeckt.webp']) {
+                  window._targetMeshes['target_verdeckt.webp'].visible = true;
+                  startTargetPulse();
+                }
+              }
+            } else {
+              const nextTargetFile = 'target_' + (window._stichNum + 1) + '.webp';
+              if (window._targetMeshes[nextTargetFile]) window._targetMeshes[nextTargetFile].visible = true;
+              if (window._targetMeshes['target_verdeckt.webp']) {
+                window._targetMeshes['target_verdeckt.webp'].visible = true;
+                startTargetPulse();
+              }
+            }
+            _stichLock = false;
+          }, 1200);
+        }, 1000);
+      }, 2500);
     }
 
     let lockedKippDir = null; // null, 'cw', 'ccw'
