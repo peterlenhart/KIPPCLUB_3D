@@ -11078,23 +11078,23 @@
     }
 
     const SLOT_LOCAL_CENTERS = {
-      f2: [
-        { x:  _cellSz, y: _half, z:  _cellSz },
-        { x:  0,        y: _half, z:  _cellSz },
-        { x: -_cellSz,  y: _half, z:  0       },
-        { x: -_cellSz,  y: _half, z: -_cellSz }
+      f2: [ // +Y face (top) — grid(row,col) → UV → local
+        { x:  _cellSz, y: _half, z: -_cellSz },  // deck[8]  grid(2,2)
+        { x:  0,        y: _half, z: -_cellSz },  // deck[9]  grid(2,1)
+        { x: -_cellSz,  y: _half, z:  0       },  // deck[10] grid(1,0)
+        { x: -_cellSz,  y: _half, z:  _cellSz }   // deck[11] grid(0,0)
       ],
-      f0: [
-        { x: -_cellSz, y: -_cellSz, z: _half },
-        { x: -_cellSz, y:  0,        z: _half },
-        { x:  0,        y:  _cellSz, z: _half },
-        { x:  _cellSz,  y:  _cellSz, z: _half }
+      f0: [ // +Z face — correct as is
+        { x: -_cellSz, y: -_cellSz, z: _half },   // deck[0] grid(2,0)
+        { x: -_cellSz, y:  0,        z: _half },   // deck[1] grid(1,0)
+        { x:  0,        y:  _cellSz, z: _half },   // deck[2] grid(0,1)
+        { x:  _cellSz,  y:  _cellSz, z: _half }    // deck[3] grid(0,2)
       ],
-      f1: [
-        { x: -_half, y:  _cellSz, z:  _cellSz },
-        { x: -_half, y:  _cellSz, z:  0       },
-        { x: -_half, y:  0,        z: -_cellSz },
-        { x: -_half, y: -_cellSz,  z: -_cellSz }
+      f1: [ // -X face
+        { x: -_half, y:  _cellSz, z: -_cellSz },  // deck[4] grid(0,0)
+        { x: -_half, y:  _cellSz, z:  0       },   // deck[5] grid(0,1)
+        { x: -_half, y:  0,        z:  _cellSz },  // deck[6] grid(1,2)
+        { x: -_half, y: -_cellSz,  z:  _cellSz }   // deck[7] grid(2,2)
       ]
     };
 
