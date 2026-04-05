@@ -2231,28 +2231,45 @@
 
       // === STICH-GRAFIKEN laden (stich1-6_pl und stich1-6_b) am Anker A11 ===
       window._stichMeshes = {};
+      window._stichMeshes2 = {}; // Zyklus 2: versetzt
       const stichFiles = [];
       for (let i = 1; i <= 6; i++) {
         stichFiles.push('stich' + i + '_pl.webp');
         stichFiles.push('stich' + i + '_b.webp');
       }
+      const stich2OffX = -12 * 0.15625 / 45; // 12px westlich
+      const stich2OffZ = 8 * 0.15625 / 45;   // 8px südlich
+      const stich2Rot = 2 * Math.PI / 180;    // 2° CCW
       stichFiles.forEach((file) => {
         new THREE.TextureLoader().load(file, (tex) => {
           const imgW = tex.image.width;
           const imgH = tex.image.height;
           const w3d = (imgW / 3) * (0.15625 / 45);
           const h3d = (imgH / 3) * (0.15625 / 45);
-          const geo = new THREE.PlaneGeometry(w3d, h3d);
-          const matl = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-          const mesh = new THREE.Mesh(geo, matl);
-          mesh.rotation.x = -Math.PI / 2;
-          // Alle am Anker A11, von unten nach oben gestapelt (1=unten, 6=oben)
           const num = parseInt(file.match(/\d/)[0]);
-          mesh.position.set(a11X + w3d / 2, yPos + 0.012 + num * 0.001, a11Z + h3d / 2);
-          mesh.renderOrder = 17 + num;
-          mesh.visible = false;
-          scene.add(mesh);
-          window._stichMeshes[file] = mesh;
+
+          // Zyklus 1
+          const geo1 = new THREE.PlaneGeometry(w3d, h3d);
+          const mat1 = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh1 = new THREE.Mesh(geo1, mat1);
+          mesh1.rotation.x = -Math.PI / 2;
+          mesh1.position.set(a11X + w3d / 2, yPos + 0.012 + num * 0.001, a11Z + h3d / 2);
+          mesh1.renderOrder = 17 + num;
+          mesh1.visible = false;
+          scene.add(mesh1);
+          window._stichMeshes[file] = mesh1;
+
+          // Zyklus 2 (versetzt)
+          const geo2 = new THREE.PlaneGeometry(w3d, h3d);
+          const mat2 = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh2 = new THREE.Mesh(geo2, mat2);
+          mesh2.rotation.x = -Math.PI / 2;
+          mesh2.rotation.z = stich2Rot;
+          mesh2.position.set(a11X + w3d / 2 + stich2OffX, yPos + 0.019 + num * 0.001, a11Z + h3d / 2 + stich2OffZ);
+          mesh2.renderOrder = 24 + num;
+          mesh2.visible = false;
+          scene.add(mesh2);
+          window._stichMeshes2[file] = mesh2;
         });
       });
 
@@ -2365,8 +2382,8 @@
       const pRankMat = new THREE.MeshBasicMaterial({ map: pRankTexture, transparent: true, depthWrite: false });
       window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
       window._playerRankMesh.rotation.x = -Math.PI / 2;
-      window._playerRankMesh.rotation.z = pCardRot - 3 * Math.PI / 180; // 9° CW
-      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.012, rank12D_Z + 4 * 0.15625 / 45);
+      window._playerRankMesh.rotation.z = pCardRot - 4 * Math.PI / 180; // 10° CW
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset + 4 * 0.15625 / 45, yPos + 0.012, rank12D_Z + 4 * 0.15625 / 45);
       window._playerRankMesh.renderOrder = 26;
       window._playerRankMesh.visible = false;
       scene.add(window._playerRankMesh);
@@ -2393,8 +2410,8 @@
           const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
           const mesh = new THREE.Mesh(geo, mat);
           mesh.rotation.x = -Math.PI / 2;
-          mesh.rotation.z = pCardRot - 3 * Math.PI / 180; // 6° + 3° = 9° CW
-          mesh.position.set(a11X + w3d / 2 + pCardOffset, yPos + 0.013, a11Z + h3d / 2 - 6 * 0.15625 / 45);
+          mesh.rotation.z = pCardRot - 3 * Math.PI / 180; // 9° CW
+          mesh.position.set(a11X + w3d / 2 + pCardOffset + 3 * 0.15625 / 45, yPos + 0.013, a11Z + h3d / 2 - 3 * 0.15625 / 45);
           mesh.renderOrder = 27;
           mesh.visible = false;
           scene.add(mesh);
@@ -9012,6 +9029,10 @@
           for (const key in (window._stichMeshes || {})) {
             if (window._stichMeshes[key].visible) stichVisible[key] = true;
           }
+          const stichVisible2 = {};
+          for (const key in (window._stichMeshes2 || {})) {
+            if (window._stichMeshes2[key].visible) stichVisible2[key] = true;
+          }
           const state = {
             cardMode: window._cardMode,
             phase: gamePhase,
@@ -9034,6 +9055,7 @@
             cubeQuat: [cube.quaternion.x, cube.quaternion.y, cube.quaternion.z, cube.quaternion.w],
             kipp21KippCount,
             stichVisible,
+            stichVisible2,
             currentTarget: window._cardTargetState ? window._cardTargetState.currentTarget : null
           };
           localStorage.setItem('digikipp_card_frozen', JSON.stringify(state));
@@ -9133,6 +9155,7 @@
         // Stich-Grafiken ausblenden
         if (window._stichMeshes) {
           Object.values(window._stichMeshes).forEach(m => m.visible = false);
+          Object.values(window._stichMeshes2 || {}).forEach(m => m.visible = false);
         }
         // Spielerkarte ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
@@ -11412,10 +11435,11 @@
           window._targetMeshes[curTargetFile].visible = false;
         }
 
-        // Stich-Grafik einblenden
+        // Stich-Grafik einblenden (Zyklus 2 → versetzte Meshes)
         const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
-        if (window._stichMeshes[stichFile]) {
-          window._stichMeshes[stichFile].visible = true;
+        const meshSet = (window._stichCycle >= 1) ? window._stichMeshes2 : window._stichMeshes;
+        if (meshSet[stichFile]) {
+          meshSet[stichFile].visible = true;
         }
 
         // t=4000+1000: Score zurechnen + pulsieren + nächste Runde
@@ -11437,15 +11461,16 @@
             window._stichNum = 0;
             window._stichCycle++;
 
-            for (let i = 1; i <= 6; i++) {
-              if (window._stichMeshes['stich' + i + '_pl.webp']) window._stichMeshes['stich' + i + '_pl.webp'].visible = false;
-              if (window._stichMeshes['stich' + i + '_b.webp']) window._stichMeshes['stich' + i + '_b.webp'].visible = false;
-            }
-
             if (window._stichCycle >= 2) {
+              // Spiel beendet — Zyklus 2 Meshes ausblenden
+              for (let i = 1; i <= 6; i++) {
+                if (window._stichMeshes2['stich' + i + '_pl.webp']) window._stichMeshes2['stich' + i + '_pl.webp'].visible = false;
+                if (window._stichMeshes2['stich' + i + '_b.webp']) window._stichMeshes2['stich' + i + '_b.webp'].visible = false;
+              }
               console.log('[STICH] Spiel beendet! Player:', window._playerScore3D, 'Bank:', window._bankScore3D);
               _stichLock = false;
             } else {
+              // Zyklus 1 → 2: stich6 bleibt sichtbar! Keine Meshes ausblenden.
               if (window._targetMeshes['target_stapel2.webp']) window._targetMeshes['target_stapel2.webp'].visible = false;
               if (window._targetMeshes['target_1.webp']) window._targetMeshes['target_1.webp'].visible = true;
               if (window._targetMeshes['target_verdeckt.webp']) {
@@ -11786,6 +11811,13 @@
               for (const key in state.stichVisible) {
                 if (window._stichMeshes && window._stichMeshes[key]) {
                   window._stichMeshes[key].visible = true;
+                }
+              }
+            }
+            if (state.stichVisible2) {
+              for (const key in state.stichVisible2) {
+                if (window._stichMeshes2 && window._stichMeshes2[key]) {
+                  window._stichMeshes2[key].visible = true;
                 }
               }
             }
