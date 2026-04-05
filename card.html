@@ -3191,9 +3191,7 @@
 
     function renderCardBestScores() {
       const titleEl = document.getElementById('bsTitleText');
-      const bestScores = loadCardBestScores();
-      const bestPlayer = bestScores.length > 0 ? bestScores[0].player : 0;
-      if (titleEl) titleEl.textContent = 'KIPP +1 SCORES (BEST: ' + bestPlayer + ')';
+      if (titleEl) titleEl.textContent = 'KIPP +1 | HIGHSCORE = 100%';
       const scores = loadCardBestScores();
 
       let latestIdx = -1;
@@ -9187,8 +9185,8 @@
 
       scoreBox.appendChild(makeScoreCol('PLAYER', ps, won));
       const vs = document.createElement('div');
-      vs.style.cssText = 'font:bold 20px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.8);';
-      vs.textContent = ':';
+      vs.style.cssText = 'font:300 36px Arial;color:rgba(224,208,184,0.3);text-shadow:none;';
+      vs.textContent = '|';
       scoreBox.appendChild(vs);
       scoreBox.appendChild(makeScoreCol('BANK', bs, !won && !draw));
       inner.appendChild(scoreBox);
@@ -9208,7 +9206,7 @@
       const stichInfo = document.createElement('div');
       stichInfo.style.cssText = 'font:bold 16px Arial;color:#e0d0b8;letter-spacing:1px;' +
         'text-shadow:0 1px 3px rgba(0,0,0,0.8);text-align:center;';
-      stichInfo.textContent = playerWins + ' von 6 STICHE' + (perfects > 0 ? '  \u2022  ' + perfects + '\u00d7 perfekt +1' : '');
+      stichInfo.textContent = playerWins + ' von 6 STICHEN' + (perfects > 0 ? '  \u2022  ' + perfects + '\u00d7 perfekt +1' : '');
       inner.appendChild(stichInfo);
 
       // Effizienz-Balken
@@ -9257,14 +9255,14 @@
       }).join('');
 
       const dailyTag = window._dailyMode ? ' #' + window._dailyDayNum : '';
-      const shareText = 'STICH +1' + dailyTag + '\n' +
+      const shareText = 'KIPP +1' + dailyTag + '\n' +
         starStr + '\n' +
         'PLAYER ' + String(ps).padStart(3,'0') + ' : BANK ' + String(bs).padStart(3,'0') + '\n' +
         'EFFIZIENZ: ' + effizienz + '%\n' +
         shareGrid + '\n' +
         'Schaffst du das auch?\n' +
         window._DIGIKIPP_URL + '\n' +
-        '#DigiKipp #StichPlusOne';
+        '#DigiKipp #KippPlusOne';
 
       const btnShare = document.createElement('button');
       btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">TEILEN</span>';
