@@ -2367,7 +2367,8 @@
       window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
       window._playerRankMesh.rotation.x = -Math.PI / 2;
       window._playerRankMesh.rotation.z = pCardRot;
-      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.012, rank12D_Z);
+      // Gleiche Position wie Target-Rank, nur + 40px Offset östlich
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.013, rank12D_Z);
       window._playerRankMesh.renderOrder = 26;
       window._playerRankMesh.visible = false;
       scene.add(window._playerRankMesh);
@@ -2395,6 +2396,7 @@
           const mesh = new THREE.Mesh(geo, mat);
           mesh.rotation.x = -Math.PI / 2;
           mesh.rotation.z = pCardRot;
+          // Gleiche Position wie Target-Suit, nur + 40px Offset
           mesh.position.set(a11X + w3d / 2 + pCardOffset, yPos + 0.013, a11Z + h3d / 2);
           mesh.renderOrder = 27;
           mesh.visible = false;
