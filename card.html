@@ -2365,8 +2365,8 @@
       const pRankMat = new THREE.MeshBasicMaterial({ map: pRankTexture, transparent: true, depthWrite: false });
       window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
       window._playerRankMesh.rotation.x = -Math.PI / 2;
-      window._playerRankMesh.rotation.z = pCardRot;
-      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.012, rank12D_Z);
+      window._playerRankMesh.rotation.z = pCardRot - 3 * Math.PI / 180; // 9° CW
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.012, rank12D_Z + 4 * 0.15625 / 45);
       window._playerRankMesh.renderOrder = 26;
       window._playerRankMesh.visible = false;
       scene.add(window._playerRankMesh);
