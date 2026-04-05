@@ -725,7 +725,7 @@
     #btnSpielen  { top: 455px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 515px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
     #btnAnleitung { top: 575px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
-    #btnDaily    { top: 635px; padding-top: 0px; font-size: 16px; letter-spacing: 2px;
+    #btnDaily    { top: 635px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px;
                    border: 1px solid rgba(206,219,37,0.4) !important; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
@@ -2369,7 +2369,7 @@
       window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
       window._playerRankMesh.rotation.x = -Math.PI / 2;
       window._playerRankMesh.rotation.z = pCardRot - 1 * Math.PI / 180; // 7° CW
-      window._playerRankMesh.position.set(rank12D_X + pCardOffset + 1 * 0.15625 / 45, yPos + 0.012, rank12D_Z + 4 * 0.15625 / 45);
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset + 4 * 0.15625 / 45, yPos + 0.012, rank12D_Z + 7 * 0.15625 / 45);
       window._playerRankMesh.renderOrder = 26;
       window._playerRankMesh.visible = false;
       scene.add(window._playerRankMesh);
@@ -2582,6 +2582,7 @@
       };
     }
     window._dailyMode = false;
+    window._DIGIKIPP_URL = 'https://peterlenhart.github.io/KIPPCLUB_3D/card.html'; // Deine Game-URL hier anpassen
     window._dailyRng = null;
     window._dailySeed = 0;
     window._dailyDayNum = 0;
@@ -9261,6 +9262,8 @@
         'PLAYER ' + String(ps).padStart(3,'0') + ' : BANK ' + String(bs).padStart(3,'0') + '\n' +
         'EFFIZIENZ: ' + effizienz + '%\n' +
         shareGrid + '\n' +
+        'Schaffst du das auch?\n' +
+        window._DIGIKIPP_URL + '\n' +
         '#DigiKipp #StichPlusOne';
 
       const btnShare = document.createElement('button');
