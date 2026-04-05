@@ -2370,30 +2370,28 @@
         _pcCtx.clearRect(0, 0, 1092, 560);
         _pcCtx.drawImage(_pcImg, 0, 0);
 
-        // Karte ist ~6° CW gedreht im Bild → Text muss auch gedreht sein
-        const cardCx = 597, cardCy = 277;
+        // Karte ist ~6° CW gedreht im Bild
         const angle = -6 * Math.PI / 180;
 
-        // Wert in obere Hälfte (597, 205)
+        // Wert in obere Hälfte
         _pcCtx.save();
-        _pcCtx.translate(597, 205);
+        _pcCtx.translate(597, 210);
         _pcCtx.rotate(angle);
-        _pcCtx.font = '900 80px "Noto Serif"';
+        _pcCtx.font = '900 100px "Noto Serif"';
         _pcCtx.textAlign = 'center';
         _pcCtx.textBaseline = 'middle';
         _pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
         _pcCtx.fillText(rankText, 0, 0);
         _pcCtx.restore();
 
-        // Suit in untere Hälfte (597, 349)
+        // Suit in untere Hälfte
         const SUIT_FILE = { violett:'pik.png', blau:'herz.png', gruen:'karo.png', orange:'kreuz.png' };
         const suitImg = _pcSuitImgs[SUIT_FILE[colorName]];
         if (suitImg && suitImg.complete) {
           _pcCtx.save();
-          _pcCtx.translate(597, 349);
+          _pcCtx.translate(597, 345);
           _pcCtx.rotate(angle);
-          // Suit auf ~60x60 Retina-Pixel skalieren (passt in Kartenhälfte)
-          const suitSize = 75;
+          const suitSize = 140;
           _pcCtx.drawImage(suitImg, -suitSize/2, -suitSize/2, suitSize, suitSize);
           _pcCtx.restore();
         }
