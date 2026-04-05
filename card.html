@@ -2382,8 +2382,8 @@
       const pRankMat = new THREE.MeshBasicMaterial({ map: pRankTexture, transparent: true, depthWrite: false });
       window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
       window._playerRankMesh.rotation.x = -Math.PI / 2;
-      window._playerRankMesh.rotation.z = pCardRot - 2 * Math.PI / 180; // 8° CW
-      window._playerRankMesh.position.set(rank12D_X + pCardOffset + 4 * 0.15625 / 45, yPos + 0.012, rank12D_Z + 4 * 0.15625 / 45);
+      window._playerRankMesh.rotation.z = pCardRot - 1 * Math.PI / 180; // 7° CW
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset + 1 * 0.15625 / 45, yPos + 0.012, rank12D_Z + 4 * 0.15625 / 45);
       window._playerRankMesh.renderOrder = 26;
       window._playerRankMesh.visible = false;
       scene.add(window._playerRankMesh);
@@ -9150,7 +9150,7 @@
 
       const btnMenu = document.createElement('button');
       btnMenu.textContent = 'MEN\u00dc';
-      btnMenu.style.cssText = btnStyle + 'font-size:16px;height:44px;';
+      btnMenu.style.cssText = btnStyle;
       btnMenu.onclick = () => {
         ov.remove();
         backToStartScreen();
@@ -11595,9 +11595,15 @@
           window._targetMeshes[curTargetFile].visible = false;
         }
 
-        // Stich-Grafik einblenden (Zyklus 2 → versetzte Meshes)
+        // Stich-Grafik einblenden — nur die neueste sichtbar (Dateien sind kumulativ)
         const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
         const meshSet = (window._stichCycle >= 1) ? window._stichMeshes2 : window._stichMeshes;
+        // Vorherige ausblenden
+        if (sNum > 1) {
+          const prev = sNum - 1;
+          if (meshSet['stich' + prev + '_pl.webp']) meshSet['stich' + prev + '_pl.webp'].visible = false;
+          if (meshSet['stich' + prev + '_b.webp']) meshSet['stich' + prev + '_b.webp'].visible = false;
+        }
         if (meshSet[stichFile]) {
           meshSet[stichFile].visible = true;
         }
