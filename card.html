@@ -725,6 +725,8 @@
     #btnSpielen  { top: 455px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
     #btnDemo     { top: 534px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
     #btnAnleitung { top: 613px; padding-top: 0px; font-size: 18px; letter-spacing: 2.5px; }
+    #btnDaily    { top: 375px; padding-top: 0px; font-size: 16px; letter-spacing: 2px;
+                   border: 1px solid rgba(206,219,37,0.4) !important; }
     #btnKippPrinzip { top: 539px; padding-top: 4px; font-size: 16px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
     @keyframes pokalPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
@@ -996,6 +998,7 @@
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnAnleitung" disabled style="opacity:0">ANLEITUNG</button>
+    <button class="startClickZone" id="btnDaily" disabled style="opacity:0">DAILY</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
   
@@ -1139,7 +1142,7 @@
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange",
         nml:"NOCHMAL", nxl:"NEXT LEVEL", sek:"Sek.", tout:"60 Sek.<br>\u00fcberschritten", h4b:"Mit 4 HITS ins BRAINY Level", h4r:"Mit 4 HITS ins BRAIN Level",
         exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden",
-        cOffen:"KIPP 180", cVerdeckt:"KIPP POKER",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP POKER",
         cSub1:"K\u00d6NNEN : GL\u00dcCK = 50 : 50", cSub2:"K\u00d6NNEN : GL\u00dcCK = 90 : 10",
         cEinfr:"EINFRIEREN", cWeiter:"WEITER",
         cForts:"FORTSETZEN", cPause:"PAUSE",
@@ -1191,7 +1194,7 @@
         fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange",
         nml:"AGAIN", nxl:"NEXT LEVEL", sek:"sec.", tout:"60 sec.<br>exceeded", h4b:"4 HITS to reach BRAINY Level", h4r:"4 HITS to reach BRAIN Level",
         exQ:"Really<br>quit the game?", exC:"Back", exE:"Quit",
-        cOffen:"KIPP 180", cVerdeckt:"KIPP POKER",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP POKER",
         cSub1:"SKILL : LUCK = 50 : 50", cSub2:"SKILL : LUCK = 90 : 10",
         cEinfr:"FREEZE", cWeiter:"CONTINUE",
         cForts:"CONTINUE", cPause:"PAUSE",
@@ -1225,7 +1228,7 @@
         fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja",
         nml:"OTRA VEZ", nxl:"SIGUIENTE NIVEL", sek:"seg.", tout:"60 seg.<br>superados", h4b:"4 HITS para el nivel BRAINY", h4r:"4 HITS para el nivel BRAIN",
         exQ:"\u00bfRealmente<br>salir?", exC:"Volver", exE:"Salir",
-        cOffen:"KIPP 180", cVerdeckt:"KIPP POKER",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP POKER",
         cSub1:"HABILIDAD : SUERTE = 50 : 50", cSub2:"HABILIDAD : SUERTE = 90 : 10",
         cEinfr:"CONGELAR", cWeiter:"SEGUIR",
         cForts:"CONTINUAR", cPause:"PAUSA",
@@ -1259,7 +1262,7 @@
         fV:"Violet", fB:"Bleu", fG:"Vert", fO:"Orange",
         nml:"ENCORE", nxl:"NIVEAU SUIVANT", sek:"sec.", tout:"60 sec.<br>d\u00e9pass\u00e9es", h4b:"4 HITS pour le niveau BRAINY", h4r:"4 HITS pour le niveau BRAIN",
         exQ:"Vraiment<br>quitter ?", exC:"Retour", exE:"Quitter",
-        cOffen:"KIPP 180", cVerdeckt:"KIPP POKER",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP POKER",
         cSub1:"COMP\u00c9TENCE : CHANCE = 50 : 50", cSub2:"COMP\u00c9TENCE : CHANCE = 90 : 10",
         cEinfr:"GELER", cWeiter:"CONTINUER",
         cForts:"REPRENDRE", cPause:"PAUSE",
@@ -1293,7 +1296,7 @@
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione",
         nml:"ANCORA", nxl:"LIVELLO SUCCESSIVO", sek:"sec.", tout:"60 sec.<br>superati", h4b:"4 HITS per il livello BRAINY", h4r:"4 HITS per il livello BRAIN",
         exQ:"Vuoi davvero<br>uscire?", exC:"Indietro", exE:"Esci",
-        cOffen:"KIPP 180", cVerdeckt:"KIPP POKER",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP POKER",
         cSub1:"ABILIT\u00c0 : FORTUNA = 50 : 50", cSub2:"ABILIT\u00c0 : FORTUNA = 90 : 10",
         cEinfr:"CONGELA", cWeiter:"CONTINUA",
         cForts:"RIPRENDI", cPause:"PAUSA",
@@ -1327,7 +1330,7 @@
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu",
         nml:"TEKRAR", nxl:"SONRAK0130 SEV0130YE", sek:"sn.", tout:"60 sn.<br>a\u015f\u0131ld\u0131", h4b:"BRAINY seviyesi i\u00e7in 4 HITS", h4r:"BRAIN seviyesi i\u00e7in 4 HITS",
         exQ:"Oyundan \u00e7\u0131kmak<br>istiyor musun?", exC:"Geri", exE:"\u00c7\u0131k",
-        cOffen:"KIPP 180", cVerdeckt:"KIPP POKER",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP POKER",
         cSub1:"YETENEK : \u015eANS = 50 : 50", cSub2:"YETENEK : \u015eANS = 90 : 10",
         cEinfr:"DONDUR", cWeiter:"DEVAM",
         cForts:"DEVAM ET", cPause:"MOLA",
@@ -2189,7 +2192,7 @@
       // === BANKKARTEN-STAPEL auf Spieltisch, Anker A11 (li ob Ecke) ===
       const a11X = -4 * 0.15625; // linke Kante Spalte A
       const a11Z = -0.359375 + (11 - 4) * 0.15625; // Nordkante Zeile 11
-      const targetFiles = ['target_stapel2.webp','target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp','target_verdeckt.webp'];
+      const targetFiles = ['target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp','target_verdeckt.webp'];
       window._targetMeshes = {};
 
       // Suit-Bilder (herz/karo/kreuz/pik) am selben Anker A11, unsichtbar
@@ -2232,15 +2235,11 @@
 
       // === STICH-GRAFIKEN laden (stich1-6_pl und stich1-6_b) am Anker A11 ===
       window._stichMeshes = {};
-      window._stichMeshes2 = {}; // Zyklus 2: versetzt
       const stichFiles = [];
       for (let i = 1; i <= 6; i++) {
         stichFiles.push('stich' + i + '_pl.webp');
         stichFiles.push('stich' + i + '_b.webp');
       }
-      const stich2OffX = -12 * 0.15625 / 45; // 12px westlich
-      const stich2OffZ = 8 * 0.15625 / 45;   // 8px südlich
-      const stich2Rot = 2 * Math.PI / 180;    // 2° CCW
       stichFiles.forEach((file) => {
         new THREE.TextureLoader().load(file, (tex) => {
           const imgW = tex.image.width;
@@ -2248,29 +2247,15 @@
           const w3d = (imgW / 3) * (0.15625 / 45);
           const h3d = (imgH / 3) * (0.15625 / 45);
           const num = parseInt(file.match(/\d/)[0]);
-
-          // Zyklus 1
-          const geo1 = new THREE.PlaneGeometry(w3d, h3d);
-          const mat1 = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-          const mesh1 = new THREE.Mesh(geo1, mat1);
-          mesh1.rotation.x = -Math.PI / 2;
-          mesh1.position.set(a11X + w3d / 2, yPos + 0.012 + num * 0.001, a11Z + h3d / 2);
-          mesh1.renderOrder = 17 + num;
-          mesh1.visible = false;
-          scene.add(mesh1);
-          window._stichMeshes[file] = mesh1;
-
-          // Zyklus 2 (versetzt)
-          const geo2 = new THREE.PlaneGeometry(w3d, h3d);
-          const mat2 = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
-          const mesh2 = new THREE.Mesh(geo2, mat2);
-          mesh2.rotation.x = -Math.PI / 2;
-          mesh2.rotation.z = stich2Rot;
-          mesh2.position.set(a11X + w3d / 2 + stich2OffX, yPos + 0.019 + num * 0.001, a11Z + h3d / 2 + stich2OffZ);
-          mesh2.renderOrder = 24 + num;
-          mesh2.visible = false;
-          scene.add(mesh2);
-          window._stichMeshes2[file] = mesh2;
+          const geo = new THREE.PlaneGeometry(w3d, h3d);
+          const matl = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh = new THREE.Mesh(geo, matl);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.position.set(a11X + w3d / 2, yPos + 0.012 + num * 0.001, a11Z + h3d / 2);
+          mesh.renderOrder = 17 + num;
+          mesh.visible = false;
+          scene.add(mesh);
+          window._stichMeshes[file] = mesh;
         });
       });
 
@@ -2587,6 +2572,53 @@
     const cubeSize = 0.46875;
 
     // Randomdeck 1-12 mischen
+    // === DAILY CHALLENGE — Seeded PRNG ===
+    function mulberry32(seed) {
+      return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    window._dailyMode = false;
+    window._dailyRng = null;
+    window._dailySeed = 0;
+    window._dailyDayNum = 0;
+
+    function getDailySeed() {
+      const now = new Date();
+      const y = now.getUTCFullYear(), m = now.getUTCMonth() + 1, d = now.getUTCDate();
+      return y * 10000 + m * 100 + d; // z.B. 20260405
+    }
+    function getDailyDayNum() {
+      // Tag #1 = 1. Jan 2026 (UTC), wie Wordle
+      const ref = Date.UTC(2026, 0, 1);
+      const now = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
+      return Math.floor((now - ref) / 86400000) + 1;
+    }
+    function isDailyPlayed() {
+      try { return localStorage.getItem('digikipp_daily_' + getDailySeed()) !== null; } catch(e) { return false; }
+    }
+    function saveDailyResult(ps, bs, eff) {
+      try { localStorage.setItem('digikipp_daily_' + getDailySeed(), JSON.stringify({ player: ps, bank: bs, eff: eff, ts: Date.now() })); } catch(e) {}
+    }
+
+    // Aktiviere Daily-Modus: ersetzt Math.random temporär
+    function activateDailyRng() {
+      window._dailySeed = getDailySeed();
+      window._dailyDayNum = getDailyDayNum();
+      window._dailyRng = mulberry32(window._dailySeed);
+      window._origMathRandom = Math.random;
+      Math.random = window._dailyRng;
+      window._dailyMode = true;
+    }
+    function deactivateDailyRng() {
+      if (window._origMathRandom) Math.random = window._origMathRandom;
+      window._dailyMode = false;
+      window._dailyRng = null;
+    }
+
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -3037,6 +3069,17 @@
         document.getElementById('btnDemo').style.opacity = '1';
         document.getElementById('btnAnleitung').disabled = false;
         document.getElementById('btnAnleitung').style.opacity = '1';
+        // Daily Button
+        const dailyBtn = document.getElementById('btnDaily');
+        dailyBtn.disabled = false;
+        dailyBtn.style.opacity = '1';
+        if (isDailyPlayed()) {
+          dailyBtn.textContent = 'DAILY #' + getDailyDayNum();
+          dailyBtn.style.opacity = '0.5';
+          dailyBtn.disabled = true;
+        } else {
+          dailyBtn.textContent = 'DAILY #' + getDailyDayNum();
+        }
       }
     }
 
@@ -8849,6 +8892,19 @@
       e.preventDefault(); showCardAnleitung();
     }, { passive: false });
 
+    // Daily Challenge
+    document.getElementById('btnDaily').addEventListener('click', () => {
+      if (isDailyPlayed()) return;
+      activateDailyRng();
+      handleStart(false);
+    });
+    document.getElementById('btnDaily').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (isDailyPlayed()) return;
+      activateDailyRng();
+      handleStart(false);
+    }, { passive: false });
+
     // Augen-Icon → Eckblick + Target aufdecken
     function onEyeIconTap() {
       // Nicht mehr verwendet - Eckblick wird über target_verdeckt getriggert
@@ -8877,10 +8933,6 @@
         // target_verdeckt ausblenden
         if (window._targetMeshes['target_verdeckt.webp']) {
           window._targetMeshes['target_verdeckt.webp'].visible = false;
-        }
-        // target_stapel2 nur in Zyklus 1
-        if (window._targetMeshes['target_stapel2.webp']) {
-          window._targetMeshes['target_stapel2.webp'].visible = (window._stichCycle === 0);
         }
         // Aktuelles target_N bleibt sichtbar (wurde vom Zyklus-Code eingeblendet)
       }
@@ -9159,7 +9211,7 @@
       const pct = Math.max(0, Math.min(100, effizienz));
       barFill.style.cssText = 'height:100%;border-radius:6px 0 0 6px;' +
         'width:' + pct + '%;' +
-        'background:linear-gradient(90deg, rgba(206,219,37,0.7), rgba(206,219,37,1));' +
+        'background:linear-gradient(90deg, rgba(160,155,28,0.5), rgba(160,155,28,0.85));' +
         'transition:width 1s ease-out;';
       barOuter.appendChild(barFill);
 
@@ -9186,7 +9238,8 @@
         return '\ud83d\udfe8'; // 🟨 Player, nicht perfekt
       }).join('');
 
-      const shareText = 'STICH +1 \ud83c\udfb2\ud83c\udccf\n' +
+      const dailyTag = window._dailyMode ? ' #' + window._dailyDayNum : '';
+      const shareText = 'STICH +1' + dailyTag + '\n' +
         starStr + '\n' +
         'PLAYER ' + String(ps).padStart(3,'0') + ' : BANK ' + String(bs).padStart(3,'0') + '\n' +
         'EFFIZIENZ: ' + effizienz + '%\n' +
@@ -9194,20 +9247,21 @@
         '#DigiKipp #StichPlusOne';
 
       const btnShare = document.createElement('button');
-      btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">\u2b06\ufe0f TEILEN</span>';
-      btnShare.style.cssText = 'background:linear-gradient(135deg, rgba(206,219,37,0.9), rgba(187,183,32,0.9));' +
-        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
-        'color:#1a1a1a;cursor:pointer;border-radius:6px;' +
+      btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">TEILEN</span>';
+      btnShare.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:1px solid rgba(206,219,37,0.4);' +
+        'width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'color:#cedb25;cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:10px;' +
-        'box-shadow:0 2px 8px rgba(0,0,0,0.4);';
+        'text-shadow:0 1px 3px rgba(0,0,0,0.6);';
       btnShare.onclick = () => {
         if (navigator.share) {
           navigator.share({ text: shareText }).catch(() => {});
         } else {
           navigator.clipboard.writeText(shareText).then(() => {
-            btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">\u2705 KOPIERT!</span>';
+            btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">KOPIERT!</span>';
             setTimeout(() => {
-              btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">\u2b06\ufe0f TEILEN</span>';
+              btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">TEILEN</span>';
             }, 2000);
           }).catch(() => {});
         }
@@ -9287,10 +9341,6 @@
           for (const key in (window._stichMeshes || {})) {
             if (window._stichMeshes[key].visible) stichVisible[key] = true;
           }
-          const stichVisible2 = {};
-          for (const key in (window._stichMeshes2 || {})) {
-            if (window._stichMeshes2[key].visible) stichVisible2[key] = true;
-          }
           const state = {
             cardMode: window._cardMode,
             phase: gamePhase,
@@ -9313,7 +9363,6 @@
             cubeQuat: [cube.quaternion.x, cube.quaternion.y, cube.quaternion.z, cube.quaternion.w],
             kipp21KippCount,
             stichVisible,
-            stichVisible2,
             stichResults: window._stichResults || [],
             currentTarget: window._cardTargetState ? window._cardTargetState.currentTarget : null
           };
@@ -9335,6 +9384,8 @@
     }
 
     function backToStartScreen() {
+      // Daily RNG deaktivieren
+      deactivateDailyRng();
       // KIPP-TIPP Overlay schließen falls offen
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
       disableReplayBlocker();
@@ -9415,7 +9466,6 @@
         // Stich-Grafiken ausblenden
         if (window._stichMeshes) {
           Object.values(window._stichMeshes).forEach(m => m.visible = false);
-          Object.values(window._stichMeshes2 || {}).forEach(m => m.visible = false);
         }
         // Spielerkarte ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
@@ -11705,7 +11755,7 @@
 
         // Stich-Grafik einblenden — deckungsgleich, überdeckt vorherige automatisch
         const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
-        const meshSet = (window._stichCycle >= 1) ? window._stichMeshes2 : window._stichMeshes;
+        const meshSet = window._stichMeshes;
         if (meshSet[stichFile]) {
           meshSet[stichFile].visible = true;
         }
@@ -11729,6 +11779,12 @@
             // Spiel beendet nach 6 Stichen
             _stichLock = false;
             saveCardBestScore(window._playerScore3D || 0, window._bankScore3D || 0);
+            if (window._dailyMode) {
+              const totalDev = (window._stichResults || []).reduce((s, r) => s + r.deviation, 0);
+              const eff = Math.round((36 - totalDev) / 36 * 100);
+              saveDailyResult(window._playerScore3D || 0, window._bankScore3D || 0, eff);
+              deactivateDailyRng();
+            }
             document.getElementById('btnBestScores').classList.add('pulsing');
             setTimeout(() => showEndScreen(), 800);
           } else {
@@ -12066,13 +12122,6 @@
                 }
               }
             }
-            if (state.stichVisible2) {
-              for (const key in state.stichVisible2) {
-                if (window._stichMeshes2 && window._stichMeshes2[key]) {
-                  window._stichMeshes2[key].visible = true;
-                }
-              }
-            }
 
             // Target wiederherstellen
             if (state.currentTarget) {
@@ -12105,10 +12154,6 @@
               }
               // Aktuelle zeigen
               if (window._targetMeshes[curTargetN]) window._targetMeshes[curTargetN].visible = true;
-              // Stapel nur in Zyklus 0
-              if (window._targetMeshes['target_stapel2.webp']) {
-                window._targetMeshes['target_stapel2.webp'].visible = (window._stichCycle === 0);
-              }
             }
 
             // Spielphase setzen
