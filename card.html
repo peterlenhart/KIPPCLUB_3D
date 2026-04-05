@@ -2335,69 +2335,72 @@
       window._targetRankMesh.visible = false;
       scene.add(window._targetRankMesh);
 
-      // === PLAYER-KARTE (eingeloggte Karte) — Single Canvas ===
-      const _pcCanvas = document.createElement('canvas');
-      _pcCanvas.width = 1092; _pcCanvas.height = 560;
-      const _pcCtx = _pcCanvas.getContext('2d');
-      const _pcTex = new THREE.CanvasTexture(_pcCanvas);
-      const _pcImg = new Image();
-      _pcImg.src = 'playercard.webp';
+      // === PLAYER-KARTE (eingeloggte Karte) ===
+      const pCardOffset = 40 * 0.15625 / 45; // 40px östlich
+      const pCardRot = -6 * Math.PI / 180; // 6° CW
 
-      // Suit-Bilder vorladen
-      const _pcSuitImgs = {};
-      ['herz.png','karo.png','kreuz.png','pik.png'].forEach(f => {
-        const si = new Image(); si.src = f; _pcSuitImgs[f] = si;
-      });
-
+      // playercard.webp Mesh — kein Extra-Offset (im Bild eingebaut)
       window._playerCardMesh = null;
-      _pcImg.onload = () => {
-        const w3d = (_pcImg.width / 3) * (0.15625 / 45);
-        const h3d = (_pcImg.height / 3) * (0.15625 / 45);
+      new THREE.TextureLoader().load('playercard.webp', (tex) => {
+        const imgW = tex.image.width;
+        const imgH = tex.image.height;
+        const w3d = (imgW / 3) * (0.15625 / 45);
+        const h3d = (imgH / 3) * (0.15625 / 45);
         const geo = new THREE.PlaneGeometry(w3d, h3d);
-        const mat = new THREE.MeshBasicMaterial({ map: _pcTex, transparent: true, depthWrite: false });
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
         window._playerCardMesh = new THREE.Mesh(geo, mat);
         window._playerCardMesh.rotation.x = -Math.PI / 2;
-        // Keine Rotation — die Karte ist im Bild bereits 6° CW gedreht
         window._playerCardMesh.position.set(a11X + w3d / 2, yPos + 0.011, a11Z + h3d / 2);
         window._playerCardMesh.renderOrder = 25;
         window._playerCardMesh.visible = false;
         scene.add(window._playerCardMesh);
-      };
+      });
 
-      // Kartenfläche auf playercard.webp zeichnen (Wert + Farbe)
-      // Pixelanalyse: Kartenfläche Mitte bei (597, 277), Obere Hälfte (597, 205), Untere Hälfte (597, 349)
-      window.drawPlayerCard = function(rankText, colorName) {
-        _pcCtx.clearRect(0, 0, 1092, 560);
-        _pcCtx.drawImage(_pcImg, 0, 0);
+      // Player Rank Text Mesh
+      const pRankCanvas = document.createElement('canvas');
+      pRankCanvas.width = 128; pRankCanvas.height = 128;
+      const pRankCtx = pRankCanvas.getContext('2d');
+      const pRankTexture = new THREE.CanvasTexture(pRankCanvas);
+      const pRankGeo = new THREE.PlaneGeometry(0.15625, 0.15625);
+      const pRankMat = new THREE.MeshBasicMaterial({ map: pRankTexture, transparent: true, depthWrite: false });
+      window._playerRankMesh = new THREE.Mesh(pRankGeo, pRankMat);
+      window._playerRankMesh.rotation.x = -Math.PI / 2;
+      window._playerRankMesh.rotation.z = pCardRot;
+      window._playerRankMesh.position.set(rank12D_X + pCardOffset, yPos + 0.012, rank12D_Z);
+      window._playerRankMesh.renderOrder = 26;
+      window._playerRankMesh.visible = false;
+      scene.add(window._playerRankMesh);
 
-        // Karte ist ~6° CW gedreht im Bild
-        const angle = -6 * Math.PI / 180;
+      window.updatePlayerRankDisplay = function(text) {
+        pRankCtx.clearRect(0, 0, 128, 128);
+        pRankCtx.font = '900 90px "Noto Serif"';
+        pRankCtx.textAlign = 'center';
+        pRankCtx.textBaseline = 'middle';
+        pRankCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+        pRankCtx.fillText(text, 64, 64);
+        pRankTexture.needsUpdate = true;
+      }
 
-        // Wert in obere Hälfte
-        _pcCtx.save();
-        _pcCtx.translate(597, 210);
-        _pcCtx.rotate(angle);
-        _pcCtx.font = '900 100px "Noto Serif"';
-        _pcCtx.textAlign = 'center';
-        _pcCtx.textBaseline = 'middle';
-        _pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
-        _pcCtx.fillText(rankText, 0, 0);
-        _pcCtx.restore();
-
-        // Suit in untere Hälfte
-        const SUIT_FILE = { violett:'pik.png', blau:'herz.png', gruen:'karo.png', orange:'kreuz.png' };
-        const suitImg = _pcSuitImgs[SUIT_FILE[colorName]];
-        if (suitImg && suitImg.complete) {
-          _pcCtx.save();
-          _pcCtx.translate(597, 345);
-          _pcCtx.rotate(angle);
-          const suitSize = 140;
-          _pcCtx.drawImage(suitImg, -suitSize/2, -suitSize/2, suitSize, suitSize);
-          _pcCtx.restore();
-        }
-
-        _pcTex.needsUpdate = true;
-      };
+      // Player Suit Meshes
+      window._playerSuitMeshes = {};
+      ['herz.png','karo.png','kreuz.png','pik.png'].forEach((file) => {
+        new THREE.TextureLoader().load(file, (tex) => {
+          const imgW = tex.image.width;
+          const imgH = tex.image.height;
+          const w3d = (imgW / 3) * (0.15625 / 45);
+          const h3d = (imgH / 3) * (0.15625 / 45);
+          const geo = new THREE.PlaneGeometry(w3d, h3d);
+          const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.rotation.z = pCardRot;
+          mesh.position.set(a11X + w3d / 2 + pCardOffset, yPos + 0.013, a11Z + h3d / 2);
+          mesh.renderOrder = 27;
+          mesh.visible = false;
+          scene.add(mesh);
+          window._playerSuitMeshes[file] = mesh;
+        });
+      });
 
       window.updateTargetRankDisplay = function(text) {
         rankCtx.clearRect(0, 0, 128, 128);
@@ -9133,6 +9136,8 @@
         }
         // Spielerkarte ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
+        if (window._playerRankMesh) window._playerRankMesh.visible = false;
+        Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
         // slotAlpha in allen Faces zurücksetzen
         for (const fk of ['f0','f1','f2']) {
           const f = faceSlots[fk];
@@ -11381,8 +11386,14 @@
       markSlotAsPlayed(slotIdx);
 
       // t=0: Eingeloggte Spielerkarte anzeigen
-      drawPlayerCard(displayNum(slot.val), slot.color);
       if (window._playerCardMesh) window._playerCardMesh.visible = true;
+      Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+      const pSuitFile = SUIT_IMG_BY_COLOR[slot.color];
+      if (pSuitFile && window._playerSuitMeshes[pSuitFile]) {
+        window._playerSuitMeshes[pSuitFile].visible = true;
+      }
+      updatePlayerRankDisplay(displayNum(slot.val));
+      if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
       const sNum = window._stichNum + 1;
       st.currentTarget = null;
@@ -11391,6 +11402,8 @@
       setTimeout(() => {
         // Spielerkarte ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
+        Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+        if (window._playerRankMesh) window._playerRankMesh.visible = false;
         // Target Suit + Rank + target_N ausblenden
         Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
         if (window._targetRankMesh) window._targetRankMesh.visible = false;
