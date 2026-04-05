@@ -8899,14 +8899,27 @@
     // Daily Challenge
     document.getElementById('btnDaily').addEventListener('click', () => {
       if (isDailyPlayed()) return;
+      // Vorheriges Spiel komplett zurücksetzen
+      if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
+      if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
+      if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
+      if (window._targetRankMesh) window._targetRankMesh.visible = false;
+      if (window._playerCardMesh) window._playerCardMesh.visible = false;
+      if (window._playerRankMesh) window._playerRankMesh.visible = false;
+      Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+      if (window._scorePLMesh) window._scorePLMesh.visible = false;
+      if (window._scoreBKMesh) window._scoreBKMesh.visible = false;
+      window._playedSlots = new Set();
+      window._stichNum = 0;
+      window._stichResults = [];
+      if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
       activateDailyRng();
       handleStart(false);
     });
     document.getElementById('btnDaily').addEventListener('touchend', (e) => {
       e.preventDefault();
       if (isDailyPlayed()) return;
-      activateDailyRng();
-      handleStart(false);
+      document.getElementById('btnDaily').click();
     }, { passive: false });
 
     // Augen-Icon → Eckblick + Target aufdecken
