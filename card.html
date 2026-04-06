@@ -1020,7 +1020,7 @@
   <!-- BEST SCORES Overlay -->
   <div id="bestScoresOverlay">
     <div id="bestScoresBoard">
-      <img src="scoretafel.png" alt="Best Scores">
+      <img src="scoretafel_card.webp" alt="Best Scores">
       <div class="bsTitle" id="bsTitleText">HIGHSCORES</div>
       <span class="bsNum" style="top:23.69%">1.</span>
       <span class="bsNum" style="top:30.69%">2.</span>
@@ -4277,16 +4277,39 @@
       // Anleitung-Button verstecken im Tutorial
       if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
       if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
-      startKipp21(false);
+
+      // Minimaler Game-State für Tutorial (KEIN startKipp21 — keine async Interferenz)
+      gamePhase = 'kipp21';
+      kipp21Active = true;
+      kipp21Generation++;
+      isAnimating = false;
+      dragActive = false;
+      _cardLockedDir = null;
+      _cardKippCount = 0;
+
+      // Würfel explizit in Startposition bringen
+      if (cube.parent && cube.parent !== kipGroup) {
+        cube.parent.remove(cube);
+        kipGroup.add(cube);
+      }
+      const _off = 0.15625 / 2;
+      cube.position.set(-_off, _off, 0.109375 + _off);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      kippDirection = 'cw';
+
+      // Kipp-Zähler + hintText zeigen
+      kipp21KippCount = 0;
+      if (typeof formatKipps === 'function') hintText.innerHTML = formatKipps(0);
+      hintText.style.display = 'block';
+
       _startBtnLock = false;
 
-      // Warten bis startKipp21 vollständig initialisiert hat
+      // Tutorial-Modus aktivieren
       initHandEl();
-      await new Promise(r => setTimeout(r, 1500));
-
-      // JETZT erst Tutorial-Modus aktivieren (nach startKipp21 settled)
       replayActive = true;
-      kippDirection = 'cw';
+      await new Promise(r => setTimeout(r, 1200));
 
       // === SCHRITT 1: Target aufdecken ===
       showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
@@ -4424,73 +4447,45 @@
       document.body.appendChild(blurOv);
 
       requestAnimationFrame(() => { blurOv.style.opacity = '1'; });
-      await sleep(2500);
+      await new Promise(r => setTimeout(r, 2500));
 
-      // === FAKE ENDSCREEN ===
-      blurOv.innerHTML = '';
-      blurOv.style.background = 'rgba(0,0,0,0.85)';
+      // Perfekte Spieldaten setzen
+      window._playerScore3D = 84;
+      window._bankScore3D = 0;
+      window._playerWinCount = 6;
+      window._bankWinCount = 0;
+      window._stichResults = [];
+      for (let i = 0; i < 6; i++) {
+        window._stichResults.push({ winner: 'player', deviation: 0, points: 14 });
+      }
 
-      const bg = document.createElement('img');
-      bg.src = 'overlay_card.webp';
-      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;opacity:0.4;';
-      blurOv.appendChild(bg);
+      // Blur weg, echten Endscreen zeigen
+      blurOv.remove();
+      showEndScreen();
 
-      const inner = document.createElement('div');
-      inner.style.cssText = 'position:relative;z-index:1;display:flex;flex-direction:column;' +
-        'align-items:center;gap:10px;width:100%;';
-
-      // GEWONNEN
-      const title = document.createElement('div');
-      title.style.cssText = 'font:bold 32px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.8);letter-spacing:3px;';
-      title.textContent = T.cWon || 'GEWONNEN!';
-      inner.appendChild(title);
-
-      // Score
-      const scoreRow = document.createElement('div');
-      scoreRow.style.cssText = 'display:flex;align-items:center;gap:20px;margin:6px 0;';
-      scoreRow.innerHTML = '<div style="text-align:center"><div style="font:bold 14px Arial;color:#cedb25;letter-spacing:1px;">PLAYER</div><div style="font:bold 36px Arial;color:#cedb25;">084</div></div>' +
-        '<div style="font:300 36px Arial;color:rgba(224,208,184,0.3);">|</div>' +
-        '<div style="text-align:center"><div style="font:bold 14px Arial;color:#e0d0b8;letter-spacing:1px;">BANK</div><div style="font:bold 36px Arial;color:#e0d0b8;">000</div></div>';
-      inner.appendChild(scoreRow);
-
-      // Sterne
-      const stars = document.createElement('div');
-      stars.style.cssText = 'font-size:28px;letter-spacing:4px;';
-      stars.textContent = '★★★★★★';
-      inner.appendChild(stars);
-
-      // Stich-Info
-      const info = document.createElement('div');
-      info.style.cssText = 'font:14px Arial;color:#e0d0b8;opacity:0.8;';
-      info.textContent = '6 ' + (T.cStiche || 'von 6 STICHEN') + '  •  6× ' + (T.cPerfekt || 'perfekt +1');
-      inner.appendChild(info);
-
-      // Effizienz
-      const effRow = document.createElement('div');
-      effRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin:6px 0;';
-      effRow.innerHTML = '<span style="font:bold 14px Arial;color:#e0d0b8;letter-spacing:1px;">' +
-        (T.cEffizienz || 'EFFIZIENZ') + '</span>' +
-        '<div style="width:160px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">' +
-        '<div style="width:100%;height:100%;background:linear-gradient(90deg,#8b7530,#cedb25);border-radius:12px;"></div></div>' +
-        '<span style="font:bold 18px Arial;color:#cedb25;">100%</span>';
-      inner.appendChild(effRow);
-
-      // SPIELEN Button
-      const btnPlay = document.createElement('button');
-      btnPlay.textContent = T.sp || 'SPIELEN';
-      btnPlay.style.cssText = 'margin-top:16px;background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2.5px;' +
-        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
-      btnPlay.onclick = () => {
-        blurOv.remove();
-        if (_tutHintEl) { _tutHintEl.remove(); _tutHintEl = null; }
-        backToStartScreen();
-        setTimeout(() => handleStart(false), 300);
-      };
-      btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
-      inner.appendChild(btnPlay);
-
-      blurOv.appendChild(inner);
+      // Buttons durch SPIELEN ersetzen
+      await new Promise(r => setTimeout(r, 100));
+      const endOv = document.getElementById('_endScreenOverlay');
+      if (endOv) {
+        // Alle existierenden Buttons entfernen
+        endOv.querySelectorAll('button').forEach(b => b.remove());
+        // SPIELEN Button einfügen
+        const btnPlay = document.createElement('button');
+        btnPlay.textContent = T.sp || 'SPIELEN';
+        btnPlay.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+          'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2.5px;' +
+          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
+        btnPlay.onclick = () => {
+          endOv.remove();
+          if (_tutHintEl) { _tutHintEl.remove(); _tutHintEl = null; }
+          backToStartScreen();
+          setTimeout(() => handleStart(false), 300);
+        };
+        btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
+        // In den inneren Container einfügen
+        const innerDiv = endOv.querySelector('div > div');
+        if (innerDiv) innerDiv.appendChild(btnPlay);
+      }
     }
 
     // Slot-Screen-Position aus Deck-Index berechnen
