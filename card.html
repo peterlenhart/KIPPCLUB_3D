@@ -9269,14 +9269,14 @@
       handleStart(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => {
-      if (_cardModePhase === 0) { showModeSelection(); return; }
       window._cardMode = 'offen';
+      _cardModePhase = 1; // Skip mode selection
       runCardTutorial();
     });
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault();
-      if (_cardModePhase === 0) { showModeSelection(); return; }
       window._cardMode = 'offen';
+      _cardModePhase = 1;
       runCardTutorial();
     }, { passive: false });
     document.getElementById('btnAnleitung').addEventListener('click', () => showCardAnleitung());
