@@ -2190,7 +2190,7 @@
       scene.add(window._pauseTextMesh);
       
       // ANLEITUNG-Button auf Zeile 15 (3D, Spieltisch): reset_card gespiegelt rechts + "Anleitung" Text
-      const anlBtnZ = pauseZ; // Exakt wie Pause
+      const anlBtnZ = pauseZ - 1 * 0.15625 / 45; // Exakt wie Pause
       const anlBtnIconX = 3.5 * 0.15625 - 0.076; // Gespiegelt von pauseIconX
 
       window._anlBtnIconMesh = null;
@@ -2212,7 +2212,7 @@
       const atc = document.createElement('canvas');
       atc.width = 256; atc.height = 64;
       const atctx = atc.getContext('2d');
-      atctx.font = 'bold 36px Arial';
+      atctx.font = 'bold 38px Arial';
       atctx.textAlign = 'right';
       atctx.textBaseline = 'middle';
       atctx.fillStyle = '#e0d0b8';
@@ -2562,15 +2562,24 @@
         new THREE.TextureLoader().load(file, (tex) => {
           const imgW = tex.image.width;
           const imgH = tex.image.height;
-          const w3d = (imgW / 3) * (0.15625 / 45); // px → 3D Einheiten (45px = 1 Zelle)
+          const w3d = (imgW / 3) * (0.15625 / 45);
           const h3d = (imgH / 3) * (0.15625 / 45);
           const geo = new THREE.PlaneGeometry(w3d, h3d);
           const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
           const mesh = new THREE.Mesh(geo, mat);
           mesh.rotation.x = -Math.PI / 2;
-          // Mesh-Zentrum so, dass li ob Ecke auf A11 li ob Ecke liegt
-          mesh.position.set(a11X + w3d / 2, yPos + 0.001 + idx * 0.001, a11Z + h3d / 2);
-          mesh.renderOrder = 5 + idx;
+          // Stapel: target_6 ganz unten, target_1 oben, target_verdeckt ganz oben
+          let stackY, stackOrder;
+          if (file === 'target_verdeckt.webp') {
+            stackY = yPos + 0.008;
+            stackOrder = 12;
+          } else {
+            const num = parseInt(file.match(/\d/)[0]); // 1-6
+            stackY = yPos + 0.001 + (6 - num) * 0.001; // 1→0.006, 6→0.001
+            stackOrder = 5 + (6 - num); // 1→10, 6→5
+          }
+          mesh.position.set(a11X + w3d / 2, stackY, a11Z + h3d / 2);
+          mesh.renderOrder = stackOrder;
           mesh.visible = false;
           scene.add(mesh);
           window._targetMeshes[file] = mesh;
@@ -8898,10 +8907,10 @@
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
       if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      // Bankkarten sichtbar: Stapel + target_1 + target_verdeckt
+      // Alle Targets gestapelt sichtbar (6 unten, 1 oben, verdeckt ganz oben)
       if (window._targetMeshes) {
         Object.entries(window._targetMeshes).forEach(([name, m]) => {
-          m.visible = (name === 'target_1.webp' || name === 'target_verdeckt.webp');
+          m.visible = true;
         });
       }
       if (window._targetRankMesh) window._targetRankMesh.visible = false;
