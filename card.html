@@ -823,11 +823,12 @@
     #bestScoresClose {
       position: absolute;
       bottom: 63px; left: 50%; transform: translateX(-50%);
-      background: url(button_lang.webp) center/contain no-repeat;
+      background: url(buttonfilz.webp) center/cover no-repeat;
       width: 280px; height: 49px; border: none; cursor: pointer;
-      font: bold 16px Arial; color: #d0d0d0; letter-spacing: 2px;
-      text-shadow: 0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);
+      font: bold 16px Arial; color: #fff; letter-spacing: 2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
       pointer-events: auto;
+      border-radius: 6px;
     }
 
     /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
@@ -3263,8 +3264,11 @@
     function saveCardBestScore(playerScore, bankScore) {
       try {
         const scores = loadCardBestScores();
-        scores.push({ player: playerScore, bank: bankScore, ts: Date.now() });
-        scores.sort((a, b) => b.player - a.player || a.bank - b.bank);
+        const results = window._stichResults || [];
+        const totalDev = results.reduce((s, r) => s + r.deviation, 0);
+        const eff = Math.round((36 - totalDev) / 36 * 100);
+        scores.push({ player: playerScore, bank: bankScore, eff: eff, ts: Date.now() });
+        scores.sort((a, b) => (b.eff || 0) - (a.eff || 0) || b.player - a.player || a.bank - b.bank);
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_card_bestscores', JSON.stringify(top11));
         return top11;
@@ -3289,11 +3293,14 @@
           const s = scores[i];
           const ul = (i === latestIdx) ? 'text-decoration:underline;text-underline-offset:3px;' : '';
           el.innerHTML =
-            '<span style="color:#cedb25;font-size:17px;font-weight:bold;' + ul + '">PLAYER ' +
+            '<span style="color:#cedb25;font-size:15px;font-weight:bold;' + ul + '">Pl ' +
             String(s.player).padStart(3, '0') + '</span>' +
-            ' <span style="color:#888;font-size:14px">|</span> ' +
-            '<span style="color:#e05050;font-size:17px;font-weight:bold;' + ul + '">BANK ' +
-            String(s.bank).padStart(3, '0') + '</span>';
+            ' <span style="color:#888;font-size:12px">|</span> ' +
+            '<span style="color:#e05050;font-size:15px;font-weight:bold;' + ul + '">B ' +
+            String(s.bank).padStart(3, '0') + '</span>' +
+            ' <span style="color:#888;font-size:12px">|</span> ' +
+            '<span style="color:#e0d0b8;font-size:15px;font-weight:bold;' + ul + '">' +
+            (s.eff !== undefined ? s.eff : '?') + '%</span>';
         } else {
           el.textContent = '';
         }
@@ -4243,193 +4250,147 @@
     }
 
     async function runCardTutorial() {
-      // Spiel starten (normaler KIPP +1 Modus)
-      _startBtnLock = true;
-      unlockAndPlayBgMusic();
-      document.getElementById('startOverlay').style.display = 'none';
-      if (window._buttonOverlay) window._buttonOverlay.visible = false;
-      // Targets sichtbar
-      if (window._targetMeshes) {
-        Object.entries(window._targetMeshes).forEach(([n, m]) => { m.visible = true; });
-      }
-      if (window._targetRankMesh) window._targetRankMesh.visible = false;
-      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
-      startTargetPulse();
-      // State zurücksetzen
-      window._stichNum = 0; window._stichCycle = 0; window._stichResults = [];
-      window._playerWinCount = 0; window._bankWinCount = 0;
-      window._stichGeneration = (window._stichGeneration || 0) + 1;
-      window._playedSlots = new Set();
-      if (window._cardTargetState) {
-        window._cardTargetState.usedNumbers.clear();
-        window._cardTargetState.drawsCount = 0;
-        window._cardTargetState.currentTarget = null;
-        window._cardTargetState.round = 1;
-      }
-      if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
-      if (window._playerCardMesh) window._playerCardMesh.visible = false;
-      if (window._playerRankMesh) window._playerRankMesh.visible = false;
-      Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
-      if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
-      if (window._scorePLMesh) window._scorePLMesh.visible = true;
-      if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
-      initScores3D();
-      // Anleitung-Button verstecken im Tutorial
-      if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
-      if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
+      // Normales Spiel starten — NICHTS am Würfel ändern
+      handleStart(false);
 
-      // Minimaler Game-State für Tutorial (KEIN startKipp21 — keine async Interferenz)
-      gamePhase = 'kipp21';
-      kipp21Active = true;
-      kipp21Generation++;
-      isAnimating = false;
-      dragActive = false;
-      _cardLockedDir = null;
-      _cardKippCount = 0;
+      // Warten bis Spiel komplett initialisiert (startKipp21 async fertig)
+      await new Promise(r => setTimeout(r, 2000));
 
-      // Würfel explizit in Startposition bringen
-      if (cube.parent && cube.parent !== kipGroup) {
-        cube.parent.remove(cube);
-        kipGroup.add(cube);
-      }
-      const _off = 0.15625 / 2;
-      cube.position.set(-_off, _off, 0.109375 + _off);
-      cube.quaternion.set(0, 0, 0, 1);
-      currentQuadrant = 3;
-      topFace = 'f2';
-      kippDirection = 'cw';
-
-      // Kipp-Zähler + hintText zeigen
-      kipp21KippCount = 0;
-      if (typeof formatKipps === 'function') hintText.innerHTML = formatKipps(0);
-      hintText.style.display = 'block';
-
-      _startBtnLock = false;
-
-      // Tutorial-Modus aktivieren
+      // Jetzt Tutorial-Hand aktivieren
       initHandEl();
       replayActive = true;
-      await new Promise(r => setTimeout(r, 1200));
+      const tutGen = kipp21Generation;
+      function aborted() { return !replayActive || kipp21Generation !== tutGen; }
+      function tutSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-      // === SCHRITT 1: Target aufdecken ===
-      showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
-      await sleep(600);
-      await handTapFromSouth(169, 491, 500);
-      onTargetVerdecktTap();
-      await sleep(3500); // Eckblick-Animation abwarten
+      // User-Input blockieren
+      renderer.domElement.style.pointerEvents = 'none';
 
-      // === SCHRITT 2: Eckblick ===
-      showTutHint(T.cTut2 || 'Schau dir die Kartenwerte an');
-      await sleep(600);
-      // Eckblick wurde schon durch onTargetVerdecktTap ausgelöst
-      // Warten bis Würfel wieder liegt
-      await sleep(2000);
+      try {
+        // === SCHRITT 1: Target aufdecken ===
+        showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
+        await tutSleep(600);
+        await handTapFromSouth(169, 491, 500);
+        if (aborted()) return;
+        onTargetVerdecktTap();
+        await tutSleep(5000); // Eckblick-Animation abwarten
 
-      // === SCHRITT 3: Kippen ===
-      showTutHint(T.cTut3 || 'Kippe den Würfel');
-      await sleep(600);
+        // === SCHRITT 2: Eckblick-Hinweis ===
+        if (aborted()) return;
+        showTutHint(T.cTut2 || 'Schau dir die Kartenwerte an');
+        await tutSleep(2500);
 
-      // Erste Richtung festlegen (CW)
-      _cardLockedDir = 'cw';
-      kippDirection = 'cw';
+        // === SCHRITT 3: Kippen ===
+        if (aborted()) return;
+        showTutHint(T.cTut3 || 'Kippe den Würfel');
+        await tutSleep(600);
 
-      // Tutorial-Kipp-Hilfsfunktion
-      async function tutKipp() {
-        if (!replayActive) return;
-        const dir = CW_KIPP[currentQuadrant];
-        const c = cubeScreenXY();
-        const off = kippPixelDir(dir);
-        setHandPos(c.x, c.y);
-        handEl.style.opacity = '1';
-        updateHandShadow(c.x, c.y, true);
-        await sleep(300);
-        isAnimating = false;
-        const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, 800);
-        await performKipp(dir, 800);
-        advanceTopFace();
-        _cardKippCount++;
-        await moveP;
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await sleep(300);
-      }
+        _cardLockedDir = 'cw';
+        kippDirection = 'cw';
 
-      // 1. Kipp
-      await tutKipp();
-      // 2. Kipp
-      await tutKipp();
+        // Kipp-Funktion: Hand auf Würfelmitte, wischt in Kipprichtung, Würfel kippt echt
+        async function tutKipp() {
+          if (aborted()) return;
+          const dir = CW_KIPP[currentQuadrant];
+          const c = cubeScreenXY();
+          const off = kippPixelDir(dir);
+          setHandPos(c.x, c.y);
+          handEl.style.opacity = '1';
+          updateHandShadow(c.x, c.y, true);
+          await tutSleep(300);
+          isAnimating = false;
+          const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, 800);
+          await performKipp(dir, 800);
+          advanceTopFace();
+          _cardKippCount++;
+          await moveP;
+          handEl.style.opacity = '0';
+          updateHandShadow(0, 0, false);
+          await tutSleep(300);
+        }
 
-      // === SCHRITT 4: Rückkipp-Versuch ===
-      showTutHint(T.cTut4 || 'Zurückkippen nicht erlaubt!');
-      await sleep(300);
-      const c = cubeScreenXY();
-      const backDir = CCW_KIPP[currentQuadrant];
-      const backOff = kippPixelDir(backDir);
-      setHandPos(c.x, c.y);
-      handEl.style.opacity = '1';
-      updateHandShadow(c.x, c.y, true);
-      await sleep(300);
-      await moveHandSmooth(c.x + backOff.dx * 0.6, c.y + backOff.dy * 0.6, 500);
-      showCardKippWarning();
-      await sleep(800);
-      handEl.style.opacity = '0';
-      updateHandShadow(0, 0, false);
-      await sleep(500);
+        // 1. Kipp
+        await tutKipp();
+        if (aborted()) return;
+        // 2. Kipp
+        await tutKipp();
+        if (aborted()) return;
 
-      // === SCHRITT 5: Weiter kippen ===
-      showTutHint(T.cTut3 || 'Kippe den Würfel');
-      await sleep(400);
+        // === SCHRITT 4: Rückkipp-Versuch ===
+        showTutHint(T.cTut4 || 'Zurückkippen nicht erlaubt!');
+        await tutSleep(300);
+        {
+          const c = cubeScreenXY();
+          const backDir = CCW_KIPP[currentQuadrant];
+          const backOff = kippPixelDir(backDir);
+          setHandPos(c.x, c.y);
+          handEl.style.opacity = '1';
+          updateHandShadow(c.x, c.y, true);
+          await tutSleep(300);
+          await moveHandSmooth(c.x + backOff.dx * 0.6, c.y + backOff.dy * 0.6, 500);
+          showCardKippWarning();
+          await tutSleep(800);
+          handEl.style.opacity = '0';
+          updateHandShadow(0, 0, false);
+        }
+        if (aborted()) return;
+        await tutSleep(500);
 
-      // 3. Kipp
-      await tutKipp();
-      // 4. Kipp
-      await tutKipp();
+        // === SCHRITT 5: Weiter kippen ===
+        showTutHint(T.cTut3 || 'Kippe den Würfel');
+        await tutSleep(400);
+        // 3. Kipp
+        await tutKipp();
+        if (aborted()) return;
+        // 4. Kipp
+        await tutKipp();
+        if (aborted()) return;
 
-      // === SCHRITT 6: Karte ausspielen ===
-      showTutHint(T.cTut5 || 'Halte eine Karte gedrückt');
-      await sleep(600);
+        // === SCHRITT 6: Karte ausspielen ===
+        showTutHint(T.cTut5 || 'Halte eine Karte gedrückt');
+        await tutSleep(600);
 
-      // Aktiven Slot finden (erster nicht-gespielter auf aktueller Seite)
-      let targetSlot = -1;
-      const face = faceSlots[topFace];
-      if (face) {
-        for (const key in face.slotMap) {
-          const idx = face.slotMap[key].deckIdx;
-          if (idx !== undefined && !window._playedSlots.has(idx)) {
-            targetSlot = idx;
-            break;
+        // Aktiven Slot finden
+        let targetSlot = -1;
+        const face = faceSlots[topFace];
+        if (face) {
+          for (const key in face.slotMap) {
+            const idx = face.slotMap[key].deckIdx;
+            if (idx !== undefined && !window._playedSlots.has(idx)) {
+              targetSlot = idx;
+              break;
+            }
           }
         }
-      }
-      // Fallback: ersten aktiven Slot über alle Faces suchen
-      if (targetSlot < 0) {
-        for (let i = 0; i < 12; i++) {
-          if (!window._playedSlots.has(i)) { targetSlot = i; break; }
+        if (targetSlot < 0) {
+          for (let i = 0; i < 12; i++) {
+            if (!window._playedSlots.has(i)) { targetSlot = i; break; }
+          }
         }
+
+        // Hand zum Slot bewegen
+        const slotPos = getSlotScreenPos(targetSlot);
+        if (slotPos) {
+          setHandPos(slotPos.x, 740);
+          handEl.style.opacity = '1';
+          updateHandShadow(slotPos.x, 740, true);
+          await moveHandSmooth(slotPos.x, slotPos.y, 800);
+          await tutSleep(900);
+        }
+
+        // Stich auslösen
+        if (targetSlot >= 0) handleStichConfirm(targetSlot);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        showTutHint('');
+
+        // Stich-Animation abwarten
+        await tutSleep(5500);
+
+      } finally {
+        replayActive = false;
+        renderer.domElement.style.pointerEvents = 'auto';
       }
-
-      // Slot-Position auf Screen projizieren per UV
-      const slotScreenPos = getSlotScreenPos(targetSlot);
-      if (slotScreenPos) {
-        setHandPos(slotScreenPos.x, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(slotScreenPos.x, 740, true);
-        await moveHandSmooth(slotScreenPos.x, slotScreenPos.y, 800);
-        await sleep(900); // Long-Press simulieren
-      }
-
-      // Stich auslösen
-      if (targetSlot >= 0) {
-        handleStichConfirm(targetSlot);
-      }
-      handEl.style.opacity = '0';
-      updateHandShadow(0, 0, false);
-      showTutHint('');
-
-      // Stich-Animation abwarten
-      await sleep(5500);
-
-      replayActive = false;
 
       // === BLUR + TEXT ===
       const blurOv = document.createElement('div');
@@ -4467,9 +4428,7 @@
       await new Promise(r => setTimeout(r, 100));
       const endOv = document.getElementById('_endScreenOverlay');
       if (endOv) {
-        // Alle existierenden Buttons entfernen
         endOv.querySelectorAll('button').forEach(b => b.remove());
-        // SPIELEN Button einfügen
         const btnPlay = document.createElement('button');
         btnPlay.textContent = T.sp || 'SPIELEN';
         btnPlay.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
@@ -4482,7 +4441,6 @@
           setTimeout(() => handleStart(false), 300);
         };
         btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
-        // In den inneren Container einfügen
         const innerDiv = endOv.querySelector('div > div');
         if (innerDiv) innerDiv.appendChild(btnPlay);
       }
