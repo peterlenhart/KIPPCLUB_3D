@@ -2219,6 +2219,8 @@
       window._stichNum = 0;
       window._stichCycle = 0;
       window._stichResults = []; // Track each stich: { winner, playerRankIdx, targetRankIdx, deviation }
+      window._playerWinCount = 0;
+      window._bankWinCount = 0;
       window._cardTargetState = {
         usedNumbers: new Set(),
         drawsCount: 0,
@@ -8869,7 +8871,17 @@
       window._stichNum = 0;
       window._stichCycle = 0;
       window._stichResults = [];
+      window._playerWinCount = 0;
+      window._bankWinCount = 0;
+      window._stichGeneration = (window._stichGeneration || 0) + 1;
       window._playedSlots = new Set();
+      // Target-State zurücksetzen
+      if (window._cardTargetState) {
+        window._cardTargetState.usedNumbers.clear();
+        window._cardTargetState.drawsCount = 0;
+        window._cardTargetState.currentTarget = null;
+        window._cardTargetState.round = 1;
+      }
       // Stich-Grafiken ausblenden
       if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
       // Playercard ausblenden
@@ -8920,6 +8932,8 @@
       window._playedSlots = new Set();
       window._stichNum = 0;
       window._stichResults = [];
+      window._playerWinCount = 0;
+      window._bankWinCount = 0;
       if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
       activateDailyRng();
       handleStart(false);
@@ -9375,6 +9389,8 @@
             playerScore: window._playerScore3D || 0,
             bankScore: window._bankScore3D || 0,
             stichNum: window._stichNum || 0,
+            playerWinCount: window._playerWinCount || 0,
+            bankWinCount: window._bankWinCount || 0,
             stichCycle: window._stichCycle || 0,
             playedSlots: Array.from(window._playedSlots || []),
             usedNumbers: Array.from(window._cardTargetState.usedNumbers || []),
@@ -9492,6 +9508,8 @@
         window._stichNum = 0;
         window._stichCycle = 0;
         window._stichResults = [];
+      window._playerWinCount = 0;
+      window._bankWinCount = 0;
         // Stich-Grafiken ausblenden
         if (window._stichMeshes) {
           Object.values(window._stichMeshes).forEach(m => m.visible = false);
@@ -11765,11 +11783,21 @@
       updatePlayerRankDisplay(displayNum(slot.val));
       if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
-      const sNum = window._stichNum + 1;
+      const sNum = window._stichNum + 1; // Gesamt-Stich (für target_N)
+      // Pro-Seite Zähler für Stich-Grafiken
+      if (result.winner === 'player') {
+        window._playerWinCount = (window._playerWinCount || 0) + 1;
+      } else {
+        window._bankWinCount = (window._bankWinCount || 0) + 1;
+      }
+      const sideNum = (result.winner === 'player') ? window._playerWinCount : window._bankWinCount;
+      const _thisStichGen = window._stichGeneration || 0;
+      console.log('[STICH-GFX] gesamt=' + sNum + ' sideNum=' + sideNum + ' winner=' + result.winner);
       st.currentTarget = null;
 
       // t=4000ms: Spielerkarte + Targetkarte weg, Stich-Grafik + target_verdeckt zeigen
       setTimeout(() => {
+        if ((window._stichGeneration || 0) !== _thisStichGen) return;
         // Spielerkarte ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
         Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
@@ -11782,8 +11810,8 @@
           window._targetMeshes[curTargetFile].visible = false;
         }
 
-        // Stich-Grafik einblenden — deckungsgleich, überdeckt vorherige automatisch
-        const stichFile = 'stich' + sNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
+        // Stich-Grafik einblenden — per-side Zählung
+        const stichFile = 'stich' + sideNum + '_' + (result.winner === 'player' ? 'pl' : 'b') + '.webp';
         const meshSet = window._stichMeshes;
         if (meshSet[stichFile]) {
           meshSet[stichFile].visible = true;
@@ -11791,6 +11819,7 @@
 
         // t=4000+1000: Score zurechnen + pulsieren + nächste Runde
         setTimeout(() => {
+          if ((window._stichGeneration || 0) !== _thisStichGen) return; // Altes Spiel → ignorieren
           if (result.winner === 'player') {
             window._playerScore3D = (window._playerScore3D || 0) + result.points;
             updateScore3D('player', window._playerScore3D);
@@ -12091,6 +12120,8 @@
             window._playerScore3D = state.playerScore || 0;
             window._bankScore3D = state.bankScore || 0;
             window._stichNum = state.stichNum || 0;
+            window._playerWinCount = state.playerWinCount || 0;
+            window._bankWinCount = state.bankWinCount || 0;
             window._stichCycle = state.stichCycle || 0;
             window._playedSlots = new Set(state.playedSlots || []);
 
