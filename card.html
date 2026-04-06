@@ -8869,6 +8869,15 @@
       window._stichNum = 0;
       window._stichCycle = 0;
       window._stichResults = [];
+      window._playedSlots = new Set();
+      // Stich-Grafiken ausblenden
+      if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
+      // Playercard ausblenden
+      if (window._playerCardMesh) window._playerCardMesh.visible = false;
+      if (window._playerRankMesh) window._playerRankMesh.visible = false;
+      Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+      // Würfel-Texturen zurücksetzen
+      if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
       // Scores sichtbar
       if (window._scorePLMesh) window._scorePLMesh.visible = true;
       if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
