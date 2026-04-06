@@ -12175,6 +12175,102 @@
       try { localStorage.removeItem('digikipp_card_frozen'); } catch(e) {}
     })();
 
+    // === TUTORIAL TOUCH-TRACKING ===
+    (function() {
+      let _trkActive = false;
+      let _trkData = [];
+      let _trkStart = 0;
+      let _trkTapCount = 0;
+      let _trkTapTimer = null;
+      let _trkIndicator = null;
+
+      // 3× Pokal-Tap aktiviert Tracking
+      const pokal = document.getElementById('btnBestScores');
+      pokal.addEventListener('touchend', function() {
+        _trkTapCount++;
+        clearTimeout(_trkTapTimer);
+        _trkTapTimer = setTimeout(() => { _trkTapCount = 0; }, 800);
+        if (_trkTapCount >= 3) {
+          _trkTapCount = 0;
+          if (!_trkActive) startTracking();
+          else stopTracking();
+        }
+      });
+
+      function startTracking() {
+        _trkActive = true;
+        _trkData = [];
+        _trkStart = Date.now();
+        // Roter Punkt als Indikator
+        _trkIndicator = document.createElement('div');
+        _trkIndicator.style.cssText = 'position:fixed;top:6px;left:50%;transform:translateX(-50%);' +
+          'width:14px;height:14px;border-radius:50%;background:red;z-index:9999;' +
+          'box-shadow:0 0 6px red;animation:trkBlink 1s infinite;';
+        const style = document.createElement('style');
+        style.textContent = '@keyframes trkBlink{0%,100%{opacity:1}50%{opacity:0.3}}';
+        document.head.appendChild(style);
+        document.body.appendChild(_trkIndicator);
+        console.log('[TRACKING] Gestartet — spiel jetzt den 1. Stich!');
+      }
+
+      function stopTracking() {
+        _trkActive = false;
+        if (_trkIndicator) { _trkIndicator.remove(); _trkIndicator = null; }
+        // Overlay mit kopierbaren Daten
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+        const txt = document.createElement('textarea');
+        txt.value = JSON.stringify(_trkData, null, 1);
+        txt.style.cssText = 'width:340px;height:500px;font:11px monospace;color:#0f0;background:#111;border:1px solid #0f0;padding:8px;';
+        txt.readOnly = true;
+        const btn = document.createElement('button');
+        btn.textContent = 'KOPIEREN & SCHLIESSEN';
+        btn.style.cssText = 'margin-top:12px;padding:10px 24px;font:bold 16px Arial;background:#cedb25;color:#000;border:none;border-radius:6px;cursor:pointer;';
+        btn.onclick = () => {
+          navigator.clipboard.writeText(txt.value).catch(() => { txt.select(); document.execCommand('copy'); });
+          ov.remove();
+        };
+        ov.appendChild(txt);
+        ov.appendChild(btn);
+        document.body.appendChild(ov);
+        console.log('[TRACKING] Gestoppt — ' + _trkData.length + ' Events aufgezeichnet');
+      }
+
+      // Events auf dem Canvas + uiOverlay abfangen
+      const canvas = document.querySelector('#container canvas');
+      const overlay = document.getElementById('uiOverlay');
+
+      function recordTouch(e, type) {
+        if (!_trkActive) return;
+        const t = e.changedTouches ? e.changedTouches[0] : e;
+        const rect = (canvas || document.body).getBoundingClientRect();
+        const x = Math.round(t.clientX - rect.left);
+        const y = Math.round(t.clientY - rect.top);
+        _trkData.push({
+          t: Date.now() - _trkStart,
+          type: type,
+          x: x,
+          y: y
+        });
+      }
+
+      ['touchstart','touchmove','touchend'].forEach(evt => {
+        document.addEventListener(evt, function(e) {
+          recordTouch(e, evt.replace('touch',''));
+        }, { passive: true });
+      });
+
+      // Auch Mouse-Events für Desktop
+      ['mousedown','mousemove','mouseup'].forEach(evt => {
+        document.addEventListener(evt, function(e) {
+          if (!_trkActive) return;
+          const map = { mousedown:'start', mousemove:'move', mouseup:'end' };
+          if (evt === 'mousemove' && !e.buttons) return; // Nur bei gedrückter Taste
+          recordTouch(e, map[evt]);
+        });
+      });
+    })();
+
     renderLoop();
   </script>
 
