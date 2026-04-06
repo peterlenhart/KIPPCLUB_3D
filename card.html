@@ -2189,7 +2189,47 @@
       window._pauseTextMesh.visible = false;
       scene.add(window._pauseTextMesh);
       
-      // === BANKKARTEN-STAPEL auf Spieltisch, Anker A11 (li ob Ecke) ===
+      // ANLEITUNG-Button auf Zeile 15 (3D, Spieltisch): reset_card gespiegelt rechts + "Anleitung" Text
+      const anlBtnZ = pauseZ; // Exakt wie Pause
+      const anlBtnIconX = 3.5 * 0.15625 - 0.076; // Gespiegelt von pauseIconX
+
+      window._anlBtnIconMesh = null;
+      new THREE.TextureLoader().load('reset_card.webp', (iconTex) => {
+        const iconGeo = new THREE.PlaneGeometry(pauseIconSize, pauseIconSize);
+        const iconMat = new THREE.MeshBasicMaterial({
+          map: iconTex, transparent: true, depthWrite: false
+        });
+        window._anlBtnIconMesh = new THREE.Mesh(iconGeo, iconMat);
+        window._anlBtnIconMesh.rotation.x = -Math.PI / 2;
+        window._anlBtnIconMesh.scale.x = -1; // Horizontal gespiegelt
+        window._anlBtnIconMesh.position.set(anlBtnIconX, yPos + 0.003, anlBtnZ);
+        window._anlBtnIconMesh.renderOrder = 3;
+        window._anlBtnIconMesh.visible = false;
+        scene.add(window._anlBtnIconMesh);
+      });
+
+      // "Anleitung" Text links neben Icon
+      const atc = document.createElement('canvas');
+      atc.width = 256; atc.height = 64;
+      const atctx = atc.getContext('2d');
+      atctx.font = 'bold 36px Arial';
+      atctx.textAlign = 'right';
+      atctx.textBaseline = 'middle';
+      atctx.fillStyle = '#e0d0b8';
+      atctx.fillText('Anleitung', 248, 32);
+      const anlTxtTex = new THREE.CanvasTexture(atc);
+      const anlTxtW = 2.5 * 0.15625;
+      const anlTxtH = 0.625 * 0.15625;
+      const anlTxtGeo = new THREE.PlaneGeometry(anlTxtW, anlTxtH);
+      const anlTxtMat = new THREE.MeshBasicMaterial({
+        map: anlTxtTex, transparent: true, depthWrite: false
+      });
+      window._anlBtnTextMesh = new THREE.Mesh(anlTxtGeo, anlTxtMat);
+      window._anlBtnTextMesh.rotation.x = -Math.PI / 2;
+      window._anlBtnTextMesh.position.set(anlBtnIconX - 1.8 * 0.15625, yPos + 0.003, anlBtnZ);
+      window._anlBtnTextMesh.renderOrder = 3;
+      window._anlBtnTextMesh.visible = false;
+      scene.add(window._anlBtnTextMesh);
       const a11X = -4 * 0.15625; // linke Kante Spalte A
       const a11Z = -0.359375 + (11 - 4) * 0.15625; // Nordkante Zeile 11
       const targetFiles = ['target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp','target_verdeckt.webp'];
@@ -8895,8 +8935,10 @@
       if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
       initScores3D();
       // BEREIT-Button jetzt zeigen
-      if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
-      if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
+      // Pause deaktiviert — Anleitung-Button stattdessen
+      if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = true;
+      if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = true;
+      
       startKipp21(false);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
@@ -9329,15 +9371,6 @@
       addBtn(btnNochmal);
       inner.appendChild(btnNochmal);
 
-      const btnHighscores = document.createElement('button');
-      btnHighscores.textContent = T.bs || 'HIGHSCORES';
-      btnHighscores.style.cssText = btnStyle;
-      btnHighscores.onclick = () => {
-        showBestScores();
-      };
-      addBtn(btnHighscores);
-      inner.appendChild(btnHighscores);
-
       const btnMenu = document.createElement('button');
       btnMenu.textContent = 'MEN\u00dc';
       btnMenu.style.cssText = btnStyle;
@@ -9494,6 +9527,8 @@
       if (window._buttonOverlay) window._buttonOverlay.visible = true;
       if (window._pauseIconMesh) window._pauseIconMesh.visible = false;
       if (window._pauseTextMesh) window._pauseTextMesh.visible = false;
+      if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
+      if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
       if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
       if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
       if (window._targetRankMesh) window._targetRankMesh.visible = false;
@@ -9968,6 +10003,20 @@
         }
       }
 
+      // ANLEITUNG-Button (3D) touch handler
+      if (window._anlBtnIconMesh && window._anlBtnIconMesh.visible && lastTouchPos) {
+        const rectA = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectA.left) / rectA.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectA.top) / rectA.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
+            (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
+          showCardAnleitung();
+          lastTouchPos = null;
+          return;
+        }
+      }
+
       // Target_verdeckt (3D) → Kippziel generieren
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
           window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
@@ -10139,6 +10188,15 @@
         if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
             (window._pauseTextMesh && vkRaycaster.intersectObject(window._pauseTextMesh).length > 0)) {
           showPauseDialog();
+          return;
+        }
+      }
+
+      // ANLEITUNG-Button (3D) click (Desktop)
+      if (window._anlBtnIconMesh && window._anlBtnIconMesh.visible) {
+        if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
+            (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
+          showCardAnleitung();
           return;
         }
       }
@@ -12080,177 +12138,8 @@
 
     // Eingefrorenen Spielstand prüfen
     (function checkFrozenState() {
-      try {
-        const frozen = localStorage.getItem('digikipp_card_frozen');
-        if (!frozen) return;
-        const state = JSON.parse(frozen);
-        if (!state || !state.timestamp) return;
-
-        // Sofort markieren: initScores3D darf nicht resetten
-        window._scoreRestoreActive = true;
-
-        // Overlay zeigen
-        const ov = document.createElement('div');
-        ov.id = '_frozenOverlay';
-        ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-          'width:360px;height:' + window.innerHeight + 'px;z-index:200;' +
-          'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#000;';
-
-        const bg = document.createElement('img');
-        bg.src = 'overlay_card.webp';
-        bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
-        ov.appendChild(bg);
-
-        const btn1 = document.createElement('button');
-        btn1.textContent = T.cForts || 'FORTSETZEN';
-        btn1.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
-          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
-        btn1.onclick = () => {
-          ov.remove();
-          try {
-            // Spielstand wiederherstellen
-            window._cardMode = state.cardMode || 'offen';
-            currentQuadrant = state.currentQuadrant;
-            topFace = state.topFace;
-            kippDirection = state.kippDirection;
-            _cardKippCount = state.cardKippCount || 0;
-            _cardLockedDir = state.cardLockedDir || null;
-            kipp21KippCount = state.kipp21KippCount || 0;
-            window._playerScore3D = state.playerScore || 0;
-            window._bankScore3D = state.bankScore || 0;
-            window._stichNum = state.stichNum || 0;
-            window._playerWinCount = state.playerWinCount || 0;
-            window._bankWinCount = state.bankWinCount || 0;
-            window._stichCycle = state.stichCycle || 0;
-            window._playedSlots = new Set(state.playedSlots || []);
-
-            // Target-State wiederherstellen (usedNumbers, round)
-            window._cardTargetState.usedNumbers = new Set(state.usedNumbers || []);
-            window._cardTargetState.drawsCount = state.drawsCount || 0;
-            window._cardTargetState.round = state.targetRound || 1;
-
-            if (state.deck) {
-              for (let i = 0; i < 12 && i < state.deck.length; i++) deck[i] = state.deck[i];
-            }
-
-            // Würfel sauber positionieren
-            // Erst aus aktuellem Parent entfernen, dann in kipGroup
-            if (cube.parent && cube.parent !== kipGroup) {
-              cube.parent.remove(cube);
-              kipGroup.add(cube);
-            }
-            cube.position.set(state.cubePos[0], state.cubePos[1], state.cubePos[2]);
-            const q = new THREE.Quaternion(state.cubeQuat[0], state.cubeQuat[1], state.cubeQuat[2], state.cubeQuat[3]);
-            q.normalize();
-            cube.quaternion.copy(q);
-            cube.updateMatrixWorld(true);
-            isAnimating = false;
-
-            // Face-Texturen mit richtigen Alphas neu zeichnen
-            updateAllFaceTextures();
-
-            // Scores anzeigen (warten bis updateScore3D verfügbar)
-            const _restorePlayerScore = window._playerScore3D;
-            const _restoreBankScore = window._bankScore3D;
-            (function waitAndRestoreScores() {
-              if (typeof window.updateScore3D !== 'function' || !window._scorePLMesh) {
-                setTimeout(waitAndRestoreScores, 100);
-                return;
-              }
-              window._playerScore3D = _restorePlayerScore;
-              window._bankScore3D = _restoreBankScore;
-              updateScore3D('player', _restorePlayerScore);
-              updateScore3D('bank', _restoreBankScore);
-              window._scorePLMesh.visible = true;
-              window._scoreBKMesh.visible = true;
-              // Nochmal nach 500ms sicherstellen (falls init überschreibt)
-              setTimeout(() => {
-                window._playerScore3D = _restorePlayerScore;
-                window._bankScore3D = _restoreBankScore;
-                updateScore3D('player', _restorePlayerScore);
-                updateScore3D('bank', _restoreBankScore);
-                window._scoreRestoreActive = false;
-              }, 500);
-            })();
-
-            // Stich-Grafiken wiederherstellen
-            if (state.stichVisible) {
-              for (const key in state.stichVisible) {
-                if (window._stichMeshes && window._stichMeshes[key]) {
-                  window._stichMeshes[key].visible = true;
-                }
-              }
-            }
-
-            // Target wiederherstellen
-            if (state.currentTarget) {
-              window._cardTargetState.currentTarget = state.currentTarget;
-              const suitFile = SUIT_IMG_BY_COLOR[state.currentTarget.color];
-              if (suitFile && window._suitMeshes[suitFile]) {
-                window._suitMeshes[suitFile].visible = true;
-                window._suitMeshes[suitFile].material.opacity = 1;
-              }
-              updateTargetRankDisplay(getTargetVisualRank(state.currentTarget.num));
-              if (window._targetRankMesh) {
-                window._targetRankMesh.visible = true;
-                window._targetRankMesh.material.opacity = 1;
-              }
-            } else {
-              // Kein aktives Target → verdeckt zeigen
-              if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
-                window._targetMeshes['target_verdeckt.webp'].visible = true;
-                startTargetPulse();
-              }
-            }
-
-            // Aktuelle target_N Karte zeigen
-            const curTargetN = 'target_' + (window._stichNum + 1) + '.webp';
-            if (window._targetMeshes) {
-              // Alle target_N erstmal verstecken
-              for (let i = 1; i <= 6; i++) {
-                const tn = 'target_' + i + '.webp';
-                if (window._targetMeshes[tn]) window._targetMeshes[tn].visible = false;
-              }
-              // Aktuelle zeigen
-              if (window._targetMeshes[curTargetN]) window._targetMeshes[curTargetN].visible = true;
-            }
-
-            // Spielphase setzen
-            gamePhase = 'kipp21';
-            kipp21Active = true;
-            hintText.innerHTML = formatKipps(kipp21KippCount);
-
-            // UI: Startscreen weg, Spielelemente sichtbar
-            document.getElementById('startOverlay').style.display = 'none';
-            if (window._buttonOverlay) window._buttonOverlay.visible = false;
-            if (window._pauseIconMesh) window._pauseIconMesh.visible = true;
-            if (window._pauseTextMesh) window._pauseTextMesh.visible = true;
-
-            // Hintergrundmusik
-            unlockAndPlayBgMusic();
-
-            localStorage.removeItem('digikipp_card_frozen');
-            console.log('[RESTORE] Player:', window._playerScore3D, 'Bank:', window._bankScore3D, 'Stich:', window._stichNum, 'UsedNums:', window._cardTargetState.usedNumbers.size);
-          } catch(e) { console.error('[RESTORE]', e); }
-        };
-
-        const btn2 = document.createElement('button');
-        btn2.textContent = T.nm || 'NEUES SPIEL';
-        btn2.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
-          'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
-        btn2.onclick = () => {
-          window._scoreRestoreActive = false;
-          localStorage.removeItem('digikipp_card_frozen');
-          ov.remove();
-          backToStartScreen();
-        };
-
-        ov.appendChild(btn1);
-        ov.appendChild(btn2);
-        document.body.appendChild(ov);
-      } catch(e) {}
+      // Pause/Einfrieren deaktiviert (6 Stiche = kurzes Spiel)
+      try { localStorage.removeItem('digikipp_card_frozen'); } catch(e) {}
     })();
 
     renderLoop();
