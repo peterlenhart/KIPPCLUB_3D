@@ -4280,10 +4280,13 @@
       startKipp21(false);
       _startBtnLock = false;
 
-      // Tutorial-Modus aktivieren
-      replayActive = true;
+      // Warten bis startKipp21 vollständig initialisiert hat
       initHandEl();
-      await sleep(1500);
+      await new Promise(r => setTimeout(r, 1500));
+
+      // JETZT erst Tutorial-Modus aktivieren (nach startKipp21 settled)
+      replayActive = true;
+      kippDirection = 'cw';
 
       // === SCHRITT 1: Target aufdecken ===
       showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
@@ -4305,23 +4308,37 @@
 
       // Erste Richtung festlegen (CW)
       _cardLockedDir = 'cw';
+      kippDirection = 'cw';
 
-      // 1. Kipp (CW)
-      const dir1 = CW_KIPP[currentQuadrant];
-      await handKippAnim(dir1, 800);
-      _cardKippCount++;
-      await sleep(400);
+      // Tutorial-Kipp-Hilfsfunktion
+      async function tutKipp() {
+        if (!replayActive) return;
+        const dir = CW_KIPP[currentQuadrant];
+        const c = cubeScreenXY();
+        const off = kippPixelDir(dir);
+        setHandPos(c.x, c.y);
+        handEl.style.opacity = '1';
+        updateHandShadow(c.x, c.y, true);
+        await sleep(300);
+        isAnimating = false;
+        const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, 800);
+        await performKipp(dir, 800);
+        advanceTopFace();
+        _cardKippCount++;
+        await moveP;
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(300);
+      }
 
-      // 2. Kipp (CW)
-      const dir2 = CW_KIPP[currentQuadrant];
-      await handKippAnim(dir2, 800);
-      _cardKippCount++;
-      await sleep(400);
+      // 1. Kipp
+      await tutKipp();
+      // 2. Kipp
+      await tutKipp();
 
       // === SCHRITT 4: Rückkipp-Versuch ===
       showTutHint(T.cTut4 || 'Zurückkippen nicht erlaubt!');
       await sleep(300);
-      // Hand wischt in falsche Richtung (CCW), wird blockiert
       const c = cubeScreenXY();
       const backDir = CCW_KIPP[currentQuadrant];
       const backOff = kippPixelDir(backDir);
@@ -4340,17 +4357,10 @@
       showTutHint(T.cTut3 || 'Kippe den Würfel');
       await sleep(400);
 
-      // 3. Kipp (CW)
-      const dir3 = CW_KIPP[currentQuadrant];
-      await handKippAnim(dir3, 800);
-      _cardKippCount++;
-      await sleep(400);
-
-      // 4. Kipp (CW)
-      const dir4 = CW_KIPP[currentQuadrant];
-      await handKippAnim(dir4, 800);
-      _cardKippCount++;
-      await sleep(400);
+      // 3. Kipp
+      await tutKipp();
+      // 4. Kipp
+      await tutKipp();
 
       // === SCHRITT 6: Karte ausspielen ===
       showTutHint(T.cTut5 || 'Halte eine Karte gedrückt');
