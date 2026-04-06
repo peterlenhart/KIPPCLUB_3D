@@ -11884,6 +11884,12 @@
           meshSet[stichFile].visible = true;
         }
 
+        // target_verdeckt sofort wieder drauf (zeitgleich mit Playercard-Verschwinden)
+        if (sNum < 6 && window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
+          window._targetMeshes['target_verdeckt.webp'].visible = true;
+          startTargetPulse();
+        }
+
         // t=4000+1000: Score zurechnen + pulsieren + nächste Runde
         setTimeout(() => {
           if ((window._stichGeneration || 0) !== _thisStichGen) return; // Altes Spiel → ignorieren
@@ -11913,12 +11919,6 @@
             document.getElementById('btnBestScores').classList.add('pulsing');
             setTimeout(() => showEndScreen(), 800);
           } else {
-            const nextTargetFile = 'target_' + (window._stichNum + 1) + '.webp';
-            if (window._targetMeshes[nextTargetFile]) window._targetMeshes[nextTargetFile].visible = true;
-            if (window._targetMeshes['target_verdeckt.webp']) {
-              window._targetMeshes['target_verdeckt.webp'].visible = true;
-              startTargetPulse();
-            }
             _stichLock = false;
           }
         }, 1000);
