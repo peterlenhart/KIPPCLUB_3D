@@ -4295,64 +4295,28 @@
         _cardLockedDir = 'cw';
         kippDirection = 'cw';
 
-        // Kipp per simuliertem Touch auf dem Canvas — identischer Code-Pfad wie Spieler-Swipe
+        // Kipp wie in training.html handKippAnim — performKipp + advanceTopFace
         async function tutKipp() {
           if (aborted()) return;
-          const c = cubeScreenXY();
           const dir = CW_KIPP[currentQuadrant];
+          const c = cubeScreenXY();
           const off = kippPixelDir(dir);
 
-          // Hand einblenden auf Würfelmitte
           setHandPos(c.x, c.y);
           handEl.style.opacity = '1';
           updateHandShadow(c.x, c.y, true);
-          await tutSleep(300);
+          await tutSleep(350);
 
-          // Echten Touch simulieren
-          const canvas = renderer.domElement;
-          const rect = canvas.getBoundingClientRect();
-          const startX = rect.left + c.x * (rect.width / 360);
-          const startY = rect.top + c.y * (rect.height / 720);
-          const endX = startX + off.dx * (rect.width / 360);
-          const endY = startY + off.dy * (rect.height / 720);
+          isAnimating = false;
+          const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, 800);
+          await performKipp(dir, 800);
+          advanceTopFace();
+          _cardKippCount++;
+          await moveP;
 
-          function makeTouch(x, y) {
-            return new Touch({ identifier: 999, target: canvas, clientX: x, clientY: y });
-          }
-
-          canvas.dispatchEvent(new TouchEvent('touchstart', {
-            bubbles: true, cancelable: true,
-            touches: [makeTouch(startX, startY)],
-            changedTouches: [makeTouch(startX, startY)]
-          }));
-
-          // Hand smooth mitbewegen + Touch-Move schrittweise
-          const steps = 8;
-          for (let i = 1; i <= steps; i++) {
-            const t = i / steps;
-            const mx = startX + (endX - startX) * t;
-            const my = startY + (endY - startY) * t;
-            setHandPos(c.x + off.dx * t, c.y + off.dy * t);
-            updateHandShadow(c.x + off.dx * t, c.y + off.dy * t, true);
-            canvas.dispatchEvent(new TouchEvent('touchmove', {
-              bubbles: true, cancelable: true,
-              touches: [makeTouch(mx, my)],
-              changedTouches: [makeTouch(mx, my)]
-            }));
-            await tutSleep(80);
-          }
-
-          canvas.dispatchEvent(new TouchEvent('touchend', {
-            bubbles: true, cancelable: true,
-            touches: [],
-            changedTouches: [makeTouch(endX, endY)]
-          }));
-
-          // Warten bis Kipp-Animation fertig
-          await tutSleep(1200);
           handEl.style.opacity = '0';
           updateHandShadow(0, 0, false);
-          await tutSleep(300);
+          await tutSleep(60);
         }
 
         // 1. Kipp
