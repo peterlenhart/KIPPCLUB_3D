@@ -4279,27 +4279,12 @@
         if (aborted()) return;
         showTutHint(T.cTut2 || 'Schau dir die Kartenwerte an');
         await tutSleep(1500);
-        // Tap auf den stehenden Würfel (178, 232) — beendet Eckblick, Würfel senkt sich
+        // Tap auf den stehenden Würfel — Eckblick beenden
         await handTapFromSouth(178, 232, 400);
         if (aborted()) return;
-        // Simulierten Tap auf Canvas auslösen
-        {
-          const canvas = renderer.domElement;
-          const rect = canvas.getBoundingClientRect();
-          const tx = rect.left + 178 * (rect.width / 360);
-          const ty = rect.top + 232 * (rect.height / 720);
-          function makeTouch(x, y) {
-            return new Touch({ identifier: 998, target: canvas, clientX: x, clientY: y });
-          }
-          canvas.dispatchEvent(new TouchEvent('touchstart', {
-            bubbles: true, cancelable: true,
-            touches: [makeTouch(tx, ty)], changedTouches: [makeTouch(tx, ty)]
-          }));
-          canvas.dispatchEvent(new TouchEvent('touchend', {
-            bubbles: true, cancelable: true,
-            touches: [], changedTouches: [makeTouch(tx, ty)]
-          }));
-        }
+        // Eckblick direkt abbrechen (dasselbe was der echte Tap-Handler tut)
+        kipp21KniffAbort = true;
+        if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
         await tutSleep(2500); // Würfel senkt sich
 
         // === SCHRITT 3: Kippen ===
