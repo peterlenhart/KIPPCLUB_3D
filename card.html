@@ -4241,7 +4241,7 @@
       if (!_tutHintEl) {
         _tutHintEl = document.createElement('div');
         _tutHintEl.style.cssText = 'position:absolute;left:0;width:360px;top:140px;text-align:center;' +
-          'font:bold 15px/1.4 Arial;color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.9);' +
+          'font:bold 19px/1.4 Arial;color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.9);' +
           'pointer-events:none;z-index:25;opacity:0;transition:opacity 0.4s ease;';
         document.getElementById('uiOverlay').appendChild(_tutHintEl);
       }
@@ -4273,12 +4273,34 @@
         await handTapFromSouth(169, 491, 500);
         if (aborted()) return;
         onTargetVerdecktTap();
-        await tutSleep(5000); // Eckblick-Animation abwarten
+        await tutSleep(4000); // Eckblick-Animation läuft
 
-        // === SCHRITT 2: Eckblick-Hinweis ===
+        // === SCHRITT 2: Würfel antippen → senkt sich ===
         if (aborted()) return;
         showTutHint(T.cTut2 || 'Schau dir die Kartenwerte an');
-        await tutSleep(2500);
+        await tutSleep(1500);
+        // Tap auf den stehenden Würfel (178, 232) — beendet Eckblick, Würfel senkt sich
+        await handTapFromSouth(178, 232, 400);
+        if (aborted()) return;
+        // Simulierten Tap auf Canvas auslösen
+        {
+          const canvas = renderer.domElement;
+          const rect = canvas.getBoundingClientRect();
+          const tx = rect.left + 178 * (rect.width / 360);
+          const ty = rect.top + 232 * (rect.height / 720);
+          function makeTouch(x, y) {
+            return new Touch({ identifier: 998, target: canvas, clientX: x, clientY: y });
+          }
+          canvas.dispatchEvent(new TouchEvent('touchstart', {
+            bubbles: true, cancelable: true,
+            touches: [makeTouch(tx, ty)], changedTouches: [makeTouch(tx, ty)]
+          }));
+          canvas.dispatchEvent(new TouchEvent('touchend', {
+            bubbles: true, cancelable: true,
+            touches: [], changedTouches: [makeTouch(tx, ty)]
+          }));
+        }
+        await tutSleep(2500); // Würfel senkt sich
 
         // === SCHRITT 3: Kippen ===
         if (aborted()) return;
