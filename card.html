@@ -4326,8 +4326,8 @@
           const fullOff = kippPixelDir(dir);
           // Normalisiere auf 45px (1 Zelle)
           const len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
-          const nx = fullOff.dx / len * 90;
-          const ny = fullOff.dy / len * 90;
+          const nx = fullOff.dx / len * 112;
+          const ny = fullOff.dy / len * 112;
 
           // 1. Hand erscheint auf Würfelmitte
           setHandPos(c.x, c.y);
@@ -12213,9 +12213,10 @@
     }
 
     function handleStichConfirm(slotIdx) {
-      if (_stichLock) return;
+      console.log('[STICH-CONFIRM] slotIdx=' + slotIdx + ' _stichLock=' + _stichLock + ' target=' + JSON.stringify(window._cardTargetState && window._cardTargetState.currentTarget));
+      if (_stichLock) { console.warn('[STICH-CONFIRM] BLOCKED by _stichLock!'); return; }
       const st = window._cardTargetState;
-      if (!st || !st.currentTarget) return;
+      if (!st || !st.currentTarget) { console.warn('[STICH-CONFIRM] BLOCKED: no target!'); return; }
       _stichLock = true;
 
       const slot = getSlotValueAndColor(slotIdx);
