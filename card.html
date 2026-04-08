@@ -4278,7 +4278,6 @@
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 1: Target aufdecken ===
-        showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
         await sleep(600);
         await handTapFromSouth(169, 491, 500);
         if (aborted()) throw new ReplayAbort();
@@ -4287,7 +4286,6 @@
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 2: Würfel antippen → senkt sich ===
-        showTutHint(T.cTut9 || 'Tippe auf den Würfel um ihn zu senken');
         await sleep(600);
         await handTapFromSouth(178, 232, 400);
         if (aborted()) throw new ReplayAbort();
@@ -4302,7 +4300,6 @@
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 3: Kippen (CW) ===
-        showTutHint(T.cTut3 || 'Kippe den Würfel');
         await sleep(600);
         if (aborted()) throw new ReplayAbort();
 
@@ -4320,7 +4317,6 @@
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 4: Rückkipp-Versuch ===
-        showTutHint(T.cTut4 || 'Zurückkippen nicht erlaubt!');
         await sleep(300);
         {
           const c = cubeScreenXY();
@@ -4339,7 +4335,6 @@
         await sleep(500);
 
         // === SCHRITT 5: Weiter kippen ===
-        showTutHint(T.cTut3 || 'Kippe den Würfel');
         await sleep(400);
         if (aborted()) throw new ReplayAbort();
 
@@ -4355,7 +4350,6 @@
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 6: Karte ausspielen ===
-        showTutHint(T.cTut5 || 'Halte eine Karte gedrückt');
         await sleep(600);
 
         // Aktiven Slot finden
@@ -4377,11 +4371,10 @@
 
         // Hand zum Slot — Position dynamisch via getSlotScreenPos
         const slotPos = getSlotScreenPos(targetSlot);
-        const sx = slotPos ? slotPos.x : 78;
-        const sy = slotPos ? slotPos.y : 314;
+        const sx = (slotPos ? slotPos.x : 78) + 45;
+        const sy = (slotPos ? slotPos.y : 314) + 22;
         await handTapFromSouth(sx, sy, 900);
         if (targetSlot >= 0) handleStichConfirm(targetSlot);
-        showTutHint('');
         await sleep(5500);
 
       } catch(e) {
