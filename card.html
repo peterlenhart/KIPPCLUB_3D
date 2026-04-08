@@ -4326,8 +4326,8 @@
           const fullOff = kippPixelDir(dir);
           // Normalisiere auf 45px (1 Zelle)
           const len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
-          const nx = fullOff.dx / len * 45;
-          const ny = fullOff.dy / len * 45;
+          const nx = fullOff.dx / len * 90;
+          const ny = fullOff.dy / len * 90;
 
           // 1. Hand erscheint auf Würfelmitte
           setHandPos(c.x, c.y);
@@ -4446,11 +4446,30 @@
 
         // Hand zum Slot — Position via deckIdx
         const slotPos = getSlotScreenPos(targetDeckIdx);
-        const sx = (slotPos ? slotPos.x : 78) + 45;
+        const sx = (slotPos ? slotPos.x : 78);
         const sy = (slotPos ? slotPos.y : 314) + 22;
         await handTapFromSouth(sx, sy, 900);
         // handleStichConfirm erwartet per-face slotIdx (0-3)
-        if (targetSlot >= 0) handleStichConfirm(targetSlot);
+        if (targetSlot >= 0) {
+          console.log('[TUT-STICH] slotIdx=' + targetSlot + ' deckIdx=' + targetDeckIdx + ' face=' + topFace + ' Q=' + currentQuadrant);
+          handleStichConfirm(targetSlot);
+          // Sicherheitshalber Slot nochmal explizit blass machen
+          setTimeout(() => {
+            const f = faceSlots[topFace];
+            if (f) {
+              let i = 0;
+              for (const key in f.slotMap) {
+                if (i === targetSlot) {
+                  f.slotMap[key].slotAlpha = 0.25;
+                  console.log('[TUT-STICH] slotAlpha set for key=' + key);
+                  break;
+                }
+                i++;
+              }
+              rebuildFaceMat(topFace, 1);
+            }
+          }, 200);
+        }
         await sleep(5500);
 
       } catch(e) {
