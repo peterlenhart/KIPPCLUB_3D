@@ -4250,119 +4250,113 @@
     }
 
     async function runCardTutorial() {
-      // Alte Tutorial-Instanz killen
+      // Alte Instanz killen
       replayActive = false;
       kipp21Generation++;
       window._tutorialRunning = false;
       if (handEl) { handEl.style.opacity = '0'; }
       if (handShadowMesh) handShadowMesh.visible = true;
+      disableReplayBlocker();
       await new Promise(r => setTimeout(r, 100));
 
       // Normales Spiel starten
       handleStart(false);
       await new Promise(r => setTimeout(r, 2000));
 
-      // Tutorial-Hand aktivieren
+      // Replay-Infrastruktur aktivieren — EXAKT wie startPerfectReplay in training.html
+      const myGen = kipp21Generation;
+      replayGeneration = myGen;
       initHandEl();
       replayActive = true;
-      if (handShadowMesh) handShadowMesh.visible = false;
-      const tutGen = kipp21Generation;
-      function aborted() { return !replayActive || kipp21Generation !== tutGen; }
-      function tutSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-      window._tutorialRunning = true;
+      enableReplayBlocker();
 
-      // Hand-Swipe-Hilfsfunktion: Hand von A nach B bewegen + gleichzeitig performKipp
-      async function tutSwipe(fromX, fromY, toX, toY) {
-        if (aborted()) return;
-        setHandPos(fromX, fromY);
-        handEl.style.opacity = '1';
-        await tutSleep(250);
-        // Cube defensiv prüfen
-        if (cube.parent && cube.parent !== kipGroup) {
-          cube.updateMatrixWorld();
-          const wp = new THREE.Vector3(); cube.getWorldPosition(wp);
-          const wq = new THREE.Quaternion(); cube.getWorldQuaternion(wq);
-          cube.parent.remove(cube);
-          cube.position.copy(wp); cube.quaternion.copy(wq);
-          kipGroup.add(cube);
-        }
-        isAnimating = false;
-        kippDirection = 'cw';
-        const dir = CW_KIPP[currentQuadrant];
-        const moveP = moveHandSmooth(toX, toY, 800);
-        await performKipp(dir, 800);
-        advanceTopFace();
-        _cardKippCount++;
-        await moveP;
-        handEl.style.opacity = '0';
-        await tutSleep(300);
-      }
+      function aborted() { return !replayActive || kipp21Generation !== myGen; }
+      const KIPP_DUR = 1000;
 
       try {
-        // === SCHRITT 1: Target aufdecken (169, 491) ===
-        showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
-        await tutSleep(600);
-        await handTapFromSouth(169, 491, 500);
-        if (aborted()) return;
-        onTargetVerdecktTap();
-        await tutSleep(4000);
+        await sleep(500);
+        if (aborted()) throw new ReplayAbort();
 
-        // === SCHRITT 2: Würfel antippen zum Senken (178, 232) ===
-        if (aborted()) return;
+        // === SCHRITT 1: Target aufdecken ===
+        showTutHint(T.cTut1 || 'Decke die Bankkarte auf');
+        await sleep(600);
+        await handTapFromSouth(169, 491, 500);
+        if (aborted()) throw new ReplayAbort();
+        onTargetVerdecktTap();
+        await sleep(4000);
+        if (aborted()) throw new ReplayAbort();
+
+        // === SCHRITT 2: Würfel antippen → senkt sich ===
         showTutHint(T.cTut9 || 'Tippe auf den Würfel um ihn zu senken');
-        await tutSleep(600);
+        await sleep(600);
         await handTapFromSouth(178, 232, 400);
-        if (aborted()) return;
+        if (aborted()) throw new ReplayAbort();
         kipp21KniffAbort = true;
         if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+        // Warten bis Eckblick-Cleanup fertig
         for (let w = 0; w < 50; w++) {
           if (!kipp21KniffActive) break;
-          await tutSleep(100);
+          await new Promise(r => setTimeout(r, 100));
         }
-        await tutSleep(1000);
+        await sleep(1000);
+        if (aborted()) throw new ReplayAbort();
 
-        // === SCHRITT 3: Kippen ===
-        if (aborted()) return;
+        // === SCHRITT 3: Kippen (CW) ===
         showTutHint(T.cTut3 || 'Kippe den Würfel');
-        await tutSleep(600);
+        await sleep(600);
+        if (aborted()) throw new ReplayAbort();
+
         _cardLockedDir = 'cw';
 
-        // Kipp 1: Ost — Peters Tracking (101,313)→(322,312)
-        await tutSwipe(101, 313, 322, 312);
-        if (aborted()) return;
+        // Kipp 1 + 2 — handKippAnim aus training.html
+        kippDirection = 'cw';
+        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
+        _cardKippCount++;
+        if (aborted()) throw new ReplayAbort();
 
-        // Kipp 2: Nord — Peters Tracking (274,327)→(327,59)
-        await tutSwipe(274, 327, 327, 59);
-        if (aborted()) return;
+        kippDirection = 'cw';
+        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
+        _cardKippCount++;
+        if (aborted()) throw new ReplayAbort();
 
-        // === SCHRITT 4: Rückkipp-Versuch (259,173)→(290,407) ===
+        // === SCHRITT 4: Rückkipp-Versuch ===
         showTutHint(T.cTut4 || 'Zurückkippen nicht erlaubt!');
-        await tutSleep(300);
-        setHandPos(259, 173);
-        handEl.style.opacity = '1';
-        await tutSleep(250);
-        await moveHandSmooth(290, 407, 500);
-        showCardKippWarning();
-        await tutSleep(800);
-        handEl.style.opacity = '0';
-        if (aborted()) return;
-        await tutSleep(500);
+        await sleep(300);
+        {
+          const c = cubeScreenXY();
+          const backOff = kippPixelDir(CCW_KIPP[currentQuadrant]);
+          setHandPos(c.x, c.y);
+          handEl.style.opacity = '1';
+          updateHandShadow(c.x, c.y, true);
+          await sleep(300);
+          await moveHandSmooth(c.x + backOff.dx * 0.6, c.y + backOff.dy * 0.6, 500);
+          showCardKippWarning();
+          await sleep(800);
+          handEl.style.opacity = '0';
+          updateHandShadow(0, 0, false);
+        }
+        if (aborted()) throw new ReplayAbort();
+        await sleep(500);
 
         // === SCHRITT 5: Weiter kippen ===
         showTutHint(T.cTut3 || 'Kippe den Würfel');
-        await tutSleep(400);
+        await sleep(400);
+        if (aborted()) throw new ReplayAbort();
 
-        // Kipp 3: West — Peters Tracking (290,182)→(93,210)
-        await tutSwipe(290, 182, 93, 210);
-        if (aborted()) return;
+        // Kipp 3 + 4
+        kippDirection = 'cw';
+        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
+        _cardKippCount++;
+        if (aborted()) throw new ReplayAbort();
 
-        // Kipp 4: Süd — Peters Tracking (124,176)→(144,428)
-        await tutSwipe(124, 176, 144, 428);
-        if (aborted()) return;
+        kippDirection = 'cw';
+        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
+        _cardKippCount++;
+        if (aborted()) throw new ReplayAbort();
 
-        // === SCHRITT 6: Karte ausspielen (78, 314) ===
+        // === SCHRITT 6: Karte ausspielen ===
         showTutHint(T.cTut5 || 'Halte eine Karte gedrückt');
-        await tutSleep(600);
+        await sleep(600);
 
         // Aktiven Slot finden
         let targetSlot = -1;
@@ -4381,22 +4375,25 @@
           }
         }
 
-        // Hand zu Peters Tracking-Position (78, 314)
-        setHandPos(78, 740);
-        handEl.style.opacity = '1';
-        await moveHandSmooth(78, 314, 800);
-        await tutSleep(900);
-
+        // Hand zum Slot — Position dynamisch via getSlotScreenPos
+        const slotPos = getSlotScreenPos(targetSlot);
+        const sx = slotPos ? slotPos.x : 78;
+        const sy = slotPos ? slotPos.y : 314;
+        await handTapFromSouth(sx, sy, 900);
         if (targetSlot >= 0) handleStichConfirm(targetSlot);
-        handEl.style.opacity = '0';
         showTutHint('');
-        await tutSleep(5500);
+        await sleep(5500);
 
+      } catch(e) {
+        if (!(e instanceof ReplayAbort)) console.error('[TUT]', e);
       } finally {
         replayActive = false;
-        window._tutorialRunning = false;
+        disableReplayBlocker();
         if (handShadowMesh) handShadowMesh.visible = true;
+        if (handEl) handEl.style.opacity = '0';
       }
+
+      if (kipp21Generation !== myGen) return; // Abgebrochen
 
       // === BLUR → "NACH 6 PERFEKTEN STICHEN" ===
       const blurOv = document.createElement('div');
@@ -4414,17 +4411,12 @@
       requestAnimationFrame(() => { blurOv.style.opacity = '1'; });
       await new Promise(r => setTimeout(r, 2500));
 
-      // Perfekte Daten setzen
-      window._playerScore3D = 84;
-      window._bankScore3D = 0;
-      window._playerWinCount = 6;
-      window._bankWinCount = 0;
+      // Perfekte Daten
+      window._playerScore3D = 84; window._bankScore3D = 0;
+      window._playerWinCount = 6; window._bankWinCount = 0;
       window._stichResults = [];
-      for (let i = 0; i < 6; i++) {
-        window._stichResults.push({ winner: 'player', deviation: 0, points: 14 });
-      }
+      for (let i = 0; i < 6; i++) window._stichResults.push({ winner: 'player', deviation: 0, points: 14 });
 
-      // Echter Endscreen
       blurOv.remove();
       showEndScreen();
 
@@ -4450,13 +4442,12 @@
           btnRepeat.onclick = () => {
             endOv.remove();
             if (_tutHintEl) { _tutHintEl.remove(); _tutHintEl = null; }
-            replayActive = false;
-            kipp21Generation++;
-            if (handEl) { handEl.style.opacity = '0'; }
+            replayActive = false; kipp21Generation++;
+            if (handEl) handEl.style.opacity = '0';
             if (handShadowMesh) handShadowMesh.visible = true;
+            disableReplayBlocker();
             backToStartScreen();
-            _cardModePhase = 1;
-            window._cardMode = 'offen';
+            _cardModePhase = 1; window._cardMode = 'offen';
             setTimeout(() => runCardTutorial(), 500);
           };
           btnRepeat.addEventListener('touchend', (e) => { e.preventDefault(); btnRepeat.click(); }, { passive: false });
@@ -4468,13 +4459,12 @@
           btnPlay.onclick = () => {
             endOv.remove();
             if (_tutHintEl) { _tutHintEl.remove(); _tutHintEl = null; }
-            replayActive = false;
-            kipp21Generation++;
-            if (handEl) { handEl.style.opacity = '0'; }
+            replayActive = false; kipp21Generation++;
+            if (handEl) handEl.style.opacity = '0';
             if (handShadowMesh) handShadowMesh.visible = true;
+            disableReplayBlocker();
             backToStartScreen();
-            _cardModePhase = 1;
-            window._cardMode = 'offen';
+            _cardModePhase = 1; window._cardMode = 'offen';
             setTimeout(() => handleStart(false), 500);
           };
           btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
