@@ -4115,7 +4115,7 @@
       scene.add(handShadowMesh);
     }
     function updateHandShadow(screenX, screenY, visible) {
-      if (!handShadowMesh) return;
+      if (!handShadowMesh || !handShadowMesh.visible) return;
       if (!visible) { handShadowMesh.material.opacity = 0; return; }
       // Screen → 3D auf Bodenhöhe (Y=0.002)
       const ndc = new THREE.Vector3((screenX / 360) * 2 - 1, -(screenY / 720) * 2 + 1, 0.5);
@@ -4149,7 +4149,7 @@
     }
     
     // --- Smooth easeInOut Bewegung ---
-    const HAND_SPEED_MUL = 2.0; // Tutorial-Hand doppelt so langsam
+    const HAND_SPEED_MUL = 1.33; // Tutorial-Hand doppelt so langsam
     function moveHandSmooth(toX, toY, durMs) {
       const actualDur = replayActive ? durMs * HAND_SPEED_MUL : durMs;
       return new Promise(resolve => {
@@ -4261,7 +4261,21 @@
 
       // Normales Spiel starten
       handleStart(false);
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 1000));
+
+      // Target für perfekten +1 Stich erzwingen:
+      // Nach 4 CW Kipps landet Würfel bei Q3/f0. S2 von f0 = deck[1], Farbe = gruen.
+      // Wenn target.num = deck[1], ergibt das automatisch +1 (wegen Offset Player/Target).
+      const _tutPerfectNum = deck[1]; // S2 of f0
+      const _tutPerfectColor = 'gruen'; // S2 in Q3
+      const _origGenerate = window.generateCardTarget3D;
+      window.generateCardTarget3D = function() {
+        const st = window._cardTargetState;
+        st.usedNumbers.add(_tutPerfectNum);
+        st.drawsCount++;
+        st.currentTarget = { num: _tutPerfectNum, color: _tutPerfectColor };
+        return st.currentTarget;
+      };
 
       // Replay-Infrastruktur aktivieren — EXAKT wie startPerfectReplay in training.html
       const myGen = kipp21Generation;
@@ -4274,11 +4288,10 @@
       const KIPP_DUR = 1000;
 
       try {
-        await sleep(500);
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 1: Target aufdecken ===
-        await sleep(600);
+        await sleep(100);
         await handTapFromSouth(169, 491, 500);
         if (aborted()) throw new ReplayAbort();
         onTargetVerdecktTap();
@@ -4353,9 +4366,28 @@
         await sleep(600);
 
         // Aktiven Slot finden
+        // Slot finden der zur Target-Farbe passt (wie ein echter Spieler)
         let targetSlot = -1;
+        const targetColor = window._cardTargetState && window._cardTargetState.currentTarget
+          ? window._cardTargetState.currentTarget.color : null;
+        const slotColors = SLOT_NEIGHBOR_COLORS[currentQuadrant];
         const face = faceSlots[topFace];
-        if (face) {
+        if (face && targetColor && slotColors) {
+          // S1=idx0, S2=idx1, S3=idx2, S4=idx3 im slotMap
+          const slotKeys = Object.keys(face.slotMap);
+          for (let si = 0; si < slotKeys.length; si++) {
+            const slotName = 'S' + (si + 1);
+            if (slotColors[slotName] === targetColor) {
+              const idx = face.slotMap[slotKeys[si]].deckIdx;
+              if (idx !== undefined && !window._playedSlots.has(idx)) {
+                targetSlot = idx;
+                break;
+              }
+            }
+          }
+        }
+        // Fallback: ersten aktiven Slot
+        if (targetSlot < 0 && face) {
           for (const key in face.slotMap) {
             const idx = face.slotMap[key].deckIdx;
             if (idx !== undefined && !window._playedSlots.has(idx)) {
@@ -4363,15 +4395,10 @@
             }
           }
         }
-        if (targetSlot < 0) {
-          for (let i = 0; i < 12; i++) {
-            if (!window._playedSlots.has(i)) { targetSlot = i; break; }
-          }
-        }
 
         // Hand zum Slot — Position dynamisch via getSlotScreenPos
         const slotPos = getSlotScreenPos(targetSlot);
-        const sx = (slotPos ? slotPos.x : 78) + 45;
+        const sx = (slotPos ? slotPos.x : 78) - 45;
         const sy = (slotPos ? slotPos.y : 314) + 22;
         await handTapFromSouth(sx, sy, 900);
         if (targetSlot >= 0) handleStichConfirm(targetSlot);
@@ -4384,6 +4411,7 @@
         disableReplayBlocker();
         if (handShadowMesh) handShadowMesh.visible = true;
         if (handEl) handEl.style.opacity = '0';
+        window.generateCardTarget3D = _origGenerate;
       }
 
       if (kipp21Generation !== myGen) return; // Abgebrochen
@@ -6767,7 +6795,7 @@
       }
 
       // === HOLD on corner (2s) — player sees number + pulsing gem ===
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 1000));
       if (!brainyActive || gamePhase !== 'kipp21') {
         pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
         cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
@@ -6976,7 +7004,7 @@
         sctHead.style.animation = 'sctInflate 1.2s ease-out forwards';
         sct.style.display = 'flex';
         sct.style.opacity = '1';
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 1000));
         sct.style.transition = 'opacity 0.5s';
         sct.style.opacity = '0';
         await new Promise(r => setTimeout(r, 500));
