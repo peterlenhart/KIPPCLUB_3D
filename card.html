@@ -4367,20 +4367,21 @@
 
         // Aktiven Slot finden
         // Slot finden der zur Target-Farbe passt (wie ein echter Spieler)
-        let targetSlot = -1;
+        let targetSlot = -1;   // per-face slot index (0-3)
+        let targetDeckIdx = -1; // deck index (0-11) für Screen-Position
         const targetColor = window._cardTargetState && window._cardTargetState.currentTarget
           ? window._cardTargetState.currentTarget.color : null;
         const slotColors = SLOT_NEIGHBOR_COLORS[currentQuadrant];
         const face = faceSlots[topFace];
         if (face && targetColor && slotColors) {
-          // S1=idx0, S2=idx1, S3=idx2, S4=idx3 im slotMap
           const slotKeys = Object.keys(face.slotMap);
           for (let si = 0; si < slotKeys.length; si++) {
             const slotName = 'S' + (si + 1);
             if (slotColors[slotName] === targetColor) {
               const idx = face.slotMap[slotKeys[si]].deckIdx;
               if (idx !== undefined && !window._playedSlots.has(idx)) {
-                targetSlot = idx;
+                targetSlot = si;        // per-face (0-3)
+                targetDeckIdx = idx;    // deck (0-11)
                 break;
               }
             }
@@ -4388,19 +4389,24 @@
         }
         // Fallback: ersten aktiven Slot
         if (targetSlot < 0 && face) {
+          let si = 0;
           for (const key in face.slotMap) {
             const idx = face.slotMap[key].deckIdx;
             if (idx !== undefined && !window._playedSlots.has(idx)) {
-              targetSlot = idx; break;
+              targetSlot = si;
+              targetDeckIdx = idx;
+              break;
             }
+            si++;
           }
         }
 
-        // Hand zum Slot — Position dynamisch via getSlotScreenPos
-        const slotPos = getSlotScreenPos(targetSlot);
-        const sx = (slotPos ? slotPos.x : 78) - 45;
+        // Hand zum Slot — Position via deckIdx
+        const slotPos = getSlotScreenPos(targetDeckIdx);
+        const sx = (slotPos ? slotPos.x : 78) + 45;
         const sy = (slotPos ? slotPos.y : 314) + 22;
         await handTapFromSouth(sx, sy, 900);
+        // handleStichConfirm erwartet per-face slotIdx (0-3)
         if (targetSlot >= 0) handleStichConfirm(targetSlot);
         await sleep(5500);
 
