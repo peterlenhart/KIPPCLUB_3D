@@ -4318,31 +4318,79 @@
 
         _cardLockedDir = 'cw';
 
-        // Kipp 1 + 2 — handKippAnim aus training.html
-        kippDirection = 'cw';
-        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
-        _cardKippCount++;
-        if (aborted()) throw new ReplayAbort();
+        // Impuls-Kipp: Hand gibt kurzen schnellen Wisch (45px), hebt ab, Würfel kippt allein weiter
+        async function tutImpulsKipp() {
+          if (aborted()) return;
+          const dir = CW_KIPP[currentQuadrant];
+          const c = cubeScreenXY();
+          const fullOff = kippPixelDir(dir);
+          // Normalisiere auf 45px (1 Zelle)
+          const len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
+          const nx = fullOff.dx / len * 45;
+          const ny = fullOff.dy / len * 45;
 
-        kippDirection = 'cw';
-        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
-        _cardKippCount++;
+          // 1. Hand erscheint auf Würfelmitte
+          setHandPos(c.x, c.y);
+          handEl.style.opacity = '1';
+          handEl.style.transition = 'opacity 0.15s ease';
+          await sleep(200);
+
+          // 2. performKipp starten (läuft im Hintergrund)
+          isAnimating = false;
+          kippDirection = 'cw';
+          const kippP = performKipp(dir, 800);
+
+          // 3. Schneller beschleunigender Wisch: 45px in ~220ms (ease-in = quadratisch)
+          const swipeDur = 220;
+          const swipeStart = Date.now();
+          await new Promise(resolve => {
+            function frame() {
+              const elapsed = Date.now() - swipeStart;
+              const t = Math.min(elapsed / swipeDur, 1);
+              const eased = t * t; // ease-in (beschleunigend)
+              setHandPos(c.x + nx * eased, c.y + ny * eased);
+              if (t < 1) requestAnimationFrame(frame);
+              else resolve();
+            }
+            requestAnimationFrame(frame);
+          });
+
+          // 4. Finger hebt ab — rasches Ausblenden
+          handEl.style.opacity = '0';
+
+          // 5. Kipp fertig abwarten
+          await kippP;
+          advanceTopFace();
+          _cardKippCount++;
+
+          // Reset transition
+          handEl.style.transition = 'opacity 0.25s ease';
+          await sleep(200);
+        }
+
+        // Kipp 1 + 2
+        await tutImpulsKipp();
+        if (aborted()) throw new ReplayAbort();
+        await tutImpulsKipp();
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 4: Rückkipp-Versuch ===
         await sleep(300);
         {
           const c = cubeScreenXY();
-          const backOff = kippPixelDir(CCW_KIPP[currentQuadrant]);
+          const backFull = kippPixelDir(CCW_KIPP[currentQuadrant]);
+          const bLen = Math.sqrt(backFull.dx * backFull.dx + backFull.dy * backFull.dy);
+          const bnx = backFull.dx / bLen * 45;
+          const bny = backFull.dy / bLen * 45;
           setHandPos(c.x, c.y);
           handEl.style.opacity = '1';
-          updateHandShadow(c.x, c.y, true);
-          await sleep(300);
-          await moveHandSmooth(c.x + backOff.dx * 0.6, c.y + backOff.dy * 0.6, 500);
+          handEl.style.transition = 'opacity 0.15s ease';
+          await sleep(200);
+          await moveHandSmooth(c.x + bnx, c.y + bny, 220);
           showCardKippWarning();
-          await sleep(800);
+          await sleep(600);
           handEl.style.opacity = '0';
-          updateHandShadow(0, 0, false);
+          handEl.style.transition = 'opacity 0.25s ease';
         }
         if (aborted()) throw new ReplayAbort();
         await sleep(500);
@@ -4352,14 +4400,9 @@
         if (aborted()) throw new ReplayAbort();
 
         // Kipp 3 + 4
-        kippDirection = 'cw';
-        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
-        _cardKippCount++;
+        await tutImpulsKipp();
         if (aborted()) throw new ReplayAbort();
-
-        kippDirection = 'cw';
-        await handKippAnim(CW_KIPP[currentQuadrant], KIPP_DUR);
-        _cardKippCount++;
+        await tutImpulsKipp();
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 6: Karte ausspielen ===
