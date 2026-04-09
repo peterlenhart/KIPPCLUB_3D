@@ -4292,27 +4292,59 @@
     // Dunkles Overlay OHNE Blur (Karten bleiben scharf sichtbar)
     function showDarkHint(text, durMs) {
       return new Promise(resolve => {
-        // Zeile 10 projizieren — direkt über den Karten
+        // Dunkle 3D-Plane ÜBER Spieltisch (0.46975) aber UNTER Karten (0.479+)
+        const darkPlaneGeo = new THREE.PlaneGeometry(1.5, 2.5);
+        const darkPlaneMat = new THREE.MeshBasicMaterial({
+          color: 0x000000, transparent: true, opacity: 0, depthWrite: false
+        });
+        const darkPlane = new THREE.Mesh(darkPlaneGeo, darkPlaneMat);
+        darkPlane.rotation.x = -Math.PI / 2;
+        darkPlane.position.set(0, 0.46975 + 0.005, 0.4); // Y zwischen Spieltisch und Karten
+        darkPlane.renderOrder = 15;
+        scene.add(darkPlane);
+
+        // Zeile 10 projizieren für Text
         const z10 = new THREE.Vector3(0, 0.46875, 0.658);
         z10.project(camera);
         const textY = Math.round((-z10.y * 0.5 + 0.5) * 720);
 
-        const ov = document.createElement('div');
-        ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-          'width:360px;height:' + window.innerHeight + 'px;z-index:100;' +
-          'background:rgba(0,0,0,0.35);opacity:0;transition:opacity 0.5s ease;';
+        // Nur Text als HTML (kein Vollbild-Overlay)
         const txt = document.createElement('div');
-        txt.style.cssText = 'position:absolute;top:' + textY + 'px;left:0;right:0;' +
-          'transform:translateY(-50%);text-align:center;' +
-          'font:bold 22px Arial;color:#cedb25;' +
-          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.5;padding:0 20px;';
+        txt.style.cssText = 'position:fixed;top:' + textY + 'px;left:50%;transform:translate(-50%,-50%);' +
+          'z-index:100;pointer-events:none;' +
+          'font:bold 22px Arial;color:#cedb25;text-align:center;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.5;' +
+          'padding:8px 20px;opacity:0;transition:opacity 0.5s ease;';
         txt.innerHTML = text;
-        ov.appendChild(txt);
-        document.body.appendChild(ov);
-        requestAnimationFrame(() => { ov.style.opacity = '1'; });
+        document.body.appendChild(txt);
+
+        // Fade in
+        let opacity = 0;
+        const fadeInStart = performance.now();
+        (function fadeIn() {
+          const t = Math.min((performance.now() - fadeInStart) / 500, 1);
+          opacity = t * 0.7;
+          darkPlaneMat.opacity = opacity;
+          txt.style.opacity = String(Math.min(t / 0.5, 1));
+          if (t < 1) requestAnimationFrame(fadeIn);
+        })();
+
         setTimeout(() => {
-          ov.style.opacity = '0';
-          setTimeout(() => { ov.remove(); resolve(); }, 500);
+          // Fade out
+          const fadeOutStart = performance.now();
+          (function fadeOut() {
+            const t = Math.min((performance.now() - fadeOutStart) / 500, 1);
+            darkPlaneMat.opacity = 0.7 * (1 - t);
+            txt.style.opacity = String(1 - t);
+            if (t < 1) requestAnimationFrame(fadeOut);
+            else {
+              scene.remove(darkPlane);
+              darkPlaneGeo.dispose();
+              darkPlaneMat.dispose();
+              txt.remove();
+              resolve();
+            }
+          })();
         }, durMs);
       });
     }
