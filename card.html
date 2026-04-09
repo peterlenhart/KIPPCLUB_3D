@@ -4275,53 +4275,55 @@
       });
     }
 
-    // Blur mit Aussparungen (Würfel + Target bleiben scharf)
+    // Blur mit Aussparung: oben+unten dunkel, Mitte (Box+Target) frei, Text bei Zeile 10
     function showMaskedBlur(text, durMs) {
       return new Promise(resolve => {
-        // Würfel Screen-Position
-        const cc = cubeScreenXY();
-        // Target-Mesh Screen-Position
-        const tMesh = window._targetMeshes && window._targetMeshes['target_verdeckt.webp'];
-        let tx = 180, ty = 490;
-        if (tMesh) {
-          const tv = new THREE.Vector3();
-          tMesh.getWorldPosition(tv);
-          tv.project(camera);
-          tx = Math.round((tv.x * 0.5 + 0.5) * 360);
-          ty = Math.round((-tv.y * 0.5 + 0.5) * 720);
-        }
+        // Zeile 10 Screen-Position durch Kamera projizieren
+        const z10 = new THREE.Vector3(0, 0.46975, 0.658);
+        z10.project(camera);
+        const textScreenY = Math.round((-z10.y * 0.5 + 0.5) * 720);
 
-        // Aussparungs-Rechtecke (großzügig)
-        const cubeR = { x: cc.x - 85, y: cc.y - 100, w: 170, h: 200 };
-        const targR = { x: tx - 50, y: ty - 55, w: 100, h: 110 };
+        // Box-Nordkante projizieren (obere Grenze des freien Bereichs)
+        const northEdge = new THREE.Vector3(0, 0.46975, -0.359375);
+        northEdge.project(camera);
+        const topCutY = Math.round((-northEdge.y * 0.5 + 0.5) * 720);
 
-        // SVG clip-path mit evenodd Löchern
-        const pathD = 'M0 0 L360 0 L360 720 L0 720 Z' +
-          ' M' + cubeR.x + ' ' + cubeR.y + ' L' + (cubeR.x + cubeR.w) + ' ' + cubeR.y +
-          ' L' + (cubeR.x + cubeR.w) + ' ' + (cubeR.y + cubeR.h) + ' L' + cubeR.x + ' ' + (cubeR.y + cubeR.h) + ' Z' +
-          ' M' + targR.x + ' ' + targR.y + ' L' + (targR.x + targR.w) + ' ' + targR.y +
-          ' L' + (targR.x + targR.w) + ' ' + (targR.y + targR.h) + ' L' + targR.x + ' ' + (targR.y + targR.h) + ' Z';
+        // Target-Unterkante projizieren (untere Grenze des freien Bereichs)
+        const southEdge = new THREE.Vector3(0, 0.46975, 0.89);
+        southEdge.project(camera);
+        const botCutY = Math.round((-southEdge.y * 0.5 + 0.5) * 720);
 
-        const ov = document.createElement('div');
-        ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-          'width:360px;height:' + window.innerHeight + 'px;z-index:100;' +
-          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
-          'background:rgba(0,0,0,0.45);opacity:0;transition:opacity 0.5s ease;' +
-          'clip-path:path(evenodd,\'' + pathD + '\');-webkit-clip-path:path(evenodd,\'' + pathD + '\');';
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+          'width:360px;height:' + window.innerHeight + 'px;z-index:100;pointer-events:none;' +
+          'opacity:0;transition:opacity 0.5s ease;';
 
-        // Text bei Zeile 10 (3D Grid: Y = (10-0.5)*45 = 427px)
+        // Oberer dunkler Bereich (blur)
+        const topOv = document.createElement('div');
+        topOv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:' + topCutY + 'px;' +
+          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);';
+        container.appendChild(topOv);
+
+        // Unterer dunkler Bereich (blur)
+        const botOv = document.createElement('div');
+        botOv.style.cssText = 'position:absolute;bottom:0;left:0;width:360px;top:' + botCutY + 'px;' +
+          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);';
+        container.appendChild(botOv);
+
+        // Text bei Zeile 10 (projiziert)
         const txt = document.createElement('div');
-        txt.style.cssText = 'position:absolute;top:427px;left:0;right:0;text-align:center;' +
+        txt.style.cssText = 'position:absolute;top:' + textScreenY + 'px;left:0;right:0;text-align:center;' +
+          'transform:translateY(-50%);' +
           'font:bold 20px Arial;color:#cedb25;' +
           'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;';
         txt.innerHTML = text;
-        ov.appendChild(txt);
+        container.appendChild(txt);
 
-        document.body.appendChild(ov);
-        requestAnimationFrame(() => { ov.style.opacity = '1'; });
+        document.body.appendChild(container);
+        requestAnimationFrame(() => { container.style.opacity = '1'; });
         setTimeout(() => {
-          ov.style.opacity = '0';
-          setTimeout(() => { ov.remove(); resolve(); }, 500);
+          container.style.opacity = '0';
+          setTimeout(() => { container.remove(); resolve(); }, 500);
         }, durMs);
       });
     }
