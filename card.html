@@ -4363,12 +4363,11 @@
       disableReplayBlocker();
       await new Promise(r => setTimeout(r, 100));
 
-      // Normales Spiel starten (ohne dessen Intro-Blur)
+      // Normales Spiel starten + Intro SOFORT gleichzeitig
       window._tutorialRunning = true;
       handleStart(false);
-      await new Promise(r => setTimeout(r, 1000));
 
-      // === INTRO: Zeile für Zeile einblenden ===
+      // === INTRO: Sofort Blur + Zeile für Zeile ===
       {
         const lines = [
           'Stich alle 6', 'Target-Karten', 'Mit gleicher',
@@ -4437,135 +4436,49 @@
 
         // Werte vorbereiten
         const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
-        let playerValText = '', targetValText = '';
+        const SUIT_NAME = { gruen: 'Karo', orange: 'Kreuz', blau: 'Herz', violett: 'Pik' };
+        let playerValShort = ''; // "8", "Q", "K", "A"
+        let playerValLong = '';  // "8", "Dame", "König", "Buben", "Ass"
+        let articleDat = 'der';  // Dativ-Artikel
+        let suitName = '';
         if (tgt) {
-          playerValText = displayNum(tgt.num).replace('.','');
-          if (playerValText === 'A') playerValText = 'Ass';
-          targetValText = getTargetVisualRank(tgt.num);
-        }
-
-        // === BLUR alles außer Target-Karte ===
-        // Target-Karte Screen-Position
-        let tcx = 180, tcy = 500;
-        {
-          // Target-Suit-Mesh für Position (genauer als verdeckt-Mesh das jetzt weg ist)
-          const tRank = window._targetRankMesh;
-          if (tRank) {
-            const tv = new THREE.Vector3();
-            tRank.getWorldPosition(tv);
-            tv.project(camera);
-            tcx = Math.round((tv.x * 0.5 + 0.5) * 360);
-            tcy = Math.round((-tv.y * 0.5 + 0.5) * 720);
+          playerValShort = displayNum(tgt.num).replace('.','');
+          suitName = SUIT_NAME[tgt.color] || '?';
+          // Lange Form + Artikel
+          switch(playerValShort) {
+            case 'J': playerValLong = 'Buben'; articleDat = 'dem'; break;
+            case 'Q': playerValLong = 'Dame'; articleDat = 'der'; break;
+            case 'K': playerValLong = 'König'; articleDat = 'dem'; break;
+            case 'A': playerValLong = 'Ass'; articleDat = 'der'; break;
+            default:  playerValLong = playerValShort; articleDat = 'der'; break;
           }
         }
 
-        // Blur mit Target-Freistellung (Rechteck um Karte)
-        const targetBlur = document.createElement('div');
-        {
-          const cx = tcx, cy = tcy;
-          const hw = 55, hh = 70;
-          const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-          const inner = (cx-hw)+'px '+(cy-hh)+'px, '+(cx-hw)+'px '+(cy+hh)+'px, '+
-                        (cx+hw)+'px '+(cy+hh)+'px, '+(cx+hw)+'px '+(cy-hh)+'px, '+(cx-hw)+'px '+(cy-hh)+'px';
-          targetBlur.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-            'width:360px;height:720px;z-index:98;pointer-events:none;' +
-            'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);' +
-            'clip-path:polygon('+outer+', '+inner+');opacity:0;transition:opacity 0.4s ease;';
-          document.body.appendChild(targetBlur);
-          requestAnimationFrame(() => { targetBlur.style.opacity = '1'; });
+        // === Playercard einblenden (beste Stichkarte zeigen) ===
+        const slotColor = tgt ? tgt.color : 'gruen';
+        if (window._playerCardMesh) window._playerCardMesh.visible = true;
+        Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+        const pSuitFile = SUIT_IMG_BY_COLOR[slotColor];
+        if (pSuitFile && window._playerSuitMeshes && window._playerSuitMeshes[pSuitFile]) {
+          window._playerSuitMeshes[pSuitFile].visible = true;
         }
-        await sleep(500);
-        if (aborted()) { targetBlur.remove(); throw new ReplayAbort(); }
+        updatePlayerRankDisplay(playerValShort);
+        if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
-        // === Hand zeichnet Oval um Target-Karte ===
-        const ovalCanvas = document.createElement('canvas');
-        {
-          ovalCanvas.width = 360; ovalCanvas.height = 720;
-          ovalCanvas.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-            'width:360px;height:720px;z-index:99;pointer-events:none;';
-          document.body.appendChild(ovalCanvas);
-          const octx = ovalCanvas.getContext('2d');
-          octx.strokeStyle = '#cedb25';
-          octx.lineWidth = 3.5;
-          octx.lineCap = 'round';
-          octx.lineJoin = 'round';
+        // === Voller Blur + Stich-Text ===
+        await showBlurHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 3500);
 
-          const rx = 65, ry = 75;
-          const totalAngle = 2 * Math.PI + 0.5;
-          const startAngle = -Math.PI * 0.6;
-          const dur = 900;
-          const wobble = 3;
+        // Playercard wieder ausblenden
+        if (window._playerCardMesh) window._playerCardMesh.visible = false;
+        Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+        if (window._playerRankMesh) window._playerRankMesh.visible = false;
 
-          setHandPos(tcx + rx * Math.cos(startAngle), tcy + ry * Math.sin(startAngle));
-          handEl.style.opacity = '1';
-          await sleep(150);
-
-          let prevX = null, prevY = null;
-          const t0 = Date.now();
-          await new Promise(resolve => {
-            function frame() {
-              const elapsed = Date.now() - t0;
-              const t = Math.min(elapsed / dur, 1);
-              const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-              const a = startAngle + totalAngle * ease;
-              const wx = (Math.random() - 0.5) * wobble;
-              const wy = (Math.random() - 0.5) * wobble;
-              const px = tcx + rx * Math.cos(a) + wx;
-              const py = tcy + ry * Math.sin(a) + wy;
-              if (prevX !== null) { octx.beginPath(); octx.moveTo(prevX, prevY); octx.lineTo(px, py); octx.stroke(); }
-              prevX = px; prevY = py;
-              setHandPos(px, py);
-              if (t < 1) requestAnimationFrame(frame); else resolve();
-            }
-            requestAnimationFrame(frame);
-          });
-
-          // === Hand schreibt "+1 = 8" neben dem Oval ===
-          const writeText = targetValText + ' + 1 = ' + playerValText;
-          const writeX = tcx + 75; // rechts vom Oval
-          const writeY = tcy - 30;
-          await sleep(200);
-
-          // Text Zeichen für Zeichen einblenden
-          const writeEl = document.createElement('div');
-          writeEl.style.cssText = 'position:fixed;left:' + (writeX + (180 - 180)) + 'px;top:' + writeY + 'px;' +
-            'z-index:100;pointer-events:none;font:bold 24px Arial;color:#cedb25;' +
-            'text-shadow:0 2px 4px rgba(0,0,0,0.9);letter-spacing:2px;white-space:nowrap;' +
-            'transform:translateX(-50%) rotate(-5deg);';
-          // Position relativ zum Overlay-Container
-          writeEl.style.left = writeX + 'px';
-          document.body.appendChild(writeEl);
-
-          for (let ci = 0; ci < writeText.length; ci++) {
-            writeEl.textContent += writeText[ci];
-            // Hand folgt dem Text
-            const charX = writeX + ci * 14;
-            setHandPos(charX, writeY + 15);
-            await new Promise(r => setTimeout(r, 120));
-          }
-
-          handEl.style.opacity = '0';
-          await sleep(1500); // Oval + Text sichtbar lassen
-
-          // Alles ausblenden
-          ovalCanvas.style.transition = 'opacity 0.4s ease';
-          ovalCanvas.style.opacity = '0';
-          writeEl.style.transition = 'opacity 0.4s ease';
-          writeEl.style.opacity = '0';
-          targetBlur.style.opacity = '0';
-          await sleep(400);
-          ovalCanvas.remove();
-          writeEl.remove();
-          targetBlur.remove();
-        }
-
-        await sleep(300);
         if (aborted()) throw new ReplayAbort();
 
-        // === Box-Freistellung: "*Kartenwert* finden und merken" ===
+        // === Box-Freistellung: "Achtung! „K" finden und merken." ===
         {
           if (tgt) {
-            await showMaskedBlur('\u201E' + playerValText + '\u201C finden und merken', 3500);
+            await showMaskedBlur('Achtung! \u201E' + playerValShort + '\u201C finden und merken.', 3500);
           }
         }
         if (aborted()) throw new ReplayAbort();
