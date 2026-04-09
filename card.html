@@ -4372,7 +4372,7 @@
       {
         const lines = [
           'Stich alle 6', 'Target-Karten', 'Mit gleicher',
-          'Kartenfarbe und', 'um 1 höheren Wert'
+          'Kartenfarbe und', 'um 1 höher.'
         ];
         const ov = document.createElement('div');
         ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -4435,21 +4435,51 @@
         onTargetVerdecktTap();
         await sleep(1200); // Target wird sichtbar
 
-        // === Hand-gezeichnetes Oval um Target-Karte ===
+        // Werte vorbereiten
+        const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
+        let playerValText = '', targetValText = '';
+        if (tgt) {
+          playerValText = displayNum(tgt.num).replace('.','');
+          if (playerValText === 'A') playerValText = 'Ass';
+          targetValText = getTargetVisualRank(tgt.num);
+        }
+
+        // === BLUR alles außer Target-Karte ===
+        // Target-Karte Screen-Position
+        let tcx = 180, tcy = 500;
         {
-          // Target-Karte Screen-Position projizieren
-          const tMeshV = window._targetMeshes && window._targetMeshes['target_verdeckt.webp'];
-          let tcx = 180, tcy = 500;
-          if (tMeshV) {
+          // Target-Suit-Mesh für Position (genauer als verdeckt-Mesh das jetzt weg ist)
+          const tRank = window._targetRankMesh;
+          if (tRank) {
             const tv = new THREE.Vector3();
-            tMeshV.getWorldPosition(tv);
+            tRank.getWorldPosition(tv);
             tv.project(camera);
             tcx = Math.round((tv.x * 0.5 + 0.5) * 360);
             tcy = Math.round((-tv.y * 0.5 + 0.5) * 720);
           }
+        }
 
-          // Canvas für Oval-Linie
-          const ovalCanvas = document.createElement('canvas');
+        // Blur mit Target-Freistellung (Rechteck um Karte)
+        const targetBlur = document.createElement('div');
+        {
+          const cx = tcx, cy = tcy;
+          const hw = 55, hh = 70;
+          const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+          const inner = (cx-hw)+'px '+(cy-hh)+'px, '+(cx-hw)+'px '+(cy+hh)+'px, '+
+                        (cx+hw)+'px '+(cy+hh)+'px, '+(cx+hw)+'px '+(cy-hh)+'px, '+(cx-hw)+'px '+(cy-hh)+'px';
+          targetBlur.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+            'width:360px;height:720px;z-index:98;pointer-events:none;' +
+            'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.45);' +
+            'clip-path:polygon('+outer+', '+inner+');opacity:0;transition:opacity 0.4s ease;';
+          document.body.appendChild(targetBlur);
+          requestAnimationFrame(() => { targetBlur.style.opacity = '1'; });
+        }
+        await sleep(500);
+        if (aborted()) { targetBlur.remove(); throw new ReplayAbort(); }
+
+        // === Hand zeichnet Oval um Target-Karte ===
+        const ovalCanvas = document.createElement('canvas');
+        {
           ovalCanvas.width = 360; ovalCanvas.height = 720;
           ovalCanvas.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
             'width:360px;height:720px;z-index:99;pointer-events:none;';
@@ -4460,56 +4490,73 @@
           octx.lineCap = 'round';
           octx.lineJoin = 'round';
 
-          // Oval-Parameter
-          const rx = 65, ry = 75; // Radien
-          const totalAngle = 2 * Math.PI + 0.5; // Überlauf ~30°
-          const startAngle = -Math.PI * 0.6; // Start oben-links
-          const dur = 900; // ms
-          const wobble = 3; // px Zitter
+          const rx = 65, ry = 75;
+          const totalAngle = 2 * Math.PI + 0.5;
+          const startAngle = -Math.PI * 0.6;
+          const dur = 900;
+          const wobble = 3;
 
           setHandPos(tcx + rx * Math.cos(startAngle), tcy + ry * Math.sin(startAngle));
           handEl.style.opacity = '1';
           await sleep(150);
 
-          const t0 = Date.now();
           let prevX = null, prevY = null;
+          const t0 = Date.now();
           await new Promise(resolve => {
             function frame() {
               const elapsed = Date.now() - t0;
               const t = Math.min(elapsed / dur, 1);
-              const angle = startAngle + totalAngle * t;
-              // Ease-in-out für natürliche Geschwindigkeit
               const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
               const a = startAngle + totalAngle * ease;
               const wx = (Math.random() - 0.5) * wobble;
               const wy = (Math.random() - 0.5) * wobble;
               const px = tcx + rx * Math.cos(a) + wx;
               const py = tcy + ry * Math.sin(a) + wy;
-
-              if (prevX !== null) {
-                octx.beginPath();
-                octx.moveTo(prevX, prevY);
-                octx.lineTo(px, py);
-                octx.stroke();
-              }
+              if (prevX !== null) { octx.beginPath(); octx.moveTo(prevX, prevY); octx.lineTo(px, py); octx.stroke(); }
               prevX = px; prevY = py;
-
               setHandPos(px, py);
-
-              if (t < 1) requestAnimationFrame(frame);
-              else resolve();
+              if (t < 1) requestAnimationFrame(frame); else resolve();
             }
             requestAnimationFrame(frame);
           });
 
-          handEl.style.opacity = '0';
-          await sleep(800); // Oval kurz sichtbar lassen
+          // === Hand schreibt "+1 = 8" neben dem Oval ===
+          const writeText = targetValText + ' + 1 = ' + playerValText;
+          const writeX = tcx + 75; // rechts vom Oval
+          const writeY = tcy - 30;
+          await sleep(200);
 
-          // Oval ausblenden
+          // Text Zeichen für Zeichen einblenden
+          const writeEl = document.createElement('div');
+          writeEl.style.cssText = 'position:fixed;left:' + (writeX + (180 - 180)) + 'px;top:' + writeY + 'px;' +
+            'z-index:100;pointer-events:none;font:bold 24px Arial;color:#cedb25;' +
+            'text-shadow:0 2px 4px rgba(0,0,0,0.9);letter-spacing:2px;white-space:nowrap;' +
+            'transform:translateX(-50%) rotate(-5deg);';
+          // Position relativ zum Overlay-Container
+          writeEl.style.left = writeX + 'px';
+          document.body.appendChild(writeEl);
+
+          for (let ci = 0; ci < writeText.length; ci++) {
+            writeEl.textContent += writeText[ci];
+            // Hand folgt dem Text
+            const charX = writeX + ci * 14;
+            setHandPos(charX, writeY + 15);
+            await new Promise(r => setTimeout(r, 120));
+          }
+
+          handEl.style.opacity = '0';
+          await sleep(1500); // Oval + Text sichtbar lassen
+
+          // Alles ausblenden
           ovalCanvas.style.transition = 'opacity 0.4s ease';
           ovalCanvas.style.opacity = '0';
+          writeEl.style.transition = 'opacity 0.4s ease';
+          writeEl.style.opacity = '0';
+          targetBlur.style.opacity = '0';
           await sleep(400);
           ovalCanvas.remove();
+          writeEl.remove();
+          targetBlur.remove();
         }
 
         await sleep(300);
@@ -4517,17 +4564,25 @@
 
         // === Box-Freistellung: "*Kartenwert* finden und merken" ===
         {
-          const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
           if (tgt) {
-            let valText = displayNum(tgt.num).replace('.','');
-            if (valText === 'A') valText = 'Ass';
-            await showMaskedBlur('\u201E' + valText + '\u201C finden und merken', 3500);
+            await showMaskedBlur('\u201E' + playerValText + '\u201C finden und merken', 3500);
           }
         }
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 2: Würfel antippen → senkt sich ===
-        // Zuerst: ALLE 3 Faces verdecken (Würfel steht noch auf Ecke, alle Seiten sichtbar)
+        await sleep(600);
+        await handTapFromSouth(178, 232, 400);
+        if (aborted()) throw new ReplayAbort();
+        kipp21KniffAbort = true;
+        if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+        // Warten bis Eckblick-Cleanup fertig (Würfel-Ecke bei Y=0)
+        for (let w = 0; w < 50; w++) {
+          if (!kipp21KniffActive) break;
+          await new Promise(r => setTimeout(r, 100));
+        }
+
+        // Slots verdecken JETZT — Würfel hat Y=0 erreicht (kipp21KniffActive = false)
         for (const fk of ['f0', 'f1', 'f2']) {
           const f = faceSlots[fk];
           if (f) {
@@ -4536,15 +4591,6 @@
           }
         }
 
-        await sleep(600);
-        await handTapFromSouth(178, 232, 400);
-        if (aborted()) throw new ReplayAbort();
-        kipp21KniffAbort = true;
-        if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
-        for (let w = 0; w < 50; w++) {
-          if (!kipp21KniffActive) break;
-          await new Promise(r => setTimeout(r, 100));
-        }
         await sleep(800);
         if (aborted()) throw new ReplayAbort();
 
