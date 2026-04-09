@@ -4289,6 +4289,28 @@
       });
     }
 
+    // Dunkles Overlay OHNE Blur (Karten bleiben scharf sichtbar)
+    function showDarkHint(text, durMs) {
+      return new Promise(resolve => {
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+          'width:360px;height:' + window.innerHeight + 'px;z-index:100;' +
+          'display:flex;align-items:flex-start;justify-content:center;padding-top:60px;' +
+          'background:rgba(0,0,0,0.35);opacity:0;transition:opacity 0.5s ease;';
+        const txt = document.createElement('div');
+        txt.style.cssText = 'font:bold 22px Arial;color:#cedb25;text-align:center;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.5;padding:0 30px;';
+        txt.innerHTML = text;
+        ov.appendChild(txt);
+        document.body.appendChild(ov);
+        requestAnimationFrame(() => { ov.style.opacity = '1'; });
+        setTimeout(() => {
+          ov.style.opacity = '0';
+          setTimeout(() => { ov.remove(); resolve(); }, 500);
+        }, durMs);
+      });
+    }
+
     // Blur mit Freistellung: Box-Innenfläche (Monge-Quadrat 6×6 Zellen) projiziert
     function showMaskedBlur(text, durMs) {
       return new Promise(resolve => {
@@ -4455,7 +4477,7 @@
           }
         }
 
-        // === Playercard einblenden (beste Stichkarte) ===
+        // === Playercard einblenden (3D-Mesh, korrekt positioniert) ===
         const slotColor = tgt ? tgt.color : 'gruen';
         if (window._playerCardMesh) window._playerCardMesh.visible = true;
         Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
@@ -4466,8 +4488,8 @@
         updatePlayerRankDisplay(playerValShort);
         if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
-        // === Blur + "Stich mit der Karo 8" ===
-        await showBlurHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 3500);
+        // === Dunkles Overlay + Text (kein Blur, Karten bleiben scharf) ===
+        await showDarkHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 5500);
 
         // Playercard wieder ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
