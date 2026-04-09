@@ -4427,24 +4427,25 @@
       try {
         if (aborted()) throw new ReplayAbort();
 
-        // === SCHRITT 1: Target aufdecken ===
+        // === SCHRITT 1: Target aufdecken (OHNE Eckblick) ===
         await sleep(100);
         await handTapFromSouth(169, 491, 500);
         if (aborted()) throw new ReplayAbort();
-        onTargetVerdecktTap();
-        await sleep(1200); // Target wird sichtbar
+        // Nur Target-Karte aufdecken, Würfel bleibt liegen
+        stopTargetPulse();
+        window.revealGeneratedCardTarget3D(true);
+        await sleep(1200); // Target fade-in abwarten
 
         // Werte vorbereiten
         const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
         const SUIT_NAME = { gruen: 'Karo', orange: 'Kreuz', blau: 'Herz', violett: 'Pik' };
-        let playerValShort = ''; // "8", "Q", "K", "A"
-        let playerValLong = '';  // "8", "Dame", "König", "Buben", "Ass"
-        let articleDat = 'der';  // Dativ-Artikel
+        let playerValShort = '';
+        let playerValLong = '';
+        let articleDat = 'der';
         let suitName = '';
         if (tgt) {
           playerValShort = displayNum(tgt.num).replace('.','');
           suitName = SUIT_NAME[tgt.color] || '?';
-          // Lange Form + Artikel
           switch(playerValShort) {
             case 'J': playerValLong = 'Buben'; articleDat = 'dem'; break;
             case 'Q': playerValLong = 'Dame'; articleDat = 'der'; break;
@@ -4454,7 +4455,7 @@
           }
         }
 
-        // === Playercard einblenden (beste Stichkarte zeigen) ===
+        // === Playercard einblenden (beste Stichkarte) ===
         const slotColor = tgt ? tgt.color : 'gruen';
         if (window._playerCardMesh) window._playerCardMesh.visible = true;
         Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
@@ -4465,14 +4466,18 @@
         updatePlayerRankDisplay(playerValShort);
         if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
-        // === Voller Blur + Stich-Text ===
+        // === Blur + "Stich mit der Karo 8" ===
         await showBlurHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 3500);
 
         // Playercard wieder ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
         Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
         if (window._playerRankMesh) window._playerRankMesh.visible = false;
+        if (aborted()) throw new ReplayAbort();
 
+        // === JETZT Eckblick starten (Würfel hebt sich) ===
+        runKipp21EckblickKniff(true);
+        await sleep(2000); // Würfel steigt auf Höchststand
         if (aborted()) throw new ReplayAbort();
 
         // === Box-Freistellung: "Achtung! „K" finden und merken." ===
