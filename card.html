@@ -4355,7 +4355,7 @@
       await new Promise(r => setTimeout(r, 1000));
 
       // === INTRO BLUR: "Überbiete alle 6 Target-Karten um +1" ===
-      await showBlurHint(T.cIntro || 'Überbiete alle 6<br>Target-Karten um +1', 3000);
+      await showBlurHint(T.cIntro || 'Überbiete alle 6<br>Target-Karten um +1', 3500);
 
       // Target für perfekten +1 Stich erzwingen:
       // Nach 4 CW Kipps landet Würfel bei Q3/f0. S2 von f0 = deck[1], Farbe = gruen.
@@ -4397,7 +4397,9 @@
           if (tgt) {
             const sym = SUIT_SYMBOL[tgt.color] || '?';
             const playerVal = displayNum(tgt.num);
-            await showMaskedBlur('Finde den Kartenwert ' + sym + ' ' + playerVal, 3000);
+            let valText = playerVal.replace('.','');
+            if (valText === 'A') valText = 'Ass';
+            await showMaskedBlur('Finde den Kartenwert ' + valText, 3500);
           }
         }
         if (aborted()) throw new ReplayAbort();
@@ -9426,7 +9428,7 @@
       startKipp21(false);
       // Intro-Blur nur im normalen Spiel (Tutorial hat eigenen)
       if (!window._tutorialRunning) {
-        showBlurHint(T.cIntro || 'Überbiete alle 6<br>Target-Karten um +1', 3000);
+        showBlurHint(T.cIntro || 'Überbiete alle 6<br>Target-Karten um +1', 3500);
       }
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
