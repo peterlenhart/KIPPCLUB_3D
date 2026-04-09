@@ -4527,7 +4527,7 @@
         if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
         // === Dunkles Overlay + Text (kein Blur, Karten bleiben scharf) ===
-        await showDarkHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 5500);
+        await showDarkHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 6500);
 
         // Playercard wieder ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
@@ -4717,7 +4717,9 @@
 
         if (targetSlot >= 0) handleStichConfirm(targetSlot);
 
-        await sleep(5500);
+        // handleStichConfirm zeigt stich1_pl erst nach 4000ms intern
+        // → 8000ms = stich1_pl für ~4 Sek sichtbar
+        await sleep(9000);
 
       } catch(e) {
         if (!(e instanceof ReplayAbort)) console.error('[TUT]', e);
@@ -5341,7 +5343,7 @@
       }
       
       // Warten bis FAIL-Animation komplett (1500 Delay + Flug 800 + Hold 2000 + Geste ~1500 + X 1200 + Fade 600)
-      await sleep(8000);
+      await sleep(9000);
       if (aborted()) { replayCleanup(jr); return; }
       
       // ==============================================
