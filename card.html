@@ -4391,31 +4391,93 @@
         onTargetVerdecktTap();
         await sleep(1500); // Target wird sichtbar
 
-        // === TUTORIAL HINT: "Stich mit ♦ 8" — direkt wenn Target sichtbar ===
-        {
-          const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
-          if (tgt) {
-            const sym = SUIT_SYMBOL[tgt.color] || '?';
-            const playerVal = displayNum(tgt.num);
-            let valText = playerVal.replace('.','');
-            if (valText === 'A') valText = 'Ass';
-            await showMaskedBlur('Finde den Kartenwert ' + valText, 3500);
-          }
+        // Farbnamen-Lookup
+        const SUIT_NAME = { gruen: 'Karo', orange: 'Kreuz', blau: 'Herz', violett: 'Pik' };
+
+        // === TUTORIAL HINT 1: "Finde den Kartenwert 8" — bleibt bis 0.5s vor Hand-Tap ===
+        const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
+        let valText = '', suitName = '';
+        if (tgt) {
+          const playerVal = displayNum(tgt.num);
+          valText = playerVal.replace('.','');
+          if (valText === 'A') valText = 'Ass';
+          suitName = SUIT_NAME[tgt.color] || '?';
         }
-        if (aborted()) throw new ReplayAbort();
+
+        // Masked Blur manuell erzeugen (nicht auto-dismiss)
+        let maskedOv = null;
+        let maskedTxt = null;
+        {
+          const Y = 0.46875;
+          const corners3D = [
+            new THREE.Vector3(-0.46875, Y, -0.359375),
+            new THREE.Vector3( 0.46875, Y, -0.359375),
+            new THREE.Vector3( 0.46875, Y,  0.579875),
+            new THREE.Vector3(-0.46875, Y,  0.579875)
+          ];
+          const corners2D = corners3D.map(p => {
+            const v = p.clone().project(camera);
+            return { x: Math.round((v.x * 0.5 + 0.5) * 360), y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+          });
+          const [nw, ne, se, sw] = corners2D;
+          const z10 = new THREE.Vector3(0, Y, 0.658);
+          z10.project(camera);
+          const textScreenY = Math.round((-z10.y * 0.5 + 0.5) * 720);
+
+          const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+          const inner = nw.x+'px '+nw.y+'px, '+sw.x+'px '+sw.y+'px, '+se.x+'px '+se.y+'px, '+ne.x+'px '+ne.y+'px, '+nw.x+'px '+nw.y+'px';
+
+          maskedOv = document.createElement('div');
+          maskedOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+            'width:360px;height:'+window.innerHeight+'px;z-index:100;pointer-events:none;' +
+            'opacity:0;transition:opacity 0.5s ease;';
+          const blurDiv = document.createElement('div');
+          blurDiv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+            'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+            'clip-path:polygon('+outer+', '+inner+');';
+          maskedOv.appendChild(blurDiv);
+          maskedTxt = document.createElement('div');
+          maskedTxt.style.cssText = 'position:absolute;top:'+textScreenY+'px;left:0;right:0;text-align:center;' +
+            'transform:translateY(-50%);font:bold 20px Arial;color:#cedb25;' +
+            'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;transition:opacity 0.3s ease;';
+          maskedTxt.textContent = 'Finde den Kartenwert ' + valText;
+          maskedOv.appendChild(maskedTxt);
+          document.body.appendChild(maskedOv);
+          requestAnimationFrame(() => { maskedOv.style.opacity = '1'; });
+        }
+
+        // Warten (Text bleibt sichtbar)
+        await sleep(3500);
+        if (aborted()) { if (maskedOv) maskedOv.remove(); throw new ReplayAbort(); }
+
+        // === TUTORIAL HINT 2: Text wechseln ===
+        maskedTxt.style.opacity = '0';
+        await sleep(300);
+        maskedTxt.textContent = 'Mit Tipp auf den Würfel senkst du ihn.';
+        maskedTxt.style.opacity = '1';
+        await sleep(500);
+        if (aborted()) { if (maskedOv) maskedOv.remove(); throw new ReplayAbort(); }
 
         // === SCHRITT 2: Würfel antippen → senkt sich ===
-        await sleep(600);
         await handTapFromSouth(178, 232, 400);
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { if (maskedOv) maskedOv.remove(); throw new ReplayAbort(); }
         kipp21KniffAbort = true;
         if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
-        // Warten bis Eckblick-Cleanup fertig
         for (let w = 0; w < 50; w++) {
           if (!kipp21KniffActive) break;
           await new Promise(r => setTimeout(r, 100));
         }
-        await sleep(1000);
+
+        // Masked Blur ausblenden
+        maskedOv.style.opacity = '0';
+        await sleep(500);
+        maskedOv.remove();
+        maskedOv = null;
+        await sleep(500);
+        if (aborted()) throw new ReplayAbort();
+
+        // === TUTORIAL HINT 3: Kipp-Regel erklären ===
+        await showBlurHint('Wie oft (1–6) und in welche<br>Richtung musst du den Würfel<br>kippen, damit ' + valText + ' an ' + suitName + ' liegt?', 4500);
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 3: Kippen (CW) ===
