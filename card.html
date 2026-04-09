@@ -4409,38 +4409,38 @@
         await sleep(600);
 
         // Aktiven Slot finden
-        // Slot finden der zur Target-Farbe passt (wie ein echter Spieler)
+        // deckIdx wird berechnet als faceBase[topFace] + slotIndex
+        const _faceBase = { f0: 0, f1: 4, f2: 8 };
         let targetSlot = -1;   // per-face slot index (0-3)
         let targetDeckIdx = -1; // deck index (0-11) für Screen-Position
         const targetColor = window._cardTargetState && window._cardTargetState.currentTarget
           ? window._cardTargetState.currentTarget.color : null;
         const slotColors = SLOT_NEIGHBOR_COLORS[currentQuadrant];
         const face = faceSlots[topFace];
+        const baseIdx = _faceBase[topFace] || 0;
+
         if (face && targetColor && slotColors) {
           const slotKeys = Object.keys(face.slotMap);
           for (let si = 0; si < slotKeys.length; si++) {
             const slotName = 'S' + (si + 1);
-            if (slotColors[slotName] === targetColor) {
-              const idx = face.slotMap[slotKeys[si]].deckIdx;
-              if (idx !== undefined && !window._playedSlots.has(idx)) {
-                targetSlot = si;        // per-face (0-3)
-                targetDeckIdx = idx;    // deck (0-11)
-                break;
-              }
+            const di = baseIdx + si;
+            if (slotColors[slotName] === targetColor && !window._playedSlots.has(di)) {
+              targetSlot = si;
+              targetDeckIdx = di;
+              break;
             }
           }
         }
         // Fallback: ersten aktiven Slot
         if (targetSlot < 0 && face) {
-          let si = 0;
-          for (const key in face.slotMap) {
-            const idx = face.slotMap[key].deckIdx;
-            if (idx !== undefined && !window._playedSlots.has(idx)) {
+          const slotKeys = Object.keys(face.slotMap);
+          for (let si = 0; si < slotKeys.length; si++) {
+            const di = baseIdx + si;
+            if (!window._playedSlots.has(di)) {
               targetSlot = si;
-              targetDeckIdx = idx;
+              targetDeckIdx = di;
               break;
             }
-            si++;
           }
         }
 
@@ -4449,27 +4449,9 @@
         const sx = (slotPos ? slotPos.x : 78);
         const sy = (slotPos ? slotPos.y : 314) + 22;
         await handTapFromSouth(sx, sy, 900);
-        // handleStichConfirm erwartet per-face slotIdx (0-3)
-        if (targetSlot >= 0) {
-          _tutDbg('[TUT-STICH] slotIdx=' + targetSlot + ' deckIdx=' + targetDeckIdx + ' face=' + topFace + ' Q=' + currentQuadrant);
-          handleStichConfirm(targetSlot);
-          // Sicherheitshalber Slot nochmal explizit blass machen
-          setTimeout(() => {
-            const f = faceSlots[topFace];
-            if (f) {
-              let i = 0;
-              for (const key in f.slotMap) {
-                if (i === targetSlot) {
-                  f.slotMap[key].slotAlpha = 0.25;
-                  _tutDbg('[TUT-STICH] slotAlpha set for key=' + key);
-                  break;
-                }
-                i++;
-              }
-              rebuildFaceMat(topFace, 1);
-            }
-          }, 200);
-        }
+
+        if (targetSlot >= 0) handleStichConfirm(targetSlot);
+
         await sleep(5500);
 
       } catch(e) {
@@ -12212,25 +12194,10 @@
       })();
     }
 
-    function _tutDbg(msg) {
-      let el = document.getElementById('_tutDebug');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = '_tutDebug';
-        el.style.cssText = 'position:fixed;bottom:60px;left:10px;right:10px;z-index:999;' +
-          'background:rgba(0,0,0,0.9);color:#0f0;font:11px monospace;padding:8px;border-radius:6px;' +
-          'max-height:140px;overflow-y:auto;';
-        document.body.appendChild(el);
-      }
-      el.innerHTML += msg + '<br>';
-      el.scrollTop = el.scrollHeight;
-    }
-
     function handleStichConfirm(slotIdx) {
-      _tutDbg('handleStichConfirm slot=' + slotIdx + ' lock=' + _stichLock + ' tgt=' + (window._cardTargetState && window._cardTargetState.currentTarget ? JSON.stringify(window._cardTargetState.currentTarget) : 'NULL'));
-      if (_stichLock) { _tutDbg('BLOCKED: _stichLock!'); return; }
+      if (_stichLock) return;
       const st = window._cardTargetState;
-      if (!st || !st.currentTarget) { _tutDbg('BLOCKED: no target!'); return; }
+      if (!st || !st.currentTarget) return;
       _stichLock = true;
 
       const slot = getSlotValueAndColor(slotIdx);
