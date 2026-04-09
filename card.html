@@ -4371,7 +4371,7 @@
       // === INTRO: Zeile für Zeile einblenden ===
       {
         const lines = [
-          'Stich die 6', 'Target-Karten', 'Mit gleicher',
+          'Stich alle 6', 'Target-Karten', 'Mit gleicher',
           'Kartenfarbe und', 'um 1 höheren Wert'
         ];
         const ov = document.createElement('div');
@@ -4433,7 +4433,86 @@
         await handTapFromSouth(169, 491, 500);
         if (aborted()) throw new ReplayAbort();
         onTargetVerdecktTap();
-        await sleep(2000); // Würfel steigt auf Höchststand
+        await sleep(1200); // Target wird sichtbar
+
+        // === Hand-gezeichnetes Oval um Target-Karte ===
+        {
+          // Target-Karte Screen-Position projizieren
+          const tMeshV = window._targetMeshes && window._targetMeshes['target_verdeckt.webp'];
+          let tcx = 180, tcy = 500;
+          if (tMeshV) {
+            const tv = new THREE.Vector3();
+            tMeshV.getWorldPosition(tv);
+            tv.project(camera);
+            tcx = Math.round((tv.x * 0.5 + 0.5) * 360);
+            tcy = Math.round((-tv.y * 0.5 + 0.5) * 720);
+          }
+
+          // Canvas für Oval-Linie
+          const ovalCanvas = document.createElement('canvas');
+          ovalCanvas.width = 360; ovalCanvas.height = 720;
+          ovalCanvas.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+            'width:360px;height:720px;z-index:99;pointer-events:none;';
+          document.body.appendChild(ovalCanvas);
+          const octx = ovalCanvas.getContext('2d');
+          octx.strokeStyle = '#cedb25';
+          octx.lineWidth = 3.5;
+          octx.lineCap = 'round';
+          octx.lineJoin = 'round';
+
+          // Oval-Parameter
+          const rx = 65, ry = 75; // Radien
+          const totalAngle = 2 * Math.PI + 0.5; // Überlauf ~30°
+          const startAngle = -Math.PI * 0.6; // Start oben-links
+          const dur = 900; // ms
+          const wobble = 3; // px Zitter
+
+          setHandPos(tcx + rx * Math.cos(startAngle), tcy + ry * Math.sin(startAngle));
+          handEl.style.opacity = '1';
+          await sleep(150);
+
+          const t0 = Date.now();
+          let prevX = null, prevY = null;
+          await new Promise(resolve => {
+            function frame() {
+              const elapsed = Date.now() - t0;
+              const t = Math.min(elapsed / dur, 1);
+              const angle = startAngle + totalAngle * t;
+              // Ease-in-out für natürliche Geschwindigkeit
+              const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+              const a = startAngle + totalAngle * ease;
+              const wx = (Math.random() - 0.5) * wobble;
+              const wy = (Math.random() - 0.5) * wobble;
+              const px = tcx + rx * Math.cos(a) + wx;
+              const py = tcy + ry * Math.sin(a) + wy;
+
+              if (prevX !== null) {
+                octx.beginPath();
+                octx.moveTo(prevX, prevY);
+                octx.lineTo(px, py);
+                octx.stroke();
+              }
+              prevX = px; prevY = py;
+
+              setHandPos(px, py);
+
+              if (t < 1) requestAnimationFrame(frame);
+              else resolve();
+            }
+            requestAnimationFrame(frame);
+          });
+
+          handEl.style.opacity = '0';
+          await sleep(800); // Oval kurz sichtbar lassen
+
+          // Oval ausblenden
+          ovalCanvas.style.transition = 'opacity 0.4s ease';
+          ovalCanvas.style.opacity = '0';
+          await sleep(400);
+          ovalCanvas.remove();
+        }
+
+        await sleep(300);
         if (aborted()) throw new ReplayAbort();
 
         // === Box-Freistellung: "*Kartenwert* finden und merken" ===
@@ -4448,6 +4527,15 @@
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 2: Würfel antippen → senkt sich ===
+        // Zuerst: ALLE 3 Faces verdecken (Würfel steht noch auf Ecke, alle Seiten sichtbar)
+        for (const fk of ['f0', 'f1', 'f2']) {
+          const f = faceSlots[fk];
+          if (f) {
+            for (const key in f.slotMap) f.slotMap[key].slotAlpha = 0;
+            rebuildFaceMat(fk, 1);
+          }
+        }
+
         await sleep(600);
         await handTapFromSouth(178, 232, 400);
         if (aborted()) throw new ReplayAbort();
@@ -4458,16 +4546,6 @@
           await new Promise(r => setTimeout(r, 100));
         }
         await sleep(800);
-
-        // === Slots verdecken (alle 4 der aktuellen Face auf alpha=0) ===
-        {
-          const f = faceSlots[topFace];
-          if (f) {
-            for (const key in f.slotMap) f.slotMap[key].slotAlpha = 0;
-            rebuildFaceMat(topFace, 1);
-          }
-        }
-        await sleep(400);
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 3: Kippen ===
