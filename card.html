@@ -4275,42 +4275,53 @@
       });
     }
 
-    // Blur mit Aussparung: oben+unten dunkel, Mitte (Box+Target) frei, Text bei Zeile 10
+    // Blur mit Freistellung: Box-Innenfläche (Monge-Quadrat 6×6 Zellen) projiziert
     function showMaskedBlur(text, durMs) {
       return new Promise(resolve => {
-        // Zeile 10 Screen-Position durch Kamera projizieren
-        const z10 = new THREE.Vector3(0, 0.46975, 0.658);
+        // 4 Ecken der Box-Innenfläche auf Spieltisch-Höhe (Y=0.46875)
+        const Y = 0.46875;
+        const corners3D = [
+          new THREE.Vector3(-0.46875, Y, -0.359375),  // NW
+          new THREE.Vector3( 0.46875, Y, -0.359375),  // NE
+          new THREE.Vector3( 0.46875, Y,  0.579875),  // SE
+          new THREE.Vector3(-0.46875, Y,  0.579875)   // SW
+        ];
+        // Perspektivisch projizieren
+        const corners2D = corners3D.map(p => {
+          const v = p.clone().project(camera);
+          return {
+            x: Math.round((v.x * 0.5 + 0.5) * 360),
+            y: Math.round((-v.y * 0.5 + 0.5) * 720)
+          };
+        });
+        const [nw, ne, se, sw] = corners2D;
+
+        // Zeile 10 Screen-Position projizieren
+        const z10 = new THREE.Vector3(0, Y, 0.658);
         z10.project(camera);
         const textScreenY = Math.round((-z10.y * 0.5 + 0.5) * 720);
 
-        // Box-Nordkante projizieren (obere Grenze des freien Bereichs)
-        const northEdge = new THREE.Vector3(0, 0.46975, -0.359375);
-        northEdge.project(camera);
-        const topCutY = Math.round((-northEdge.y * 0.5 + 0.5) * 720);
-
-        // Target-Unterkante projizieren (untere Grenze des freien Bereichs)
-        const southEdge = new THREE.Vector3(0, 0.46975, 0.89);
-        southEdge.project(camera);
-        const botCutY = Math.round((-southEdge.y * 0.5 + 0.5) * 720);
+        // Polygon mit Loch: Außen CW, Innen CCW (erzeugt Loch)
+        const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+        const inner = nw.x + 'px ' + nw.y + 'px, ' +
+                      sw.x + 'px ' + sw.y + 'px, ' +
+                      se.x + 'px ' + se.y + 'px, ' +
+                      ne.x + 'px ' + ne.y + 'px, ' +
+                      nw.x + 'px ' + nw.y + 'px';
 
         const container = document.createElement('div');
         container.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
           'width:360px;height:' + window.innerHeight + 'px;z-index:100;pointer-events:none;' +
           'opacity:0;transition:opacity 0.5s ease;';
 
-        // Oberer dunkler Bereich (blur)
-        const topOv = document.createElement('div');
-        topOv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:' + topCutY + 'px;' +
-          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);';
-        container.appendChild(topOv);
+        // Blur-Overlay mit Polygon-Loch
+        const blurDiv = document.createElement('div');
+        blurDiv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+          'clip-path:polygon(' + outer + ', ' + inner + ');';
+        container.appendChild(blurDiv);
 
-        // Unterer dunkler Bereich (blur)
-        const botOv = document.createElement('div');
-        botOv.style.cssText = 'position:absolute;bottom:0;left:0;width:360px;top:' + botCutY + 'px;' +
-          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);';
-        container.appendChild(botOv);
-
-        // Text bei Zeile 10 (projiziert)
+        // Text bei Zeile 10
         const txt = document.createElement('div');
         txt.style.cssText = 'position:absolute;top:' + textScreenY + 'px;left:0;right:0;text-align:center;' +
           'transform:translateY(-50%);' +
