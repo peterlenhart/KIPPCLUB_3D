@@ -4392,7 +4392,7 @@
         document.body.appendChild(ov);
         requestAnimationFrame(() => { ov.style.opacity = '1'; });
         for (let i = 0; i < lineEls.length; i++) {
-          await new Promise(r => setTimeout(r, 500));
+          await new Promise(r => setTimeout(r, 1000));
           lineEls[i].style.opacity = '1';
         }
         await new Promise(r => setTimeout(r, 2500));
@@ -4433,7 +4433,18 @@
         await handTapFromSouth(169, 491, 500);
         if (aborted()) throw new ReplayAbort();
         onTargetVerdecktTap();
-        await sleep(4000);
+        await sleep(2000); // Würfel steigt auf Höchststand
+        if (aborted()) throw new ReplayAbort();
+
+        // === Box-Freistellung: "*Kartenwert* finden und merken" ===
+        {
+          const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
+          if (tgt) {
+            let valText = displayNum(tgt.num).replace('.','');
+            if (valText === 'A') valText = 'Ass';
+            await showMaskedBlur('\u201E' + valText + '\u201C finden und merken', 3500);
+          }
+        }
         if (aborted()) throw new ReplayAbort();
 
         // === SCHRITT 2: Würfel antippen → senkt sich ===
@@ -6997,7 +7008,7 @@
       }
 
       // === HOLD on corner (2s) — player sees number + pulsing gem ===
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 500));
       if (!brainyActive || gamePhase !== 'kipp21') {
         pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
         cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
@@ -7206,7 +7217,7 @@
         sctHead.style.animation = 'sctInflate 1.2s ease-out forwards';
         sct.style.display = 'flex';
         sct.style.opacity = '1';
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 500));
         sct.style.transition = 'opacity 0.5s';
         sct.style.opacity = '0';
         await new Promise(r => setTimeout(r, 500));
