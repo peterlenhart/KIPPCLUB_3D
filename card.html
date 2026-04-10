@@ -4978,16 +4978,41 @@
           txt.textContent = T.cLongTap || 'Lang tippen';
           ltOv.appendChild(txt);
 
+          // Text anfangs unsichtbar
+          txt.style.opacity = '0';
+          txt.style.transition = 'opacity 0.3s ease';
+
           document.body.appendChild(ltOv);
           requestAnimationFrame(() => { ltOv.style.opacity = '1'; });
-          await sleep(2000);
-          if (aborted()) { ltOv.remove(); throw new ReplayAbort(); }
+
+          // Hand startet sofort parallel von unten
+          const SY = 740;
+          setHandPos(sx, SY);
+          handEl.style.opacity = '1';
+          updateHandShadow(sx, SY, true);
+
+          // Hand bewegt sich nach oben — nach 400ms Text einblenden
+          const moveP = moveHandSmooth(sx, sy, 900);
+          await sleep(400);
+          txt.style.opacity = '1';
+          await moveP;
+
+          // Hand hält auf Slot
+          await sleep(1200);
+          if (aborted()) { ltOv.remove(); handEl.style.opacity='0'; throw new ReplayAbort(); }
+
+          // Blur + Text ausblenden
           ltOv.style.opacity = '0';
           await sleep(500);
           ltOv.remove();
-        }
 
-        await handTapFromSouth(sx, sy, 900);
+          // Hand hält weiter (Long-tap), dann zurück
+          await sleep(900);
+          await moveHandSmooth(sx, SY, 600);
+          handEl.style.opacity = '0';
+          updateHandShadow(0, 0, false);
+          await sleep(100);
+        }
 
         // Slot enthüllen (slotAlpha zurück auf 1)
         if (targetSlot >= 0) {
