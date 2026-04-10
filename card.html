@@ -4526,38 +4526,8 @@
         updatePlayerRankDisplay(playerValShort);
         if (window._playerRankMesh) window._playerRankMesh.visible = true;
 
-        // target_1 sichtbar machen
-        if (window._targetMeshes && window._targetMeshes['target_1.webp']) {
-          window._targetMeshes['target_1.webp'].visible = true;
-        }
-
-        // Playercard pulsierend (Scale-Animation)
-        let pulseActive = true;
-        const pulseMeshes = [window._playerCardMesh, window._playerRankMesh];
-        if (pSuitFile && window._playerSuitMeshes && window._playerSuitMeshes[pSuitFile]) {
-          pulseMeshes.push(window._playerSuitMeshes[pSuitFile]);
-        }
-        const pulseBaseScales = pulseMeshes.map(m => m ? m.scale.clone() : null);
-        (function animPulse() {
-          if (!pulseActive) return;
-          const t = (Date.now() % 1200) / 1200;
-          const s = 1 + 0.08 * Math.sin(t * Math.PI * 2);
-          pulseMeshes.forEach((m, i) => {
-            if (m && pulseBaseScales[i]) {
-              m.scale.set(pulseBaseScales[i].x * s, pulseBaseScales[i].y * s, pulseBaseScales[i].z * s);
-            }
-          });
-          requestAnimationFrame(animPulse);
-        })();
-
         // === Dunkles Overlay + Text (kein Blur, Karten bleiben scharf) ===
         await showDarkHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 6500);
-
-        // Puls stoppen + Scales zurücksetzen
-        pulseActive = false;
-        pulseMeshes.forEach((m, i) => {
-          if (m && pulseBaseScales[i]) m.scale.copy(pulseBaseScales[i]);
-        });
 
         // Playercard wieder ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
@@ -4570,10 +4540,10 @@
         await sleep(2000); // Würfel steigt auf Höchststand
         if (aborted()) throw new ReplayAbort();
 
-        // === Box-Freistellung: "Gemerkt? Dann „K" finden und an Herz kippen" ===
+        // === Box-Freistellung: "Achtung! „K" finden und merken." ===
         {
           if (tgt) {
-            await showMaskedBlur('Gemerkt? Dann \u201E' + playerValShort + '\u201C finden und an ' + suitName + ' kippen', 3500);
+            await showMaskedBlur('Achtung! \u201E' + playerValShort + '\u201C finden und merken.', 3500);
           }
         }
         if (aborted()) throw new ReplayAbort();
