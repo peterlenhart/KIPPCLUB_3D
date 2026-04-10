@@ -4300,7 +4300,7 @@
         const darkPlane = new THREE.Mesh(darkPlaneGeo, darkPlaneMat);
         darkPlane.rotation.x = -Math.PI / 2;
         darkPlane.position.set(0, 0.46975 + 0.003, 0.4); // Y unter target_1 (0.47575)
-        darkPlane.renderOrder = 15;
+        darkPlane.renderOrder = 2; // UNTER target (5-10) und playercard (25)
         scene.add(darkPlane);
 
         // Zeile 10 projizieren für Text
@@ -4611,7 +4611,7 @@
           // Zeilen-Container bei Zeile 10
           const lineWrap = document.createElement('div');
           lineWrap.style.cssText = 'position:absolute;top:'+textScreenY+'px;left:0;right:0;' +
-            'display:flex;flex-direction:column;align-items:center;gap:4px;transform:translateY(-50%);';
+            'display:flex;flex-direction:column;align-items:center;gap:4px;';
 
           const lines = [
             'Kippe den Würfel',
