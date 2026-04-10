@@ -4691,7 +4691,7 @@
         if (window._scoreBKMesh) window._scoreBKMesh.visible = false;
 
         // === Dunkles Overlay + Text (kein Blur, Karten bleiben scharf) ===
-        await showDarkHint((T.cStichTpl||'').replace('{art}',articleDat).replace('{suit}',(T.cSuits||{})[tgt.color]||suitName).replace('{val}',(T.cCards||{})[playerValShort]||playerValShort), 6500);
+        await showDarkHint((T.cStichTpl||'').replace('{art}',articleDat).replace('{suit}',(T.cSuits||{})[tgt.color]||suitName).replace('{val}',(T.cCards||{})[playerValShort]||playerValShort), 5000);
 
         // Scores wieder einblenden
         if (window._scorePLMesh) window._scorePLMesh.visible = true;
@@ -5007,7 +5007,7 @@
 
         // handleStichConfirm zeigt stich1_pl erst nach 4000ms intern
         // → 8000ms = stich1_pl für ~4 Sek sichtbar
-        await sleep(9000);
+        await sleep(7000);
 
       } catch(e) {
         if (!(e instanceof ReplayAbort)) console.error('[TUT]', e);
