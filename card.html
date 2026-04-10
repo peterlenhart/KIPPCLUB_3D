@@ -1494,7 +1494,7 @@
         cStichTpl:"{suit} {val} oyna",
         cFindTpl:"\u201E{val}\u201C bul ve hat\u0131rla!",
         cTutL1:"T\u00fcm 6 hedef", cTutL2:"kart\u0131", cTutL3:"ayn\u0131 kart rengiyle", cTutL4:"ve 1 fazlas\u0131yla", cTutL5:"yen.",
-        cTutK1:"K\u00fcp\u00fc istedi\u011fin", cTutK2:"gibi devir,", cTutK3:"ve \u201E{val}\u201C\u2019\u0131", cTutK4:"bir {suit}", cTutK5:"sembol\u00fcne getir.",
+        cTutK1:"K\u00fcp\u00fc istedi\u011fin", cTutK2:"gibi devir,", cTutK3:"ve \u201E{val}\u201C de\u011ferini", cTutK4:"bir {suit}", cTutK5:"sembol\u00fcne getir.",
         cLongTap:"Uzun bas",
         cAnlSecO:["HEDEF","OYUN AKI\u015eI","DEV\u0130RME HAMLES\u0130","KART OYNAMA","KART DE\u011eERLER\u0130"],
         cAnlO:[
@@ -4980,7 +4980,7 @@
 
           document.body.appendChild(ltOv);
           requestAnimationFrame(() => { ltOv.style.opacity = '1'; });
-          await sleep(3000);
+          await sleep(2000);
           if (aborted()) { ltOv.remove(); throw new ReplayAbort(); }
           ltOv.style.opacity = '0';
           await sleep(500);
@@ -9961,6 +9961,27 @@
       // KIPP CARD: Neue Runde → Richtung und Kippzähler zurücksetzen
       _cardLockedDir = null;
       _cardKippCount = 0;
+
+      // Slots wieder aufdecken (neue Runde = frische Sicht)
+      if (window._cardMode && faceSlots) {
+        const fBase = { f0: 0, f1: 4, f2: 8 };
+        for (const fk of ['f0', 'f1', 'f2']) {
+          const f = faceSlots[fk];
+          if (f) {
+            const base = fBase[fk] || 0;
+            let si = 0;
+            let changed = false;
+            for (const key in f.slotMap) {
+              if (f.slotMap[key].slotAlpha === 0 && (!window._playedSlots || !window._playedSlots.has(base + si))) {
+                f.slotMap[key].slotAlpha = 1;
+                changed = true;
+              }
+              si++;
+            }
+            if (changed) rebuildFaceMat(fk, 1);
+          }
+        }
+      }
 
       let target = generateCardTarget3D();
       if (!target) {
