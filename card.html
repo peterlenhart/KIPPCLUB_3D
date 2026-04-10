@@ -1143,7 +1143,7 @@
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange",
         nml:"NOCHMAL", nxl:"NEXT LEVEL", sek:"Sek.", tout:"60 Sek.<br>\u00fcberschritten", h4b:"Mit 4 HITS ins BRAINY Level", h4r:"Mit 4 HITS ins BRAIN Level",
         exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP BLIND",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP BLUFF",
         cSub1:"K\u00d6NNEN : GL\u00dcCK = 50 : 50", cSub2:"K\u00d6NNEN : GL\u00dcCK = 90 : 10",
         cEinfr:"EINFRIEREN", cWeiter:"WEITER",
         cForts:"FORTSETZEN", cPause:"PAUSE",
@@ -1163,10 +1163,10 @@
         ],
         cAnlSecO:["ZIEL","SPIEL ABLAUF","KIPP ZUG","AUSSPIELEN","KARTENWERTE"],
         cAnlO:[
-          "Stich alle 6 Bankkarten \u2013 jede mit genau +1! Effizienz 100% = perfektes Spiel.\n\nDu bist nicht dem Zufall ausgeliefert \u2013 jede Partie ist tats\u00e4chlich mit Merken und Logik gewinnbar. Chance mit reinen Gl\u00fcck-Kipps = 50%.",
-          "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte). Der W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\n\nTippe auf den W\u00fcrfel oder warte kurz, dann legt er sich wieder in die Box.",
-          "Du kannst den W\u00fcrfel mit dem Finger kippen \u2013 im Uhrzeigersinn oder gegen den Uhrzeigersinn. Du darfst bis zu 6 Kipps machen. Zur\u00fcckkippen ist nicht m\u00f6glich.\n\nNach jedem Kipp liegen 4 Karten zur Auswahl: 4 verschiedene Werte, 4 verschiedene Farben. Ein Wert davon liegt immer an der Targetfarbe.",
-          "Tippe lang auf den Kartenwert am W\u00fcrfel, den du ausspielen willst. H\u00f6herer Wert + gleiche Farbe = du stichst. Sonst sticht die Bank.\n\nDer gespielte Kartenwert wird danach inaktiv \u2013 am W\u00fcrfel blass dargestellt \u2013 und kann nicht mehr verwendet werden.",
+          "Stich alle 6 Target-Karten mit derselben Kartenfarbe und um 1 h\u00f6her.\n\nTrefferchance mit reinen Gl\u00fcck-Kipps = 9%\nPerfektes Spielergebnis = Effizienz 100%\nMit Merkf\u00e4higkeit und Logik ist das immer schaffbar.",
+          "Tippe auf die schwenkende, verdeckte Targetkarte (Bankkarte). Der W\u00fcrfel stellt sich auf die Ecke und zeigt alle Kartenwerte von 3 bis Ass.\n\nTippe auf den W\u00fcrfel oder warte kurz, dann legt er sich wieder in die Box, und die Kartenwerte werden verdeckt.",
+          "Du kannst den W\u00fcrfel mit dem Finger beliebig in der Box von Ecke zu Ecke kippen. Nach jedem einzelnen Weiterkippen des W\u00fcrfels stehen dir 4 Karten zum Ausspielen zur Verf\u00fcgung.",
+          "Mit langem Tipp auf einen verdeckten Kartenwert spielst du aus.\n\nGleiche Farbe, h\u00f6herer Wert = dein Stich\nGleiche Farbe, um 1 h\u00f6her = perfekter Stich, 100% Effizienz.\n\nAlles andere = Bank Stich.\n\nDer gespielte Kartenwert wird danach inaktiv \u2013 am W\u00fcrfel blass dargestellt \u2013 und kann nicht mehr verwendet werden.",
           "Zahlenwert = Zahlenwert\nJ, Q, K = 10\nA = 14"
         ],
         cAnlSecV:["ZIEL","SPIELSTART","W\u00dcRFELBLICK","KIPPZUG","DEINE HAND","SETZEN","SHOWDOWN"],
@@ -1179,6 +1179,15 @@
           "Sobald deine Karten vollst\u00e4ndig sind, beginnt die Setzrunde. Beide Seiten zahlen automatisch 1 Punkt Grundeinsatz (Ante).\n\n<b style=\"color:#cedb25\">1.</b> Bank setzt zus\u00e4tzlich 1\u201310 Punkte. Die H\u00f6he des Einsatzes gibt meist einen Hinweis auf die St\u00e4rke der Bankhand \u2013 aber nicht immer. Die Bank kann bluffen.\n\n<b style=\"color:#cedb25\">2.</b> Du entscheidest:\npassen = du verlierst deinen Grundeinsatz (1 Punkt)\nmitgehen = Showdown\nerh\u00f6hen = Bank entscheidet\n\n<b style=\"color:#cedb25\">3.</b> Bank entscheidet:\nBank passt = du gewinnst den Grundeinsatz der Bank\nBank geht mit = Showdown",
           "Die Bank deckt ihre Karten auf. Die Kombinationen werden verglichen:\nbessere Kombination = du stichst\ngleiche Kombination = unentschieden\nniedrigere Kombination = Bank sticht\nInnerhalb der Kombination entscheidet die H\u00f6he (z.\u00a0B. h\u00f6heres Paar, h\u00f6here Stra\u00dfe).\n\nDu bist nicht dem Zufall ausgeliefert. Jede Partie ist gewinnbar. Anf\u00e4nger spielen mit Gl\u00fcck. Fortgeschrittene gewinnen durch K\u00f6nnen."
         ]
+      ,
+        cSuits:{gruen:"Karo",orange:"Kreuz",blau:"Herz",violett:"Pik"},
+        cCards:{J:"Buben",Q:"Dame",K:"König",A:"Ass"},
+        cStichTpl:"Stich mit {art} {suit} {val}",
+        cFindTpl:"Gemerkt? Dann \u201E{val}\u201C finden und an {suit} kippen",
+        cTutL1:"Stich alle 6", cTutL2:"Target-Karten", cTutL3:"Mit gleicher", cTutL4:"Kartenfarbe und", cTutL5:"um 1 höher.",
+        cTutK1:"Kippe den Würfel", cTutK2:"wie du willst,", cTutK3:"und versuche mit", cTutK4:"\u201E{val}\u201C auf ein", cTutK5:"{suit}symbol zu kommen.",
+        cLongTap:"Lang tippen",
+        cArtDer:"der", cArtDem:"dem"
       },
       "en": {
         s1:"OBJECTIVE", s2:"\u2022 Find the right number of tips and the correct direction so the cube hits the target. E.g. <b>{zahl}</b> to <b>{farbe}</b>.<br>It\u2019s never more than <b>6</b> tips if the direction is right.<br>\u2022 Use <b>LOOK</b> seconds efficiently.",
@@ -1200,7 +1209,7 @@
         fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange",
         nml:"AGAIN", nxl:"NEXT LEVEL", sek:"sec.", tout:"60 sec.<br>exceeded", h4b:"4 HITS to reach BRAINY Level", h4r:"4 HITS to reach BRAIN Level",
         exQ:"Really<br>quit the game?", exC:"Back", exE:"Quit",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP BLIND",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP BLUFF",
         cSub1:"SKILL : LUCK = 50 : 50", cSub2:"SKILL : LUCK = 90 : 10",
         cEinfr:"FREEZE", cWeiter:"CONTINUE",
         cForts:"CONTINUE", cPause:"PAUSE",
@@ -1217,6 +1226,32 @@
           "Higher than the bank = your trick. Lower, equal or wrong suit = bank wins.",
           "Score left = Your Score. Score right = Bank Score.",
           "Each used card value on the cube becomes transparent \u2013 it\u2019s gone. Use your values wisely! Only those who beat all 12 bank cards (targets) by exactly 1 higher achieve the highscore of 180."
+        ]
+      ,
+        cSuits:{gruen:"Diamond",orange:"Club",blau:"Heart",violett:"Spade"},
+        cCards:{J:"Jack",Q:"Queen",K:"King",A:"Ace"},
+        cStichTpl:"Play the {suit} {val}",
+        cFindTpl:"Got it? Find \u201E{val}\u201C and tip to {suit}",
+        cTutL1:"Beat all 6", cTutL2:"target cards", cTutL3:"with the same", cTutL4:"card suit and", cTutL5:"1 higher.",
+        cTutK1:"Tip the cube", cTutK2:"any way you want,", cTutK3:"and try to get", cTutK4:"\u201E{val}\u201C onto a", cTutK5:"{suit} symbol.",
+        cLongTap:"Long tap",
+        cAnlSecO:["GOAL","GAMEPLAY","TIP MOVE","PLAY A CARD","CARD VALUES"],
+        cAnlO:[
+          "Beat all 6 target cards with the same card suit and 1 higher.\n\nChance with pure luck tips = 9%\nPerfect game result = 100% Efficiency\nAlways achievable with memory and logic.",
+          "Tap the swaying, face-down target card (bank card). The cube rises to its corner showing all card values from 3 to Ace.\n\nTap the cube or wait briefly, then it settles back into the box, and the card values become hidden.",
+          "You can tip the cube with your finger freely inside the box from corner to corner. After each individual tip, 4 cards are available for you to play.",
+          "With a long tap on a hidden card value, you play it.\n\nSame suit, higher value = your trick\nSame suit, exactly 1 higher = perfect trick, 100% Efficiency.\n\nAnything else = Bank trick.\n\nThe played card value becomes inactive \u2013 shown faded on the cube \u2013 and can no longer be used.",
+          "Number value = number value\nJ, Q, K = 10\nA = 14"
+        ],
+        cAnlSecV:["GOAL","GAME START","CUBE VIEW","TIP MOVE","YOUR HAND","BETTING","SHOWDOWN"],
+        cAnlV:[
+          "Tip a higher card combination than the bank. You are not at the mercy of chance \u2013 every game is actually winnable with memory and logic.\n\nBefore the game you choose which combination is played:\nHigh Card (very easy) = 1 card\nPair (easy) = 2 cards\n2 Pairs (medium) = 4 cards\nThree of a Kind (medium) = 3 cards\nStraight (hard) = 5 cards\nFlush (very hard) = 5 cards\nFull House (very hard) = 5 cards\nFour of a Kind (extremely rare) = 4 cards\nStraight Flush (extremely hard) = 5 cards\nThe difficulty matches the rarity in card luck.",
+          "Tap \u201eBank\u201c. The bank places its cards face down. The combination matches the chosen game type.\n\nYou know the type of combination, but not its rank.",
+          "Tap the cube. It rises to its corner and shows all card values from 3 to Ace. After a few seconds the values are hidden again and the cube lowers.\n\nYou can trigger this earlier by tapping.",
+          "Tip the cube by swiping over it \u2013 clockwise, counterclockwise, as often as you like, back and forth. The cube is yours.\n\nYou have access to all 48 cards (3 to Ace in 4 suits). Long-tap a hidden card symbol on the cube to reveal its value.\n\nThe adjacent suit color on the frame completes your card. The card is automatically placed on your field.",
+          "You choose exactly as many cards as the game type requires. Then your hand is fixed. No drawing, no swapping.",
+          "Once your cards are complete, the betting round begins. Both sides automatically pay 1 point ante.\n\n<b style=\"color:#cedb25\">1.</b> Bank bets 1\u201310 additional points. The bet amount usually hints at the bank\u2019s hand strength \u2013 but not always. The bank can bluff.\n\n<b style=\"color:#cedb25\">2.</b> You decide:\nfold = you lose your ante (1 point)\ncall = showdown\nraise = bank decides\n\n<b style=\"color:#cedb25\">3.</b> Bank decides:\nbank folds = you win the bank\u2019s ante\nbank calls = showdown",
+          "The bank reveals its cards. Combinations are compared:\nhigher combination = you win\nsame combination = draw\nlower combination = bank wins\nWithin the combination, rank decides (e.g. higher pair, higher straight).\n\nYou are not at the mercy of chance. Every game is winnable. Beginners play with luck. Advanced players win with skill."
         ]
       },
       "es": {
@@ -1239,7 +1274,7 @@
         fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja",
         nml:"OTRA VEZ", nxl:"SIGUIENTE NIVEL", sek:"seg.", tout:"60 seg.<br>superados", h4b:"4 HITS para el nivel BRAINY", h4r:"4 HITS para el nivel BRAIN",
         exQ:"\u00bfRealmente<br>salir?", exC:"Volver", exE:"Salir",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP BLIND",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP BLUFF",
         cSub1:"HABILIDAD : SUERTE = 50 : 50", cSub2:"HABILIDAD : SUERTE = 90 : 10",
         cTut1:"Descubre la carta del banco", cTut2:"Mira los valores", cTut3:"Vuelca el cubo", cTut4:"\u00a1No se puede volver!", cTut5:"Mant\u00e9n una carta pulsada", cTut6:"TRAS 6 BAZAS PERFECTAS", cTut7:"RESULTADO DE EJEMPLO", cTut8:"REPETIR", cTut9:"Toca el cubo para bajarlo", cIntro:"Supera las 6 cartas<br>objetivo por +1",
         cEinfr:"CONGELAR", cWeiter:"SEGUIR",
@@ -1256,6 +1291,32 @@
           "Mayor que la banca = tu baza. Menor, igual u otro palo = la banca gana.",
           "Puntuaci\u00f3n izquierda = Tu score. Puntuaci\u00f3n derecha = Score de la banca.",
           "Cada valor usado en el cubo se vuelve transparente. \u00a1\u00dasalos con inteligencia! Solo quien supere las 12 cartas exactamente por 1 logra el highscore de 180."
+        ]
+      ,
+        cSuits:{gruen:"Diamante",orange:"Tr\u00e9bol",blau:"Coraz\u00f3n",violett:"Pica"},
+        cCards:{J:"Jota",Q:"Reina",K:"Rey",A:"As"},
+        cStichTpl:"Juega el {suit} {val}",
+        cFindTpl:"\u00bfMemorizado? Busca \u201E{val}\u201C y vuelca hacia {suit}",
+        cTutL1:"Supera las 6", cTutL2:"cartas objetivo", cTutL3:"con el mismo", cTutL4:"palo y", cTutL5:"1 m\u00e1s alto.",
+        cTutK1:"Vuelca el cubo", cTutK2:"como quieras,", cTutK3:"e intenta poner", cTutK4:"\u201E{val}\u201C en un", cTutK5:"s\u00edmbolo de {suit}.",
+        cLongTap:"Pulsar largo",
+        cAnlSecO:["OBJETIVO","DESARROLLO","MOVIMIENTO","JUGAR CARTA","VALORES"],
+        cAnlO:[
+          "Supera las 6 cartas objetivo con el mismo palo y 1 m\u00e1s alto.\n\nProbabilidad con volcadas de pura suerte = 9%\nResultado perfecto = Eficiencia 100%\nSiempre alcanzable con memoria y l\u00f3gica.",
+          "Toca la carta objetivo oscilante (carta del banco). El cubo se eleva a su esquina mostrando todos los valores de 3 al As.\n\nToca el cubo o espera brevemente, luego se asienta en la caja y los valores se ocultan.",
+          "Puedes volcar el cubo con el dedo libremente de esquina a esquina. Despu\u00e9s de cada volcada individual, tienes 4 cartas disponibles para jugar.",
+          "Con una pulsaci\u00f3n larga sobre un valor oculto, juegas esa carta.\n\nMismo palo, valor m\u00e1s alto = tu baza\nMismo palo, exactamente 1 m\u00e1s alto = baza perfecta, Eficiencia 100%.\n\nTodo lo dem\u00e1s = baza del Banco.\n\nEl valor jugado queda inactivo \u2013 mostrado difuminado en el cubo \u2013 y no puede volver a usarse.",
+          "Valor num\u00e9rico = valor num\u00e9rico\nJ, Q, K = 10\nA = 14"
+        ],
+        cAnlSecV:["OBJETIVO","INICIO","VISTA DEL CUBO","MOVIMIENTO","TU MANO","APUESTA","SHOWDOWN"],
+        cAnlV:[
+          "Consigue una combinaci\u00f3n de cartas m\u00e1s alta que el banco. No est\u00e1s a merced del azar \u2013 cada partida es realmente ganable con memoria y l\u00f3gica.\n\nAntes del juego eliges qu\u00e9 combinaci\u00f3n se juega:\nCarta Alta (muy f\u00e1cil) = 1 carta\nPar (f\u00e1cil) = 2 cartas\n2 Pares (medio) = 4 cartas\nTr\u00edo (medio) = 3 cartas\nEscalera (dif\u00edcil) = 5 cartas\nColor (muy dif\u00edcil) = 5 cartas\nFull (muy dif\u00edcil) = 5 cartas\nP\u00f3ker (extremadamente raro) = 4 cartas\nEscalera de Color (extremadamente dif\u00edcil) = 5 cartas\nLa dificultad corresponde a la rareza en la suerte con cartas.",
+          "Toca \u201eBanco\u201c. El banco coloca sus cartas boca abajo. La combinaci\u00f3n corresponde al tipo de juego elegido.\n\nConoces el tipo de combinaci\u00f3n, pero no su altura.",
+          "Toca el cubo. Se eleva a su esquina y muestra todos los valores de 3 al As. Despu\u00e9s de unos segundos los valores se ocultan y el cubo baja.\n\nPuedes acelerarlo tocando.",
+          "Vuelca el cubo deslizando sobre \u00e9l \u2013 en sentido horario, antihorario, las veces que quieras. El cubo es tuyo.\n\nTienes acceso a las 48 cartas (de 3 al As en 4 palos). Pulsa largo sobre un s\u00edmbolo oculto para revelar el valor.\n\nEl palo adyacente en el marco completa tu carta. Se coloca autom\u00e1ticamente en tu campo.",
+          "Eliges exactamente tantas cartas como exige el tipo de juego. Despu\u00e9s tu mano es fija. Sin robar, sin cambiar.",
+          "Cuando tus cartas est\u00e1n completas, comienza la ronda de apuestas. Ambos lados pagan autom\u00e1ticamente 1 punto de apuesta b\u00e1sica (ante).\n\n<b style=\"color:#cedb25\">1.</b> El banco apuesta 1\u201310 puntos adicionales.\n\n<b style=\"color:#cedb25\">2.</b> T\u00fa decides:\npasar = pierdes tu ante (1 punto)\nigualar = showdown\nsubir = el banco decide\n\n<b style=\"color:#cedb25\">3.</b> El banco decide:\nel banco pasa = ganas su ante\nel banco iguala = showdown",
+          "El banco revela sus cartas. Se comparan las combinaciones:\nmejor combinaci\u00f3n = t\u00fa ganas\nmisma combinaci\u00f3n = empate\ncombinaci\u00f3n menor = gana el banco\n\nNo est\u00e1s a merced del azar. Cada partida es ganable."
         ]
       },
       "fr": {
@@ -1279,7 +1340,7 @@
         nml:"ENCORE", nxl:"NIVEAU SUIVANT", sek:"sec.", tout:"60 sec.<br>d\u00e9pass\u00e9es", h4b:"4 HITS pour le niveau BRAINY", h4r:"4 HITS pour le niveau BRAIN",
         cTut1:"R\u00e9v\u00e8le la carte banque", cTut2:"Regarde les valeurs", cTut3:"Bascule le cube", cTut4:"Pas de retour en arri\u00e8re !", cTut5:"Maintiens une carte appuy\u00e9e", cTut6:"APR\u00c8S 6 PLIS PARFAITS", cTut7:"R\u00c9SULTAT EXEMPLE", cTut8:"REJOUER", cTut9:"Touche le cube pour le baisser", cIntro:"Bats les 6 cartes<br>cibles de +1",
         exQ:"Vraiment<br>quitter ?", exC:"Retour", exE:"Quitter",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP BLIND",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP BLUFF",
         cSub1:"COMP\u00c9TENCE : CHANCE = 50 : 50", cSub2:"COMP\u00c9TENCE : CHANCE = 90 : 10",
         cEinfr:"GELER", cWeiter:"CONTINUER",
         cForts:"REPRENDRE", cPause:"PAUSE",
@@ -1295,6 +1356,32 @@
           "Plus haut que la banque = ton pli. Plus bas, \u00e9gal ou autre couleur = la banque gagne.",
           "Score \u00e0 gauche = Ton score. Score \u00e0 droite = Score de la banque.",
           "Chaque valeur utilis\u00e9e sur le cube devient transparente. Utilise tes valeurs avec intelligence ! Seul celui qui bat les 12 cartes exactement de 1 atteint le highscore de 180."
+        ]
+      ,
+        cSuits:{gruen:"Carreau",orange:"Tr\u00e8fle",blau:"C\u0153ur",violett:"Pique"},
+        cCards:{J:"Valet",Q:"Dame",K:"Roi",A:"As"},
+        cStichTpl:"Joue le {suit} {val}",
+        cFindTpl:"Retenu\u00a0? Trouve \u00ab\u00a0{val}\u00a0\u00bb et bascule vers {suit}",
+        cTutL1:"Bats les 6", cTutL2:"cartes cibles", cTutL3:"avec la m\u00eame", cTutL4:"couleur de carte et", cTutL5:"1 de plus.",
+        cTutK1:"Bascule le cube", cTutK2:"comme tu veux,", cTutK3:"et essaie de mettre", cTutK4:"\u00ab\u00a0{val}\u00a0\u00bb sur un", cTutK5:"symbole {suit}.",
+        cLongTap:"Appui long",
+        cAnlSecO:["OBJECTIF","D\u00c9ROULEMENT","MOUVEMENT","JOUER UNE CARTE","VALEURS"],
+        cAnlO:[
+          "Bats les 6 cartes cibles avec la m\u00eame couleur et 1 de plus.\n\nChance avec des bascules de pure chance = 9%\nR\u00e9sultat parfait = Efficacit\u00e9 100%\nToujours r\u00e9alisable avec m\u00e9moire et logique.",
+          "Touche la carte cible oscillante (carte de la banque). Le cube se dresse sur sa pointe et montre toutes les valeurs de 3 \u00e0 l\u2019As.\n\nTouche le cube ou attends bri\u00e8vement, puis il se repose dans la bo\u00eete et les valeurs sont cach\u00e9es.",
+          "Tu peux basculer le cube avec ton doigt librement de coin en coin. Apr\u00e8s chaque bascule individuelle, 4 cartes sont disponibles pour jouer.",
+          "Avec un appui long sur une valeur cach\u00e9e, tu la joues.\n\nM\u00eame couleur, valeur sup\u00e9rieure = ton pli\nM\u00eame couleur, exactement 1 de plus = pli parfait, Efficacit\u00e9 100%.\n\nTout le reste = pli de la Banque.\n\nLa valeur jou\u00e9e devient inactive \u2013 affich\u00e9e en p\u00e2le sur le cube \u2013 et ne peut plus \u00eatre utilis\u00e9e.",
+          "Valeur num\u00e9rique = valeur num\u00e9rique\nJ, Q, K = 10\nA = 14"
+        ],
+        cAnlSecV:["OBJECTIF","D\u00c9BUT","VUE DU CUBE","MOUVEMENT","TA MAIN","MISE","SHOWDOWN"],
+        cAnlV:[
+          "Bascule une combinaison plus haute que la banque. Tu n\u2019es pas \u00e0 la merci du hasard \u2013 chaque partie est gagnable avec m\u00e9moire et logique.\n\nAvant le jeu tu choisis quelle combinaison est jou\u00e9e :\nCarte Haute (tr\u00e8s facile) = 1 carte\nPaire (facile) = 2 cartes\n2 Paires (moyen) = 4 cartes\nBrelan (moyen) = 3 cartes\nSuite (difficile) = 5 cartes\nCouleur (tr\u00e8s difficile) = 5 cartes\nFull (tr\u00e8s difficile) = 5 cartes\nCarr\u00e9 (extr\u00eamement rare) = 4 cartes\nQuinte Flush (extr\u00eamement difficile) = 5 cartes",
+          "Touche \u201eBanque\u201c. La banque pose ses cartes face cach\u00e9e.\n\nTu connais le type de combinaison, mais pas son rang.",
+          "Touche le cube. Il se dresse sur sa pointe et montre toutes les valeurs de 3 \u00e0 l\u2019As. Apr\u00e8s quelques secondes les valeurs sont cach\u00e9es.\n\nTu peux acc\u00e9l\u00e9rer en touchant.",
+          "Bascule le cube en glissant \u2013 sens horaire, antihoraire, autant que tu veux. Le cube est \u00e0 toi.\n\nTu as acc\u00e8s aux 48 cartes. Appui long sur un symbole cach\u00e9 pour r\u00e9v\u00e9ler la valeur.\n\nLa couleur adjacente sur le cadre compl\u00e8te ta carte.",
+          "Tu choisis exactement autant de cartes que le type de jeu l\u2019exige. Ensuite ta main est fix\u00e9e.",
+          "D\u00e8s que tes cartes sont compl\u00e8tes, le tour de mise commence. Les deux c\u00f4t\u00e9s paient automatiquement 1 point d\u2019ante.\n\n<b style=\"color:#cedb25\">1.</b> La banque mise 1\u201310 points suppl\u00e9mentaires.\n\n<b style=\"color:#cedb25\">2.</b> Tu d\u00e9cides :\npasser = tu perds ton ante\nsuivre = showdown\nrelancer = la banque d\u00e9cide\n\n<b style=\"color:#cedb25\">3.</b> La banque d\u00e9cide :\nla banque passe = tu gagnes son ante\nla banque suit = showdown",
+          "La banque r\u00e9v\u00e8le ses cartes. Les combinaisons sont compar\u00e9es.\n\nTu n\u2019es pas \u00e0 la merci du hasard. Chaque partie est gagnable."
         ]
       },
       "it": {
@@ -1319,7 +1406,7 @@
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione",
         nml:"ANCORA", nxl:"LIVELLO SUCCESSIVO", sek:"sec.", tout:"60 sec.<br>superati", h4b:"4 HITS per il livello BRAINY", h4r:"4 HITS per il livello BRAIN",
         exQ:"Vuoi davvero<br>uscire?", exC:"Indietro", exE:"Esci",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP BLIND",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP BLUFF",
         cSub1:"ABILIT\u00c0 : FORTUNA = 50 : 50", cSub2:"ABILIT\u00c0 : FORTUNA = 90 : 10",
         cEinfr:"CONGELA", cWeiter:"CONTINUA",
         cForts:"RIPRENDI", cPause:"PAUSA",
@@ -1335,6 +1422,32 @@
           "Pi\u00f9 alto del banco = la tua presa. Pi\u00f9 basso, uguale o seme diverso = il banco vince.",
           "Punteggio a sinistra = Il tuo score. Punteggio a destra = Score del banco.",
           "Ogni valore usato sul cubo diventa trasparente. Usa i tuoi valori con intelligenza! Solo chi batte tutte le 12 carte esattamente di 1 raggiunge l\u2019highscore di 180."
+        ]
+      ,
+        cSuits:{gruen:"Quadri",orange:"Fiori",blau:"Cuori",violett:"Picche"},
+        cCards:{J:"Fante",Q:"Regina",K:"Re",A:"Asso"},
+        cStichTpl:"Gioca il {suit} {val}",
+        cFindTpl:"Memorizzato? Trova \u201E{val}\u201C e ribalta verso {suit}",
+        cTutL1:"Batti tutte le 6", cTutL2:"carte obiettivo", cTutL3:"con lo stesso", cTutL4:"seme di carta e", cTutL5:"1 in pi\u00f9.",
+        cTutK1:"Ribalta il cubo", cTutK2:"come vuoi,", cTutK3:"e prova a mettere", cTutK4:"\u201E{val}\u201C su un", cTutK5:"simbolo {suit}.",
+        cLongTap:"Tocco lungo",
+        cAnlSecO:["OBIETTIVO","SVOLGIMENTO","MOSSA","GIOCARE UNA CARTA","VALORI"],
+        cAnlO:[
+          "Batti tutte le 6 carte obiettivo con lo stesso seme e 1 in pi\u00f9.\n\nProbabilit\u00e0 con ribaltamenti di pura fortuna = 9%\nRisultato perfetto = Efficienza 100%\nSempre raggiungibile con memoria e logica.",
+          "Tocca la carta obiettivo oscillante (carta della banca). Il cubo si alza sulla punta mostrando tutti i valori da 3 all\u2019Asso.\n\nTocca il cubo o aspetta, poi si riadagia nella scatola e i valori vengono nascosti.",
+          "Puoi ribaltare il cubo con il dito liberamente da angolo ad angolo. Dopo ogni singolo ribaltamento, hai 4 carte disponibili da giocare.",
+          "Con un tocco lungo su un valore nascosto, lo giochi.\n\nStesso seme, valore pi\u00f9 alto = la tua presa\nStesso seme, esattamente 1 in pi\u00f9 = presa perfetta, Efficienza 100%.\n\nTutto il resto = presa della Banca.\n\nIl valore giocato diventa inattivo \u2013 mostrato sbiadito sul cubo \u2013 e non pu\u00f2 pi\u00f9 essere usato.",
+          "Valore numerico = valore numerico\nJ, Q, K = 10\nA = 14"
+        ],
+        cAnlSecV:["OBIETTIVO","INIZIO","VISTA DEL CUBO","MOSSA","LA TUA MANO","PUNTATA","SHOWDOWN"],
+        cAnlV:[
+          "Ribalta una combinazione pi\u00f9 alta della banca. Non sei in balia del caso \u2013 ogni partita \u00e8 vincibile con memoria e logica.\n\nPrima del gioco scegli quale combinazione giocare:\nCarta Alta (molto facile) = 1 carta\nCoppia (facile) = 2 carte\n2 Coppie (medio) = 4 carte\nTris (medio) = 3 carte\nScala (difficile) = 5 carte\nColore (molto difficile) = 5 carte\nFull (molto difficile) = 5 carte\nPoker (estremamente raro) = 4 carte\nScala Reale (estremamente difficile) = 5 carte",
+          "Tocca \u201eBanca\u201c. La banca mette le sue carte coperte.\n\nConosci il tipo di combinazione, ma non il suo rango.",
+          "Tocca il cubo. Si alza sulla punta e mostra tutti i valori da 3 all\u2019Asso. Dopo qualche secondo i valori vengono nascosti.\n\nPuoi accelerare toccando.",
+          "Ribalta il cubo scorrendo \u2013 orario, antiorario, quante volte vuoi. Il cubo \u00e8 tuo.\n\nHai accesso a tutte le 48 carte. Tocco lungo su un simbolo nascosto per rivelare il valore.\n\nIl seme adiacente sulla cornice completa la tua carta.",
+          "Scegli esattamente tante carte quante richiede il tipo di gioco. Poi la tua mano \u00e8 fissa.",
+          "Quando le tue carte sono complete, inizia il giro di puntate. Entrambi pagano automaticamente 1 punto di ante.\n\n<b style=\"color:#cedb25\">1.</b> La banca punta 1\u201310 punti aggiuntivi.\n\n<b style=\"color:#cedb25\">2.</b> Tu decidi:\npassare = perdi il tuo ante\nchiamata = showdown\nrilanciare = la banca decide\n\n<b style=\"color:#cedb25\">3.</b> La banca decide:\nla banca passa = vinci il suo ante\nla banca chiama = showdown",
+          "La banca rivela le sue carte. Le combinazioni vengono confrontate.\n\nNon sei in balia del caso. Ogni partita \u00e8 vincibile."
         ]
       },
       "tr": {
@@ -1358,7 +1471,7 @@
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu",
         nml:"TEKRAR", nxl:"SONRAK0130 SEV0130YE", sek:"sn.", tout:"60 sn.<br>a\u015f\u0131ld\u0131", h4b:"BRAINY seviyesi i\u00e7in 4 HITS", h4r:"BRAIN seviyesi i\u00e7in 4 HITS",
         exQ:"Oyundan \u00e7\u0131kmak<br>istiyor musun?", exC:"Geri", exE:"\u00c7\u0131k",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP BLIND",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP BLUFF",
         cSub1:"YETENEK : \u015eANS = 50 : 50", cSub2:"YETENEK : \u015eANS = 90 : 10",
         cEinfr:"DONDUR", cWeiter:"DEVAM",
         cForts:"DEVAM ET", cPause:"MOLA",
@@ -1374,6 +1487,32 @@
           "Bankadan y\u00fcksek = senin elin. D\u00fc\u015f\u00fck, e\u015fit veya farkl\u0131 simge = banka kazan\u0131r.",
           "Sol skor = Senin skorun. Sa\u011f skor = Banka skoru.",
           "Kullan\u0131lan her kart de\u011feri saydam olur. De\u011ferlerini ak\u0131ll\u0131ca kullan! Sadece 12 banka kart\u0131n\u0131 tam 1 fazlas\u0131yla yenen ki\u015fi 180 rekoruna ula\u015f\u0131r."
+        ]
+      ,
+        cSuits:{gruen:"Karo",orange:"Sinek",blau:"Kupa",violett:"Ma\u00e7a"},
+        cCards:{J:"Vale",Q:"K\u0131z",K:"Papaz",A:"As"},
+        cStichTpl:"{suit} {val} oyna",
+        cFindTpl:"Haf\u0131zlad\u0131n m\u0131? \u201E{val}\u201C bul ve {suit}\u2019a devir",
+        cTutL1:"T\u00fcm 6 hedef", cTutL2:"kart\u0131", cTutL3:"ayn\u0131 kart rengiyle", cTutL4:"ve 1 fazlas\u0131yla", cTutL5:"yen.",
+        cTutK1:"K\u00fcp\u00fc istedi\u011fin", cTutK2:"gibi devir,", cTutK3:"ve \u201E{val}\u201C\u2019\u0131", cTutK4:"bir {suit}", cTutK5:"sembol\u00fcne getir.",
+        cLongTap:"Uzun bas",
+        cAnlSecO:["HEDEF","OYUN AKI\u015eI","DEV\u0130RME HAMLES\u0130","KART OYNAMA","KART DE\u011eERLER\u0130"],
+        cAnlO:[
+          "T\u00fcm 6 hedef kart\u0131 ayn\u0131 kart rengiyle ve 1 fazlas\u0131yla yen.\n\nSaf \u015fans devirmeleriyle isabet \u015fans\u0131 = %9\nM\u00fckemmel oyun sonucu = %100 Verimlilik\nHaf\u0131za ve mant\u0131kla her zaman ba\u015far\u0131labilir.",
+          "Sallanan, kapal\u0131 hedef karta (banka kart\u0131) dokun. K\u00fcp k\u00f6\u015fesine y\u00fckselir ve 3\u2019ten As\u2019a t\u00fcm kart de\u011ferlerini g\u00f6sterir.\n\nK\u00fcpe dokun veya k\u0131sa bekle, ard\u0131ndan kutuya geri oturur ve kart de\u011ferleri gizlenir.",
+          "K\u00fcp\u00fc parma\u011f\u0131nla kutu i\u00e7inde k\u00f6\u015feden k\u00f6\u015feye serbestce devirebilirsin. Her bir devirme hareketinden sonra oynaman i\u00e7in 4 kart mevcut olur.",
+          "Gizli bir kart de\u011ferine uzun basarak oynars\u0131n.\n\nAyn\u0131 renk, daha y\u00fcksek de\u011fer = senin elin\nAyn\u0131 renk, tam 1 fazla = m\u00fckemmel el, %100 Verimlilik.\n\nDi\u011fer her \u015fey = Banka eli.\n\nOynanan kart de\u011feri pasif olur \u2013 k\u00fcpte soluk g\u00f6sterilir \u2013 ve bir daha kullan\u0131lamaz.",
+          "Say\u0131 de\u011feri = say\u0131 de\u011feri\nJ, Q, K = 10\nA = 14"
+        ],
+        cAnlSecV:["HEDEF","OYUN BA\u015eLANGICI","K\u00dcP G\u00d6R\u00dcN\u00dcM\u00dc","DEV\u0130RME","EL\u0130N","BAH\u0130S","SHOWDOWN"],
+        cAnlV:[
+          "Bankadan daha y\u00fcksek bir kart kombinasyonu devir. \u015eansa ba\u011fl\u0131 de\u011filsin \u2013 her oyun haf\u0131za ve mant\u0131kla kazan\u0131labilir.\n\nOyundan \u00f6nce hangi kombinasyonun oynanaca\u011f\u0131n\u0131 se\u00e7ersin:\nY\u00fcksek Kart (\u00e7ok kolay) = 1 kart\n\u00c7ift (kolay) = 2 kart\n2 \u00c7ift (orta) = 4 kart\n\u00dc\u00e7l\u00fc (orta) = 3 kart\nSeri (zor) = 5 kart\nRenk (\u00e7ok zor) = 5 kart\nFull (\u00e7ok zor) = 5 kart\nD\u00f6rtl\u00fc (a\u015f\u0131r\u0131 nadir) = 4 kart\nSeri Renk (a\u015f\u0131r\u0131 zor) = 5 kart",
+          "\u201eBanka\u201c\u2019ya dokun. Banka kartlar\u0131n\u0131 kapal\u0131 koyar.\n\nKombinasyon t\u00fcr\u00fcn\u00fc bilirsin, ama y\u00fcksekli\u011fini de\u011fil.",
+          "K\u00fcpe dokun. K\u00f6\u015fesine y\u00fckselir ve 3\u2019ten As\u2019a t\u00fcm de\u011ferleri g\u00f6sterir. Birka\u00e7 saniye sonra de\u011ferler gizlenir.\n\nDokunarak h\u0131zland\u0131rabilirsin.",
+          "K\u00fcp\u00fc kayd\u0131rarak devir \u2013 saat y\u00f6n\u00fc, ters y\u00f6n, istedi\u011fin kadar. K\u00fcp senin.\n\n48 kart\u0131n tamam\u0131na eri\u015fimin var. Gizli bir sembole uzun bas\u0131p de\u011feri a\u00e7.\n\nKenardaki bitisik renk kart\u0131n\u0131 tamamlar.",
+          "Oyun t\u00fcr\u00fcn\u00fcn gerektirdi\u011fi kadar kart se\u00e7ersin. Sonra elin sabit. \u00c7ekme yok, de\u011fi\u015fim yok.",
+          "Kartlar\u0131n tamamland\u0131\u011f\u0131nda bahis turu ba\u015flar. Her iki taraf otomatik 1 puan ante \u00f6der.\n\n<b style=\"color:#cedb25\">1.</b> Banka 1\u201310 ek puan koyar.\n\n<b style=\"color:#cedb25\">2.</b> Sen karar verirsin:\npas = anteni kaybedersin\ng\u00f6r = showdown\nart\u0131r = banka karar verir\n\n<b style=\"color:#cedb25\">3.</b> Banka karar verir:\nbanka pas ge\u00e7er = bankan\u0131n antesini kazan\u0131rs\u0131n\nbanka g\u00f6r\u00fcr = showdown",
+          "Banka kartlar\u0131n\u0131 a\u00e7ar. Kombinasyonlar kar\u015f\u0131la\u015ft\u0131r\u0131l\u0131r.\n\n\u015eansa ba\u011fl\u0131 de\u011filsin. Her oyun kazan\u0131labilir."
         ]
       }
     }[_digikippLang];
@@ -3727,6 +3866,23 @@
       const ccw = { f2: 'f1', f1: 'f0', f0: 'f2' };
       const oldFace = topFace;
       topFace = (kippDirection === 'cw') ? cw[topFace] : ccw[topFace];
+
+      // KIPP CARD: Neue Face-Slots verdecken
+      if (window._cardMode && faceSlots) {
+        const f = faceSlots[topFace];
+        if (f) {
+          const fBase = { f0: 0, f1: 4, f2: 8 };
+          const base = fBase[topFace] || 0;
+          let si = 0;
+          for (const key in f.slotMap) {
+            if (!window._playedSlots || !window._playedSlots.has(base + si)) {
+              f.slotMap[key].slotAlpha = 0;
+            }
+            si++;
+          }
+          rebuildFaceMat(topFace, 1);
+        }
+      }
     }
 
     // Welche Nachbarfarbe hat jeder Slot pro Quadrant
@@ -4430,8 +4586,7 @@
       // === INTRO: Sofort Blur + Zeile für Zeile ===
       {
         const lines = [
-          'Stich alle 6', 'Target-Karten', 'Mit gleicher',
-          'Kartenfarbe und', 'um 1 höher.'
+          T.cTutL1, T.cTutL2, T.cTutL3, T.cTutL4, T.cTutL5
         ];
         const ov = document.createElement('div');
         ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -4498,7 +4653,7 @@
 
         // Werte vorbereiten
         const tgt = window._cardTargetState && window._cardTargetState.currentTarget;
-        const SUIT_NAME = { gruen: 'Karo', orange: 'Kreuz', blau: 'Herz', violett: 'Pik' };
+        const SUIT_NAME = T.cSuits || { gruen: 'Karo', orange: 'Kreuz', blau: 'Herz', violett: 'Pik' };
         let playerValShort = '';
         let playerValLong = '';
         let articleDat = 'der';
@@ -4531,8 +4686,16 @@
           window._targetMeshes['target_1.webp'].visible = true;
         }
 
+        // Scores ausblenden (sollen nicht über dem Dark-Overlay erscheinen)
+        if (window._scorePLMesh) window._scorePLMesh.visible = false;
+        if (window._scoreBKMesh) window._scoreBKMesh.visible = false;
+
         // === Dunkles Overlay + Text (kein Blur, Karten bleiben scharf) ===
-        await showDarkHint('Stich mit ' + articleDat + ' ' + suitName + ' ' + playerValLong, 6500);
+        await showDarkHint((T.cStichTpl||'').replace('{art}',articleDat).replace('{suit}',(T.cSuits||{})[tgt.color]||suitName).replace('{val}',(T.cCards||{})[playerValShort]||playerValShort), 6500);
+
+        // Scores wieder einblenden
+        if (window._scorePLMesh) window._scorePLMesh.visible = true;
+        if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
 
         // Playercard wieder ausblenden
         if (window._playerCardMesh) window._playerCardMesh.visible = false;
@@ -4548,7 +4711,7 @@
         // === Box-Freistellung: "Achtung! „K" finden und merken." ===
         {
           if (tgt) {
-            await showMaskedBlur('Achtung! \u201E' + playerValShort + '\u201C finden und merken.', 3500);
+            await showMaskedBlur((T.cFindTpl||'').replace('{val}',playerValShort).replace('{suit}',suitName), 3500);
           }
         }
         if (aborted()) throw new ReplayAbort();
@@ -4614,11 +4777,11 @@
             'display:flex;flex-direction:column;align-items:center;gap:4px;';
 
           const lines = [
-            'Kippe den Würfel',
-            'wie du willst,',
-            'und versuche mit',
-            '\u201E' + playerValShort + '\u201C auf ein',
-            suitName + 'symbol zu kommen.'
+            T.cTutK1,
+            T.cTutK2,
+            T.cTutK3,
+            (T.cTutK4||'').replace('{val}',playerValShort),
+            (T.cTutK5||'').replace('{suit}',(T.cSuits||{})[tgt.color]||suitName)
           ];
           const lineEls = [];
           for (const l of lines) {
@@ -4772,6 +4935,41 @@
         const slotPos = getSlotScreenPos(targetDeckIdx);
         const sx = (slotPos ? slotPos.x : 78);
         const sy = (slotPos ? slotPos.y : 314) + 22;
+
+        // === "Lang tippen" Erklärung mit Slot-Freistellung ===
+        {
+          const hw = 30, hh = 30; // halbe Breite/Höhe der Freistellung
+          const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+          const inner = (sx-hw)+'px '+(sy-hh)+'px, '+(sx-hw)+'px '+(sy+hh)+'px, '+
+                        (sx+hw)+'px '+(sy+hh)+'px, '+(sx+hw)+'px '+(sy-hh)+'px, '+(sx-hw)+'px '+(sy-hh)+'px';
+
+          const ltOv = document.createElement('div');
+          ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+            'width:360px;height:'+window.innerHeight+'px;z-index:100;pointer-events:none;' +
+            'opacity:0;transition:opacity 0.5s ease;';
+          const blurDiv = document.createElement('div');
+          blurDiv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+            'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+            'clip-path:polygon('+outer+', '+inner+');';
+          ltOv.appendChild(blurDiv);
+
+          // Text rechts neben Slot, vertikal auf Slot-Höhe
+          const txt = document.createElement('div');
+          txt.style.cssText = 'position:absolute;top:'+(sy-14)+'px;left:'+(sx+hw+12)+'px;' +
+            'font:bold 20px Arial;color:#cedb25;' +
+            'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;';
+          txt.textContent = T.cLongTap || 'Lang tippen';
+          ltOv.appendChild(txt);
+
+          document.body.appendChild(ltOv);
+          requestAnimationFrame(() => { ltOv.style.opacity = '1'; });
+          await sleep(3000);
+          if (aborted()) { ltOv.remove(); throw new ReplayAbort(); }
+          ltOv.style.opacity = '0';
+          await sleep(500);
+          ltOv.remove();
+        }
+
         await handTapFromSouth(sx, sy, 900);
 
         // Slot enthüllen (slotAlpha zurück auf 1)
@@ -7585,6 +7783,21 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21WobbleUsed++;
+
+      // KIPP CARD: Alle Slots verdecken wenn Würfel gelandet ist
+      if (window._cardMode && faceSlots) {
+        for (const fk of ['f0', 'f1', 'f2']) {
+          const f = faceSlots[fk];
+          if (f) {
+            for (const key in f.slotMap) {
+              if (!window._playedSlots || !window._playedSlots.has(getDeckIndexForSlot(Object.keys(f.slotMap).indexOf(key)))) {
+                f.slotMap[key].slotAlpha = 0;
+              }
+            }
+            rebuildFaceMat(fk, 1);
+          }
+        }
+      }
       setTimeout(() => { wobEye.style.display = 'none'; }, 400);
       
       // Joker-Status aktualisieren
@@ -9575,7 +9788,7 @@
       document.getElementById('btnAnleitung').style.display = 'none';
       document.getElementById('btnDaily').style.display = 'none';
       btn1.textContent = T.cOffen || 'KIPP +1';
-      btn2.textContent = T.cVerdeckt || 'KIPP BLIND';
+      btn2.textContent = T.cVerdeckt || 'KIPP BLUFF';
       btn2.style.top = '575px'; // 120px südlicher als btnSpielen
 
       // Subtexte
@@ -10773,25 +10986,37 @@
           const slotInfo = getSlotValueAndColor(slotIdx);
           console.log('[STICH] Long-Press Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
             ' vs Target: ' + displayNum(window._cardTargetState.currentTarget.num) + ' ' + window._cardTargetState.currentTarget.color);
-          handleStichConfirm(slotIdx);
+
+          // Slot enthüllen falls verdeckt (slotAlpha=0)
+          const f = faceSlots[topFace];
+          if (f) {
+            let si = 0;
+            for (const key in f.slotMap) {
+              if (si === slotIdx && f.slotMap[key].slotAlpha === 0) {
+                f.slotMap[key].slotAlpha = 1;
+                rebuildFaceMat(topFace, 1);
+                break;
+              }
+              si++;
+            }
+          }
+
+          // Kurz zeigen, dann Stich
           _stichTouchStart = 0;
           lastTouchPos = null;
+          setTimeout(() => { handleStichConfirm(slotIdx); }, 800);
           return;
         }
-        // Inaktiven Slot getroffen?
+        // Inaktiven Slot getroffen? (ausgespielt)
         const inactiveSlot = findTappedSlotByUV(lastTouchPos.x, lastTouchPos.y, true);
         if (inactiveSlot >= 0) {
-          if (allVisibleSlotsInactive() && _cardKippCount >= _CARD_MAX_KIPPS) {
-            // Alle inaktiv + 6 Kipps verbraucht → Auto-Play
-            console.log('[AUTO-PLAY] Triggered by long-press on inactive (6 kipps used)');
+          if (allVisibleSlotsInactive()) {
+            console.log('[AUTO-PLAY] Triggered by long-press on inactive');
             _stichTouchStart = 0;
             lastTouchPos = null;
             executeAutoPlay();
             return;
           }
-          // Aktive Slots vorhanden ODER noch Kipps übrig → Rotsignal
-          console.log('[STICH] Inaktiven Slot angetippt → Rotsignal');
-          showCardKippWarning();
           _stichTouchStart = 0;
           lastTouchPos = null;
           return;
@@ -10937,7 +11162,20 @@
           window._cardTargetState && window._cardTargetState.currentTarget) {
         const slotIdx = findTappedSlotByUV(e.clientX, e.clientY);
         if (slotIdx >= 0) {
-          handleStichConfirm(slotIdx);
+          // Slot enthüllen falls verdeckt
+          const f = faceSlots[topFace];
+          if (f) {
+            let si = 0;
+            for (const key in f.slotMap) {
+              if (si === slotIdx && f.slotMap[key].slotAlpha === 0) {
+                f.slotMap[key].slotAlpha = 1;
+                rebuildFaceMat(topFace, 1);
+                break;
+              }
+              si++;
+            }
+          }
+          setTimeout(() => { handleStichConfirm(slotIdx); }, 800);
           return;
         }
       }
@@ -11685,33 +11923,7 @@
           const isCW = CW_DIRS.has(direction);
           const swipeDir = isCW ? 'cw' : 'ccw';
 
-          // Richtung sperren beim ersten Kipp
-          if (_cardLockedDir === null) {
-            _cardLockedDir = swipeDir;
-          }
-
-          // Falsche Richtung → Signal
-          if (swipeDir !== _cardLockedDir) {
-            showCardKippWarning();
-            isSwiping = false;
-            lastTouchPos = null;
-            return;
-          }
-
-          // Max 6 Kipps erreicht
-          if (_cardKippCount >= _CARD_MAX_KIPPS) {
-            if (allVisibleSlotsInactive()) {
-              // Alle inaktiv → Auto-Play statt Warnung
-              isSwiping = false;
-              lastTouchPos = null;
-              checkAutoPlayNeeded();
-              return;
-            }
-            showCardKippWarning();
-            isSwiping = false;
-            lastTouchPos = null;
-            return;
-          }
+          // Keine Richtungssperre, kein Kipp-Limit
         }
         
         // SPIELEN-Phase: freies Dragging wie in KIPPEN (kein Auto-Kipp mehr)
