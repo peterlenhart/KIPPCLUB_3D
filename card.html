@@ -1183,7 +1183,7 @@
         cSuits:{gruen:"Karo",orange:"Kreuz",blau:"Herz",violett:"Pik"},
         cCards:{J:"Buben",Q:"Dame",K:"König",A:"Ass"},
         cStichTpl:"Stich mit {art} {suit} {val}",
-        cFindTpl:"Gemerkt? Dann \u201E{val}\u201C finden und an {suit} kippen",
+        cFindTpl:"\u201E{val}\u201C finden und merken!",
         cTutL1:"Stich alle 6", cTutL2:"Target-Karten", cTutL3:"Mit gleicher", cTutL4:"Kartenfarbe und", cTutL5:"um 1 höher.",
         cTutK1:"Kippe den Würfel", cTutK2:"wie du willst,", cTutK3:"und versuche mit", cTutK4:"\u201E{val}\u201C auf ein", cTutK5:"{suit}symbol zu kommen.",
         cLongTap:"Lang tippen",
@@ -1231,7 +1231,7 @@
         cSuits:{gruen:"Diamond",orange:"Club",blau:"Heart",violett:"Spade"},
         cCards:{J:"Jack",Q:"Queen",K:"King",A:"Ace"},
         cStichTpl:"Play the {suit} {val}",
-        cFindTpl:"Got it? Find \u201E{val}\u201C and tip to {suit}",
+        cFindTpl:"Find and remember \u201E{val}\u201C!",
         cTutL1:"Beat all 6", cTutL2:"target cards", cTutL3:"with the same", cTutL4:"card suit and", cTutL5:"1 higher.",
         cTutK1:"Tip the cube", cTutK2:"any way you want,", cTutK3:"and try to get", cTutK4:"\u201E{val}\u201C onto a", cTutK5:"{suit} symbol.",
         cLongTap:"Long tap",
@@ -1296,7 +1296,7 @@
         cSuits:{gruen:"Diamante",orange:"Tr\u00e9bol",blau:"Coraz\u00f3n",violett:"Pica"},
         cCards:{J:"Jota",Q:"Reina",K:"Rey",A:"As"},
         cStichTpl:"Juega el {suit} {val}",
-        cFindTpl:"\u00bfMemorizado? Busca \u201E{val}\u201C y vuelca hacia {suit}",
+        cFindTpl:"\u00a1Busca y recuerda \u201E{val}\u201C!",
         cTutL1:"Supera las 6", cTutL2:"cartas objetivo", cTutL3:"con el mismo", cTutL4:"palo y", cTutL5:"1 m\u00e1s alto.",
         cTutK1:"Vuelca el cubo", cTutK2:"como quieras,", cTutK3:"e intenta poner", cTutK4:"\u201E{val}\u201C en un", cTutK5:"s\u00edmbolo de {suit}.",
         cLongTap:"Pulsar largo",
@@ -1361,7 +1361,7 @@
         cSuits:{gruen:"Carreau",orange:"Tr\u00e8fle",blau:"C\u0153ur",violett:"Pique"},
         cCards:{J:"Valet",Q:"Dame",K:"Roi",A:"As"},
         cStichTpl:"Joue le {suit} {val}",
-        cFindTpl:"Retenu\u00a0? Trouve \u00ab\u00a0{val}\u00a0\u00bb et bascule vers {suit}",
+        cFindTpl:"Trouve et retiens \u00ab\u00a0{val}\u00a0\u00bb\u00a0!",
         cTutL1:"Bats les 6", cTutL2:"cartes cibles", cTutL3:"avec la m\u00eame", cTutL4:"couleur de carte et", cTutL5:"1 de plus.",
         cTutK1:"Bascule le cube", cTutK2:"comme tu veux,", cTutK3:"et essaie de mettre", cTutK4:"\u00ab\u00a0{val}\u00a0\u00bb sur un", cTutK5:"symbole {suit}.",
         cLongTap:"Appui long",
@@ -1427,7 +1427,7 @@
         cSuits:{gruen:"Quadri",orange:"Fiori",blau:"Cuori",violett:"Picche"},
         cCards:{J:"Fante",Q:"Regina",K:"Re",A:"Asso"},
         cStichTpl:"Gioca il {suit} {val}",
-        cFindTpl:"Memorizzato? Trova \u201E{val}\u201C e ribalta verso {suit}",
+        cFindTpl:"Trova e ricorda \u201E{val}\u201C!",
         cTutL1:"Batti tutte le 6", cTutL2:"carte obiettivo", cTutL3:"con lo stesso", cTutL4:"seme di carta e", cTutL5:"1 in pi\u00f9.",
         cTutK1:"Ribalta il cubo", cTutK2:"come vuoi,", cTutK3:"e prova a mettere", cTutK4:"\u201E{val}\u201C su un", cTutK5:"simbolo {suit}.",
         cLongTap:"Tocco lungo",
@@ -1492,7 +1492,7 @@
         cSuits:{gruen:"Karo",orange:"Sinek",blau:"Kupa",violett:"Ma\u00e7a"},
         cCards:{J:"Vale",Q:"K\u0131z",K:"Papaz",A:"As"},
         cStichTpl:"{suit} {val} oyna",
-        cFindTpl:"Haf\u0131zlad\u0131n m\u0131? \u201E{val}\u201C bul ve {suit}\u2019a devir",
+        cFindTpl:"\u201E{val}\u201C bul ve hat\u0131rla!",
         cTutL1:"T\u00fcm 6 hedef", cTutL2:"kart\u0131", cTutL3:"ayn\u0131 kart rengiyle", cTutL4:"ve 1 fazlas\u0131yla", cTutL5:"yen.",
         cTutK1:"K\u00fcp\u00fc istedi\u011fin", cTutK2:"gibi devir,", cTutK3:"ve \u201E{val}\u201C\u2019\u0131", cTutK4:"bir {suit}", cTutK5:"sembol\u00fcne getir.",
         cLongTap:"Uzun bas",
@@ -4936,12 +4936,25 @@
         const sx = (slotPos ? slotPos.x : 78);
         const sy = (slotPos ? slotPos.y : 314) + 22;
 
-        // === "Lang tippen" Erklärung mit Slot-Freistellung ===
+        // === "Lang tippen" Erklärung mit C9+C10 Freistellung (Monge-Projektion) ===
         {
-          const hw = 30, hh = 30; // halbe Breite/Höhe der Freistellung
+          // C9+C10 Ecken auf Spieltisch-Höhe projizieren
+          const Y = 0.46875;
+          const cellC9C10 = [
+            new THREE.Vector3(-0.3125, Y, 0.421875),   // NW (C9 oben)
+            new THREE.Vector3(-0.15625, Y, 0.421875),  // NE
+            new THREE.Vector3(-0.15625, Y, 0.736125),  // SE (C10 unten)
+            new THREE.Vector3(-0.3125, Y, 0.736125)    // SW
+          ];
+          const c2d = cellC9C10.map(p => {
+            const v = p.clone().project(camera);
+            return { x: Math.round((v.x * 0.5 + 0.5) * 360), y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+          });
+          const [nw, ne, se, sw] = c2d;
+
           const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-          const inner = (sx-hw)+'px '+(sy-hh)+'px, '+(sx-hw)+'px '+(sy+hh)+'px, '+
-                        (sx+hw)+'px '+(sy+hh)+'px, '+(sx+hw)+'px '+(sy-hh)+'px, '+(sx-hw)+'px '+(sy-hh)+'px';
+          const inner = nw.x+'px '+nw.y+'px, '+sw.x+'px '+sw.y+'px, '+
+                        se.x+'px '+se.y+'px, '+ne.x+'px '+ne.y+'px, '+nw.x+'px '+nw.y+'px';
 
           const ltOv = document.createElement('div');
           ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -4953,9 +4966,13 @@
             'clip-path:polygon('+outer+', '+inner+');';
           ltOv.appendChild(blurDiv);
 
-          // Text rechts neben Slot, vertikal auf Slot-Höhe
+          // Text rechts neben C10, auf Höhe Zeile 10
+          const z10 = new THREE.Vector3(0, Y, 0.658);
+          z10.project(camera);
+          const textY = Math.round((-z10.y * 0.5 + 0.5) * 720);
           const txt = document.createElement('div');
-          txt.style.cssText = 'position:absolute;top:'+(sy-14)+'px;left:'+(sx+hw+12)+'px;' +
+          txt.style.cssText = 'position:absolute;top:'+textY+'px;left:'+(ne.x+10)+'px;' +
+            'transform:translateY(-50%);' +
             'font:bold 20px Arial;color:#cedb25;' +
             'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;';
           txt.textContent = T.cLongTap || 'Lang tippen';
