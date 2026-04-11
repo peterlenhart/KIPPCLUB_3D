@@ -10304,7 +10304,7 @@
         const nameEl = document.createElement('div');
         nameEl.style.cssText = 'font:bold 20px Arial;color:#e0d0b8;letter-spacing:1px;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.7);';
-        nameEl.textContent = mode.label + '  ' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
+        nameEl.innerHTML = mode.label + ' <span style="font-size:16px;font-weight:normal;color:#aaa;">' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten') + '</span>';
         textDiv.appendChild(nameEl);
 
         // Quadrat-Button rechts mit gelbem Haken
