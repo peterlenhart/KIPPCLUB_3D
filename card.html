@@ -10241,10 +10241,10 @@
 
       // Karten als 3D-Meshes auf Zeile 11/12 Grenze
       const cardY = 0.46975 + 0.004; // geringfügig über overlay_bluff
-      const cardZ = 0.890625;
+      const cardZ = 0.890625 + 0.052; // 15px südlicher
       const cardW3D = 0.20833; // 1.3333 Zellen (1 Zelle × 1.3333)
       const cardH3D = cardW3D * (280 / 196); // proportional zur neuen Breite
-      const gap3D = (1.25 - numCards * cardW3D) / Math.max(numCards - 1, 1); // auf volle Spieltischbreite
+      const gap3D = (1.25 - numCards * cardW3D) / Math.max(numCards - 1, 1) - 0.014; // -4px pro Gap
       const totalW3D = numCards * cardW3D + (numCards - 1) * gap3D;
       const startX = -totalW3D / 2 + cardW3D / 2;
 
