@@ -10229,59 +10229,22 @@
 
       // BANK-Button als 3D-Mesh auf Spieltisch (Zeile 11/12 Grenze)
       // Z=0.890625, Y=Spieltisch+0.002, X=0
-      const bankY3D = 0.46975 + 0.004; // geringfügig über overlay_bluff
-      const bankZ3D = 0.890625;
 
-      // Canvas-Textur: buttonfilz + "BANK" Text
-      const bankCanvas = document.createElement('canvas');
-      bankCanvas.width = 812; bankCanvas.height = 252;
-      const bankCtx = bankCanvas.getContext('2d');
-      const bankBgImg = new Image();
-      bankBgImg.onload = () => {
-        bankCtx.drawImage(bankBgImg, 0, 0, 812, 252);
-        bankCtx.font = 'bold 80px Arial';
-        bankCtx.fillStyle = '#e0d0b8';
-        bankCtx.textAlign = 'center';
-        bankCtx.textBaseline = 'middle';
-        bankCtx.shadowColor = 'rgba(0,0,0,0.6)';
-        bankCtx.shadowBlur = 8;
-        bankCtx.fillText('BANK', 406, 130);
-
-        const bankTex = new THREE.CanvasTexture(bankCanvas);
-        const bankW = 0.94; // 812/3/45 = 6 Zellen (Retina 3x)
-        const bankH = 0.29; // 252/3/45 = 1.87 Zellen (Retina 3x)
-        const bankGeo = new THREE.PlaneGeometry(bankW, bankH);
-        const bankMat = new THREE.MeshBasicMaterial({
-          map: bankTex, transparent: true, alphaTest: 0.1,
-          side: THREE.DoubleSide, depthWrite: false
-        });
-        window._bluffBankMesh = new THREE.Mesh(bankGeo, bankMat);
-        window._bluffBankMesh.rotation.x = -Math.PI / 2;
-        window._bluffBankMesh.position.set(0, bankY3D, bankZ3D);
-        window._bluffBankMesh.renderOrder = 5;
-        scene.add(window._bluffBankMesh);
-      };
-      bankBgImg.src = 'buttonfilz.webp';
-
-      // Klick auf BANK via Raycasting
-      window._bluffBankClickActive = true;
-      window._bluffBankCards = mode.cards;
+      // Automatisches Auflegen der Bankkarten (Croupier-Stil)
+      setTimeout(() => {
+        showBluffBankCards(mode.cards);
+      }, 1200);
     }
 
     function showBluffBankCards(numCards) {
-      // BANK-Mesh entfernen
-      if (window._bluffBankMesh) {
-        scene.remove(window._bluffBankMesh);
-        window._bluffBankMesh = null;
-      }
-      window._bluffBankClickActive = false;
+
 
       // Karten als 3D-Meshes auf Zeile 11/12 Grenze
       const cardY = 0.46975 + 0.004; // geringfügig über overlay_bluff
       const cardZ = 0.890625;
-      const cardW3D = 0.225; // 65px / 45px = 1.44 Zellen (Retina 3x)
-      const cardH3D = 0.323; // 93px / 45px = 2.07 Zellen (Retina 3x)
-      const gap3D = 0.03;
+      const cardW3D = 0.15625; // 1 Zelle, exakt wie +1
+      const cardH3D = 0.15625 * (280 / 196); // proportional wie +1
+      const gap3D = (0.9375 - numCards * cardW3D) / Math.max(numCards - 1, 1); // dynamisch wie +1
       const totalW3D = numCards * cardW3D + (numCards - 1) * gap3D;
       const startX = -totalW3D / 2 + cardW3D / 2;
 
@@ -10303,7 +10266,7 @@
         window._bluffCardMeshes.push(cMesh);
 
         // Nacheinander einblenden
-        setTimeout(() => { cMesh.visible = true; }, i * 200);
+        setTimeout(() => { cMesh.visible = true; }, 600 + i * 400);
       }
     }
 
@@ -11232,13 +11195,6 @@
       }
 
 
-      // BLUFF: BANK-Button Raycasting (Touch)
-      if (window._bluffBankClickActive && window._bluffBankMesh) {
-        if (vkRaycaster.intersectObject(window._bluffBankMesh).length > 0) {
-          showBluffBankCards(window._bluffBankCards);
-          return;
-        }
-      }
 
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
@@ -11438,13 +11394,6 @@
       }
       
 
-      // BLUFF: BANK-Button Raycasting
-      if (window._bluffBankClickActive && window._bluffBankMesh) {
-        if (vkRaycaster.intersectObject(window._bluffBankMesh).length > 0) {
-          showBluffBankCards(window._bluffBankCards);
-          return;
-        }
-      }
 
       // PAUSE-Button (3D) click (Desktop)
       if (window._pauseIconMesh && window._pauseIconMesh.visible) {
@@ -11917,9 +11866,8 @@
       // Bluff-Overlays offen → zurück zur Startseite (card.html)
       if (document.getElementById('_bluffModeOverlay') || window._bluffOverlayMesh) {
         if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
-        if (window._bluffBankMesh) { scene.remove(window._bluffBankMesh); window._bluffBankMesh = null; }
-        if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
-        window._bluffBankClickActive = false;
+                if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
+        
         window.location.href = 'card.html';
         return;
       }
