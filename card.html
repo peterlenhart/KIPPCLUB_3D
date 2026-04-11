@@ -10405,7 +10405,7 @@
       });
       window._bluffModeMesh = new THREE.Mesh(modeGeo, modeMat);
       window._bluffModeMesh.rotation.x = -Math.PI / 2;
-      window._bluffModeMesh.position.set(0, 0.46975 + 0.004, 0.890625 + 0.052 - 0.0417);
+      window._bluffModeMesh.position.set(0, 0.46975 + 0.004, 1.203125 - 0.0417);
       window._bluffModeMesh.renderOrder = 5;
       scene.add(window._bluffModeMesh);
 
@@ -10487,7 +10487,7 @@
       const cardZ = 0.890625 + 0.052; // 15px südlicher
       const cardW3D = 0.20833; // 1.3333 Zellen (1 Zelle × 1.3333)
       const cardH3D = cardW3D * (280 / 196); // proportional zur neuen Breite
-      const gap3D = (1.25 - numCards * cardW3D) / Math.max(numCards - 1, 1) - 0.014; // -4px pro Gap
+      const gap3D = 0.038; // fixer Abstand wie bei 5 Karten
       const totalW3D = numCards * cardW3D + (numCards - 1) * gap3D;
       const startX = -totalW3D / 2 + cardW3D / 2;
 
