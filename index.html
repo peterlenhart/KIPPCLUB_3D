@@ -312,6 +312,8 @@
         <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild -->
         <div id="clickColor" class="gameClickArea"></div>
         <div id="clickCard" class="gameClickArea"></div>
+        <div id="clickKippCard" class="gameClickArea"></div>
+        <div id="clickSmiley" class="gameClickArea"></div>
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
@@ -419,6 +421,8 @@
 
       const clickColor = document.getElementById("clickColor");
       const clickCard  = document.getElementById("clickCard");
+      const clickKippCard = document.getElementById("clickKippCard");
+      const clickSmiley = document.getElementById("clickSmiley");
       const clickQueen = document.getElementById("clickQueen");
       const clickKing  = document.getElementById("clickKing");
 
@@ -440,6 +444,19 @@
       clickCard.style.top = zahlenTop + "px";
       clickCard.style.width = (cellPx * 3) + "px";
       clickCard.style.height = zahlenHeight + "px";
+
+      // KIPP CARD: Zeile 8, kein Offset
+      // KIPP CARD: Zeile 10,5 bis 11,5
+      clickKippCard.style.left = btnLeft + "px";
+      clickKippCard.style.top = (9.5 * cellPx) + "px";
+      clickKippCard.style.width = btnWidth + "px";
+      clickKippCard.style.height = cellPx + "px";
+
+      // KIPP SMILEY: Zeile 9, kein Offset
+      clickSmiley.style.left = btnLeft + "px";
+      clickSmiley.style.top = (8 * cellPx) + "px";
+      clickSmiley.style.width = btnWidth + "px";
+      clickSmiley.style.height = btnHeight + "px";
 
       // KIPP QUEEN: Zeile 10
       const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
@@ -519,29 +536,38 @@
       document.getElementById("levelOverlay").classList.add("show");
     };
     function updateLevelLinks() {
-      const base = selectedSkin === 'icons' ? 'coloricon.html' : 'training.html';
-      const mb = selectedSkin === 'icons' ? 'kipp21_icon.html' : 'kipp21.html';
-      const kp = selectedSkin === 'icons' ? 'kipp-prinzip-icon.html' : 'kipp-prinzip.html';
+      let base, mb, kp;
+      if (selectedSkin === 'icons') {
+        base = 'coloricon.html';
+        mb = 'kipp21_icon.html';
+        kp = 'kipp-prinzip-icon.html';
+      } else if (selectedSkin === 'card') {
+        base = 'card.html';
+        mb = 'card.html?level=masterbrain';
+        kp = 'kipp-prinzip.html';
+      } else {
+        base = 'training.html';
+        mb = 'kipp21.html';
+        kp = 'kipp-prinzip.html';
+      }
       document.getElementById('lvlTraining').onclick = () => location.href = base;
       document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
       document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
       document.getElementById('lvlK21').onclick = () => location.href = mb;
       document.getElementById('lvlKP').onclick = () => location.href = kp;
       document.getElementById('lvlK21').style.display = selectedSkin === 'icons' ? 'none' : '';
-      // Button-Bilder je nach Theme
+      // Button-Bilder + Stil je nach Theme
       if (selectedSkin === 'icons') {
         document.getElementById('lvlTrainingBg').src = 'button_lang_icon_1.webp';
         document.getElementById('lvlBrainyBg').src = 'button_lang_icon_1.webp';
         document.getElementById('lvlBrainBg').src = 'button_lang_icon_2.webp';
         document.getElementById('lvlKPBg').src = 'button_lang_icon_2.webp';
         document.getElementById('levelCloseBg').src = 'reset_icon.png';
-        // 80% Breite, TRAINING+BRAIN 180° gedreht
         var iconImgStyle = 'position:absolute;width:288px;height:auto;top:50%;left:50%;pointer-events:none;z-index:-1;';
         document.getElementById('lvlTrainingBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%) rotate(180deg);';
         document.getElementById('lvlBrainyBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%);';
         document.getElementById('lvlBrainBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%) rotate(180deg);';
         document.getElementById('lvlKPBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%);';
-        // Text dunkelbraun
         ['lvlTraining','lvlBrainy','lvlBrain','lvlKP'].forEach(function(id) {
           document.getElementById(id).style.color = '#3a2210';
           document.getElementById(id).style.textShadow = '0 1px 1px rgba(255,255,255,0.3), 0 -1px 1px rgba(0,0,0,0.15)';
@@ -552,7 +578,6 @@
         document.getElementById('lvlBrainBg').src = 'button_lang_orange_glow.webp';
         document.getElementById('lvlKPBg').src = 'button_lang_grau.webp';
         document.getElementById('levelCloseBg').src = 'rw.webp';
-        // Original-Stil zurücksetzen
         var origImgStyle = 'position:absolute;width:360px;height:auto;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:-1;';
         ['lvlTrainingBg','lvlBrainyBg','lvlBrainBg','lvlKPBg'].forEach(function(id) {
           document.getElementById(id).style.cssText = origImgStyle;
@@ -565,6 +590,16 @@
     }
     updateLevelLinks();
     // clickQueen und clickKing haben vorerst keine Funktion
+
+    // KIPP CARD
+    document.getElementById("clickKippCard").onclick = () => {
+      location.href = 'card.html';
+    };
+
+    // KIPP SMILEY
+    document.getElementById("clickSmiley").onclick = () => {
+      location.href = 'smiley.html';
+    };
 
     // Modal
     const closeBtn = document.getElementById("closeBtn");
