@@ -7158,6 +7158,26 @@
       { q: 2, face: 'f1', cwSteps: 11 }
     ];
 
+    function _bluffGetStateQuat(cwSteps) {
+      const q = new THREE.Quaternion();
+      const stepRots = [
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -Math.PI/2),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), -Math.PI/2),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),  Math.PI/2),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),  Math.PI/2),
+      ];
+      for (let i = 0; i < cwSteps; i++) q.premultiply(stepRots[i % 4]);
+      return q;
+    }
+    function _bluffGetQuadPos(q) {
+      return [
+        new THREE.Vector3(-offset, offset, 0.109375 - offset),
+        new THREE.Vector3( offset, offset, 0.109375 - offset),
+        new THREE.Vector3( offset, offset, 0.109375 + offset),
+        new THREE.Vector3(-offset, offset, 0.109375 + offset),
+      ][q].clone();
+    }
+
     // Generate target for a specific zahl: random Q + resulting color
     function brainyGenerateTarget(zahl) {
       const faceOff = { f0: 0, f1: 4, f2: 8 };
@@ -8035,63 +8055,58 @@
         }
       }
 
-      // 7. Von Ecke zurückfallen
-      const fallDur = 800;
-      await new Promise(resolve => {
-        const startTime = performance.now();
-        function animate() {
-          const t = Math.min((performance.now() - startTime) / fallDur, 1);
-          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(new THREE.Quaternion(), ease));
-          if (t < 1) requestAnimationFrame(animate);
-          else { pivotGroup.quaternion.set(0,0,0,1); resolve(); }
-        }
-        animate();
-      });
-
-      
-      // Cleanup: Cube zurück in kipGroup
+      // 7. Von Ecke zurückfallen — Cleanup + Fall
       cube.updateMatrixWorld();
-      const newWorldPos = new THREE.Vector3();
-      cube.getWorldPosition(newWorldPos);
-      const newWorldQuat = new THREE.Quaternion();
-      cube.getWorldQuaternion(newWorldQuat);
-      
+      const fallFromPos = new THREE.Vector3(); cube.getWorldPosition(fallFromPos);
+      const fallFromQuat = new THREE.Quaternion(); cube.getWorldQuaternion(fallFromQuat);
       pivotGroup.remove(cube);
       kipGroup.remove(pivotGroup);
-      cube.position.copy(savedPos);
-      cube.quaternion.copy(savedQuat);
       kipGroup.add(cube);
-      
-      currentQuadrant = savedQ;
-      topFace = savedF;
+      cube.position.copy(fallFromPos);
+      cube.quaternion.copy(fallFromQuat);
       eckblickPivot = null;
+
+      // Zielposition bestimmen
+      let fallToPos, fallToQuat, fallQ, fallFace;
+      if (window._bluffMode) {
+        // BLUFF: Zufällige andere Position (wie BRAINY Numbers)
+        const valid = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
+        const pick = valid[Math.floor(Math.random() * valid.length)];
+        fallToPos = _bluffGetQuadPos(pick.q);
+        fallToQuat = _bluffGetStateQuat(pick.cwSteps);
+        fallQ = pick.q;
+        fallFace = pick.face;
+      } else {
+        // +1: Zurück zur gespeicherten Position
+        fallToPos = savedPos;
+        fallToQuat = savedQuat;
+        fallQ = savedQ;
+        fallFace = savedF;
+      }
+
+      // Fall-Animation (800ms)
+      const fallDur = 800;
+      await new Promise(resolve => {
+        const st = performance.now();
+        function tick() {
+          const t = Math.min((performance.now() - st) / fallDur, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          cube.position.lerpVectors(fallFromPos, fallToPos, e);
+          cube.quaternion.slerpQuaternions(fallFromQuat, fallToQuat, e);
+          if (t < 1) requestAnimationFrame(tick);
+          else { cube.position.copy(fallToPos); cube.quaternion.copy(fallToQuat); resolve(); }
+        }
+        tick();
+      });
+
+      currentQuadrant = fallQ;
+      topFace = fallFace;
       
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
 
-      // BLUFF: Halbkipp-Sequenz nach Eckblick (wie BRAINY Numbers)
-      if (window._bluffMode && !kipp21KniffAbort) {
-        kipp21KniffActive = true;
-        function _bluffNextCwDir() {
-          if (currentQuadrant === 3) return 'north';
-          if (currentQuadrant === 0) return 'east';
-          if (currentQuadrant === 1) return 'south_from_q1';
-          return 'west_from_q2';
-        }
-        const _savedDir = kippDirection;
-        kippDirection = 'cw';
-        for (let hw = 0; hw < 3; hw++) {
-          if (kipp21KniffAbort) break;
-          const wobbles = 3 - hw;
-          const pause = (hw < 2) ? 300 : 100;
-          await halfKippWithWobble(_bluffNextCwDir(), wobbles, pause);
-          if (hw < 2 && !kipp21KniffAbort) await sleep(200);
-        }
-        kippDirection = _savedDir;
-        kipp21KniffActive = false;
-      }
+
 
 
       
