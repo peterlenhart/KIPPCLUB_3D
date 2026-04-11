@@ -10203,7 +10203,7 @@
         const btn = document.createElement('button');
         btn.textContent = text;
         btn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2.5px;' +
+          'border:none;width:254px;height:47px;font:bold 17px Arial;letter-spacing:2.5px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
         btn.onclick = onClick;
@@ -10317,7 +10317,7 @@
 
       // Overlay Bluff als 3D-Mesh — exakt wie Spieltisch positioniert, nur Y geringfügig höher
       if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); }
-      const bluffTex = new THREE.TextureLoader().load('overlay_bluff.webp', (tex) => {
+      const bluffTex = new THREE.TextureLoader().load('buttonoverlay_card.webp', (tex) => {
         const imgAspect = tex.image.height / tex.image.width;
         const bW = SPIEL_WIDTH; // 8 Zellen = 1.25 (gleich wie Spieltisch)
         const bH = bW * imgAspect;
@@ -10365,13 +10365,23 @@
       });
       window._bluffModeMesh = new THREE.Mesh(modeGeo, modeMat);
       window._bluffModeMesh.rotation.x = -Math.PI / 2;
-      window._bluffModeMesh.position.set(0, 0.46975 + 0.004, 1.203125);
+      window._bluffModeMesh.position.set(0, 0.46975 + 0.004, 1.203125 - 0.0417);
       window._bluffModeMesh.renderOrder = 5;
       scene.add(window._bluffModeMesh);
 
       // Automatisches Auflegen der Bankkarten (Croupier-Stil)
+      window._bluffMode = true;
+      window._bluffCardsNeeded = mode.cards;
+      window._bluffCardsPlayed = [];
+      window._bluffWaitForCubeTap = false;
+
       setTimeout(() => {
         showBluffBankCards(mode.cards);
+        // Nach letzter Karte: Würfel tippbar machen für Eckblick
+        const waitMs = 600 + mode.cards * 400 + 500;
+        setTimeout(() => {
+          window._bluffWaitForCubeTap = true;
+        }, waitMs);
       }, 1200);
     }
 
@@ -11335,6 +11345,18 @@
 
 
 
+
+      // BLUFF: Cube-Tap → Eckblick starten
+      if (window._bluffWaitForCubeTap && !kipp21KniffActive) {
+        const cubeHits = vkRaycaster.intersectObject(cube);
+        if (cubeHits.length > 0) {
+          window._bluffWaitForCubeTap = false;
+          gamePhase = 'spielen';
+          runKipp21EckblickKniff(true);
+          return;
+        }
+      }
+
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rectP = renderer.domElement.getBoundingClientRect();
@@ -11385,6 +11407,66 @@
         // Aktiven Slot suchen
         const slotIdx = findTappedSlotByUV(lastTouchPos.x, lastTouchPos.y);
         if (slotIdx >= 0) {
+
+          // BLUFF-Modus: Karte sammeln statt Stich
+          if (window._bluffMode) {
+            const slotInfo = getSlotValueAndColor(slotIdx);
+            if (!slotInfo) { _stichTouchStart = 0; lastTouchPos = null; return; }
+
+            // Slot als gespielt markieren
+            markSlotAsPlayed(slotIdx);
+
+            // Karte als 3D-Mesh südlich der Bankkarten
+            const bankZ = 0.890625 + 0.052; // Bank-Karten Z
+            const playerZ = bankZ + 0.15625; // 45px = 1 Zelle südlicher
+            const playerY = 0.46975 + 0.004;
+            const played = window._bluffCardsPlayed;
+            
+            // X: Flucht zur linkesten Bankkarte
+            const bCards = window._bluffCardsNeeded;
+            const cW = 0.20833;
+            const cH = cW * (280 / 196);
+            const gp = (1.25 - bCards * cW) / Math.max(bCards - 1, 1) - 0.014;
+            const totalBW = bCards * cW + (bCards - 1) * gp;
+            const firstBankX = -totalBW / 2 + cW / 2;
+            const pX = firstBankX + played.length * (cW + gp);
+
+            // Suit-Datei bestimmen
+            const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
+            const suitFile = 'karte' + (suitMap[slotInfo.color] || 'herz') + '.webp';
+
+            // Canvas: Kartenbild + Wert
+            const pcCanvas = document.createElement('canvas');
+            pcCanvas.width = 196; pcCanvas.height = 280;
+            const pcCtx = pcCanvas.getContext('2d');
+            const pcImg = new Image();
+            pcImg.onload = () => {
+              pcCtx.drawImage(pcImg, 0, 0, 196, 280);
+              pcCtx.font = '900 94px "Noto Serif"';
+              pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+              pcCtx.textAlign = 'center';
+              pcCtx.textBaseline = 'middle';
+              pcCtx.fillText(displayNum(slotInfo.val), 98, 80);
+
+              const pcTex = new THREE.CanvasTexture(pcCanvas);
+              const pcGeo = new THREE.PlaneGeometry(cW, cH);
+              const pcMat = new THREE.MeshBasicMaterial({
+                map: pcTex, transparent: true, alphaTest: 0.1,
+                side: THREE.DoubleSide, depthWrite: false
+              });
+              const pcMesh = new THREE.Mesh(pcGeo, pcMat);
+              pcMesh.rotation.x = -Math.PI / 2;
+              pcMesh.position.set(pX, playerY, playerZ);
+              pcMesh.renderOrder = 6;
+              scene.add(pcMesh);
+              played.push({ mesh: pcMesh, val: slotInfo.val, color: slotInfo.color });
+            };
+            pcImg.src = suitFile;
+
+            _stichTouchStart = 0;
+            lastTouchPos = null;
+            return;
+          }
           const slotInfo = getSlotValueAndColor(slotIdx);
           console.log('[STICH] Long-Press Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
             ' vs Target: ' + displayNum(window._cardTargetState.currentTarget.num) + ' ' + window._cardTargetState.currentTarget.color);
@@ -11533,6 +11615,18 @@
       }
       
 
+
+
+      // BLUFF: Cube-Tap → Eckblick starten
+      if (window._bluffWaitForCubeTap && !kipp21KniffActive) {
+        const cubeHits = vkRaycaster.intersectObject(cube);
+        if (cubeHits.length > 0) {
+          window._bluffWaitForCubeTap = false;
+          gamePhase = 'spielen';
+          runKipp21EckblickKniff(true);
+          return;
+        }
+      }
 
       // PAUSE-Button (3D) click (Desktop)
       if (window._pauseIconMesh && window._pauseIconMesh.visible) {
@@ -12005,6 +12099,9 @@
       // Bluff-Overlays offen → zurück zur Startseite (card.html)
       if (document.getElementById('_bluffModeOverlay') || document.getElementById('_bluffPreviewOverlay') || window._bluffOverlayMesh) {
         if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+        window._bluffMode = false;
+        window._bluffWaitForCubeTap = false;
+        if (window._bluffCardsPlayed) { window._bluffCardsPlayed.forEach(c => { if(c.mesh) scene.remove(c.mesh); }); window._bluffCardsPlayed = null; }
                 if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
         if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
         
