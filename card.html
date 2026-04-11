@@ -8071,6 +8071,28 @@
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
 
+      // BLUFF: Halbkipp-Sequenz nach Eckblick (wie BRAINY Numbers)
+      if (window._bluffMode && !kipp21KniffAbort) {
+        kipp21KniffActive = true;
+        function _bluffNextCwDir() {
+          if (currentQuadrant === 3) return 'north';
+          if (currentQuadrant === 0) return 'east';
+          if (currentQuadrant === 1) return 'south_from_q1';
+          return 'west_from_q2';
+        }
+        const _savedDir = kippDirection;
+        kippDirection = 'cw';
+        for (let hw = 0; hw < 3; hw++) {
+          if (kipp21KniffAbort) break;
+          const wobbles = 3 - hw;
+          const pause = (hw < 2) ? 300 : 100;
+          await halfKippWithWobble(_bluffNextCwDir(), wobbles, pause);
+          if (hw < 2 && !kipp21KniffAbort) await sleep(200);
+        }
+        kippDirection = _savedDir;
+        kipp21KniffActive = false;
+      }
+
 
       
       // Joker-Status aktualisieren
@@ -10099,15 +10121,15 @@
 
     // === KIPP BLUFF: Modus-Auswahl + Spielstart ===
     const BLUFF_MODES = [
-      { key: 'highcard',   label: 'High Card',      diff: 'sehr leicht',    cards: 1 },
-      { key: 'pair',       label: 'Paar',           diff: 'leicht',         cards: 2 },
-      { key: 'twopair',    label: '2 Paare',        diff: 'mittel',         cards: 4 },
-      { key: 'three',      label: 'Drilling',       diff: 'mittel',         cards: 3 },
-      { key: 'straight',   label: 'Straße',       diff: 'schwer',         cards: 5 },
-      { key: 'flush',      label: 'Flush',          diff: 'sehr schwer',    cards: 5 },
-      { key: 'fullhouse',  label: 'Full House',     diff: 'sehr schwer',    cards: 5 },
-      { key: 'four',       label: 'Vierling',       diff: 'extrem selten',  cards: 4 },
-      { key: 'straightfl', label: 'Straight Flush', diff: 'extrem schwer',  cards: 5 }
+      { key: 'highcard',   label: 'High Card',      cards: 1 },
+      { key: 'pair',       label: 'Paar',           cards: 2 },
+      { key: 'three',      label: 'Drilling',       cards: 3 },
+      { key: 'twopair',    label: '2 Paare',        cards: 4 },
+      { key: 'four',       label: 'Vierling',       cards: 4 },
+      { key: 'straight',   label: 'Straße',       cards: 5 },
+      { key: 'flush',      label: 'Flush',          cards: 5 },
+      { key: 'fullhouse',  label: 'Full House',     cards: 5 },
+      { key: 'straightfl', label: 'Straight Flush', cards: 5 }
     ];
 
     window._bluffSelectedMode = null;
@@ -10154,7 +10176,7 @@
       // Schwierigkeit
       const diffEl = document.createElement('div');
       diffEl.style.cssText = 'font:15px Arial;color:#aaa;letter-spacing:1px;text-align:center;margin-bottom:8px;';
-      diffEl.textContent = '(' + mode.diff + ') — ' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
+      diffEl.textContent = mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
       content.appendChild(diffEl);
 
       // Hinweistext
@@ -10267,7 +10289,7 @@
         const nameEl = document.createElement('div');
         nameEl.style.cssText = 'font:bold 17px Arial;color:#e0d0b8;letter-spacing:1px;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.7);';
-        nameEl.textContent = mode.label + ' (' + mode.diff + ')';
+        nameEl.textContent = mode.label;
         const cardEl = document.createElement('div');
         cardEl.style.cssText = 'font:13px Arial;color:#aaa;margin-top:2px;';
         cardEl.textContent = mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
@@ -10355,7 +10377,7 @@
       modeCtx.textBaseline = 'bottom';
       modeCtx.shadowColor = 'rgba(0,0,0,0.7)';
       modeCtx.shadowBlur = 8;
-      const modeStr = mode.label + ' (' + mode.diff + ') \u2013 ' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
+      const modeStr = mode.label + ' \u2013 ' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
       modeCtx.fillText(modeStr, 512, 110);
 
       const modeTex = new THREE.CanvasTexture(modeCanvas);
