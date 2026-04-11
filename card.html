@@ -9948,15 +9948,11 @@
       handleStart(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => {
-      window._cardMode = 'offen';
-      _cardModePhase = 1; // Skip mode selection
-      runCardTutorial();
+      showBluffModeSelection();
     });
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault();
-      window._cardMode = 'offen';
-      _cardModePhase = 1;
-      runCardTutorial();
+      showBluffModeSelection();
     }, { passive: false });
     document.getElementById('btnAnleitung').addEventListener('click', () => showCardAnleitung());
     document.getElementById('btnAnleitung').addEventListener('touchend', (e) => {
@@ -10091,6 +10087,177 @@
     
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
+
+    // === KIPP BLUFF: Modus-Auswahl + Spielstart ===
+    const BLUFF_MODES = [
+      { key: 'highcard',   label: 'High Card',      diff: 'sehr leicht',    cards: 1 },
+      { key: 'pair',       label: 'Paar',           diff: 'leicht',         cards: 2 },
+      { key: 'twopair',    label: '2 Paare',        diff: 'mittel',         cards: 4 },
+      { key: 'three',      label: 'Drilling',       diff: 'mittel',         cards: 3 },
+      { key: 'straight',   label: 'Straße',       diff: 'schwer',         cards: 5 },
+      { key: 'flush',      label: 'Flush',          diff: 'sehr schwer',    cards: 5 },
+      { key: 'fullhouse',  label: 'Full House',     diff: 'sehr schwer',    cards: 5 },
+      { key: 'four',       label: 'Vierling',       diff: 'extrem selten',  cards: 4 },
+      { key: 'straightfl', label: 'Straight Flush', diff: 'extrem schwer',  cards: 5 }
+    ];
+
+    window._bluffSelectedMode = null;
+
+    function showBluffModeSelection() {
+      const old = document.getElementById('_bluffModeOverlay');
+      if (old) old.remove();
+
+      const ov = document.createElement('div');
+      ov.id = '_bluffModeOverlay';
+      ov.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:45;display:flex;flex-direction:column;';
+
+      const bg = document.createElement('img');
+      bg.src = 'overlay_card.webp';
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;';
+      ov.appendChild(bg);
+
+      const scroll = document.createElement('div');
+      scroll.style.cssText = 'position:relative;z-index:1;flex:1;overflow-y:auto;' +
+        'padding:80px 20px 20px 20px;-webkit-overflow-scrolling:touch;' +
+        'background:rgba(0,0,0,0.45);';
+
+      // Titel
+      const h1 = document.createElement('div');
+      h1.style.cssText = 'font:bold 24px Arial;letter-spacing:3px;text-transform:uppercase;' +
+        'color:rgb(187,183,32);text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:18px;';
+      h1.textContent = 'KIPP BLUFF';
+      scroll.appendChild(h1);
+
+      // Modi-Liste
+      BLUFF_MODES.forEach(mode => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 8px;' +
+          'border-bottom:1px solid rgba(224,208,184,0.15);cursor:pointer;pointer-events:auto;';
+
+        // Textblock links
+        const textDiv = document.createElement('div');
+        textDiv.style.cssText = 'flex:1;';
+        const nameEl = document.createElement('div');
+        nameEl.style.cssText = 'font:bold 17px Arial;color:#e0d0b8;letter-spacing:1px;' +
+          'text-shadow:0 1px 3px rgba(0,0,0,0.7);';
+        nameEl.textContent = mode.label + ' (' + mode.diff + ')';
+        const cardEl = document.createElement('div');
+        cardEl.style.cssText = 'font:13px Arial;color:#aaa;margin-top:2px;';
+        cardEl.textContent = mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
+        textDiv.appendChild(nameEl);
+        textDiv.appendChild(cardEl);
+
+        // Quadrat-Button rechts
+        const qBtn = document.createElement('img');
+        qBtn.src = 'buttonquadr_card.webp';
+        qBtn.style.cssText = 'width:42px;height:42px;object-fit:contain;flex-shrink:0;';
+
+        row.appendChild(textDiv);
+        row.appendChild(qBtn);
+
+        row.onclick = () => {
+          window._bluffSelectedMode = mode;
+          ov.remove();
+          startBluffGame(mode);
+        };
+        row.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          row.click();
+        }, { passive: false });
+
+        scroll.appendChild(row);
+      });
+
+      ov.appendChild(scroll);
+
+      // Zurück-Button
+      const backWrap = document.createElement('div');
+      backWrap.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
+        'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
+      const backBtn = document.createElement('button');
+      backBtn.textContent = 'OK';
+      backBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
+        'display:flex;align-items:center;justify-content:center;';
+      backBtn.onclick = () => ov.remove();
+      backWrap.appendChild(backBtn);
+      ov.appendChild(backWrap);
+
+      document.body.appendChild(ov);
+    }
+
+    function startBluffGame(mode) {
+      // Start-Overlay ausblenden
+      document.getElementById('startOverlay').style.display = 'none';
+
+      // Overlay Bluff über Spielfeld
+      let bluffOv = document.getElementById('_bluffGameOverlay');
+      if (bluffOv) bluffOv.remove();
+      bluffOv = document.createElement('div');
+      bluffOv.id = '_bluffGameOverlay';
+      bluffOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:30;pointer-events:none;';
+
+      const bluffBg = document.createElement('img');
+      bluffBg.src = 'overlay_bluff.webp';
+      bluffBg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;opacity:0.85;';
+      bluffOv.appendChild(bluffBg);
+
+      // BANK-Button auf Zeile 11/12 Grenze (Monge-Projektion)
+      const bankP = new THREE.Vector3(0, 0.46875, 0.890625);
+      bankP.project(camera);
+      const bankX = Math.round((bankP.x * 0.5 + 0.5) * 360);
+      const bankY = Math.round((-bankP.y * 0.5 + 0.5) * 720);
+
+      const bankBtn = document.createElement('button');
+      bankBtn.id = '_bluffBankBtn';
+      bankBtn.textContent = 'BANK';
+      bankBtn.style.cssText = 'position:absolute;left:50%;top:' + bankY + 'px;transform:translate(-50%,-50%);' +
+        'background:url("buttonfilz.webp") center/cover no-repeat;' +
+        'border:none;width:200px;height:52px;z-index:1;pointer-events:auto;cursor:pointer;' +
+        'font:bold 20px Arial;letter-spacing:2.5px;color:#e0d0b8;' +
+        'text-shadow:0 1px 3px rgba(0,0,0,0.6);border-radius:6px;';
+
+      bankBtn.onclick = () => {
+        bankBtn.style.display = 'none';
+        showBluffBankCards(mode.cards, bankY);
+      };
+      bankBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        bankBtn.click();
+      }, { passive: false });
+
+      bluffOv.appendChild(bankBtn);
+      document.body.appendChild(bluffOv);
+    }
+
+    function showBluffBankCards(numCards, centerY) {
+      const container = document.getElementById('_bluffGameOverlay');
+      if (!container) return;
+
+      // Karten horizontal zentriert auf centerY
+      const cardW = 42; // skalierte Breite
+      const cardH = 60; // proportional (196:280)
+      const gap = 6;
+      const totalW = numCards * cardW + (numCards - 1) * gap;
+      const startX = (360 - totalW) / 2;
+
+      for (let i = 0; i < numCards; i++) {
+        const card = document.createElement('img');
+        card.src = 'karteverdeckt.webp';
+        card.className = '_bluffBankCard';
+        card.style.cssText = 'position:absolute;width:' + cardW + 'px;height:' + cardH + 'px;' +
+          'left:' + (startX + i * (cardW + gap)) + 'px;top:' + (centerY - cardH / 2) + 'px;' +
+          'z-index:2;pointer-events:none;object-fit:contain;' +
+          'opacity:0;transition:opacity 0.4s ease;';
+        container.appendChild(card);
+        // Nacheinander einblenden
+        setTimeout(() => { card.style.opacity = '1'; }, i * 200);
+      }
+    }
+
     function showCardAnleitung() {
       const old = document.getElementById('_cardAnleitungOverlay');
       if (old) old.remove();
