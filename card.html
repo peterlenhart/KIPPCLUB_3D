@@ -10302,14 +10302,10 @@
         const textDiv = document.createElement('div');
         textDiv.style.cssText = 'flex:1;';
         const nameEl = document.createElement('div');
-        nameEl.style.cssText = 'font:bold 17px Arial;color:#e0d0b8;letter-spacing:1px;' +
+        nameEl.style.cssText = 'font:bold 20px Arial;color:#e0d0b8;letter-spacing:1px;' +
           'text-shadow:0 1px 3px rgba(0,0,0,0.7);';
-        nameEl.textContent = mode.label;
-        const cardEl = document.createElement('div');
-        cardEl.style.cssText = 'font:13px Arial;color:#aaa;margin-top:2px;';
-        cardEl.textContent = mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
+        nameEl.textContent = mode.label + '  ' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
         textDiv.appendChild(nameEl);
-        textDiv.appendChild(cardEl);
 
         // Quadrat-Button rechts mit gelbem Haken
         const qWrap = document.createElement('div');
