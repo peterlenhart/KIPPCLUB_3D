@@ -10133,7 +10133,7 @@
       BLUFF_MODES.forEach(mode => {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 8px;' +
-          'border-bottom:1px solid rgba(224,208,184,0.15);cursor:pointer;pointer-events:auto;';
+          'border-bottom:1px solid rgba(224,208,184,0.15);cursor:default;pointer-events:none;';
 
         // Textblock links
         const textDiv = document.createElement('div');
@@ -10148,22 +10148,35 @@
         textDiv.appendChild(nameEl);
         textDiv.appendChild(cardEl);
 
-        // Quadrat-Button rechts
+        // Quadrat-Button rechts mit gelbem Haken
+        const qWrap = document.createElement('div');
+        qWrap.style.cssText = 'position:relative;width:42px;height:42px;flex-shrink:0;pointer-events:auto;';
         const qBtn = document.createElement('img');
         qBtn.src = 'buttonquadr_card.webp';
-        qBtn.style.cssText = 'width:42px;height:42px;object-fit:contain;flex-shrink:0;';
+        qBtn.style.cssText = 'width:42px;height:42px;object-fit:contain;';
+        const qCheck = document.createElement('div');
+        qCheck.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
+          'font:bold 24px Arial;color:#cedb25;text-shadow:0 1px 2px rgba(0,0,0,0.5);pointer-events:none;';
+        qCheck.textContent = '\u2713';
+        qWrap.appendChild(qBtn);
+        qWrap.appendChild(qCheck);
 
         row.appendChild(textDiv);
-        row.appendChild(qBtn);
+        row.appendChild(qWrap);
 
-        row.onclick = () => {
+        // Nur Klick auf den quadratischen Button löst aus
+        qBtn.style.cursor = 'pointer';
+        qBtn.style.pointerEvents = 'auto';
+        qBtn.onclick = (e) => {
+          e.stopPropagation();
           window._bluffSelectedMode = mode;
           ov.remove();
           startBluffGame(mode);
         };
-        row.addEventListener('touchend', (e) => {
+        qBtn.addEventListener('touchend', (e) => {
           e.preventDefault();
-          row.click();
+          e.stopPropagation();
+          qBtn.click();
         }, { passive: false });
 
         scroll.appendChild(row);
@@ -10192,69 +10205,101 @@
       // Start-Overlay ausblenden
       document.getElementById('startOverlay').style.display = 'none';
 
-      // Overlay Bluff über Spielfeld
-      let bluffOv = document.getElementById('_bluffGameOverlay');
-      if (bluffOv) bluffOv.remove();
-      bluffOv = document.createElement('div');
-      bluffOv.id = '_bluffGameOverlay';
-      bluffOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:30;pointer-events:none;';
+      // Overlay Bluff als 3D-Mesh auf Spieltisch
+      if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); }
+      const bluffTex = new THREE.TextureLoader().load('overlay_bluff.webp');
+      // Bild 644x1568 → Aspekt 0.4107. Breite = Box-Inneres (0.9375), Höhe proportional
+      const bluffW = 0.9375;
+      const bluffH = bluffW * (1568 / 644);
+      const bluffGeo = new THREE.PlaneGeometry(bluffW, bluffH);
+      const bluffMat = new THREE.MeshBasicMaterial({
+        map: bluffTex, transparent: false,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      window._bluffOverlayMesh = new THREE.Mesh(bluffGeo, bluffMat);
+      window._bluffOverlayMesh.rotation.x = -Math.PI / 2;
+      // Auf Spieltisch, zentriert auf Box-Mitte (X=0, Z=0.1105)
+      window._bluffOverlayMesh.position.set(0, 0.46975 + 0.001, 0.1105);
+      window._bluffOverlayMesh.renderOrder = 3;
+      scene.add(window._bluffOverlayMesh);
 
-      const bluffBg = document.createElement('img');
-      bluffBg.src = 'overlay_bluff.webp';
-      bluffBg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:130%;object-fit:cover;z-index:0;opacity:0.85;';
-      bluffOv.appendChild(bluffBg);
+      // BANK-Button als 3D-Mesh auf Spieltisch (Zeile 11/12 Grenze)
+      // Z=0.890625, Y=Spieltisch+0.002, X=0
+      const bankY3D = 0.46975 + 0.002;
+      const bankZ3D = 0.890625;
 
-      // BANK-Button auf Zeile 11/12 Grenze (Monge-Projektion)
-      const bankP = new THREE.Vector3(0, 0.46875, 0.890625);
-      bankP.project(camera);
-      const bankX = Math.round((bankP.x * 0.5 + 0.5) * 360);
-      const bankY = Math.round((-bankP.y * 0.5 + 0.5) * 720);
+      // Canvas-Textur: buttonfilz + "BANK" Text
+      const bankCanvas = document.createElement('canvas');
+      bankCanvas.width = 812; bankCanvas.height = 252;
+      const bankCtx = bankCanvas.getContext('2d');
+      const bankBgImg = new Image();
+      bankBgImg.onload = () => {
+        bankCtx.drawImage(bankBgImg, 0, 0, 812, 252);
+        bankCtx.font = 'bold 80px Arial';
+        bankCtx.fillStyle = '#e0d0b8';
+        bankCtx.textAlign = 'center';
+        bankCtx.textBaseline = 'middle';
+        bankCtx.shadowColor = 'rgba(0,0,0,0.6)';
+        bankCtx.shadowBlur = 8;
+        bankCtx.fillText('BANK', 406, 130);
 
-      const bankBtn = document.createElement('button');
-      bankBtn.id = '_bluffBankBtn';
-      bankBtn.textContent = 'BANK';
-      bankBtn.style.cssText = 'position:absolute;left:50%;top:' + bankY + 'px;transform:translate(-50%,-50%);' +
-        'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:200px;height:52px;z-index:1;pointer-events:auto;cursor:pointer;' +
-        'font:bold 20px Arial;letter-spacing:2.5px;color:#e0d0b8;' +
-        'text-shadow:0 1px 3px rgba(0,0,0,0.6);border-radius:6px;';
-
-      bankBtn.onclick = () => {
-        bankBtn.style.display = 'none';
-        showBluffBankCards(mode.cards, bankY);
+        const bankTex = new THREE.CanvasTexture(bankCanvas);
+        const bankW = 0.46875; // 3 Zellen breit
+        const bankH = bankW * (252 / 812);
+        const bankGeo = new THREE.PlaneGeometry(bankW, bankH);
+        const bankMat = new THREE.MeshBasicMaterial({
+          map: bankTex, transparent: true, alphaTest: 0.1,
+          side: THREE.DoubleSide, depthWrite: false
+        });
+        window._bluffBankMesh = new THREE.Mesh(bankGeo, bankMat);
+        window._bluffBankMesh.rotation.x = -Math.PI / 2;
+        window._bluffBankMesh.position.set(0, bankY3D, bankZ3D);
+        window._bluffBankMesh.renderOrder = 5;
+        scene.add(window._bluffBankMesh);
       };
-      bankBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        bankBtn.click();
-      }, { passive: false });
+      bankBgImg.src = 'buttonfilz.webp';
 
-      bluffOv.appendChild(bankBtn);
-      document.body.appendChild(bluffOv);
+      // Klick auf BANK via Raycasting
+      window._bluffBankClickActive = true;
+      window._bluffBankCards = mode.cards;
     }
 
-    function showBluffBankCards(numCards, centerY) {
-      const container = document.getElementById('_bluffGameOverlay');
-      if (!container) return;
+    function showBluffBankCards(numCards) {
+      // BANK-Mesh entfernen
+      if (window._bluffBankMesh) {
+        scene.remove(window._bluffBankMesh);
+        window._bluffBankMesh = null;
+      }
+      window._bluffBankClickActive = false;
 
-      // Karten horizontal zentriert auf centerY
-      const cardW = 42; // skalierte Breite
-      const cardH = 60; // proportional (196:280)
-      const gap = 6;
-      const totalW = numCards * cardW + (numCards - 1) * gap;
-      const startX = (360 - totalW) / 2;
+      // Karten als 3D-Meshes auf Zeile 11/12 Grenze
+      const cardY = 0.46975 + 0.002;
+      const cardZ = 0.890625;
+      const cardW3D = 0.10; // ~0.64 Zellen breit
+      const cardH3D = cardW3D * (280 / 196); // proportional
+      const gap3D = 0.02;
+      const totalW3D = numCards * cardW3D + (numCards - 1) * gap3D;
+      const startX = -totalW3D / 2 + cardW3D / 2;
+
+      window._bluffCardMeshes = [];
+      const cardTex = new THREE.TextureLoader().load('karteverdeckt.webp');
 
       for (let i = 0; i < numCards; i++) {
-        const card = document.createElement('img');
-        card.src = 'karteverdeckt.webp';
-        card.className = '_bluffBankCard';
-        card.style.cssText = 'position:absolute;width:' + cardW + 'px;height:' + cardH + 'px;' +
-          'left:' + (startX + i * (cardW + gap)) + 'px;top:' + (centerY - cardH / 2) + 'px;' +
-          'z-index:2;pointer-events:none;object-fit:contain;' +
-          'opacity:0;transition:opacity 0.4s ease;';
-        container.appendChild(card);
+        const cGeo = new THREE.PlaneGeometry(cardW3D, cardH3D);
+        const cMat = new THREE.MeshBasicMaterial({
+          map: cardTex, transparent: true, alphaTest: 0.1,
+          side: THREE.DoubleSide, depthWrite: false
+        });
+        const cMesh = new THREE.Mesh(cGeo, cMat);
+        cMesh.rotation.x = -Math.PI / 2;
+        cMesh.position.set(startX + i * (cardW3D + gap3D), cardY, cardZ);
+        cMesh.renderOrder = 5;
+        cMesh.visible = false;
+        scene.add(cMesh);
+        window._bluffCardMeshes.push(cMesh);
+
         // Nacheinander einblenden
-        setTimeout(() => { card.style.opacity = '1'; }, i * 200);
+        setTimeout(() => { cMesh.visible = true; }, i * 200);
       }
     }
 
@@ -11182,6 +11227,15 @@
         }
       }
 
+
+      // BLUFF: BANK-Button Raycasting (Touch)
+      if (window._bluffBankClickActive && window._bluffBankMesh) {
+        if (vkRaycaster.intersectObject(window._bluffBankMesh).length > 0) {
+          showBluffBankCards(window._bluffBankCards);
+          return;
+        }
+      }
+
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rectP = renderer.domElement.getBoundingClientRect();
@@ -11379,6 +11433,15 @@
         }
       }
       
+
+      // BLUFF: BANK-Button Raycasting
+      if (window._bluffBankClickActive && window._bluffBankMesh) {
+        if (vkRaycaster.intersectObject(window._bluffBankMesh).length > 0) {
+          showBluffBankCards(window._bluffBankCards);
+          return;
+        }
+      }
+
       // PAUSE-Button (3D) click (Desktop)
       if (window._pauseIconMesh && window._pauseIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
@@ -11847,6 +11910,15 @@
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
+      // Bluff-Overlays offen → zurück zur Startseite (card.html)
+      if (document.getElementById('_bluffModeOverlay') || window._bluffOverlayMesh) {
+        if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+        if (window._bluffBankMesh) { scene.remove(window._bluffBankMesh); window._bluffBankMesh = null; }
+        if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
+        window._bluffBankClickActive = false;
+        window.location.href = 'card.html';
+        return;
+      }
       if (gamePhase === 'start') {
         window.location.href = 'index.html';
       } else {
