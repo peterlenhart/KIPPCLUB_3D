@@ -10385,11 +10385,11 @@
       modeCtx.font = 'bold 52px Arial';
       modeCtx.fillStyle = '#e0d0b8';
       modeCtx.textAlign = 'center';
-      modeCtx.textBaseline = 'bottom';
+      modeCtx.textBaseline = 'middle';
       modeCtx.shadowColor = 'rgba(0,0,0,0.7)';
       modeCtx.shadowBlur = 8;
       const modeStr = mode.label + ' \u2013 ' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten');
-      modeCtx.fillText(modeStr, 512, 110);
+      modeCtx.fillText(modeStr, 512, 64);
 
       const modeTex = new THREE.CanvasTexture(modeCanvas);
       const modeW = 1.1;
@@ -10401,7 +10401,7 @@
       });
       window._bluffModeMesh = new THREE.Mesh(modeGeo, modeMat);
       window._bluffModeMesh.rotation.x = -Math.PI / 2;
-      window._bluffModeMesh.position.set(0, 0.46975 + 0.004, 1.203125 - 0.0417);
+      window._bluffModeMesh.position.set(0, 0.46975 + 0.004, 1.149);
       window._bluffModeMesh.renderOrder = 5;
       scene.add(window._bluffModeMesh);
 
