@@ -5527,6 +5527,7 @@
             _smileyResults.push({src: 'smiley_teufel.png', hit: false, points: 0, color: targetColor});
             _smileyMaxPoints += (LEVEL_POINTS[targetColor] || 0);
             if (window._smileyTargetEl) window._smileyTargetEl.dataset.played = 'miss';
+            hideHandOverlay();
             showResultSmileys();
 
             // WEITER-Button
@@ -6648,6 +6649,51 @@
       return -1;
     }
     
+
+    // === Sequentielle Spielführung: "Kippe deinen" → "Smiley zu dieser" → "Hand" → Hand-Bild ===
+    async function showSequentialGuide(guideEl) {
+      if (!guideEl) return;
+      guideEl.style.display = '';
+      guideEl.style.lineHeight = '1.3';
+      const lines = ['Kippe deinen', 'Smiley zu dieser', 'Hand'];
+      for (let i = 0; i < lines.length; i++) {
+        guideEl.textContent = lines[i];
+        await new Promise(r => setTimeout(r, 1500));
+      }
+      guideEl.style.display = 'none';
+
+      // Hand-Bild einblenden (Monge-Projektion: Zeile 11/12 Grenze)
+      let handOv = document.getElementById('_smileyHandOverlay');
+      if (!handOv) {
+        handOv = document.createElement('img');
+        handOv.id = '_smileyHandOverlay';
+        handOv.style.cssText = 'position:absolute;z-index:20;pointer-events:none;opacity:0;transition:opacity 0.5s ease;';
+        document.getElementById('container').appendChild(handOv);
+      }
+      const handColor = window._smileyTargetColor || 'orange';
+      handOv.src = 'hand_' + handColor + '.png';
+
+      // Zeile 11/12 Grenze: Z=0.890625, Y=0.46875 (Spieltisch), X=0 (zentriert)
+      const p = new THREE.Vector3(0, 0.46875, 0.890625);
+      p.project(camera);
+      const sx = Math.round((p.x * 0.5 + 0.5) * 360);
+      const sy = Math.round((-p.y * 0.5 + 0.5) * 720);
+
+      // 1.3-fach vergrößert (Basis ~45px = 1 Zelle, 1.3x = ~59px)
+      const handSize = Math.round(45 * 1.3);
+      handOv.style.width = handSize + 'px';
+      handOv.style.height = handSize + 'px';
+      handOv.style.left = (sx - handSize / 2) + 'px';
+      handOv.style.top = (sy - handSize / 2) + 'px';
+      handOv.style.opacity = '1';
+      handOv.style.display = '';
+    }
+
+    function hideHandOverlay() {
+      const h = document.getElementById('_smileyHandOverlay');
+      if (h) { h.style.opacity = '0'; setTimeout(() => { h.style.display = 'none'; }, 500); }
+    }
+
     function kipp21EndKniffAndOpenCard() {
       if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
       const target = (kipp21BlickTargetCard >= 0) ? kipp21BlickTargetCard : kipp21NextVerdeckt();
@@ -6744,8 +6790,7 @@
       // Spielführungs-Text Phase 2: nur bei erster Runde
       const guideText = document.getElementById('_smileyGuideText');
       if (guideText && _smileyRound === 0) {
-        guideText.style.display = '';
-        guideText.innerHTML = T.sG2 || 'Wähle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.';
+        showSequentialGuide(guideText);
       }
       // Smiley: Karte als "offen" markieren
       if (kipp21CardStates[activeCardIdx] !== undefined) kipp21CardStates[activeCardIdx] = 'offen';
@@ -6955,8 +7000,7 @@
       // Spielführungs-Text Phase 2: nur bei erster Runde
       const guideText2 = document.getElementById('_smileyGuideText');
       if (guideText2 && _smileyRound === 0) {
-        guideText2.style.display = '';
-        guideText2.innerHTML = T.sG2 || 'Wähle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.';
+        showSequentialGuide(guideText2);
       }
       gamePhase = 'spielen';
       kipp21KniffAbort = false;
@@ -7743,6 +7787,7 @@
         if (currentPulse >= pulseCount) {
           // Flug zum Treffer-Slot
           animateCardFly(card, hitInfo.quadrant, hitInfo.slot).then(() => {
+            hideHandOverlay();
             showHitText(activeCardIdx);
             setTimeout(() => onRunde(), 600);
           });
