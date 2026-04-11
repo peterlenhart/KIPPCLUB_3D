@@ -10213,7 +10213,7 @@
         const bH = bW * imgAspect;
         const bluffGeo = new THREE.PlaneGeometry(bW, bH);
         const bluffMat = new THREE.MeshBasicMaterial({
-          map: tex, transparent: false,
+          map: tex, transparent: true, alphaTest: 0.1,
           side: THREE.DoubleSide, depthWrite: false
         });
         window._bluffOverlayMesh = new THREE.Mesh(bluffGeo, bluffMat);
@@ -10248,8 +10248,8 @@
         bankCtx.fillText('BANK', 406, 130);
 
         const bankTex = new THREE.CanvasTexture(bankCanvas);
-        const bankW = 0.46875; // 3 Zellen breit
-        const bankH = bankW * (252 / 812);
+        const bankW = 0.94; // 812/3/45 = 6 Zellen (Retina 3x)
+        const bankH = 0.29; // 252/3/45 = 1.87 Zellen (Retina 3x)
         const bankGeo = new THREE.PlaneGeometry(bankW, bankH);
         const bankMat = new THREE.MeshBasicMaterial({
           map: bankTex, transparent: true, alphaTest: 0.1,
