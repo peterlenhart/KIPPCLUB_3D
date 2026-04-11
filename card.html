@@ -10376,20 +10376,10 @@
       window._bluffCardsPlayed = [];
       setTimeout(() => {
         showBluffBankCards(mode.cards);
-        // Nach letzter Karte: Spiel starten
+        // Nach letzter Karte: +1 Spiel starten (identisch)
         const waitMs = 600 + mode.cards * 400 + 500;
         setTimeout(() => {
-          // Dummy-Target setzen damit Long-tap-Guards durchlassen
-          if (!window._cardTargetState) window._cardTargetState = {};
-          window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
-          // Spielphase setzen + Eckblick bereit
-          gamePhase = 'kipp21';
-          kipp21Active = true;
-          // Target_verdeckt unsichtbar (wir haben keine Targets in BLUFF)
-          if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
-            window._targetMeshes['target_verdeckt.webp'].visible = false;
-          }
-          stopTargetPulse();
+          handleStart(false);
         }, waitMs);
       }, 1200);
     }
