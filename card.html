@@ -13308,56 +13308,87 @@
           cur.mesh.material.map = newTex;
           cur.mesh.material.needsUpdate = true;
 
-          // Gefüllte Karten sortieren (ohne die ungefüllte)
+          // Sortierte Position berechnen
           const filled = slots.filter(s => s.filled);
           filled.sort((a, b) => a.val - b.val);
-
-          // Positionen: links = nächste ungefüllte, rechts = gefüllte sortiert
           const bCards = slots.length;
           const cW = 0.20833;
           const gp = 0.038;
           const totalW = bCards * cW + (bCards - 1) * gp;
           const startX = -totalW / 2 + cW / 2;
-
           const nextUnfilled = slots.find(s => !s.filled);
-          let posIdx = 0;
-          if (nextUnfilled) {
-            nextUnfilled.mesh.position.x = startX;
-            nextUnfilled.mesh.visible = true;
-            posIdx = 1;
-          }
-          for (let fi = 0; fi < filled.length; fi++) {
-            filled[fi].mesh.position.x = startX + posIdx * (cW + gp);
-            posIdx++;
-          }
+          const filledOffset = nextUnfilled ? 1 : 0;
+          const sortIdx = filled.indexOf(cur);
+          const targetX = startX + (filledOffset + sortIdx) * (cW + gp);
 
-          // Dummy-Target für nächsten Kippzug
-          window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
-
-          // Nächster Eckblick oder Hand komplett
-          if (nextUnfilled) {
-            setTimeout(() => {
-              // Slots aufdecken (gespielte Slots bleiben)
-              if (faceSlots) {
-                const fBase = { f0: 0, f1: 4, f2: 8 };
-                for (const fk of ['f0', 'f1', 'f2']) {
-                  const f = faceSlots[fk];
-                  if (f) {
-                    const base = fBase[fk] || 0;
-                    let si = 0;
-                    for (const key in f.slotMap) {
-                      if (!window._playedSlots || !window._playedSlots.has(base + si)) {
-                        f.slotMap[key].slotAlpha = 1;
-                      }
-                      si++;
-                    }
-                    rebuildFaceMat(fk, 1);
-                  }
-                }
+          // Schritt 1: Wert 600ms zeigen
+          setTimeout(() => {
+            // Schritt 2: ALLE gefüllten Karten animiert auf sortierte Positionen schieben
+            // Karten die über andere geschoben werden → Y höher (darüber)
+            // Jede Karte die sich nach RECHTS bewegt, geht über die anderen
+            const fromPositions = filled.map(f => f.mesh.position.x);
+            const toPositions = filled.map((f, fi) => startX + (filledOffset + fi) * (cW + gp));
+            // Y-Ebenen: Karten die nach rechts wandern sind darüber
+            const baseY = filled[0] ? filled[0].mesh.position.y : 0.47375;
+            for (let fi = 0; fi < filled.length; fi++) {
+              if (toPositions[fi] > fromPositions[fi] + 0.001) {
+                filled[fi].mesh.position.y = baseY + 0.003; // darüber
+                filled[fi].mesh.renderOrder = 8;
+              } else if (toPositions[fi] < fromPositions[fi] - 0.001) {
+                filled[fi].mesh.position.y = baseY + 0.005; // noch höher (links einsortiert)
+                filled[fi].mesh.renderOrder = 9;
               }
-              runKipp21EckblickKniff(true);
-            }, 1500);
-          }
+            }
+            const slideDur = 600;
+            const slideStart = performance.now();
+            (function slideAnim() {
+              const t = Math.min((performance.now() - slideStart) / slideDur, 1);
+              const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+              for (let fi = 0; fi < filled.length; fi++) {
+                filled[fi].mesh.position.x = fromPositions[fi] + (toPositions[fi] - fromPositions[fi]) * e;
+              }
+              if (t < 1) {
+                requestAnimationFrame(slideAnim);
+              } else {
+                for (let fi = 0; fi < filled.length; fi++) {
+                  filled[fi].mesh.position.x = toPositions[fi];
+                  filled[fi].mesh.position.y = baseY; // Y zurücksetzen
+                  filled[fi].mesh.renderOrder = 6;
+                }
+                // Schritt 3: Neue halbleere Karte links einblenden (300ms Pause)
+                setTimeout(() => {
+                  if (nextUnfilled) {
+                    nextUnfilled.mesh.position.x = startX;
+                    nextUnfilled.mesh.visible = true;
+                  }
+                  window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
+                  // Nächster Eckblick
+                  if (nextUnfilled) {
+                    setTimeout(() => {
+                      if (faceSlots) {
+                        const fBase = { f0: 0, f1: 4, f2: 8 };
+                        for (const fk of ['f0', 'f1', 'f2']) {
+                          const f = faceSlots[fk];
+                          if (f) {
+                            const base = fBase[fk] || 0;
+                            let si = 0;
+                            for (const key in f.slotMap) {
+                              if (!window._playedSlots || !window._playedSlots.has(base + si)) {
+                                f.slotMap[key].slotAlpha = 1;
+                              }
+                              si++;
+                            }
+                            rebuildFaceMat(fk, 1);
+                          }
+                        }
+                      }
+                      runKipp21EckblickKniff(true);
+                    }, 1000);
+                  }
+                }, 300);
+              }
+            })();
+          }, 600);
         };
         pcImg.src = 'karte' + cur.suit + '.webp';
         _stichLock = false;
