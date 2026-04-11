@@ -10205,27 +10205,31 @@
       // Start-Overlay ausblenden
       document.getElementById('startOverlay').style.display = 'none';
 
-      // Overlay Bluff als 3D-Mesh auf Spieltisch
+      // Overlay Bluff als 3D-Mesh — exakt wie Spieltisch positioniert, nur Y geringfügig höher
       if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); }
-      const bluffTex = new THREE.TextureLoader().load('overlay_bluff.webp');
-      // Bild 644x1568 → Aspekt 0.4107. Breite = Box-Inneres (0.9375), Höhe proportional
-      const bluffW = 0.9375;
-      const bluffH = bluffW * (1568 / 644);
-      const bluffGeo = new THREE.PlaneGeometry(bluffW, bluffH);
-      const bluffMat = new THREE.MeshBasicMaterial({
-        map: bluffTex, transparent: false,
-        side: THREE.DoubleSide, depthWrite: false
+      const bluffTex = new THREE.TextureLoader().load('overlay_bluff.webp', (tex) => {
+        const imgAspect = tex.image.height / tex.image.width;
+        const bW = SPIEL_WIDTH; // 8 Zellen = 1.25 (gleich wie Spieltisch)
+        const bH = bW * imgAspect;
+        const bluffGeo = new THREE.PlaneGeometry(bW, bH);
+        const bluffMat = new THREE.MeshBasicMaterial({
+          map: tex, transparent: false,
+          side: THREE.DoubleSide, depthWrite: false
+        });
+        window._bluffOverlayMesh = new THREE.Mesh(bluffGeo, bluffMat);
+        window._bluffOverlayMesh.rotation.x = -Math.PI / 2;
+        // Gleiche Berechnung wie Spieltisch, nur Y + 0.002
+        const xC = -0.625 + bW / 2;
+        const zC = -0.828125 + bH / 2;
+        const yP = 0.001 + 3 * 0.15625 + 0.002;
+        window._bluffOverlayMesh.position.set(xC, yP, zC);
+        window._bluffOverlayMesh.renderOrder = 3;
+        scene.add(window._bluffOverlayMesh);
       });
-      window._bluffOverlayMesh = new THREE.Mesh(bluffGeo, bluffMat);
-      window._bluffOverlayMesh.rotation.x = -Math.PI / 2;
-      // Auf Spieltisch, zentriert auf Box-Mitte (X=0, Z=0.1105)
-      window._bluffOverlayMesh.position.set(0, 0.46975 + 0.001, 0.1105);
-      window._bluffOverlayMesh.renderOrder = 3;
-      scene.add(window._bluffOverlayMesh);
 
       // BANK-Button als 3D-Mesh auf Spieltisch (Zeile 11/12 Grenze)
       // Z=0.890625, Y=Spieltisch+0.002, X=0
-      const bankY3D = 0.46975 + 0.002;
+      const bankY3D = 0.46975 + 0.004; // geringfügig über overlay_bluff
       const bankZ3D = 0.890625;
 
       // Canvas-Textur: buttonfilz + "BANK" Text
@@ -10273,7 +10277,7 @@
       window._bluffBankClickActive = false;
 
       // Karten als 3D-Meshes auf Zeile 11/12 Grenze
-      const cardY = 0.46975 + 0.002;
+      const cardY = 0.46975 + 0.004; // geringfügig über overlay_bluff
       const cardZ = 0.890625;
       const cardW3D = 0.225; // 65px / 45px = 1.44 Zellen (Retina 3x)
       const cardH3D = 0.323; // 93px / 45px = 2.07 Zellen (Retina 3x)
