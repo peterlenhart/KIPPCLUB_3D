@@ -11089,19 +11089,10 @@
           setTimeout(() => { handleStichConfirm(slotIdx); }, 800);
           return;
         }
-        // Inaktiven Slot getroffen? (ausgespielt)
-        const inactiveSlot = findTappedSlotByUV(lastTouchPos.x, lastTouchPos.y, true);
-        if (inactiveSlot >= 0) {
-          if (allVisibleSlotsInactive()) {
-            console.log('[AUTO-PLAY] Triggered by long-press on inactive');
-            _stichTouchStart = 0;
-            lastTouchPos = null;
-            executeAutoPlay();
-            return;
-          }
-          _stichTouchStart = 0;
-          lastTouchPos = null;
-          return;
+        // Inaktiven Slot getroffen → ignorieren
+        _stichTouchStart = 0;
+        lastTouchPos = null;
+        {
         }
       }
       _stichTouchStart = 0;
@@ -12189,7 +12180,7 @@
               hintText.innerHTML = formatKipps(kipp21KippCount);
               checkOnTargetAfterKipp();
               // Nach 6. Kipp: Auto-Play wenn alle 4 Slots inaktiv
-              if (_cardKippCount >= _CARD_MAX_KIPPS) checkAutoPlayNeeded();
+              // Auto-Play entfernt — kein Kipp-Limit mehr
             }
 
 
