@@ -7723,11 +7723,7 @@
     
     function kipp21EndKniffAndOpenCard() {
       if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
-      // BLUFF: Keine Targetkarte → direkt zum Kippen
-      if (window._bluffMode) {
-        gamePhase = 'spielen';
-        return;
-      }
+
       const target = (kipp21BlickTargetCard >= 0) ? kipp21BlickTargetCard : kipp21NextVerdeckt();
       kipp21BlickTargetCard = -1;
       if (target >= 0) {
@@ -11386,14 +11382,14 @@
         }
       }
 
-      // BLUFF: Cube-Tap → Eckblick (statt Target-Tap)
+      // BLUFF: Cube-Tap → gleicher Flow wie +1
       if (window._bluffMode && gamePhase === 'kipp21' && !kipp21KniffActive && lastTouchPos) {
         const rectB = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectB.left) / rectB.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rectB.top) / rectB.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(cube).length > 0) {
-          runKipp21EckblickKniff(true);
+          onTargetVerdecktTap();
           lastTouchPos = null;
           return;
         }
@@ -11612,10 +11608,10 @@
         }
       }
 
-      // BLUFF: Cube-Tap → Eckblick (Desktop)
+      // BLUFF: Cube-Tap → gleicher Flow wie +1 (Desktop)
       if (window._bluffMode && gamePhase === 'kipp21' && !kipp21KniffActive) {
         if (vkRaycaster.intersectObject(cube).length > 0) {
-          runKipp21EckblickKniff(true);
+          onTargetVerdecktTap();
           return;
         }
       }
@@ -13198,60 +13194,6 @@
 
     function handleStichConfirm(slotIdx) {
       if (_stichLock) return;
-      // BLUFF-Modus: Karte südlich der Bankkarten platzieren statt Stich
-      if (window._bluffMode) {
-        const slotInfo = getSlotValueAndColor(slotIdx);
-        if (!slotInfo) { _stichLock = false; return; }
-        markSlotAsPlayed(slotIdx);
-
-        const played = window._bluffCardsPlayed || [];
-        const bCards = window._bluffCardsNeeded || 1;
-        const cW = 0.20833;
-        const cH = cW * (280 / 196);
-        const gp = (1.25 - bCards * cW) / Math.max(bCards - 1, 1) - 0.014;
-        const totalBW = bCards * cW + (bCards - 1) * Math.max(gp, 0.02);
-        const firstBankX = -totalBW / 2 + cW / 2;
-        const pX = firstBankX + played.length * (cW + Math.max(gp, 0.02));
-        const bankZ = 0.890625 + 0.052;
-        const playerZ = bankZ + 0.15625;
-        const playerY = 0.46975 + 0.004;
-
-        const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
-        const suitFile = 'karte' + (suitMap[slotInfo.color] || 'herz') + '.webp';
-
-        const pcCanvas = document.createElement('canvas');
-        pcCanvas.width = 196; pcCanvas.height = 280;
-        const pcCtx = pcCanvas.getContext('2d');
-        const pcImg = new Image();
-        pcImg.onload = () => {
-          pcCtx.drawImage(pcImg, 0, 0, 196, 280);
-          pcCtx.font = '900 94px "Noto Serif"';
-          pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
-          pcCtx.textAlign = 'center';
-          pcCtx.textBaseline = 'middle';
-          pcCtx.fillText(displayNum(slotInfo.val), 98, 80);
-          const pcTex = new THREE.CanvasTexture(pcCanvas);
-          const pcGeo = new THREE.PlaneGeometry(cW, cH);
-          const pcMat = new THREE.MeshBasicMaterial({
-            map: pcTex, transparent: true, alphaTest: 0.1,
-            side: THREE.DoubleSide, depthWrite: false
-          });
-          const pcMesh = new THREE.Mesh(pcGeo, pcMat);
-          pcMesh.rotation.x = -Math.PI / 2;
-          pcMesh.position.set(pX, playerY, playerZ);
-          pcMesh.renderOrder = 6;
-          scene.add(pcMesh);
-          played.push({ mesh: pcMesh, val: slotInfo.val, color: slotInfo.color });
-          window._bluffCardsPlayed = played;
-
-          // Dummy-Target neu setzen für nächsten Kippzug
-          window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
-        };
-        pcImg.src = suitFile;
-        _stichLock = false;
-        return;
-      }
-
       const st = window._cardTargetState;
       if (!st || !st.currentTarget) return;
       _stichLock = true;
