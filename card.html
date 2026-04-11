@@ -8016,6 +8016,25 @@
 
       // Kippziel wird jetzt vor dem Eckblick angezeigt (in onTargetVerdecktTap)
 
+      // KIPP CARD: Slots verdecken — Würfel-ECKE hat Y=0 erreicht
+      if (window._cardMode && faceSlots) {
+        const fBase = { f0: 0, f1: 4, f2: 8 };
+        for (const fk of ['f0', 'f1', 'f2']) {
+          const f = faceSlots[fk];
+          if (f) {
+            const base = fBase[fk] || 0;
+            let si = 0;
+            for (const key in f.slotMap) {
+              if (!window._playedSlots || !window._playedSlots.has(base + si)) {
+                f.slotMap[key].slotAlpha = 0;
+              }
+              si++;
+            }
+            rebuildFaceMat(fk, 1);
+          }
+        }
+      }
+
       // 7. Von Ecke zurückfallen
       const fallDur = 800;
       await new Promise(resolve => {
@@ -8052,24 +8071,7 @@
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
 
-      // KIPP CARD: Alle Slots verdecken — Würfel hat Y=0 erreicht
-      if (window._cardMode && faceSlots) {
-        const fBase = { f0: 0, f1: 4, f2: 8 };
-        for (const fk of ['f0', 'f1', 'f2']) {
-          const f = faceSlots[fk];
-          if (f) {
-            const base = fBase[fk] || 0;
-            let si = 0;
-            for (const key in f.slotMap) {
-              if (!window._playedSlots || !window._playedSlots.has(base + si)) {
-                f.slotMap[key].slotAlpha = 0;
-              }
-              si++;
-            }
-            rebuildFaceMat(fk, 1);
-          }
-        }
-      }
+
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
@@ -10376,22 +10378,36 @@
       window._bluffCardsPlayed = [];
       setTimeout(() => {
         showBluffBankCards(mode.cards);
-        // Nach letzter Karte: +1 Spiel starten (identisch)
+        // Nach letzter Karte: Eckblick automatisch starten
         const waitMs = 600 + mode.cards * 400 + 500;
         setTimeout(() => {
-          // Minimaler State für Kippzug (kein +1 Spiel)
           document.getElementById('startOverlay').style.display = 'none';
+          window._cardMode = 'bluff';
           gamePhase = 'kipp21';
           kipp21Active = true;
           isAnimating = false;
           dragActive = false;
           kipp21KniffActive = false;
           kipp21KniffAbort = false;
+          currentMode = 'kanten';
+          _stichLock = false;
           if (!window._cardTargetState) window._cardTargetState = {};
           window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
-          window._stichNum = 0;
-          window._stichResults = [];
-          _stichLock = false;
+          // Alles von +1 unterhalb Zeile 10 verstecken
+          if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
+          stopTargetPulse();
+          if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
+          if (window._targetRankMesh) window._targetRankMesh.visible = false;
+          if (window._playerCardMesh) window._playerCardMesh.visible = false;
+          if (window._playerSuitMeshes) Object.values(window._playerSuitMeshes).forEach(m => m.visible = false);
+          if (window._playerRankMesh) window._playerRankMesh.visible = false;
+          if (window._scorePLMesh) window._scorePLMesh.visible = false;
+          if (window._scoreBKMesh) window._scoreBKMesh.visible = false;
+          if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
+          if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
+          if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
+          // Eckblick automatisch starten
+          runKipp21EckblickKniff(true);
         }, waitMs);
       }, 1200);
     }
@@ -11384,19 +11400,6 @@
         }
       }
 
-      // BLUFF: Cube-Tap → gleicher Flow wie +1
-      if (window._bluffMode && gamePhase === 'kipp21' && !kipp21KniffActive && lastTouchPos) {
-        const rectB = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rectB.left) / rectB.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rectB.top) / rectB.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(cube).length > 0) {
-          onTargetVerdecktTap();
-          lastTouchPos = null;
-          return;
-        }
-      }
-
       // Target_verdeckt (3D) → Kippziel generieren
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
           window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
@@ -11606,14 +11609,6 @@
             }
           }
           setTimeout(() => { handleStichConfirm(slotIdx); }, 800);
-          return;
-        }
-      }
-
-      // BLUFF: Cube-Tap → gleicher Flow wie +1 (Desktop)
-      if (window._bluffMode && gamePhase === 'kipp21' && !kipp21KniffActive) {
-        if (vkRaycaster.intersectObject(cube).length > 0) {
-          onTargetVerdecktTap();
           return;
         }
       }
