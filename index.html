@@ -312,8 +312,6 @@
         <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild -->
         <div id="clickColor" class="gameClickArea"></div>
         <div id="clickCard" class="gameClickArea"></div>
-        <div id="clickKippCard" class="gameClickArea"></div>
-        <div id="clickSmiley" class="gameClickArea"></div>
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
 
@@ -345,13 +343,13 @@
   <div id="levelOverlay">
     <button id="levelClose" onclick="document.getElementById('levelOverlay').classList.remove('show')"><img src="rw.webp" alt="Zurück"></button>
     <h2 id="lvlTitle">WÄHLE DEIN LEVEL</h2>
-    <div class="lvl-btn" id="lvlTraining"><img class="lvl-bg" src="button_lang_braun.webp">TRAINING</div>
+    <div class="lvl-btn" id="lvlTraining"><img class="lvl-bg" src="button_lang_icon_1.webp">TRAINING</div>
     <div class="lvl-sub" id="lvlSubTraining">mit TUTORIAL</div>
-    <div class="lvl-btn" id="lvlBrainy"><img class="lvl-bg" src="button_lang_rotbraun_glow.webp">BRAINY</div>
-    <div class="lvl-btn" id="lvlBrain"><img class="lvl-bg" src="button_lang_orange_glow.webp">BRAIN</div>
+    <div class="lvl-btn" id="lvlBrainy"><img class="lvl-bg" src="button_lang_icon_1.webp">BRAINY</div>
+    <div class="lvl-btn" id="lvlBrain"><img class="lvl-bg" src="button_lang_icon_2.webp">BRAIN</div>
     <div class="lvl-btn" id="lvlK21"><img class="lvl-bg" src="button_lang_gold_glow.webp">MASTER BRAIN</div>
     <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
-      <div class="lvl-btn" id="lvlKP"><img class="lvl-bg" src="button_lang_grau.webp">KIPP PRINZIP</div>
+      <div class="lvl-btn" id="lvlKP"><img class="lvl-bg" src="button_lang_icon_2.webp">KIPP PRINZIP</div>
       <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
     </div>
   </div>
@@ -421,8 +419,6 @@
 
       const clickColor = document.getElementById("clickColor");
       const clickCard  = document.getElementById("clickCard");
-      const clickKippCard = document.getElementById("clickKippCard");
-      const clickSmiley = document.getElementById("clickSmiley");
       const clickQueen = document.getElementById("clickQueen");
       const clickKing  = document.getElementById("clickKing");
 
@@ -444,19 +440,6 @@
       clickCard.style.top = zahlenTop + "px";
       clickCard.style.width = (cellPx * 3) + "px";
       clickCard.style.height = zahlenHeight + "px";
-
-      // KIPP CARD: Zeile 8, kein Offset
-      // KIPP CARD: Zeile 10,5 bis 11,5
-      clickKippCard.style.left = btnLeft + "px";
-      clickKippCard.style.top = (9.5 * cellPx) + "px";
-      clickKippCard.style.width = btnWidth + "px";
-      clickKippCard.style.height = cellPx + "px";
-
-      // KIPP SMILEY: Zeile 9, kein Offset
-      clickSmiley.style.left = btnLeft + "px";
-      clickSmiley.style.top = (8 * cellPx) + "px";
-      clickSmiley.style.width = btnWidth + "px";
-      clickSmiley.style.height = btnHeight + "px";
 
       // KIPP QUEEN: Zeile 10
       const row10 = ((10 + HEADER_ROW_OFFSET - 1) * cellPx);
@@ -536,20 +519,9 @@
       document.getElementById("levelOverlay").classList.add("show");
     };
     function updateLevelLinks() {
-      let base, mb, kp;
-      if (selectedSkin === 'icons') {
-        base = 'coloricon.html';
-        mb = 'kipp21_icon.html';
-        kp = 'kipp-prinzip-icon.html';
-      } else if (selectedSkin === 'card') {
-        base = 'card.html';
-        mb = 'card.html?level=masterbrain';
-        kp = 'kipp-prinzip.html';
-      } else {
-        base = 'training.html';
-        mb = 'kipp21.html';
-        kp = 'kipp-prinzip.html';
-      }
+      const base = selectedSkin === 'icons' ? 'coloricon.html' : 'training.html';
+      const mb = selectedSkin === 'icons' ? 'kipp21_icon.html' : 'kipp21.html';
+      const kp = selectedSkin === 'icons' ? 'kipp-prinzip-icon.html' : 'kipp-prinzip.html';
       document.getElementById('lvlTraining').onclick = () => location.href = base;
       document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
       document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
@@ -559,16 +531,6 @@
     }
     updateLevelLinks();
     // clickQueen und clickKing haben vorerst keine Funktion
-
-    // KIPP CARD
-    document.getElementById("clickKippCard").onclick = () => {
-      location.href = 'card.html';
-    };
-
-    // KIPP SMILEY
-    document.getElementById("clickSmiley").onclick = () => {
-      location.href = 'smiley.html';
-    };
 
     // Modal
     const closeBtn = document.getElementById("closeBtn");
