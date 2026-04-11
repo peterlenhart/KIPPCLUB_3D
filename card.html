@@ -10380,6 +10380,12 @@
         const waitMs = 600 + mode.cards * 400 + 500;
         setTimeout(() => {
           handleStart(false);
+          // BLUFF: target_1, Anleitung-Button + Icon ausblenden
+          setTimeout(() => {
+            if (window._targetMeshes && window._targetMeshes['target_1.webp']) window._targetMeshes['target_1.webp'].visible = false;
+            if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
+            if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
+          }, 100);
         }, waitMs);
       }, 1200);
     }
