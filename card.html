@@ -10275,9 +10275,9 @@
       // Karten als 3D-Meshes auf Zeile 11/12 Grenze
       const cardY = 0.46975 + 0.002;
       const cardZ = 0.890625;
-      const cardW3D = 0.10; // ~0.64 Zellen breit
-      const cardH3D = cardW3D * (280 / 196); // proportional
-      const gap3D = 0.02;
+      const cardW3D = 0.225; // 65px / 45px = 1.44 Zellen (Retina 3x)
+      const cardH3D = 0.323; // 93px / 45px = 2.07 Zellen (Retina 3x)
+      const gap3D = 0.03;
       const totalW3D = numCards * cardW3D + (numCards - 1) * gap3D;
       const startX = -totalW3D / 2 + cardW3D / 2;
 
