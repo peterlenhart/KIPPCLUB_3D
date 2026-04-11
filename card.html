@@ -13206,7 +13206,7 @@
         const firstBankX = -totalBW / 2 + cW / 2;
         const pX = firstBankX + played.length * (cW + Math.max(gp, 0.02));
         const bankZ = 0.890625 + 0.052;
-        const playerZ = bankZ + 0.15625;
+        const playerZ = bankZ + cH + 0.0104; // Kartenlänge + 3px südlicher
         const playerY = 0.46975 + 0.004;
 
         const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
@@ -13235,8 +13235,17 @@
           pcMesh.renderOrder = 6;
           scene.add(pcMesh);
           played.push({ mesh: pcMesh, val: slotInfo.val, color: slotInfo.color });
+          // Aufsteigend nach Wert sortieren + Meshes neu positionieren
+          played.sort((a, b) => a.val - b.val);
+          for (let pi = 0; pi < played.length; pi++) {
+            played[pi].mesh.position.x = firstBankX + pi * (cW + Math.max(gp, 0.02));
+          }
           window._bluffCardsPlayed = played;
           window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
+          // Nächster Eckblick automatisch nach 1.5s
+          if (played.length < (window._bluffCardsNeeded || 1)) {
+            setTimeout(() => { runKipp21EckblickKniff(true); }, 1500);
+          }
         };
         pcImg.src = suitFile;
         _stichLock = false;
