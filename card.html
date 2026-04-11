@@ -7723,10 +7723,15 @@
     
     function kipp21EndKniffAndOpenCard() {
       if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+      // BLUFF: Keine Targetkarte → direkt zum Kippen
+      if (window._bluffMode) {
+        gamePhase = 'spielen';
+        return;
+      }
       const target = (kipp21BlickTargetCard >= 0) ? kipp21BlickTargetCard : kipp21NextVerdeckt();
       kipp21BlickTargetCard = -1;
       if (target >= 0) {
-        kipp21OnCardTap(target, true); // _fromReplay=true → öffnet direkt
+        kipp21OnCardTap(target, true);
       }
     }
     
@@ -10373,14 +10378,22 @@
       window._bluffMode = true;
       window._bluffCardsNeeded = mode.cards;
       window._bluffCardsPlayed = [];
-      window._bluffWaitForCubeTap = false;
-
       setTimeout(() => {
         showBluffBankCards(mode.cards);
-        // Nach letzter Karte: Würfel tippbar machen für Eckblick
+        // Nach letzter Karte: Spiel starten
         const waitMs = 600 + mode.cards * 400 + 500;
         setTimeout(() => {
-          window._bluffWaitForCubeTap = true;
+          // Dummy-Target setzen damit Long-tap-Guards durchlassen
+          if (!window._cardTargetState) window._cardTargetState = {};
+          window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
+          // Spielphase setzen + Eckblick bereit
+          gamePhase = 'kipp21';
+          kipp21Active = true;
+          // Target_verdeckt unsichtbar (wir haben keine Targets in BLUFF)
+          if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
+            window._targetMeshes['target_verdeckt.webp'].visible = false;
+          }
+          stopTargetPulse();
         }, waitMs);
       }, 1200);
     }
@@ -11308,7 +11321,7 @@
         dismissKippenWarning();
         const touch = e.touches[0];
         lastTouchPos = { x: touch.clientX, y: touch.clientY };
-        // Long-Press Timer für Stich starten
+        // Long-Press Timer für Stich/Bluff starten
         if (window._cardTargetState && window._cardTargetState.currentTarget) {
           _stichTouchStart = Date.now();
         }
@@ -11345,18 +11358,6 @@
 
 
 
-
-      // BLUFF: Cube-Tap → Eckblick starten
-      if (window._bluffWaitForCubeTap && !kipp21KniffActive) {
-        const cubeHits = vkRaycaster.intersectObject(cube);
-        if (cubeHits.length > 0) {
-          window._bluffWaitForCubeTap = false;
-          gamePhase = 'spielen';
-          runKipp21EckblickKniff(true);
-          return;
-        }
-      }
-
       // PAUSE-Button (3D) → immer zuerst prüfen
       if (window._pauseIconMesh && window._pauseIconMesh.visible && lastTouchPos) {
         const rectP = renderer.domElement.getBoundingClientRect();
@@ -11385,6 +11386,19 @@
         }
       }
 
+      // BLUFF: Cube-Tap → Eckblick (statt Target-Tap)
+      if (window._bluffMode && gamePhase === 'kipp21' && !kipp21KniffActive && lastTouchPos) {
+        const rectB = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectB.left) / rectB.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectB.top) / rectB.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(cube).length > 0) {
+          runKipp21EckblickKniff(true);
+          lastTouchPos = null;
+          return;
+        }
+      }
+
       // Target_verdeckt (3D) → Kippziel generieren
       if (window._targetMeshes && window._targetMeshes['target_verdeckt.webp'] &&
           window._targetMeshes['target_verdeckt.webp'].visible && lastTouchPos && !kipp21KniffActive) {
@@ -11408,65 +11422,6 @@
         const slotIdx = findTappedSlotByUV(lastTouchPos.x, lastTouchPos.y);
         if (slotIdx >= 0) {
 
-          // BLUFF-Modus: Karte sammeln statt Stich
-          if (window._bluffMode) {
-            const slotInfo = getSlotValueAndColor(slotIdx);
-            if (!slotInfo) { _stichTouchStart = 0; lastTouchPos = null; return; }
-
-            // Slot als gespielt markieren
-            markSlotAsPlayed(slotIdx);
-
-            // Karte als 3D-Mesh südlich der Bankkarten
-            const bankZ = 0.890625 + 0.052; // Bank-Karten Z
-            const playerZ = bankZ + 0.15625; // 45px = 1 Zelle südlicher
-            const playerY = 0.46975 + 0.004;
-            const played = window._bluffCardsPlayed;
-            
-            // X: Flucht zur linkesten Bankkarte
-            const bCards = window._bluffCardsNeeded;
-            const cW = 0.20833;
-            const cH = cW * (280 / 196);
-            const gp = (1.25 - bCards * cW) / Math.max(bCards - 1, 1) - 0.014;
-            const totalBW = bCards * cW + (bCards - 1) * gp;
-            const firstBankX = -totalBW / 2 + cW / 2;
-            const pX = firstBankX + played.length * (cW + gp);
-
-            // Suit-Datei bestimmen
-            const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
-            const suitFile = 'karte' + (suitMap[slotInfo.color] || 'herz') + '.webp';
-
-            // Canvas: Kartenbild + Wert
-            const pcCanvas = document.createElement('canvas');
-            pcCanvas.width = 196; pcCanvas.height = 280;
-            const pcCtx = pcCanvas.getContext('2d');
-            const pcImg = new Image();
-            pcImg.onload = () => {
-              pcCtx.drawImage(pcImg, 0, 0, 196, 280);
-              pcCtx.font = '900 94px "Noto Serif"';
-              pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
-              pcCtx.textAlign = 'center';
-              pcCtx.textBaseline = 'middle';
-              pcCtx.fillText(displayNum(slotInfo.val), 98, 80);
-
-              const pcTex = new THREE.CanvasTexture(pcCanvas);
-              const pcGeo = new THREE.PlaneGeometry(cW, cH);
-              const pcMat = new THREE.MeshBasicMaterial({
-                map: pcTex, transparent: true, alphaTest: 0.1,
-                side: THREE.DoubleSide, depthWrite: false
-              });
-              const pcMesh = new THREE.Mesh(pcGeo, pcMat);
-              pcMesh.rotation.x = -Math.PI / 2;
-              pcMesh.position.set(pX, playerY, playerZ);
-              pcMesh.renderOrder = 6;
-              scene.add(pcMesh);
-              played.push({ mesh: pcMesh, val: slotInfo.val, color: slotInfo.color });
-            };
-            pcImg.src = suitFile;
-
-            _stichTouchStart = 0;
-            lastTouchPos = null;
-            return;
-          }
           const slotInfo = getSlotValueAndColor(slotIdx);
           console.log('[STICH] Long-Press Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
             ' vs Target: ' + displayNum(window._cardTargetState.currentTarget.num) + ' ' + window._cardTargetState.currentTarget.color);
@@ -11616,18 +11571,6 @@
       
 
 
-
-      // BLUFF: Cube-Tap → Eckblick starten
-      if (window._bluffWaitForCubeTap && !kipp21KniffActive) {
-        const cubeHits = vkRaycaster.intersectObject(cube);
-        if (cubeHits.length > 0) {
-          window._bluffWaitForCubeTap = false;
-          gamePhase = 'spielen';
-          runKipp21EckblickKniff(true);
-          return;
-        }
-      }
-
       // PAUSE-Button (3D) click (Desktop)
       if (window._pauseIconMesh && window._pauseIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._pauseIconMesh).length > 0 ||
@@ -11665,6 +11608,14 @@
             }
           }
           setTimeout(() => { handleStichConfirm(slotIdx); }, 800);
+          return;
+        }
+      }
+
+      // BLUFF: Cube-Tap → Eckblick (Desktop)
+      if (window._bluffMode && gamePhase === 'kipp21' && !kipp21KniffActive) {
+        if (vkRaycaster.intersectObject(cube).length > 0) {
+          runKipp21EckblickKniff(true);
           return;
         }
       }
@@ -12100,7 +12051,6 @@
       if (document.getElementById('_bluffModeOverlay') || document.getElementById('_bluffPreviewOverlay') || window._bluffOverlayMesh) {
         if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
         window._bluffMode = false;
-        window._bluffWaitForCubeTap = false;
         if (window._bluffCardsPlayed) { window._bluffCardsPlayed.forEach(c => { if(c.mesh) scene.remove(c.mesh); }); window._bluffCardsPlayed = null; }
                 if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
         if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
@@ -13248,6 +13198,60 @@
 
     function handleStichConfirm(slotIdx) {
       if (_stichLock) return;
+      // BLUFF-Modus: Karte südlich der Bankkarten platzieren statt Stich
+      if (window._bluffMode) {
+        const slotInfo = getSlotValueAndColor(slotIdx);
+        if (!slotInfo) { _stichLock = false; return; }
+        markSlotAsPlayed(slotIdx);
+
+        const played = window._bluffCardsPlayed || [];
+        const bCards = window._bluffCardsNeeded || 1;
+        const cW = 0.20833;
+        const cH = cW * (280 / 196);
+        const gp = (1.25 - bCards * cW) / Math.max(bCards - 1, 1) - 0.014;
+        const totalBW = bCards * cW + (bCards - 1) * Math.max(gp, 0.02);
+        const firstBankX = -totalBW / 2 + cW / 2;
+        const pX = firstBankX + played.length * (cW + Math.max(gp, 0.02));
+        const bankZ = 0.890625 + 0.052;
+        const playerZ = bankZ + 0.15625;
+        const playerY = 0.46975 + 0.004;
+
+        const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
+        const suitFile = 'karte' + (suitMap[slotInfo.color] || 'herz') + '.webp';
+
+        const pcCanvas = document.createElement('canvas');
+        pcCanvas.width = 196; pcCanvas.height = 280;
+        const pcCtx = pcCanvas.getContext('2d');
+        const pcImg = new Image();
+        pcImg.onload = () => {
+          pcCtx.drawImage(pcImg, 0, 0, 196, 280);
+          pcCtx.font = '900 94px "Noto Serif"';
+          pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+          pcCtx.textAlign = 'center';
+          pcCtx.textBaseline = 'middle';
+          pcCtx.fillText(displayNum(slotInfo.val), 98, 80);
+          const pcTex = new THREE.CanvasTexture(pcCanvas);
+          const pcGeo = new THREE.PlaneGeometry(cW, cH);
+          const pcMat = new THREE.MeshBasicMaterial({
+            map: pcTex, transparent: true, alphaTest: 0.1,
+            side: THREE.DoubleSide, depthWrite: false
+          });
+          const pcMesh = new THREE.Mesh(pcGeo, pcMat);
+          pcMesh.rotation.x = -Math.PI / 2;
+          pcMesh.position.set(pX, playerY, playerZ);
+          pcMesh.renderOrder = 6;
+          scene.add(pcMesh);
+          played.push({ mesh: pcMesh, val: slotInfo.val, color: slotInfo.color });
+          window._bluffCardsPlayed = played;
+
+          // Dummy-Target neu setzen für nächsten Kippzug
+          window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
+        };
+        pcImg.src = suitFile;
+        _stichLock = false;
+        return;
+      }
+
       const st = window._cardTargetState;
       if (!st || !st.currentTarget) return;
       _stichLock = true;
