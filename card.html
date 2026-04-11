@@ -11670,16 +11670,7 @@
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
-      if (gamePhase === 'start') {
-        window.location.href = 'index.html';
-        return;
-      }
-      // Aktives Spiel: Bestätigung zeigen
-      if (gamePhase === 'kipp21') {
-        document.getElementById('saveGameOverlay').style.display = 'block';
-        return;
-      }
-      window.location.href = 'index.html';
+      window.location.href = 'index.html?theme=card';
     });
 
     function _doNukeAndReset() {

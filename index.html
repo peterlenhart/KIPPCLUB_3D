@@ -589,7 +589,14 @@
       }
     }
     updateLevelLinks();
-    // clickQueen und clickKing haben vorerst keine Funktion
+
+    // ?theme= Parameter: automatisch Level-Overlay öffnen
+    const _themeParam = new URLSearchParams(window.location.search).get('theme');
+    if (_themeParam === 'numbers' || _themeParam === 'icons') {
+      selectedSkin = _themeParam === 'icons' ? 'icons' : 'numbers';
+      updateLevelLinks();
+      document.getElementById("levelOverlay").classList.add("show");
+    }
 
     // KIPP CARD
     document.getElementById("clickKippCard").onclick = () => {

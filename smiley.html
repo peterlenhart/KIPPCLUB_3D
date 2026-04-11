@@ -10548,16 +10548,7 @@
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
-      if (gamePhase === 'start') {
-        window.location.href = 'index.html?noflash=1';
-        return;
-      }
-      // Aktives Spiel: Bestätigung zeigen
-      if (gamePhase === 'kipp21') {
-        document.getElementById('saveGameOverlay').style.display = 'block';
-        return;
-      }
-      window.location.href = 'index.html?noflash=1';
+      window.location.href = 'index.html?theme=smiley';
     });
 
     function _doNukeAndReset() {
