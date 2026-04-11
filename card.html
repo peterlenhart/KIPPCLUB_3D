@@ -8044,6 +8044,25 @@
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21EckblickUsed++;
+
+      // KIPP CARD: Alle Slots verdecken — Würfel hat Y=0 erreicht
+      if (window._cardMode && faceSlots) {
+        const fBase = { f0: 0, f1: 4, f2: 8 };
+        for (const fk of ['f0', 'f1', 'f2']) {
+          const f = faceSlots[fk];
+          if (f) {
+            const base = fBase[fk] || 0;
+            let si = 0;
+            for (const key in f.slotMap) {
+              if (!window._playedSlots || !window._playedSlots.has(base + si)) {
+                f.slotMap[key].slotAlpha = 0;
+              }
+              si++;
+            }
+            rebuildFaceMat(fk, 1);
+          }
+        }
+      }
       
       // Joker-Status aktualisieren
       refreshKniffIcons();
