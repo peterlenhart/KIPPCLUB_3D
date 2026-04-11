@@ -11670,7 +11670,11 @@
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
-      window.location.href = 'index.html?theme=card';
+      if (gamePhase === 'start') {
+        window.location.href = 'index.html';
+      } else {
+        window.location.href = 'card.html';
+      }
     });
 
     function _doNukeAndReset() {
