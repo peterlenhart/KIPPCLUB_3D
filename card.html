@@ -12190,6 +12190,7 @@
           window._matchScorePlayer = 0;
           // Slots zurücksetzen
           window._playedSlots = new Set();
+          window._bluffPlayedDeckSlots = null;
           if (typeof faceSlots !== 'undefined' && faceSlots) {
             for (const fk of ['f0', 'f1', 'f2']) {
               const f = faceSlots[fk];
@@ -12236,6 +12237,7 @@
           window._matchScorePlayer = 0;
           // Slots zurücksetzen
           window._playedSlots = new Set();
+          window._bluffPlayedDeckSlots = null;
           if (typeof faceSlots !== 'undefined' && faceSlots) {
             for (const fk of ['f0', 'f1', 'f2']) {
               const f = faceSlots[fk];
@@ -12361,7 +12363,14 @@
             const dupVal = slotInfo.val;
             const filled = window._bluffCardSlots.filter(s => s.filled);
             if (filled.some(s => s.val === dupVal && s.suit === dupSuit)) {
-              // Karte existiert bereits → Puls-Signal, nicht aufdecken
+              // Flush/Straight Flush: Duplikat → VERFEHLT
+              if (window._bluffSelectedMode && (window._bluffSelectedMode.key === 'flush' || window._bluffSelectedMode.key === 'straightfl')) {
+                _stichTouchStart = 0;
+                lastTouchPos = null;
+                setTimeout(() => startBluffVerfehlt(), 500);
+                return;
+              }
+              // Andere Modi: Puls-Signal, nicht aufdecken
               const curSlotDup = window._bluffCardSlots.find(s => !s.filled);
               if (curSlotDup && curSlotDup.mesh) {
                 let pcd = 0;
@@ -12571,7 +12580,14 @@
             const dupVal = slotInfo.val;
             const filled = window._bluffCardSlots.filter(s => s.filled);
             if (filled.some(s => s.val === dupVal && s.suit === dupSuit)) {
-              // Karte existiert bereits → Puls-Signal, nicht aufdecken
+              // Flush/Straight Flush: Duplikat → VERFEHLT
+              if (window._bluffSelectedMode && (window._bluffSelectedMode.key === 'flush' || window._bluffSelectedMode.key === 'straightfl')) {
+                _stichTouchStart = 0;
+                lastTouchPos = null;
+                setTimeout(() => startBluffVerfehlt(), 500);
+                return;
+              }
+              // Andere Modi: Puls-Signal, nicht aufdecken
               const curSlotDup = window._bluffCardSlots.find(s => !s.filled);
               if (curSlotDup && curSlotDup.mesh) {
                 let pcd = 0;
@@ -14219,7 +14235,31 @@
         cur.val = slotInfo.val;
         cur.filled = true;
         isAnimating = false; // Kippen wieder erlauben
-        markSlotAsPlayed(slotIdx); // Slot blass machen wie bei +1
+        // Flush/Straight Flush: Slot wieder verdecken (nicht blass)
+        if (window._bluffSelectedMode && (window._bluffSelectedMode.key === 'flush' || window._bluffSelectedMode.key === 'straightfl')) {
+          // Slot nach kurzer Anzeige wieder verdecken
+          const _playedFace = topFace;
+          const _playedSlotIdx = slotIdx;
+          setTimeout(() => {
+            const pf = faceSlots[_playedFace];
+            if (pf) {
+              let psi = 0;
+              for (const key in pf.slotMap) {
+                if (psi === _playedSlotIdx) {
+                  pf.slotMap[key].slotAlpha = 0;
+                  rebuildFaceMat(_playedFace, 1);
+                  break;
+                }
+                psi++;
+              }
+            }
+          }, 600);
+          // Position merken für Duplikat-Erkennung
+          if (!window._bluffPlayedDeckSlots) window._bluffPlayedDeckSlots = new Set();
+          window._bluffPlayedDeckSlots.add(getDeckIndexForSlot(slotIdx));
+        } else {
+          markSlotAsPlayed(slotIdx); // Andere Modi: Slot blass machen
+        }
 
         // Canvas neu zeichnen mit Wert
         const pcCanvas = document.createElement('canvas');
