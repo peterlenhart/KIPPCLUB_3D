@@ -822,7 +822,7 @@
     }
     #bestScoresClose {
       position: absolute;
-      bottom: 63px; left: 50%; transform: translateX(-50%);
+      bottom: 85px; left: 50%; transform: translateX(-50%);
       background: url(buttonfilz.webp) center/cover no-repeat;
       width: 280px; height: 49px; border: none; cursor: pointer;
       font: bold 16px Arial; color: #fff; letter-spacing: 2px;
@@ -3782,7 +3782,7 @@
       });
     }
     function showBestScores() {
-      if (window._bluffMode) {
+      if (window._bluffMode || document.getElementById('_bluffModeOverlay') || document.getElementById('_bluffPreviewOverlay')) {
         renderMatchBestScores();
       } else if (gamePhase === 'kipp21' || gamePhase === 'start') {
         renderCardBestScores();
@@ -12388,6 +12388,16 @@
                     _dsi++;
                   }
                 }
+                // Würfel-Slot pulsieren (Cube skalieren)
+                let cubePC = 0;
+                const cubeOrigScale = cube.scale.clone();
+                function pulseCubeSlot() {
+                  if (cubePC >= 10) { cube.scale.copy(cubeOrigScale); return; }
+                  const s = (cubePC % 2 === 0) ? 1.08 : 1.0;
+                  cube.scale.set(s, s, s);
+                  cubePC++; setTimeout(pulseCubeSlot, 250);
+                }
+                pulseCubeSlot();
                 // 2. Bereits gespielte Karte mit gleichem Wert finden + pulsieren
                 const dupCard = filled.find(s => s.val === dupVal && s.suit === dupSuit);
                 if (dupCard && dupCard.mesh) {
@@ -12400,18 +12410,7 @@
                   }
                   pulseDupCard();
                 }
-                // 3. Halbleere Karte auch pulsieren
-                const curEmpty = window._bluffCardSlots.find(s => !s.filled);
-                if (curEmpty && curEmpty.mesh) {
-                  let ceC = 0;
-                  const ceOrig = curEmpty.mesh.scale.clone();
-                  function pulseEmpty() {
-                    if (ceC >= 10) { curEmpty.mesh.scale.copy(ceOrig); return; }
-                    curEmpty.mesh.scale.set(ceC % 2 === 0 ? 1.3 : 1.0, ceC % 2 === 0 ? 1.3 : 1.0, ceC % 2 === 0 ? 1.3 : 1.0);
-                    ceC++; setTimeout(pulseEmpty, 250);
-                  }
-                  pulseEmpty();
-                }
+
                 _stichTouchStart = 0;
                 lastTouchPos = null;
                 // 4. Nach 2.5s → VERFEHLT
@@ -12643,6 +12642,16 @@
                     _dsi++;
                   }
                 }
+                // Würfel-Slot pulsieren (Cube skalieren)
+                let cubePC = 0;
+                const cubeOrigScale = cube.scale.clone();
+                function pulseCubeSlot() {
+                  if (cubePC >= 10) { cube.scale.copy(cubeOrigScale); return; }
+                  const s = (cubePC % 2 === 0) ? 1.08 : 1.0;
+                  cube.scale.set(s, s, s);
+                  cubePC++; setTimeout(pulseCubeSlot, 250);
+                }
+                pulseCubeSlot();
                 // 2. Bereits gespielte Karte mit gleichem Wert finden + pulsieren
                 const dupCard = filled.find(s => s.val === dupVal && s.suit === dupSuit);
                 if (dupCard && dupCard.mesh) {
@@ -12655,18 +12664,7 @@
                   }
                   pulseDupCard();
                 }
-                // 3. Halbleere Karte auch pulsieren
-                const curEmpty = window._bluffCardSlots.find(s => !s.filled);
-                if (curEmpty && curEmpty.mesh) {
-                  let ceC = 0;
-                  const ceOrig = curEmpty.mesh.scale.clone();
-                  function pulseEmpty() {
-                    if (ceC >= 10) { curEmpty.mesh.scale.copy(ceOrig); return; }
-                    curEmpty.mesh.scale.set(ceC % 2 === 0 ? 1.3 : 1.0, ceC % 2 === 0 ? 1.3 : 1.0, ceC % 2 === 0 ? 1.3 : 1.0);
-                    ceC++; setTimeout(pulseEmpty, 250);
-                  }
-                  pulseEmpty();
-                }
+
                 _stichTouchStart = 0;
                 lastTouchPos = null;
                 // 4. Nach 2.5s → VERFEHLT
