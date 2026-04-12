@@ -1526,7 +1526,7 @@
         ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
-    // btnDemo wird in Card-Setup zu KIPP BLUFF umbenannt
+    document.getElementById("btnDemo").textContent = T.dm;
     document.getElementById("btnAnleitung").textContent = T.cAnlTitle || 'ANLEITUNG';
     // Exit overlay translations
     if (T.exQ) document.querySelector('.sgLine1').innerHTML = T.exQ;
@@ -9994,11 +9994,23 @@
       handleStart(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => {
-      showBluffModeSelection();
+      if (_cardModePhase === 0) {
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+      } else {
+        showBluffModeSelection();
+      }
     });
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault();
-      showBluffModeSelection();
+      if (_cardModePhase === 0) {
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+      } else {
+        showBluffModeSelection();
+      }
     }, { passive: false });
     document.getElementById('btnAnleitung').addEventListener('click', () => showCardAnleitung());
     document.getElementById('btnAnleitung').addEventListener('touchend', (e) => {
@@ -11035,7 +11047,7 @@
       _bSp.disabled = false; _bDm.disabled = false;
       _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
       _bSp.textContent = T.sp || 'SPIELEN'; _bDm.textContent = T.dm || 'TUTORIAL';
-      _bDm.style.top = '515px'; // Reset position
+      _bDm.style.top = '515px'; // TUTORIAL Position
       document.getElementById('btnAnleitung').style.display = '';
       document.getElementById('btnDaily').style.display = '';
       _cardModePhase = 0;
