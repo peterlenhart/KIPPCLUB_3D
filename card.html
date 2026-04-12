@@ -10519,9 +10519,9 @@
         labelCtx.fillStyle = 'rgba(255, 255, 0, 0.25)';
         labelCtx.textAlign = 'center';
         labelCtx.textBaseline = 'middle';
-        labelCtx.fillText('BANK     BANK     BANK', 1024, 64);
+        labelCtx.fillText('BANK', 620, 64); labelCtx.fillText('BANK', 1024, 64); labelCtx.fillText('BANK', 1428, 64);
         const bankLabelTex = new THREE.CanvasTexture(labelCanvas);
-        const bankLabelW = 1.15;
+        const bankLabelW = 2.2;
         const bankLabelH = bankLabelW * (64 / 1024);
         const bankLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const bankLabelMat = new THREE.MeshBasicMaterial({
@@ -10542,7 +10542,7 @@
         handCtx.fillStyle = 'rgba(255, 255, 0, 0.25)';
         handCtx.textAlign = 'center';
         handCtx.textBaseline = 'middle';
-        handCtx.fillText('HAND     HAND     HAND', 1024, 64);
+        handCtx.fillText('HAND', 620, 64); handCtx.fillText('HAND', 1024, 64); handCtx.fillText('HAND', 1428, 64);
         const handLabelTex = new THREE.CanvasTexture(handCanvas);
         const handLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const handLabelMat = new THREE.MeshBasicMaterial({
@@ -10799,7 +10799,7 @@
         rtCtx.shadowBlur = 10;
         rtCtx.fillText(resultText, 512, 64);
         const rtTex = new THREE.CanvasTexture(rtCanvas);
-        const rtW = 1.1; const rtH = rtW * (128 / 1024);
+        const rtW = 2.75; const rtH = rtW * (128 / 1024);
         const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
         const rtMat = new THREE.MeshBasicMaterial({
           map: rtTex, transparent: true, alphaTest: 0.05,
@@ -10817,8 +10817,11 @@
         else scene.add(window._bluffResultMesh);
 
         // Pokal pulsiert
-        const pokalEl = document.getElementById('bestScoresBtn');
-        if (pokalEl) pokalEl.classList.add('pulsing');
+        const pokalEl = document.getElementById('bestScoresBtn') || document.getElementById('btnBestScores');
+        if (pokalEl) {
+          pokalEl.classList.add('pulsing');
+          pokalEl.style.animation = 'targetPulse 1.5s ease-in-out infinite';
+        }
 
         // Score auf overlay_bet anzeigen
         showMatchScores(group);
@@ -10889,7 +10892,7 @@
       scCtx.fillText(String(window._matchScorePlayer), 520, 180);
 
       const scTex = new THREE.CanvasTexture(scCanvas);
-      const scW = 1.1; const scH = scW * (256 / 1024);
+      const scW = 3.3; const scH = scW * (256 / 1024);
       const scGeo = new THREE.PlaneGeometry(scW, scH);
       const scMat = new THREE.MeshBasicMaterial({
         map: scTex, transparent: true, alphaTest: 0.05,
@@ -10906,7 +10909,7 @@
       const cW2 = 0.20833;
       const cH2 = cW2 * (280 / 196);
       const playerZ2 = bankZ + cH2 + 0.1146;
-      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5);
+      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5 + 0.243);
       window._bluffScoreMesh.renderOrder = 7;
       if (group) group.add(window._bluffScoreMesh);
       else scene.add(window._bluffScoreMesh);
@@ -11030,7 +11033,7 @@
             const cW2 = 0.20833;
             const cH2 = cW2 * (280 / 196);
             const playerZ2 = bankZ + cH2 + 0.1146;
-            window._bluffShowdownBtn.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 / 2 + 0.08);
+            window._bluffShowdownBtn.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 / 2 + 0.08 + 0.15625);
             window._bluffShowdownBtn.renderOrder = 7;
             bluffGroup.add(window._bluffShowdownBtn);
             window._bluffShowdownActive = true;
