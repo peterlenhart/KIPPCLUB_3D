@@ -783,7 +783,7 @@
     }
     #bestScoresBoard {
       position: absolute;
-      left: 50%; top: 46%; transform: translate(-50%,-50%);
+      left: 50%; top: 41%; transform: translate(-50%,-50%);
       width: 360px; height: 565px;
     }
     #bestScoresBoard img {
@@ -813,7 +813,7 @@
       position: absolute;
       left: 0; right: 0; top: 15.28%;
       text-align: center;
-      font: bold 13px Arial, sans-serif;
+      font: bold 20px Arial, sans-serif;
       color: #c8c0b0;
       text-shadow: 0 1px 1px rgba(0,0,0,0.8), 0 0 4px rgba(255,255,255,0.15);
       letter-spacing: 2px;
@@ -1064,7 +1064,7 @@
   <div id="resetButtonWrap">
     <button id="resetButton"><img src="reset_card.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein_card.webp" alt="Sound"></button>
-    <div id="btnBestScores" style="position:absolute; right:9px; top:11px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_card.webp" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
+    <div id="btnBestScores" style="position:absolute; right:9px; top:31px; width:45px; height:45px; cursor:pointer; pointer-events:auto;"><img src="pokal_card.webp" style="width:45px;height:45px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
@@ -3479,9 +3479,11 @@
         if (m.count > 0) {
           rowEl.innerHTML =
             '<span style="color:#e0d0b8;font-size:14px;">' + MATCH_MODE_LABELS[key] + '</span>' +
-            '<span style="float:right;">' +
+            '<span style="float:right;margin-right:20px;">' +
+            '<span style="color:#cedb25;font-size:13px;">PL</span> ' +
             '<span style="color:#cedb25;font-size:14px;font-weight:bold;">' + m.pl + '</span>' +
             ' <span style="color:#888;font-size:11px;">|</span> ' +
+            '<span style="color:#e05050;font-size:13px;">B</span> ' +
             '<span style="color:#e05050;font-size:14px;font-weight:bold;">' + m.b + '</span>' +
             '</span>';
         } else {
@@ -3495,7 +3497,7 @@
         const numEl10 = document.querySelectorAll('.bsNum')[9];
         if (numEl10) numEl10.textContent = 'PL';
         row10.innerHTML = '<span style="color:#e0d0b8;font-size:14px;">Gesamt</span>' +
-          '<span style="float:right;color:#cedb25;font-size:16px;font-weight:bold;">' + plGesamt + '</span>';
+          '<span style="float:right;margin-right:20px;color:#cedb25;font-size:16px;font-weight:bold;">PL ' + plGesamt + '</span>';
       }
 
       // Zeile 11: B Gesamt
@@ -3504,7 +3506,7 @@
         const numEl11 = document.querySelectorAll('.bsNum')[10];
         if (numEl11) numEl11.textContent = 'B';
         row11.innerHTML = '<span style="color:#e0d0b8;font-size:14px;">Gesamt</span>' +
-          '<span style="float:right;color:#e05050;font-size:16px;font-weight:bold;">' + bGesamt + '</span>';
+          '<span style="float:right;margin-right:20px;color:#e05050;font-size:16px;font-weight:bold;">B ' + bGesamt + '</span>';
       }
     }
 
@@ -10893,7 +10895,7 @@
         rtCtx.shadowBlur = 10;
         rtCtx.fillText(resultText, 512, 64);
         const rtTex = new THREE.CanvasTexture(rtCanvas);
-        const rtW = 2.75; const rtH = rtW * (128 / 1024);
+        const rtW = 2.34; const rtH = rtW * (128 / 1024);
         const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
         const rtMat = new THREE.MeshBasicMaterial({
           map: rtTex, transparent: true, alphaTest: 0.05,
@@ -10920,13 +10922,8 @@
         // Score auf overlay_bet anzeigen
         showMatchScores(group);
 
-        // Nach 3.5s: Ergebnis-Text durch NOCHMAL Button ersetzen
+        // Nach 3.5s: NOCHMAL Button zeigen (Ergebnis-Text bleibt)
         setTimeout(() => {
-          if (window._bluffResultMesh) {
-            if (group) group.remove(window._bluffResultMesh);
-            else scene.remove(window._bluffResultMesh);
-            window._bluffResultMesh = null;
-          }
           // NOCHMAL Button
           const nmCanvas = document.createElement('canvas');
           nmCanvas.width = 812; nmCanvas.height = 252;
@@ -10950,7 +10947,7 @@
             });
             window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
             window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625);
+            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486);
             window._bluffNochmalBtn.renderOrder = 8;
             if (group) group.add(window._bluffNochmalBtn);
             else scene.add(window._bluffNochmalBtn);
@@ -10968,22 +10965,25 @@
       const scCtx = scCanvas.getContext('2d');
       scCtx.clearRect(0, 0, 1024, 256);
       scCtx.font = 'bold 56px Arial';
-      scCtx.textAlign = 'left';
+      scCtx.textAlign = 'center';
       scCtx.textBaseline = 'middle';
       scCtx.shadowColor = 'rgba(0,0,0,0.5)';
       scCtx.shadowBlur = 6;
 
       // Bank: XX
       scCtx.fillStyle = '#e0d0b8';
-      scCtx.fillText('Bank:', 180, 80);
+      scCtx.fillText('Bank: ', 460, 80);
       scCtx.fillStyle = '#cedb25';
-      scCtx.fillText(String(window._matchScoreBank), 520, 80);
+      scCtx.textAlign = 'left';
+      scCtx.fillText(String(window._matchScoreBank), 512, 80);
+      scCtx.textAlign = 'center';
 
       // Player: XX
       scCtx.fillStyle = '#e0d0b8';
-      scCtx.fillText('Player:', 180, 180);
+      scCtx.fillText('Player: ', 460, 180);
       scCtx.fillStyle = '#cedb25';
-      scCtx.fillText(String(window._matchScorePlayer), 520, 180);
+      scCtx.textAlign = 'left';
+      scCtx.fillText(String(window._matchScorePlayer), 512, 180);
 
       const scTex = new THREE.CanvasTexture(scCanvas);
       const scW = 1.98; const scH = scW * (256 / 1024);
@@ -11003,7 +11003,7 @@
       const cW2 = 0.20833;
       const cH2 = cW2 * (280 / 196);
       const playerZ2 = bankZ + cH2 + 0.1146;
-      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5 + 0.243);
+      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5);
       window._bluffScoreMesh.renderOrder = 7;
       if (group) group.add(window._bluffScoreMesh);
       else scene.add(window._bluffScoreMesh);
