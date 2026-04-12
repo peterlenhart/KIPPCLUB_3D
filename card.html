@@ -824,8 +824,8 @@
     #bestScoresClose {
       position: fixed;
       bottom: 85px; left: 50%; transform: translateX(-50%);
-      background: url(buttonfilz.webp) center/cover no-repeat;
-      width: 280px; height: 49px; border: none; cursor: pointer;
+      background: url(buttonfilz.webp) center/100% 100% no-repeat;
+      width: 254px; height: 47px; border: none; cursor: pointer;
       font: bold 16px Arial; color: #fff; letter-spacing: 2px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.6);
       pointer-events: auto;
@@ -12390,16 +12390,32 @@
                     _dsi++;
                   }
                 }
-                // Würfel-Slot pulsieren (Cube skalieren)
-                let cubePC = 0;
-                const cubeOrigScale = cube.scale.clone();
-                function pulseCubeSlot() {
-                  if (cubePC >= 10) { cube.scale.copy(cubeOrigScale); return; }
-                  const s = (cubePC % 2 === 0) ? 1.08 : 1.0;
-                  cube.scale.set(s, s, s);
-                  cubePC++; setTimeout(pulseCubeSlot, 250);
+                // Einzelnen Slot-Wert blinken lassen
+                const _pFace = topFace;
+                const _pSlotIdx = slotIdx;
+                let slotBlinkC = 0;
+                function blinkSlot() {
+                  if (slotBlinkC >= 10) {
+                    // Am Ende sichtbar lassen
+                    const bf = faceSlots[_pFace];
+                    if (bf) { let bsi = 0; for (const bk in bf.slotMap) { if (bsi === _pSlotIdx) { bf.slotMap[bk].slotAlpha = 1; rebuildFaceMat(_pFace, 1); break; } bsi++; } }
+                    return;
+                  }
+                  const bf = faceSlots[_pFace];
+                  if (bf) {
+                    let bsi = 0;
+                    for (const bk in bf.slotMap) {
+                      if (bsi === _pSlotIdx) {
+                        bf.slotMap[bk].slotAlpha = (slotBlinkC % 2 === 0) ? 0 : 1;
+                        rebuildFaceMat(_pFace, 1);
+                        break;
+                      }
+                      bsi++;
+                    }
+                  }
+                  slotBlinkC++; setTimeout(blinkSlot, 250);
                 }
-                pulseCubeSlot();
+                blinkSlot();
                 // 2. Bereits gespielte Karte mit gleichem Wert finden + pulsieren
                 const dupCard = filled.find(s => s.val === dupVal && s.suit === dupSuit);
                 if (dupCard && dupCard.mesh) {
@@ -12644,16 +12660,32 @@
                     _dsi++;
                   }
                 }
-                // Würfel-Slot pulsieren (Cube skalieren)
-                let cubePC = 0;
-                const cubeOrigScale = cube.scale.clone();
-                function pulseCubeSlot() {
-                  if (cubePC >= 10) { cube.scale.copy(cubeOrigScale); return; }
-                  const s = (cubePC % 2 === 0) ? 1.08 : 1.0;
-                  cube.scale.set(s, s, s);
-                  cubePC++; setTimeout(pulseCubeSlot, 250);
+                // Einzelnen Slot-Wert blinken lassen
+                const _pFace = topFace;
+                const _pSlotIdx = slotIdx;
+                let slotBlinkC = 0;
+                function blinkSlot() {
+                  if (slotBlinkC >= 10) {
+                    // Am Ende sichtbar lassen
+                    const bf = faceSlots[_pFace];
+                    if (bf) { let bsi = 0; for (const bk in bf.slotMap) { if (bsi === _pSlotIdx) { bf.slotMap[bk].slotAlpha = 1; rebuildFaceMat(_pFace, 1); break; } bsi++; } }
+                    return;
+                  }
+                  const bf = faceSlots[_pFace];
+                  if (bf) {
+                    let bsi = 0;
+                    for (const bk in bf.slotMap) {
+                      if (bsi === _pSlotIdx) {
+                        bf.slotMap[bk].slotAlpha = (slotBlinkC % 2 === 0) ? 0 : 1;
+                        rebuildFaceMat(_pFace, 1);
+                        break;
+                      }
+                      bsi++;
+                    }
+                  }
+                  slotBlinkC++; setTimeout(blinkSlot, 250);
                 }
-                pulseCubeSlot();
+                blinkSlot();
                 // 2. Bereits gespielte Karte mit gleichem Wert finden + pulsieren
                 const dupCard = filled.find(s => s.val === dupVal && s.suit === dupSuit);
                 if (dupCard && dupCard.mesh) {
