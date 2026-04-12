@@ -10397,7 +10397,7 @@
           window._bluffSouthMesh = new THREE.Mesh(blGeo, blMat);
           window._bluffSouthMesh.rotation.x = -Math.PI / 2;
           const southEdge = zC + bH / 2;
-          window._bluffSouthMesh.position.set(xC, yP, southEdge + blH / 2);
+          window._bluffSouthMesh.position.set(xC, yP, southEdge + blH / 2 - 0.365);
           window._bluffSouthMesh.renderOrder = 3;
           scene.add(window._bluffSouthMesh);
         });
@@ -13354,8 +13354,9 @@
         const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
         const tappedSuit = suitMap[slotInfo.color] || 'herz';
 
-        // Farbe passt nicht → Puls-Signal
+        // Farbe passt nicht → Puls-Signal + Kippen sperren
         if (tappedSuit !== cur.suit) {
+          isAnimating = true; // Kippen sperren
           if (cur.mesh) {
             let pc = 0;
             const origS = cur.mesh.scale.clone();
@@ -13366,6 +13367,24 @@
             }
             pulse();
           }
+          // Nach 1 Sek: Slot verdecken + Kippen wieder erlauben
+          const _slotIdx = slotIdx;
+          const _topFace = topFace;
+          setTimeout(() => {
+            const f = faceSlots[_topFace];
+            if (f) {
+              let si = 0;
+              for (const key in f.slotMap) {
+                if (si === _slotIdx) {
+                  f.slotMap[key].slotAlpha = 0;
+                  rebuildFaceMat(_topFace, 1);
+                  break;
+                }
+                si++;
+              }
+            }
+            isAnimating = false; // Kippen wieder erlauben
+          }, 1000);
           _stichLock = false;
           return;
         }
