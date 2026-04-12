@@ -10895,7 +10895,7 @@
         rtCtx.shadowBlur = 10;
         rtCtx.fillText(resultText, 512, 64);
         const rtTex = new THREE.CanvasTexture(rtCanvas);
-        const rtW = 2.34; const rtH = rtW * (128 / 1024);
+        const rtW = 1.638; const rtH = rtW * (128 / 1024);
         const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
         const rtMat = new THREE.MeshBasicMaterial({
           map: rtTex, transparent: true, alphaTest: 0.05,
@@ -10999,7 +10999,7 @@
       const cW2 = 0.20833;
       const cH2 = cW2 * (280 / 196);
       const playerZ2 = bankZ + cH2 + 0.1146;
-      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5);
+      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5 - 0.069);
       window._bluffScoreMesh.renderOrder = 7;
       if (group) group.add(window._bluffScoreMesh);
       else scene.add(window._bluffScoreMesh);
@@ -11081,7 +11081,7 @@
         rtCtx.shadowBlur = 10;
         rtCtx.fillText('KEIN ' + label, 512, 64);
         const rtTex = new THREE.CanvasTexture(rtCanvas);
-        const rtW = 2.34; const rtH = rtW * (128 / 1024);
+        const rtW = 1.638; const rtH = rtW * (128 / 1024);
         const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
         const rtMat = new THREE.MeshBasicMaterial({
           map: rtTex, transparent: true, alphaTest: 0.05,
@@ -12172,7 +12172,24 @@
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(window._bluffNochmalBtn).length > 0) {
           window._bluffNochmalActive = false;
-          window.location.href = 'card.html';
+          // BLUFF-State aufräumen
+          if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+          if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+          if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
+          if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
+          if (window._bluffCardSlots) { window._bluffCardSlots.forEach(s => { if(s.mesh) scene.remove(s.mesh); }); window._bluffCardSlots = null; }
+          if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
+          if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
+          if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
+          if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
+          if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
+          if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
+          if (window._bluffNochmalBtn) { window._bluffNochmalBtn = null; }
+          window._bluffMode = false;
+          window._bluffShowdownActive = false;
+          window._matchScoreBank = 0;
+          window._matchScorePlayer = 0;
+          showBluffModeSelection();
           return;
         }
       }
@@ -12186,7 +12203,24 @@
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(window._bluffNochmalBtn).length > 0) {
           window._bluffNochmalActive = false;
-          window.location.href = 'card.html';
+          // BLUFF-State aufräumen
+          if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+          if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+          if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
+          if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
+          if (window._bluffCardSlots) { window._bluffCardSlots.forEach(s => { if(s.mesh) scene.remove(s.mesh); }); window._bluffCardSlots = null; }
+          if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
+          if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
+          if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
+          if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
+          if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
+          if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
+          if (window._bluffNochmalBtn) { window._bluffNochmalBtn = null; }
+          window._bluffMode = false;
+          window._bluffShowdownActive = false;
+          window._matchScoreBank = 0;
+          window._matchScorePlayer = 0;
+          showBluffModeSelection();
           return;
         }
       }
