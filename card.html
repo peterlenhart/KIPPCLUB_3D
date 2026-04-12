@@ -10516,12 +10516,12 @@
         const labelCtx = labelCanvas.getContext('2d');
         labelCtx.clearRect(0, 0, 1024, 64);
         labelCtx.font = '900 96px "Noto Serif", serif';
-        labelCtx.fillStyle = 'rgba(206, 219, 37, 0.30)';
+        labelCtx.fillStyle = 'rgba(255, 255, 0, 0.25)';
         labelCtx.textAlign = 'center';
         labelCtx.textBaseline = 'middle';
-        labelCtx.fillText('BANK          BANK          BANK', 1024, 64);
+        labelCtx.fillText('BANK     BANK     BANK', 1024, 64);
         const bankLabelTex = new THREE.CanvasTexture(labelCanvas);
-        const bankLabelW = 2.2;
+        const bankLabelW = 1.15;
         const bankLabelH = bankLabelW * (64 / 1024);
         const bankLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const bankLabelMat = new THREE.MeshBasicMaterial({
@@ -10539,10 +10539,10 @@
         const handCtx = handCanvas.getContext('2d');
         handCtx.clearRect(0, 0, 1024, 64);
         handCtx.font = '900 96px "Noto Serif", serif';
-        handCtx.fillStyle = 'rgba(206, 219, 37, 0.30)';
+        handCtx.fillStyle = 'rgba(255, 255, 0, 0.25)';
         handCtx.textAlign = 'center';
         handCtx.textBaseline = 'middle';
-        handCtx.fillText('HAND          HAND          HAND', 1024, 64);
+        handCtx.fillText('HAND     HAND     HAND', 1024, 64);
         const handLabelTex = new THREE.CanvasTexture(handCanvas);
         const handLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const handLabelMat = new THREE.MeshBasicMaterial({
@@ -10702,6 +10702,216 @@
 
     // === BLUFF: Setzrunde starten — Platte nach Nord schieben ===
 
+
+    // === KIPP MATCH: Showdown ===
+    if (!window._matchScoreBank) window._matchScoreBank = 0;
+    if (!window._matchScorePlayer) window._matchScorePlayer = 0;
+
+    function getPokerValue(internVal) { return internVal + 2; }
+
+    function compareHands(modeKey, playerVals, bankVals) {
+      const pSorted = [...playerVals].sort((a,b) => b - a);
+      const bSorted = [...bankVals].sort((a,b) => b - a);
+      // Vergleich: höchste Karte abwärts
+      for (let i = 0; i < Math.min(pSorted.length, bSorted.length); i++) {
+        if (pSorted[i] > bSorted[i]) return 'player';
+        if (pSorted[i] < bSorted[i]) return 'bank';
+      }
+      return 'draw';
+    }
+
+    function runShowdown(group) {
+      const bankHand = window._bluffBankHand || [];
+      const slots = window._bluffCardSlots || [];
+      const playerVals = slots.filter(s => s.filled).map(s => s.val);
+      const mode = window._bluffSelectedMode;
+
+      // 1. Bankkarte(n) aufdecken — verdeckte durch aufgedeckte ersetzen
+      const bankMeshes = window._bluffCardMeshes || [];
+      const bankSuits = generateModeSuits(mode.key, mode.cards);
+      const suitFileMap = {herz:'karteherz', karo:'kartekaro', kreuz:'kartekreuz', pik:'kartepik'};
+
+      let revealIdx = 0;
+      function revealNext() {
+        if (revealIdx >= bankMeshes.length) {
+          // Alle aufgedeckt → Vergleich
+          setTimeout(() => showResult(), 800);
+          return;
+        }
+        const mesh = bankMeshes[revealIdx];
+        const val = bankHand[revealIdx];
+        const suit = bankSuits[revealIdx];
+        const suitFile = (suitFileMap[suit] || 'karteherz') + '.webp';
+
+        // Canvas: Karte + Wert
+        const rc = document.createElement('canvas');
+        rc.width = 196; rc.height = 280;
+        const rctx = rc.getContext('2d');
+        const rImg = new Image();
+        rImg.onload = () => {
+          rctx.drawImage(rImg, 0, 0, 196, 280);
+          rctx.font = '900 94px "Noto Serif"';
+          rctx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+          rctx.textAlign = 'center';
+          rctx.textBaseline = 'middle';
+          rctx.fillText(displayNum(val), 98, 80);
+          mesh.material.map = new THREE.CanvasTexture(rc);
+          mesh.material.needsUpdate = true;
+          revealIdx++;
+          setTimeout(revealNext, 400);
+        };
+        rImg.src = suitFile;
+      }
+      revealNext();
+
+      function showResult() {
+        const winner = compareHands(mode.key, playerVals, bankHand);
+
+        // Punkte berechnen (Pokerwert-Summe)
+        const playerSum = playerVals.reduce((s, v) => s + getPokerValue(v), 0);
+        const bankSum = bankHand.reduce((s, v) => s + getPokerValue(v), 0);
+
+        if (winner === 'player') {
+          window._matchScorePlayer += playerSum;
+        } else if (winner === 'bank') {
+          window._matchScoreBank += bankSum;
+        } else {
+          // Unentschieden: halbe Punkte
+          window._matchScorePlayer += Math.floor(playerSum / 2);
+          window._matchScoreBank += Math.floor(bankSum / 2);
+        }
+
+        // "Bank gewinnt" / "Player gewinnt" Text
+        const resultText = (winner === 'player') ? 'Player gewinnt' :
+                           (winner === 'bank') ? 'Bank gewinnt' : 'Unentschieden';
+        const resultColor = (winner === 'player') ? '#cedb25' :
+                            (winner === 'bank') ? '#ff6644' : '#e0d0b8';
+
+        const rtCanvas = document.createElement('canvas');
+        rtCanvas.width = 1024; rtCanvas.height = 128;
+        const rtCtx = rtCanvas.getContext('2d');
+        rtCtx.clearRect(0, 0, 1024, 128);
+        rtCtx.font = 'bold 64px Arial';
+        rtCtx.fillStyle = resultColor;
+        rtCtx.textAlign = 'center';
+        rtCtx.textBaseline = 'middle';
+        rtCtx.shadowColor = 'rgba(0,0,0,0.7)';
+        rtCtx.shadowBlur = 10;
+        rtCtx.fillText(resultText, 512, 64);
+        const rtTex = new THREE.CanvasTexture(rtCanvas);
+        const rtW = 1.1; const rtH = rtW * (128 / 1024);
+        const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
+        const rtMat = new THREE.MeshBasicMaterial({
+          map: rtTex, transparent: true, alphaTest: 0.05,
+          side: THREE.DoubleSide, depthWrite: false, depthTest: false
+        });
+        window._bluffResultMesh = new THREE.Mesh(rtGeo, rtMat);
+        window._bluffResultMesh.rotation.x = -Math.PI / 2;
+        const bankZ = 0.890625 + 0.052;
+        const cW2 = 0.20833;
+        const cH2 = cW2 * (280 / 196);
+        const playerZ2 = bankZ + cH2 + 0.1146;
+        window._bluffResultMesh.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08);
+        window._bluffResultMesh.renderOrder = 8;
+        if (group) group.add(window._bluffResultMesh);
+        else scene.add(window._bluffResultMesh);
+
+        // Pokal pulsiert
+        const pokalEl = document.getElementById('bestScoresBtn');
+        if (pokalEl) pokalEl.classList.add('pulsing');
+
+        // Score auf overlay_bet anzeigen
+        showMatchScores(group);
+
+        // Nach 3.5s: Ergebnis-Text durch NOCHMAL Button ersetzen
+        setTimeout(() => {
+          if (window._bluffResultMesh) {
+            if (group) group.remove(window._bluffResultMesh);
+            else scene.remove(window._bluffResultMesh);
+            window._bluffResultMesh = null;
+          }
+          // NOCHMAL Button
+          const nmCanvas = document.createElement('canvas');
+          nmCanvas.width = 812; nmCanvas.height = 252;
+          const nmCtx = nmCanvas.getContext('2d');
+          const nmImg = new Image();
+          nmImg.onload = () => {
+            nmCtx.drawImage(nmImg, 0, 0, 812, 252);
+            nmCtx.font = 'bold 70px Arial';
+            nmCtx.fillStyle = '#e0d0b8';
+            nmCtx.textAlign = 'center';
+            nmCtx.textBaseline = 'middle';
+            nmCtx.shadowColor = 'rgba(0,0,0,0.6)';
+            nmCtx.shadowBlur = 8;
+            nmCtx.fillText('NOCHMAL', 406, 130);
+            const nmTex = new THREE.CanvasTexture(nmCanvas);
+            const nmW = 0.94; const nmH = 0.29;
+            const nmGeo = new THREE.PlaneGeometry(nmW, nmH);
+            const nmMat = new THREE.MeshBasicMaterial({
+              map: nmTex, transparent: true, alphaTest: 0.1,
+              side: THREE.DoubleSide, depthWrite: false
+            });
+            window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
+            window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
+            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08);
+            window._bluffNochmalBtn.renderOrder = 8;
+            if (group) group.add(window._bluffNochmalBtn);
+            else scene.add(window._bluffNochmalBtn);
+            window._bluffNochmalActive = true;
+          };
+          nmImg.src = 'buttonfilz.webp';
+        }, 3500);
+      }
+    }
+
+    function showMatchScores(group) {
+      // Score-Texte auf overlay_bet Bereich
+      const scCanvas = document.createElement('canvas');
+      scCanvas.width = 1024; scCanvas.height = 256;
+      const scCtx = scCanvas.getContext('2d');
+      scCtx.clearRect(0, 0, 1024, 256);
+      scCtx.font = 'bold 56px Arial';
+      scCtx.textAlign = 'left';
+      scCtx.textBaseline = 'middle';
+      scCtx.shadowColor = 'rgba(0,0,0,0.5)';
+      scCtx.shadowBlur = 6;
+
+      // Bank: XX
+      scCtx.fillStyle = '#e0d0b8';
+      scCtx.fillText('Bank:', 180, 80);
+      scCtx.fillStyle = '#cedb25';
+      scCtx.fillText(String(window._matchScoreBank), 520, 80);
+
+      // Player: XX
+      scCtx.fillStyle = '#e0d0b8';
+      scCtx.fillText('Player:', 180, 180);
+      scCtx.fillStyle = '#cedb25';
+      scCtx.fillText(String(window._matchScorePlayer), 520, 180);
+
+      const scTex = new THREE.CanvasTexture(scCanvas);
+      const scW = 1.1; const scH = scW * (256 / 1024);
+      const scGeo = new THREE.PlaneGeometry(scW, scH);
+      const scMat = new THREE.MeshBasicMaterial({
+        map: scTex, transparent: true, alphaTest: 0.05,
+        side: THREE.DoubleSide, depthWrite: false, depthTest: false
+      });
+      if (window._bluffScoreMesh) {
+        if (group) group.remove(window._bluffScoreMesh);
+        else scene.remove(window._bluffScoreMesh);
+      }
+      window._bluffScoreMesh = new THREE.Mesh(scGeo, scMat);
+      window._bluffScoreMesh.rotation.x = -Math.PI / 2;
+      // Position: auf overlay_bet (südlich nach Slide)
+      const bankZ = 0.890625 + 0.052;
+      const cW2 = 0.20833;
+      const cH2 = cW2 * (280 / 196);
+      const playerZ2 = bankZ + cH2 + 0.1146;
+      window._bluffScoreMesh.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 + 0.5);
+      window._bluffScoreMesh.renderOrder = 7;
+      if (group) group.add(window._bluffScoreMesh);
+      else scene.add(window._bluffScoreMesh);
+    }
+
     // === KIPP MATCH: Verfehlt — Kombination unmöglich ===
     function startBluffVerfehlt() {
       const modeLabels = {
@@ -10792,7 +11002,40 @@
           requestAnimationFrame(slideNorth);
         } else {
           bluffGroup.position.z = -slideDist;
-          // Setzrunde UI hier starten (TODO)
+          // SHOWDOWN Button unter Spielerkarten
+          const sdCanvas = document.createElement('canvas');
+          sdCanvas.width = 812; sdCanvas.height = 252;
+          const sdCtx = sdCanvas.getContext('2d');
+          const sdImg = new Image();
+          sdImg.onload = () => {
+            sdCtx.drawImage(sdImg, 0, 0, 812, 252);
+            sdCtx.font = 'bold 80px Arial';
+            sdCtx.fillStyle = '#e0d0b8';
+            sdCtx.textAlign = 'center';
+            sdCtx.textBaseline = 'middle';
+            sdCtx.shadowColor = 'rgba(0,0,0,0.6)';
+            sdCtx.shadowBlur = 8;
+            sdCtx.fillText('SHOWDOWN', 406, 130);
+            const sdTex = new THREE.CanvasTexture(sdCanvas);
+            const sdW = 0.94;
+            const sdH = 0.29;
+            const sdGeo = new THREE.PlaneGeometry(sdW, sdH);
+            const sdMat = new THREE.MeshBasicMaterial({
+              map: sdTex, transparent: true, alphaTest: 0.1,
+              side: THREE.DoubleSide, depthWrite: false
+            });
+            window._bluffShowdownBtn = new THREE.Mesh(sdGeo, sdMat);
+            window._bluffShowdownBtn.rotation.x = -Math.PI / 2;
+            const bankZ = 0.890625 + 0.052;
+            const cW2 = 0.20833;
+            const cH2 = cW2 * (280 / 196);
+            const playerZ2 = bankZ + cH2 + 0.1146;
+            window._bluffShowdownBtn.position.set(0, 0.46975 + 0.004, playerZ2 + cH2 / 2 + 0.08);
+            window._bluffShowdownBtn.renderOrder = 7;
+            bluffGroup.add(window._bluffShowdownBtn);
+            window._bluffShowdownActive = true;
+          };
+          sdImg.src = 'buttonfilz.webp';
         }
       })();
     }
@@ -11724,6 +11967,34 @@
 
 
 
+
+      // NOCHMAL Button Raycasting
+      if (window._bluffNochmalActive && window._bluffNochmalBtn && lastTouchPos) {
+        const rectNM = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectNM.left) / rectNM.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectNM.top) / rectNM.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._bluffNochmalBtn).length > 0) {
+          window._bluffNochmalActive = false;
+          window.location.href = 'card.html';
+          return;
+        }
+      }
+
+
+      // NOCHMAL Button Raycasting
+      if (window._bluffNochmalActive && window._bluffNochmalBtn && lastTouchPos) {
+        const rectNM = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectNM.left) / rectNM.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectNM.top) / rectNM.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._bluffNochmalBtn).length > 0) {
+          window._bluffNochmalActive = false;
+          window.location.href = 'card.html';
+          return;
+        }
+      }
+
       // SHOWDOWN Button Raycasting
       if (window._bluffShowdownActive && window._bluffShowdownBtn && lastTouchPos) {
         const rectSD = renderer.domElement.getBoundingClientRect();
@@ -11733,7 +12004,7 @@
         if (vkRaycaster.intersectObject(window._bluffShowdownBtn).length > 0) {
           window._bluffShowdownActive = false;
           window._bluffShowdownBtn.visible = false;
-          // TODO: Bank aufdecken + Vergleich
+          runShowdown(window._bluffSlideGroup);
           lastTouchPos = null;
           return;
         }
@@ -11977,7 +12248,7 @@
         if (vkRaycaster.intersectObject(window._bluffShowdownBtn).length > 0) {
           window._bluffShowdownActive = false;
           window._bluffShowdownBtn.visible = false;
-          // TODO: Bank aufdecken + Vergleich
+          runShowdown(window._bluffSlideGroup);
           lastTouchPos = null;
           return;
         }
@@ -12465,6 +12736,10 @@
         if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
         if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
         if (window._bluffVerfehltMesh) { scene.remove(window._bluffVerfehltMesh); window._bluffVerfehltMesh = null; }
+        if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
+        if (window._bluffNochmalBtn) { window._bluffNochmalBtn = null; }
+        if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
+        window._bluffNochmalActive = false;
         window._bluffShowdownActive = false;
         
         window.location.href = 'card.html';
