@@ -10383,6 +10383,24 @@
         window._bluffOverlayMesh.position.set(xC, yP, zC);
         window._bluffOverlayMesh.renderOrder = 3;
         scene.add(window._bluffOverlayMesh);
+
+        // overlay_bluff.webp nahtlos südlich anhängen
+        new THREE.TextureLoader().load('overlay_bluff.webp', (blTex) => {
+          const blAspect = blTex.image.height / blTex.image.width;
+          const blW = bW;
+          const blH = blW * blAspect;
+          const blGeo = new THREE.PlaneGeometry(blW, blH);
+          const blMat = new THREE.MeshBasicMaterial({
+            map: blTex, transparent: true, alphaTest: 0.1,
+            side: THREE.DoubleSide, depthWrite: false
+          });
+          window._bluffSouthMesh = new THREE.Mesh(blGeo, blMat);
+          window._bluffSouthMesh.rotation.x = -Math.PI / 2;
+          const southEdge = zC + bH / 2;
+          window._bluffSouthMesh.position.set(xC, yP, southEdge + blH / 2);
+          window._bluffSouthMesh.renderOrder = 3;
+          scene.add(window._bluffSouthMesh);
+        });
       });
 
       // BANK-Button als 3D-Mesh auf Spieltisch (Zeile 11/12 Grenze)
@@ -10524,76 +10542,50 @@
 
     // === BLUFF: Setzrunde starten — Platte nach Nord schieben ===
     function startBluffSetzrunde() {
-      // overlay_bluff.webp südlich der bestehenden Overlay anhängen
-      new THREE.TextureLoader().load('overlay_bluff.webp', (tex) => {
-        const imgAspect = tex.image.height / tex.image.width;
-        const bW = SPIEL_WIDTH;
-        const bH = bW * imgAspect;
+      // Group erstellen, alle BLUFF-Meshes rein
+      const bluffGroup = new THREE.Group();
+      window._bluffSlideGroup = bluffGroup;
 
-        // Position des bestehenden Overlays berechnen
-        const existingH = window._bluffOverlayMesh ? window._bluffOverlayMesh.geometry.parameters.height : bH;
-        const existingZ = window._bluffOverlayMesh ? window._bluffOverlayMesh.position.z : 0;
-        const southEdge = existingZ + existingH / 2;
+      // Overlays in Group
+      if (window._bluffOverlayMesh) {
+        scene.remove(window._bluffOverlayMesh);
+        bluffGroup.add(window._bluffOverlayMesh);
+      }
+      if (window._bluffSouthMesh) {
+        scene.remove(window._bluffSouthMesh);
+        bluffGroup.add(window._bluffSouthMesh);
+      }
+      // Bankkarten in Group
+      if (window._bluffCardMeshes) {
+        window._bluffCardMeshes.forEach(m => { scene.remove(m); bluffGroup.add(m); });
+      }
+      // Spielerkarten in Group
+      if (window._bluffCardSlots) {
+        window._bluffCardSlots.forEach(s => { if (s.mesh) { scene.remove(s.mesh); bluffGroup.add(s.mesh); } });
+      }
+      // Modustext in Group
+      if (window._bluffModeMesh) {
+        scene.remove(window._bluffModeMesh);
+        bluffGroup.add(window._bluffModeMesh);
+      }
 
-        const bluffGeo = new THREE.PlaneGeometry(bW, bH);
-        const bluffMat = new THREE.MeshBasicMaterial({
-          map: tex, transparent: true, alphaTest: 0.1,
-          side: THREE.DoubleSide, depthWrite: false
-        });
-        const bluffSouthMesh = new THREE.Mesh(bluffGeo, bluffMat);
-        bluffSouthMesh.rotation.x = -Math.PI / 2;
-        bluffSouthMesh.position.set(
-          window._bluffOverlayMesh ? window._bluffOverlayMesh.position.x : 0,
-          window._bluffOverlayMesh ? window._bluffOverlayMesh.position.y : 0.47175,
-          southEdge + bH / 2
-        );
-        bluffSouthMesh.renderOrder = 3;
+      scene.add(bluffGroup);
 
-        // Group erstellen
-        const bluffGroup = new THREE.Group();
-        window._bluffSlideGroup = bluffGroup;
-
-        // Bestehende Overlay in Group
-        if (window._bluffOverlayMesh) {
-          scene.remove(window._bluffOverlayMesh);
-          bluffGroup.add(window._bluffOverlayMesh);
+      // 8 Zellen nach Nord schieben (Z -= 1.25), 1200ms
+      const slideDist = 1.25;
+      const slideDur = 1200;
+      const slideStart = performance.now();
+      (function slideNorth() {
+        const t = Math.min((performance.now() - slideStart) / slideDur, 1);
+        const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+        bluffGroup.position.z = -slideDist * e;
+        if (t < 1) {
+          requestAnimationFrame(slideNorth);
+        } else {
+          bluffGroup.position.z = -slideDist;
+          // Setzrunde UI hier starten (TODO)
         }
-        // Süd-Overlay in Group
-        bluffGroup.add(bluffSouthMesh);
-        window._bluffSouthMesh = bluffSouthMesh;
-
-        // Bankkarten in Group
-        if (window._bluffCardMeshes) {
-          window._bluffCardMeshes.forEach(m => { scene.remove(m); bluffGroup.add(m); });
-        }
-        // Spielerkarten in Group
-        if (window._bluffCardSlots) {
-          window._bluffCardSlots.forEach(s => { if (s.mesh) { scene.remove(s.mesh); bluffGroup.add(s.mesh); } });
-        }
-        // Modustext in Group
-        if (window._bluffModeMesh) {
-          scene.remove(window._bluffModeMesh);
-          bluffGroup.add(window._bluffModeMesh);
-        }
-
-        scene.add(bluffGroup);
-
-        // 8 Zellen nach Nord schieben (Z -= 1.25), 1200ms
-        const slideDist = 1.25;
-        const slideDur = 1200;
-        const slideStart = performance.now();
-        (function slideNorth() {
-          const t = Math.min((performance.now() - slideStart) / slideDur, 1);
-          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
-          bluffGroup.position.z = -slideDist * e;
-          if (t < 1) {
-            requestAnimationFrame(slideNorth);
-          } else {
-            bluffGroup.position.z = -slideDist;
-            // Setzrunde UI hier starten (TODO)
-          }
-        })();
-      });
+      })();
     }
 
     function showCardAnleitung() {
