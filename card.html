@@ -10476,62 +10476,37 @@
     }
 
     function showBluffBankCards(numCards) {
-      // Kartenstapel als 3D-Meshes mit realer Dicke
-      const cardThick = 0.006696; // 1mm real (3 Zellen = 70mm)
-      const cW = 0.20833;
-      const cH = cW * (280 / 196);
-      const stackY = 0.46975 + 0.004;
-      const stackZ = 0.890625 + 0.052; // Position der ehemaligen Bankkarten
-      const stackX = 0; // mittig
 
-      window._bluffStackMeshes = [];
 
-      const cardTex = new THREE.TextureLoader().load('playerkarteverdeckt.webp');
+      // Karten als 3D-Meshes auf Zeile 11/12 Grenze
+      const cardY = 0.46975 + 0.004; // geringfügig über overlay_bluff
+      const cardZ = 0.890625 + 0.052; // 15px südlicher
+      const cardW3D = 0.20833; // 1.3333 Zellen (1 Zelle × 1.3333)
+      const cardH3D = cardW3D * (280 / 196); // proportional zur neuen Breite
+      const gap3D = 0.038; // fixer Abstand wie bei 5 Karten
+      const totalW3D = numCards * cardW3D + (numCards - 1) * gap3D;
+      const startX = -totalW3D / 2 + cardW3D / 2;
+
+      window._bluffCardMeshes = [];
+      const cardTex = new THREE.TextureLoader().load('karteverdeckt.webp');
 
       for (let i = 0; i < numCards; i++) {
-        const boxGeo = new THREE.BoxGeometry(cW, cardThick, cH);
+        const cGeo = new THREE.PlaneGeometry(cardW3D, cardH3D);
+        const cMat = new THREE.MeshBasicMaterial({
+          map: cardTex, transparent: true, alphaTest: 0.1,
+          side: THREE.DoubleSide, depthWrite: false
+        });
+        const cMesh = new THREE.Mesh(cGeo, cMat);
+        cMesh.rotation.x = -Math.PI / 2;
+        cMesh.position.set(startX + i * (cardW3D + gap3D), cardY, cardZ);
+        cMesh.renderOrder = 5;
+        cMesh.visible = false;
+        scene.add(cMesh);
+        window._bluffCardMeshes.push(cMesh);
 
-        // Textur nur auf Oberseite (face index 2 = top)
-        const materials = [
-          new THREE.MeshBasicMaterial({ color: 0x4a2020 }), // rechts
-          new THREE.MeshBasicMaterial({ color: 0x4a2020 }), // links
-          new THREE.MeshBasicMaterial({ map: cardTex.clone(), side: THREE.FrontSide }), // oben
-          new THREE.MeshBasicMaterial({ color: 0x4a2020 }), // unten
-          new THREE.MeshBasicMaterial({ color: 0x4a2020 }), // vorne
-          new THREE.MeshBasicMaterial({ color: 0x4a2020 }), // hinten
-        ];
-
-        const mesh = new THREE.Mesh(boxGeo, materials);
-        mesh.position.set(stackX, stackY + cardThick / 2 + i * cardThick, stackZ);
-        mesh.renderOrder = 5 + i;
-        scene.add(mesh);
-        window._bluffStackMeshes.push(mesh);
-
-        // Nacheinander einblenden (Croupier-Stil)
-        mesh.visible = false;
-        setTimeout(() => { mesh.visible = true; }, 600 + i * 400);
+        // Nacheinander einblenden
+        setTimeout(() => { cMesh.visible = true; }, 600 + i * 400);
       }
-
-      // Oberste Karte: Schwenk-Animation (wie target_verdeckt)
-      const topIdx = numCards - 1;
-      const waitMs = 600 + numCards * 400;
-      setTimeout(() => {
-        const topMesh = window._bluffStackMeshes[topIdx];
-        if (!topMesh) return;
-        window._bluffStackPulseActive = true;
-        const baseY = topMesh.position.y;
-        const baseQuat = topMesh.quaternion.clone();
-        (function stackPulse() {
-          if (!window._bluffStackPulseActive || !topMesh.visible) return;
-          const now = Date.now();
-          const lift = (Math.sin(now * 0.0032) + 1) / 2;
-          const sway = Math.sin(now * 0.0046) * THREE.MathUtils.degToRad(5);
-          const yQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), sway);
-          topMesh.position.y = baseY + 0.012 + lift * 0.018;
-          topMesh.quaternion.copy(yQuat).multiply(baseQuat);
-          requestAnimationFrame(stackPulse);
-        })();
-      }, waitMs);
     }
 
     function showCardAnleitung() {
@@ -12135,8 +12110,6 @@
         if (window._bluffCardsPlayed) { window._bluffCardsPlayed.forEach(c => { if(c.mesh) scene.remove(c.mesh); }); window._bluffCardsPlayed = null; }
         if (window._bluffCardSlots) { window._bluffCardSlots.forEach(s => { if(s.mesh) scene.remove(s.mesh); }); window._bluffCardSlots = null; }
                 if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
-        if (window._bluffStackMeshes) { window._bluffStackMeshes.forEach(m => scene.remove(m)); window._bluffStackMeshes = null; }
-        window._bluffStackPulseActive = false;
         if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
         
         window.location.href = 'card.html';
