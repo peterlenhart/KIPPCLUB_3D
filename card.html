@@ -10907,17 +10907,14 @@
         const cW2 = 0.20833;
         const cH2 = cW2 * (280 / 196);
         const playerZ2 = bankZ + cH2 + 0.1146;
-        window._bluffResultMesh.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08);
+        window._bluffResultMesh.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.139);
         window._bluffResultMesh.renderOrder = 8;
         if (group) group.add(window._bluffResultMesh);
         else scene.add(window._bluffResultMesh);
 
         // Pokal pulsiert
-        const pokalEl = document.getElementById('bestScoresBtn') || document.getElementById('btnBestScores');
-        if (pokalEl) {
-          pokalEl.classList.add('pulsing');
-          pokalEl.style.animation = 'targetPulse 1.5s ease-in-out infinite';
-        }
+        const pokalEl = document.getElementById('btnBestScores');
+        if (pokalEl) pokalEl.classList.add('pulsing');
 
         // Score auf overlay_bet anzeigen
         showMatchScores(group);
@@ -10947,7 +10944,7 @@
             });
             window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
             window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486);
+            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208);
             window._bluffNochmalBtn.renderOrder = 8;
             if (group) group.add(window._bluffNochmalBtn);
             else scene.add(window._bluffNochmalBtn);
@@ -10964,26 +10961,25 @@
       scCanvas.width = 1024; scCanvas.height = 256;
       const scCtx = scCanvas.getContext('2d');
       scCtx.clearRect(0, 0, 1024, 256);
-      scCtx.font = 'bold 56px Arial';
-      scCtx.textAlign = 'center';
-      scCtx.textBaseline = 'middle';
       scCtx.shadowColor = 'rgba(0,0,0,0.5)';
       scCtx.shadowBlur = 6;
-
-      // Bank: XX
-      scCtx.fillStyle = '#e0d0b8';
-      scCtx.fillText('Bank: ', 460, 80);
-      scCtx.fillStyle = '#cedb25';
-      scCtx.textAlign = 'left';
-      scCtx.fillText(String(window._matchScoreBank), 512, 80);
       scCtx.textAlign = 'center';
+      scCtx.textBaseline = 'middle';
 
-      // Player: XX
+      scCtx.font = 'bold 56px Arial';
       scCtx.fillStyle = '#e0d0b8';
-      scCtx.fillText('Player: ', 460, 180);
-      scCtx.fillStyle = '#cedb25';
+
+      // Bank: linksbündig, Punkte rechtsbündig
       scCtx.textAlign = 'left';
-      scCtx.fillText(String(window._matchScorePlayer), 512, 180);
+      scCtx.fillText('Bank:', 280, 90);
+      scCtx.textAlign = 'right';
+      scCtx.fillText(String(window._matchScoreBank), 744, 90);
+
+      // Player: linksbündig, Punkte rechtsbündig
+      scCtx.textAlign = 'left';
+      scCtx.fillText('Player:', 280, 170);
+      scCtx.textAlign = 'right';
+      scCtx.fillText(String(window._matchScorePlayer), 744, 170);
 
       const scTex = new THREE.CanvasTexture(scCanvas);
       const scW = 1.98; const scH = scW * (256 / 1024);
@@ -11011,41 +11007,135 @@
 
     // === KIPP MATCH: Verfehlt — Kombination unmöglich ===
     function startBluffVerfehlt() {
+      // Verfehlt = gleicher Flow wie Showdown, nur Bank gewinnt automatisch
+      window._bluffVerfehlt = true;
+
+      // Punkte: Player 0, Bank bekommt ihre Summe
+      const bankHand = window._bluffBankHand || [];
+      const bankSum = bankHand.reduce((s, v) => s + (v + 2), 0);
+      const mode = window._bluffSelectedMode;
+      window._matchScoreBank += bankSum;
+      saveMatchScore(mode.key, 0, bankSum);
+
+      // Platte hochziehen
+      startBluffSetzrunde();
+    }
+
+
+    function runVerfehltResult(group) {
       const modeLabels = {
         highcard:'HIGH CARD', pair:'PAAR', three:'DRILLING', four:'VIERLING',
         twopair:'2 PAARE', straight:'STRASSE', flush:'FLUSH',
         fullhouse:'FULL HOUSE', straightfl:'STRAIGHT FLUSH'
       };
-      const label = modeLabels[window._bluffSelectedMode.key] || '';
+      const mode = window._bluffSelectedMode;
+      const label = modeLabels[mode.key] || '';
 
-      // Text-Mesh: "KEIN PAAR" etc.
-      const vCanvas = document.createElement('canvas');
-      vCanvas.width = 1024; vCanvas.height = 128;
-      const vCtx = vCanvas.getContext('2d');
-      vCtx.clearRect(0, 0, 1024, 128);
-      vCtx.font = 'bold 60px Arial';
-      vCtx.fillStyle = '#ff4444';
-      vCtx.textAlign = 'center';
-      vCtx.textBaseline = 'middle';
-      vCtx.shadowColor = 'rgba(0,0,0,0.7)';
-      vCtx.shadowBlur = 8;
-      vCtx.fillText('KEIN ' + label, 512, 64);
-      const vTex = new THREE.CanvasTexture(vCanvas);
-      const vW = 1.1;
-      const vH = vW * (128 / 1024);
-      const vGeo = new THREE.PlaneGeometry(vW, vH);
-      const vMat = new THREE.MeshBasicMaterial({
-        map: vTex, transparent: true, alphaTest: 0.05,
-        side: THREE.DoubleSide, depthWrite: false
-      });
-      window._bluffVerfehltMesh = new THREE.Mesh(vGeo, vMat);
-      window._bluffVerfehltMesh.rotation.x = -Math.PI / 2;
-      window._bluffVerfehltMesh.position.set(0, 0.46975 + 0.006, 1.149);
-      window._bluffVerfehltMesh.renderOrder = 8;
-      scene.add(window._bluffVerfehltMesh);
+      // Bank aufdecken
+      const bankHand = window._bluffBankHand || [];
+      const bankMeshes = window._bluffCardMeshes || [];
+      const bankSuits = generateModeSuits(mode.key, mode.cards);
+      const suitFileMap = {herz:'karteherz', karo:'kartekaro', kreuz:'kartekreuz', pik:'kartepik'};
 
-      // Platte hochziehen nach 2s
-      setTimeout(() => startBluffSetzrunde(), 2000);
+      let revealIdx = 0;
+      function revealNext() {
+        if (revealIdx >= bankMeshes.length) {
+          setTimeout(() => showVerfehltText(), 800);
+          return;
+        }
+        const mesh = bankMeshes[revealIdx];
+        const val = bankHand[revealIdx];
+        const suit = bankSuits[revealIdx];
+        const suitFile = (suitFileMap[suit] || 'karteherz') + '.webp';
+        const rc = document.createElement('canvas');
+        rc.width = 196; rc.height = 280;
+        const rctx = rc.getContext('2d');
+        const rImg = new Image();
+        rImg.onload = () => {
+          rctx.drawImage(rImg, 0, 0, 196, 280);
+          rctx.font = '900 94px "Noto Serif"';
+          rctx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+          rctx.textAlign = 'center';
+          rctx.textBaseline = 'middle';
+          rctx.fillText(displayNum(val), 98, 80);
+          mesh.material.map = new THREE.CanvasTexture(rc);
+          mesh.material.needsUpdate = true;
+          revealIdx++;
+          setTimeout(revealNext, 400);
+        };
+        rImg.src = suitFile;
+      }
+      revealNext();
+
+      function showVerfehltText() {
+        // "KEIN PAAR" etc. in rot — gleiche Größe/Position wie "Bank gewinnt"
+        const rtCanvas = document.createElement('canvas');
+        rtCanvas.width = 1024; rtCanvas.height = 128;
+        const rtCtx = rtCanvas.getContext('2d');
+        rtCtx.clearRect(0, 0, 1024, 128);
+        rtCtx.font = 'bold 64px Arial';
+        rtCtx.fillStyle = '#ff4444';
+        rtCtx.textAlign = 'center';
+        rtCtx.textBaseline = 'middle';
+        rtCtx.shadowColor = 'rgba(0,0,0,0.7)';
+        rtCtx.shadowBlur = 10;
+        rtCtx.fillText('KEIN ' + label, 512, 64);
+        const rtTex = new THREE.CanvasTexture(rtCanvas);
+        const rtW = 2.34; const rtH = rtW * (128 / 1024);
+        const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
+        const rtMat = new THREE.MeshBasicMaterial({
+          map: rtTex, transparent: true, alphaTest: 0.05,
+          side: THREE.DoubleSide, depthWrite: false, depthTest: false
+        });
+        window._bluffResultMesh = new THREE.Mesh(rtGeo, rtMat);
+        window._bluffResultMesh.rotation.x = -Math.PI / 2;
+        const bankZ = 0.890625 + 0.052;
+        const cW2 = 0.20833;
+        const cH2 = cW2 * (280 / 196);
+        const playerZ2 = bankZ + cH2 + 0.1146;
+        window._bluffResultMesh.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.139);
+        window._bluffResultMesh.renderOrder = 8;
+        if (group) group.add(window._bluffResultMesh);
+
+        // Pokal pulsiert
+        const pokalEl = document.getElementById('btnBestScores');
+        if (pokalEl) pokalEl.classList.add('pulsing');
+
+        // Scores anzeigen
+        showMatchScores(group);
+
+        // Nach 3.5s: NOCHMAL Button
+        setTimeout(() => {
+          const nmCanvas = document.createElement('canvas');
+          nmCanvas.width = 812; nmCanvas.height = 252;
+          const nmCtx = nmCanvas.getContext('2d');
+          const nmImg = new Image();
+          nmImg.onload = () => {
+            nmCtx.drawImage(nmImg, 0, 0, 812, 252);
+            nmCtx.font = 'bold 70px Arial';
+            nmCtx.fillStyle = '#e0d0b8';
+            nmCtx.textAlign = 'center';
+            nmCtx.textBaseline = 'middle';
+            nmCtx.shadowColor = 'rgba(0,0,0,0.6)';
+            nmCtx.shadowBlur = 8;
+            nmCtx.fillText('NOCHMAL', 406, 130);
+            const nmTex = new THREE.CanvasTexture(nmCanvas);
+            const nmW = 0.94; const nmH = 0.29;
+            const nmGeo = new THREE.PlaneGeometry(nmW, nmH);
+            const nmMat = new THREE.MeshBasicMaterial({
+              map: nmTex, transparent: true, alphaTest: 0.1,
+              side: THREE.DoubleSide, depthWrite: false
+            });
+            window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
+            window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
+            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208);
+            window._bluffNochmalBtn.renderOrder = 8;
+            if (group) group.add(window._bluffNochmalBtn);
+            window._bluffNochmalActive = true;
+          };
+          nmImg.src = 'buttonfilz.webp';
+        }, 3500);
+      }
     }
 
     function startBluffSetzrunde() {
@@ -11085,6 +11175,9 @@
         bluffGroup.add(window._bluffHandLabel);
       }
 
+      // Modustext löschen vor Slide
+      if (window._bluffModeMesh) window._bluffModeMesh.visible = false;
+
       scene.add(bluffGroup);
 
       // 8 Zellen nach Nord schieben (Z -= 1.25), 1200ms
@@ -11099,6 +11192,12 @@
           requestAnimationFrame(slideNorth);
         } else {
           bluffGroup.position.z = -slideDist;
+          // Bei Verfehlt: direkt Ergebnis zeigen, kein SHOWDOWN
+          if (window._bluffVerfehlt) {
+            window._bluffVerfehlt = false;
+            runVerfehltResult(bluffGroup);
+            return;
+          }
           // SHOWDOWN Button unter Spielerkarten
           const sdCanvas = document.createElement('canvas');
           sdCanvas.width = 812; sdCanvas.height = 252;
