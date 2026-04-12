@@ -10278,6 +10278,114 @@
       document.body.appendChild(ov);
     }
 
+
+    // === KIPP MATCH: Farbvorgabe pro Modus ===
+    function generateModeSuits(modeKey, numCards) {
+      const suits = ['herz', 'karo', 'kreuz', 'pik'];
+      function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+      function pick(n) { return shuffle([...suits]).slice(0, n); }
+
+      switch (modeKey) {
+        case 'highcard': return [suits[Math.floor(Math.random() * 4)]];
+        case 'pair': return pick(2);
+        case 'three': return pick(3);
+        case 'four': return shuffle([...suits]);
+        case 'twopair': { const p1 = pick(2); const p2 = pick(2); return [...p1, ...p2]; }
+        case 'straight': {
+          // Gemischt, NICHT alle gleich
+          let s; do { s = Array.from({length:5}, () => suits[Math.floor(Math.random()*4)]); } while (new Set(s).size === 1);
+          return s;
+        }
+        case 'fullhouse': { const tri = pick(3); const pa = pick(2); return [...tri, ...pa]; }
+        case 'flush': { const one = suits[Math.floor(Math.random() * 4)]; return Array(5).fill(one); }
+        case 'straightfl': { const one = suits[Math.floor(Math.random() * 4)]; return Array(5).fill(one); }
+        default: return Array.from({length: numCards}, () => suits[Math.floor(Math.random()*4)]);
+      }
+    }
+
+    // === KIPP MATCH: Prüfe ob Kombination noch erreichbar ===
+    function checkMatchStillPossible(modeKey, filledSlots) {
+      const vals = filledSlots.filter(s => s.filled).map(s => s.val);
+      if (vals.length < 2) return true;
+      const unique = [...new Set(vals)];
+      const sorted = [...vals].sort((a,b) => a - b);
+
+      switch (modeKey) {
+        case 'highcard': return true; // immer möglich
+        case 'pair': return unique.length <= 1; // alle gleich
+        case 'three': return unique.length <= 1;
+        case 'four': return unique.length <= 1;
+        case 'twopair': {
+          // Max 2 verschiedene Werte erlaubt
+          if (unique.length > 2) return false;
+          // Bei 3+ Karten: kein Wert darf 3x vorkommen
+          const counts = {};
+          vals.forEach(v => counts[v] = (counts[v]||0) + 1);
+          if (Object.values(counts).some(c => c > 2)) return false;
+          return true;
+        }
+        case 'straight':
+        case 'straightfl': {
+          // Prüfe ob noch eine aufsteigende 5er-Folge möglich
+          const min = Math.min(...vals);
+          const max = Math.max(...vals);
+          if (max - min >= 5) return false; // Spanne zu groß
+          if (unique.length < vals.length) return false; // Duplikat in Straße
+          return true;
+        }
+        case 'fullhouse': {
+          // Max 2 verschiedene Werte
+          if (unique.length > 2) return false;
+          // Bei 4+ Karten: ein Wert muss 3x, anderer 1-2x
+          if (vals.length >= 4) {
+            const counts = {};
+            vals.forEach(v => counts[v] = (counts[v]||0) + 1);
+            const c = Object.values(counts).sort((a,b) => b - a);
+            if (c[0] > 3) return false;
+            if (c.length > 1 && c[1] > 2) return false;
+          }
+          return true;
+        }
+        case 'flush': return true; // Farbe durch Vorgabe garantiert
+        default: return true;
+      }
+    }
+
+    // === KIPP MATCH: Bank-Hand generieren ===
+    function generateBankHand(modeKey, numCards) {
+      const allVals = [1,2,3,4,5,6,7,8,9,10,11,12]; // 3..A intern
+      function randVal() { return allVals[Math.floor(Math.random() * 12)]; }
+      function randRange(start, count) { return Array.from({length:count}, (_,i) => start + i); }
+
+      switch (modeKey) {
+        case 'highcard': return [randVal()];
+        case 'pair': { const v = randVal(); return [v, v]; }
+        case 'three': { const v = randVal(); return [v, v, v]; }
+        case 'four': { const v = randVal(); return [v, v, v, v]; }
+        case 'twopair': {
+          let v1 = randVal(), v2;
+          do { v2 = randVal(); } while (v2 === v1);
+          return [v1, v1, v2, v2].sort((a,b) => a - b);
+        }
+        case 'straight':
+        case 'straightfl': {
+          const start = 1 + Math.floor(Math.random() * 8); // 1..8 → 5er Folge passt
+          return randRange(start, 5);
+        }
+        case 'fullhouse': {
+          let v1 = randVal(), v2;
+          do { v2 = randVal(); } while (v2 === v1);
+          return [v1, v1, v1, v2, v2].sort((a,b) => a - b);
+        }
+        case 'flush': {
+          const vals = [];
+          while (vals.length < 5) { const v = randVal(); if (!vals.includes(v)) vals.push(v); }
+          return vals.sort((a,b) => a - b);
+        }
+        default: return [randVal()];
+      }
+    }
+
     function showBluffModeSelection() {
       const old = document.getElementById('_bluffModeOverlay');
       if (old) old.remove();
@@ -10408,12 +10516,12 @@
         const labelCtx = labelCanvas.getContext('2d');
         labelCtx.clearRect(0, 0, 1024, 64);
         labelCtx.font = '900 96px "Noto Serif", serif';
-        labelCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        labelCtx.fillStyle = 'rgba(206, 219, 37, 0.30)';
         labelCtx.textAlign = 'center';
         labelCtx.textBaseline = 'middle';
         labelCtx.fillText('BANK          BANK          BANK', 1024, 64);
         const bankLabelTex = new THREE.CanvasTexture(labelCanvas);
-        const bankLabelW = 1.1;
+        const bankLabelW = 2.2;
         const bankLabelH = bankLabelW * (64 / 1024);
         const bankLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const bankLabelMat = new THREE.MeshBasicMaterial({
@@ -10431,7 +10539,7 @@
         const handCtx = handCanvas.getContext('2d');
         handCtx.clearRect(0, 0, 1024, 64);
         handCtx.font = '900 96px "Noto Serif", serif';
-        handCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        handCtx.fillStyle = 'rgba(206, 219, 37, 0.30)';
         handCtx.textAlign = 'center';
         handCtx.textBaseline = 'middle';
         handCtx.fillText('HAND          HAND          HAND', 1024, 64);
@@ -10489,6 +10597,7 @@
       window._bluffMode = true;
       window._bluffCardsNeeded = mode.cards;
       window._bluffCardsPlayed = [];
+      window._bluffBankHand = generateBankHand(mode.key, mode.cards);
       setTimeout(() => {
         showBluffBankCards(mode.cards);
         // Nach letzter Karte: Eckblick automatisch starten
@@ -10532,8 +10641,9 @@
           const playerZ = bankZ + cH + 0.1146;
           const playerY = 0.46975 + 0.004;
 
+          const modeSuits = generateModeSuits(mode.key, bCards);
           for (let ci = 0; ci < bCards; ci++) {
-            const suit = suits[Math.floor(Math.random() * 4)];
+            const suit = modeSuits[ci];
             const cardTex = new THREE.TextureLoader().load('karte' + suit + '.webp');
             const geo = new THREE.PlaneGeometry(cW, cH);
             const mat = new THREE.MeshBasicMaterial({
@@ -10591,6 +10701,46 @@
 
 
     // === BLUFF: Setzrunde starten — Platte nach Nord schieben ===
+
+    // === KIPP MATCH: Verfehlt — Kombination unmöglich ===
+    function startBluffVerfehlt() {
+      const modeLabels = {
+        highcard:'HIGH CARD', pair:'PAAR', three:'DRILLING', four:'VIERLING',
+        twopair:'2 PAARE', straight:'STRASSE', flush:'FLUSH',
+        fullhouse:'FULL HOUSE', straightfl:'STRAIGHT FLUSH'
+      };
+      const label = modeLabels[window._bluffSelectedMode.key] || '';
+
+      // Text-Mesh: "KEIN PAAR" etc.
+      const vCanvas = document.createElement('canvas');
+      vCanvas.width = 1024; vCanvas.height = 128;
+      const vCtx = vCanvas.getContext('2d');
+      vCtx.clearRect(0, 0, 1024, 128);
+      vCtx.font = 'bold 60px Arial';
+      vCtx.fillStyle = '#ff4444';
+      vCtx.textAlign = 'center';
+      vCtx.textBaseline = 'middle';
+      vCtx.shadowColor = 'rgba(0,0,0,0.7)';
+      vCtx.shadowBlur = 8;
+      vCtx.fillText('KEIN ' + label, 512, 64);
+      const vTex = new THREE.CanvasTexture(vCanvas);
+      const vW = 1.1;
+      const vH = vW * (128 / 1024);
+      const vGeo = new THREE.PlaneGeometry(vW, vH);
+      const vMat = new THREE.MeshBasicMaterial({
+        map: vTex, transparent: true, alphaTest: 0.05,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      window._bluffVerfehltMesh = new THREE.Mesh(vGeo, vMat);
+      window._bluffVerfehltMesh.rotation.x = -Math.PI / 2;
+      window._bluffVerfehltMesh.position.set(0, 0.46975 + 0.006, 1.149);
+      window._bluffVerfehltMesh.renderOrder = 8;
+      scene.add(window._bluffVerfehltMesh);
+
+      // Platte hochziehen nach 2s
+      setTimeout(() => startBluffSetzrunde(), 2000);
+    }
+
     function startBluffSetzrunde() {
       // Group erstellen, alle BLUFF-Meshes rein
       const bluffGroup = new THREE.Group();
@@ -11644,6 +11794,34 @@
           console.log('[STICH] Long-Press Slot' + (slotIdx+1) + ': ' + displayNum(slotInfo.val) + ' ' + slotInfo.color +
             ' vs Target: ' + displayNum(window._cardTargetState.currentTarget.num) + ' ' + window._cardTargetState.currentTarget.color);
 
+          // BLUFF: Kippzug endet mit erstem Long-Tap
+          if (window._bluffMode) {
+            isAnimating = true; // Kipp-Sperre sofort
+
+            // Farb-Check VOR Slot-Enthüllung
+            const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
+            const tappedSuit = suitMap[slotInfo.color] || 'herz';
+            const slots = window._bluffCardSlots;
+            const curSlot = slots ? slots.find(s => !s.filled) : null;
+
+            if (curSlot && tappedSuit !== curSlot.suit) {
+              // Slot lässt sich nicht aufdecken — Karte pulsiert als Signal
+              if (curSlot.mesh) {
+                let pc = 0;
+                const origS = curSlot.mesh.scale.clone();
+                function pulseWrong() {
+                  if (pc >= 6) { curSlot.mesh.scale.copy(origS); return; }
+                  curSlot.mesh.scale.set(pc % 2 === 0 ? 1.3 : 1.0, pc % 2 === 0 ? 1.3 : 1.0, pc % 2 === 0 ? 1.3 : 1.0);
+                  pc++; setTimeout(pulseWrong, 200);
+                }
+                pulseWrong();
+              }
+              _stichTouchStart = 0;
+              lastTouchPos = null;
+              return;
+            }
+          }
+
           // Slot enthüllen falls verdeckt (slotAlpha=0)
           const f = faceSlots[topFace];
           if (f) {
@@ -12286,6 +12464,7 @@
         if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
         if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
         if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
+        if (window._bluffVerfehltMesh) { scene.remove(window._bluffVerfehltMesh); window._bluffVerfehltMesh = null; }
         window._bluffShowdownActive = false;
         
         window.location.href = 'card.html';
@@ -13449,44 +13628,10 @@
         const suitMap = {gruen:'karo', orange:'kreuz', blau:'herz', violett:'pik'};
         const tappedSuit = suitMap[slotInfo.color] || 'herz';
 
-        // Farbe passt nicht → Puls-Signal + Kippen sperren
-        if (tappedSuit !== cur.suit) {
-          isAnimating = true; // Kippen sperren
-          if (cur.mesh) {
-            let pc = 0;
-            const origS = cur.mesh.scale.clone();
-            function pulse() {
-              if (pc >= 6) { cur.mesh.scale.copy(origS); return; }
-              cur.mesh.scale.set(pc % 2 === 0 ? 1.3 : 1.0, pc % 2 === 0 ? 1.3 : 1.0, pc % 2 === 0 ? 1.3 : 1.0);
-              pc++; setTimeout(pulse, 200);
-            }
-            pulse();
-          }
-          // Nach 1 Sek: Slot verdecken + Kippen wieder erlauben
-          const _slotIdx = slotIdx;
-          const _topFace = topFace;
-          setTimeout(() => {
-            const f = faceSlots[_topFace];
-            if (f) {
-              let si = 0;
-              for (const key in f.slotMap) {
-                if (si === _slotIdx) {
-                  f.slotMap[key].slotAlpha = 0;
-                  rebuildFaceMat(_topFace, 1);
-                  break;
-                }
-                si++;
-              }
-            }
-            isAnimating = false; // Kippen wieder erlauben
-          }, 1000);
-          _stichLock = false;
-          return;
-        }
-
         // Farbe passt → Wert auf Karte schreiben
         cur.val = slotInfo.val;
         cur.filled = true;
+        isAnimating = false; // Kippen wieder erlauben
 
         // Canvas neu zeichnen mit Wert
         const pcCanvas = document.createElement('canvas');
@@ -13503,6 +13648,15 @@
           const newTex = new THREE.CanvasTexture(pcCanvas);
           cur.mesh.material.map = newTex;
           cur.mesh.material.needsUpdate = true;
+
+          // Prüfe ob Kombination noch erreichbar
+          if (!checkMatchStillPossible(window._bluffSelectedMode.key, slots)) {
+            // VERFEHLT — Kombination unmöglich
+            setTimeout(() => {
+              startBluffVerfehlt();
+            }, 1000);
+            return;
+          }
 
           // Sortierte Position berechnen
           const filled = slots.filter(s => s.filled);
