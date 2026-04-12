@@ -10404,14 +10404,14 @@
 
         // Casino-Beschriftungen auf Filz: 3x BANK + 3x HAND
         const labelCanvas = document.createElement('canvas');
-        labelCanvas.width = 1024; labelCanvas.height = 64;
+        labelCanvas.width = 2048; labelCanvas.height = 128;
         const labelCtx = labelCanvas.getContext('2d');
         labelCtx.clearRect(0, 0, 1024, 64);
-        labelCtx.font = '900 48px "Noto Serif"';
-        labelCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        labelCtx.font = '900 96px "Noto Serif", serif';
+        labelCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         labelCtx.textAlign = 'center';
         labelCtx.textBaseline = 'middle';
-        labelCtx.fillText('BANK          BANK          BANK', 512, 32);
+        labelCtx.fillText('BANK          BANK          BANK', 1024, 64);
         const bankLabelTex = new THREE.CanvasTexture(labelCanvas);
         const bankLabelW = 1.1;
         const bankLabelH = bankLabelW * (64 / 1024);
@@ -10427,14 +10427,14 @@
         scene.add(window._bluffBankLabel);
 
         const handCanvas = document.createElement('canvas');
-        handCanvas.width = 1024; handCanvas.height = 64;
+        handCanvas.width = 2048; handCanvas.height = 128;
         const handCtx = handCanvas.getContext('2d');
         handCtx.clearRect(0, 0, 1024, 64);
-        handCtx.font = '900 48px "Noto Serif"';
-        handCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        handCtx.font = '900 96px "Noto Serif", serif';
+        handCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         handCtx.textAlign = 'center';
         handCtx.textBaseline = 'middle';
-        handCtx.fillText('HAND          HAND          HAND', 512, 32);
+        handCtx.fillText('HAND          HAND          HAND', 1024, 64);
         const handLabelTex = new THREE.CanvasTexture(handCanvas);
         const handLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const handLabelMat = new THREE.MeshBasicMaterial({
