@@ -10418,11 +10418,11 @@
         const bankLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const bankLabelMat = new THREE.MeshBasicMaterial({
           map: bankLabelTex, transparent: true, alphaTest: 0.01,
-          side: THREE.DoubleSide, depthWrite: false
+          side: THREE.DoubleSide, depthWrite: false, depthTest: false
         });
         window._bluffBankLabel = new THREE.Mesh(bankLabelGeo, bankLabelMat);
         window._bluffBankLabel.rotation.x = -Math.PI / 2;
-        window._bluffBankLabel.position.set(0, yP + 0.001, 0.890625 + 0.052);
+        window._bluffBankLabel.position.set(0, yP + 0.003, 0.890625 + 0.052);
         window._bluffBankLabel.renderOrder = 4;
         scene.add(window._bluffBankLabel);
 
@@ -10439,7 +10439,7 @@
         const handLabelGeo = new THREE.PlaneGeometry(bankLabelW, bankLabelH);
         const handLabelMat = new THREE.MeshBasicMaterial({
           map: handLabelTex, transparent: true, alphaTest: 0.01,
-          side: THREE.DoubleSide, depthWrite: false
+          side: THREE.DoubleSide, depthWrite: false, depthTest: false
         });
         window._bluffHandLabel = new THREE.Mesh(handLabelGeo, handLabelMat);
         window._bluffHandLabel.rotation.x = -Math.PI / 2;
@@ -10447,7 +10447,7 @@
         const cW = 0.20833;
         const cH = cW * (280 / 196);
         const playerLabelZ = bankZ + cH + 0.1146;
-        window._bluffHandLabel.position.set(0, yP + 0.001, playerLabelZ);
+        window._bluffHandLabel.position.set(0, yP + 0.003, playerLabelZ);
         window._bluffHandLabel.renderOrder = 4;
         scene.add(window._bluffHandLabel);
 
