@@ -1526,7 +1526,7 @@
         ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
-    document.getElementById("btnDemo").textContent = T.dm;
+    // btnDemo wird in Card-Setup zu KIPP BLUFF umbenannt
     document.getElementById("btnAnleitung").textContent = T.cAnlTitle || 'ANLEITUNG';
     // Exit overlay translations
     if (T.exQ) document.querySelector('.sgLine1').innerHTML = T.exQ;
@@ -10509,6 +10509,81 @@
       }
     }
 
+
+    // === BLUFF: Setzrunde starten — Platte nach Nord schieben ===
+    function startBluffSetzrunde() {
+      // overlay_bluff.webp südlich der bestehenden Overlay anhängen
+      new THREE.TextureLoader().load('overlay_bluff.webp', (tex) => {
+        const imgAspect = tex.image.height / tex.image.width;
+        const bW = SPIEL_WIDTH;
+        const bH = bW * imgAspect;
+
+        // Position des bestehenden Overlays berechnen
+        const existingH = window._bluffOverlayMesh ? window._bluffOverlayMesh.geometry.parameters.height : bH;
+        const existingZ = window._bluffOverlayMesh ? window._bluffOverlayMesh.position.z : 0;
+        const southEdge = existingZ + existingH / 2;
+
+        const bluffGeo = new THREE.PlaneGeometry(bW, bH);
+        const bluffMat = new THREE.MeshBasicMaterial({
+          map: tex, transparent: true, alphaTest: 0.1,
+          side: THREE.DoubleSide, depthWrite: false
+        });
+        const bluffSouthMesh = new THREE.Mesh(bluffGeo, bluffMat);
+        bluffSouthMesh.rotation.x = -Math.PI / 2;
+        bluffSouthMesh.position.set(
+          window._bluffOverlayMesh ? window._bluffOverlayMesh.position.x : 0,
+          window._bluffOverlayMesh ? window._bluffOverlayMesh.position.y : 0.47175,
+          southEdge + bH / 2
+        );
+        bluffSouthMesh.renderOrder = 3;
+
+        // Group erstellen
+        const bluffGroup = new THREE.Group();
+        window._bluffSlideGroup = bluffGroup;
+
+        // Bestehende Overlay in Group
+        if (window._bluffOverlayMesh) {
+          scene.remove(window._bluffOverlayMesh);
+          bluffGroup.add(window._bluffOverlayMesh);
+        }
+        // Süd-Overlay in Group
+        bluffGroup.add(bluffSouthMesh);
+        window._bluffSouthMesh = bluffSouthMesh;
+
+        // Bankkarten in Group
+        if (window._bluffCardMeshes) {
+          window._bluffCardMeshes.forEach(m => { scene.remove(m); bluffGroup.add(m); });
+        }
+        // Spielerkarten in Group
+        if (window._bluffCardSlots) {
+          window._bluffCardSlots.forEach(s => { if (s.mesh) { scene.remove(s.mesh); bluffGroup.add(s.mesh); } });
+        }
+        // Modustext in Group
+        if (window._bluffModeMesh) {
+          scene.remove(window._bluffModeMesh);
+          bluffGroup.add(window._bluffModeMesh);
+        }
+
+        scene.add(bluffGroup);
+
+        // 8 Zellen nach Nord schieben (Z -= 1.25), 1200ms
+        const slideDist = 1.25;
+        const slideDur = 1200;
+        const slideStart = performance.now();
+        (function slideNorth() {
+          const t = Math.min((performance.now() - slideStart) / slideDur, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          bluffGroup.position.z = -slideDist * e;
+          if (t < 1) {
+            requestAnimationFrame(slideNorth);
+          } else {
+            bluffGroup.position.z = -slideDist;
+            // Setzrunde UI hier starten (TODO)
+          }
+        })();
+      });
+    }
+
     function showCardAnleitung() {
       const old = document.getElementById('_cardAnleitungOverlay');
       if (old) old.remove();
@@ -12111,14 +12186,17 @@
         if (window._bluffCardSlots) { window._bluffCardSlots.forEach(s => { if(s.mesh) scene.remove(s.mesh); }); window._bluffCardSlots = null; }
                 if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(m => scene.remove(m)); window._bluffCardMeshes = null; }
         if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
+        if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+        if (window._bluffSouthMesh) { window._bluffSouthMesh = null; }
         
         window.location.href = 'card.html';
         return;
       }
-      if (gamePhase === 'start') {
-        window.location.href = 'index.html';
-      } else {
+      // Anleitung oder anderes Overlay offen → zurück zu card.html
+      if (document.getElementById('_cardAnleitungOverlay') || gamePhase !== 'start') {
         window.location.href = 'card.html';
+      } else {
+        window.location.href = 'index.html';
       }
     });
 
@@ -13362,7 +13440,7 @@
                     nextUnfilled.mesh.visible = true;
                   }
                   window._cardTargetState.currentTarget = { num: 1, color: 'gruen' };
-                  // Nächster Eckblick
+                  // Nächster Eckblick oder Setzrunde
                   if (nextUnfilled) {
                     setTimeout(() => {
                       if (faceSlots) {
@@ -13384,6 +13462,9 @@
                       }
                       runKipp21EckblickKniff(true);
                     }, 1000);
+                  } else {
+                    // Hand komplett → Setzrunde
+                    setTimeout(() => startBluffSetzrunde(), 800);
                   }
                 }, 300);
               }
