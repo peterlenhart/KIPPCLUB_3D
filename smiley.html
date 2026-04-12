@@ -5503,6 +5503,8 @@
             rebuildFaceWithGlow(topFace, null, 0); // Glow weg
 
             // 3. Smiley + Punkte zwischen Zeile 11-12 platzieren
+            hideHandOverlay();
+            if (window._handMeshes3D) window._handMeshes3D.forEach(m => m.visible = false);
             _smileyResults.push({src: targetSrc, hit: true, points: points, color: targetColor});
             _smileyTotalPoints += points;
             _smileyMaxPoints += (LEVEL_POINTS[targetColor] || 0);
@@ -5550,6 +5552,7 @@
             _smileyMaxPoints += (LEVEL_POINTS[targetColor] || 0);
             if (window._smileyTargetEl) window._smileyTargetEl.dataset.played = 'miss';
             hideHandOverlay();
+            if (window._handMeshes3D) window._handMeshes3D.forEach(m => m.visible = false);
             showResultSmileys();
 
             // WEITER-Button
