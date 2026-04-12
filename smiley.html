@@ -3148,6 +3148,28 @@
         }
       });
 
+      // Gesamt-Punkte pro Reihe
+      const rowDefs = [
+        { prefix: 'smiley_orange_1', ids: ['1','2','3','4'], pts: 25, top: 34 },
+        { prefix: 'smiley_gruen_2', ids: ['1','2','3','4'], pts: 15, top: 149 },
+        { prefix: 'smiley_blau_3', ids: ['1','2','3','4'], pts: 10, top: 262 },
+        { prefix: 'smiley_violett_4', ids: ['1','2','3','4'], pts: 5, top: 376 }
+      ];
+      rowDefs.forEach(row => {
+        let totalPlays = 0;
+        row.ids.forEach(id => {
+          const fn = row.prefix + id + '.png';
+          totalPlays += (card[fn] || 0);
+        });
+        if (totalPlays > 0) {
+          const gesEl = document.createElement('div');
+          gesEl.style.cssText = 'position:absolute;left:112.5px;top:' + row.top + 'px;' +
+            'color:#fff;font:bold 22px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;';
+          gesEl.textContent = 'Ges.: ' + (totalPlays * row.pts);
+          scOv.appendChild(gesEl);
+        }
+      });
+
       // OK-Button
       const okBtn = document.createElement('button');
       okBtn.textContent = 'OK';
