@@ -824,13 +824,13 @@
     #bestScoresClose {
       position: fixed;
       bottom: 85px; left: 50%; transform: translateX(-50%);
-      background: url(buttonfilz.webp) center/100% 100% no-repeat;
+      background: url(buttonfilz.webp) center/cover no-repeat;
       width: 254px; height: 47px; border: none; cursor: pointer;
       font: bold 16px Arial; color: #fff; letter-spacing: 2px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.6);
       pointer-events: auto;
       border-radius: 6px;
-      z-index: 110;
+      z-index: 200;
     }
 
     /* === KIPP-PRINZIP Overlay (scrollbar, Kipp-Tipp Stil) === */
@@ -1048,9 +1048,10 @@
       <div class="bsRow" style="top:87.07%" id="bsRow10"></div>
       <div class="bsRow" style="top:93.85%" id="bsRow11"></div>
     </div>
-    <button id="bestScoresClose">OK</button>
   </div>
   
+  <button id="bestScoresClose" style="display:none;">OK</button>
+
   <!-- KIPP-PRINZIP Overlay -->
   <div id="kippPrinzipOverlay">
     <div class="kpBg"></div>
@@ -3793,10 +3794,12 @@
       _savedKipp21Active = kipp21Active;
       kipp21Active = false;
       document.getElementById('bestScoresOverlay').style.display = 'block';
+      document.getElementById('bestScoresClose').style.display = 'block';
     }
     
     document.getElementById('bestScoresClose').addEventListener('click', () => {
       document.getElementById('bestScoresOverlay').style.display = 'none';
+      document.getElementById('bestScoresClose').style.display = 'none';
       kipp21Active = _savedKipp21Active;
     });
     
@@ -11561,6 +11564,7 @@
         ov.remove();
         document.getElementById('btnBestScores').classList.remove('pulsing');
         document.getElementById('bestScoresOverlay').style.display = 'none';
+      document.getElementById('bestScoresClose').style.display = 'none';
         backToStartScreen();
       };
       addBtn(btnMenu);
@@ -14376,7 +14380,7 @@
           if (!window._bluffPlayedDeckSlots) window._bluffPlayedDeckSlots = new Set();
           window._bluffPlayedDeckSlots.add(getDeckIndexForSlot(slotIdx));
         } else {
-          markSlotAsPlayed(slotIdx); // Andere Modi: Slot blass machen
+          // KIPP MATCH: Slots nie blass markieren
         }
 
         // Canvas neu zeichnen mit Wert
