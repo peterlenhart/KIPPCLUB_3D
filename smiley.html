@@ -3161,7 +3161,7 @@
           const fn = row.prefix + id + '.png';
           totalPlays += (card[fn] || 0);
         });
-        if (totalPlays > 0) {
+        {
           const gesEl = document.createElement('div');
           gesEl.style.cssText = 'position:absolute;left:112.5px;top:' + row.top + 'px;' +
             'color:#fff;font:bold 22px Arial;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;';
