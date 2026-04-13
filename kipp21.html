@@ -3721,7 +3721,7 @@
         
         // Button 1: NOCHMAL (421px)
         abtn.textContent = T.nml || T.nm || 'NOCHMAL';
-        abtn.style.cssText = btnCSS(421, 18, 2.5);
+        abtn.style.cssText = btnCSS(411, 18, 2.5);
         abtn.onclick = () => {
           hideAllEndBtns();
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
@@ -3737,7 +3737,7 @@
           document.getElementById('uiOverlay').appendChild(teilenBtn);
         }
         teilenBtn.textContent = T.cTeilen || 'TEILEN';
-        teilenBtn.style.cssText = btnCSS(493, 18, 2.5);
+        teilenBtn.style.cssText = btnCSS(483, 18, 2.5);
         teilenBtn.style.display = 'block';
         teilenBtn.onclick = () => {
           const totalSec2 = Math.floor((kipp21TotalTime || 0) / 1000);
@@ -3765,7 +3765,7 @@
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
         kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
-        kpBtn.style.cssText = btnCSS(565, 16, 2);
+        kpBtn.style.cssText = btnCSS(555, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => { showKippPrinzip(); };
         
