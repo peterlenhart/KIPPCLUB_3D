@@ -3627,12 +3627,13 @@
       cardCenter3D.project(camera);
       const btnBaseY = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
       
-      const btnCSS = (top, fs, ls) => 'position:absolute; display:block; left:50%; transform:translateX(-50%);' +
-        ' top:' + top + 'px; width:280px; height:49px;' +
-        ' background:url(button_lang.webp) center/contain no-repeat;' +
+      const baseTop = btnBaseY - 45;
+      const gap = 64; // 52px Höhe + 12px Abstand
+      const btnCSS = (idx, fs, ls) => 'position:absolute; display:block; left:50%; transform:translateX(-50%);' +
+        ' top:' + (baseTop + idx * gap) + 'px; width:282px; height:52px;' +
+        ' background:url(button_lang.webp) center/cover no-repeat;' +
         ' border:none; cursor:pointer; pointer-events:auto; z-index:15;' +
-        ' font-family:Arial,sans-serif; font-size:' + fs + 'px; font-weight:bold;' +
-        ' letter-spacing:' + ls + 'px; padding-top:4px;' +
+        ' font:bold ' + fs + 'px Arial; letter-spacing:' + ls + 'px;' +
         ' color:#d0d0d0; text-shadow:0 1px 1px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.6);';
       
       let abtn = document.getElementById('auswertungBtn');
@@ -3646,7 +3647,7 @@
       if (isTutorial) {
         // Tutorial-Ende: WIEDERHOLEN + SPIELEN + HIGHSCORES (Intro-Abstände: 421, 480, 539)
         abtn.textContent = T.wh;
-        abtn.style.cssText = btnCSS(421, 16, 2);
+        abtn.style.cssText = btnCSS(0, 16, 2);
         abtn.onclick = () => {
           abtn.style.display = 'none';
           const esb = document.getElementById('endSpielenBtn');
@@ -3667,7 +3668,7 @@
           document.getElementById('uiOverlay').appendChild(spielenBtn);
         }
         spielenBtn.textContent = T.sp;
-        spielenBtn.style.cssText = btnCSS(480, 18, 2.5);
+        spielenBtn.style.cssText = btnCSS(1, 18, 2);
         spielenBtn.onclick = () => {
           spielenBtn.style.display = 'none';
           abtn.style.display = 'none';
@@ -3716,12 +3717,20 @@
           document.getElementById('gameEndText').style.display = 'none';
           countdown.style.display = 'none';
           hintText.style.display = 'none';
+          const _kl = document.getElementById('kipps21Label');
+          if (_kl) _kl.style.display = 'none';
           counterOrigPos = null;
         }
         
+        // Sekundenanzeige und Countdown verstecken
+        countdown.style.display = 'none';
+        hintText.style.display = 'none';
+        const _klEnd = document.getElementById('kipps21Label');
+        if (_klEnd) _klEnd.style.display = 'none';
+
         // Button 1: NOCHMAL (421px)
         abtn.textContent = T.nml || T.nm || 'NOCHMAL';
-        abtn.style.cssText = btnCSS(411, 18, 2.5);
+        abtn.style.cssText = btnCSS(0, 18, 2);
         abtn.onclick = () => {
           hideAllEndBtns();
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
@@ -3737,7 +3746,7 @@
           document.getElementById('uiOverlay').appendChild(teilenBtn);
         }
         teilenBtn.textContent = T.cTeilen || 'TEILEN';
-        teilenBtn.style.cssText = btnCSS(483, 18, 2.5);
+        teilenBtn.style.cssText = btnCSS(1, 18, 2);
         teilenBtn.style.display = 'block';
         teilenBtn.onclick = () => {
           const totalSec2 = Math.floor((kipp21TotalTime || 0) / 1000);
@@ -3765,7 +3774,7 @@
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
         kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
-        kpBtn.style.cssText = btnCSS(555, 16, 2);
+        kpBtn.style.cssText = btnCSS(2, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => { showKippPrinzip(); };
         
