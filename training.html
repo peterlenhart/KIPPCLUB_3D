@@ -2565,6 +2565,11 @@
     function showLevelEndButtons(levelName, hits, fails, btn1Action, btn2Label, btn2Action) {
       // Alle alten End-Buttons entfernen
       document.querySelectorAll('.levelEndBtn').forEach(el => el.remove());
+      // Richtungsbuttons verstecken
+      if (window._dirCwMesh) window._dirCwMesh.visible = false;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
+      const _rb = document.getElementById('richtungButtons');
+      if (_rb) { _rb.style.display = 'none'; _rb.classList.add('hidden'); }
 
       const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
       cardCenter3D.project(camera);
@@ -5671,8 +5676,8 @@
 
       saveBestScore(currentLevel, brainyHits, brainyFails);
       showLevelScore(brainyHits, brainyFails);
-      ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.style.display = 'none';
+      ['eyeIcon','numBtns','kippTarget','demoSubtitle','richtungButtons'].forEach(id => {
+        const el = document.getElementById(id); if (el) { el.style.display = 'none'; el.classList.add('hidden'); }
       });
 
       // Show HITs same duration as TRAINING end + 2s for score
