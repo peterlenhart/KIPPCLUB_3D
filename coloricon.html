@@ -4694,35 +4694,23 @@
           else startKipp21(false);
         };
 
-        // TEILEN: vertikal mittig (180° gedreht)
-        let teilenBtn = document.getElementById('endTeilenBtn');
-        if (!teilenBtn) {
-          teilenBtn = document.createElement('button');
-          teilenBtn.id = 'endTeilenBtn';
-          teilenBtn.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(teilenBtn);
-        }
-        teilenBtn.innerHTML = '';
-        teilenBtn.style.cssText = 'position:absolute;display:block;left:50%;' +
-          'transform:translateX(-50%) rotate(180deg);' +
-          'top:475px;width:280px;height:49px;' +
-          'background:url(button_lang_icon_1.webp) center/contain no-repeat;' +
-          'border:none;cursor:pointer;pointer-events:auto;z-index:15;';
-        const teilenSpan = document.createElement('span');
-        teilenSpan.style.cssText = 'display:block;transform:rotate(180deg);font:bold 18px Arial;letter-spacing:2px;' +
-          'color:#3a2210;text-shadow:0 1px 1px rgba(255,255,255,0.3),0 -1px 1px rgba(0,0,0,0.2);' +
-          'line-height:49px;text-align:center;';
-        teilenSpan.textContent = T.cTeilen || 'TEILEN';
-        teilenBtn.appendChild(teilenSpan);
-        teilenBtn.onclick = () => {
-          const shareText = buildShareText(lvName, _hits, _fails);
+        // TEILEN: selber Stil wie NOCHMAL, button_lang_icon_1.webp
+        var _oldTB = document.getElementById('endTeilenBtn');
+        if (_oldTB) _oldTB.remove();
+        var teilenBtn = document.createElement('button');
+        teilenBtn.id = 'endTeilenBtn';
+        teilenBtn.textContent = T.cTeilen || 'TEILEN';
+        teilenBtn.style.cssText = btnCSS(475, 18, 2);
+        document.getElementById('uiOverlay').appendChild(teilenBtn);
+        teilenBtn.onclick = function() {
+          var shareText = buildShareText(lvName, _hits, _fails);
           if (navigator.share) {
-            navigator.share({ text: shareText }).catch(() => {});
+            navigator.share({ text: shareText }).catch(function(){});
           } else {
-            navigator.clipboard.writeText(shareText).then(() => {
-              teilenSpan.textContent = T.cKopiert || 'KOPIERT!';
-              setTimeout(() => { teilenSpan.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-            }).catch(() => {});
+            navigator.clipboard.writeText(shareText).then(function() {
+              teilenBtn.textContent = T.cKopiert || 'KOPIERT!';
+              setTimeout(function() { teilenBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+            }).catch(function(){});
           }
         };
 
