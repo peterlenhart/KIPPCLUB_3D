@@ -10969,7 +10969,10 @@
           btnS.disabled = false;
           btnS.style.opacity = '1';
           btnS.style.display = '';
+          btnS.style.top = '507px';
           btnS.onclick = function() {
+            btnS.style.top = '455px';
+            btnD.style.top = '515px';
             overlay.style.display = 'none';
             if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
             if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
@@ -11000,6 +11003,7 @@
           btnD.disabled = false;
           btnD.style.opacity = '1';
           btnD.style.display = '';
+          btnD.style.top = '564px';
           btnD.onclick = function() {
             var shareText = buildMatchShareText(
               window._lastMatchModeLabel || '',
@@ -11196,7 +11200,10 @@
           btnS.disabled = false;
           btnS.style.opacity = '1';
           btnS.style.display = '';
+          btnS.style.top = '507px';
           btnS.onclick = function() {
+            btnS.style.top = '455px';
+            btnD.style.top = '515px';
             overlay.style.display = 'none';
             if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
             if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
@@ -11227,6 +11234,7 @@
           btnD.disabled = false;
           btnD.style.opacity = '1';
           btnD.style.display = '';
+          btnD.style.top = '564px';
           btnD.onclick = function() {
             var shareText = buildMatchShareText(
               window._lastMatchModeLabel || '',
