@@ -3535,7 +3535,7 @@
         const scores = loadCardBestScores();
         const results = window._stichResults || [];
         const totalDev = results.reduce((s, r) => s + r.deviation, 0);
-        const eff = Math.round((36 - totalDev) / 36 * 100);
+        const eff = Math.max(0, Math.round((36 - totalDev) / 36 * 100));
         scores.push({ player: playerScore, bank: bankScore, eff: eff, ts: Date.now() });
         scores.sort((a, b) => (b.eff || 0) - (a.eff || 0) || b.player - a.player || a.bank - b.bank);
         const top11 = scores.slice(0, 11);
@@ -10818,6 +10818,16 @@
     // === BLUFF: Setzrunde starten — Platte nach Nord schieben ===
 
 
+
+    function buildMatchShareText(modeLabel, winner, plScore, bScore) {
+      var result = (winner === 'player') ? '\u{2705}' : (winner === 'bank') ? '\u{274C}' : '\u{1F7F0}';
+      return 'KIPP MATCH \u2014 ' + modeLabel + ' ' + result + '\n' +
+        'Player ' + plScore + ' | Bank ' + bScore + '\n' +
+        (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
+        'https://peterlenhart.github.io/KIPPCLUB_3D/' + '\n' +
+        '#KippClub #KippMatch';
+    }
+
     // === KIPP MATCH: Showdown ===
     if (!window._matchScoreBank) window._matchScoreBank = 0;
     if (!window._matchScorePlayer) window._matchScorePlayer = 0;
@@ -10893,6 +10903,8 @@
         saveMatchScore(mode.key, playerSum, bankSum);
 
         // "Bank gewinnt" / "Player gewinnt" Text
+        window._lastMatchWinner = winner;
+        window._lastMatchModeLabel = mode.label;
         const resultText = (winner === 'player') ? 'Player gewinnt' :
                            (winner === 'bank') ? 'Bank gewinnt' : 'Unentschieden';
         const resultColor = (winner === 'player') ? '#cedb25' :
@@ -10964,6 +10976,38 @@
             if (group) group.add(window._bluffNochmalBtn);
             else scene.add(window._bluffNochmalBtn);
             window._bluffNochmalActive = true;
+
+            // TEILEN Button (südlich unter NOCHMAL)
+            const tCanvas = document.createElement('canvas');
+            tCanvas.width = 812; tCanvas.height = 252;
+            const tCtx = tCanvas.getContext('2d');
+            const tImg = new Image();
+            tImg.onload = () => {
+              tCtx.drawImage(tImg, 0, 0, 812, 252);
+              tCtx.font = 'bold 70px Arial';
+              tCtx.fillStyle = '#e0d0b8';
+              tCtx.textAlign = 'center';
+              tCtx.textBaseline = 'middle';
+              tCtx.shadowColor = 'rgba(0,0,0,0.6)';
+              tCtx.shadowBlur = 8;
+              tCtx.fillText(T.cTeilen || 'TEILEN', 406, 130);
+              const tTex = new THREE.CanvasTexture(tCanvas);
+              const tGeo = new THREE.PlaneGeometry(nmW, nmH);
+              const tMat = new THREE.MeshBasicMaterial({
+                map: tTex, transparent: true, alphaTest: 0.1,
+                side: THREE.DoubleSide, depthWrite: false
+              });
+              window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
+              window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
+              window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
+              window._bluffTeilenBtn.position.z += 0.34;
+              window._bluffTeilenBtn.renderOrder = 8;
+              if (group) group.add(window._bluffTeilenBtn);
+              else scene.add(window._bluffTeilenBtn);
+              window._bluffTeilenActive = true;
+            };
+            tImg.src = 'buttonfilz.webp';
+
           };
           nmImg.src = 'buttonfilz.webp';
         }, 3500);
@@ -11038,6 +11082,8 @@
 
 
     function runVerfehltResult(group) {
+      window._lastMatchWinner = 'bank';
+      window._lastMatchModeLabel = (window._bluffSelectedMode || {}).label || '';
       const modeLabels = {
         highcard:'HIGH CARD', pair:'PAAR', three:'DRILLING', four:'VIERLING',
         twopair:'2 PAARE', straight:'STRASSE', flush:'FLUSH',
@@ -11147,6 +11193,38 @@
             window._bluffNochmalBtn.renderOrder = 8;
             if (group) group.add(window._bluffNochmalBtn);
             window._bluffNochmalActive = true;
+
+            // TEILEN Button (südlich unter NOCHMAL)
+            const tCanvas = document.createElement('canvas');
+            tCanvas.width = 812; tCanvas.height = 252;
+            const tCtx = tCanvas.getContext('2d');
+            const tImg = new Image();
+            tImg.onload = () => {
+              tCtx.drawImage(tImg, 0, 0, 812, 252);
+              tCtx.font = 'bold 70px Arial';
+              tCtx.fillStyle = '#e0d0b8';
+              tCtx.textAlign = 'center';
+              tCtx.textBaseline = 'middle';
+              tCtx.shadowColor = 'rgba(0,0,0,0.6)';
+              tCtx.shadowBlur = 8;
+              tCtx.fillText(T.cTeilen || 'TEILEN', 406, 130);
+              const tTex = new THREE.CanvasTexture(tCanvas);
+              const tGeo = new THREE.PlaneGeometry(nmW, nmH);
+              const tMat = new THREE.MeshBasicMaterial({
+                map: tTex, transparent: true, alphaTest: 0.1,
+                side: THREE.DoubleSide, depthWrite: false
+              });
+              window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
+              window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
+              window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
+              window._bluffTeilenBtn.position.z += 0.34;
+              window._bluffTeilenBtn.renderOrder = 8;
+              if (group) group.add(window._bluffTeilenBtn);
+              else scene.add(window._bluffTeilenBtn);
+              window._bluffTeilenActive = true;
+            };
+            tImg.src = 'buttonfilz.webp';
+
           };
           nmImg.src = 'buttonfilz.webp';
         }, 3500);
@@ -11389,7 +11467,7 @@
       const playerWins = results.filter(r => r.winner === 'player').length;
       const perfects = results.filter(r => r.winner === 'player' && r.deviation === 0).length;
       const totalDev = results.reduce((s, r) => s + r.deviation, 0);
-      const effizienz = Math.round((36 - totalDev) / 36 * 100);
+      const effizienz = Math.max(0, Math.round((36 - totalDev) / 36 * 100));
 
       const ov = document.createElement('div');
       ov.id = '_endScreenOverlay';
@@ -11513,12 +11591,12 @@
         shareGrid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         window._DIGIKIPP_URL + '\n' +
-        '#DigiKipp #KippPlusOne';
+        '#KippClub #KippPlusOne';
 
       const btnShare = document.createElement('button');
       btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">' + (T.cTeilen || 'TEILEN') + '</span>';
       btnShare.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:1px solid rgba(206,219,37,0.4);' +
+        'border:none;' +
         'width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
         'color:#cedb25;cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:10px;' +
@@ -12181,6 +12259,27 @@
 
 
       // NOCHMAL Button Raycasting
+      // TEILEN Button Raycaster
+      if (window._bluffTeilenActive && window._bluffTeilenBtn && lastTouchPos) {
+        const rectT = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectT.left) / rectT.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectT.top) / rectT.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._bluffTeilenBtn).length > 0) {
+          var shareText = buildMatchShareText(
+            window._lastMatchModeLabel || '',
+            window._lastMatchWinner || '',
+            window._matchScorePlayer || 0,
+            window._matchScoreBank || 0
+          );
+          if (navigator.share) {
+            navigator.share({ text: shareText }).catch(function(){});
+          } else {
+            navigator.clipboard.writeText(shareText).then(function() {}).catch(function(){});
+          }
+          return;
+        }
+      }
       if (window._bluffNochmalActive && window._bluffNochmalBtn && lastTouchPos) {
         const rectNM = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectNM.left) / rectNM.width) * 2 - 1;
@@ -12201,6 +12300,8 @@
           if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
           if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
           if (window._bluffNochmalBtn) { window._bluffNochmalBtn = null; }
+          if (window._bluffTeilenBtn) { window._bluffTeilenBtn = null; }
+          window._bluffTeilenActive = false;
           window._bluffShowdownActive = false;
           window._matchScoreBank = 0;
           window._matchScorePlayer = 0;
@@ -12228,6 +12329,27 @@
 
 
       // NOCHMAL Button Raycasting
+      // TEILEN Button Raycaster
+      if (window._bluffTeilenActive && window._bluffTeilenBtn && lastTouchPos) {
+        const rectT = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectT.left) / rectT.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectT.top) / rectT.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(window._bluffTeilenBtn).length > 0) {
+          var shareText = buildMatchShareText(
+            window._lastMatchModeLabel || '',
+            window._lastMatchWinner || '',
+            window._matchScorePlayer || 0,
+            window._matchScoreBank || 0
+          );
+          if (navigator.share) {
+            navigator.share({ text: shareText }).catch(function(){});
+          } else {
+            navigator.clipboard.writeText(shareText).then(function() {}).catch(function(){});
+          }
+          return;
+        }
+      }
       if (window._bluffNochmalActive && window._bluffNochmalBtn && lastTouchPos) {
         const rectNM = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectNM.left) / rectNM.width) * 2 - 1;
@@ -12248,6 +12370,8 @@
           if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
           if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
           if (window._bluffNochmalBtn) { window._bluffNochmalBtn = null; }
+          if (window._bluffTeilenBtn) { window._bluffTeilenBtn = null; }
+          window._bluffTeilenActive = false;
           window._bluffShowdownActive = false;
           window._matchScoreBank = 0;
           window._matchScorePlayer = 0;
@@ -14576,7 +14700,7 @@
       const allRanks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
       const pIdx = allRanks.indexOf(displayNum(slot.val).replace('.',''));
       const tIdx = allRanks.indexOf(getTargetVisualRank(target.num));
-      const deviation = (result.winner === 'player') ? Math.max(0, (pIdx - tIdx) - 1) : 6;
+      const deviation = (result.winner === 'player') ? Math.min(5, Math.max(0, (pIdx - tIdx) - 1)) : 6;
       window._stichResults.push({ winner: result.winner, deviation, pIdx, tIdx, points: result.points });
       
       console.log('[STICH] Player:', displayNum(slot.val), slot.color, '| Target:', getTargetVisualRank(target.num), target.color, '→', result.winner, '+' + result.points, '| Dev:', deviation);
@@ -14656,7 +14780,7 @@
             saveCardBestScore(window._playerScore3D || 0, window._bankScore3D || 0);
             if (window._dailyMode) {
               const totalDev = (window._stichResults || []).reduce((s, r) => s + r.deviation, 0);
-              const eff = Math.round((36 - totalDev) / 36 * 100);
+              const eff = Math.max(0, Math.round((36 - totalDev) / 36 * 100));
               saveDailyResult(window._playerScore3D || 0, window._bankScore3D || 0, eff);
               deactivateDailyRng();
             }
