@@ -10946,70 +10946,78 @@
         // Score auf overlay_bet anzeigen
         showMatchScores(group);
 
-        // Nach 3.5s: NOCHMAL Button zeigen (Ergebnis-Text bleibt)
+        // Nach 3.5s: Menü-Buttons wiederverwenden (exakt gleiche Größe)
         setTimeout(() => {
-          // NOCHMAL Button
-          const nmCanvas = document.createElement('canvas');
-          nmCanvas.width = 812; nmCanvas.height = 252;
-          const nmCtx = nmCanvas.getContext('2d');
-          const nmImg = new Image();
-          nmImg.onload = () => {
-            nmCtx.drawImage(nmImg, 0, 0, 812, 252);
-            nmCtx.font = 'bold 70px Arial';
-            nmCtx.fillStyle = '#e0d0b8';
-            nmCtx.textAlign = 'center';
-            nmCtx.textBaseline = 'middle';
-            nmCtx.shadowColor = 'rgba(0,0,0,0.6)';
-            nmCtx.shadowBlur = 8;
-            nmCtx.fillText('NOCHMAL', 406, 130);
-            const nmTex = new THREE.CanvasTexture(nmCanvas);
-            const nmW = 0.94; const nmH = 0.29;
-            const nmGeo = new THREE.PlaneGeometry(nmW, nmH);
-            const nmMat = new THREE.MeshBasicMaterial({
-              map: nmTex, transparent: true, alphaTest: 0.1,
-              side: THREE.DoubleSide, depthWrite: false
-            });
-            window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
-            window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208 - 0.02083);
-            window._bluffNochmalBtn.renderOrder = 8;
-            if (group) group.add(window._bluffNochmalBtn);
-            else scene.add(window._bluffNochmalBtn);
-            window._bluffNochmalActive = true;
+          var overlay = document.getElementById('startOverlay');
+          var sct = document.getElementById('startChallengeText');
+          if (sct) sct.style.display = 'none';
+          overlay.style.display = 'block';
 
-            // TEILEN 3D Button (südlich unter NOCHMAL)
-            const tCanvas = document.createElement('canvas');
-            tCanvas.width = 812; tCanvas.height = 252;
-            const tCtx = tCanvas.getContext('2d');
-            const tImg = new Image();
-            tImg.onload = () => {
-              tCtx.drawImage(tImg, 0, 0, 812, 252);
-              tCtx.font = 'bold 70px Arial';
-              tCtx.fillStyle = '#e0d0b8';
-              tCtx.textAlign = 'center';
-              tCtx.textBaseline = 'middle';
-              tCtx.shadowColor = 'rgba(0,0,0,0.6)';
-              tCtx.shadowBlur = 8;
-              tCtx.fillText(T.cTeilen || 'TEILEN', 406, 130);
-              const tTex = new THREE.CanvasTexture(tCanvas);
-              const tGeo = new THREE.PlaneGeometry(nmW, nmH);
-              const tMat = new THREE.MeshBasicMaterial({
-                map: tTex, transparent: true, alphaTest: 0.1,
-                side: THREE.DoubleSide, depthWrite: false
-              });
-              window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
-              window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
-              window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
-              window._bluffTeilenBtn.position.z += 0.3247;
-              window._bluffTeilenBtn.renderOrder = 8;
-              if (group) group.add(window._bluffTeilenBtn);
-              else scene.add(window._bluffTeilenBtn);
-              window._bluffTeilenActive = true;
-            };
-            tImg.src = 'buttonfilz.webp';
+          var btnS = document.getElementById('btnSpielen');
+          var btnD = document.getElementById('btnDemo');
+          var btnA = document.getElementById('btnAnleitung');
+          var btnDy = document.getElementById('btnDaily');
+          var btnKP = document.getElementById('btnKippPrinzip');
 
+          // Alle erstmal verstecken
+          if (btnA) btnA.style.display = 'none';
+          if (btnDy) btnDy.style.display = 'none';
+          if (btnKP) btnKP.style.display = 'none';
+
+          // NOCHMAL
+          btnS.textContent = T.nml || 'NOCHMAL';
+          btnS.disabled = false;
+          btnS.style.opacity = '1';
+          btnS.style.display = '';
+          btnS.onclick = function() {
+            overlay.style.display = 'none';
+            if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+            if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+            if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
+            if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(function(m){scene.remove(m)}); window._bluffCardMeshes = null; }
+            if (window._bluffCardSlots) { window._bluffCardSlots.forEach(function(s){if(s.mesh)scene.remove(s.mesh)}); window._bluffCardSlots = null; }
+            if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
+            if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
+            if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
+            if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
+            if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
+            if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
+            window._bluffShowdownActive = false;
+            window._bluffNochmalActive = false;
+            window._matchScoreBank = 0;
+            window._matchScorePlayer = 0;
+            window._playedSlots = new Set();
+            window._bluffPlayedDeckSlots = null;
+            if (typeof faceSlots !== 'undefined' && faceSlots) {
+              faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
+            }
+            updateAllFaceTextures();
+            startBluffSetzrunde();
           };
-          nmImg.src = 'buttonfilz.webp';
+
+          // TEILEN
+          btnD.textContent = T.cTeilen || 'TEILEN';
+          btnD.disabled = false;
+          btnD.style.opacity = '1';
+          btnD.style.display = '';
+          btnD.onclick = function() {
+            var shareText = buildMatchShareText(
+              window._lastMatchModeLabel || '',
+              window._lastMatchWinner || '',
+              window._matchScorePlayer || 0,
+              window._matchScoreBank || 0
+            );
+            if (navigator.share) {
+              navigator.share({ text: shareText }).catch(function(){});
+            } else {
+              navigator.clipboard.writeText(shareText).then(function() {
+                btnD.textContent = T.cKopiert || 'KOPIERT!';
+                setTimeout(function() { btnD.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+              }).catch(function(){});
+            }
+          };
+
+          window._bluffNochmalActive = false;
         }, 3500);
       }
     }
@@ -11165,68 +11173,78 @@
         // Scores anzeigen
         showMatchScores(group);
 
-        // Nach 3.5s: NOCHMAL Button
+        // Nach 3.5s: Menü-Buttons wiederverwenden (exakt gleiche Größe)
         setTimeout(() => {
-          const nmCanvas = document.createElement('canvas');
-          nmCanvas.width = 812; nmCanvas.height = 252;
-          const nmCtx = nmCanvas.getContext('2d');
-          const nmImg = new Image();
-          nmImg.onload = () => {
-            nmCtx.drawImage(nmImg, 0, 0, 812, 252);
-            nmCtx.font = 'bold 70px Arial';
-            nmCtx.fillStyle = '#e0d0b8';
-            nmCtx.textAlign = 'center';
-            nmCtx.textBaseline = 'middle';
-            nmCtx.shadowColor = 'rgba(0,0,0,0.6)';
-            nmCtx.shadowBlur = 8;
-            nmCtx.fillText('NOCHMAL', 406, 130);
-            const nmTex = new THREE.CanvasTexture(nmCanvas);
-            const nmW = 0.94; const nmH = 0.29;
-            const nmGeo = new THREE.PlaneGeometry(nmW, nmH);
-            const nmMat = new THREE.MeshBasicMaterial({
-              map: nmTex, transparent: true, alphaTest: 0.1,
-              side: THREE.DoubleSide, depthWrite: false
-            });
-            window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
-            window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208 - 0.02083);
-            window._bluffNochmalBtn.renderOrder = 8;
-            if (group) group.add(window._bluffNochmalBtn);
-            window._bluffNochmalActive = true;
+          var overlay = document.getElementById('startOverlay');
+          var sct = document.getElementById('startChallengeText');
+          if (sct) sct.style.display = 'none';
+          overlay.style.display = 'block';
 
-            // TEILEN 3D Button (südlich unter NOCHMAL)
-            const tCanvas = document.createElement('canvas');
-            tCanvas.width = 812; tCanvas.height = 252;
-            const tCtx = tCanvas.getContext('2d');
-            const tImg = new Image();
-            tImg.onload = () => {
-              tCtx.drawImage(tImg, 0, 0, 812, 252);
-              tCtx.font = 'bold 70px Arial';
-              tCtx.fillStyle = '#e0d0b8';
-              tCtx.textAlign = 'center';
-              tCtx.textBaseline = 'middle';
-              tCtx.shadowColor = 'rgba(0,0,0,0.6)';
-              tCtx.shadowBlur = 8;
-              tCtx.fillText(T.cTeilen || 'TEILEN', 406, 130);
-              const tTex = new THREE.CanvasTexture(tCanvas);
-              const tGeo = new THREE.PlaneGeometry(nmW, nmH);
-              const tMat = new THREE.MeshBasicMaterial({
-                map: tTex, transparent: true, alphaTest: 0.1,
-                side: THREE.DoubleSide, depthWrite: false
-              });
-              window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
-              window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
-              window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
-              window._bluffTeilenBtn.position.z += 0.3247;
-              window._bluffTeilenBtn.renderOrder = 8;
-              if (group) group.add(window._bluffTeilenBtn);
-              else scene.add(window._bluffTeilenBtn);
-              window._bluffTeilenActive = true;
-            };
-            tImg.src = 'buttonfilz.webp';
+          var btnS = document.getElementById('btnSpielen');
+          var btnD = document.getElementById('btnDemo');
+          var btnA = document.getElementById('btnAnleitung');
+          var btnDy = document.getElementById('btnDaily');
+          var btnKP = document.getElementById('btnKippPrinzip');
 
+          // Alle erstmal verstecken
+          if (btnA) btnA.style.display = 'none';
+          if (btnDy) btnDy.style.display = 'none';
+          if (btnKP) btnKP.style.display = 'none';
+
+          // NOCHMAL
+          btnS.textContent = T.nml || 'NOCHMAL';
+          btnS.disabled = false;
+          btnS.style.opacity = '1';
+          btnS.style.display = '';
+          btnS.onclick = function() {
+            overlay.style.display = 'none';
+            if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+            if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+            if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
+            if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(function(m){scene.remove(m)}); window._bluffCardMeshes = null; }
+            if (window._bluffCardSlots) { window._bluffCardSlots.forEach(function(s){if(s.mesh)scene.remove(s.mesh)}); window._bluffCardSlots = null; }
+            if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
+            if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
+            if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
+            if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
+            if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
+            if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
+            window._bluffShowdownActive = false;
+            window._bluffNochmalActive = false;
+            window._matchScoreBank = 0;
+            window._matchScorePlayer = 0;
+            window._playedSlots = new Set();
+            window._bluffPlayedDeckSlots = null;
+            if (typeof faceSlots !== 'undefined' && faceSlots) {
+              faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
+            }
+            updateAllFaceTextures();
+            startBluffSetzrunde();
           };
-          nmImg.src = 'buttonfilz.webp';
+
+          // TEILEN
+          btnD.textContent = T.cTeilen || 'TEILEN';
+          btnD.disabled = false;
+          btnD.style.opacity = '1';
+          btnD.style.display = '';
+          btnD.onclick = function() {
+            var shareText = buildMatchShareText(
+              window._lastMatchModeLabel || '',
+              window._lastMatchWinner || '',
+              window._matchScorePlayer || 0,
+              window._matchScoreBank || 0
+            );
+            if (navigator.share) {
+              navigator.share({ text: shareText }).catch(function(){});
+            } else {
+              navigator.clipboard.writeText(shareText).then(function() {
+                btnD.textContent = T.cKopiert || 'KOPIERT!';
+                setTimeout(function() { btnD.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+              }).catch(function(){});
+            }
+          };
+
+          window._bluffNochmalActive = false;
         }, 3500);
       }
     }
