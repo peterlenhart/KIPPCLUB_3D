@@ -744,7 +744,7 @@
     #btnSpielen  { top: 441px; padding-top: 1px; font-size: 22px; letter-spacing: 2.5px; }
     #btnDemo     { top: 540px; padding-top: 1px; font-size: 20px; letter-spacing: 2px; }
     #btnTeilen   { top: 491px; padding-top: 1px; font-size: 20px; letter-spacing: 2px; }
-    #btnTeilen::before { background: url('button_lang_icon_1.webp') center/contain no-repeat; transform: rotate(180deg); }
+    #btnTeilen::before { background: url('button_lang_icon_1.webp') center/contain no-repeat; }
     #btnKippPrinzip { top: 539px; padding-top: 1px; font-size: 20px; letter-spacing: 2px; }
     #btnBestScores { /* trophy icon — styled inline */ }
     @keyframes pokalPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
@@ -10775,6 +10775,18 @@
       const nb = document.getElementById('numBtns');
       if (nb) nb.classList.add('hidden');
       
+    function buildIconShareText(levelName, hits, fails) {
+      var total = hits + fails;
+      var pct = total > 0 ? Math.round(hits / total * 100) : 0;
+      var grid = window._hitMissSeq.map(function(r) { return r === 'hit' ? '\u{1F7E9}' : '\u{1F7E5}'; }).join('');
+      return 'KIPP ICONS \u2014 ' + levelName + '\n' +
+        pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
+        grid + '\n' +
+        (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
+        'https://peterlenhart.github.io/KIPPCLUB_3D/' + '\n' +
+        '#DigiKipp #KippIcons';
+    }
+
       saveBestScore(currentLevel, iconHits, iconMisses);
       
       // Pokal blinkt
