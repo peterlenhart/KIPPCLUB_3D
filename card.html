@@ -5204,7 +5204,7 @@
           innerDiv.insertBefore(heading, innerDiv.firstChild);
 
           const btnStyle = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-            'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2.5px;' +
+            'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2.5px;' +
             'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
 
           const btnRepeat = document.createElement('button');
@@ -10971,13 +10971,13 @@
             });
             window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
             window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208);
+            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208 - 0.02083);
             window._bluffNochmalBtn.renderOrder = 8;
             if (group) group.add(window._bluffNochmalBtn);
             else scene.add(window._bluffNochmalBtn);
             window._bluffNochmalActive = true;
 
-            // TEILEN Button (südlich unter NOCHMAL)
+            // TEILEN 3D Button (südlich unter NOCHMAL)
             const tCanvas = document.createElement('canvas');
             tCanvas.width = 812; tCanvas.height = 252;
             const tCtx = tCanvas.getContext('2d');
@@ -11000,7 +11000,7 @@
               window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
               window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
               window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
-              window._bluffTeilenBtn.position.z += 0.34;
+              window._bluffTeilenBtn.position.z += 0.3247;
               window._bluffTeilenBtn.renderOrder = 8;
               if (group) group.add(window._bluffTeilenBtn);
               else scene.add(window._bluffTeilenBtn);
@@ -11189,12 +11189,12 @@
             });
             window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
             window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208);
+            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208 - 0.02083);
             window._bluffNochmalBtn.renderOrder = 8;
             if (group) group.add(window._bluffNochmalBtn);
             window._bluffNochmalActive = true;
 
-            // TEILEN Button (südlich unter NOCHMAL)
+            // TEILEN 3D Button (südlich unter NOCHMAL)
             const tCanvas = document.createElement('canvas');
             tCanvas.width = 812; tCanvas.height = 252;
             const tCtx = tCanvas.getContext('2d');
@@ -11217,7 +11217,7 @@
               window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
               window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
               window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
-              window._bluffTeilenBtn.position.z += 0.34;
+              window._bluffTeilenBtn.position.z += 0.3247;
               window._bluffTeilenBtn.renderOrder = 8;
               if (group) group.add(window._bluffTeilenBtn);
               else scene.add(window._bluffTeilenBtn);
@@ -11360,7 +11360,7 @@
         const btn = document.createElement('button');
         btn.textContent = label;
         btn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+          'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
         btn.onclick = onClick;
@@ -11383,7 +11383,7 @@
       const backBtn = document.createElement('button');
       backBtn.textContent = 'OK';
       backBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;';
       backBtn.onclick = () => ov.remove();
@@ -11444,7 +11444,7 @@
         const okBtn = document.createElement('button');
         okBtn.textContent = 'OK';
         okBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+          'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
         okBtn.onclick = () => { ov.remove(); showCardAnleitung(); };
@@ -11540,7 +11540,7 @@
 
       // Effizienz-Balken
       const effBox = document.createElement('div');
-      effBox.style.cssText = 'width:282px;margin:6px 0;';
+      effBox.style.cssText = 'width:226px;margin:6px 0;';
 
       const effLabel = document.createElement('div');
       effLabel.style.cssText = 'font:bold 14px Arial;color:#e0d0b8;letter-spacing:2px;' +
@@ -11549,7 +11549,7 @@
       effBox.appendChild(effLabel);
 
       const barOuter = document.createElement('div');
-      barOuter.style.cssText = 'width:282px;height:30px;border-radius:6px;overflow:hidden;' +
+      barOuter.style.cssText = 'width:226px;height:24px;border-radius:6px;overflow:hidden;' +
         'background:rgba(224,208,184,0.2);border:1px solid rgba(224,208,184,0.3);position:relative;';
 
       const barFill = document.createElement('div');
@@ -11597,7 +11597,7 @@
       btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">' + (T.cTeilen || 'TEILEN') + '</span>';
       btnShare.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
         'border:none;' +
-        'width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#cedb25;cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:10px;' +
         'text-shadow:0 1px 3px rgba(0,0,0,0.6);';
@@ -11618,7 +11618,7 @@
 
       // Buttons
       const btnStyle = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:6px;';
 
@@ -11671,7 +11671,7 @@
       const btn1 = document.createElement('button');
       btn1.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:6px;">' + (T.cEinfr || 'EINFRIEREN') + ' <span style="font-size:1.2em;line-height:1">&#10052;</span></span>';
       btn1.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
       btn1.onclick = () => {
         // Vollständigen Spielstand einfrieren
@@ -11715,7 +11715,7 @@
       const btn2 = document.createElement('button');
       btn2.textContent = T.cWeiter || 'WEITER';
       btn2.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
       btn2.onclick = () => ov.remove();
 
