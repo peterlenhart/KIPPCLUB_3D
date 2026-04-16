@@ -1020,6 +1020,15 @@
     }
     #hintLine1 { font-size: 36px; opacity: 1; }
     #hintLine2 { font-size: 28px; opacity: 0; }
+
+    @keyframes _challengePulseAnim {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px #FFD700); }
+      50% { transform: scale(1.18); filter: drop-shadow(0 0 16px #FFD700) drop-shadow(0 0 24px #FFD700); }
+    }
+    .leveltafelSmiley._challengePulse {
+      animation: _challengePulseAnim 1s ease-in-out infinite;
+      z-index: 30 !important;
+    }
     .leveltafelSmiley.selected {
       border-radius: 50%;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
@@ -5677,6 +5686,7 @@
           blurOv.remove();
           showLeveltafel(false);
           markPlayedSmileys();
+          advanceChallenge();
         }, 700);
       }
 
@@ -8956,6 +8966,17 @@
         document.getElementById('hintLine1').style.opacity = showingLine1 ? '1' : '0';
         document.getElementById('hintLine2').style.opacity = showingLine1 ? '0' : '1';
       }, 3000);
+      // Challenge-UI anwenden oder Originaltext wiederherstellen
+      setTimeout(function(){
+        if (window._challengeSequence && typeof applyChallengeUI === 'function') {
+          applyChallengeUI();
+        } else {
+          var h1 = document.getElementById('hintLine1');
+          var h2 = document.getElementById('hintLine2');
+          if (h1) h1.textContent = T.sw4 || 'W\u00c4HLE EINEN SMILEY,';
+          if (h2) h2.textContent = T.sw4b || 'und merke ihn dir!';
+        }
+      }, 50);
       // Tutorial deaktiviert — Anleitung läuft über showAnleitung()
       // if (withTutorial && typeof runSmileyTutorial === 'function') {
       //   setTimeout(() => runSmileyTutorial(), 500);
@@ -9014,9 +9035,84 @@
       return '#FFD700';
     }
 
+
+    // === CHALLENGE-MODE: URL-Parameter ?c=fname1,fname2,fname3,fname4 ===
+    window._challengeSequence = null;
+    window._challengeCurrentIdx = 0;
+    (function initChallenge() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var cParam = params.get('c');
+        if (!cParam) return;
+        var parts = cParam.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; });
+        if (parts.length !== 4) return;
+        var validColors = ['orange','gruen','blau','violett'];
+        var allValid = parts.every(function(p) {
+          return validColors.some(function(col) { return p.indexOf('smiley_'+col+'_') === 0; });
+        });
+        if (!allValid) return;
+        window._challengeSequence = parts;
+        window._challengeCurrentIdx = 0;
+      } catch(e) {}
+    })();
+
+    function getChallengeCurrentSmiley() {
+      if (!window._challengeSequence) return null;
+      var fname = window._challengeSequence[window._challengeCurrentIdx];
+      if (!fname) return null;
+      var allEls = Array.from(document.querySelectorAll('.leveltafelSmiley'));
+      for (var i = 0; i < allEls.length; i++) {
+        var src = allEls[i].src;
+        var base = src.substring(src.lastIndexOf('/')+1).replace(/\.png.*$/, '');
+        if (base === fname && !allEls[i].dataset.played) return allEls[i];
+      }
+      return null;
+    }
+
+    function applyChallengeUI() {
+      if (!window._challengeSequence) return;
+      var h1 = document.getElementById('hintLine1');
+      var h2 = document.getElementById('hintLine2');
+      if (h1) { h1.textContent = T.cMerkeDir1 || 'MERKE DIR DEN'; h1.style.opacity = '1'; }
+      if (h2) { h2.textContent = T.cMerkeDir2 || 'BLINKENDEN SMILEY'; h2.style.opacity = '1'; }
+      if (window._hintLoop) { clearInterval(window._hintLoop); window._hintLoop = null; }
+      var bw = document.getElementById('btnBereitWrap');
+      if (bw) bw.style.display = 'none';
+      var nw = document.getElementById('btnNeuWaehlen');
+      if (nw) nw.style.display = 'none';
+      document.querySelectorAll('.leveltafelSmiley').forEach(function(s) {
+        s.classList.remove('_challengePulse');
+      });
+      var el = getChallengeCurrentSmiley();
+      if (el) el.classList.add('_challengePulse');
+    }
+
+    function advanceChallenge() {
+      if (!window._challengeSequence) return;
+      window._challengeCurrentIdx++;
+      if (window._challengeCurrentIdx >= window._challengeSequence.length) {
+        window._challengeSequence = null;
+      }
+    }
+
     document.querySelectorAll('.leveltafelSmiley').forEach(el => {
       el.style.cursor = 'pointer';
       el.addEventListener('click', () => {
+        // Challenge-Mode: nur pulsierenden Smiley akzeptieren
+        if (window._challengeSequence) {
+          var expected = getChallengeCurrentSmiley();
+          if (el !== expected) return;
+          selectedSmileys.forEach(function(prev){
+            prev.classList.remove('selected');
+            prev.style.outline = '';
+            prev.style.boxShadow = '';
+          });
+          selectedSmileys = [el];
+          el.classList.add('selected');
+          el.classList.remove('_challengePulse');
+          document.getElementById('btnBereit').click();
+          return;
+        }
         if (el.dataset.played) return; // bereits gespielte nicht wählbar
         const idx = selectedSmileys.indexOf(el);
         if (idx >= 0) {
@@ -9707,7 +9803,14 @@
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault(); showAnleitung();
     }, { passive: false });
-    
+
+    // Challenge: automatisch Leveltafel öffnen wenn ?c= in URL
+    if (window._challengeSequence) {
+      setTimeout(function() {
+        document.getElementById('startOverlay').style.display = 'none';
+        showLeveltafel(false);
+      }, 500);
+    }
     
     function showAnleitung() {
       // Eigenes Overlay — volle Kontrolle
