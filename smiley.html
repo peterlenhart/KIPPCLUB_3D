@@ -5725,19 +5725,7 @@
             if (playedSeq.length === 4) {
               challengeUrl += '?c=' + playedSeq.join(',');
             }
-                        var colorMap = { orange:'\ud83d\udfe7', gruen:'\ud83d\udfe9', blau:'\ud83d\udfe6', violett:'\ud83d\udfea' };
-            var squares = '';
-            playedSeq.forEach(function(fn) {
-              if (fn.indexOf('orange') >= 0) squares += colorMap.orange;
-              else if (fn.indexOf('gruen') >= 0) squares += colorMap.gruen;
-              else if (fn.indexOf('blau') >= 0) squares += colorMap.blau;
-              else if (fn.indexOf('violett') >= 0) squares += colorMap.violett;
-            });
-            var shareTextOnly = 'KIPP SMILEY\n' +
-              (T.cKombiTxt || 'ICH mit dieser SMILEY-KOMBI:') + ' ' + squares + '\n' +
-              pts + ' ' + (T.cPunkte || 'Punkte') + ' ' + (T.cVon || 'von') + ' ' + maxPts + '\n' +
-              (T.cWasSchaffst || 'Was schaffst DU?') + '\n' +
-              challengeUrl + '\n#KippClub #KippSmiley';
+                        var shareTextOnly = challengeUrl + '\n#KippClub #KippSmiley';
             
             // Bild generieren (600x600)
             try {
