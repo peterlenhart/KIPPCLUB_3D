@@ -2710,7 +2710,7 @@
       } catch(e) {}
     }
 
-    const SCORE_LEVEL_NAMES = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+    const SCORE_LEVEL_NAMES = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
 
     function saveBestScore(level, hits, fails) {
       try {
@@ -4708,7 +4708,7 @@
         pgt.appendChild(pgtH);
         pgt.appendChild(pgtS);
       }
-      const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+      const levelNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
       const challengeText = currentLevel >= 3 ? null : (currentLevel >= 2 ? (T.h4r || 'Mit 4 HITS ins BRAIN Level') : (T.h4b || 'Mit 4 HITS ins BRAINY Level'));
       if (challengeText) {
         pgtH.innerHTML = challengeText;
@@ -10826,8 +10826,8 @@
       
       // TEILEN Button
       var btnT = document.getElementById('btnTeilen');
-      var _lvNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN' };
-      var _lvName = _lvNames[currentLevel] || 'TRAINING';
+      var _lvNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN' };
+      var _lvName = _lvNames[currentLevel] || 'BUMBLEBRAIN';
       btnT.textContent = T.cTeilen || 'TEILEN';
       btnT.disabled = false;
       btnT.style.opacity = '1';
@@ -11218,7 +11218,7 @@
       try {
         const now = Date.now();
         const fixed = [
-          { level:1, hits:4, fails:0, pct:100, levelName:'TRAINING', ts: now },
+          { level:1, hits:4, fails:0, pct:100, levelName:'BUMBLEBRAIN', ts: now },
           { level:2, hits:4, fails:3, pct:57,  levelName:'BRAINY',   ts: now - 30000 },
           { level:3, hits:4, fails:5, pct:44,  levelName:'BRAIN',    ts: now - 60000 }
         ];

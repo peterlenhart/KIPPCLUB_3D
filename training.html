@@ -2544,7 +2544,7 @@
       } catch(e) {}
     }
 
-    const SCORE_LEVEL_NAMES = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+    const SCORE_LEVEL_NAMES = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
 
     // === HIT/MISS Sequence für Share ===
     window._hitMissSeq = [];
@@ -4622,7 +4622,7 @@
         pgt.appendChild(pgtH);
         pgt.appendChild(pgtS);
       }
-      const levelNames = { 1: 'TRAINING', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+      const levelNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
       const challengeText = currentLevel >= 3 ? null : (currentLevel >= 2 ? (T.h4r || 'Mit 4 HITS ins BRAIN Level') : (T.h4b || 'Mit 4 HITS ins BRAINY Level'));
       if (challengeText) {
         pgtH.innerHTML = challengeText;
@@ -5105,7 +5105,7 @@
               gameCards.forEach(c => c.mesh.visible = false);
               
               // 3 Buttons: NOCHMAL / TEILEN / BRAINY
-              showLevelEndButtons('TRAINING', kipp21Done, kipp21Fails,
+              showLevelEndButtons('BUMBLEBRAIN', kipp21Done, kipp21Fails,
                 // NOCHMAL
                 () => { gamePhase = 'start'; startKipp21(false); },
                 // BRAINY Label + Action

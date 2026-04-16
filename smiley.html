@@ -6677,41 +6677,7 @@
 
     // === Sequentielle Spielführung: "Kippe deinen" → "Smiley zu dieser" → "Hand" → Hand-Bild ===
     async function showSequentialGuide(guideEl) {
-      if (!guideEl) return;
-      guideEl.style.display = '';
-      guideEl.style.lineHeight = '1.3';
-      const lines = ['Kippe deinen', 'Smiley zu dieser', 'Hand'];
-      for (let i = 0; i < lines.length; i++) {
-        guideEl.textContent = lines[i];
-        await new Promise(r => setTimeout(r, 1500));
-      }
-      guideEl.style.display = 'none';
-
-      // Hand-Bild einblenden (Monge-Projektion: Zeile 11/12 Grenze)
-      let handOv = document.getElementById('_smileyHandOverlay');
-      if (!handOv) {
-        handOv = document.createElement('img');
-        handOv.id = '_smileyHandOverlay';
-        handOv.style.cssText = 'position:absolute;z-index:20;pointer-events:none;opacity:0;transition:opacity 0.5s ease;';
-        document.getElementById('container').appendChild(handOv);
-      }
-      const handColor = window._smileyTargetColor || 'orange';
-      handOv.src = 'hand_' + handColor + '.png';
-
-      // Zeile 11/12 Grenze: Z=0.890625, Y=0.46875 (Spieltisch), X=0 (zentriert)
-      const p = new THREE.Vector3(0, 0.46875, 0.890625);
-      p.project(camera);
-      const sx = Math.round((p.x * 0.5 + 0.5) * 360);
-      const sy = Math.round((-p.y * 0.5 + 0.5) * 720);
-
-      // 1.3-fach vergrößert (Basis ~45px = 1 Zelle, 1.3x = ~59px)
-      const handSize = Math.round(45 * 1.3);
-      handOv.style.width = handSize + 'px';
-      handOv.style.height = handSize + 'px';
-      handOv.style.left = (sx - handSize / 2) + 'px';
-      handOv.style.top = (sy - handSize / 2) + 'px';
-      handOv.style.opacity = '1';
-      handOv.style.display = '';
+      if (guideEl) guideEl.style.display = 'none';
     }
 
     function hideHandOverlay() {
