@@ -2425,7 +2425,7 @@
         });
         window._tutBtnIconMesh = new THREE.Mesh(tutGeo, tutMat);
         window._tutBtnIconMesh.rotation.x = -Math.PI / 2;
-        window._tutBtnIconMesh.rotation.z = Math.PI / 2; // 90° CCW
+        window._tutBtnIconMesh.rotation.z = Math.PI / 2 - Math.PI / 12; // 75° CCW (90-15)
         window._tutBtnIconMesh.position.set(pauseIconX, yPos + 0.003, pauseZ);
         window._tutBtnIconMesh.renderOrder = 3;
         window._tutBtnIconMesh.visible = false;
@@ -10145,9 +10145,7 @@
       
       startKipp21(false);
       // Intro-Blur nur im normalen Spiel (Tutorial hat eigenen)
-      if (!window._tutorialRunning) {
-        showBlurHint(T.cIntro || 'Überbiete alle 6<br>Target-Karten um +1', 3500);
-      }
+      // Intro-Blur entfernt — Tutorial/Anleitung stattdessen
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
