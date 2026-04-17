@@ -10135,11 +10135,13 @@
       initScores3D();
       // BEREIT-Button jetzt zeigen
       // Pause deaktiviert — Anleitung-Button stattdessen
-      if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = true;
-      if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = true;
-      if (window._tutBtnIconMesh) window._tutBtnIconMesh.visible = true;
-      if (window._tutBtnTextMesh) window._tutBtnTextMesh.visible = true;
-      document.getElementById('btnBestScores').style.display = '';
+      if (!window._tutorialRunning) {
+        if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = true;
+        if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = true;
+        if (window._tutBtnIconMesh) window._tutBtnIconMesh.visible = true;
+        if (window._tutBtnTextMesh) window._tutBtnTextMesh.visible = true;
+      }
+      if (!window._tutorialRunning) document.getElementById('btnBestScores').style.display = '';
       
       startKipp21(false);
       // Intro-Blur nur im normalen Spiel (Tutorial hat eigenen)
