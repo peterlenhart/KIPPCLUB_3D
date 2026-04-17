@@ -10658,7 +10658,7 @@
       anlWrap.onclick = function() {
         var ovEl = document.getElementById('_bluffModeOverlay');
         if (ovEl) ovEl.remove();
-        showCardAnleitung();
+        showCardAnleitung('verdeckt');
       };
       btnRow.appendChild(anlWrap);
 
@@ -11494,7 +11494,7 @@
       })();
     }
 
-    function showCardAnleitung() {
+    function showCardAnleitung(directMode) {
       const old = document.getElementById('_cardAnleitungOverlay');
       if (old) old.remove();
 
@@ -11541,6 +11541,7 @@
 
       selectWrap.appendChild(makeBtn(T.cOffen || 'KIPP +1', '', () => showAnlContent('offen')));
       selectWrap.appendChild(makeBtn(T.cVerdeckt || 'KIPP MATCH', '', () => showAnlContent('verdeckt')));
+      if (directMode) { setTimeout(function(){ showAnlContent(directMode); }, 50); }
 
 
       const backBtn = document.createElement('button');
@@ -11559,7 +11560,6 @@
 
       function showAnlContent(mode) {
         selectWrap.remove();
-        backWrap.remove();
 
         const sections = mode === 'verdeckt'
           ? (T.cAnlSecV || T.cAnlSec || [])
@@ -11611,7 +11611,7 @@
           'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
-        okBtn.onclick = () => { ov.remove(); showCardAnleitung(); };
+        okBtn.onclick = () => { ov.remove(); };
         btnWrap2.appendChild(okBtn);
         ov.appendChild(btnWrap2);
       }
@@ -12600,7 +12600,7 @@
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
             (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
-          showCardAnleitung();
+          showCardAnleitung(window._cardMode || 'offen');
           lastTouchPos = null;
           return;
         }
@@ -12958,7 +12958,7 @@
       if (window._anlBtnIconMesh && window._anlBtnIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
             (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
-          showCardAnleitung();
+          showCardAnleitung(window._cardMode || 'offen');
           return;
         }
       }
