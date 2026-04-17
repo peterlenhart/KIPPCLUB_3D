@@ -10038,6 +10038,7 @@
     }
 
     function handleStart(withTutorial) {
+      if (window._tutorialSelectionActive) return;
       if (!texturesReady || _startBtnLock) return;
 
       if (_cardModePhase === 0) {
@@ -10107,7 +10108,9 @@
       e.preventDefault();
       handleStart(false);
     }, { passive: false });
+    window._tutorialSelectionActive = false;
     function showTutorialSelection() {
+      window._tutorialSelectionActive = true;
       var btnS = document.getElementById('btnSpielen');
       var btnD = document.getElementById('btnDemo');
       var btnA = document.getElementById('btnAnleitung');
@@ -10117,11 +10120,13 @@
       btnS.textContent = T.cOffen || 'KIPP +1';
       btnD.textContent = T.cVerdeckt || 'KIPP MATCH';
       btnS.onclick = function() {
+        window._tutorialSelectionActive = false;
         window._cardMode = 'offen';
         _cardModePhase = 1;
         runCardTutorial();
       };
       btnD.onclick = function() {
+        window._tutorialSelectionActive = false;
         window._cardMode = 'verdeckt';
         _cardModePhase = 1;
         startBluffSetzrunde();
