@@ -10091,13 +10091,7 @@
         runCardTutorial();
         return;
       }
-      if (window._menuSelState === 2) {
-        // KIPP +1 Anleitung
-        window._menuSelState = 0;
-        resetMenuButtons();
-        showCardAnleitung('offen');
-        return;
-      }
+
       if (!texturesReady || _startBtnLock) return;
 
       if (_cardModePhase === 0) {
@@ -10202,13 +10196,7 @@
         startBluffSetzrunde();
         return;
       }
-      if (window._menuSelState === 2) {
-        // KIPP MATCH Anleitung
-        window._menuSelState = 0;
-        resetMenuButtons();
-        showCardAnleitung('verdeckt');
-        return;
-      }
+
       if (_cardModePhase === 0) {
         showMenuSelection(1); // Tutorial-Auswahl
       } else {
@@ -10224,32 +10212,16 @@
         startBluffSetzrunde();
         return;
       }
-      if (window._menuSelState === 2) {
-        window._menuSelState = 0;
-        resetMenuButtons();
-        showCardAnleitung('verdeckt');
-        return;
-      }
+
       if (_cardModePhase === 0) {
         showMenuSelection(1);
       } else {
         showBluffModeSelection();
       }
     }, { passive: false });
-    document.getElementById('btnAnleitung').addEventListener('click', () => {
-      if (_cardModePhase === 0) {
-        showMenuSelection(2); // Anleitung-Auswahl
-      } else {
-        showCardAnleitung();
-      }
-    });
+    document.getElementById('btnAnleitung').addEventListener('click', () => showCardAnleitung());
     document.getElementById('btnAnleitung').addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (_cardModePhase === 0) {
-        showMenuSelection(2);
-      } else {
-        showCardAnleitung();
-      }
+      e.preventDefault(); showCardAnleitung();
     }, { passive: false });
 
     // Daily Challenge
@@ -11522,7 +11494,7 @@
       })();
     }
 
-    function showCardAnleitung(directMode) {
+    function showCardAnleitung() {
       const old = document.getElementById('_cardAnleitungOverlay');
       if (old) old.remove();
 
@@ -11567,9 +11539,9 @@
         return wrap;
       }
 
-      selectWrap.appendChild(makeBtn(T.cOffen || 'OFFEN', '', () => showAnlContent('offen')));
-      selectWrap.appendChild(makeBtn(T.cVerdeckt || 'VERDECKT', '', () => showAnlContent('verdeckt')));
-      if (directMode) { setTimeout(function(){ showAnlContent(directMode); }, 50); }
+      selectWrap.appendChild(makeBtn(T.cOffen || 'KIPP +1', '', () => showAnlContent('offen')));
+      selectWrap.appendChild(makeBtn(T.cVerdeckt || 'KIPP MATCH', '', () => showAnlContent('verdeckt')));
+
 
       const backBtn = document.createElement('button');
       backBtn.textContent = 'OK';
