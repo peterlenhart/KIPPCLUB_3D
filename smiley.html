@@ -5704,6 +5704,8 @@
         });
         _kombiHtml += '</div>';
         var _wasChallenge = (window._challengeTargetScore !== null && window._challengeTargetScore !== undefined);
+        var _sc = document.getElementById('spielzielContent');
+        if (_sc) _sc.style.paddingTop = _wasChallenge ? '100px' : '150px';
         var _cmpText = '';
         // Schwierigkeits-Label berechnen
         var _anspruchLabel = (_smileyMaxPoints <= 25) ? (T.cSehrleichtLc || 'sehr leicht')
@@ -5717,12 +5719,12 @@
           else if (_smileyTotalPoints === _ts) _resultLine = T.cEingestellt || 'Eingestellt';
           else _resultLine = T.cUebertroffen || '\u00dcbertroffen';
           _cmpText = '<span style="font-size:26px;font-weight:bold;">' + (T.cVorgabe||'Vorgabe') + ' ' + _ts + ' ' + (T.cPunkte||'Punkte') + '</span><br>' +
-            '<span style="font-size:20px;color:#2a5a1a;">(' + (T.cAnspruch||'Anspruch') + ': ' + _anspruchLabel + ')</span><br>' +
+            '<span style="font-size:20px;color:#2a5a1a;text-shadow:none;">(' + (T.cAnspruch||'Anspruch') + ': ' + _anspruchLabel + ')</span><br>' +
             '<span style="font-size:28px;font-weight:bold;">' + _resultLine + '</span>';
         }
         document.getElementById('spielzielLine2').innerHTML =
           '<div style="line-height:1.4;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;">' +
-          (_wasChallenge ? '<div style="margin-bottom:8px;">' + _cmpText + '</div>' : '<b style="font-size:28px;">' + (T.cEndTitel || 'Mit deiner SMILEY-KOMBI') + '</b><br><span style="font-size:20px;color:#2a5a1a;">(' + (T.cAnspruch||'Anspruch') + ': ' + _anspruchLabel + ')</span><br>') +
+          (_wasChallenge ? '<div style="margin-bottom:8px;">' + _cmpText + '</div>' : '<b style="font-size:28px;">' + (T.cEndTitel || 'Mit deiner SMILEY-KOMBI') + '</b><br><span style="font-size:20px;color:#2a5a1a;text-shadow:none;">(' + (T.cAnspruch||'Anspruch') + ': ' + _anspruchLabel + ')</span><br>') +
           _kombiHtml +
           '<b style="color:#FFD700;font-size:36px;">' + _smileyTotalPoints + ' ' + (T.cPunkte || 'Punkte') + ' ' + (T.cVon || 'von') + ' ' + _smileyMaxPoints + '</b></div>';
         let losBtn = document.getElementById('btnLosGehts');
@@ -5815,7 +5817,7 @@
               ctx.fillText(T.cBildTitel || 'Mit dieser SMILEY-KOMBI', 300, 90);
               // Anspruch-Zeile
               ctx.save();
-              ctx.font = 'italic 22px Arial';
+              ctx.font = 'italic 24px Arial';
               ctx.fillStyle = '#2a5a1a';
               ctx.shadowColor = 'transparent';
               ctx.shadowBlur = 0;
