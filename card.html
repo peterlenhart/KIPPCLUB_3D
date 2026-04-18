@@ -11561,7 +11561,9 @@
           btnD.style.opacity = '1';
           btnD.style.display = '';
           btnD.style.top = '561px';
-          btnD.onclick = function() {
+          btnD.onclick = function(ev) {
+            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+            if (ev && ev.preventDefault) ev.preventDefault();
             var shareText = buildMatchShareText(
               window._lastMatchModeLabel || '',
               window._lastMatchWinner || '',
@@ -11576,6 +11578,7 @@
                 setTimeout(function() { btnD.textContent = T.cTeilen || 'TEILEN'; }, 2000);
               }).catch(function(){});
             }
+            return false;
           };
 
           window._bluffNochmalActive = false;
@@ -11792,7 +11795,9 @@
           btnD.style.opacity = '1';
           btnD.style.display = '';
           btnD.style.top = '561px';
-          btnD.onclick = function() {
+          btnD.onclick = function(ev) {
+            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+            if (ev && ev.preventDefault) ev.preventDefault();
             var shareText = buildMatchShareText(
               window._lastMatchModeLabel || '',
               window._lastMatchWinner || '',
@@ -11807,6 +11812,7 @@
                 setTimeout(function() { btnD.textContent = T.cTeilen || 'TEILEN'; }, 2000);
               }).catch(function(){});
             }
+            return false;
           };
 
           window._bluffNochmalActive = false;
