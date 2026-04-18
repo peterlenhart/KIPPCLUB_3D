@@ -4959,20 +4959,20 @@
           if (fk) break;
         }
         if (!fk) return { x: 180, y: 360 };
-        // 3D-Position auf Würfeloberfläche
-        // f0 = +Z Seite, f1 = -X Seite, f2 = +Y Seite (Deckel)
+        // 3D-Position auf Würfeloberfläche (Three.js BoxGeometry UV-Mapping)
+        // f0 = matIdx4 (+Z), f1 = matIdx1 (-X), f2 = matIdx2 (+Y)
         var local = new THREE.Vector3();
         if (fk === 'f0') {
-          // +Z: col→X links→rechts, row→Y oben→unten
+          // +Z Seite: col→X (links→rechts), row→Y (oben→unten)
           local.set(-half + (col+0.5)*cellSz, half - (row+0.5)*cellSz, half);
         } else if (fk === 'f1') {
-          // -X: col→Z vorn→hinten, row→Y oben→unten
-          local.set(-half, half - (row+0.5)*cellSz, -half + (col+0.5)*cellSz);
+          // -X Seite: col→Z (links=+Z → rechts=-Z), row→Y (oben→unten)
+          local.set(-half, half - (row+0.5)*cellSz, half - (col+0.5)*cellSz);
         } else {
-          // +Y (Deckel): col→X links→rechts, row→Z vorn→hinten
-          local.set(-half + (col+0.5)*cellSz, half, -half + (row+0.5)*cellSz);
+          // +Y Deckel: col→X (links→rechts), row→Z (oben=+Z → unten=-Z)
+          local.set(-half + (col+0.5)*cellSz, half, half - (row+0.5)*cellSz);
         }
-        cube.updateMatrixWorld(true);
+        scene.updateMatrixWorld(true);
         var wp = cube.localToWorld(local.clone());
         wp.project(camera);
         return {
@@ -4983,13 +4983,23 @@
 
       // Ass finden
       var aceIdx = deck.indexOf(12);
-      console.log('[MATCH-TUT] Ace at deckIdx=' + aceIdx + ', deck=' + JSON.stringify(deck));
       var aceScreen = getSlotScreen(aceIdx);
+      console.log('[MATCH-TUT] Ace at deckIdx=' + aceIdx + ' aceScreen x=' + aceScreen.x + ' y=' + aceScreen.y);
+      // Debug-Punkt (roter Kreis an berechneter Position)
+      var dbgDot = document.createElement('div');
+      dbgDot.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);width:360px;height:0;z-index:999;pointer-events:none;';
+      var dot = document.createElement('div');
+      dot.style.cssText = 'position:absolute;width:16px;height:16px;border-radius:50%;background:red;border:2px solid yellow;' +
+        'left:' + (aceScreen.x - 8) + 'px;top:' + (aceScreen.y - 8) + 'px;';
+      dbgDot.appendChild(dot);
+      document.body.appendChild(dbgDot);
 
       // uiOverlay heben
       uiOv.style.zIndex = '200';
       uiOv.style.overflow = 'visible';
       replayActive = true;
+
+      setTimeout(function(){ if(dbgDot) dbgDot.remove(); }, 5000);
 
       // Hand fährt zum Ass-Slot
       setHandPos(aceScreen.x, 740);
