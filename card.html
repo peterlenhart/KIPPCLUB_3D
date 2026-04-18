@@ -4937,9 +4937,10 @@
 
       await sleep(300);
 
-      // Helper: Slot-Screen-Position via 3D-Projektion (exakt auch bei Eckblick)
+      // Helper: Slot-Screen-Position via 3D-Projektion
       function getSlotScreen(dIdx) {
         var half = 0.234375, cellSz = 0.15625;
+        // f0→matIdx4(+Z), f1→matIdx1(-X), f2→matIdx2(+Y)
         var fMap = {
           f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
           f1: [[4,'0,0'],[5,'0,1'],[6,'1,2'],[7,'2,2']],
@@ -4957,15 +4958,22 @@
           }
           if (fk) break;
         }
+        if (!fk) return { x: 180, y: 360 };
+        // 3D-Position auf Würfeloberfläche
+        // f0 = +Z Seite, f1 = -X Seite, f2 = +Y Seite (Deckel)
         var local = new THREE.Vector3();
         if (fk === 'f0') {
+          // +Z: col→X links→rechts, row→Y oben→unten
           local.set(-half + (col+0.5)*cellSz, half - (row+0.5)*cellSz, half);
         } else if (fk === 'f1') {
+          // -X: col→Z vorn→hinten, row→Y oben→unten
           local.set(-half, half - (row+0.5)*cellSz, -half + (col+0.5)*cellSz);
-        } else if (fk === 'f2') {
+        } else {
+          // +Y (Deckel): col→X links→rechts, row→Z vorn→hinten
           local.set(-half + (col+0.5)*cellSz, half, -half + (row+0.5)*cellSz);
         }
-        var wp = cube.localToWorld(local);
+        cube.updateMatrixWorld(true);
+        var wp = cube.localToWorld(local.clone());
         wp.project(camera);
         return {
           x: Math.round((wp.x * 0.5 + 0.5) * 360),
@@ -4975,6 +4983,7 @@
 
       // Ass finden
       var aceIdx = deck.indexOf(12);
+      console.log('[MATCH-TUT] Ace at deckIdx=' + aceIdx + ', deck=' + JSON.stringify(deck));
       var aceScreen = getSlotScreen(aceIdx);
 
       // uiOverlay heben
@@ -4989,25 +4998,32 @@
       await moveHandSmooth(aceScreen.x, aceScreen.y, 900);
       await sleep(400);
 
-      // Blur: alles außer Bereich um Ass
-      var blurOv = document.createElement('div');
-      blurOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
-        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
-        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
-      var cutW = 120, cutH = 120;
+      // Blur: 4 Streifen um den Ass-Bereich herum
+      var cutW = 130, cutH = 130;
       var cutX = aceScreen.x - cutW / 2;
       var cutY = aceScreen.y - cutH / 2;
-      var svgMask = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='" +
-        window.innerHeight + "'%3E%3Crect width='360' height='" + window.innerHeight +
-        "' fill='white'/%3E%3Crect x='" + cutX + "' y='" + cutY +
-        "' width='" + cutW + "' height='" + cutH + "' fill='black'/%3E%3C/svg%3E\")";
-      blurOv.style.maskImage = svgMask;
-      blurOv.style.webkitMaskImage = svgMask;
-      blurOv.style.maskSize = '100% 100%';
-      blurOv.style.webkitMaskSize = '100% 100%';
-      document.body.appendChild(blurOv);
-      requestAnimationFrame(function() { blurOv.style.opacity = '1'; });
+      var blurCSS = 'position:fixed;left:50%;transform:translateX(-50%);pointer-events:none;z-index:95;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+        'opacity:0;transition:opacity 0.5s ease;';
+      var blurParts = [];
+      // Oben
+      var bTop = document.createElement('div');
+      bTop.style.cssText = blurCSS + 'width:360px;top:0;height:' + Math.max(0,cutY) + 'px;';
+      document.body.appendChild(bTop); blurParts.push(bTop);
+      // Unten
+      var bBot = document.createElement('div');
+      bBot.style.cssText = blurCSS + 'width:360px;top:' + (cutY+cutH) + 'px;height:' + (window.innerHeight - cutY - cutH) + 'px;';
+      document.body.appendChild(bBot); blurParts.push(bBot);
+      // Links (zwischen oben und unten)
+      var bLeft = document.createElement('div');
+      bLeft.style.cssText = blurCSS + 'width:' + Math.max(0,cutX) + 'px;top:' + cutY + 'px;height:' + cutH + 'px;margin-left:-180px;';
+      document.body.appendChild(bLeft); blurParts.push(bLeft);
+      // Rechts
+      var bRight = document.createElement('div');
+      var rightX = cutX + cutW;
+      bRight.style.cssText = blurCSS + 'width:' + (360-rightX) + 'px;top:' + cutY + 'px;height:' + cutH + 'px;margin-left:' + (rightX-180) + 'px;';
+      document.body.appendChild(bRight); blurParts.push(bRight);
+      requestAnimationFrame(function() { blurParts.forEach(function(p){ p.style.opacity = '1'; }); });
       await sleep(600);
 
       // Hand kurz weg, Text einblenden
@@ -5069,9 +5085,9 @@
       await sleep(800);
 
       // Blur verschwindet
-      blurOv.style.opacity = '0';
+      blurParts.forEach(function(p){ p.style.opacity = '0'; });
       await sleep(500);
-      blurOv.remove();
+      blurParts.forEach(function(p){ p.remove(); });
 
       // Eckblick beenden (Slots verdecken) + Hand verschwindet gleichzeitig
       handEl.style.opacity = '0';
