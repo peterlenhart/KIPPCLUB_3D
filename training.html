@@ -967,6 +967,7 @@
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
   </style>
+  <script src="bgMusic.js"></script>
 </head>
 <body>
   <div id="container"></div>
@@ -2880,25 +2881,7 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('colorloop.mp3');
-    bgMusic.preload = 'auto';
-    bgMusic.loop = true;
-    bgMusic.volume = 0.35;
-    let bgMusicUnlocked = false;
-    
-    bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] colorloop.mp3 konnte nicht geladen werden!');
-    });
-    
-    // Sofort versuchen — klappt oft weil User per Tap von index.html kam
-    if (soundEnabled) {
-      bgMusic.play().then(() => {
-        bgMusicUnlocked = true;
-        console.log('[AUDIO] bgMusic autoplay success');
-      }).catch(() => {
-        console.log('[AUDIO] bgMusic autoplay blocked — waiting for touch');
-      });
-    }
+    // BG-Musik wird von bgMusic.js verwaltet (global: startBgMusic, stopBgMusic, onSoundToggle)
     
     // KlackCrop als AudioBuffer für präzises Timing (kein Latenz-Delay)
     let klackBuffer = null;
@@ -2932,68 +2915,8 @@
       src.start(0);
     }
     
-    function startBgMusic() {
-      if (!soundEnabled) return;
-      initAudioContext();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      bgMusic.currentTime = 0;
-      bgMusic.play().catch(() => {});
-    }
-    
-    function stopBgMusic() {
-      bgMusic.pause();
-      bgMusic.currentTime = 0;
-    }
-    
-    // Sound-Toggle: Musik sofort starten/stoppen
-    function onSoundToggle() {
-      if (soundEnabled) {
-        // Wie unlockAndPlayBgMusic — AudioContext + Play
-        initAudioContext();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        bgMusicUnlocked = true;
-        bgMusic.play().catch(() => {});
-      } else {
-        bgMusic.pause();
-      }
-    }
-    
-    // Erster User-Touch: AudioContext initialisieren + Musik starten (Browser-Policy)
-    function unlockAndPlayBgMusic() {
-      initAudioContext();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      audioCtxResumed = true;
-      if (!soundEnabled) return;
-      bgMusicUnlocked = true;
-      bgMusic.play().then(() => {
-        console.log('[AUDIO] bgMusic playing');
-      }).catch((err) => {
-        console.log('[AUDIO] bgMusic deferred:', err.message);
-        // Retry nach kurzem Delay
-        setTimeout(() => {
-          if (soundEnabled && bgMusic.paused && bgMusicUnlocked) {
-            bgMusic.play().catch(() => {});
-          }
-        }, 500);
-      });
-    }
-    // Falls play() fehlschlug weil Datei noch lädt
-    bgMusic.addEventListener('canplaythrough', () => {
-      if (soundEnabled && bgMusic.paused) {
-        bgMusic.play().then(() => {
-          bgMusicUnlocked = true;
-        }).catch(() => {});
-      }
-    });
-    // Erster Touch IRGENDWO: Audio unlocken (capture=true, damit stopPropagation nicht blockiert)
-    document.addEventListener('touchstart', function initOnTouch() {
-      unlockAndPlayBgMusic();
-      document.removeEventListener('touchstart', initOnTouch, true);
-    }, { once: true, capture: true });
-    document.addEventListener('click', function initOnClick() {
-      unlockAndPlayBgMusic();
-      document.removeEventListener('click', initOnClick, true);
-    }, { once: true, capture: true });
+    // BG-Musik-Funktionen (startBgMusic, stopBgMusic, onSoundToggle, unlockAndPlayBgMusic)
+    // sind global in bgMusic.js definiert.
     
     // WICHTIG: Button disabled bis Texturen geladen sind
     actionButton.disabled = true;
