@@ -3882,14 +3882,14 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('brainloop.mp3');
+    const bgMusic = new Audio('velvetloop.mp3');
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
     let bgMusicUnlocked = false;
     
     bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] brainloop.mp3 konnte nicht geladen werden!');
+      console.warn('[AUDIO] velvetloop.mp3 konnte nicht geladen werden!');
     });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
@@ -5042,7 +5042,9 @@
       await sleep(500);
       lineContainer.remove();
 
-      // === PHASE 2: Blur mit Box-Freistellung (wie +1 Tutorial) ===
+      // === PHASE 2: Alten Blur weg, neuer mit Box-Freistellung (wie +1) ===
+      blurOv.remove();
+
       var Y_box = 0.46875;
       var corners3D = [
         new THREE.Vector3(-0.46875, Y_box, -0.359375),
@@ -5058,14 +5060,27 @@
         };
       });
       var nw = corners2D[0], ne = corners2D[1], se = corners2D[2], sw = corners2D[3];
-      var outerPoly = '0px 0px, 360px 0px, 360px ' + window.innerHeight + 'px, 0px ' + window.innerHeight + 'px, 0px 0px';
+      var outerPoly = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
       var innerPoly = nw.x + 'px ' + nw.y + 'px, ' +
                       sw.x + 'px ' + sw.y + 'px, ' +
                       se.x + 'px ' + se.y + 'px, ' +
                       ne.x + 'px ' + ne.y + 'px, ' +
                       nw.x + 'px ' + nw.y + 'px';
-      blurOv.style.clipPath = 'polygon(' + outerPoly + ', ' + innerPoly + ')';
-      blurOv.style.webkitClipPath = blurOv.style.clipPath;
+
+      // Container mit Blur-Div, clip-path VON ANFANG AN gesetzt
+      var blurContainer = document.createElement('div');
+      blurContainer.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
+        'opacity:0;transition:opacity 0.4s ease;';
+      var blurDiv = document.createElement('div');
+      blurDiv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+        'clip-path:polygon(' + outerPoly + ', ' + innerPoly + ');' +
+        '-webkit-clip-path:polygon(' + outerPoly + ', ' + innerPoly + ');';
+      blurContainer.appendChild(blurDiv);
+      document.body.appendChild(blurContainer);
+      requestAnimationFrame(function() { blurContainer.style.opacity = '1'; });
+      blurOv = blurContainer; // für spätere Referenz (Ausblenden)
       await sleep(400);
 
       // === PHASE 3: Hand fährt zur Ass ===
