@@ -11510,8 +11510,13 @@
           if (sct) sct.style.display = 'none';
           overlay.style.display = 'block';
 
-          var btnS = document.getElementById('btnSpielen');
-          var btnD = document.getElementById('btnDemo');
+          var btnS_old = document.getElementById('btnSpielen');
+          var btnD_old = document.getElementById('btnDemo');
+          // Alte Listener entfernen durch Klonen
+          var btnS = btnS_old.cloneNode(true);
+          btnS_old.parentNode.replaceChild(btnS, btnS_old);
+          var btnD = btnD_old.cloneNode(true);
+          btnD_old.parentNode.replaceChild(btnD, btnD_old);
           var btnA = document.getElementById('btnAnleitung');
           var btnDy = document.getElementById('btnDaily');
           var btnKP = document.getElementById('btnKippPrinzip');
@@ -11744,8 +11749,13 @@
           if (sct) sct.style.display = 'none';
           overlay.style.display = 'block';
 
-          var btnS = document.getElementById('btnSpielen');
-          var btnD = document.getElementById('btnDemo');
+          var btnS_old = document.getElementById('btnSpielen');
+          var btnD_old = document.getElementById('btnDemo');
+          // Alte Listener entfernen durch Klonen
+          var btnS = btnS_old.cloneNode(true);
+          btnS_old.parentNode.replaceChild(btnS, btnS_old);
+          var btnD = btnD_old.cloneNode(true);
+          btnD_old.parentNode.replaceChild(btnD, btnD_old);
           var btnA = document.getElementById('btnAnleitung');
           var btnDy = document.getElementById('btnDaily');
           var btnKP = document.getElementById('btnKippPrinzip');
