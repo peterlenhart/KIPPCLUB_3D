@@ -4737,107 +4737,52 @@
       // Auswahlseite öffnen
       _cardModePhase = 1;
       showBluffModeSelection();
-      await new Promise(r => setTimeout(r, 400));
+      await sleep(400);
 
       // Tutorial/Anleitung-Zeile verstecken
       var btnRowEl = document.getElementById('_matchBtnRow');
       if (btnRowEl) btnRowEl.style.display = 'none';
 
-      // Overlay + Scroll-Container finden
+      // uiOverlay über die Auswahlseite heben
+      var uiOv = document.getElementById('uiOverlay');
+      var origZ = uiOv.style.zIndex;
+      var origOverflow = uiOv.style.overflow;
+      uiOv.style.zIndex = '200';
+      uiOv.style.overflow = 'visible';
+
+      // Replay-Infrastruktur wie in +1 Tutorial
+      initHandEl();
+      replayActive = true;
+
+      // PAAR-Button Koordinaten in uiOverlay-Space
       var ovEl = document.getElementById('_bluffModeOverlay');
-      if (!ovEl) return;
-      var scrollEl = ovEl.querySelector('[style*="overflow-y"]');
-      if (!scrollEl) return;
+      var uiRect = uiOv.getBoundingClientRect();
+      var paarRow = ovEl ? ovEl.querySelector('[data-mode-key="pair"]') : null;
+      var paarBtn = paarRow ? paarRow.querySelector('img[src="buttonquadr_card.webp"]') : null;
 
-      // Tutorial-Hand erstellen (2D, über dem Overlay)
-      var tHand = document.createElement('img');
-      tHand.src = 'handsilber.webp';
-      tHand.style.cssText = 'position:fixed;left:180px;top:' + window.innerHeight + 'px;' +
-        'width:60px;height:auto;pointer-events:none;z-index:200;opacity:0;' +
-        'transform:rotate(-75deg);transition:opacity 0.3s ease;';
-      document.body.appendChild(tHand);
-
-      // Helper: Hand bewegen (animiert)
-      function moveHand(x, y, durationMs) {
-        return new Promise(function(res) {
-          tHand.style.transition = 'left ' + durationMs + 'ms ease, top ' + durationMs + 'ms ease, opacity 0.3s ease';
-          tHand.style.left = x + 'px';
-          tHand.style.top = y + 'px';
-          setTimeout(res, durationMs);
-        });
+      if (!paarBtn) {
+        uiOv.style.zIndex = origZ; uiOv.style.overflow = origOverflow;
+        replayActive = false;
+        return;
       }
 
-      // Hand einblenden, von unten hochfahren
-      tHand.style.opacity = '1';
-      await new Promise(r => setTimeout(r, 100));
+      var btnRect = paarBtn.getBoundingClientRect();
+      var tapX = Math.round(btnRect.left - uiRect.left + btnRect.width / 2);
+      var tapY = Math.round(btnRect.top - uiRect.top + btnRect.height / 2);
 
-      // Scroll nach unten (alle Modi sichtbar)
-      var maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
-      if (maxScroll > 0) {
-        var scrollStart = scrollEl.scrollTop;
-        var scrollDist = maxScroll - scrollStart;
-        var scrollDur = 1200;
-        var scrollStartTime = Date.now();
-        await new Promise(function(res) {
-          function step() {
-            var elapsed = Date.now() - scrollStartTime;
-            var t = Math.min(1, elapsed / scrollDur);
-            t = t * t * (3 - 2 * t); // smoothstep
-            scrollEl.scrollTop = scrollStart + scrollDist * t;
-            if (t < 1) requestAnimationFrame(step);
-            else res();
-          }
-          step();
-        });
-        // Hand fährt parallel mit hoch
-        await moveHand(180, window.innerHeight * 0.7, 800);
-      }
-      await new Promise(r => setTimeout(r, 300));
+      // Hand tippt auf PAAR (Standard handTapFromSouth)
+      await handTapFromSouth(tapX, tapY, 600);
+      await sleep(200);
 
-      // Alle Modi-Rows finden
-      var rows = ovEl.querySelectorAll('[data-mode-key]');
-      if (!rows.length) { tHand.remove(); return; }
+      // uiOverlay zurücksetzen
+      uiOv.style.zIndex = origZ || '';
+      uiOv.style.overflow = origOverflow || 'hidden';
+      replayActive = false;
 
-      // Hand fährt suchend über die Modi (von unten nach oben)
-      for (var i = rows.length - 1; i >= 0; i--) {
-        var row = rows[i];
-        var rect = row.getBoundingClientRect();
-        var rowCenterY = rect.top + rect.height / 2;
-        var rowCenterX = rect.left + rect.width / 2;
-        await moveHand(rowCenterX - 30, rowCenterY - 15, 400);
-        await new Promise(r => setTimeout(r, 250));
-        if (row.dataset.modeKey === 'pair') break;
-      }
-
-      // Nochmal hoch scrollen damit PAAR gut sichtbar
-      var paarRow = ovEl.querySelector('[data-mode-key="pair"]');
-      if (paarRow) {
-        var paarRect = paarRow.getBoundingClientRect();
-        var paarBtn = paarRow.querySelector('img[src="buttonquadr_card.webp"]');
-        if (paarBtn) {
-          var btnRect = paarBtn.getBoundingClientRect();
-          // Hand zum Button bewegen
-          await moveHand(btnRect.left + btnRect.width / 2 - 30, btnRect.top + btnRect.height / 2 - 15, 400);
-          await new Promise(r => setTimeout(r, 300));
-
-          // Tap-Animation: kurz runter + hoch
-          var curTop = parseFloat(tHand.style.top);
-          tHand.style.transition = 'top 0.1s ease';
-          tHand.style.top = (curTop + 8) + 'px';
-          await new Promise(r => setTimeout(r, 120));
-          tHand.style.top = curTop + 'px';
-          await new Promise(r => setTimeout(r, 200));
-
-          // Hand ausblenden
-          tHand.style.opacity = '0';
-          await new Promise(r => setTimeout(r, 300));
-          tHand.remove();
-
-          // PAAR-Button klicken
-          paarBtn.click();
-        }
-      }
+      // PAAR-Button klicken
+      paarBtn.click();
     }
+
 
     async function runCardTutorial() {
       // Alte Instanz killen
