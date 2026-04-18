@@ -2880,14 +2880,14 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('numbersloop.mp3');
+    const bgMusic = new Audio('numbersloop.ogg');
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
     let bgMusicUnlocked = false;
     
     bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] numbersloop.mp3 konnte nicht geladen werden!');
+      console.warn('[AUDIO] numbersloop.ogg konnte nicht geladen werden!');
     });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
