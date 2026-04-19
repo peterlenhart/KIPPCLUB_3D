@@ -5335,22 +5335,8 @@
       var tapSX = aceSlotPos.x;
       var tapSY = aceSlotPos.y; // Hand genau auf Slot-Mitte
 
-      // === Freistellung: achsenparallele Pixel-Rechtecke (keine Perspektivverzerrung) ===
-      // Slot-Box: 45x45 Pixel um aceSlotPos zentriert
+      // === Ein 2x1-Rechteck im 3D-Raum (Slot-Zelle + Rahmen-Zelle östlich) ===
       renderer.render(scene, camera);
-      var cellPx = 45;
-      var halfCell = Math.round(cellPx / 2);
-
-      // Slot-Rechteck
-      var slotL = tapSX - halfCell;
-      var slotR = tapSX + halfCell;
-      var slotT = tapSY - halfCell;
-      var slotB = tapSY + halfCell;
-
-      // Rahmen-Zelle in 3D-Koordinaten: Mitte bei X=0.546875 (= 3.5 Zellen östlich, 
-      // eine halbe Zelle außerhalb der Box-Ostkante), Y=0.46875, Z = Slot-Zelle-Z
-      // Slot-Zelle-Z aus aceSlotPos via unprojection schwierig - stattdessen:
-      // Slot-Zelle-World-Z aus Face-Local ableiten (Wuerfel-Mitte liegt fest)
       var halfM = 0.234375, cellSzM = 0.15625;
       var fMapM = {
         f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
@@ -5369,34 +5355,45 @@
         }
         if (fkM) break;
       }
+      // Slot-Mitte in Face-Local -> World (fuer Z-Koordinate)
       var slotMidLocal = new THREE.Vector3();
       if (fkM === 'f0') slotMidLocal.set(-halfM + (colM+0.5)*cellSzM, halfM - (rowM+0.5)*cellSzM, halfM);
       else if (fkM === 'f1') slotMidLocal.set(-halfM, halfM - (rowM+0.5)*cellSzM, -halfM + (colM+0.5)*cellSzM);
       else slotMidLocal.set(-halfM + (colM+0.5)*cellSzM, halfM, -halfM + (rowM+0.5)*cellSzM);
       var slotMidWP = slotMidLocal.clone().applyMatrix4(cube.matrixWorld);
+      var slotX = slotMidWP.x;
       var slotZ = slotMidWP.z;
-      // Rahmen-Zelle auf Spieltisch: X=0.546875 (Mitte der Zelle ausserhalb Box-Ostkante), Y=0.46875, Z=slotZ
-      var frameMid3D = new THREE.Vector3(0.546875, 0.46875, slotZ);
-      var fMid = frameMid3D.clone().project(camera);
-      var fMidX = Math.round((fMid.x * 0.5 + 0.5) * 360);
-      var fMidY = Math.round((-fMid.y * 0.5 + 0.5) * 720);
-      var frameL = fMidX - halfCell;
-      var frameR = fMidX + halfCell;
-      var frameT = fMidY - halfCell;
-      var frameB = fMidY + halfCell;
+
+      // Ein zusammenhaengendes 2x1-Rechteck auf Spieltisch Y=0.46875:
+      //   X: slotX - 0.078125 (Slot-Westkante) bis 0.625 (Rahmen-Ostkante) = 2 Zellen
+      //   Z: slotZ ± 0.078125 = 1 Zelle
+      var recY = 0.46875;
+      var recXW = slotX - cellSzM / 2;  // 0.078125 = halbe Zelle
+      var recXE = 0.625;                 // Rahmen-Ostkante (4 Zellen östlich von Zentrum)
+      var recZN = slotZ - cellSzM / 2;
+      var recZS = slotZ + cellSzM / 2;
+      var rec3D = [
+        new THREE.Vector3(recXW, recY, recZN),  // NW
+        new THREE.Vector3(recXE, recY, recZN),  // NE
+        new THREE.Vector3(recXE, recY, recZS),  // SE
+        new THREE.Vector3(recXW, recY, recZS)   // SW
+      ];
+      var rec2D = rec3D.map(function(p) {
+        var v = p.clone().project(camera);
+        return { x: Math.round((v.x * 0.5 + 0.5) * 360),
+                 y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+      });
+      var rNW = rec2D[0], rNE = rec2D[1], rSE = rec2D[2], rSW = rec2D[3];
 
       var outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-      // Achsenparallele Rechtecke als Clip-Path-Löcher (Polygon CW)
-      var innerM = slotL + 'px ' + slotT + 'px, ' +
-                   slotL + 'px ' + slotB + 'px, ' +
-                   slotR + 'px ' + slotB + 'px, ' +
-                   slotR + 'px ' + slotT + 'px, ' +
-                   slotL + 'px ' + slotT + 'px';
-      var frameInnerM = frameL + 'px ' + frameT + 'px, ' +
-                        frameL + 'px ' + frameB + 'px, ' +
-                        frameR + 'px ' + frameB + 'px, ' +
-                        frameR + 'px ' + frameT + 'px, ' +
-                        frameL + 'px ' + frameT + 'px';
+      // Inner CW (entgegen outer CCW): NW -> SW -> SE -> NE -> NW
+      var innerM = rNW.x + 'px ' + rNW.y + 'px, ' +
+                   rSW.x + 'px ' + rSW.y + 'px, ' +
+                   rSE.x + 'px ' + rSE.y + 'px, ' +
+                   rNE.x + 'px ' + rNE.y + 'px, ' +
+                   rNW.x + 'px ' + rNW.y + 'px';
+      // Fuer Text-Positionierung: untere Kante des Rechtecks
+      var slotB = Math.max(rSW.y, rSE.y);
 
       var ltOv = document.createElement('div');
       ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -5405,8 +5402,8 @@
       var ltBlur = document.createElement('div');
       ltBlur.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
         'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
-        'clip-path:polygon(' + outerM + ', ' + innerM + ', ' + frameInnerM + ');' +
-        '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ', ' + frameInnerM + ');';
+        'clip-path:polygon(' + outerM + ', ' + innerM + ');' +
+        '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ');';
       ltOv.appendChild(ltBlur);
 
       // Text knapp unter dem freigestellten Bereich
