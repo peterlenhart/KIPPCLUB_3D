@@ -5865,6 +5865,27 @@
           window._matchScoreBank = 0;
           window._matchScorePlayer = 0;
           window._playedSlots = new Set();
+          
+          // +1 Target-Meshes EXPLIZIT ausblenden (dürfen nicht im Match auftauchen)
+          if (window._targetMeshes) {
+            for (var tk in window._targetMeshes) {
+              if (window._targetMeshes[tk]) window._targetMeshes[tk].visible = false;
+            }
+          }
+          if (window._suitMeshes) {
+            for (var sk in window._suitMeshes) {
+              if (window._suitMeshes[sk]) window._suitMeshes[sk].visible = false;
+            }
+          }
+          if (window._targetRankMesh) window._targetRankMesh.visible = false;
+          // +1 Pulse stoppen
+          if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
+          // +1 State zurücksetzen
+          if (window._cardTargetState) {
+            if (window._cardTargetState.usedNumbers) window._cardTargetState.usedNumbers.clear();
+            window._cardTargetState.currentTarget = null;
+          }
+          
           // Slots wieder alle sichtbar
           if (typeof faceSlots !== 'undefined' && faceSlots) {
             for (var fkT in faceSlots) {
