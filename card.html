@@ -5213,90 +5213,45 @@
       var suitColorKey = suitNameMap[pSuit] || 'violett';
       var suitDisplay = (T.cSuits && T.cSuits[suitColorKey]) || 'Pik';
 
-      // Blur-Container mit Box-Freistellung + Halbkarten-Freistellung
-      var Y_box6 = 0.46875;
-      var corners3D6 = [
-        new THREE.Vector3(-0.46875, Y_box6, -0.359375),
-        new THREE.Vector3( 0.46875, Y_box6, -0.359375),
-        new THREE.Vector3( 0.46875, Y_box6,  0.579875),
-        new THREE.Vector3(-0.46875, Y_box6,  0.579875)
-      ];
-      var corners2D6 = corners3D6.map(function(p) {
-        var v = p.clone().project(camera);
-        return { x: Math.round((v.x * 0.5 + 0.5) * 360),
-                 y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+      // === 3D-Dunkel-Plane mit Loch fuer Box-Innenflaeche ===
+      // Grosse Plane auf Spieltisch-Hoehe, Loch stanzen mit THREE.Shape + ShapeGeometry
+      var Y_plane = 0.46875 + 0.005; // Ueber Spieltisch, unter Karte (Karte liegt Y=0.46975+0.011=0.48075)
+      var shape6 = new THREE.Shape();
+      // Aeusseres Rechteck - gross genug um ganzes Spielfeld abzudecken
+      shape6.moveTo(-1.5, -1.5);
+      shape6.lineTo( 1.5, -1.5);
+      shape6.lineTo( 1.5,  1.5);
+      shape6.lineTo(-1.5,  1.5);
+      shape6.lineTo(-1.5, -1.5);
+      // Loch = Box-Innenflaeche (6x6 Zellen, Monge-Projektion)
+      var hole6 = new THREE.Path();
+      // Shape X/Y → werden bei rotation.x=-PI/2 zu X/Z in World
+      // Box: X ±0.46875, Z von -0.359375 bis 0.579875
+      // In Shape-Koordinaten (vor rotation): X bleibt X, Y wird Z aber invertiert
+      hole6.moveTo(-0.46875,  0.359375);
+      hole6.lineTo( 0.46875,  0.359375);
+      hole6.lineTo( 0.46875, -0.579875);
+      hole6.lineTo(-0.46875, -0.579875);
+      hole6.lineTo(-0.46875,  0.359375);
+      shape6.holes.push(hole6);
+      
+      var darkGeo6 = new THREE.ShapeGeometry(shape6);
+      var darkMat6 = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0, depthWrite: false
       });
-      var nw6 = corners2D6[0], ne6 = corners2D6[1], se6 = corners2D6[2], sw6 = corners2D6[3];
-
-      // Halbkarten-Position in 2D projizieren
-      var cardScreen = null;
-      if (pSlot && pSlot.mesh) {
-        renderer.render(scene, camera);
-        var cardMesh = pSlot.mesh;
-        var cardGeo = cardMesh.geometry.parameters;
-        var hw = cardGeo.width / 2, hh = cardGeo.height / 2;
-        // 4 Ecken des Karten-PlaneGeometry in lokaler Koordinate
-        var cardCorners = [
-          new THREE.Vector3(-hw, 0, -hh),
-          new THREE.Vector3( hw, 0, -hh),
-          new THREE.Vector3( hw, 0,  hh),
-          new THREE.Vector3(-hw, 0,  hh)
-        ];
-        var cardProj = cardCorners.map(function(p) {
-          var wp = p.clone().applyMatrix4(cardMesh.matrixWorld);
-          wp.project(camera);
-          return { x: Math.round((wp.x * 0.5 + 0.5) * 360),
-                   y: Math.round((-wp.y * 0.5 + 0.5) * 720) };
-        });
-        cardScreen = {
-          corners: cardProj,
-          centerX: Math.round((cardProj[0].x + cardProj[1].x + cardProj[2].x + cardProj[3].x) / 4),
-          centerY: Math.round((cardProj[0].y + cardProj[1].y + cardProj[2].y + cardProj[3].y) / 4)
-        };
-      }
-
-      var outerPoly6 = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-      var innerPoly6 = nw6.x + 'px ' + nw6.y + 'px, ' +
-                       sw6.x + 'px ' + sw6.y + 'px, ' +
-                       se6.x + 'px ' + se6.y + 'px, ' +
-                       ne6.x + 'px ' + ne6.y + 'px, ' +
-                       nw6.x + 'px ' + nw6.y + 'px';
-
-      var blurContainer6 = document.createElement('div');
-      blurContainer6.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
-        'opacity:0;transition:opacity 0.4s ease;';
-      var blurDiv6 = document.createElement('div');
-      blurDiv6.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
-        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
-        'clip-path:polygon(' + outerPoly6 + ', ' + innerPoly6 + ');' +
-        '-webkit-clip-path:polygon(' + outerPoly6 + ', ' + innerPoly6 + ');';
-      blurContainer6.appendChild(blurDiv6);
-
-      // 2D-Karte als Image ueber den Blur legen - garantiert sichtbar
-      var cardImgOv = null;
-      if (cardScreen) {
-        var cc = cardScreen.corners;
-        // Bounding-Box der projizierten 3D-Kartenecken
-        var minX = Math.min(cc[0].x, cc[1].x, cc[2].x, cc[3].x);
-        var maxX = Math.max(cc[0].x, cc[1].x, cc[2].x, cc[3].x);
-        var minY = Math.min(cc[0].y, cc[1].y, cc[2].y, cc[3].y);
-        var maxY = Math.max(cc[0].y, cc[1].y, cc[2].y, cc[3].y);
-        var cImgW = maxX - minX;
-        // Aspektverhaeltnis der Karte ist 196/280 (W/H) - also Hoehe = Breite * 280/196
-        var cImgH = Math.round(cImgW * 280 / 196);
-        // Vertikal verschoben: unten landet auf cardScreen.centerY
-        var cImgTop = cardScreen.centerY - Math.round(cImgH * 0.5);
-
-        cardImgOv = document.createElement('img');
-        cardImgOv.src = 'karte' + pSuit + '.webp';
-        cardImgOv.style.cssText = 'position:absolute;left:' + minX + 'px;top:' + cImgTop + 'px;' +
-          'width:' + cImgW + 'px;height:' + cImgH + 'px;pointer-events:none;' +
-          'filter:drop-shadow(0 4px 8px rgba(0,0,0,0.6));';
-        blurContainer6.appendChild(cardImgOv);
-      }
-      document.body.appendChild(blurContainer6);
-      requestAnimationFrame(function() { blurContainer6.style.opacity = '1'; });
+      var darkPlane6 = new THREE.Mesh(darkGeo6, darkMat6);
+      darkPlane6.rotation.x = -Math.PI / 2;
+      darkPlane6.position.set(0, Y_plane, 0);
+      darkPlane6.renderOrder = 20; // ueber Spieltisch (3), unter Karte (6)
+      scene.add(darkPlane6);
+      
+      // Fade-In der Dunkel-Plane
+      var fadeStart6 = performance.now();
+      (function fadeDark() {
+        var t = Math.min((performance.now() - fadeStart6) / 400, 1);
+        darkMat6.opacity = t * 0.7;
+        if (t < 1) requestAnimationFrame(fadeDark);
+      })();
       await sleep(400);
 
       // Textzeilen mittig, Hand fährt unter jeder Zeile entlang
@@ -5349,13 +5304,13 @@
       await sleep(500);
       lineContainer6.remove();
 
-      // Hand fährt zum Halbkarten-Symbol (auf die 2D-Image-Karte)
-      if (cardImgOv) {
-        var imgRect = cardImgOv.getBoundingClientRect();
-        var uiRect6b = uiOv.getBoundingClientRect();
-        // Ziel: linkes oberes Drittel der Karte (wo das grosse Suit-Symbol sitzt)
-        var targetX = Math.round(imgRect.left - uiRect6b.left + imgRect.width * 0.3);
-        var targetY = Math.round(imgRect.top - uiRect6b.top + imgRect.height * 0.35);
+      // Hand fährt zum Halbkarten-Symbol (ueber 3D-Projektion der Karte)
+      if (cardScreen) {
+        var cc2 = cardScreen.corners;
+        // Ziel: Symbol-Ecke (auf Kartenflaeche, nordwestliche Region wo das Suit-Symbol sitzt)
+        // In Kartenkoordinaten: etwa bei x=30%, y=30% von der Nordwest-Ecke
+        var targetX = Math.round(cc2[0].x + (cc2[1].x - cc2[0].x) * 0.3 + (cc2[3].x - cc2[0].x) * 0.3);
+        var targetY = Math.round(cc2[0].y + (cc2[1].y - cc2[0].y) * 0.3 + (cc2[3].y - cc2[0].y) * 0.3);
         setHandPos(targetX, 740);
         handEl.style.opacity = '1';
         updateHandShadow(targetX, 740, true);
@@ -5363,12 +5318,19 @@
         await sleep(1500);
       }
 
-      // Blur + Hand ausblenden
-      blurContainer6.style.opacity = '0';
+      // Dunkel-Plane + Hand ausblenden
+      var fadeOutStart6 = performance.now();
+      (function fadeDarkOut() {
+        var t = Math.min((performance.now() - fadeOutStart6) / 500, 1);
+        darkMat6.opacity = 0.7 * (1 - t);
+        if (t < 1) requestAnimationFrame(fadeDarkOut);
+      })();
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(600);
-      blurContainer6.remove();
+      scene.remove(darkPlane6);
+      darkGeo6.dispose();
+      darkMat6.dispose();
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
