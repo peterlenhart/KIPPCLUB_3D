@@ -5213,17 +5213,28 @@
       var suitColorKey = suitNameMap[pSuit] || 'violett';
       var suitDisplay = (T.cSuits && T.cSuits[suitColorKey]) || 'Pik';
 
-      // === 3D-Dunkel-Plane (wie showDarkHint / +1 Tutorial) ===
-      // Simple grosse Plane, niedriger renderOrder - Karten haben hoeheren renderOrder
-      // und bleiben dadurch sichtbar ueber der Dunkel-Plane
-      var darkGeo6 = new THREE.PlaneGeometry(1.5, 2.5);
+      // Playercard-Halbkarte ueber Dunkel-Plane heben (renderOrder hochsetzen)
+      var _origCardRO = null;
+      if (pSlot && pSlot.mesh) {
+        _origCardRO = pSlot.mesh.renderOrder;
+        pSlot.mesh.renderOrder = 30; // ueber Dunkel-Plane (20)
+      }
+      
+      // === 3D-Dunkel-Plane suedlich von Zeile 11 ===
+      // Zeile 11 Oberkante: Z = -0.359375 + 7 * 0.15625 = 0.734375
+      // Plane von Z=0.734375 bis weit suedlich (z.B. Z=2.0), volle Breite
+      var zRow11 = 0.734375;
+      var zFarSouth = 2.0;
+      var darkWidth = 3.0; // volle Breite
+      var darkDepth = zFarSouth - zRow11;
+      var darkGeo6 = new THREE.PlaneGeometry(darkWidth, darkDepth);
       var darkMat6 = new THREE.MeshBasicMaterial({
         color: 0x000000, transparent: true, opacity: 0, depthWrite: false
       });
       var darkPlane6 = new THREE.Mesh(darkGeo6, darkMat6);
       darkPlane6.rotation.x = -Math.PI / 2;
-      darkPlane6.position.set(0, 0.46975 + 0.003, 0.4);
-      darkPlane6.renderOrder = 2; // UNTER Karten (renderOrder 6-25)
+      darkPlane6.position.set(0, 0.46975 + 0.003, zRow11 + darkDepth/2);
+      darkPlane6.renderOrder = 20; // ueber Bankkarten (6)
       scene.add(darkPlane6);
       
       // Fade-In der Dunkel-Plane
@@ -5312,6 +5323,10 @@
       scene.remove(darkPlane6);
       darkGeo6.dispose();
       darkMat6.dispose();
+      // Playercard-renderOrder wiederherstellen
+      if (pSlot && pSlot.mesh && _origCardRO !== null) {
+        pSlot.mesh.renderOrder = _origCardRO;
+      }
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
