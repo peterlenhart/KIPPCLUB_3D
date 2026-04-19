@@ -5024,7 +5024,6 @@
         var aIdx = deck.indexOf(12);
         var aFace = (aIdx < 4) ? 'f0' : (aIdx < 8 ? 'f1' : 'f2');
         var aSlotName = 'S' + ((aIdx % 4) + 1);
-        // Ziel (nach 4 Kipps): topFace=aFace, Nachbarfarbe S<slot>=gruen (Karo)
         var targetCycleIdx = -1;
         for (var ci = 0; ci < 12; ci++) {
           var cQ = CW_CYCLE[ci][0], cF = CW_CYCLE[ci][1];
@@ -5032,22 +5031,14 @@
             targetCycleIdx = ci; break;
           }
         }
-        if (targetCycleIdx < 0) return; // Fallback: random
-        // Startposition = 4 Kipps rueckwaerts im Cycle
+        if (targetCycleIdx < 0) return;
         var startCycleIdx = (targetCycleIdx - 4 + 12) % 12;
-        // In BRAINY_CW_STATES: cwSteps ist der Cycle-Index relativ zu Q3/f2 (cwSteps=0)
-        // BRAINY_CW_STATES[i].cwSteps = i, und [q,face] matcht CW_CYCLE[i]
         var startState = BRAINY_CW_STATES[startCycleIdx];
-        // Nicht cwSteps=0 (das ist der originale Fallback, würde random sein)
         if (startState && startState.cwSteps !== 0) {
           window._tutForceFallState = startState;
-          console.log('[MATCH-TUT] Fall-Target: Q' + startState.q + '/' + startState.face + ' (cw=' + startState.cwSteps + ') -> 4 CW -> Ass Karo');
-        } else if (startState && startState.cwSteps === 0) {
-          // Sonderfall: Start == Original-Pose. Nimm cwSteps=12 equivalent (= cwSteps 0 + 12) gibt's nicht
-          // Ausweichen auf eine andere valide Position und passen Kipp-Zahl an? 
-          // Einfacher: BRAINY_CW_STATES[0] funktioniert nicht, daher diesen Fall nicht forcen
+          console.log('[MATCH-TUT] Fall-Target: Q' + startState.q + '/' + startState.face + ' -> 4 CW -> Ass Karo');
+        } else {
           window._tutForceFallState = BRAINY_CW_STATES[(startCycleIdx + 1) % 12];
-          window._tutExtraKipp = 1; // ein CW weniger nötig? Merke dir für später
         }
       })();
 
@@ -5411,7 +5402,18 @@
         return { x: Math.round((v.x * 0.5 + 0.5) * 360),
                  y: Math.round((-v.y * 0.5 + 0.5) * 720) };
       });
-      var r_nw = rec2D[0], r_ne = rec2D[1], r_se = rec2D[2], r_sw = rec2D[3];
+      // 8px Erweiterung nur in Rahmen-Richtung
+      var PAD = 8;
+      var padN = 0, padS = 0, padE = 0, padW = 0;
+      if (frameX <= -0.46875) padW = PAD;        // Rahmen West
+      else if (frameX >= 0.46875) padE = PAD;    // Rahmen Ost
+      else if (frameZ <= -0.359375) padN = PAD;  // Rahmen Nord
+      else padS = PAD;                            // Rahmen Süd
+      // Screen: Y-Achse invertiert (Nord=oben=kleineres Y)
+      var r_nw = { x: rec2D[0].x - padW, y: rec2D[0].y - padN };
+      var r_ne = { x: rec2D[1].x + padE, y: rec2D[1].y - padN };
+      var r_se = { x: rec2D[2].x + padE, y: rec2D[2].y + padS };
+      var r_sw = { x: rec2D[3].x - padW, y: rec2D[3].y + padS };
 
       var slotCx = aceSlotPos.x;
       var slotCy = aceSlotPos.y;
@@ -5484,6 +5486,277 @@
           faceAce.slotMap[sKeys[slotIdxInFace]].slotAlpha = 1;
           rebuildFaceMat(topFace, 1);
         }
+      }
+      
+      // 1 Sek warten, dann Kartenwert (Ass = 'A') auf Player-Halbkarte zeichnen
+      await sleep(1000);
+      if (pSlot && pSlot.mesh) {
+        var pcCanvas = document.createElement('canvas');
+        pcCanvas.width = 196; pcCanvas.height = 280;
+        var pcCtx = pcCanvas.getContext('2d');
+        var pcImg = new Image();
+        pcImg.onload = function() {
+          pcCtx.drawImage(pcImg, 0, 0, 196, 280);
+          pcCtx.font = '900 94px "Noto Serif"';
+          pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+          pcCtx.textAlign = 'center';
+          pcCtx.textBaseline = 'middle';
+          pcCtx.fillText('A', 98, 80);
+          var newTex = new THREE.CanvasTexture(pcCanvas);
+          pSlot.mesh.material.map = newTex;
+          pSlot.mesh.material.needsUpdate = true;
+        };
+        pcImg.src = 'karte' + pSlot.suit + '.webp';
+        pSlot.val = 12;
+        pSlot.filled = true;
+      }
+      await sleep(1500);
+
+      // === 2. RUNDE: Pik-Halbkarte ===
+      // 1. Karte bleibt liegen (mit Wert), 2. Karte (Pik) wird sichtbar
+      var pSlot2 = (window._bluffCardSlots && window._bluffCardSlots[1]) ? window._bluffCardSlots[1] : null;
+      if (pSlot2 && pSlot2.mesh) {
+        pSlot2.mesh.visible = true;
+        pSlot2.mesh.renderOrder = 30; // ueber Dunkel-Plane
+      }
+
+      // Fall-Position fuer Pik (Ziel-Nachbarfarbe = violett) - 2 CCW Kipps
+      (function computeTutFallState2(){
+        var aIdx = deck.indexOf(12);
+        var aFace = (aIdx < 4) ? 'f0' : (aIdx < 8 ? 'f1' : 'f2');
+        var aSlotName = 'S' + ((aIdx % 4) + 1);
+        var targetCycleIdx = -1;
+        for (var ci = 0; ci < 12; ci++) {
+          var cQ = CW_CYCLE[ci][0], cF = CW_CYCLE[ci][1];
+          if (cF === aFace && SLOT_NEIGHBOR_COLORS[cQ] && SLOT_NEIGHBOR_COLORS[cQ][aSlotName] === 'violett') {
+            targetCycleIdx = ci; break;
+          }
+        }
+        if (targetCycleIdx < 0) return;
+        // 2 CCW rueckwaerts
+        var startCycleIdx = (targetCycleIdx + 2) % 12;
+        var startState = BRAINY_CW_STATES[startCycleIdx];
+        if (startState && startState.cwSteps !== 0) {
+          window._tutForceFallState = startState;
+        } else {
+          window._tutForceFallState = BRAINY_CW_STATES[(startCycleIdx + 1) % 12];
+        }
+        console.log('[MATCH-TUT] 2. Karte Pik Fall-Target: Q' + window._tutForceFallState.q + '/' + window._tutForceFallState.face);
+      })();
+
+      // Eckblick + Kipp + Lang-tippen + Reveal fuer Pik
+      await sleep(500);
+      runKipp21EckblickKniff(true);
+      await new Promise(function(res) {
+        window._onEckblickRiseComplete = res;
+        setTimeout(res, 8000);
+      });
+      await sleep(300);
+
+      // Dunkel-Plane 2
+      var _origCardRO2 = null;
+      if (pSlot2 && pSlot2.mesh) {
+        _origCardRO2 = pSlot2.mesh.renderOrder;
+        pSlot2.mesh.renderOrder = 30;
+      }
+      var zRow11_2 = 0.734375;
+      var zFarSouth_2 = 2.0;
+      var darkWidth_2 = 3.0;
+      var darkDepth_2 = zFarSouth_2 - zRow11_2;
+      var darkGeo6_2 = new THREE.PlaneGeometry(darkWidth_2, darkDepth_2);
+      var darkMat6_2 = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0, depthWrite: false
+      });
+      var darkPlane6_2 = new THREE.Mesh(darkGeo6_2, darkMat6_2);
+      darkPlane6_2.rotation.x = -Math.PI / 2;
+      darkPlane6_2.position.set(0, 0.46975 + 0.003, zRow11_2 + darkDepth_2/2);
+      darkPlane6_2.renderOrder = 20;
+      scene.add(darkPlane6_2);
+      var fadeStart6_2 = performance.now();
+      (function fadeDark2() {
+        var t = Math.min((performance.now() - fadeStart6_2) / 400, 1);
+        darkMat6_2.opacity = t * 0.7;
+        if (t < 1) requestAnimationFrame(fadeDark2);
+      })();
+
+      // Hand zum Ass (Face-Local Slot des Ass im 2. Run)
+      var aceScreen2 = getSlotScreen(deck.indexOf(12));
+      setHandPos(aceScreen2.x, 740);
+      handEl.style.opacity = '1';
+      updateHandShadow(aceScreen2.x, 740, true);
+      await moveHandSmooth(aceScreen2.x, aceScreen2.y, 900);
+      await sleep(1200);
+
+      // Würfel senkt sich
+      kipp21KniffAbort = true;
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+
+      // Dark-Plane ausblenden
+      var fadeOut6_2 = performance.now();
+      (function fadeDarkOut2() {
+        var t = Math.min((performance.now() - fadeOut6_2) / 500, 1);
+        darkMat6_2.opacity = 0.7 * (1 - t);
+        if (t < 1) requestAnimationFrame(fadeDarkOut2);
+      })();
+      await sleep(600);
+      scene.remove(darkPlane6_2);
+      darkGeo6_2.dispose();
+      darkMat6_2.dispose();
+
+      // Warten bis Würfel unten
+      for (var _w5b = 0; _w5b < 50; _w5b++) {
+        if (!kipp21KniffActive) break;
+        await sleep(100);
+      }
+      await sleep(400);
+
+      // 2 CCW Kipps
+      _cardLockedDir = null;
+      await matchImpulsKipp('ccw');
+      if (!replayActive) { return; }
+      await matchImpulsKipp('ccw');
+      if (!replayActive) { return; }
+      await sleep(600);
+
+      // Lang-tippen Freistellung fuer Pik-Ass
+      var aceIdx2 = deck.indexOf(12);
+      var aceSlotPos2 = getSlotScreen(aceIdx2);
+      var tapSX2 = aceSlotPos2.x;
+      var tapSY2 = aceSlotPos2.y;
+
+      renderer.render(scene, camera);
+      var cellSz2 = 0.15625;
+      var hCell2 = cellSz2 / 2;
+      var faceOff_P2 = { f0: 0, f1: 4, f2: 8 };
+      var offP2 = faceOff_P2[topFace];
+      var aceSlotNameP2 = null;
+      for (var sP2b = 0; sP2b < 4; sP2b++) {
+        var slotNameP2 = 'S' + (sP2b + 1);
+        if (deck[offP2 + sP2b] === 12 && 
+            SLOT_NEIGHBOR_COLORS[currentQuadrant][slotNameP2] === 'violett') {
+          aceSlotNameP2 = slotNameP2;
+          break;
+        }
+      }
+      var gemKey2 = currentQuadrant + '_' + aceSlotNameP2;
+      var gemT2 = aceSlotNameP2 ? GEM_POSITIONS[gemKey2] : null;
+      
+      if (gemT2) {
+        var frameX2 = gemT2.x, frameZ2 = gemT2.z;
+        var slotXT2, slotZT2;
+        if (frameX2 <= -0.46875) { slotXT2 = frameX2 + cellSz2; slotZT2 = frameZ2; }
+        else if (frameX2 >= 0.46875) { slotXT2 = frameX2 - cellSz2; slotZT2 = frameZ2; }
+        else if (frameZ2 <= -0.359375) { slotXT2 = frameX2; slotZT2 = frameZ2 + cellSz2; }
+        else { slotXT2 = frameX2; slotZT2 = frameZ2 - cellSz2; }
+        
+        var rY2 = 0.46875;
+        var minX2 = Math.min(slotXT2, frameX2) - hCell2;
+        var maxX2 = Math.max(slotXT2, frameX2) + hCell2;
+        var minZ2 = Math.min(slotZT2, frameZ2) - hCell2;
+        var maxZ2 = Math.max(slotZT2, frameZ2) + hCell2;
+        var rec3D2 = [
+          new THREE.Vector3(minX2, rY2, minZ2),
+          new THREE.Vector3(maxX2, rY2, minZ2),
+          new THREE.Vector3(maxX2, rY2, maxZ2),
+          new THREE.Vector3(minX2, rY2, maxZ2)
+        ];
+        var rec2Db = rec3D2.map(function(p) {
+          var v = p.clone().project(camera);
+          return { x: Math.round((v.x * 0.5 + 0.5) * 360),
+                   y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+        });
+        var PAD2 = 8;
+        var padN2=0, padS2=0, padE2=0, padW2=0;
+        if (frameX2 <= -0.46875) padW2 = PAD2;
+        else if (frameX2 >= 0.46875) padE2 = PAD2;
+        else if (frameZ2 <= -0.359375) padN2 = PAD2;
+        else padS2 = PAD2;
+        var r_nw2 = { x: rec2Db[0].x - padW2, y: rec2Db[0].y - padN2 };
+        var r_ne2 = { x: rec2Db[1].x + padE2, y: rec2Db[1].y - padN2 };
+        var r_se2 = { x: rec2Db[2].x + padE2, y: rec2Db[2].y + padS2 };
+        var r_sw2 = { x: rec2Db[3].x - padW2, y: rec2Db[3].y + padS2 };
+        
+        var outerM2 = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+        var innerM2 = r_nw2.x+'px '+r_nw2.y+'px, '+
+                      r_sw2.x+'px '+r_sw2.y+'px, '+
+                      r_se2.x+'px '+r_se2.y+'px, '+
+                      r_ne2.x+'px '+r_ne2.y+'px, '+
+                      r_nw2.x+'px '+r_nw2.y+'px';
+        
+        var ltOv2 = document.createElement('div');
+        ltOv2.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+          'width:360px;height:' + window.innerHeight + 'px;z-index:100;pointer-events:none;' +
+          'opacity:0;transition:opacity 0.5s ease;';
+        var ltBlur2 = document.createElement('div');
+        ltBlur2.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+          'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+          'clip-path:polygon(' + outerM2 + ', ' + innerM2 + ');' +
+          '-webkit-clip-path:polygon(' + outerM2 + ', ' + innerM2 + ');';
+        ltOv2.appendChild(ltBlur2);
+        
+        var slotB2 = Math.max(r_se2.y, r_sw2.y);
+        var ltTxt2 = document.createElement('div');
+        ltTxt2.style.cssText = 'position:absolute;top:' + (slotB2 + 28) + 'px;left:50%;transform:translateX(-50%);' +
+          'font:bold 20px Arial;color:#cedb25;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;' +
+          'opacity:0;transition:opacity 0.3s ease;';
+        ltTxt2.textContent = T.cLongTap || 'Lang tippen';
+        ltOv2.appendChild(ltTxt2);
+        document.body.appendChild(ltOv2);
+        requestAnimationFrame(function() { ltOv2.style.opacity = '1'; });
+        
+        var SY_M2 = 740;
+        setHandPos(tapSX2, SY_M2);
+        handEl.style.opacity = '1';
+        updateHandShadow(tapSX2, SY_M2, true);
+        var moveP_M2 = moveHandSmooth(tapSX2, tapSY2, 900);
+        await sleep(400);
+        ltTxt2.style.opacity = '1';
+        await moveP_M2;
+        await sleep(1200);
+        ltOv2.style.opacity = '0';
+        await sleep(500);
+        ltOv2.remove();
+        await sleep(900);
+        await moveHandSmooth(tapSX2, SY_M2, 600);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(100);
+      }
+
+      // Slot 2 enthüllen
+      var faceAce2 = faceSlots[topFace];
+      if (faceAce2) {
+        var sKeys2 = Object.keys(faceAce2.slotMap);
+        var slotIdxInFace2 = aceIdx2 % 4;
+        if (slotIdxInFace2 < sKeys2.length) {
+          faceAce2.slotMap[sKeys2[slotIdxInFace2]].slotAlpha = 1;
+          rebuildFaceMat(topFace, 1);
+        }
+      }
+      await sleep(1000);
+      
+      // Wert (A) auf Pik-Halbkarte zeichnen
+      if (pSlot2 && pSlot2.mesh) {
+        var pcCanvas2 = document.createElement('canvas');
+        pcCanvas2.width = 196; pcCanvas2.height = 280;
+        var pcCtx2 = pcCanvas2.getContext('2d');
+        var pcImg2 = new Image();
+        pcImg2.onload = function() {
+          pcCtx2.drawImage(pcImg2, 0, 0, 196, 280);
+          pcCtx2.font = '900 94px "Noto Serif"';
+          pcCtx2.fillStyle = 'rgba(38, 77, 120, 1.0)';
+          pcCtx2.textAlign = 'center';
+          pcCtx2.textBaseline = 'middle';
+          pcCtx2.fillText('A', 98, 80);
+          var newTex2 = new THREE.CanvasTexture(pcCanvas2);
+          pSlot2.mesh.material.map = newTex2;
+          pSlot2.mesh.material.needsUpdate = true;
+        };
+        pcImg2.src = 'karte' + pSlot2.suit + '.webp';
+        pSlot2.val = 12;
+        pSlot2.filled = true;
       }
       await sleep(1500);
 
