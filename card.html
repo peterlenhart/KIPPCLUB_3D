@@ -5261,15 +5261,6 @@
                        se6.x + 'px ' + se6.y + 'px, ' +
                        ne6.x + 'px ' + ne6.y + 'px, ' +
                        nw6.x + 'px ' + nw6.y + 'px';
-      var cardPoly6 = '';
-      if (cardScreen) {
-        var cc = cardScreen.corners;
-        cardPoly6 = ', ' + cc[0].x + 'px ' + cc[0].y + 'px, ' +
-                    cc[3].x + 'px ' + cc[3].y + 'px, ' +
-                    cc[2].x + 'px ' + cc[2].y + 'px, ' +
-                    cc[1].x + 'px ' + cc[1].y + 'px, ' +
-                    cc[0].x + 'px ' + cc[0].y + 'px';
-      }
 
       var blurContainer6 = document.createElement('div');
       blurContainer6.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -5278,9 +5269,32 @@
       var blurDiv6 = document.createElement('div');
       blurDiv6.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
         'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
-        'clip-path:polygon(' + outerPoly6 + ', ' + innerPoly6 + cardPoly6 + ');' +
-        '-webkit-clip-path:polygon(' + outerPoly6 + ', ' + innerPoly6 + cardPoly6 + ');';
+        'clip-path:polygon(' + outerPoly6 + ', ' + innerPoly6 + ');' +
+        '-webkit-clip-path:polygon(' + outerPoly6 + ', ' + innerPoly6 + ');';
       blurContainer6.appendChild(blurDiv6);
+
+      // 2D-Karte als Image ueber den Blur legen - garantiert sichtbar
+      var cardImgOv = null;
+      if (cardScreen) {
+        var cc = cardScreen.corners;
+        // Bounding-Box der projizierten 3D-Kartenecken
+        var minX = Math.min(cc[0].x, cc[1].x, cc[2].x, cc[3].x);
+        var maxX = Math.max(cc[0].x, cc[1].x, cc[2].x, cc[3].x);
+        var minY = Math.min(cc[0].y, cc[1].y, cc[2].y, cc[3].y);
+        var maxY = Math.max(cc[0].y, cc[1].y, cc[2].y, cc[3].y);
+        var cImgW = maxX - minX;
+        // Aspektverhaeltnis der Karte ist 196/280 (W/H) - also Hoehe = Breite * 280/196
+        var cImgH = Math.round(cImgW * 280 / 196);
+        // Vertikal verschoben: unten landet auf cardScreen.centerY
+        var cImgTop = cardScreen.centerY - Math.round(cImgH * 0.5);
+
+        cardImgOv = document.createElement('img');
+        cardImgOv.src = 'karte' + pSuit + '.webp';
+        cardImgOv.style.cssText = 'position:absolute;left:' + minX + 'px;top:' + cImgTop + 'px;' +
+          'width:' + cImgW + 'px;height:' + cImgH + 'px;pointer-events:none;' +
+          'filter:drop-shadow(0 4px 8px rgba(0,0,0,0.6));';
+        blurContainer6.appendChild(cardImgOv);
+      }
       document.body.appendChild(blurContainer6);
       requestAnimationFrame(function() { blurContainer6.style.opacity = '1'; });
       await sleep(400);
@@ -5335,11 +5349,13 @@
       await sleep(500);
       lineContainer6.remove();
 
-      // Hand fährt zum Halbkarten-Symbol
-      if (cardScreen) {
-        // Ziel: Mitte der Karte, etwas nach oben links (wo typischerweise das Suit-Symbol sitzt)
-        var targetX = Math.round(cardScreen.corners[0].x + (cardScreen.corners[1].x - cardScreen.corners[0].x) * 0.25);
-        var targetY = Math.round(cardScreen.corners[0].y + (cardScreen.corners[3].y - cardScreen.corners[0].y) * 0.3);
+      // Hand fährt zum Halbkarten-Symbol (auf die 2D-Image-Karte)
+      if (cardImgOv) {
+        var imgRect = cardImgOv.getBoundingClientRect();
+        var uiRect6b = uiOv.getBoundingClientRect();
+        // Ziel: linkes oberes Drittel der Karte (wo das grosse Suit-Symbol sitzt)
+        var targetX = Math.round(imgRect.left - uiRect6b.left + imgRect.width * 0.3);
+        var targetY = Math.round(imgRect.top - uiRect6b.top + imgRect.height * 0.35);
         setHandPos(targetX, 740);
         handEl.style.opacity = '1';
         updateHandShadow(targetX, 740, true);
