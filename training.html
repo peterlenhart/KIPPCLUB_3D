@@ -2880,14 +2880,14 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('numbersloop.ogg');
+    const bgMusic = new Audio('kippclub.oga');
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
     let bgMusicUnlocked = false;
     
     bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] numbersloop.ogg konnte nicht geladen werden!');
+      console.warn('[AUDIO] kippclub.oga konnte nicht geladen werden!');
     });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
