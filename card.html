@@ -5608,8 +5608,11 @@
         if (t < 1) requestAnimationFrame(fadeDark2);
       })();
 
-      // Hand zum Ass (Face-Local Slot des Ass im 2. Run)
+      // Zusaetzlich warten bis Eckblick-Hebe-Animation sicher fertig ist
+      await sleep(500);
+      // Hand zum Ass - getSlotScreen erst JETZT berechnen, wenn Wuerfel stabil schwebt
       var aceScreen2 = getSlotScreen(deck.indexOf(12));
+      console.log('[MATCH-TUT-R2] aceScreen2=', aceScreen2.x, aceScreen2.y, ' topFace=', topFace, ' aceIdx=', deck.indexOf(12));
       setHandPos(aceScreen2.x, 740);
       handEl.style.opacity = '1';
       updateHandShadow(aceScreen2.x, 740, true);
@@ -5827,6 +5830,59 @@
           runShowdown(window._bluffSlideGroup);
         }
       }
+
+      // Auf Ergebnis-Anzeige warten (runShowdown hat eigene Timings),
+      // dann Buttons fuer Tutorial anpassen
+      await sleep(3500);
+      
+      // btnSpielen (NOCHMAL) → soll Tutorial erneut starten
+      // btnDemo (TEILEN) → soll verschwinden
+      var btnS_tut = document.getElementById('btnSpielen');
+      var btnD_tut = document.getElementById('btnDemo');
+      if (btnD_tut) btnD_tut.style.display = 'none';
+      if (btnS_tut) {
+        btnS_tut.textContent = T.cSpielen || 'SPIELEN';
+        btnS_tut.onclick = function() {
+          var ov = document.getElementById('startOverlay');
+          if (ov) ov.style.display = 'none';
+          // Alles aufräumen
+          if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+          if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
+          if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
+          if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(function(m){scene.remove(m)}); window._bluffCardMeshes = null; }
+          if (window._bluffCardSlots) { window._bluffCardSlots.forEach(function(s){if(s.mesh)scene.remove(s.mesh)}); window._bluffCardSlots = null; }
+          if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
+          if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
+          if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
+          if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
+          if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
+          if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
+          if (window._bluffNochmalBtn) { window._bluffNochmalBtn = null; }
+          if (window._bluffTeilenBtn) { window._bluffTeilenBtn = null; }
+          window._bluffShowdownActive = false;
+          window._bluffNochmalActive = false;
+          window._bluffTeilenActive = false;
+          window._matchScoreBank = 0;
+          window._matchScorePlayer = 0;
+          window._playedSlots = new Set();
+          // Slots wieder alle sichtbar
+          if (typeof faceSlots !== 'undefined' && faceSlots) {
+            for (var fkT in faceSlots) {
+              var fT = faceSlots[fkT];
+              if (fT && fT.slotMap) {
+                for (var kT in fT.slotMap) fT.slotMap[kT].slotAlpha = 1;
+                rebuildFaceMat(fkT, 1);
+              }
+            }
+          }
+          // TEILEN wieder einblenden + Reset-Top fuer normalen Spielflow
+          if (btnD_tut) { btnD_tut.style.display = ''; btnD_tut.style.top = '515px'; }
+          if (btnS_tut) { btnS_tut.style.top = '455px'; btnS_tut.textContent = T.splayen || 'SPIELEN'; }
+          // Tutorial erneut starten
+          runMatchTutorial();
+        };
+      }
+
       // JETZT erst Tutorial-Flags zurücksetzen
       replayActive = false;
       window._matchTutorialMode = false;
