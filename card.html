@@ -5213,36 +5213,17 @@
       var suitColorKey = suitNameMap[pSuit] || 'violett';
       var suitDisplay = (T.cSuits && T.cSuits[suitColorKey]) || 'Pik';
 
-      // === 3D-Dunkel-Plane mit Loch fuer Box-Innenflaeche ===
-      // Grosse Plane auf Spieltisch-Hoehe, Loch stanzen mit THREE.Shape + ShapeGeometry
-      var Y_plane = 0.46875 + 0.005; // Ueber Spieltisch, unter Karte (Karte liegt Y=0.46975+0.011=0.48075)
-      var shape6 = new THREE.Shape();
-      // Aeusseres Rechteck - gross genug um ganzes Spielfeld abzudecken
-      shape6.moveTo(-1.5, -1.5);
-      shape6.lineTo( 1.5, -1.5);
-      shape6.lineTo( 1.5,  1.5);
-      shape6.lineTo(-1.5,  1.5);
-      shape6.lineTo(-1.5, -1.5);
-      // Loch = Box-Innenflaeche (6x6 Zellen, Monge-Projektion)
-      var hole6 = new THREE.Path();
-      // Shape X/Y → werden bei rotation.x=-PI/2 zu X/Z in World
-      // Box: X ±0.46875, Z von -0.359375 bis 0.579875
-      // In Shape-Koordinaten (vor rotation): X bleibt X, Y wird Z aber invertiert
-      hole6.moveTo(-0.46875,  0.359375);
-      hole6.lineTo( 0.46875,  0.359375);
-      hole6.lineTo( 0.46875, -0.579875);
-      hole6.lineTo(-0.46875, -0.579875);
-      hole6.lineTo(-0.46875,  0.359375);
-      shape6.holes.push(hole6);
-      
-      var darkGeo6 = new THREE.ShapeGeometry(shape6);
+      // === 3D-Dunkel-Plane (wie showDarkHint / +1 Tutorial) ===
+      // Simple grosse Plane, niedriger renderOrder - Karten haben hoeheren renderOrder
+      // und bleiben dadurch sichtbar ueber der Dunkel-Plane
+      var darkGeo6 = new THREE.PlaneGeometry(1.5, 2.5);
       var darkMat6 = new THREE.MeshBasicMaterial({
         color: 0x000000, transparent: true, opacity: 0, depthWrite: false
       });
       var darkPlane6 = new THREE.Mesh(darkGeo6, darkMat6);
       darkPlane6.rotation.x = -Math.PI / 2;
-      darkPlane6.position.set(0, Y_plane, 0);
-      darkPlane6.renderOrder = 20; // ueber Spieltisch (3), unter Karte (6)
+      darkPlane6.position.set(0, 0.46975 + 0.003, 0.4);
+      darkPlane6.renderOrder = 2; // UNTER Karten (renderOrder 6-25)
       scene.add(darkPlane6);
       
       // Fade-In der Dunkel-Plane
