@@ -5355,14 +5355,10 @@
         }
         if (fkM) break;
       }
-      // === 2 achsenparallele 45x45 Pixel-Rechtecke (Tutorial hat fixe Positionen) ===
-      // Slot-Zelle: 45x45 um aceSlotPos (Slot-Mitte auf Wuerfel-Oberseite)
+      // === Ein 3D-Rechteck auf Spieltisch, umschliesst Slot-Zelle + Rahmen-Zelle ===
       renderer.render(scene, camera);
-      var cellPx45 = 45;
-      var halfPx = 22;
-      
-      var slotCx = aceSlotPos.x;
-      var slotCy = aceSlotPos.y;
+      var cellSz = 0.15625;
+      var hCell = cellSz / 2; // 0.078125
       
       // Treffer-Logik: Slot-Name finden
       var faceOff_P = { f0: 0, f1: 4, f2: 8 };
@@ -5376,32 +5372,58 @@
           break;
         }
       }
-      var hitT = aceSlotNameP ? HIT_TARGETS[currentQuadrant][aceSlotNameP] : null;
+      var gemKey = currentQuadrant + '_' + aceSlotNameP;
+      var gemT = aceSlotNameP ? GEM_POSITIONS[gemKey] : null;
       
-      // Rahmen-Zelle: 45x45 um projizierte Rahmen-Mitte
-      var frameCx = slotCx, frameCy = slotCy;
-      if (hitT) {
-        var fMid = new THREE.Vector3(hitT.x, 0.46875, hitT.z);
-        fMid.project(camera);
-        frameCx = Math.round((fMid.x * 0.5 + 0.5) * 360);
-        frameCy = Math.round((-fMid.y * 0.5 + 0.5) * 720);
+      // Slot-Mitte (auf Spieltisch-Hoehe, visuell unter Wuerfel-Slot):
+      // Rahmen-Mitte aus GEM_POSITIONS, Slot-Mitte ist 1 Zelle zur Box-Mitte hin
+      var frameX = gemT.x, frameZ = gemT.z;
+      var slotXT, slotZT;
+      // Richtung: welche Rahmenseite?
+      if (frameX <= -0.46875) { // West-Rahmen -> Slot 1 Zelle östlich
+        slotXT = frameX + cellSz;
+        slotZT = frameZ;
+      } else if (frameX >= 0.46875) { // Ost-Rahmen -> Slot 1 Zelle westlich
+        slotXT = frameX - cellSz;
+        slotZT = frameZ;
+      } else if (frameZ <= -0.359375) { // Nord-Rahmen -> Slot 1 Zelle südlich
+        slotXT = frameX;
+        slotZT = frameZ + cellSz;
+      } else { // Süd-Rahmen -> Slot 1 Zelle nördlich
+        slotXT = frameX;
+        slotZT = frameZ - cellSz;
       }
       
-      // 2 achsenparallele Rechtecke
-      var slotL = slotCx - halfPx, slotR = slotCx + halfPx;
-      var slotT_ = slotCy - halfPx, slotB = slotCy + halfPx;
-      var frL = frameCx - halfPx, frR = frameCx + halfPx;
-      var frT = frameCy - halfPx, frB = frameCy + halfPx;
+      // 4 Eckpunkte des umschliessenden Rechtecks auf Y=0.46875
+      var rY = 0.46875;
+      var minX = Math.min(slotXT, frameX) - hCell;
+      var maxX = Math.max(slotXT, frameX) + hCell;
+      var minZ = Math.min(slotZT, frameZ) - hCell;
+      var maxZ = Math.max(slotZT, frameZ) + hCell;
+      var rec3D = [
+        new THREE.Vector3(minX, rY, minZ),  // NW
+        new THREE.Vector3(maxX, rY, minZ),  // NE
+        new THREE.Vector3(maxX, rY, maxZ),  // SE
+        new THREE.Vector3(minX, rY, maxZ)   // SW
+      ];
+      var rec2D = rec3D.map(function(p) {
+        var v = p.clone().project(camera);
+        return { x: Math.round((v.x * 0.5 + 0.5) * 360),
+                 y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+      });
+      var r_nw = rec2D[0], r_ne = rec2D[1], r_se = rec2D[2], r_sw = rec2D[3];
 
+      var slotCx = aceSlotPos.x;
+      var slotCy = aceSlotPos.y;
+      var slotB = Math.max(r_se.y, r_sw.y);
+      
       var outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-      // Slot-Loch (CW entgegen outer CCW)
-      var slotInnerM = slotL+'px '+slotT_+'px, '+slotL+'px '+slotB+'px, '+
-                       slotR+'px '+slotB+'px, '+slotR+'px '+slotT_+'px, '+
-                       slotL+'px '+slotT_+'px';
-      var frameInnerM = frL+'px '+frT+'px, '+frL+'px '+frB+'px, '+
-                        frR+'px '+frB+'px, '+frR+'px '+frT+'px, '+
-                        frL+'px '+frT+'px';
-      var innerM = slotInnerM + ', ' + frameInnerM;
+      // Inner CW (entgegen outer CCW): NW -> SW -> SE -> NE -> NW
+      var innerM = r_nw.x+'px '+r_nw.y+'px, '+
+                   r_sw.x+'px '+r_sw.y+'px, '+
+                   r_se.x+'px '+r_se.y+'px, '+
+                   r_ne.x+'px '+r_ne.y+'px, '+
+                   r_nw.x+'px '+r_nw.y+'px';
 
       var ltOv = document.createElement('div');
       ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
