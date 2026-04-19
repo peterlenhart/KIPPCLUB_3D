@@ -5333,7 +5333,7 @@
       // aceIdx Slot-Screen-Position berechnen
       var aceSlotPos = getSlotScreen(aceIdx);
       var tapSX = aceSlotPos.x;
-      var tapSY = aceSlotPos.y + 22; // wie +1
+      var tapSY = aceSlotPos.y; // Hand genau auf Slot-Mitte
 
       // 4 Eckpunkte der Zelle auf dem Würfel (Face-Local) - für Clip-Path-Freistellung
       // Ziel: ein Rechteck auf dem Spieltisch (Y=0.46875) projizieren, das die Zelle einschließt
@@ -5388,12 +5388,44 @@
       });
       var nwM = c2dM[0], neM = c2dM[1], seM = c2dM[2], swM = c2dM[3];
 
+      // Zusaetzliche Rahmen-Zelle östlich auf dem Spieltisch projizieren
+      // World: X von 0.46875 bis 0.625 (1 Zelle breit), Z wie die Slot-Zeile, Y=0.46875 (Tisch)
+      // Z-Koordinate der Slot-Zeile ableiten aus der World-Z der Slot-Zelle (Mitte)
+      var slotMidWP = new THREE.Vector3();
+      if (fkM === 'f0') slotMidWP.set(-halfM + (colM+0.5)*cellSzM, halfM - (rowM+0.5)*cellSzM, halfM);
+      else if (fkM === 'f1') slotMidWP.set(-halfM, halfM - (rowM+0.5)*cellSzM, -halfM + (colM+0.5)*cellSzM);
+      else slotMidWP.set(-halfM + (colM+0.5)*cellSzM, halfM, -halfM + (rowM+0.5)*cellSzM);
+      slotMidWP.applyMatrix4(cube.matrixWorld);
+      // Z-Wert der Slot-Zelle in World
+      var slotZ = slotMidWP.z;
+      // Rahmen-Zelle: X=0.46875..0.625, Z=slotZ-0.078125..slotZ+0.078125, Y=0.46875
+      var frameY = 0.46875;
+      var frameCorners = [
+        new THREE.Vector3(0.46875, frameY, slotZ - 0.078125),  // NW
+        new THREE.Vector3(0.625,   frameY, slotZ - 0.078125),  // NE
+        new THREE.Vector3(0.625,   frameY, slotZ + 0.078125),  // SE
+        new THREE.Vector3(0.46875, frameY, slotZ + 0.078125)   // SW
+      ];
+      var frame2d = frameCorners.map(function(p) {
+        var v = p.clone().project(camera);
+        return {
+          x: Math.round((v.x * 0.5 + 0.5) * 360),
+          y: Math.round((-v.y * 0.5 + 0.5) * 720)
+        };
+      });
+      var fNW = frame2d[0], fNE = frame2d[1], fSE = frame2d[2], fSW = frame2d[3];
+
       var outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
       var innerM = nwM.x + 'px ' + nwM.y + 'px, ' +
                    swM.x + 'px ' + swM.y + 'px, ' +
                    seM.x + 'px ' + seM.y + 'px, ' +
                    neM.x + 'px ' + neM.y + 'px, ' +
                    nwM.x + 'px ' + nwM.y + 'px';
+      var frameInnerM = fNW.x + 'px ' + fNW.y + 'px, ' +
+                        fSW.x + 'px ' + fSW.y + 'px, ' +
+                        fSE.x + 'px ' + fSE.y + 'px, ' +
+                        fNE.x + 'px ' + fNE.y + 'px, ' +
+                        fNW.x + 'px ' + fNW.y + 'px';
 
       var ltOv = document.createElement('div');
       ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -5402,8 +5434,8 @@
       var ltBlur = document.createElement('div');
       ltBlur.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
         'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
-        'clip-path:polygon(' + outerM + ', ' + innerM + ');' +
-        '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ');';
+        'clip-path:polygon(' + outerM + ', ' + innerM + ', ' + frameInnerM + ');' +
+        '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ', ' + frameInnerM + ');';
       ltOv.appendChild(ltBlur);
 
       // Text knapp unter dem freigestellten Bereich
