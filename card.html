@@ -5329,6 +5329,134 @@
       await sleep(600);
       console.log('[MATCH-TUT] Kipp-Sequenz fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
 
+      // === PHASE 7: Lange-tippen-Erklärung (1:1 wie +1 Tut) ===
+      // aceIdx Slot-Screen-Position berechnen
+      var aceSlotPos = getSlotScreen(aceIdx);
+      var tapSX = aceSlotPos.x;
+      var tapSY = aceSlotPos.y + 22; // wie +1
+
+      // 4 Eckpunkte der Zelle auf dem Würfel (Face-Local) - für Clip-Path-Freistellung
+      // Ziel: ein Rechteck auf dem Spieltisch (Y=0.46875) projizieren, das die Zelle einschließt
+      // Dazu projizieren wir die 4 Wuerfel-Zellenecken in 2D - geht durch die Lufthoehe durch,
+      // aber fuer den Clip-Path passt das visuell.
+      var halfM = 0.234375, cellSzM = 0.15625;
+      // Face-lokale Slot-Koordinaten nochmal bestimmen
+      var fMapM = {
+        f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
+        f1: [[4,'0,0'],[5,'0,1'],[6,'1,2'],[7,'2,2']],
+        f2: [[8,'2,2'],[9,'2,1'],[10,'1,0'],[11,'0,0']]
+      };
+      var fkM, rowM = 0, colM = 0;
+      for (var fxM in fMapM) {
+        for (var iM = 0; iM < fMapM[fxM].length; iM++) {
+          if (fMapM[fxM][iM][0] === aceIdx) {
+            fkM = fxM;
+            var rcM = fMapM[fxM][iM][1].split(',').map(Number);
+            rowM = rcM[0]; colM = rcM[1];
+            break;
+          }
+        }
+        if (fkM) break;
+      }
+
+      // 4 Ecken der Zelle in Face-Local
+      function cellCorner(r, cc) {
+        var lc = new THREE.Vector3();
+        if (fkM === 'f0') {
+          lc.set(-halfM + cc*cellSzM, halfM - r*cellSzM, halfM);
+        } else if (fkM === 'f1') {
+          lc.set(-halfM, halfM - r*cellSzM, -halfM + cc*cellSzM);
+        } else {
+          lc.set(-halfM + cc*cellSzM, halfM, -halfM + r*cellSzM);
+        }
+        return lc;
+      }
+      renderer.render(scene, camera);
+      var cornersCell = [
+        cellCorner(rowM,     colM),     // NW
+        cellCorner(rowM,     colM + 1), // NE
+        cellCorner(rowM + 1, colM + 1), // SE
+        cellCorner(rowM + 1, colM)      // SW
+      ];
+      var c2dM = cornersCell.map(function(p) {
+        var wp = p.clone().applyMatrix4(cube.matrixWorld);
+        wp.project(camera);
+        return {
+          x: Math.round((wp.x * 0.5 + 0.5) * 360),
+          y: Math.round((-wp.y * 0.5 + 0.5) * 720)
+        };
+      });
+      var nwM = c2dM[0], neM = c2dM[1], seM = c2dM[2], swM = c2dM[3];
+
+      var outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+      var innerM = nwM.x + 'px ' + nwM.y + 'px, ' +
+                   swM.x + 'px ' + swM.y + 'px, ' +
+                   seM.x + 'px ' + seM.y + 'px, ' +
+                   neM.x + 'px ' + neM.y + 'px, ' +
+                   nwM.x + 'px ' + nwM.y + 'px';
+
+      var ltOv = document.createElement('div');
+      ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:100;pointer-events:none;' +
+        'opacity:0;transition:opacity 0.5s ease;';
+      var ltBlur = document.createElement('div');
+      ltBlur.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+        'clip-path:polygon(' + outerM + ', ' + innerM + ');' +
+        '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ');';
+      ltOv.appendChild(ltBlur);
+
+      // Text knapp unter dem freigestellten Bereich
+      var textBelow = Math.max(seM.y, swM.y) + 28;
+      var ltTxt = document.createElement('div');
+      ltTxt.style.cssText = 'position:absolute;top:' + textBelow + 'px;left:50%;transform:translateX(-50%);' +
+        'font:bold 20px Arial;color:#cedb25;' +
+        'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;' +
+        'opacity:0;transition:opacity 0.3s ease;';
+      ltTxt.textContent = T.cLongTap || 'Lang tippen';
+      ltOv.appendChild(ltTxt);
+
+      document.body.appendChild(ltOv);
+      requestAnimationFrame(function() { ltOv.style.opacity = '1'; });
+
+      // Hand von unten zum Slot
+      var SY_M = 740;
+      setHandPos(tapSX, SY_M);
+      handEl.style.opacity = '1';
+      updateHandShadow(tapSX, SY_M, true);
+
+      var moveP_M = moveHandSmooth(tapSX, tapSY, 900);
+      await sleep(400);
+      ltTxt.style.opacity = '1';
+      await moveP_M;
+
+      // Hand hält auf Slot
+      await sleep(1200);
+
+      // Blur + Text ausblenden
+      ltOv.style.opacity = '0';
+      await sleep(500);
+      ltOv.remove();
+
+      // Hand hält weiter (Long-tap), dann zurück
+      await sleep(900);
+      await moveHandSmooth(tapSX, SY_M, 600);
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      await sleep(100);
+
+      // Slot enthuellen: Ass-Wert sichtbar machen
+      var faceAce = faceSlots[topFace];
+      if (faceAce) {
+        var sKeys = Object.keys(faceAce.slotMap);
+        var slotIdxInFace = aceIdx % 4;
+        if (slotIdxInFace < sKeys.length) {
+          faceAce.slotMap[sKeys[slotIdxInFace]].slotAlpha = 1;
+          rebuildFaceMat(topFace, 1);
+        }
+      }
+      await sleep(1500);
+
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
       if (_rbWrap2) _rbWrap2.style.zIndex = _origRbZ2 || '';
