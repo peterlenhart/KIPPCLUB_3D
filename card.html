@@ -5102,10 +5102,14 @@
       for (var ti = 0; ti < tutLines4.length; ti++) {
         if (!replayActive) break;
         var lineDiv = document.createElement('div');
-        lineDiv.style.cssText = 'font:bold 22px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.9);' +
+        // Wrapper damit der Inhalt mittig bleibt, aber inner-div nur Text-Breite hat
+        var lineWrap = document.createElement('div');
+        lineWrap.style.cssText = 'text-align:center;';
+        lineDiv.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.9);' +
           'letter-spacing:1.5px;line-height:1.8;opacity:0;transition:opacity 0.4s ease;';
         lineDiv.textContent = tutLines4[ti];
-        lineContainer.appendChild(lineDiv);
+        lineWrap.appendChild(lineDiv);
+        lineContainer.appendChild(lineWrap);
         await sleep(150);
         lineDiv.style.opacity = '1';
 
@@ -11389,10 +11393,7 @@
           if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
           if (window._tutBtnIconMesh) window._tutBtnIconMesh.visible = false;
           if (window._tutBtnTextMesh) window._tutBtnTextMesh.visible = false;
-          if (window._matchTutorialMode) {
-            document.getElementById('resetButton').style.display = 'none';
-            document.getElementById('resetButtonWrap').style.display = 'none';
-          }
+          // Tutorial: resetButtonWrap sichtbar lassen (User soll Zurueck/Sound nutzen können)
           // Farbvorgabe-Karten generieren
           const suits = ['herz', 'karo', 'kreuz', 'pik'];
           window._bluffCardSlots = [];
