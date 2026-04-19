@@ -4807,7 +4807,24 @@
 
     async function runMatchTutorial() {
       window._matchTutorialMode = true;
-      
+
+      // === TUTORIAL-DETERMINISMUS ===
+      // Deck so gestalten dass nach 4 CW Kipps von Q3/f2 -> Q3/f0 das Ass (12) oben
+      // auf f0/S2 liegt. deck[0..3]=f0, also deck[1] (= f0/S2) = 12
+      // Andere Werte aufsteigend auffuellen
+      deck = [2, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1];
+      visibleDeckIndices = new Set([0,1,2,3,4,5,6,7,8,9,10,11]);
+      // Wuerfel auf Startzustand (Q3/f2)
+      currentQuadrant = 3;
+      topFace = 'f2';
+
+      // generateModeSuits fuer Tutorial erzwingen: 1.Karte=Karo, 2.Karte=Pik
+      var _origGenModeSuits = window.generateModeSuits || generateModeSuits;
+      window.generateModeSuits = function(modeKey, numCards) {
+        if (modeKey === 'pair') return ['karo', 'pik'];
+        return _origGenModeSuits(modeKey, numCards);
+      };
+
       // Auswahlseite öffnen
       _cardModePhase = 1;
       showBluffModeSelection();
@@ -5216,54 +5233,17 @@
       }
       await sleep(400);
 
-      // === PHASE 6: Auto-Kipp-Sequenz bis Ass auf richtiger Farbe liegt ===
-      // Halbkarten-Farbe -> Zielfarbe (Nachbarfarbe die das Ass zeigen muss)
-      var _suitToColor = { herz: 'blau', karo: 'gruen', kreuz: 'orange', pik: 'violett' };
-      var targetColor = _suitToColor[pSuit] || 'violett';
-      
-      // Welche Face enthaelt das Ass?
-      var aceFace = (aceIdx < 4) ? 'f0' : (aceIdx < 8 ? 'f1' : 'f2');
-      // Welcher Slot auf der Face? (S1=idx0..S4=idx3 im Face-Offset)
-      var aceSlotNum = aceIdx % 4; // 0..3
-      var aceSlotName = 'S' + (aceSlotNum + 1); // 'S1'..'S4'
-      console.log('[MATCH-TUT] Ass: Face=' + aceFace + ' Slot=' + aceSlotName + ' Zielfarbe=' + targetColor);
-      
-      // Durch alle 12 CW_CYCLE-Zustaende gehen: finde jenen bei dem
-      // - topFace == aceFace (Ass oben)
-      // - SLOT_NEIGHBOR_COLORS[Q][aceSlotName] == targetColor
-      var targetCycleIdx = -1;
-      for (var ci = 0; ci < 12; ci++) {
-        var cQ = CW_CYCLE[ci][0];
-        var cF = CW_CYCLE[ci][1];
-        if (cF === aceFace) {
-          var nColor = SLOT_NEIGHBOR_COLORS[cQ] && SLOT_NEIGHBOR_COLORS[cQ][aceSlotName];
-          if (nColor === targetColor) {
-            targetCycleIdx = ci;
-            break;
-          }
-        }
-      }
-      console.log('[MATCH-TUT] Ziel-Cycle-Idx=' + targetCycleIdx);
-      
-      // CW-Distanz vom aktuellen Zustand zum Ziel berechnen
-      var curIdx = stateIndex(currentQuadrant, topFace);
-      var cwDist = (targetCycleIdx - curIdx + 12) % 12;
-      var ccwDist = 12 - cwDist;
-      // Kuerzere Richtung waehlen
-      var useDir, numKipps;
-      if (cwDist <= ccwDist) { useDir = 'cw'; numKipps = cwDist; }
-      else { useDir = 'ccw'; numKipps = ccwDist; }
-      console.log('[MATCH-TUT] curIdx=' + curIdx + ' cwDist=' + cwDist + ' ccwDist=' + ccwDist + ' -> ' + numKipps + ' Kipps ' + useDir);
-      
-      // Kippen
-      for (var kk = 0; kk < numKipps; kk++) {
+      // === PHASE 6: Fixe 4-CW-Kipp-Sequenz (wie +1 Tutorial) ===
+      // Start: Q3/f2. Nach 4 CW Kipps: Q3/f0. deck[1]=12 -> Ass oben auf S2/Q3 (gruen=Karo)
+      var KIPP_DUR_M = 1000;
+      for (var kk = 0; kk < 4; kk++) {
         if (!replayActive) break;
-        var kDir = (useDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
-        kippDirection = useDir;
-        await handKippAnim(kDir, 900);
-        await sleep(200);
+        var kDir = CW_KIPP[currentQuadrant];
+        kippDirection = 'cw';
+        await handKippAnim(kDir, KIPP_DUR_M);
+        if (kk < 3) await sleep(40);
       }
-      console.log('[MATCH-TUT] Auto-Kipp fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
+      console.log('[MATCH-TUT] 4 CW Kipps fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
@@ -5271,6 +5251,10 @@
       if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
       replayActive = false;
       window._matchTutorialMode = false;
+      // generateModeSuits wiederherstellen
+      if (typeof _origGenModeSuits === 'function') {
+        window.generateModeSuits = _origGenModeSuits;
+      }
     }
 
 
