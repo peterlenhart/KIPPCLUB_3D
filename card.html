@@ -5068,9 +5068,12 @@
       var aceIdx = deck.indexOf(12);
       console.log('[MATCH-TUT] Ace at deckIdx=' + aceIdx);
 
-      // uiOverlay heben
+      // uiOverlay heben (ohne overflow:visible - das verursacht seitliches Ruckeln)
       uiOv.style.zIndex = '200';
-      uiOv.style.overflow = 'visible';
+      // resetButtonWrap ueber das uiOverlay heben damit Zurueck+Sound sichtbar bleiben
+      var _rbWrap2 = document.getElementById('resetButtonWrap');
+      var _origRbZ2 = _rbWrap2 ? _rbWrap2.style.zIndex : '';
+      if (_rbWrap2) _rbWrap2.style.zIndex = '250';
       replayActive = true;
 
       // === PHASE 1: Voller Blur + Text mit Hand lesen ===
@@ -5192,6 +5195,7 @@
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
+      if (_rbWrap2) _rbWrap2.style.zIndex = _origRbZ2 || '';
       if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
       replayActive = false;
       window._matchTutorialMode = false;
