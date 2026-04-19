@@ -5544,6 +5544,24 @@
         console.log('[MATCH-TUT] 2. Karte Pik Fall-Target: Q' + window._tutForceFallState.q + '/' + window._tutForceFallState.face);
       })();
 
+      // Alle Slots auf allen 3 Faces wieder aufdecken (slotAlpha=1) vor Eckblick
+      var _fBaseR2 = { f0: 0, f1: 4, f2: 8 };
+      for (var _fkR2 = 0; _fkR2 < 3; _fkR2++) {
+        var _fK = ['f0','f1','f2'][_fkR2];
+        var _fR2 = faceSlots[_fK];
+        if (_fR2) {
+          var _baseR2 = _fBaseR2[_fK];
+          var _siR2 = 0;
+          for (var _kR2 in _fR2.slotMap) {
+            if (!window._playedSlots || !window._playedSlots.has(_baseR2 + _siR2)) {
+              _fR2.slotMap[_kR2].slotAlpha = 1;
+            }
+            _siR2++;
+          }
+          rebuildFaceMat(_fK, 1);
+        }
+      }
+
       // Eckblick + Kipp + Lang-tippen + Reveal fuer Pik
       await sleep(500);
       runKipp21EckblickKniff(true);
@@ -5760,7 +5778,49 @@
       }
       await sleep(1500);
 
+      // === Tutorial-Overrides zurücksetzen, damit Spiel normal weiterläuft ===
       uiOv.style.zIndex = origZ || '';
+      uiOv.style.overflow = origOverflow || 'hidden';
+      if (_rbWrap2) _rbWrap2.style.zIndex = _origRbZ2 || '';
+      if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
+      replayActive = false;
+      window._matchTutorialMode = false;
+      window._tutForceFallState = null;
+      window._tutExtraKipp = 0;
+      if (typeof _origGenModeSuits === 'function') {
+        window.generateModeSuits = _origGenModeSuits;
+      }
+
+      // === Spielablauf: Setzrunde starten (Slide nordwärts + SHOWDOWN-Button) ===
+      startBluffSetzrunde();
+
+      // Warten bis Slide fertig (1200ms) + SHOWDOWN-Btn erzeugt (buttonfilz.webp load)
+      await sleep(1800);
+      for (var _wsd = 0; _wsd < 30; _wsd++) {
+        if (window._bluffShowdownBtn && window._bluffShowdownActive) break;
+        await sleep(100);
+      }
+
+      // Hand-Tap von Süden auf SHOWDOWN-Button (3D-Position -> Screen)
+      if (window._bluffShowdownBtn && window._bluffShowdownActive) {
+        var btnPos = new THREE.Vector3();
+        window._bluffShowdownBtn.getWorldPosition(btnPos);
+        btnPos.project(camera);
+        var sdX = Math.round((btnPos.x * 0.5 + 0.5) * 360);
+        var sdY = Math.round((-btnPos.y * 0.5 + 0.5) * 720);
+        await handTapFromSouth(sdX, sdY, 600);
+        await sleep(200);
+        // Klick simulieren
+        window._bluffShowdownActive = false;
+        window._bluffShowdownBtn.visible = false;
+        if (typeof runShowdown === 'function') {
+          runShowdown(window._bluffSlideGroup);
+        }
+      }
+      return;
+      // (alter Cleanup unten wird nicht mehr erreicht)
+
+      var _unused_z = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
       if (_rbWrap2) _rbWrap2.style.zIndex = _origRbZ2 || '';
       if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
