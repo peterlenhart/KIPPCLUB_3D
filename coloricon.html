@@ -2970,14 +2970,14 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('clementine.mp3');
+    const bgMusic = new Audio('clementine.oga');
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
     let bgMusicUnlocked = false;
     
     bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] clementine.mp3 konnte nicht geladen werden!');
+      console.warn('[AUDIO] clementine.oga konnte nicht geladen werden!');
     });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
