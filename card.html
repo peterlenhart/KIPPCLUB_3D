@@ -5073,6 +5073,9 @@
       var aceIdx = deck.indexOf(12);
       console.log('[MATCH-TUT] Ace at deckIdx=' + aceIdx);
 
+      // Halbkarte fuer spaeter (wird in Phase 2 benoetigt)
+      var pSlot = (window._bluffCardSlots && window._bluffCardSlots[0]) ? window._bluffCardSlots[0] : null;
+
       // uiOverlay heben (ohne overflow:visible - das verursacht seitliches Ruckeln)
       uiOv.style.zIndex = '200';
       // resetButtonWrap ueber das uiOverlay heben damit Zurueck+Sound sichtbar bleiben
@@ -5142,45 +5145,39 @@
       await sleep(500);
       lineContainer.remove();
 
-      // === PHASE 2: Alten Blur weg, neuer mit Box-Freistellung (wie +1) ===
+      // === PHASE 2: 2D-Blur weg, 3D-Dunkel-Plane ab Zeile 11 ===
       blurOv.remove();
 
-      var Y_box = 0.46875;
-      var corners3D = [
-        new THREE.Vector3(-0.46875, Y_box, -0.359375),
-        new THREE.Vector3( 0.46875, Y_box, -0.359375),
-        new THREE.Vector3( 0.46875, Y_box,  0.579875),
-        new THREE.Vector3(-0.46875, Y_box,  0.579875)
-      ];
-      var corners2D = corners3D.map(function(p) {
-        var v = p.clone().project(camera);
-        return {
-          x: Math.round((v.x * 0.5 + 0.5) * 360),
-          y: Math.round((-v.y * 0.5 + 0.5) * 720)
-        };
-      });
-      var nw = corners2D[0], ne = corners2D[1], se = corners2D[2], sw = corners2D[3];
-      var outerPoly = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-      var innerPoly = nw.x + 'px ' + nw.y + 'px, ' +
-                      sw.x + 'px ' + sw.y + 'px, ' +
-                      se.x + 'px ' + se.y + 'px, ' +
-                      ne.x + 'px ' + ne.y + 'px, ' +
-                      nw.x + 'px ' + nw.y + 'px';
+      // Playercard-Halbkarte ueber Dunkel-Plane heben
+      var _origCardRO = null;
+      if (pSlot && pSlot.mesh) {
+        _origCardRO = pSlot.mesh.renderOrder;
+        pSlot.mesh.renderOrder = 30;
+      }
 
-      // Container mit Blur-Div, clip-path VON ANFANG AN gesetzt
-      var blurContainer = document.createElement('div');
-      blurContainer.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
-        'opacity:0;transition:opacity 0.4s ease;';
-      var blurDiv = document.createElement('div');
-      blurDiv.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
-        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
-        'clip-path:polygon(' + outerPoly + ', ' + innerPoly + ');' +
-        '-webkit-clip-path:polygon(' + outerPoly + ', ' + innerPoly + ');';
-      blurContainer.appendChild(blurDiv);
-      document.body.appendChild(blurContainer);
-      requestAnimationFrame(function() { blurContainer.style.opacity = '1'; });
-      blurOv = blurContainer; // für spätere Referenz (Ausblenden)
+      // 3D-Dunkel-Plane ab Zeile 11 südlich
+      var zRow11 = 0.734375;
+      var zFarSouth = 2.0;
+      var darkWidth = 3.0;
+      var darkDepth = zFarSouth - zRow11;
+      var darkGeo6 = new THREE.PlaneGeometry(darkWidth, darkDepth);
+      var darkMat6 = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0, depthWrite: false
+      });
+      var darkPlane6 = new THREE.Mesh(darkGeo6, darkMat6);
+      darkPlane6.rotation.x = -Math.PI / 2;
+      darkPlane6.position.set(0, 0.46975 + 0.003, zRow11 + darkDepth/2);
+      darkPlane6.renderOrder = 20;
+      scene.add(darkPlane6);
+
+      // Fade-In
+      var fadeStart6 = performance.now();
+      (function fadeDark() {
+        var t = Math.min((performance.now() - fadeStart6) / 400, 1);
+        darkMat6.opacity = t * 0.7;
+        if (t < 1) requestAnimationFrame(fadeDark);
+      })();
+      blurOv = null; // placeholder für spaeteres .remove()
       await sleep(400);
 
       // === PHASE 3: Hand fährt zur Ass ===
@@ -5197,10 +5194,45 @@
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
 
-      // Blur ausblenden
-      blurOv.style.opacity = '0';
+      // Dunkel-Plane ausblenden
+      var fadeOut6 = performance.now();
+      (function fadeDarkOut() {
+        var t = Math.min((performance.now() - fadeOut6) / 500, 1);
+        darkMat6.opacity = 0.7 * (1 - t);
+        if (t < 1) requestAnimationFrame(fadeDarkOut);
+      })();
       await sleep(600);
-      blurOv.remove();
+      scene.remove(darkPlane6);
+      darkGeo6.dispose();
+      darkMat6.dispose();
+      if (pSlot && pSlot.mesh && _origCardRO !== null) {
+        pSlot.mesh.renderOrder = _origCardRO;
+      }
+
+      // === PHASE 5: Warten bis Würfel wieder unten liegt ===
+      for (var _w5 = 0; _w5 < 50; _w5++) {
+        if (!kipp21KniffActive) break;
+        await sleep(100);
+      }
+      await sleep(400);
+
+      // === PHASE 6: Auto-Kipp-Sequenz bis Ass oben liegt ===
+      // aceIdx ist der Index im deck (0-11). Ziel: topFace = Face des Ass
+      // deck[0-3]=f0, deck[4-7]=f1, deck[8-11]=f2
+      var aceFace = (aceIdx < 4) ? 'f0' : (aceIdx < 8 ? 'f1' : 'f2');
+      console.log('[MATCH-TUT] Ace Face: ' + aceFace + ' current topFace: ' + topFace);
+      
+      // CW-Kipps bis topFace = aceFace (max 3 Kipps, cycle ist f2->f0->f1->f2)
+      var kippCount = 0;
+      while (topFace !== aceFace && kippCount < 3) {
+        if (!replayActive) break;
+        var kDir = CW_KIPP[currentQuadrant];
+        kippDirection = 'cw';
+        await handKippAnim(kDir, 900);
+        kippCount++;
+        await sleep(200);
+      }
+      console.log('[MATCH-TUT] Auto-Kipp fertig nach ' + kippCount + ' Kipps, topFace=' + topFace);
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
