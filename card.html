@@ -5216,23 +5216,54 @@
       }
       await sleep(400);
 
-      // === PHASE 6: Auto-Kipp-Sequenz bis Ass oben liegt ===
-      // aceIdx ist der Index im deck (0-11). Ziel: topFace = Face des Ass
-      // deck[0-3]=f0, deck[4-7]=f1, deck[8-11]=f2
-      var aceFace = (aceIdx < 4) ? 'f0' : (aceIdx < 8 ? 'f1' : 'f2');
-      console.log('[MATCH-TUT] Ace Face: ' + aceFace + ' current topFace: ' + topFace);
+      // === PHASE 6: Auto-Kipp-Sequenz bis Ass auf richtiger Farbe liegt ===
+      // Halbkarten-Farbe -> Zielfarbe (Nachbarfarbe die das Ass zeigen muss)
+      var _suitToColor = { herz: 'blau', karo: 'gruen', kreuz: 'orange', pik: 'violett' };
+      var targetColor = _suitToColor[pSuit] || 'violett';
       
-      // CW-Kipps bis topFace = aceFace (max 3 Kipps, cycle ist f2->f0->f1->f2)
-      var kippCount = 0;
-      while (topFace !== aceFace && kippCount < 3) {
+      // Welche Face enthaelt das Ass?
+      var aceFace = (aceIdx < 4) ? 'f0' : (aceIdx < 8 ? 'f1' : 'f2');
+      // Welcher Slot auf der Face? (S1=idx0..S4=idx3 im Face-Offset)
+      var aceSlotNum = aceIdx % 4; // 0..3
+      var aceSlotName = 'S' + (aceSlotNum + 1); // 'S1'..'S4'
+      console.log('[MATCH-TUT] Ass: Face=' + aceFace + ' Slot=' + aceSlotName + ' Zielfarbe=' + targetColor);
+      
+      // Durch alle 12 CW_CYCLE-Zustaende gehen: finde jenen bei dem
+      // - topFace == aceFace (Ass oben)
+      // - SLOT_NEIGHBOR_COLORS[Q][aceSlotName] == targetColor
+      var targetCycleIdx = -1;
+      for (var ci = 0; ci < 12; ci++) {
+        var cQ = CW_CYCLE[ci][0];
+        var cF = CW_CYCLE[ci][1];
+        if (cF === aceFace) {
+          var nColor = SLOT_NEIGHBOR_COLORS[cQ] && SLOT_NEIGHBOR_COLORS[cQ][aceSlotName];
+          if (nColor === targetColor) {
+            targetCycleIdx = ci;
+            break;
+          }
+        }
+      }
+      console.log('[MATCH-TUT] Ziel-Cycle-Idx=' + targetCycleIdx);
+      
+      // CW-Distanz vom aktuellen Zustand zum Ziel berechnen
+      var curIdx = stateIndex(currentQuadrant, topFace);
+      var cwDist = (targetCycleIdx - curIdx + 12) % 12;
+      var ccwDist = 12 - cwDist;
+      // Kuerzere Richtung waehlen
+      var useDir, numKipps;
+      if (cwDist <= ccwDist) { useDir = 'cw'; numKipps = cwDist; }
+      else { useDir = 'ccw'; numKipps = ccwDist; }
+      console.log('[MATCH-TUT] curIdx=' + curIdx + ' cwDist=' + cwDist + ' ccwDist=' + ccwDist + ' -> ' + numKipps + ' Kipps ' + useDir);
+      
+      // Kippen
+      for (var kk = 0; kk < numKipps; kk++) {
         if (!replayActive) break;
-        var kDir = CW_KIPP[currentQuadrant];
-        kippDirection = 'cw';
+        var kDir = (useDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        kippDirection = useDir;
         await handKippAnim(kDir, 900);
-        kippCount++;
         await sleep(200);
       }
-      console.log('[MATCH-TUT] Auto-Kipp fertig nach ' + kippCount + ' Kipps, topFace=' + topFace);
+      console.log('[MATCH-TUT] Auto-Kipp fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
