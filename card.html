@@ -4949,7 +4949,12 @@
       if (!prevOv) return;
 
       uiOv.style.zIndex = '200';
-      uiOv.style.overflow = 'visible';
+      // overflow NICHT auf visible - das verursacht seitliches Ruckeln der Bildfläche
+      // uiOv.style.overflow bleibt wie Original
+      // resetButtonWrap über das uiOverlay heben damit Zurück+Sound sichtbar bleiben
+      var _rbWrap = document.getElementById('resetButtonWrap');
+      var _origRbZ = _rbWrap ? _rbWrap.style.zIndex : '';
+      if (_rbWrap) _rbWrap.style.zIndex = '250';
       replayActive = true;
       uiRect = uiOv.getBoundingClientRect();
 
@@ -5187,6 +5192,7 @@
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
+      if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
       replayActive = false;
       window._matchTutorialMode = false;
     }
