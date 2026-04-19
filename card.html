@@ -5355,7 +5355,7 @@
         }
         if (fkM) break;
       }
-      // Slot-Mitte in Face-Local -> World (fuer Z-Koordinate)
+      // Slot-Mitte in Face-Local -> World (fuer X, Z)
       var slotMidLocal = new THREE.Vector3();
       if (fkM === 'f0') slotMidLocal.set(-halfM + (colM+0.5)*cellSzM, halfM - (rowM+0.5)*cellSzM, halfM);
       else if (fkM === 'f1') slotMidLocal.set(-halfM, halfM - (rowM+0.5)*cellSzM, -halfM + (colM+0.5)*cellSzM);
@@ -5364,14 +5364,30 @@
       var slotX = slotMidWP.x;
       var slotZ = slotMidWP.z;
 
-      // Ein zusammenhaengendes 2x1-Rechteck auf Spieltisch Y=0.46875:
-      //   X: slotX - 0.078125 (Slot-Westkante) bis 0.625 (Rahmen-Ostkante) = 2 Zellen
-      //   Z: slotZ ± 0.078125 = 1 Zelle
+      // Treffer-Logik (wie checkTreffer): finde Slot auf oberer Face der
+      // die richtige Farbe hat. Das ist genau jenes das wir getroffen haben.
+      var faceOff_P = { f0: 0, f1: 4, f2: 8 };
+      var offP = faceOff_P[topFace];
+      var aceSlotNameP = null;
+      for (var sP = 0; sP < 4; sP++) {
+        var slotNameP = 'S' + (sP + 1);
+        if (deck[offP + sP] === 12 && 
+            SLOT_NEIGHBOR_COLORS[currentQuadrant][slotNameP] === 'gruen') {
+          aceSlotNameP = slotNameP;
+          break;
+        }
+      }
+      var hitT = aceSlotNameP ? HIT_TARGETS[currentQuadrant][aceSlotNameP] : null;
+      var frameX = hitT ? hitT.x : slotX;
+      var frameZ = hitT ? hitT.z : slotZ;
+
+      // Umschliessendes Rechteck: erfasst Slot-Mitte + Rahmen-Mitte, jeweils ±halbe Zelle
+      var sHalfP = cellSzM / 2; // 0.078125
       var recY = 0.46875;
-      var recXW = slotX - cellSzM / 2;  // 0.078125 = halbe Zelle
-      var recXE = 0.625;                 // Rahmen-Ostkante (4 Zellen östlich von Zentrum)
-      var recZN = slotZ - cellSzM / 2;
-      var recZS = slotZ + cellSzM / 2;
+      var recXW = Math.min(slotX, frameX) - sHalfP;
+      var recXE = Math.max(slotX, frameX) + sHalfP;
+      var recZN = Math.min(slotZ, frameZ) - sHalfP;
+      var recZS = Math.max(slotZ, frameZ) + sHalfP;
       var rec3D = [
         new THREE.Vector3(recXW, recY, recZN),  // NW
         new THREE.Vector3(recXE, recY, recZN),  // NE
