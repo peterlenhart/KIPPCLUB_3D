@@ -4807,6 +4807,17 @@
 
     async function runMatchTutorial() {
       window._matchTutorialMode = true;
+      window._cardMode = 'verdeckt'; // Match-Modus
+      window._bluffMode = true;
+
+      // +1 Target-Overrides vorsichtshalber zuruecksetzen (falls vorher +1 Tut lief)
+      if (window._targetMeshes) {
+        Object.values(window._targetMeshes).forEach(function(m) { if (m) m.visible = false; });
+      }
+      if (window._suitMeshes) {
+        Object.values(window._suitMeshes).forEach(function(m) { if (m) m.visible = false; });
+      }
+      if (window._targetRankMesh) window._targetRankMesh.visible = false;
 
       // === TUTORIAL-DETERMINISMUS (wie +1 Tut) ===
       // deck bleibt zufallig - nach 4 CW Kipps von Q3/f2 landet Wuerfel auf Q3/f0.
@@ -5778,13 +5789,11 @@
       }
       await sleep(1500);
 
-      // === Tutorial-Overrides zurücksetzen, damit Spiel normal weiterläuft ===
+      // === Overrides teilweise zurücksetzen, aber replayActive bleibt an für Hand-Tap ===
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
       if (_rbWrap2) _rbWrap2.style.zIndex = _origRbZ2 || '';
       if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
-      replayActive = false;
-      window._matchTutorialMode = false;
       window._tutForceFallState = null;
       window._tutExtraKipp = 0;
       if (typeof _origGenModeSuits === 'function') {
@@ -5794,7 +5803,7 @@
       // === Spielablauf: Setzrunde starten (Slide nordwärts + SHOWDOWN-Button) ===
       startBluffSetzrunde();
 
-      // Warten bis Slide fertig (1200ms) + SHOWDOWN-Btn erzeugt (buttonfilz.webp load)
+      // Warten bis Slide fertig (1200ms) + SHOWDOWN-Btn erzeugt
       await sleep(1800);
       for (var _wsd = 0; _wsd < 30; _wsd++) {
         if (window._bluffShowdownBtn && window._bluffShowdownActive) break;
@@ -5808,6 +5817,7 @@
         btnPos.project(camera);
         var sdX = Math.round((btnPos.x * 0.5 + 0.5) * 360);
         var sdY = Math.round((-btnPos.y * 0.5 + 0.5) * 720);
+        // replayActive ist noch true -> handTapFromSouth laeuft
         await handTapFromSouth(sdX, sdY, 600);
         await sleep(200);
         // Klick simulieren
@@ -5817,6 +5827,9 @@
           runShowdown(window._bluffSlideGroup);
         }
       }
+      // JETZT erst Tutorial-Flags zurücksetzen
+      replayActive = false;
+      window._matchTutorialMode = false;
       return;
       // (alter Cleanup unten wird nicht mehr erreicht)
 
