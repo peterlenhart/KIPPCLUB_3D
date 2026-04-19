@@ -4808,16 +4808,9 @@
     async function runMatchTutorial() {
       window._matchTutorialMode = true;
 
-      // === TUTORIAL-DETERMINISMUS ===
-      // Deck so gestalten dass nach 4 CW Kipps von Q3/f2 -> Q3/f0 das Ass (12) oben
-      // auf f0/S2 liegt. deck[0..3]=f0, also deck[1] (= f0/S2) = 12
-      // Andere Werte aufsteigend auffuellen
-      deck = [2, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1];
-      visibleDeckIndices = new Set([0,1,2,3,4,5,6,7,8,9,10,11]);
-      // Wuerfel auf Startzustand (Q3/f2)
-      currentQuadrant = 3;
-      topFace = 'f2';
-
+      // === TUTORIAL-DETERMINISMUS (wie +1 Tut) ===
+      // deck bleibt zufallig - nach 4 CW Kipps von Q3/f2 landet Wuerfel auf Q3/f0.
+      // Dort liegt deck[1] auf S2, in Q3 ist S2-Nachbarfarbe=gruen=Karo -> immer Treffer
       // generateModeSuits fuer Tutorial erzwingen: 1.Karte=Karo, 2.Karte=Pik
       var _origGenModeSuits = window.generateModeSuits || generateModeSuits;
       window.generateModeSuits = function(modeKey, numCards) {
@@ -5024,6 +5017,39 @@
       }
 
       await sleep(400);
+
+      // === TUTORIAL-FALL-POSITION BERECHNEN ===
+      // Finde Startposition so, dass nach 4 CW Kipps das Ass auf Karo-Nachbarfarbe liegt
+      (function computeTutFallState(){
+        var aIdx = deck.indexOf(12);
+        var aFace = (aIdx < 4) ? 'f0' : (aIdx < 8 ? 'f1' : 'f2');
+        var aSlotName = 'S' + ((aIdx % 4) + 1);
+        // Ziel (nach 4 Kipps): topFace=aFace, Nachbarfarbe S<slot>=gruen (Karo)
+        var targetCycleIdx = -1;
+        for (var ci = 0; ci < 12; ci++) {
+          var cQ = CW_CYCLE[ci][0], cF = CW_CYCLE[ci][1];
+          if (cF === aFace && SLOT_NEIGHBOR_COLORS[cQ] && SLOT_NEIGHBOR_COLORS[cQ][aSlotName] === 'gruen') {
+            targetCycleIdx = ci; break;
+          }
+        }
+        if (targetCycleIdx < 0) return; // Fallback: random
+        // Startposition = 4 Kipps rueckwaerts im Cycle
+        var startCycleIdx = (targetCycleIdx - 4 + 12) % 12;
+        // In BRAINY_CW_STATES: cwSteps ist der Cycle-Index relativ zu Q3/f2 (cwSteps=0)
+        // BRAINY_CW_STATES[i].cwSteps = i, und [q,face] matcht CW_CYCLE[i]
+        var startState = BRAINY_CW_STATES[startCycleIdx];
+        // Nicht cwSteps=0 (das ist der originale Fallback, würde random sein)
+        if (startState && startState.cwSteps !== 0) {
+          window._tutForceFallState = startState;
+          console.log('[MATCH-TUT] Fall-Target: Q' + startState.q + '/' + startState.face + ' (cw=' + startState.cwSteps + ') -> 4 CW -> Ass Karo');
+        } else if (startState && startState.cwSteps === 0) {
+          // Sonderfall: Start == Original-Pose. Nimm cwSteps=12 equivalent (= cwSteps 0 + 12) gibt's nicht
+          // Ausweichen auf eine andere valide Position und passen Kipp-Zahl an? 
+          // Einfacher: BRAINY_CW_STATES[0] funktioniert nicht, daher diesen Fall nicht forcen
+          window._tutForceFallState = BRAINY_CW_STATES[(startCycleIdx + 1) % 12];
+          window._tutExtraKipp = 1; // ein CW weniger nötig? Merke dir für später
+        }
+      })();
 
       // Hand tippt auf DEAL
       var dealBtnEl = document.getElementById('_previewDealBtn');
@@ -5233,17 +5259,75 @@
       }
       await sleep(400);
 
-      // === PHASE 6: Fixe 4-CW-Kipp-Sequenz (wie +1 Tutorial) ===
-      // Start: Q3/f2. Nach 4 CW Kipps: Q3/f0. deck[1]=12 -> Ass oben auf S2/Q3 (gruen=Karo)
-      var KIPP_DUR_M = 1000;
-      for (var kk = 0; kk < 4; kk++) {
-        if (!replayActive) break;
-        var kDir = CW_KIPP[currentQuadrant];
-        kippDirection = 'cw';
-        await handKippAnim(kDir, KIPP_DUR_M);
-        if (kk < 3) await sleep(40);
+      // === PHASE 6: Kipp-Sequenz exakt 1:1 wie +1 Tutorial (2 CW, 1 CCW, 3 CW = netto 4 CW) ===
+      // Keine Richtungssperre im Tutorial
+      _cardLockedDir = null;
+
+      // Impuls-Kipp Funktion (COPY-PASTE aus runCardTutorial / tutImpulsKipp)
+      async function matchImpulsKipp(dir) {
+        if (!replayActive) return;
+        var kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        var c = cubeScreenXY();
+        var fullOff = kippPixelDir(kippDir);
+        var len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
+        var nx = fullOff.dx / len * 112;
+        var ny = fullOff.dy / len * 112;
+
+        setHandPos(c.x, c.y);
+        handEl.style.opacity = '1';
+        handEl.style.transition = 'opacity 0.15s ease';
+        await sleep(200);
+
+        isAnimating = false;
+        kippDirection = dir;
+        var kippP = performKipp(kippDir, 800);
+
+        var swipeDur = 220;
+        var swipeStart = Date.now();
+        await new Promise(function(resolve) {
+          function frame() {
+            var elapsed = Date.now() - swipeStart;
+            var t = Math.min(elapsed / swipeDur, 1);
+            var eased = t * t;
+            setHandPos(c.x + nx * eased, c.y + ny * eased);
+            if (t < 1) requestAnimationFrame(frame);
+            else resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+
+        handEl.style.opacity = '0';
+        await kippP;
+        advanceTopFace();
+
+        handEl.style.transition = 'opacity 0.25s ease';
+        await sleep(200);
       }
-      console.log('[MATCH-TUT] 4 CW Kipps fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
+
+      // Kipp 1 + 2 (CW)
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+
+      // Rueckkipp (echt, kein Block)
+      await sleep(300);
+      await matchImpulsKipp('ccw');
+      if (!replayActive) { return; }
+      await sleep(300);
+
+      // Wieder vorwaerts
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+
+      // Kipp 4 + 5 (CW) - netto 4 CW
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+
+      await sleep(600);
+      console.log('[MATCH-TUT] Kipp-Sequenz fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
 
       uiOv.style.zIndex = origZ || '';
       uiOv.style.overflow = origOverflow || 'hidden';
@@ -5251,6 +5335,8 @@
       if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
       replayActive = false;
       window._matchTutorialMode = false;
+      window._tutForceFallState = null;
+      window._tutExtraKipp = 0;
       // generateModeSuits wiederherstellen
       if (typeof _origGenModeSuits === 'function') {
         window.generateModeSuits = _origGenModeSuits;
@@ -8763,8 +8849,14 @@
       let fallToPos, fallToQuat, fallQ, fallFace;
       if (window._bluffMode) {
         // BLUFF: Zufällige andere Position (wie BRAINY Numbers)
-        const valid = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
-        const pick = valid[Math.floor(Math.random() * valid.length)];
+        let pick;
+        if (window._tutForceFallState) {
+          // Tutorial: exakt vorgegebene Fall-Position
+          pick = window._tutForceFallState;
+        } else {
+          const valid = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
+          pick = valid[Math.floor(Math.random() * valid.length)];
+        }
         fallToPos = _bluffGetQuadPos(pick.q);
         fallToQuat = _bluffGetStateQuat(pick.cwSteps);
         fallQ = pick.q;
