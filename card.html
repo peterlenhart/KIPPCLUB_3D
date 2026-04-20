@@ -5846,26 +5846,30 @@
         }
       }
 
-      // Warten bis Ergebnis-Anzeige fertig ist
+      // Originale Buttons SOFORT und KONTINUIERLICH verstecken (verhindert Aufblitzen)
       var btnS_orig = document.getElementById('btnSpielen');
       var btnD_orig = document.getElementById('btnDemo');
-      for (var _pollNM = 0; _pollNM < 80; _pollNM++) {
-        await sleep(100);
-        if (btnS_orig && btnS_orig.textContent === (T.nml || 'NOCHMAL') && btnS_orig.style.display !== 'none') {
-          break;
-        }
-      }
-      await sleep(300);
-
-      // ALLE original HTML-Buttons verstecken (haben alte addEventListener)
-      if (btnS_orig) btnS_orig.style.display = 'none';
-      if (btnD_orig) btnD_orig.style.display = 'none';
       var _btnA_orig = document.getElementById('btnAnleitung');
       var _btnDy_orig = document.getElementById('btnDaily');
       var _btnKP_orig = document.getElementById('btnKippPrinzip');
+      if (btnS_orig) btnS_orig.style.display = 'none';
+      if (btnD_orig) btnD_orig.style.display = 'none';
       if (_btnA_orig) _btnA_orig.style.display = 'none';
       if (_btnDy_orig) _btnDy_orig.style.display = 'none';
       if (_btnKP_orig) _btnKP_orig.style.display = 'none';
+      
+      // Wachposten: falls runShowdown die Buttons wieder einblendet, sofort wieder weg
+      var _hideGuard = setInterval(function() {
+        if (btnS_orig && btnS_orig.style.display !== 'none') btnS_orig.style.display = 'none';
+        if (btnD_orig && btnD_orig.style.display !== 'none') btnD_orig.style.display = 'none';
+        if (_btnA_orig && _btnA_orig.style.display !== 'none') _btnA_orig.style.display = 'none';
+        if (_btnDy_orig && _btnDy_orig.style.display !== 'none') _btnDy_orig.style.display = 'none';
+        if (_btnKP_orig && _btnKP_orig.style.display !== 'none') _btnKP_orig.style.display = 'none';
+      }, 30);
+
+      // Warten bis runShowdown durchgelaufen ist (reveal + showResult + button setup)
+      await sleep(3500);
+      clearInterval(_hideGuard);
 
       // Eigenen SPIELEN-Button erstellen (jungfraeulich, keine alten Listener)
       var _existingTutBtn = document.getElementById('_tutSpielenBtn');
