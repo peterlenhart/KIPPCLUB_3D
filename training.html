@@ -2088,6 +2088,18 @@
     }
     let deck = generateBalancedDeck();
     let visibleDeckIndices = pickEdgePairs();
+    // Initial BUMBLEBRAIN-Belegung (wird spaeter bei Level-Wechsel ueberschrieben)
+    // brainyBuildDeck ist weiter unten definiert - direkte Inline-Belegung hier
+    deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
+    visibleDeckIndices.clear();
+    (function initBumbleDeck(){
+      for (var _fi = 0; _fi < 3; _fi++) {
+        var _slotRand = Math.floor(Math.random() * 4);
+        var _deckIdx = _fi * 4 + _slotRand;
+        deck[_deckIdx] = _fi + 1; // f0=1, f1=2, f2=3
+        visibleDeckIndices.add(_deckIdx);
+      }
+    })();
 
     // Slot-Zuordnung: welche Zelle auf welcher Face → deck-Index
     // f0: 7=S1, 4=S2, 2=S3, 3=S4
@@ -5793,6 +5805,33 @@
       );
     }
 
+    // === LEVEL-Konfig ===
+    const LEVEL_CFG = {
+      1: { zahlenProFace: 1, maxZahl: 3,  ablenkGems: 0, name: 'BUMBLEBRAIN' },
+      2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY' },
+      3: { zahlenProFace: 3, maxZahl: 9,  ablenkGems: 2, name: 'BRAIN' },
+      4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN' }
+    };
+    
+    function brainyBuildDeck(cfg) {
+      deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
+      visibleDeckIndices.clear();
+      for (var _fi = 0; _fi < 3; _fi++) {
+        var _baseZahl = _fi * cfg.zahlenProFace + 1;
+        var _slots = [0,1,2,3];
+        for (var _si = _slots.length - 1; _si > 0; _si--) {
+          var _rj = Math.floor(Math.random() * (_si + 1));
+          var _tmp = _slots[_si]; _slots[_si] = _slots[_rj]; _slots[_rj] = _tmp;
+        }
+        for (var _k = 0; _k < cfg.zahlenProFace; _k++) {
+          var _deckIdx = _fi * 4 + _slots[_k];
+          deck[_deckIdx] = _baseZahl + _k;
+          visibleDeckIndices.add(_deckIdx);
+        }
+      }
+      console.log('[' + cfg.name + '] deck=', deck, ' visible=', Array.from(visibleDeckIndices));
+    }
+
     // === BRAINY Zielzahl-Pad ===
     let brainyZielpadMesh = null;
     let brainyZielpadCanvas = null;
@@ -5864,66 +5903,14 @@
         return;
       }
 
-      // Random Zielzahl aus Level-Range
-      const _maxZ = (window._brLevelCfg && window._brLevelCfg.maxZahl) || 3;
-      const zahl = 1 + Math.floor(Math.random() * _maxZ);
-      console.log('[BRAINY] Round zielzahl=' + zahl + ' (hits=' + brainyHits + ' fails=' + brainyFails + ')');
+      // === NEUE REIHENFOLGE: Fall-Position ZUERST (random), Ziel NACHHER ===
+      // Random Fall-Position (ohne Target-Constraint)
+      const _validStates = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
+      const fallState = _validStates[Math.floor(Math.random() * _validStates.length)];
+      console.log('[BRAINY] Fall: Q=' + fallState.q + ' face=' + fallState.face + ' (hits=' + brainyHits + ' fails=' + brainyFails + ')');
 
-      // Generate target for this zahl
-      const target = brainyGenerateTarget(zahl);
-      if (!target) {
-        console.error('[BRAINY] No target for zahl ' + zahl);
-        await brainyNextRound();
-        return;
-      }
-      brainyCurrentTarget = target;
-
-      // Pick fall position (must not fulfill target)
-      const fallState = brainyPickFallPosition(target);
-      console.log('[BRAINY] Target: Q=' + target.targetQ + ' color=' + target.colorName + ' | Fall: Q=' + fallState.q + ' face=' + fallState.face);
-
-      // Reset cube to Q3/f2
-      cube.position.set(-offset, offset, 0.109375 + offset);
-      cube.quaternion.set(0, 0, 0, 1);
-      currentQuadrant = 3;
-      topFace = 'f2';
-
-      // Zahlen auf Wuerfel bleiben unveraendert (1,2,3 auf je einer Face - Gedaechtnis)
-      // brainyShowOnlyZahl NICHT mehr aufrufen
-
-      // === GEM(s) appear on frame ===
-      // Richtiges Gem: Index 0 (wir resetten immer alle Gems)
+      // Gems erstmal ausblenden bis Ziel nach Fall generiert wird
       brainyHideGems();
-      brainyPlaceGem(0, target.colorName, target.targetQ, target.targetSlot);
-      
-      // Ablenkungs-Gems: weitere Rahmen-Felder gleicher Farbe, die NICHT das Ziel sind
-      const _ablenkCount = (window._brLevelCfg && window._brLevelCfg.ablenkGems) || 0;
-      const _ablenkCandidates = [];
-      for (let _q = 0; _q < 4; _q++) {
-        for (let _si = 1; _si <= 4; _si++) {
-          const _sname = 'S' + _si;
-          if (_q === target.targetQ && _sname === target.targetSlot) continue;
-          if (SLOT_NEIGHBOR_COLORS[_q][_sname] === target.colorName) {
-            _ablenkCandidates.push({ q: _q, slot: _sname });
-          }
-        }
-      }
-      // Mische und nimm die ersten _ablenkCount
-      for (let _ci = _ablenkCandidates.length - 1; _ci > 0; _ci--) {
-        const _cj = Math.floor(Math.random() * (_ci + 1));
-        const _t = _ablenkCandidates[_ci]; _ablenkCandidates[_ci] = _ablenkCandidates[_cj]; _ablenkCandidates[_cj] = _t;
-      }
-      const _ablenkToPlace = Math.min(_ablenkCount, _ablenkCandidates.length);
-      window._brainyAblenkGemIdxs = [];
-      for (let _ai = 0; _ai < _ablenkToPlace; _ai++) {
-        const _a = _ablenkCandidates[_ai];
-        const _gemIdx = _ai + 1; // 0 ist richtig, 1..3 sind Ablenkungen
-        brainyPlaceGem(_gemIdx, target.colorName, _a.q, _a.slot);
-        window._brainyAblenkGemIdxs.push(_gemIdx);
-      }
-      
-      // Pulsiere alle aktiven Gems (richtiges + Ablenkungen)
-      brainyStartMultiGemPulse(0, window._brainyAblenkGemIdxs);
 
       // === ECKBLICK: up on corner ===
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
@@ -5957,8 +5944,8 @@
         kipGroup.add(cube); return;
       }
 
-      // === HOLD on corner (2s) — player sees number + pulsing gem ===
-      await new Promise(r => setTimeout(r, 2000));
+      // === HOLD on corner (3s) — player sees number + pulsing gem ===
+      await new Promise(r => setTimeout(r, 3000));
       if (!brainyActive || gamePhase !== 'kipp21') {
         pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
         cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
@@ -6003,6 +5990,97 @@
 
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
+      // === NACH FALL: Zielzahl + Zielfarbe generieren ===
+      const _cfg_r = window._brLevelCfg || LEVEL_CFG[1];
+      const _faceOffR = { f0: 0, f1: 4, f2: 8 };
+      const _slotsR = ['S1', 'S2', 'S3', 'S4'];
+      const _colorsR = ['violett', 'blau', 'gruen', 'orange'];
+      
+      // Sammle moegliche (zahl, farbe) Kombinationen die NICHT bereits in aktueller Fall-Pose erfuellt sind
+      // Eine Kombi ist erfuellt, wenn eine Zahl auf der oberen Face an einem Slot liegt 
+      // dessen Nachbarfarbe im aktuellen Quadrant die gewaehlte Farbe ist
+      const _candidatesR = [];
+      const _offR = _faceOffR[topFace];
+      const _visibleZahlenOnTop = [];
+      for (let _si = 0; _si < 4; _si++) {
+        const _z = deck[_offR + _si];
+        if (_z > 0 && _z <= _cfg_r.maxZahl) {
+          const _neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotsR[_si]];
+          _visibleZahlenOnTop.push({ zahl: _z, slot: _slotsR[_si], ownColor: _neighborColor });
+        }
+      }
+      // Alle moeglichen Ziel-Kombis: Zahl 1..maxZahl, Farbe random
+      for (let _z = 1; _z <= _cfg_r.maxZahl; _z++) {
+        for (const _col of _colorsR) {
+          // Pruefe ob diese Kombi in aktueller Pose bereits erfuellt
+          let _erfuellt = false;
+          for (const _top of _visibleZahlenOnTop) {
+            if (_top.zahl === _z && _top.ownColor === _col) { _erfuellt = true; break; }
+          }
+          if (!_erfuellt) {
+            _candidatesR.push({ zahl: _z, colorName: _col });
+          }
+        }
+      }
+      
+      // Random eine Ziel-Kombi waehlen
+      const _picked = _candidatesR[Math.floor(Math.random() * _candidatesR.length)];
+      const zahl = _picked.zahl;
+      const zielColor = _picked.colorName;
+      console.log('[BRAINY] Ziel nach Fall: zahl=' + zahl + ' farbe=' + zielColor);
+      
+      // Finde Slot der diese Zahl enthaelt (auf irgendeiner Face, fuer Gem-Platzierung)
+      let _targetFace = null, _targetSlot = null, _targetQ = null;
+      for (const _face of ['f0', 'f1', 'f2']) {
+        const _off2 = _faceOffR[_face];
+        for (let _si = 0; _si < 4; _si++) {
+          if (deck[_off2 + _si] === zahl) {
+            _targetFace = _face;
+            _targetSlot = _slotsR[_si];
+            break;
+          }
+        }
+        if (_targetFace) break;
+      }
+      // Finde Quadrant mit passender Nachbarfarbe fuer diesen Slot
+      for (let _q = 0; _q < 4; _q++) {
+        if (SLOT_NEIGHBOR_COLORS[_q][_targetSlot] === zielColor) {
+          _targetQ = _q;
+          break;
+        }
+      }
+      
+      brainyCurrentTarget = { zahl, colorName: zielColor, targetQ: _targetQ, targetSlot: _targetSlot, targetFace: _targetFace };
+      
+      // Richtiges Gem platzieren
+      brainyPlaceGem(0, zielColor, _targetQ, _targetSlot);
+      
+      // Ablenkungs-Gems (gleiche Farbe, andere Positionen)
+      const _ablenkCount = _cfg_r.ablenkGems || 0;
+      const _ablenkCand = [];
+      for (let _q = 0; _q < 4; _q++) {
+        for (let _si = 1; _si <= 4; _si++) {
+          const _sname = 'S' + _si;
+          if (_q === _targetQ && _sname === _targetSlot) continue;
+          if (SLOT_NEIGHBOR_COLORS[_q][_sname] === zielColor) {
+            _ablenkCand.push({ q: _q, slot: _sname });
+          }
+        }
+      }
+      for (let _ci = _ablenkCand.length - 1; _ci > 0; _ci--) {
+        const _cj = Math.floor(Math.random() * (_ci + 1));
+        const _t = _ablenkCand[_ci]; _ablenkCand[_ci] = _ablenkCand[_cj]; _ablenkCand[_cj] = _t;
+      }
+      const _ablenkToPlace = Math.min(_ablenkCount, _ablenkCand.length);
+      window._brainyAblenkGemIdxs = [];
+      for (let _ai = 0; _ai < _ablenkToPlace; _ai++) {
+        const _a = _ablenkCand[_ai];
+        const _gemIdx = _ai + 1;
+        brainyPlaceGem(_gemIdx, zielColor, _a.q, _a.slot);
+        window._brainyAblenkGemIdxs.push(_gemIdx);
+      }
+      brainyStartMultiGemPulse(0, window._brainyAblenkGemIdxs);
+      
       // === ZIELZAHL-PAD anzeigen (zielpadleer.webp mit Zahl drauf) ===
       brainyShowZielpad(zahl);
 
@@ -6141,43 +6219,9 @@
       bereitsAusgegeben.clear();
       gamePhase = 'kipp21';
 
-      // LEVEL-abhaengige Konfiguration
-      // BUMBLEBRAIN: 1 Zahl/Face (Zahlen 1-3),  0 Ablenkungs-Gems
-      // BRAINY:      2 Zahlen/Face (Zahlen 1-6), 1 Ablenkungs-Gem
-      // BRAIN:       3 Zahlen/Face (Zahlen 1-9), 2 Ablenkungs-Gems
-      // MASTERBRAIN: 4 Zahlen/Face (Zahlen 1-12), 3 Ablenkungs-Gems
-      const LEVEL_CFG = {
-        1: { zahlenProFace: 1, maxZahl: 3,  ablenkGems: 0, name: 'BUMBLEBRAIN' },
-        2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY' },
-        3: { zahlenProFace: 3, maxZahl: 9,  ablenkGems: 2, name: 'BRAIN' },
-        4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN' }
-      };
       const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
-      
-      // deck mit 0 initialisieren, dann pro Face zufaellig zahlenProFace Slots mit
-      // verschiedenen Zahlen belegen (Zahlen auf Faces aufgeteilt, aufsteigend).
-      // Fuer BUMBLEBRAIN: f0=[1], f1=[2], f2=[3]
-      // Fuer BRAINY: f0=[1,2] oder {1-2 an beliebige Positionen}, f1=[3,4], f2=[5,6]
-      // Fuer BRAIN:  f0=[1,2,3], f1=[4,5,6], f2=[7,8,9]
-      // Fuer MASTER: f0=[1-4], f1=[5-8], f2=[9-12]
-      deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
-      visibleDeckIndices.clear();
-      for (var _fi = 0; _fi < 3; _fi++) {
-        var _baseZahl = _fi * _cfg.zahlenProFace + 1; // f0 startet bei 1, f1 bei 1+zpf, ...
-        // Zufaellige Slot-Permutation fuer diese Face (0,1,2,3 shuffle)
-        var _slots = [0,1,2,3];
-        for (var _si = _slots.length - 1; _si > 0; _si--) {
-          var _rj = Math.floor(Math.random() * (_si + 1));
-          var _tmp = _slots[_si]; _slots[_si] = _slots[_rj]; _slots[_rj] = _tmp;
-        }
-        for (var _k = 0; _k < _cfg.zahlenProFace; _k++) {
-          var _deckIdx = _fi * 4 + _slots[_k];
-          deck[_deckIdx] = _baseZahl + _k;
-          visibleDeckIndices.add(_deckIdx);
-        }
-      }
-      console.log('[' + _cfg.name + '] deck=', deck, ' visible=', Array.from(visibleDeckIndices));
+      brainyBuildDeck(_cfg);
       updateFaceSlots();
       updateAllFaceTextures();
 
