@@ -5365,6 +5365,8 @@
         } else {
           // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
           kipp21Fails++;
+          iconUpdateLives(kipp21Fails);
+          if (kipp21Fails >= 5) window._trainingGameOver = true;
           card.ctx.save();
           card.ctx.strokeStyle = '#ff0000';
           card.ctx.lineWidth = 8;
@@ -5491,6 +5493,25 @@
                 card.ctx.drawImage(leerImage, 0, 0, 85, 170);
                 card.texture.needsUpdate = true;
                 
+                // GAME OVER nach 5. Miss im TRAINING
+                if (window._trainingGameOver) {
+                  window._trainingGameOver = false;
+                  kipp21Active = false;
+                  gamePhase = 'ende';
+                  hideAllTrainingUI();
+                  ['eyeIcon','numBtns','kippTarget','demoSubtitle'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                  });
+                  saveBestScore(currentLevel, kipp21Done, kipp21Fails);
+                  showLevelScore(kipp21Done, kipp21Fails);
+                  iconHideLives();
+                  setTimeout(function() {
+                    document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+                    showEndButtons(false, false);
+                  }, 3500);
+                  return;
+                }
                 showBlickIcons();
                 kipp21Active = true;
                 showTrainingButtons();
