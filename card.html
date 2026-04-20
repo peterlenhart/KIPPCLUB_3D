@@ -3326,8 +3326,22 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
-        // URL-Parameter Check: ?level=brainy → direkt BRAINY starten
+        // URL-Parameter Check: ?match → direkt Modi-Auswahl oeffnen (nach NEXT MATCH)
         const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('match')) {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          window._cardMode = 'verdeckt';
+          window._bluffMode = true;
+          _cardModePhase = 1;
+          // URL bereinigen damit reload nicht nochmal matcht
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+          setTimeout(() => { showBluffModeSelection(); }, 300);
+          return;
+        }
         const levelParam = urlParams.get('level');
         if (levelParam === 'brainy') {
           sct.style.display = 'none';
@@ -12521,8 +12535,46 @@
               faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
             }
             updateAllFaceTextures();
-            // NEXT MATCH: zurueck zur Modi-Auswahl statt denselben Modus neu starten
-            showBluffModeSelection();
+            
+            // === NEXT MATCH: umfassendes Cleanup wie bei runMatchTutorial-Start ===
+            // +1 Target-Meshes aus Scene entfernen (nicht nur visible=false)
+            if (window._targetMeshes) {
+              Object.values(window._targetMeshes).forEach(function(m) {
+                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
+              });
+            }
+            if (window._suitMeshes) {
+              Object.values(window._suitMeshes).forEach(function(m) {
+                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
+              });
+            }
+            if (window._targetRankMesh) {
+              window._targetRankMesh.visible = false;
+              if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
+            }
+            if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
+            
+            // Bluff/Match-Flags sauber zurücksetzen
+            window._bluffMode = true;
+            window._cardMode = 'verdeckt';
+            window._bluffSelectedMode = null;
+            window._bluffVerfehlt = false;
+            window._bluffBankHand = null;
+            window._lastMatchWinner = null;
+            window._lastMatchModeLabel = null;
+            
+            // Tutorial-Flags sicherheitshalber aus
+            window._matchTutorialMode = false;
+            window._tutForceFallState = null;
+            window._tutExtraKipp = 0;
+            replayActive = false;
+            if (typeof disableReplayBlocker === 'function') { try { disableReplayBlocker(); } catch(e){} }
+            
+            // +1-Phase sicherstellen damit Modi-Auswahl erscheint (nicht Phase 0)
+            _cardModePhase = 1;
+            
+            // NEXT MATCH: Seite neu laden mit ?match Parameter - alle State-Probleme weg
+            window.location.href = window.location.pathname + '?match';
           };
 
           // TEILEN
@@ -12828,8 +12880,46 @@
               faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
             }
             updateAllFaceTextures();
-            // NEXT MATCH: zurueck zur Modi-Auswahl statt denselben Modus neu starten
-            showBluffModeSelection();
+            
+            // === NEXT MATCH: umfassendes Cleanup wie bei runMatchTutorial-Start ===
+            // +1 Target-Meshes aus Scene entfernen (nicht nur visible=false)
+            if (window._targetMeshes) {
+              Object.values(window._targetMeshes).forEach(function(m) {
+                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
+              });
+            }
+            if (window._suitMeshes) {
+              Object.values(window._suitMeshes).forEach(function(m) {
+                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
+              });
+            }
+            if (window._targetRankMesh) {
+              window._targetRankMesh.visible = false;
+              if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
+            }
+            if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
+            
+            // Bluff/Match-Flags sauber zurücksetzen
+            window._bluffMode = true;
+            window._cardMode = 'verdeckt';
+            window._bluffSelectedMode = null;
+            window._bluffVerfehlt = false;
+            window._bluffBankHand = null;
+            window._lastMatchWinner = null;
+            window._lastMatchModeLabel = null;
+            
+            // Tutorial-Flags sicherheitshalber aus
+            window._matchTutorialMode = false;
+            window._tutForceFallState = null;
+            window._tutExtraKipp = 0;
+            replayActive = false;
+            if (typeof disableReplayBlocker === 'function') { try { disableReplayBlocker(); } catch(e){} }
+            
+            // +1-Phase sicherstellen damit Modi-Auswahl erscheint (nicht Phase 0)
+            _cardModePhase = 1;
+            
+            // NEXT MATCH: Seite neu laden mit ?match Parameter - alle State-Probleme weg
+            window.location.href = window.location.pathname + '?match';
           };
 
           // TEILEN
