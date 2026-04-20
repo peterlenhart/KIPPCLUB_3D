@@ -5912,81 +5912,167 @@
       // Gems erstmal ausblenden bis Ziel nach Fall generiert wird
       brainyHideGems();
 
-      // === ECKBLICK: up on corner ===
+      // === ECKBLICK: 1:1 wie card_new.html ===
+      kipp21KniffActive = true;
+      kipp21KniffAbort = false;
+      
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
+      const aufEckeDur = 1200;
+      
       const pivotGroup = new THREE.Group();
       pivotGroup.position.copy(cornerPos);
       kipGroup.add(pivotGroup);
+      
       cube.updateMatrixWorld();
-      const cwp = new THREE.Vector3(); cube.getWorldPosition(cwp);
-      const cwq = new THREE.Quaternion(); cube.getWorldQuaternion(cwq);
+      const cubeWorldPos = new THREE.Vector3(); cube.getWorldPosition(cubeWorldPos);
+      const cubeWorldQuat = new THREE.Quaternion(); cube.getWorldQuaternion(cubeWorldQuat);
+      
       kipGroup.remove(cube);
-      cube.position.copy(cwp.clone().sub(cornerPos));
-      cube.quaternion.copy(cwq);
+      cube.position.copy(cubeWorldPos.clone().sub(cornerPos));
+      cube.quaternion.copy(cubeWorldQuat);
       pivotGroup.add(cube);
+      
       const o = 0.234375;
-      const diag = new THREE.Vector3(-o, o, o).normalize(); // Q3 corner diagonal
-      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, new THREE.Vector3(0, 1, 0));
-
-      // Animate up to corner (1200ms)
+      const diagVectors = {
+        0: new THREE.Vector3(-o,  o, -o),
+        1: new THREE.Vector3( o,  o, -o),
+        2: new THREE.Vector3( o,  o,  o),
+        3: new THREE.Vector3(-o,  o,  o)
+      };
+      const diag = diagVectors[currentQuadrant].clone().normalize();
+      
+      const perQ = [{y:45,t:14.5},{y:75,t:14.5},{y:45,t:14.5},{y:15,t:14.5}];
+      const { y: yDeg, t: tiltDeg } = perQ[currentQuadrant];
+      
+      const upDir       = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
+      const yRot45      = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yDeg * Math.PI/180);
+      const aufEckeY45  = yRot45.clone().multiply(aufEckeQuat);
+      const xTilt       = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
+      const tiltQuat    = xTilt.clone().multiply(aufEckeY45);
+      
+      // 1. Auf Ecke kippen (senkrecht + Y gedreht)
       await new Promise(resolve => {
-        const st = performance.now();
-        (function anim() {
-          const t = Math.min((performance.now() - st) / 1200, 1);
-          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeQuat, e));
-          if (t < 1) requestAnimationFrame(anim); else resolve();
-        })();
+        const startTime = performance.now();
+        function animate() {
+          const t = Math.min((performance.now() - startTime) / aufEckeDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeY45, ease));
+          if (t < 1) requestAnimationFrame(animate);
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+        }
+        animate();
       });
-      if (!brainyActive || gamePhase !== 'kipp21') {
-        pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
-        cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
-        kipGroup.add(cube); return;
+      
+      // 2. Senkrecht hochsteigen
+      const liftHeight  = 0.40625;
+      const liftRiseDur = 800;
+      const origY = pivotGroup.position.y;
+      
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animRise() {
+          const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * ease;
+          if (t < 1) requestAnimationFrame(animRise);
+          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
+        }
+        animRise();
+      });
+      
+      // 3. Tilt (Neigung) am hoechsten Punkt
+      const tiltInDur = 1000;
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          const startTime = performance.now();
+          function animTilt() {
+            const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
+            const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
+            if (t < 1) requestAnimationFrame(animTilt);
+            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
+          }
+          animTilt();
+        });
       }
-
-      // === HOLD on corner (3s) — player sees number + pulsing gem ===
-      await new Promise(r => setTimeout(r, 3000));
-      if (!brainyActive || gamePhase !== 'kipp21') {
-        pivotGroup.remove(cube); kipGroup.remove(pivotGroup);
-        cube.position.set(-offset, offset, 0.109375 + offset); cube.quaternion.set(0,0,0,1);
-        kipGroup.add(cube); return;
+      
+      // 4. Halten (Abort-sensitiv)
+      const HOLD_DUR = 3000;
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          const holdTO = setTimeout(resolve, HOLD_DUR);
+          const checkAbort = setInterval(() => {
+            if (kipp21KniffAbort) {
+              clearInterval(checkAbort);
+              clearTimeout(holdTO);
+              resolve();
+            }
+          }, 100);
+        });
       }
-
-      // === FALL from corner directly to target position ===
+      
+      // 5. Tilt zurueck
+      const untiltDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animUntilt() {
+          const t = Math.min((performance.now() - startTime) / untiltDur, 1);
+          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, ease));
+          if (t < 1) requestAnimationFrame(animUntilt);
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+        }
+        animUntilt();
+      });
+      
+      // 6. Senkrecht absinken
+      const liftLowerDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animLower() {
+          const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * (1 - ease);
+          if (t < 1) requestAnimationFrame(animLower);
+          else { pivotGroup.position.y = origY; resolve(); }
+        }
+        animLower();
+      });
+      
+      // 7. Cleanup + Fall zur Random-Zielposition
       cube.updateMatrixWorld();
-      const onCornerWorldPos = new THREE.Vector3(); cube.getWorldPosition(onCornerWorldPos);
-      const onCornerWorldQuat = new THREE.Quaternion(); cube.getWorldQuaternion(onCornerWorldQuat);
-
+      const fallFromPos = new THREE.Vector3(); cube.getWorldPosition(fallFromPos);
+      const fallFromQuat = new THREE.Quaternion(); cube.getWorldQuaternion(fallFromQuat);
       pivotGroup.remove(cube);
       kipGroup.remove(pivotGroup);
       kipGroup.add(cube);
-      cube.position.copy(onCornerWorldPos);
-      cube.quaternion.copy(onCornerWorldQuat);
-
+      cube.position.copy(fallFromPos);
+      cube.quaternion.copy(fallFromQuat);
+      
       const targetPos = brainyGetQuadrantPos(fallState.q);
       const targetQuat = brainyGetStateQuaternion(fallState.cwSteps);
-      const fallStartPos = onCornerWorldPos.clone();
-      const fallStartQuat = onCornerWorldQuat.clone();
-
-      // Animate fall (800ms easeInOut) with klack near landing
+      
+      const fallDur = 800;
       await new Promise(resolve => {
         const st = performance.now();
         let klackFired = false;
         (function tick() {
-          const t = Math.min((performance.now() - st) / 800, 1);
-          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-          cube.position.lerpVectors(fallStartPos, targetPos, e);
-          cube.quaternion.slerpQuaternions(fallStartQuat, targetQuat, e);
+          const t = Math.min((performance.now() - st) / fallDur, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          cube.position.lerpVectors(fallFromPos, targetPos, e);
+          cube.quaternion.slerpQuaternions(fallFromQuat, targetQuat, e);
           if (!klackFired && e > 0.85) { klackFired = true; playKlack(); }
           if (t < 1) requestAnimationFrame(tick); else resolve();
         })();
       });
-
-      // Set final state
+      
       cube.position.copy(targetPos);
       cube.quaternion.copy(targetQuat);
       currentQuadrant = fallState.q;
       topFace = fallState.face;
+      
+      kipp21KniffActive = false;
 
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
