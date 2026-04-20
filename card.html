@@ -5858,8 +5858,8 @@
       if (_btnDy_orig) _btnDy_orig.style.display = 'none';
       if (_btnKP_orig) _btnKP_orig.style.display = 'none';
       
-      // Wachposten: falls runShowdown die Buttons wieder einblendet, sofort wieder weg
-      var _hideGuard = setInterval(function() {
+      // Wachposten laeuft DAUERHAFT bis mein SPIELEN-Button geklickt wird
+      window._tutHideGuard = setInterval(function() {
         if (btnS_orig && btnS_orig.style.display !== 'none') btnS_orig.style.display = 'none';
         if (btnD_orig && btnD_orig.style.display !== 'none') btnD_orig.style.display = 'none';
         if (_btnA_orig && _btnA_orig.style.display !== 'none') _btnA_orig.style.display = 'none';
@@ -5867,9 +5867,8 @@
         if (_btnKP_orig && _btnKP_orig.style.display !== 'none') _btnKP_orig.style.display = 'none';
       }, 30);
 
-      // Warten bis runShowdown durchgelaufen ist (reveal + showResult + button setup)
+      // Warten bis runShowdown durchgelaufen ist
       await sleep(3500);
-      clearInterval(_hideGuard);
 
       // Eigenen SPIELEN-Button erstellen (jungfraeulich, keine alten Listener)
       var _existingTutBtn = document.getElementById('_tutSpielenBtn');
@@ -5883,6 +5882,12 @@
       document.getElementById('startOverlay').appendChild(btnS_tut);
       btnS_tut.onclick = function() {
         console.log('[TUT-SPIELEN] Klick registriert');
+        
+        // Wachposten stoppen
+        if (window._tutHideGuard) {
+          clearInterval(window._tutHideGuard);
+          window._tutHideGuard = null;
+        }
         
         // Alle Tutorial-Buttons entfernen
         var myBtn = document.getElementById('_tutSpielenBtn');
