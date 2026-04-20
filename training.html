@@ -5559,7 +5559,23 @@
           const slot = slots[si];
           for (let q = 0; q < 4; q++) {
             const colorName = SLOT_NEIGHBOR_COLORS[q][slot];
-            candidates.push({ zahl, colorName, targetQ: q, targetSlot: slot, targetFace: face });
+            // Pruefe ob fuer diese Ziel-Kombi mind. 1 gueltige Fall-Position existiert
+            // (Fall-Position darf Kombi nicht erfuellen)
+            let hasValidFall = false;
+            for (const st of BRAINY_CW_STATES) {
+              if (st.cwSteps === 0) continue;
+              const offF = faceOff[st.face];
+              let fulfills = false;
+              for (let si2 = 0; si2 < 4; si2++) {
+                const z2 = deck[offF + si2];
+                const c2 = SLOT_NEIGHBOR_COLORS[st.q][slots[si2]];
+                if (z2 === zahl && c2 === colorName) { fulfills = true; break; }
+              }
+              if (!fulfills) { hasValidFall = true; break; }
+            }
+            if (hasValidFall) {
+              candidates.push({ zahl, colorName, targetQ: q, targetSlot: slot, targetFace: face });
+            }
           }
         }
       }
@@ -5664,6 +5680,7 @@
     // End BRAINY game
     async function brainyEndGame() {
       brainyActive = false;
+      if (typeof brainyHideZielpad === 'function') brainyHideZielpad();
       kipp21Active = false;
       brainyStopNumPulse();
       brainyStopGemPulse();
@@ -5749,24 +5766,79 @@
       );
     }
 
+    // === BRAINY Zielzahl-Pad ===
+    let brainyZielpadMesh = null;
+    let brainyZielpadCanvas = null;
+    let brainyZielpadCtx = null;
+    let brainyZielpadTex = null;
+    let brainyZielpadBgImg = null;
+    (function loadZielpadBg() {
+      const img = new Image();
+      img.onload = () => { brainyZielpadBgImg = img; };
+      img.src = 'zielpadleer.webp';
+    })();
+
+    function brainyEnsureZielpad() {
+      if (brainyZielpadMesh) return;
+      brainyZielpadCanvas = document.createElement('canvas');
+      brainyZielpadCanvas.width = 135; // 3x 45px (Retina)
+      brainyZielpadCanvas.height = 135;
+      brainyZielpadCtx = brainyZielpadCanvas.getContext('2d');
+      brainyZielpadTex = new THREE.CanvasTexture(brainyZielpadCanvas);
+      const size = 0.15625; // 45px = 1 Zelle
+      const geo = new THREE.PlaneGeometry(size, size);
+      const mat = new THREE.MeshBasicMaterial({
+        map: brainyZielpadTex, transparent: true, alphaTest: 0.05,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      brainyZielpadMesh = new THREE.Mesh(geo, mat);
+      brainyZielpadMesh.rotation.x = -Math.PI / 2;
+      // Position: gleiche Z wie cardZ (Kippziel-Zeile), X zentriert, Y auf Spieltisch
+      brainyZielpadMesh.position.set(0, cardY + 0.001, cardZ);
+      brainyZielpadMesh.renderOrder = 8;
+      brainyZielpadMesh.visible = false;
+      scene.add(brainyZielpadMesh);
+    }
+
+    function brainyShowZielpad(zahl) {
+      brainyEnsureZielpad();
+      const ctx = brainyZielpadCtx;
+      ctx.clearRect(0, 0, 135, 135);
+      if (brainyZielpadBgImg) {
+        ctx.drawImage(brainyZielpadBgImg, 0, 0, 135, 135);
+      }
+      // Zahl darauf zeichnen - gleiche Optik wie Wuerfel-Zahlen
+      ctx.font = '900 80px "Noto Serif", serif';
+      ctx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(zahl), 67, 72);
+      brainyZielpadTex.needsUpdate = true;
+      brainyZielpadMesh.visible = true;
+    }
+
+    function brainyHideZielpad() {
+      if (brainyZielpadMesh) brainyZielpadMesh.visible = false;
+    }
+
     // === BRAINY ROUND ===
     async function brainyNextRound() {
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
       // End check
-      if (brainyCurrentZahl > 12 || brainyHits >= 4) {
+      if (brainyHits >= 4) {
         await brainyEndGame();
         return;
       }
 
-      const zahl = brainyCurrentZahl;
-      console.log('[BRAINY] Round zahl=' + zahl + ' (hits=' + brainyHits + ' fails=' + brainyFails + ')');
+      // Random Zielzahl 1, 2 oder 3
+      const zahl = 1 + Math.floor(Math.random() * 3);
+      console.log('[BRAINY] Round zielzahl=' + zahl + ' (hits=' + brainyHits + ' fails=' + brainyFails + ')');
 
       // Generate target for this zahl
       const target = brainyGenerateTarget(zahl);
       if (!target) {
         console.error('[BRAINY] No target for zahl ' + zahl);
-        brainyCurrentZahl++;
         await brainyNextRound();
         return;
       }
@@ -5782,8 +5854,8 @@
       currentQuadrant = 3;
       topFace = 'f2';
 
-      // Show only this zahl on cube
-      brainyShowOnlyZahl(zahl);
+      // Zahlen auf Wuerfel bleiben unveraendert (1,2,3 auf je einer Face - Gedaechtnis)
+      // brainyShowOnlyZahl NICHT mehr aufrufen
 
       // === GEM appears on target frame field ===
       brainyPlaceGem(brainyHits, target.colorName, target.targetQ, target.targetSlot);
@@ -5867,6 +5939,9 @@
 
       if (!brainyActive || gamePhase !== 'kipp21') return;
 
+      // === ZIELZAHL-PAD anzeigen (zielpadleer.webp mit Zahl drauf) ===
+      brainyShowZielpad(zahl);
+
       // Enable player input
       brainySelectedNum = 0;
       brainySelectedDir = null;
@@ -5906,7 +5981,7 @@
         // HIT text on table (left to right, like TRAINING)
         showHitText(brainyHits - 1);
 
-        brainyCurrentZahl++;
+        // brainyCurrentZahl++ entfernt (zufaellig nach HIT)
         await new Promise(r => setTimeout(r, 2500));
 
         if (brainyActive && gamePhase === 'kipp21') {
@@ -5937,7 +6012,7 @@
         rx.remove();
         gem.visible = false;
 
-        brainyCurrentZahl++;
+        // brainyCurrentZahl++ entfernt (zufaellig nach HIT)
 
         if (brainyActive && gamePhase === 'kipp21') {
           await brainyNextRound();
@@ -6002,8 +6077,24 @@
       bereitsAusgegeben.clear();
       gamePhase = 'kipp21';
 
-      // Alle 12 Zahlen sichtbar
-      for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
+      // BRAINY NEU: jede Face bekommt EINE Zahl (1,2,3) auf EINEM zufaelligen Slot
+      // Baue ein spezielles deck: [f0-slots, f1-slots, f2-slots] = [0..3, 4..7, 8..11]
+      // pro Face: ein Slot = Zahl (1,2,3), andere 3 Slots = 0 (wird nicht angezeigt)
+      deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
+      visibleDeckIndices.clear();
+      var _brFaceZahlen = [1, 2, 3]; // f0=1, f1=2, f2=3
+      for (var _fi = 0; _fi < 3; _fi++) {
+        var _slotRand = Math.floor(Math.random() * 4);
+        var _deckIdx = _fi * 4 + _slotRand;
+        deck[_deckIdx] = _brFaceZahlen[_fi];
+        visibleDeckIndices.add(_deckIdx);
+      }
+      // Fuer Gedaechtnis merken: Zahl -> deckIdx
+      window._brainyZahlDeckIdx = {};
+      for (var _di = 0; _di < 12; _di++) {
+        if (deck[_di] > 0) window._brainyZahlDeckIdx[deck[_di]] = _di;
+      }
+      console.log('[BRAINY] deck=', deck, ' visible=', Array.from(visibleDeckIndices));
       updateFaceSlots();
       updateAllFaceTextures();
 
