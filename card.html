@@ -12574,7 +12574,15 @@
             _cardModePhase = 1;
             
             // NEXT MATCH: direkt zur Modi-Auswahl
-            showBluffModeSelection();
+            try {
+              console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
+              showBluffModeSelection();
+              console.log('[NEXT MATCH] showBluffModeSelection returned ok');
+            } catch (err) {
+              console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
+              // Fallback: Seite neu laden
+              window.location.href = window.location.pathname;
+            }
           };
 
           // TEILEN
@@ -12919,7 +12927,15 @@
             _cardModePhase = 1;
             
             // NEXT MATCH: direkt zur Modi-Auswahl
-            showBluffModeSelection();
+            try {
+              console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
+              showBluffModeSelection();
+              console.log('[NEXT MATCH] showBluffModeSelection returned ok');
+            } catch (err) {
+              console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
+              // Fallback: Seite neu laden
+              window.location.href = window.location.pathname;
+            }
           };
 
           // TEILEN
