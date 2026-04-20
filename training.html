@@ -2461,7 +2461,16 @@
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
           unlockAndPlayBgMusic();
-          setTimeout(() => { startBrainLevel(); }, 200);
+          currentLevel = 3;
+          setTimeout(() => { startBrainyLevel(); }, 200);
+          return;
+        }
+        if (levelParam === 'masterbrain' || levelParam === 'master') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          currentLevel = 4;
+          setTimeout(() => { startBrainyLevel(); }, 200);
           return;
         }
         
@@ -6383,11 +6392,11 @@
       if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       if (kippButtons) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
 
-      // "BRAINY" Inflate
+      // Level-Name Inflate (BUMBLEBRAIN / BRAINY / BRAIN / MASTERBRAIN)
       const sct = document.getElementById('startChallengeText');
       const sctHead = document.getElementById('sctHead');
       if (sct && sctHead) {
-        sctHead.textContent = 'BRAINY';
+        sctHead.textContent = _cfg.name;
         sctHead.style.animation = 'none'; void sctHead.offsetWidth;
         sctHead.style.animation = 'sctInflate 1.2s ease-out forwards';
         sct.style.display = 'flex';
