@@ -5771,6 +5771,7 @@
     async function brainyEndGame() {
       brainyActive = false;
       if (typeof brainyHideZielpad === 'function') brainyHideZielpad();
+      if (typeof brainyHideLives === 'function') brainyHideLives();
       kipp21Active = false;
       brainyStopNumPulse();
       brainyStopGemPulse();
@@ -5953,6 +5954,61 @@
 
     function brainyHideZielpad() {
       if (brainyZielpadMesh) brainyZielpadMesh.visible = false;
+    }
+
+    // === BRAINY Lebens-Anzeige (5 Herzen, Game Over bei 5. Miss) ===
+    function brainyEnsureLivesUI() {
+      let wrap = document.getElementById('brainyLivesWrap');
+      if (wrap) return wrap;
+      wrap = document.createElement('div');
+      wrap.id = 'brainyLivesWrap';
+      wrap.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);' +
+        'z-index:25;pointer-events:none;display:flex;gap:6px;';
+      for (let i = 0; i < 5; i++) {
+        const h = document.createElement('div');
+        h.className = 'brainyLife';
+        h.textContent = '♥'; // ♥
+        h.style.cssText = 'font:24px Arial;color:#e74c3c;' +
+          'text-shadow:0 1px 2px rgba(0,0,0,0.6),0 0 6px rgba(231,76,60,0.5);' +
+          'transition:color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;';
+        wrap.appendChild(h);
+      }
+      document.getElementById('uiOverlay').appendChild(wrap);
+      return wrap;
+    }
+
+    function brainyResetLives() {
+      const wrap = brainyEnsureLivesUI();
+      wrap.style.display = 'flex';
+      const hearts = wrap.querySelectorAll('.brainyLife');
+      hearts.forEach(h => {
+        h.style.color = '#e74c3c';
+        h.style.textShadow = '0 1px 2px rgba(0,0,0,0.6),0 0 6px rgba(231,76,60,0.5)';
+        h.style.transform = 'scale(1)';
+      });
+    }
+
+    function brainyUpdateLives() {
+      const wrap = brainyEnsureLivesUI();
+      const hearts = wrap.querySelectorAll('.brainyLife');
+      // brainyFails wurde bereits inkrementiert - das (brainyFails)-te Herz (1-indexed) ausgrauen
+      // also hearts[brainyFails - 1]
+      const idx = brainyFails - 1;
+      if (idx >= 0 && idx < hearts.length) {
+        const h = hearts[idx];
+        // kurzer Puls dann ausgegraut
+        h.style.transform = 'scale(1.3)';
+        setTimeout(() => {
+          h.style.color = '#3a2a20';
+          h.style.textShadow = 'none';
+          h.style.transform = 'scale(1)';
+        }, 200);
+      }
+    }
+
+    function brainyHideLives() {
+      const wrap = document.getElementById('brainyLivesWrap');
+      if (wrap) wrap.style.display = 'none';
     }
 
     // === BRAINY ROUND ===
@@ -6302,22 +6358,20 @@
 
         const gem = brainyGemMeshes[brainyHits];
 
-        // X marker (above gem)
-        const p3 = new THREE.Vector3(gem.position.x, 0.55, gem.position.z);
-        p3.project(camera);
-        const sx = Math.round((p3.x * 0.5 + 0.5) * 360);
-        const sy = Math.round((-p3.y * 0.5 + 0.5) * 720);
-        const rx = document.createElement('div');
-        rx.textContent = '\u2715';
-        rx.style.cssText = 'position:absolute;z-index:26;pointer-events:none;font:bold 36px Arial;color:#ff0000;text-shadow:0 0 8px rgba(255,0,0,0.8);transform:translate(-50%,-50%) scale(0.3);opacity:0;transition:transform 0.3s ease-out, opacity 0.2s ease-out;left:' + sx + 'px;top:' + sy + 'px;';
-        document.getElementById('uiOverlay').appendChild(rx);
-        requestAnimationFrame(() => { rx.style.opacity = '1'; rx.style.transform = 'translate(-50%,-50%) scale(1)'; });
+        // Lebens-Anzeige aktualisieren (Herz ausgrauen)
+        brainyUpdateLives();
 
-        await new Promise(r => setTimeout(r, 1800));
-        rx.remove();
+        // Kurze Pause damit User den Miss sieht (kein Kreuz mehr)
+        await new Promise(r => setTimeout(r, 1200));
         gem.visible = false;
 
-        // brainyCurrentZahl++ entfernt (zufaellig nach HIT)
+        // GAME OVER nach 5. Miss
+        if (brainyFails >= 5) {
+          if (brainyActive && gamePhase === 'kipp21') {
+            await brainyEndGame();
+          }
+          return;
+        }
 
         if (brainyActive && gamePhase === 'kipp21') {
           await brainyNextRound();
@@ -6381,6 +6435,8 @@
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
       gamePhase = 'kipp21';
+
+      brainyResetLives();
 
       const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
