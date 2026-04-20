@@ -5851,6 +5851,78 @@
       }
     }
 
+    // === 5-LEBEN-SYSTEM (rote Wuerfel-SVG) ===
+    function iconEnsureLivesUI() {
+      let wrap = document.getElementById('iconLivesWrap');
+      if (wrap) return wrap;
+      wrap = document.createElement('div');
+      wrap.id = 'iconLivesWrap';
+      wrap.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(calc(-50% + 22px));' +
+        'z-index:25;pointer-events:none;display:flex;gap:8px;';
+      const cubeSVG =
+        '<svg width="26" height="26" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' +
+          '<defs>' +
+            '<linearGradient id="fTopIc" x1="0" y1="0" x2="0" y2="1">' +
+              '<stop offset="0" stop-color="#ff6b6b"/>' +
+              '<stop offset="1" stop-color="#e74c3c"/>' +
+            '</linearGradient>' +
+            '<linearGradient id="fLeftIc" x1="0" y1="0" x2="0" y2="1">' +
+              '<stop offset="0" stop-color="#c0392b"/>' +
+              '<stop offset="1" stop-color="#962c21"/>' +
+            '</linearGradient>' +
+            '<linearGradient id="fRightIc" x1="0" y1="0" x2="0" y2="1">' +
+              '<stop offset="0" stop-color="#a0281e"/>' +
+              '<stop offset="1" stop-color="#782017"/>' +
+            '</linearGradient>' +
+          '</defs>' +
+          '<polygon points="50,10 88,30 50,50 12,30" fill="url(#fTopIc)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
+          '<polygon points="12,30 50,50 50,90 12,70" fill="url(#fLeftIc)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
+          '<polygon points="88,30 50,50 50,90 88,70" fill="url(#fRightIc)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
+        '</svg>';
+      for (let i = 0; i < 5; i++) {
+        const h = document.createElement('div');
+        h.className = 'iconLife';
+        h.innerHTML = cubeSVG;
+        h.style.cssText = 'width:26px;height:26px;' +
+          'filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));' +
+          'transition:filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;';
+        wrap.appendChild(h);
+      }
+      document.getElementById('uiOverlay').appendChild(wrap);
+      return wrap;
+    }
+
+    function iconResetLives() {
+      const wrap = iconEnsureLivesUI();
+      wrap.style.display = 'flex';
+      const dies = wrap.querySelectorAll('.iconLife');
+      dies.forEach(h => {
+        h.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
+        h.style.opacity = '1';
+        h.style.transform = 'scale(1)';
+      });
+    }
+
+    function iconUpdateLives(failCount) {
+      const wrap = iconEnsureLivesUI();
+      const dies = wrap.querySelectorAll('.iconLife');
+      const idx = failCount - 1;
+      if (idx >= 0 && idx < dies.length) {
+        const h = dies[idx];
+        h.style.transform = 'scale(1.25)';
+        setTimeout(() => {
+          h.style.filter = 'grayscale(1) brightness(0.5)';
+          h.style.opacity = '0.4';
+          h.style.transform = 'scale(1)';
+        }, 200);
+      }
+    }
+
+    function iconHideLives() {
+      const wrap = document.getElementById('iconLivesWrap');
+      if (wrap) wrap.style.display = 'none';
+    }
+
     // Fly card from above to frame position
     // End BRAINY game
     async function brainyEndGame() {
@@ -8454,6 +8526,10 @@
       iconMisses = 0;
       window._hitMissSeq = [];
       iconUsedCombos = new Set();
+      kipp21Fails = 0;
+      kipp21Done = 0;
+      window._trainingGameOver = false;
+      iconResetLives();
       
       setTimeout(() => { _startBtnLock = false; }, 1000);
       
