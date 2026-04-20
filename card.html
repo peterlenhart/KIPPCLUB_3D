@@ -3475,11 +3475,13 @@
     function saveMatchScore(modeKey, playerSum, bankSum) {
       try {
         const data = loadMatchScores();
-        if (!data.modes[modeKey]) data.modes[modeKey] = { count: 0, pl: 0, b: 0 };
+        if (!data.modes[modeKey]) data.modes[modeKey] = { count: 0, pl: 0, b: 0, bestSingle: 0 };
         const m = data.modes[modeKey];
         m.count++;
         m.pl += playerSum;
         m.b += bankSum;
+        if (typeof m.bestSingle !== 'number') m.bestSingle = 0;
+        if (playerSum > m.bestSingle) m.bestSingle = playerSum;
 
         // Check ob Modus > 9 → Saison-Reset
         if (m.count > 9) {
@@ -3487,9 +3489,21 @@
           const bTotal = MATCH_MODE_ORDER.reduce((s, k) => s + ((data.modes[k] || {}).b || 0), 0);
           const gesamtPl = plTotal;
           if (gesamtPl > data.best) data.best = gesamtPl;
-          // Reset alle Modi
+          // Reset alle Modi - aber bestSingle pro Modus erhalten
+          const _preservedBests = {};
+          for (const _k in data.modes) {
+            if (data.modes[_k] && typeof data.modes[_k].bestSingle === 'number') {
+              _preservedBests[_k] = data.modes[_k].bestSingle;
+            }
+          }
           data.modes = {};
-          data.modes[modeKey] = { count: 1, pl: playerSum, b: bankSum };
+          data.modes[modeKey] = { count: 1, pl: playerSum, b: bankSum, bestSingle: Math.max(_preservedBests[modeKey] || 0, playerSum) };
+          // bestSingle auch fuer andere Modi wiederherstellen (als leerer Eintrag nur mit bestSingle)
+          for (const _k in _preservedBests) {
+            if (_k !== modeKey) {
+              data.modes[_k] = { count: 0, pl: 0, b: 0, bestSingle: _preservedBests[_k] };
+            }
+          }
         }
 
         localStorage.setItem('digikipp_match_scores', JSON.stringify(data));
@@ -5658,13 +5672,53 @@
       }
       await sleep(400);
 
-      // 2 CCW Kipps
+      // === JETZT DU! Spieler übernimmt für zweite Ass ===
       _cardLockedDir = null;
-      await matchImpulsKipp('ccw');
-      if (!replayActive) { return; }
-      await matchImpulsKipp('ccw');
-      if (!replayActive) { return; }
-      await sleep(600);
+      
+      // Overlay "Jetzt DU!" einblenden
+      var jetztOv = document.createElement('div');
+      jetztOv.id = '_matchTutJetztOv';
+      jetztOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:99;pointer-events:none;' +
+        'opacity:0;transition:opacity 0.5s ease;';
+      // Blur-Hintergrund (ohne zentrale Kippziel-Aussparung - hier ist Würfel wichtig)
+      var jetztBlur = document.createElement('div');
+      jetztBlur.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' +
+        'backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(0,0,0,0.35);' +
+        'clip-path:polygon(0 0, 100% 0, 100% 28%, 0 28%, 0 72%, 100% 72%, 100% 100%, 0 100%);' +
+        '-webkit-clip-path:polygon(0 0, 100% 0, 100% 28%, 0 28%, 0 72%, 100% 72%, 100% 100%, 0 100%);';
+      jetztOv.appendChild(jetztBlur);
+      // Text oben
+      var jetztTxt = document.createElement('div');
+      jetztTxt.style.cssText = 'position:absolute;top:80px;left:0;width:100%;text-align:center;' +
+        'font:bold 38px Arial;color:#ffd93d;letter-spacing:3px;line-height:1.15;' +
+        'text-shadow:0 2px 10px rgba(0,0,0,0.9),0 0 20px rgba(255,217,61,0.4);';
+      jetztTxt.innerHTML = 'JETZT DU!<br><span style="font-size:22px;font-weight:bold;color:#e0d0b8;letter-spacing:2px;">Erkippe die<br>zweite Ass!</span>';
+      jetztOv.appendChild(jetztTxt);
+      document.body.appendChild(jetztOv);
+      requestAnimationFrame(function() { jetztOv.style.opacity = '1'; });
+      
+      // Tutorial-Overrides zurücksetzen: Spieler uebernimmt echt
+      window._tutForceFallState = null;
+      if (typeof _origGenModeSuits === 'function') {
+        window.generateModeSuits = _origGenModeSuits;
+      }
+      
+      // Tutorial-Flags beenden - Spieler hat volle Kontrolle
+      replayActive = false;
+      window._matchTutorialMode = false;
+      window._tutExtraKipp = 0;
+      disableReplayBlocker();
+      
+      // Overlay nach 3s ausblenden (Spieler hat Hinweis gesehen)
+      setTimeout(function() {
+        jetztOv.style.opacity = '0';
+        setTimeout(function() { if (jetztOv.parentNode) jetztOv.remove(); }, 600);
+      }, 3000);
+      
+      // Tutorial-Funktion beenden - normaler Spielfluss übernimmt ab hier
+      // (Spieler tippt Würfel -> senkt sich -> kippt -> Trefferlogik -> SHOWDOWN oder VERFEHLT)
+      return;
 
       // Lang-tippen Freistellung fuer Pik-Ass
       var aceIdx2 = deck.indexOf(12);
@@ -11994,6 +12048,21 @@
           'text-shadow:0 1px 3px rgba(0,0,0,0.7);';
         nameEl.innerHTML = mode.label + ' <span style="font-size:16px;font-weight:normal;color:#aaa;">' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten') + '</span>';
         textDiv.appendChild(nameEl);
+        
+        // Bestleistung fuer diesen Modus
+        const _msData = loadMatchScores();
+        const _mEntry = _msData.modes && _msData.modes[mode.key];
+        const _bestSingle = (_mEntry && _mEntry.bestSingle) ? _mEntry.bestSingle : 0;
+        if (_bestSingle > 0) {
+          const bestEl = document.createElement('div');
+          const _bestLabelMap = { de: 'Beste', en: 'Best', es: 'Mejor', fr: 'Meilleur', it: 'Migliore', tr: 'En iyi' };
+          const _userLang = localStorage.getItem('digikipp_lang') || 'de';
+          const _bestLabel = _bestLabelMap[_userLang] || _bestLabelMap.de;
+          bestEl.style.cssText = 'font:bold 12px Arial;color:#cedb25;letter-spacing:1px;' +
+            'text-shadow:0 1px 2px rgba(0,0,0,0.6);margin-top:2px;';
+          bestEl.textContent = _bestLabel + ': ' + _bestSingle;
+          textDiv.appendChild(bestEl);
+        }
 
         // Quadrat-Button rechts mit gelbem Haken
         const qWrap = document.createElement('div');
@@ -12422,7 +12491,7 @@
           if (btnKP) btnKP.style.display = 'none';
 
           // NOCHMAL
-          btnS.textContent = T.nml || 'NOCHMAL';
+          btnS.textContent = 'NEXT MATCH';
           btnS.disabled = false;
           btnS.style.opacity = '1';
           btnS.style.display = '';
@@ -12452,7 +12521,8 @@
               faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
             }
             updateAllFaceTextures();
-            startBluffSetzrunde();
+            // NEXT MATCH: zurueck zur Modi-Auswahl statt denselben Modus neu starten
+            showBluffModeSelection();
           };
 
           // TEILEN
@@ -12612,7 +12682,79 @@
         rtCtx.textBaseline = 'middle';
         rtCtx.shadowColor = 'rgba(0,0,0,0.7)';
         rtCtx.shadowBlur = 10;
-        rtCtx.fillText('KEIN ' + label, 512, 64);
+        // Grammatikalisch korrekte "Kein ..."-Texte je Modus und Sprache
+        const _verfehltTexts = {
+          de: {
+            highcard: 'KEINE HIGH CARD',
+            pair: 'KEIN PAAR',
+            three: 'KEIN DRILLING',
+            four: 'KEIN VIERLING',
+            twopair: 'KEINE 2 PAARE',
+            straight: 'KEINE STRASSE',
+            flush: 'KEIN FLUSH',
+            fullhouse: 'KEIN FULL HOUSE',
+            straightfl: 'KEIN STRAIGHT FLUSH'
+          },
+          en: {
+            highcard: 'NO HIGH CARD',
+            pair: 'NO PAIR',
+            three: 'NO THREE OF A KIND',
+            four: 'NO FOUR OF A KIND',
+            twopair: 'NO TWO PAIR',
+            straight: 'NO STRAIGHT',
+            flush: 'NO FLUSH',
+            fullhouse: 'NO FULL HOUSE',
+            straightfl: 'NO STRAIGHT FLUSH'
+          },
+          es: {
+            highcard: 'SIN CARTA ALTA',
+            pair: 'SIN PAREJA',
+            three: 'SIN TR\u00cdO',
+            four: 'SIN POKER',
+            twopair: 'SIN DOBLE PAREJA',
+            straight: 'SIN ESCALERA',
+            flush: 'SIN COLOR',
+            fullhouse: 'SIN FULL',
+            straightfl: 'SIN ESCALERA DE COLOR'
+          },
+          fr: {
+            highcard: 'PAS DE CARTE HAUTE',
+            pair: 'PAS DE PAIRE',
+            three: 'PAS DE BRELAN',
+            four: 'PAS DE CARR\u00c9',
+            twopair: 'PAS DE DEUX PAIRES',
+            straight: 'PAS DE SUITE',
+            flush: 'PAS DE COULEUR',
+            fullhouse: 'PAS DE FULL',
+            straightfl: 'PAS DE QUINTE FLUSH'
+          },
+          it: {
+            highcard: 'NESSUNA CARTA ALTA',
+            pair: 'NESSUNA COPPIA',
+            three: 'NESSUN TRIS',
+            four: 'NESSUN POKER',
+            twopair: 'NESSUNA DOPPIA COPPIA',
+            straight: 'NESSUNA SCALA',
+            flush: 'NESSUN COLORE',
+            fullhouse: 'NESSUN FULL',
+            straightfl: 'NESSUNA SCALA REALE'
+          },
+          tr: {
+            highcard: 'Y\u00dcKSEK KART YOK',
+            pair: 'ÇİFT YOK',
+            three: '\u00dc\u00c7L\u00dc YOK',
+            four: 'KARE YOK',
+            twopair: '\u0130K\u0130 \u00c7\u0130FT YOK',
+            straight: 'STRE\u0130T YOK',
+            flush: 'FLA\u015e YOK',
+            fullhouse: 'FULL YOK',
+            straightfl: 'STRE\u0130T FLA\u015e YOK'
+          }
+        };
+        const _userLangV = localStorage.getItem('digikipp_lang') || 'de';
+        const _verfTexts = _verfehltTexts[_userLangV] || _verfehltTexts.de;
+        const _verfText = _verfTexts[mode.key] || ('KEIN ' + label);
+        rtCtx.fillText(_verfText, 512, 64);
         const rtTex = new THREE.CanvasTexture(rtCanvas);
         const rtW = 1.638; const rtH = rtW * (128 / 1024);
         const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
@@ -12656,7 +12798,7 @@
           if (btnKP) btnKP.style.display = 'none';
 
           // NOCHMAL
-          btnS.textContent = T.nml || 'NOCHMAL';
+          btnS.textContent = 'NEXT MATCH';
           btnS.disabled = false;
           btnS.style.opacity = '1';
           btnS.style.display = '';
@@ -12686,7 +12828,8 @@
               faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
             }
             updateAllFaceTextures();
-            startBluffSetzrunde();
+            // NEXT MATCH: zurueck zur Modi-Auswahl statt denselben Modus neu starten
+            showBluffModeSelection();
           };
 
           // TEILEN
