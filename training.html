@@ -8405,7 +8405,16 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      startKipp21(withTutorial);
+      if (withTutorial) {
+        startKipp21(true); // Tutorial bleibt wie gehabt
+      } else {
+        // BUMBLEBRAIN = Level 1 mit neuem Zielpad-System
+        currentLevel = 1;
+        for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
+        updateFaceSlots();
+        updateAllFaceTextures();
+        setTimeout(() => { startBrainyLevel(); }, 100);
+      }
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
