@@ -2163,6 +2163,7 @@
         const [r, c] = key.split(',').map(Number);
         const { val, rot } = slotMap[key];
         if (slotMap[key].vis === false) continue; // Kantenpaar-Sichtbarkeit
+        if (!val || val <= 0) continue; // Leerer Slot (BRAINY-System: deck=0 = leer)
         const cx = c * cell + cell / 2;
         const cy = r * cell + cell / 2;
         ctx.save();
@@ -4474,12 +4475,51 @@
             () => {
               document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
               hitTextEls.length = 0;
-              gamePhase = 'start';
-              startBrainLevel();
+              gamePhase = 'kipp21';
+              currentLevel = 3;
+              startBrainyLevel();
             },
-            // MASTERBRAIN → kipp21.html
+            // MASTERBRAIN
             'MASTERBRAIN',
-            () => { window.location.href = 'kipp21.html'; }
+            async () => {
+              const blurOv = document.createElement('div');
+              blurOv.style.cssText = 'position:fixed;inset:0;z-index:28;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);background:rgba(0,0,0,0);transition:all 0.6s ease-out;pointer-events:none;';
+              document.body.appendChild(blurOv);
+              requestAnimationFrame(() => {
+                blurOv.style.backdropFilter = 'blur(8px)';
+                blurOv.style.webkitBackdropFilter = 'blur(8px)';
+                blurOv.style.background = 'rgba(0,0,0,0.45)';
+              });
+              await new Promise(r => setTimeout(r, 700));
+              const mbEl = document.createElement('div');
+              mbEl.textContent = 'MASTERBRAIN';
+              mbEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
+                'transform:translateY(-50%) scale(0.3);text-align:center;' +
+                'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
+                'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
+                'opacity:0;pointer-events:none;';
+              document.body.appendChild(mbEl);
+              requestAnimationFrame(() => {
+                mbEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
+                mbEl.style.opacity = '1';
+                mbEl.style.transform = 'translateY(-50%) scale(1)';
+              });
+              await new Promise(r => setTimeout(r, 2200));
+              mbEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
+              mbEl.style.opacity = '0';
+              mbEl.style.transform = 'translateY(-50%) scale(1.2)';
+              blurOv.style.backdropFilter = 'blur(0px)';
+              blurOv.style.webkitBackdropFilter = 'blur(0px)';
+              blurOv.style.background = 'rgba(0,0,0,0)';
+              await new Promise(r => setTimeout(r, 600));
+              mbEl.remove();
+              blurOv.remove();
+              currentLevel = 4;
+              gamePhase = 'kipp21';
+              await new Promise(r => setTimeout(r, 300));
+              await waitForScoreClosed();
+              startBrainyLevel();
+            }
           );
           return;
         } else {
@@ -5757,12 +5797,26 @@
       hitTextEls.length = 0;
       document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
 
-      // 3 Buttons: NOCHMAL / TEILEN / BRAIN
-      showLevelEndButtons('BRAINY', brainyHits, brainyFails,
-        // NOCHMAL
+      // Level-abhaengig: Label + naechstes Level bestimmen
+      const _endLvlNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+      const _curName = _endLvlNames[currentLevel] || 'BUMBLEBRAIN';
+      const _nextLvl = currentLevel < 4 ? currentLevel + 1 : null;
+      const _nextName = _nextLvl ? _endLvlNames[_nextLvl] : null;
+      
+      if (!_nextName) {
+        // MASTERBRAIN Ende - nur NOCHMAL / TEILEN (kein naechstes Level)
+        showLevelEndButtons(_curName, brainyHits, brainyFails,
+          () => { gamePhase = 'kipp21'; startBrainyLevel(); },
+          null, null
+        );
+        return;
+      }
+      
+      showLevelEndButtons(_curName, brainyHits, brainyFails,
+        // NOCHMAL (gleiches Level)
         () => { gamePhase = 'kipp21'; startBrainyLevel(); },
-        // BRAIN Label + Action
-        'BRAIN',
+        // Naechstes Level Label + Action
+        _nextName,
         async () => {
           const blurOv = document.createElement('div');
           blurOv.style.cssText = 'position:fixed;inset:0;z-index:28;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);background:rgba(0,0,0,0);transition:all 0.6s ease-out;pointer-events:none;';
@@ -5773,34 +5827,34 @@
             blurOv.style.background = 'rgba(0,0,0,0.45)';
           });
           await new Promise(r => setTimeout(r, 700));
-          const brainEl = document.createElement('div');
-          brainEl.textContent = 'BRAIN';
-          brainEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
+          const nextEl = document.createElement('div');
+          nextEl.textContent = _nextName;
+          nextEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
             'transform:translateY(-50%) scale(0.3);text-align:center;' +
             'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
             'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
             'opacity:0;pointer-events:none;';
-          document.body.appendChild(brainEl);
+          document.body.appendChild(nextEl);
           requestAnimationFrame(() => {
-            brainEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
-            brainEl.style.opacity = '1';
-            brainEl.style.transform = 'translateY(-50%) scale(1)';
+            nextEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
+            nextEl.style.opacity = '1';
+            nextEl.style.transform = 'translateY(-50%) scale(1)';
           });
           await new Promise(r => setTimeout(r, 2200));
-          brainEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
-          brainEl.style.opacity = '0';
-          brainEl.style.transform = 'translateY(-50%) scale(1.2)';
+          nextEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
+          nextEl.style.opacity = '0';
+          nextEl.style.transform = 'translateY(-50%) scale(1.2)';
           blurOv.style.backdropFilter = 'blur(0px)';
           blurOv.style.webkitBackdropFilter = 'blur(0px)';
           blurOv.style.background = 'rgba(0,0,0,0)';
           await new Promise(r => setTimeout(r, 600));
-          brainEl.remove();
+          nextEl.remove();
           blurOv.remove();
-          currentLevel = 3;
+          currentLevel = _nextLvl;
           gamePhase = 'kipp21';
           await new Promise(r => setTimeout(r, 300));
           await waitForScoreClosed();
-          startBrainLevel();
+          startBrainyLevel();
         }
       );
     }
