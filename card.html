@@ -5938,6 +5938,25 @@
             }
           }
           
+          // Score-Meshes ausblenden (die "000" von +1)
+          if (window._scorePLMesh) window._scorePLMesh.visible = false;
+          if (window._scoreBKMesh) window._scoreBKMesh.visible = false;
+          
+          // Stich-Meshes ausblenden
+          if (window._stichMeshes) {
+            for (var stk in window._stichMeshes) {
+              if (window._stichMeshes[stk]) window._stichMeshes[stk].visible = false;
+            }
+          }
+          
+          // Pokal-Pulse stoppen
+          var _pokalEl = document.getElementById('btnBestScores');
+          if (_pokalEl) { _pokalEl.classList.remove('pulsing'); _pokalEl.style.animation = ''; }
+          
+          // Bluff-Mode-Flag zuruecksetzen (sonst Overlay bleibt sichtbar)
+          window._bluffMode = false;
+          window._cardMode = undefined;
+          
           // TEILEN wieder zuruecksetzen
           if (btnD_tut) { btnD_tut.style.display = ''; btnD_tut.style.top = '515px'; }
           if (btnS_tut) { btnS_tut.style.top = '455px'; }
@@ -11916,8 +11935,8 @@
       tutWrap.onclick = function() {
         var ovEl = document.getElementById('_bluffModeOverlay');
         if (ovEl) ovEl.remove();
-        window._cardMode = 'offen';
-        runCardTutorial();
+        window._cardMode = 'verdeckt';
+        runMatchTutorial();
       };
       btnRow.appendChild(tutWrap);
 
