@@ -292,6 +292,7 @@
     .lvl-btn:active { filter:brightness(0.85); }
     .lvl-btn.disabled { opacity:0.3; pointer-events:none; }
     .lvl-sub { font-size:13px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-14px; text-align:center; }
+    .lvl-best { font-size:12px; font-weight:bold; letter-spacing:1px; color:#cedb25; margin-top:-10px; text-align:center; min-height:14px; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
     .lvl-sub-big { font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; }
     #levelClose { position:absolute; top:12px; left:16px; width:48px; height:48px; cursor:pointer; background:none; border:none; padding:0; -webkit-tap-highlight-color:transparent; pointer-events:auto; }
     #levelClose img { width:100%; height:100%; object-fit:contain; }
@@ -351,9 +352,13 @@
     <h2 id="lvlTitle">WÄHLE DEIN LEVEL</h2>
     <div class="lvl-btn" id="lvlTraining"><img class="lvl-bg" id="lvlTrainingBg" src="button_lang_braun.webp">BUMBLEBRAIN</div>
     <div class="lvl-sub" id="lvlSubTraining">mit TUTORIAL</div>
+    <div class="lvl-best" id="lvlBestTraining"></div>
     <div class="lvl-btn" id="lvlBrainy"><img class="lvl-bg" id="lvlBrainyBg" src="button_lang_rotbraun_glow.webp">BRAINY</div>
+    <div class="lvl-best" id="lvlBestBrainy"></div>
     <div class="lvl-btn" id="lvlBrain"><img class="lvl-bg" id="lvlBrainBg" src="button_lang_orange_glow.webp">BRAIN</div>
+    <div class="lvl-best" id="lvlBestBrain"></div>
     <div class="lvl-btn" id="lvlK21"><img class="lvl-bg" src="button_lang_gold_glow.webp">MASTER BRAIN</div>
+    <div class="lvl-best" id="lvlBestK21"></div>
     <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
       <div class="lvl-btn" id="lvlKP"><img class="lvl-bg" id="lvlKPBg" src="button_lang_grau.webp">KIPP PRINZIP</div>
       <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
@@ -593,6 +598,48 @@
       }
     }
     updateLevelLinks();
+
+    // === Bestleistungen pro Level aus localStorage anzeigen ===
+    function updateLevelBests() {
+      let scores = [];
+      try {
+        const raw = localStorage.getItem('digikipp_bestscores_v2');
+        if (raw) scores = JSON.parse(raw) || [];
+      } catch(e) { scores = []; }
+      
+      // Beste Pct + Hits pro Level ermitteln
+      function bestForLvl(lvlNum) {
+        const filtered = scores.filter(s => s.level === lvlNum);
+        if (filtered.length === 0) return null;
+        filtered.sort((a, b) => b.pct - a.pct || a.fails - b.fails);
+        return filtered[0];
+      }
+      
+      const lvlMap = [
+        { id: 'lvlBestTraining', lvl: 1 },
+        { id: 'lvlBestBrainy',   lvl: 2 },
+        { id: 'lvlBestBrain',    lvl: 3 },
+        { id: 'lvlBestK21',      lvl: 4 }
+      ];
+      
+      const labelMap = {
+        de: 'Beste', en: 'Best', es: 'Mejor', fr: 'Meilleur', it: 'Migliore', tr: 'En iyi'
+      };
+      const userLang = localStorage.getItem('digikipp_lang') || 'de';
+      const label = labelMap[userLang] || labelMap.de;
+      
+      for (const m of lvlMap) {
+        const el = document.getElementById(m.id);
+        if (!el) continue;
+        const best = bestForLvl(m.lvl);
+        if (best) {
+          el.textContent = label + ': ' + best.pct + '% (' + best.hits + '/' + (best.hits + best.fails) + ')';
+        } else {
+          el.textContent = '';
+        }
+      }
+    }
+    updateLevelBests();
 
     // ?theme= Parameter: automatisch Level-Overlay öffnen
     const _themeParam = new URLSearchParams(window.location.search).get('theme');
