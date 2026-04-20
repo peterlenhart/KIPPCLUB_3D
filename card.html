@@ -5868,8 +5868,23 @@
           var ov = document.getElementById('startOverlay');
           if (ov) ov.style.display = 'none';
           
-          // Bluff-Group und zugehoerige Meshes aufraeumen
-          if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
+          // Bluff-Group: erst alle children einzeln entfernen, dann group selber
+          if (window._bluffSlideGroup) {
+            var _bg = window._bluffSlideGroup;
+            // Children rueckwaerts entfernen
+            while (_bg.children.length > 0) {
+              var _ch = _bg.children[_bg.children.length - 1];
+              _bg.remove(_ch);
+              if (_ch.material) {
+                if (_ch.material.map) _ch.material.map.dispose();
+                _ch.material.dispose();
+              }
+              if (_ch.geometry) _ch.geometry.dispose();
+            }
+            scene.remove(_bg);
+            window._bluffSlideGroup = null;
+          }
+          // Einzelne Refs auch aus scene (falls sie nicht in der group waren)
           if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
           if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
           if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(function(m){scene.remove(m)}); window._bluffCardMeshes = null; }
