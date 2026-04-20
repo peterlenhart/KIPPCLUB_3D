@@ -5807,12 +5807,15 @@
       if (brainyZielpadBgImg) {
         ctx.drawImage(brainyZielpadBgImg, 0, 0, 135, 135);
       }
-      // Zahl darauf zeichnen - gleiche Optik wie Wuerfel-Zahlen
-      ctx.font = '900 80px "Noto Serif", serif';
-      ctx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+      // Zahl-Stil identisch zu Slot-Zahlen: bold Arial, #2a1810
+      // Canvas ist 135px (3x Retina), Slot-Canvas 256 mit 56px Font -> hier 3/5.69 Skalierung
+      // Einfacher: proportional skalieren. Slot: 256px/56px = 4.57. Unser: 135px, 135/4.57 ~ 29px.
+      // Aber groesser lesbar: 70px wie auf Wuerfel aussieht bei 45px Zelle
+      ctx.font = 'bold 70px Arial';
+      ctx.fillStyle = '#2a1810';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(String(zahl), 67, 72);
+      ctx.fillText(String(zahl), 67.5, 70);
       brainyZielpadTex.needsUpdate = true;
       brainyZielpadMesh.visible = true;
     }
@@ -5824,6 +5827,9 @@
     // === BRAINY ROUND ===
     async function brainyNextRound() {
       if (!brainyActive || gamePhase !== 'kipp21') return;
+      
+      // Zielpad der vorherigen Runde ausblenden
+      brainyHideZielpad();
 
       // End check
       if (brainyHits >= 4) {
