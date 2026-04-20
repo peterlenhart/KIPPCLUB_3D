@@ -6147,53 +6147,65 @@
       const _slotsR = ['S1', 'S2', 'S3', 'S4'];
       const _colorsR = ['violett', 'blau', 'gruen', 'orange'];
       
-      // Sammle moegliche (zahl, farbe) Kombinationen die NICHT bereits in aktueller Fall-Pose erfuellt sind
-      // Eine Kombi ist erfuellt, wenn eine Zahl auf der oberen Face an einem Slot liegt 
-      // dessen Nachbarfarbe im aktuellen Quadrant die gewaehlte Farbe ist
-      const _candidatesR = [];
+      // === ZIELZAHL-ZIEHUNG ===
+      // Sichtbare Zahlen = die auf topFace (nach Fall oben liegend)
+      // BUMBLEBRAIN: natuerliche Wahrscheinlichkeit (uniform aus 1..maxZahl)
+      // BRAINY: 75% der natuerlichen Rate fuer sichtbare
+      // BRAIN:  50% der natuerlichen Rate
+      // MASTERBRAIN: 33% der natuerlichen Rate
       const _offR = _faceOffR[topFace];
-      const _visibleZahlenOnTop = [];
+      const _visZahlenSet = new Set();
       for (let _si = 0; _si < 4; _si++) {
         const _z = deck[_offR + _si];
-        if (_z > 0 && _z <= _cfg_r.maxZahl) {
-          const _neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotsR[_si]];
-          _visibleZahlenOnTop.push({ zahl: _z, slot: _slotsR[_si], ownColor: _neighborColor });
-        }
+        if (_z > 0 && _z <= _cfg_r.maxZahl) _visZahlenSet.add(_z);
       }
-      // Alle moeglichen Ziel-Kombis: Zahl 1..maxZahl, Farbe random
+      const _visAllowByLvl = { 1: 1.0, 2: 0.75, 3: 0.5, 4: 0.33 };
+      const _visAllow = _visAllowByLvl[currentLevel] || 1.0;
+      
+      // Gewichtete Ziehung aus allen Zahlen 1..maxZahl
+      // sichtbare bekommen Gewicht _visAllow, unsichtbare 1.0
+      const _zahlWeights = [];
+      let _totalZW = 0;
       for (let _z = 1; _z <= _cfg_r.maxZahl; _z++) {
-        for (const _col of _colorsR) {
-          // Pruefe ob diese Kombi in aktueller Pose bereits erfuellt
-          let _erfuellt = false;
-          for (const _top of _visibleZahlenOnTop) {
-            if (_top.zahl === _z && _top.ownColor === _col) { _erfuellt = true; break; }
-          }
-          if (!_erfuellt) {
-            _candidatesR.push({ zahl: _z, colorName: _col });
-          }
-        }
+        const _w = _visZahlenSet.has(_z) ? _visAllow : 1.0;
+        _zahlWeights.push({ zahl: _z, w: _w });
+        _totalZW += _w;
+      }
+      let _rZW = Math.random() * _totalZW;
+      let zahl = 1;
+      for (const _zw of _zahlWeights) {
+        _rZW -= _zw.w;
+        if (_rZW <= 0) { zahl = _zw.zahl; break; }
       }
       
-      // Random eine Ziel-Kombi waehlen
-      const _picked = _candidatesR[Math.floor(Math.random() * _candidatesR.length)];
-      const zahl = _picked.zahl;
-      const zielColor = _picked.colorName;
-      console.log('[BRAINY] Ziel nach Fall: zahl=' + zahl + ' farbe=' + zielColor);
-      
-      // Finde Slot der diese Zahl enthaelt (auf irgendeiner Face, fuer Gem-Platzierung)
-      let _targetFace = null, _targetSlot = null, _targetQ = null;
+      // Finde Slot der diese Zahl enthaelt (auf irgendeiner Face)
+      let _targetFace = null, _targetSlotIdx = -1;
       for (const _face of ['f0', 'f1', 'f2']) {
         const _off2 = _faceOffR[_face];
         for (let _si = 0; _si < 4; _si++) {
-          if (deck[_off2 + _si] === zahl) {
-            _targetFace = _face;
-            _targetSlot = _slotsR[_si];
-            break;
-          }
+          if (deck[_off2 + _si] === zahl) { _targetFace = _face; _targetSlotIdx = _si; break; }
         }
         if (_targetFace) break;
       }
-      // Finde Quadrant mit passender Nachbarfarbe fuer diesen Slot
+      const _targetSlotName = _slotsR[_targetSlotIdx];
+      
+      // === ZIELFARBE: random aus 4 Farben, aber ausschliesse die Farbe die in aktueller Pose
+      // bereits erfuellt waere (nur relevant wenn Zahl auf topFace liegt)
+      let _zielColorCandidates = _colorsR.slice();
+      if (_targetFace === topFace) {
+        // Zahl ist sichtbar -> die Nachbarfarbe im currentQuadrant ist bereits erfuellt
+        const _erfuelltFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][_targetSlotName];
+        _zielColorCandidates = _colorsR.filter(_c => _c !== _erfuelltFarbe);
+      }
+      const zielColor = _zielColorCandidates[Math.floor(Math.random() * _zielColorCandidates.length)];
+      
+      const _zWasVisible = _visZahlenSet.has(zahl);
+      const _dbgProbVis = ((_visZahlenSet.size * _visAllow) / (_visZahlenSet.size * _visAllow + (_cfg_r.maxZahl - _visZahlenSet.size) * 1.0) * 100).toFixed(1);
+      console.log('[BRAINY] Ziel zahl=' + zahl + ' farbe=' + zielColor + ' | visible=' + _zWasVisible + ' | Lvl=' + currentLevel + ' | visAllow=' + _visAllow + ' | visZahlen=' + Array.from(_visZahlenSet).join(',') + ' | P(vis)=' + _dbgProbVis + '%');
+      
+      // Finde Quadrant mit passender Nachbarfarbe fuer den Ziel-Slot
+      const _targetSlot = _targetSlotName;
+      let _targetQ = null;
       for (let _q = 0; _q < 4; _q++) {
         if (SLOT_NEIGHBOR_COLORS[_q][_targetSlot] === zielColor) {
           _targetQ = _q;
