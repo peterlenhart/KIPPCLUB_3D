@@ -12865,8 +12865,15 @@
         'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:35px;';
-      backBtn.onclick = () => ov.remove();
-      backBtn.addEventListener('touchend', (e) => { e.preventDefault(); ov.remove(); }, { passive: false });
+      backBtn.onclick = () => {
+        ov.remove();
+        if (directMode) showBluffModeSelection();
+      };
+      backBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        ov.remove();
+        if (directMode) showBluffModeSelection();
+      }, { passive: false });
       selectWrap.appendChild(backBtn);
 
       ov.appendChild(selectWrap);
@@ -12926,7 +12933,12 @@
           'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
-        okBtn.onclick = () => { ov.remove(); };
+        okBtn.onclick = () => {
+          ov.remove();
+          if (directMode) {
+            showBluffModeSelection();
+          }
+        };
         btnWrap2.appendChild(okBtn);
         ov.appendChild(btnWrap2);
       }
