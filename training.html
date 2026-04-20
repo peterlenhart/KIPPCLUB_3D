@@ -2613,7 +2613,7 @@
       const gap = 64; // 52px Höhe + 12px Abstand
       const btnNochmal = mkBtn(T.nml || 'NOCHMAL', baseTop);
       const btnTeilen = mkBtn(T.cTeilen || 'TEILEN', baseTop + gap);
-      const btnNext = mkBtn(btn2Label, baseTop + gap * 2);
+      const btnNext = btn2Label ? mkBtn(btn2Label, baseTop + gap * 2) : null;
 
       btnNochmal.onclick = () => {
         document.querySelectorAll('.levelEndBtn').forEach(el => el.remove());
@@ -2633,16 +2633,18 @@
         }
       };
 
-      btnNext.onclick = () => {
-        document.querySelectorAll('.levelEndBtn').forEach(el => el.remove());
-        hideLevelScore();
-        btn2Action();
-      };
+      if (btnNext) {
+        btnNext.onclick = () => {
+          document.querySelectorAll('.levelEndBtn').forEach(el => el.remove());
+          hideLevelScore();
+          btn2Action();
+        };
+      }
 
       const ui = document.getElementById('uiOverlay');
       ui.appendChild(btnNochmal);
       ui.appendChild(btnTeilen);
-      ui.appendChild(btnNext);
+      if (btnNext) ui.appendChild(btnNext);
     }
 
     function saveBestScore(level, hits, fails) {
