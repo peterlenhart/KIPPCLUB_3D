@@ -11439,6 +11439,7 @@
     }
 
     function handleStart(withTutorial) {
+      if (window._nextMatchBlock) { window._nextMatchBlock = false; return; }
       if (window._menuSelState === 1) {
         // KIPP +1 Tutorial
         window._menuSelState = 0;
@@ -12510,7 +12511,10 @@
           btnS.style.opacity = '1';
           btnS.style.display = '';
           btnS.style.top = '504px';
-          btnS.onclick = function() {
+          btnS.onclick = function(ev) {
+            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+            if (ev && ev.preventDefault) ev.preventDefault();
+            window._nextMatchBlock = true;
             btnS.style.top = '455px';
             btnD.style.top = '515px';
             overlay.style.display = 'none';
@@ -12863,7 +12867,10 @@
           btnS.style.opacity = '1';
           btnS.style.display = '';
           btnS.style.top = '504px';
-          btnS.onclick = function() {
+          btnS.onclick = function(ev) {
+            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+            if (ev && ev.preventDefault) ev.preventDefault();
+            window._nextMatchBlock = true;
             btnS.style.top = '455px';
             btnD.style.top = '515px';
             overlay.style.display = 'none';
