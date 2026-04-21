@@ -4520,14 +4520,7 @@
       scene.add(handShadowMesh);
     }
     function updateHandShadow(screenX, screenY, visible) {
-      if (!handShadowMesh) return;
-      // Im Match-Tutorial: Schatten IMMER aus
-      if (window._matchTutorialMode) {
-        handShadowMesh.visible = false;
-        handShadowMesh.material.opacity = 0;
-        return;
-      }
-      if (!handShadowMesh.visible) return;
+      if (!handShadowMesh || !handShadowMesh.visible) return;
       if (!visible) { handShadowMesh.material.opacity = 0; return; }
       // Screen → 3D auf Bodenhöhe (Y=0.002)
       const ndc = new THREE.Vector3((screenX / 360) * 2 - 1, -(screenY / 720) * 2 + 1, 0.5);
@@ -4817,22 +4810,14 @@
       window._cardMode = 'verdeckt'; // Match-Modus
       window._bluffMode = true;
 
-      // +1 Target-Overrides aus scene entfernen (nicht nur visible=false)
+      // +1 Target-Overrides vorsichtshalber zuruecksetzen (falls vorher +1 Tut lief)
       if (window._targetMeshes) {
-        Object.values(window._targetMeshes).forEach(function(m) {
-          if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
-        });
+        Object.values(window._targetMeshes).forEach(function(m) { if (m) m.visible = false; });
       }
       if (window._suitMeshes) {
-        Object.values(window._suitMeshes).forEach(function(m) {
-          if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
-        });
+        Object.values(window._suitMeshes).forEach(function(m) { if (m) m.visible = false; });
       }
-      if (window._targetRankMesh) {
-        window._targetRankMesh.visible = false;
-        if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
-      }
-      if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
+      if (window._targetRankMesh) window._targetRankMesh.visible = false;
 
       // === TUTORIAL-DETERMINISMUS (wie +1 Tut) ===
       // deck bleibt zufallig - nach 4 CW Kipps von Q3/f2 landet Wuerfel auf Q3/f0.
@@ -5846,29 +5831,21 @@
         }
       }
 
-      // Polle bis runShowdown den NOCHMAL-Button fertig konfiguriert hat
+      // Auf Ergebnis-Anzeige warten (runShowdown hat eigene Timings),
+      // dann Buttons fuer Tutorial anpassen
+      await sleep(3500);
+      
+      // btnSpielen (NOCHMAL) → soll Tutorial erneut starten
+      // btnDemo (TEILEN) → soll verschwinden
       var btnS_tut = document.getElementById('btnSpielen');
       var btnD_tut = document.getElementById('btnDemo');
-      for (var _pollNM = 0; _pollNM < 80; _pollNM++) {
-        await sleep(100);
-        if (btnS_tut && btnS_tut.textContent === (T.nml || 'NOCHMAL') && btnS_tut.style.display !== 'none') {
-          break;
-        }
-      }
-      // Sicherstellen dass auch showResult durchgelaufen ist
-      await sleep(300);
-
-      // JETZT uebernehmen wir die Buttons (unser Override gewinnt)
       if (btnD_tut) btnD_tut.style.display = 'none';
       if (btnS_tut) {
         btnS_tut.textContent = T.cSpielen || 'SPIELEN';
-        btnS_tut.style.top = '504px';
         btnS_tut.onclick = function() {
-          // Startoverlay schliessen
           var ov = document.getElementById('startOverlay');
           if (ov) ov.style.display = 'none';
-          
-          // Bluff-Group und zugehoerige Meshes aufraeumen
+          // Alles aufräumen
           if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
           if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
           if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
@@ -5889,24 +5866,21 @@
           window._matchScorePlayer = 0;
           window._playedSlots = new Set();
           
-          // +1 Target-Meshes aus scene entfernen
+          // +1 Target-Meshes EXPLIZIT ausblenden (dürfen nicht im Match auftauchen)
           if (window._targetMeshes) {
             for (var tk in window._targetMeshes) {
-              var tm = window._targetMeshes[tk];
-              if (tm) { tm.visible = false; if (tm.parent) tm.parent.remove(tm); }
+              if (window._targetMeshes[tk]) window._targetMeshes[tk].visible = false;
             }
           }
           if (window._suitMeshes) {
             for (var sk in window._suitMeshes) {
-              var sm = window._suitMeshes[sk];
-              if (sm) { sm.visible = false; if (sm.parent) sm.parent.remove(sm); }
+              if (window._suitMeshes[sk]) window._suitMeshes[sk].visible = false;
             }
           }
-          if (window._targetRankMesh) {
-            window._targetRankMesh.visible = false;
-            if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
-          }
+          if (window._targetRankMesh) window._targetRankMesh.visible = false;
+          // +1 Pulse stoppen
           if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
+          // +1 State zurücksetzen
           if (window._cardTargetState) {
             if (window._cardTargetState.usedNumbers) window._cardTargetState.usedNumbers.clear();
             window._cardTargetState.currentTarget = null;
@@ -5922,13 +5896,11 @@
               }
             }
           }
-          
-          // TEILEN wieder zuruecksetzen
+          // TEILEN wieder einblenden + Reset-Top fuer normalen Spielflow
           if (btnD_tut) { btnD_tut.style.display = ''; btnD_tut.style.top = '515px'; }
-          if (btnS_tut) { btnS_tut.style.top = '455px'; }
-          
-          // ECHTES SPIEL: Modi-Auswahl öffnen
-          showBluffModeSelection();
+          if (btnS_tut) { btnS_tut.style.top = '455px'; btnS_tut.textContent = T.splayen || 'SPIELEN'; }
+          // Tutorial erneut starten
+          runMatchTutorial();
         };
       }
 
