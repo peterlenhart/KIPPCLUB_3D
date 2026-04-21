@@ -12510,19 +12510,26 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NOCHMAL
-          btnS.textContent = 'NEXT MATCH';
-          btnS.disabled = false;
-          btnS.style.opacity = '1';
-          btnS.style.display = '';
-          btnS.style.top = '504px';
-          btnS.onclick = function(ev) {
-            console.log('[DEBUG] NEXT MATCH onclick aufgerufen!');
-            alert('NEXT MATCH geklickt - onclick läuft');
+          // NEXT MATCH - eigener Button ohne Konflikte mit btnSpielen's addEventListener
+          btnS.style.display = 'none';  // Original btnSpielen komplett verstecken
+          var oldNextBtn = document.getElementById('_nextMatchBtn');
+          if (oldNextBtn) oldNextBtn.remove();
+          var nmBtn = document.createElement('button');
+          nmBtn.id = '_nextMatchBtn';
+          nmBtn.textContent = 'NEXT MATCH';
+          nmBtn.style.cssText = 'position:absolute;top:504px;left:50%;transform:translateX(-50%);' +
+            'width:226px;height:42px;z-index:50;cursor:pointer;pointer-events:auto;border:none;border-radius:6px;' +
+            'background:url(buttonfilz.webp) center/cover no-repeat;' +
+            'font:bold 18px Arial;letter-spacing:2.5px;color:#d0d0d0;' +
+            'text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6);';
+          document.getElementById('startOverlay').appendChild(nmBtn);
+          nmBtn.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
             window._nextMatchBlock = true;
+            nmBtn.remove();
             btnS.style.top = '455px';
+            btnS.style.display = '';
             btnD.style.top = '515px';
             overlay.style.display = 'none';
             if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
@@ -12587,9 +12594,7 @@
             // NEXT MATCH: direkt zur Modi-Auswahl
             try {
               console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
-              alert('Cleanup fertig - rufe showBluffModeSelection auf');
               showBluffModeSelection();
-              alert('showBluffModeSelection return ok');
               console.log('[NEXT MATCH] showBluffModeSelection returned ok');
             } catch (err) {
               console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
@@ -12870,19 +12875,26 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NOCHMAL
-          btnS.textContent = 'NEXT MATCH';
-          btnS.disabled = false;
-          btnS.style.opacity = '1';
-          btnS.style.display = '';
-          btnS.style.top = '504px';
-          btnS.onclick = function(ev) {
-            console.log('[DEBUG] NEXT MATCH onclick aufgerufen!');
-            alert('NEXT MATCH geklickt - onclick läuft');
+          // NEXT MATCH - eigener Button ohne Konflikte mit btnSpielen's addEventListener
+          btnS.style.display = 'none';  // Original btnSpielen komplett verstecken
+          var oldNextBtn = document.getElementById('_nextMatchBtn');
+          if (oldNextBtn) oldNextBtn.remove();
+          var nmBtn = document.createElement('button');
+          nmBtn.id = '_nextMatchBtn';
+          nmBtn.textContent = 'NEXT MATCH';
+          nmBtn.style.cssText = 'position:absolute;top:504px;left:50%;transform:translateX(-50%);' +
+            'width:226px;height:42px;z-index:50;cursor:pointer;pointer-events:auto;border:none;border-radius:6px;' +
+            'background:url(buttonfilz.webp) center/cover no-repeat;' +
+            'font:bold 18px Arial;letter-spacing:2.5px;color:#d0d0d0;' +
+            'text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6);';
+          document.getElementById('startOverlay').appendChild(nmBtn);
+          nmBtn.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
             window._nextMatchBlock = true;
+            nmBtn.remove();
             btnS.style.top = '455px';
+            btnS.style.display = '';
             btnD.style.top = '515px';
             overlay.style.display = 'none';
             if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
@@ -12947,9 +12959,7 @@
             // NEXT MATCH: direkt zur Modi-Auswahl
             try {
               console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
-              alert('Cleanup fertig - rufe showBluffModeSelection auf');
               showBluffModeSelection();
-              alert('showBluffModeSelection return ok');
               console.log('[NEXT MATCH] showBluffModeSelection returned ok');
             } catch (err) {
               console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
