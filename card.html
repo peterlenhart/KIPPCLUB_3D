@@ -12506,6 +12506,9 @@
           var btnDy = document.getElementById('btnDaily');
           var btnKP = document.getElementById('btnKippPrinzip');
 
+          // Tutorial-Wachposten beenden falls noch aktiv (versteckt sonst btnS dauerhaft)
+          if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
+
           // Alle erstmal verstecken
           if (btnA) btnA.style.display = 'none';
           if (btnDy) btnDy.style.display = 'none';
@@ -12520,6 +12523,8 @@
           btnS.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
+            // Tutorial-Wachposten zwangsweise stoppen falls noch aktiv
+            if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
             try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
             window.location.reload();
           };
@@ -12791,6 +12796,9 @@
           var btnDy = document.getElementById('btnDaily');
           var btnKP = document.getElementById('btnKippPrinzip');
 
+          // Tutorial-Wachposten beenden falls noch aktiv (versteckt sonst btnS dauerhaft)
+          if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
+
           // Alle erstmal verstecken
           if (btnA) btnA.style.display = 'none';
           if (btnDy) btnDy.style.display = 'none';
@@ -12805,6 +12813,8 @@
           btnS.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
+            // Tutorial-Wachposten zwangsweise stoppen falls noch aktiv
+            if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
             try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
             window.location.reload();
           };
