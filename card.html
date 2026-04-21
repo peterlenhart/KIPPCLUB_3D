@@ -12510,95 +12510,32 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NEXT MATCH - eigener Button ohne Konflikte mit btnSpielen's addEventListener
-          btnS.style.display = 'none';  // Original btnSpielen komplett verstecken
-          var oldNextBtn = document.getElementById('_nextMatchBtn');
-          if (oldNextBtn) oldNextBtn.remove();
-          var nmBtn = document.createElement('button');
-          nmBtn.id = '_nextMatchBtn';
-          nmBtn.textContent = 'NEXT MATCH';
-          nmBtn.style.cssText = 'position:absolute;top:504px;left:50%;transform:translateX(-50%);' +
-            'width:226px;height:42px;z-index:50;cursor:pointer;pointer-events:auto;border:none;border-radius:6px;' +
-            'background:url(buttonfilz.webp) center/cover no-repeat;' +
-            'font:bold 18px Arial;letter-spacing:2.5px;color:#d0d0d0;' +
-            'text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6);';
-          document.getElementById('startOverlay').appendChild(nmBtn);
-          nmBtn.onclick = function(ev) {
+          // NEXT MATCH: btnS recyclen wie frueher, aber addEventListener-Konflikt ueber _nextMatchBlock Flag umgehen
+          btnS.textContent = 'NEXT MATCH';
+          btnS.disabled = false;
+          btnS.style.opacity = '1';
+          btnS.style.display = '';
+          btnS.style.top = '504px';
+          btnS.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
             window._nextMatchBlock = true;
-            nmBtn.remove();
-            btnS.style.top = '455px';
-            btnS.style.display = '';
-            btnD.style.top = '515px';
+            // NEXT MATCH: kompletter Scene-Reset + Modus-Auswahl oeffnen
             overlay.style.display = 'none';
-            if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
-            if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
-            if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
-            if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(function(m){scene.remove(m)}); window._bluffCardMeshes = null; }
-            if (window._bluffCardSlots) { window._bluffCardSlots.forEach(function(s){if(s.mesh)scene.remove(s.mesh)}); window._bluffCardSlots = null; }
-            if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
-            if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
-            if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
-            if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
-            if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
-            if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
-            window._bluffShowdownActive = false;
-            window._bluffNochmalActive = false;
-            window._matchScoreBank = 0;
-            window._matchScorePlayer = 0;
-            window._playedSlots = new Set();
-            window._bluffPlayedDeckSlots = null;
-            if (typeof faceSlots !== 'undefined' && faceSlots) {
-              faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
-            }
-            updateAllFaceTextures();
-            
-            // === NEXT MATCH: umfassendes Cleanup wie bei runMatchTutorial-Start ===
-            // +1 Target-Meshes aus Scene entfernen (nicht nur visible=false)
-            if (window._targetMeshes) {
-              Object.values(window._targetMeshes).forEach(function(m) {
-                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
-              });
-            }
-            if (window._suitMeshes) {
-              Object.values(window._suitMeshes).forEach(function(m) {
-                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
-              });
-            }
-            if (window._targetRankMesh) {
-              window._targetRankMesh.visible = false;
-              if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
-            }
-            if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
-            
-            // Bluff/Match-Flags sauber zurücksetzen
-            window._bluffMode = true;
-            window._cardMode = 'verdeckt';
-            window._bluffSelectedMode = null;
-            window._bluffVerfehlt = false;
-            window._bluffBankHand = null;
-            window._lastMatchWinner = null;
-            window._lastMatchModeLabel = null;
-            
-            // Tutorial-Flags sicherheitshalber aus
-            window._matchTutorialMode = false;
-            window._tutForceFallState = null;
-            window._tutExtraKipp = 0;
-            replayActive = false;
-            if (typeof disableReplayBlocker === 'function') { try { disableReplayBlocker(); } catch(e){} }
-            
-            // +1-Phase sicherstellen damit Modi-Auswahl erscheint (nicht Phase 0)
-            _cardModePhase = 1;
-            
-            // NEXT MATCH: direkt zur Modi-Auswahl
+            btnS.style.top = '455px';
+            btnD.style.top = '515px';
             try {
-              console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
+              backToStartScreen();
+            } catch(e) { console.error('[NEXT MATCH] backToStartScreen Fehler:', e); }
+            // Nach Reset: startOverlay ist wieder sichtbar. Wir wollen aber Modus-Auswahl.
+            document.getElementById('startOverlay').style.display = 'none';
+            _cardModePhase = 1;
+            window._cardMode = 'verdeckt';
+            window._bluffMode = true;
+            try {
               showBluffModeSelection();
-              console.log('[NEXT MATCH] showBluffModeSelection returned ok');
-            } catch (err) {
-              console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
-              // Fallback: Seite neu laden
+            } catch(e) {
+              console.error('[NEXT MATCH] showBluffModeSelection Fehler:', e);
               window.location.href = window.location.pathname;
             }
           };
@@ -12875,95 +12812,32 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NEXT MATCH - eigener Button ohne Konflikte mit btnSpielen's addEventListener
-          btnS.style.display = 'none';  // Original btnSpielen komplett verstecken
-          var oldNextBtn = document.getElementById('_nextMatchBtn');
-          if (oldNextBtn) oldNextBtn.remove();
-          var nmBtn = document.createElement('button');
-          nmBtn.id = '_nextMatchBtn';
-          nmBtn.textContent = 'NEXT MATCH';
-          nmBtn.style.cssText = 'position:absolute;top:504px;left:50%;transform:translateX(-50%);' +
-            'width:226px;height:42px;z-index:50;cursor:pointer;pointer-events:auto;border:none;border-radius:6px;' +
-            'background:url(buttonfilz.webp) center/cover no-repeat;' +
-            'font:bold 18px Arial;letter-spacing:2.5px;color:#d0d0d0;' +
-            'text-shadow:0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6);';
-          document.getElementById('startOverlay').appendChild(nmBtn);
-          nmBtn.onclick = function(ev) {
+          // NEXT MATCH: btnS recyclen wie frueher, aber addEventListener-Konflikt ueber _nextMatchBlock Flag umgehen
+          btnS.textContent = 'NEXT MATCH';
+          btnS.disabled = false;
+          btnS.style.opacity = '1';
+          btnS.style.display = '';
+          btnS.style.top = '504px';
+          btnS.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
             window._nextMatchBlock = true;
-            nmBtn.remove();
-            btnS.style.top = '455px';
-            btnS.style.display = '';
-            btnD.style.top = '515px';
+            // NEXT MATCH: kompletter Scene-Reset + Modus-Auswahl oeffnen
             overlay.style.display = 'none';
-            if (window._bluffSlideGroup) { scene.remove(window._bluffSlideGroup); window._bluffSlideGroup = null; }
-            if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
-            if (window._bluffSouthMesh) { scene.remove(window._bluffSouthMesh); window._bluffSouthMesh = null; }
-            if (window._bluffCardMeshes) { window._bluffCardMeshes.forEach(function(m){scene.remove(m)}); window._bluffCardMeshes = null; }
-            if (window._bluffCardSlots) { window._bluffCardSlots.forEach(function(s){if(s.mesh)scene.remove(s.mesh)}); window._bluffCardSlots = null; }
-            if (window._bluffModeMesh) { scene.remove(window._bluffModeMesh); window._bluffModeMesh = null; }
-            if (window._bluffBankLabel) { scene.remove(window._bluffBankLabel); window._bluffBankLabel = null; }
-            if (window._bluffHandLabel) { scene.remove(window._bluffHandLabel); window._bluffHandLabel = null; }
-            if (window._bluffResultMesh) { scene.remove(window._bluffResultMesh); window._bluffResultMesh = null; }
-            if (window._bluffScoreMesh) { scene.remove(window._bluffScoreMesh); window._bluffScoreMesh = null; }
-            if (window._bluffShowdownBtn) { window._bluffShowdownBtn = null; }
-            window._bluffShowdownActive = false;
-            window._bluffNochmalActive = false;
-            window._matchScoreBank = 0;
-            window._matchScorePlayer = 0;
-            window._playedSlots = new Set();
-            window._bluffPlayedDeckSlots = null;
-            if (typeof faceSlots !== 'undefined' && faceSlots) {
-              faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
-            }
-            updateAllFaceTextures();
-            
-            // === NEXT MATCH: umfassendes Cleanup wie bei runMatchTutorial-Start ===
-            // +1 Target-Meshes aus Scene entfernen (nicht nur visible=false)
-            if (window._targetMeshes) {
-              Object.values(window._targetMeshes).forEach(function(m) {
-                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
-              });
-            }
-            if (window._suitMeshes) {
-              Object.values(window._suitMeshes).forEach(function(m) {
-                if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
-              });
-            }
-            if (window._targetRankMesh) {
-              window._targetRankMesh.visible = false;
-              if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
-            }
-            if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
-            
-            // Bluff/Match-Flags sauber zurücksetzen
-            window._bluffMode = true;
-            window._cardMode = 'verdeckt';
-            window._bluffSelectedMode = null;
-            window._bluffVerfehlt = false;
-            window._bluffBankHand = null;
-            window._lastMatchWinner = null;
-            window._lastMatchModeLabel = null;
-            
-            // Tutorial-Flags sicherheitshalber aus
-            window._matchTutorialMode = false;
-            window._tutForceFallState = null;
-            window._tutExtraKipp = 0;
-            replayActive = false;
-            if (typeof disableReplayBlocker === 'function') { try { disableReplayBlocker(); } catch(e){} }
-            
-            // +1-Phase sicherstellen damit Modi-Auswahl erscheint (nicht Phase 0)
-            _cardModePhase = 1;
-            
-            // NEXT MATCH: direkt zur Modi-Auswahl
+            btnS.style.top = '455px';
+            btnD.style.top = '515px';
             try {
-              console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
+              backToStartScreen();
+            } catch(e) { console.error('[NEXT MATCH] backToStartScreen Fehler:', e); }
+            // Nach Reset: startOverlay ist wieder sichtbar. Wir wollen aber Modus-Auswahl.
+            document.getElementById('startOverlay').style.display = 'none';
+            _cardModePhase = 1;
+            window._cardMode = 'verdeckt';
+            window._bluffMode = true;
+            try {
               showBluffModeSelection();
-              console.log('[NEXT MATCH] showBluffModeSelection returned ok');
-            } catch (err) {
-              console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
-              // Fallback: Seite neu laden
+            } catch(e) {
+              console.error('[NEXT MATCH] showBluffModeSelection Fehler:', e);
               window.location.href = window.location.pathname;
             }
           };
