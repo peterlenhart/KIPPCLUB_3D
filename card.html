@@ -5687,52 +5687,83 @@
       }
       await sleep(400);
 
-      // === JETZT DU! Spieler übernimmt für zweite Ass ===
+      // === Jetzt DU! Spieler übernimmt für zweite Ass ===
       _cardLockedDir = null;
       
-      // Overlay "Jetzt DU!" einblenden
+      // Overlay mit Blur (Karten 28-72% bleiben klar) + Text
       var jetztOv = document.createElement('div');
       jetztOv.id = '_matchTutJetztOv';
       jetztOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
         'width:360px;height:' + window.innerHeight + 'px;z-index:99;pointer-events:none;' +
         'opacity:0;transition:opacity 0.5s ease;';
-      // Blur-Hintergrund (ohne zentrale Kippziel-Aussparung - hier ist Würfel wichtig)
       var jetztBlur = document.createElement('div');
       jetztBlur.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' +
         'backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(0,0,0,0.35);' +
         'clip-path:polygon(0 0, 100% 0, 100% 28%, 0 28%, 0 72%, 100% 72%, 100% 100%, 0 100%);' +
         '-webkit-clip-path:polygon(0 0, 100% 0, 100% 28%, 0 28%, 0 72%, 100% 72%, 100% 100%, 0 100%);';
       jetztOv.appendChild(jetztBlur);
-      // Text oben
       var jetztTxt = document.createElement('div');
-      jetztTxt.style.cssText = 'position:absolute;top:80px;left:0;width:100%;text-align:center;' +
-        'font:bold 38px Arial;color:#ffd93d;letter-spacing:3px;line-height:1.15;' +
+      jetztTxt.style.cssText = 'position:absolute;top:90px;left:0;width:100%;text-align:center;' +
+        'font:bold 26px Arial;color:#ffd93d;letter-spacing:2px;line-height:1.25;' +
         'text-shadow:0 2px 10px rgba(0,0,0,0.9),0 0 20px rgba(255,217,61,0.4);';
-      jetztTxt.innerHTML = 'Jetzt DU!<br>Kippe den Würfel<br>mit deinem Finger<br><span style="font-size:22px;font-weight:bold;color:#e0d0b8;letter-spacing:2px;">Das Ass muss<br>zu Pik</span>';
+      jetztTxt.innerHTML = 'Jetzt DU!<br>Kippe den Würfel<br>mit deinem Finger.<br><span style="font-size:20px;font-weight:bold;color:#e0d0b8;letter-spacing:1.5px;">Das Ass zu Pik</span>';
       jetztOv.appendChild(jetztTxt);
       document.body.appendChild(jetztOv);
       requestAnimationFrame(function() { jetztOv.style.opacity = '1'; });
       
-      // Tutorial-Overrides zurücksetzen: Spieler uebernimmt echt
+      // Tutorial-Overrides zurücksetzen: Spieler übernimmt echt
       window._tutForceFallState = null;
       if (typeof _origGenModeSuits === 'function') {
         window.generateModeSuits = _origGenModeSuits;
       }
-      
-      // Tutorial-Flags beenden - Spieler hat volle Kontrolle
       replayActive = false;
       window._matchTutorialMode = false;
       window._tutExtraKipp = 0;
       disableReplayBlocker();
       
-      // Overlay nach 3s ausblenden (Spieler hat Hinweis gesehen)
+      // 4s Text+Blur sichtbar, Hand bleibt mit
       setTimeout(function() {
         jetztOv.style.opacity = '0';
         setTimeout(function() { if (jetztOv.parentNode) jetztOv.remove(); }, 600);
-      }, 3000);
+        // Hand auch verstecken
+        try { if (typeof setHandVisible === 'function') setHandVisible(false); } catch(e){}
+        try { var _h = document.getElementById('handMesh') || document.getElementById('hand'); if (_h) _h.style.display = 'none'; } catch(e){}
+        if (window._handMesh) window._handMesh.visible = false;
+        // Wuerfel-Wobble starten - 10° cw/ccw bis Spieler kippt
+        startCubeWobble();
+      }, 4000);
       
-      // Tutorial-Funktion beenden - normaler Spielfluss übernimmt ab hier
-      // (Spieler tippt Würfel -> senkt sich -> kippt -> Trefferlogik -> SHOWDOWN oder VERFEHLT)
+      // Wobble-Funktion: Würfel rotiert um Y (vertikale Achse) je 10° cw/ccw
+      function startCubeWobble() {
+        if (!cube) return;
+        window._wobbleStop = false;
+        var startQuat = cube.quaternion.clone();
+        var amp = 10 * Math.PI / 180; // 10°
+        var period = 800; // ms hin oder zurück
+        var t0 = performance.now();
+        function tick(now) {
+          if (window._wobbleStop) {
+            cube.quaternion.copy(startQuat);
+            return;
+          }
+          var t = (now - t0) / period;
+          var angle = Math.sin(t * Math.PI) * amp; // sanftes hin/her
+          var q = new THREE.Quaternion();
+          q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+          cube.quaternion.copy(startQuat).multiply(q);
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        // Bei erstem User-Input (Kipp) Wobble stoppen
+        var stopper = function() {
+          window._wobbleStop = true;
+          document.removeEventListener('touchstart', stopper, true);
+          document.removeEventListener('mousedown', stopper, true);
+        };
+        document.addEventListener('touchstart', stopper, true);
+        document.addEventListener('mousedown', stopper, true);
+      }
+      
       return;
 
       // Lang-tippen Freistellung fuer Pik-Ass
