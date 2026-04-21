@@ -5921,7 +5921,7 @@
 
     function iconHideLives() {
       const wrap = document.getElementById('iconLivesWrap');
-      if (wrap) wrap.style.display = 'none';
+      if (wrap) { wrap.style.display = 'none'; wrap.style.visibility = 'hidden'; if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
     }
 
     // Fly card from above to frame position
@@ -10951,6 +10951,7 @@
     }
     
     function showIconEndScreen() {
+      iconHideLives();
       const row = document.getElementById('iconKippzielRow');
       if (row) row.classList.add('hidden');
       const nb = document.getElementById('numBtns');
