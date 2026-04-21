@@ -547,11 +547,13 @@
     document.getElementById("clickColor").onclick = () => {
       selectedSkin = 'numbers';
       updateLevelLinks();
+      updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
     };
     document.getElementById("clickCard").onclick = () => {
       selectedSkin = 'icons';
       updateLevelLinks();
+      updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
     };
     function updateLevelLinks() {
@@ -620,9 +622,12 @@
         if (raw) scores = JSON.parse(raw) || [];
       } catch(e) { scores = []; }
       
-      // Beste Pct + Hits pro Level ermitteln
+      // Aktuell ausgewaehlten Skin pruefen (numbers oder icons)
+      const currentSkin = (typeof selectedSkin !== 'undefined' ? selectedSkin : null) || localStorage.getItem('digikipp_skin') || 'numbers';
+      
+      // Beste Pct + Hits pro Level ermitteln - GETRENNT nach Skin
       function bestForLvl(lvlNum) {
-        const filtered = scores.filter(s => s.level === lvlNum);
+        const filtered = scores.filter(s => s.level === lvlNum && (s.skin || 'numbers') === currentSkin);
         if (filtered.length === 0) return null;
         filtered.sort((a, b) => b.pct - a.pct || a.fails - b.fails);
         return filtered[0];

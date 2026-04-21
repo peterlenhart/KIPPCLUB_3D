@@ -5364,6 +5364,7 @@
           }, 5000);
         } else {
           // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
+          console.log('[BUMBLEBRAIN FAIL] kipp21Fails=' + (kipp21Fails+1));
           kipp21Fails++;
           iconUpdateLives(kipp21Fails);
           if (kipp21Fails >= 5) window._trainingGameOver = true;
@@ -6177,6 +6178,7 @@
         // === FAIL ===
         brainyFails++;
         kipp21Fails++;
+        iconUpdateLives(kipp21Fails);
         brainyStopGemPulse();
 
         const gem = brainyGemMeshes[brainyHits];

@@ -3317,6 +3317,21 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
+        // NEUES MATCH: nach reload Modi-Auswahl direkt oeffnen
+        try {
+          if (sessionStorage.getItem('kippOpenMatchModi') === '1') {
+            sessionStorage.removeItem('kippOpenMatchModi');
+            try { document.getElementById('startOverlay').style.display = 'none'; } catch(e){}
+            try { document.getElementById('startChallengeText').style.display = 'none'; } catch(e){}
+            try { unlockAndPlayBgMusic(); } catch(e){}
+            window._cardMode = 'verdeckt';
+            window._bluffMode = true;
+            _cardModePhase = 1;
+            setTimeout(function(){ try { showBluffModeSelection(); } catch(e){ console.error(e); } }, 600);
+            return;
+          }
+        } catch(e){}
+
         // Sequenz stoppen
         sctRunning = false;
         if (sctTimerId) { clearTimeout(sctTimerId); sctTimerId = null; }
@@ -12496,27 +12511,43 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NEXT MATCH: eigener Button - btnS hat addEventListener der zu KIPP+1 fuehrt
+          // NEUES MATCH: eigener Button - direkt zur Modi-Auswahl
           btnS.style.display = 'none';
+          var oldNeu = document.getElementById('_neuesMatchBtn');
+          if (oldNeu) oldNeu.remove();
+          var neuBtn = document.createElement('button');
+          neuBtn.id = '_neuesMatchBtn';
+          neuBtn.className = 'startClickZone';
+          neuBtn.textContent = 'NEUES MATCH';
+          neuBtn.style.cssText = 'top:447px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(neuBtn);
+          neuBtn.onclick = function() {
+            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
+            location.reload();
+          };
+
+          // MENÜ: zurueck zum Hauptmenue
           var oldNM = document.getElementById('_nmReloadBtn');
           if (oldNM) oldNM.remove();
           var nmBtn = document.createElement('button');
           nmBtn.id = '_nmReloadBtn';
           nmBtn.className = 'startClickZone';
-          nmBtn.textContent = 'NEXT MATCH';
+          nmBtn.textContent = 'MENÜ';
           nmBtn.style.cssText = 'top:504px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
           document.getElementById('startOverlay').appendChild(nmBtn);
           nmBtn.onclick = function() { location.reload(); };
 
-          // TEILEN
-          btnD.textContent = T.cTeilen || 'TEILEN';
-          btnD.disabled = false;
-          btnD.style.opacity = '1';
-          btnD.style.display = '';
-          btnD.style.top = '561px';
-          btnD.onclick = function(ev) {
-            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-            if (ev && ev.preventDefault) ev.preventDefault();
+          // TEILEN: eigener Button - btnD hat addEventListener der zur Modi-Auswahl fuehrt
+          btnD.style.display = 'none';
+          var oldTL = document.getElementById('_tlShareBtn');
+          if (oldTL) oldTL.remove();
+          var tlBtn = document.createElement('button');
+          tlBtn.id = '_tlShareBtn';
+          tlBtn.className = 'startClickZone';
+          tlBtn.textContent = T.cTeilen || 'TEILEN';
+          tlBtn.style.cssText = 'top:561px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(tlBtn);
+          tlBtn.onclick = function() {
             var shareText = buildMatchShareText(
               window._lastMatchModeLabel || '',
               window._lastMatchWinner || '',
@@ -12527,11 +12558,10 @@
               navigator.share({ text: shareText }).catch(function(){});
             } else {
               navigator.clipboard.writeText(shareText).then(function() {
-                btnD.textContent = T.cKopiert || 'KOPIERT!';
-                setTimeout(function() { btnD.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+                tlBtn.textContent = T.cKopiert || 'KOPIERT!';
+                setTimeout(function() { tlBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
               }).catch(function(){});
             }
-            return false;
           };
 
           window._bluffNochmalActive = false;
@@ -12780,27 +12810,43 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NEXT MATCH: eigener Button - btnS hat addEventListener der zu KIPP+1 fuehrt
+          // NEUES MATCH: eigener Button - direkt zur Modi-Auswahl
           btnS.style.display = 'none';
+          var oldNeu = document.getElementById('_neuesMatchBtn');
+          if (oldNeu) oldNeu.remove();
+          var neuBtn = document.createElement('button');
+          neuBtn.id = '_neuesMatchBtn';
+          neuBtn.className = 'startClickZone';
+          neuBtn.textContent = 'NEUES MATCH';
+          neuBtn.style.cssText = 'top:447px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(neuBtn);
+          neuBtn.onclick = function() {
+            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
+            location.reload();
+          };
+
+          // MENÜ: zurueck zum Hauptmenue
           var oldNM = document.getElementById('_nmReloadBtn');
           if (oldNM) oldNM.remove();
           var nmBtn = document.createElement('button');
           nmBtn.id = '_nmReloadBtn';
           nmBtn.className = 'startClickZone';
-          nmBtn.textContent = 'NEXT MATCH';
+          nmBtn.textContent = 'MENÜ';
           nmBtn.style.cssText = 'top:504px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
           document.getElementById('startOverlay').appendChild(nmBtn);
           nmBtn.onclick = function() { location.reload(); };
 
-          // TEILEN
-          btnD.textContent = T.cTeilen || 'TEILEN';
-          btnD.disabled = false;
-          btnD.style.opacity = '1';
-          btnD.style.display = '';
-          btnD.style.top = '561px';
-          btnD.onclick = function(ev) {
-            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-            if (ev && ev.preventDefault) ev.preventDefault();
+          // TEILEN: eigener Button - btnD hat addEventListener der zur Modi-Auswahl fuehrt
+          btnD.style.display = 'none';
+          var oldTL = document.getElementById('_tlShareBtn');
+          if (oldTL) oldTL.remove();
+          var tlBtn = document.createElement('button');
+          tlBtn.id = '_tlShareBtn';
+          tlBtn.className = 'startClickZone';
+          tlBtn.textContent = T.cTeilen || 'TEILEN';
+          tlBtn.style.cssText = 'top:561px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(tlBtn);
+          tlBtn.onclick = function() {
             var shareText = buildMatchShareText(
               window._lastMatchModeLabel || '',
               window._lastMatchWinner || '',
@@ -12811,11 +12857,10 @@
               navigator.share({ text: shareText }).catch(function(){});
             } else {
               navigator.clipboard.writeText(shareText).then(function() {
-                btnD.textContent = T.cKopiert || 'KOPIERT!';
-                setTimeout(function() { btnD.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+                tlBtn.textContent = T.cKopiert || 'KOPIERT!';
+                setTimeout(function() { tlBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
               }).catch(function(){});
             }
-            return false;
           };
 
           window._bluffNochmalActive = false;
