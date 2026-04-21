@@ -2717,7 +2717,7 @@
         const total = hits + fails;
         const pct = total > 0 ? Math.round(hits / total * 100) : 0;
         const scores = loadBestScores();
-        scores.push({ level: level, hits: hits, fails: fails, pct: pct, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level, ts: Date.now() });
+        scores.push({ level: level, hits: hits, fails: fails, pct: pct, skin: 'icons', levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level, ts: Date.now() });
         scores.sort((a, b) => b.pct - a.pct || a.fails - b.fails);
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(top11));
@@ -2728,6 +2728,7 @@
     }
 
     function showLevelScore(hits, fails) {
+      iconHideLives();
       const total = hits + fails;
       const pct = total > 0 ? Math.round(hits / total * 100) : 0;
       const el = document.getElementById('levelScoreDisplay');
@@ -5364,7 +5365,6 @@
           }, 5000);
         } else {
           // FAIL — roter Rand + Karte fliegt zur richtigen Farbe mit halbtransparenter Zahl
-          console.log('[BUMBLEBRAIN FAIL] kipp21Fails=' + (kipp21Fails+1));
           kipp21Fails++;
           iconUpdateLives(kipp21Fails);
           if (kipp21Fails >= 5) window._trainingGameOver = true;
@@ -6245,6 +6245,7 @@
 
     // === START BRAINY LEVEL ===
     async function startBrainyLevel() {
+      iconResetLives();
       console.log('[BRAINY] Starting level - sequential 1-12');
       hideLevelScore();
       brainyActive = true;
@@ -10929,6 +10930,12 @@
         autoEckblick();
       } else {
         iconMisses++;
+        kipp21Fails++;
+        iconUpdateLives(kipp21Fails);
+        if (kipp21Fails >= 5) {
+          window._trainingGameOver = true;
+          iconHideLives();
+        }
         window._hitMissSeq.push('miss');
         // Roter Rand
         kzEl.style.borderWidth = '4px';
