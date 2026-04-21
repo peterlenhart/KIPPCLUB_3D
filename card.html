@@ -11439,7 +11439,12 @@
     }
 
     function handleStart(withTutorial) {
-      if (window._nextMatchBlock) { window._nextMatchBlock = false; return; }
+      console.log('[DEBUG] handleStart aufgerufen, nextMatchBlock=' + window._nextMatchBlock + ', withTut=' + withTutorial);
+      if (window._nextMatchBlock) { 
+        console.log('[DEBUG] handleStart abgebrochen wegen nextMatchBlock');
+        window._nextMatchBlock = false; 
+        return; 
+      }
       if (window._menuSelState === 1) {
         // KIPP +1 Tutorial
         window._menuSelState = 0;
@@ -12512,6 +12517,8 @@
           btnS.style.display = '';
           btnS.style.top = '504px';
           btnS.onclick = function(ev) {
+            console.log('[DEBUG] NEXT MATCH onclick aufgerufen!');
+            alert('NEXT MATCH geklickt - onclick läuft');
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
             window._nextMatchBlock = true;
@@ -12580,7 +12587,9 @@
             // NEXT MATCH: direkt zur Modi-Auswahl
             try {
               console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
+              alert('Cleanup fertig - rufe showBluffModeSelection auf');
               showBluffModeSelection();
+              alert('showBluffModeSelection return ok');
               console.log('[NEXT MATCH] showBluffModeSelection returned ok');
             } catch (err) {
               console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
@@ -12868,6 +12877,8 @@
           btnS.style.display = '';
           btnS.style.top = '504px';
           btnS.onclick = function(ev) {
+            console.log('[DEBUG] NEXT MATCH onclick aufgerufen!');
+            alert('NEXT MATCH geklickt - onclick läuft');
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
             window._nextMatchBlock = true;
@@ -12936,7 +12947,9 @@
             // NEXT MATCH: direkt zur Modi-Auswahl
             try {
               console.log('[NEXT MATCH] cleanup done, calling showBluffModeSelection...');
+              alert('Cleanup fertig - rufe showBluffModeSelection auf');
               showBluffModeSelection();
+              alert('showBluffModeSelection return ok');
               console.log('[NEXT MATCH] showBluffModeSelection returned ok');
             } catch (err) {
               console.error('[NEXT MATCH] Fehler bei showBluffModeSelection:', err);
