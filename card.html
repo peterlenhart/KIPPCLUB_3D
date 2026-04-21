@@ -3326,24 +3326,7 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
-        // sessionStorage-Check: kippOpenMatchModi → Modi-Auswahl oeffnen (nach NEXT MATCH)
-        let _openMatchModi = false;
-        try { _openMatchModi = sessionStorage.getItem('kippOpenMatchModi') === '1'; } catch(e){}
-        if (_openMatchModi) {
-          try { sessionStorage.removeItem('kippOpenMatchModi'); } catch(e){}
-          alert('SESSIONSTORAGE FLAG ERKANNT - showBluffModeSelection wird gerufen');
-          try { sct.style.display = 'none'; } catch(e){}
-          try { document.getElementById('startOverlay').style.display = 'none'; } catch(e){}
-          try { unlockAndPlayBgMusic(); } catch(e){}
-          try { window._cardMode = 'verdeckt'; } catch(e){}
-          try { window._bluffMode = true; } catch(e){}
-          try { _cardModePhase = 1; } catch(e){}
-          setTimeout(() => { 
-            try { showBluffModeSelection(); alert('showBluffModeSelection erfolgreich'); } 
-            catch(e) { alert('FEHLER bei showBluffModeSelection: ' + e.message); }
-          }, 500);
-          return;
-        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const levelParam = urlParams.get('level');
         if (levelParam === 'brainy') {
@@ -12522,13 +12505,9 @@
           btnS.style.opacity = '1';
           btnS.style.display = '';
           btnS.style.top = '504px';
-          btnS.onclick = function(ev) {
-            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-            if (ev && ev.preventDefault) ev.preventDefault();
-            // Tutorial-Wachposten zwangsweise stoppen falls noch aktiv
+          btnS.onclick = function() {
             if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
-            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
-            window.location.reload();
+            location.reload();
           };
 
           // TEILEN
@@ -12812,13 +12791,9 @@
           btnS.style.opacity = '1';
           btnS.style.display = '';
           btnS.style.top = '504px';
-          btnS.onclick = function(ev) {
-            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-            if (ev && ev.preventDefault) ev.preventDefault();
-            // Tutorial-Wachposten zwangsweise stoppen falls noch aktiv
+          btnS.onclick = function() {
             if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
-            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
-            window.location.reload();
+            location.reload();
           };
 
           // TEILEN
