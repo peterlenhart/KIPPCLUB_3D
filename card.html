@@ -11604,13 +11604,17 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NOCHMAL
-          btnS.textContent = T.nml || 'NOCHMAL';
+          // NEXT MATCH
+          btnS.textContent = 'NEXT MATCH';
           btnS.disabled = false;
           btnS.style.opacity = '1';
           btnS.style.display = '';
           btnS.style.top = '504px';
-          btnS.onclick = function() {
+          btnS.onclick = function(ev) {
+            if (ev) {
+              if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+              if (ev.preventDefault) ev.preventDefault();
+            }
             btnS.style.top = '455px';
             btnD.style.top = '515px';
             overlay.style.display = 'none';
@@ -11635,7 +11639,11 @@
               faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
             }
             updateAllFaceTextures();
-            startBluffSetzrunde();
+            // Phase setzen damit Modi-Auswahl korrekt erscheint
+            window._cardMode = 'verdeckt';
+            window._bluffMode = true;
+            _cardModePhase = 1;
+            showBluffModeSelection();
           };
 
           // TEILEN
@@ -11838,13 +11846,17 @@
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NOCHMAL
-          btnS.textContent = T.nml || 'NOCHMAL';
+          // NEXT MATCH
+          btnS.textContent = 'NEXT MATCH';
           btnS.disabled = false;
           btnS.style.opacity = '1';
           btnS.style.display = '';
           btnS.style.top = '504px';
-          btnS.onclick = function() {
+          btnS.onclick = function(ev) {
+            if (ev) {
+              if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+              if (ev.preventDefault) ev.preventDefault();
+            }
             btnS.style.top = '455px';
             btnD.style.top = '515px';
             overlay.style.display = 'none';
@@ -11869,7 +11881,11 @@
               faceSlots.forEach(function(s){ s.played = false; s.blass = false; });
             }
             updateAllFaceTextures();
-            startBluffSetzrunde();
+            // Phase setzen damit Modi-Auswahl korrekt erscheint
+            window._cardMode = 'verdeckt';
+            window._bluffMode = true;
+            _cardModePhase = 1;
+            showBluffModeSelection();
           };
 
           // TEILEN
