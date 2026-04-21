@@ -12491,24 +12491,22 @@
           var btnDy = document.getElementById('btnDaily');
           var btnKP = document.getElementById('btnKippPrinzip');
 
-          // Tutorial-Wachposten beenden falls noch aktiv (versteckt sonst btnS dauerhaft)
-          if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
-
           // Alle erstmal verstecken
           if (btnA) btnA.style.display = 'none';
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NEXT MATCH: btnS recyclen wie frueher, aber addEventListener-Konflikt ueber _nextMatchBlock Flag umgehen
-          btnS.textContent = 'NEXT MATCH';
-          btnS.disabled = false;
-          btnS.style.opacity = '1';
-          btnS.style.display = '';
-          btnS.style.top = '504px';
-          btnS.onclick = function() {
-            if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
-            location.reload();
-          };
+          // NEXT MATCH: eigener Button - btnS hat addEventListener der zu KIPP+1 fuehrt
+          btnS.style.display = 'none';
+          var oldNM = document.getElementById('_nmReloadBtn');
+          if (oldNM) oldNM.remove();
+          var nmBtn = document.createElement('button');
+          nmBtn.id = '_nmReloadBtn';
+          nmBtn.className = 'startClickZone';
+          nmBtn.textContent = 'NEXT MATCH';
+          nmBtn.style.cssText = 'top:504px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(nmBtn);
+          nmBtn.onclick = function() { location.reload(); };
 
           // TEILEN
           btnD.textContent = T.cTeilen || 'TEILEN';
@@ -12777,24 +12775,22 @@
           var btnDy = document.getElementById('btnDaily');
           var btnKP = document.getElementById('btnKippPrinzip');
 
-          // Tutorial-Wachposten beenden falls noch aktiv (versteckt sonst btnS dauerhaft)
-          if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
-
           // Alle erstmal verstecken
           if (btnA) btnA.style.display = 'none';
           if (btnDy) btnDy.style.display = 'none';
           if (btnKP) btnKP.style.display = 'none';
 
-          // NEXT MATCH: btnS recyclen wie frueher, aber addEventListener-Konflikt ueber _nextMatchBlock Flag umgehen
-          btnS.textContent = 'NEXT MATCH';
-          btnS.disabled = false;
-          btnS.style.opacity = '1';
-          btnS.style.display = '';
-          btnS.style.top = '504px';
-          btnS.onclick = function() {
-            if (window._tutHideGuard) { try { clearInterval(window._tutHideGuard); } catch(e){} window._tutHideGuard = null; }
-            location.reload();
-          };
+          // NEXT MATCH: eigener Button - btnS hat addEventListener der zu KIPP+1 fuehrt
+          btnS.style.display = 'none';
+          var oldNM = document.getElementById('_nmReloadBtn');
+          if (oldNM) oldNM.remove();
+          var nmBtn = document.createElement('button');
+          nmBtn.id = '_nmReloadBtn';
+          nmBtn.className = 'startClickZone';
+          nmBtn.textContent = 'NEXT MATCH';
+          nmBtn.style.cssText = 'top:504px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(nmBtn);
+          nmBtn.onclick = function() { location.reload(); };
 
           // TEILEN
           btnD.textContent = T.cTeilen || 'TEILEN';
