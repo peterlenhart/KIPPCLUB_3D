@@ -3326,22 +3326,23 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
-        // URL-Parameter Check: ?match → direkt Modi-Auswahl oeffnen (nach NEXT MATCH)
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('match')) {
+        // sessionStorage-Check: kippOpenMatchModi → Modi-Auswahl oeffnen (nach NEXT MATCH)
+        let _openMatchModi = false;
+        try { _openMatchModi = sessionStorage.getItem('kippOpenMatchModi') === '1'; } catch(e){}
+        if (_openMatchModi) {
+          try { sessionStorage.removeItem('kippOpenMatchModi'); } catch(e){}
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
           unlockAndPlayBgMusic();
           window._cardMode = 'verdeckt';
           window._bluffMode = true;
           _cardModePhase = 1;
-          // URL bereinigen damit reload nicht nochmal matcht
-          if (window.history && window.history.replaceState) {
-            window.history.replaceState({}, '', window.location.pathname);
-          }
-          setTimeout(() => { showBluffModeSelection(); }, 300);
+          setTimeout(() => { 
+            try { showBluffModeSelection(); } catch(e) { console.error('showBluffModeSelection Fehler:', e); }
+          }, 500);
           return;
         }
+        const urlParams = new URLSearchParams(window.location.search);
         const levelParam = urlParams.get('level');
         if (levelParam === 'brainy') {
           sct.style.display = 'none';
@@ -12519,25 +12520,8 @@
           btnS.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
-            window._nextMatchBlock = true;
-            // NEXT MATCH: kompletter Scene-Reset + Modus-Auswahl oeffnen
-            overlay.style.display = 'none';
-            btnS.style.top = '455px';
-            btnD.style.top = '515px';
-            try {
-              backToStartScreen();
-            } catch(e) { console.error('[NEXT MATCH] backToStartScreen Fehler:', e); }
-            // Nach Reset: startOverlay ist wieder sichtbar. Wir wollen aber Modus-Auswahl.
-            document.getElementById('startOverlay').style.display = 'none';
-            _cardModePhase = 1;
-            window._cardMode = 'verdeckt';
-            window._bluffMode = true;
-            try {
-              showBluffModeSelection();
-            } catch(e) {
-              console.error('[NEXT MATCH] showBluffModeSelection Fehler:', e);
-              window.location.href = window.location.pathname;
-            }
+            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
+            window.location.reload();
           };
 
           // TEILEN
@@ -12821,25 +12805,8 @@
           btnS.onclick = function(ev) {
             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
             if (ev && ev.preventDefault) ev.preventDefault();
-            window._nextMatchBlock = true;
-            // NEXT MATCH: kompletter Scene-Reset + Modus-Auswahl oeffnen
-            overlay.style.display = 'none';
-            btnS.style.top = '455px';
-            btnD.style.top = '515px';
-            try {
-              backToStartScreen();
-            } catch(e) { console.error('[NEXT MATCH] backToStartScreen Fehler:', e); }
-            // Nach Reset: startOverlay ist wieder sichtbar. Wir wollen aber Modus-Auswahl.
-            document.getElementById('startOverlay').style.display = 'none';
-            _cardModePhase = 1;
-            window._cardMode = 'verdeckt';
-            window._bluffMode = true;
-            try {
-              showBluffModeSelection();
-            } catch(e) {
-              console.error('[NEXT MATCH] showBluffModeSelection Fehler:', e);
-              window.location.href = window.location.pathname;
-            }
+            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
+            window.location.reload();
           };
 
           // TEILEN
