@@ -5575,28 +5575,30 @@
         pSlot2.mesh.renderOrder = 30; // ueber Dunkel-Plane
       }
 
-      // Fall-Position fuer Pik (Ziel-Nachbarfarbe = violett) - 2 CCW Kipps
+      // 2. Karte: Spieler erkippt selbst.
+      // Random Startpos waehlen, aber so dass Ass NICHT auf der topFace sichtbar ist.
       (function computeTutFallState2(){
+        // Ass-Position im deck bestimmt sein Face
         var aIdx = deck.indexOf(12);
         var aFace = (aIdx < 4) ? 'f0' : (aIdx < 8 ? 'f1' : 'f2');
-        var aSlotName = 'S' + ((aIdx % 4) + 1);
-        var targetCycleIdx = -1;
+        // Sammle alle Cycle-States deren topFace != aFace ist
+        var validStates = [];
         for (var ci = 0; ci < 12; ci++) {
-          var cQ = CW_CYCLE[ci][0], cF = CW_CYCLE[ci][1];
-          if (cF === aFace && SLOT_NEIGHBOR_COLORS[cQ] && SLOT_NEIGHBOR_COLORS[cQ][aSlotName] === 'violett') {
-            targetCycleIdx = ci; break;
+          var s = BRAINY_CW_STATES[ci];
+          if (!s || s.cwSteps === 0) continue;
+          if (s.face !== aFace) validStates.push(s);
+        }
+        if (validStates.length === 0) {
+          // fallback: irgendein nicht-Null state
+          for (var cj = 0; cj < 12; cj++) {
+            if (BRAINY_CW_STATES[cj] && BRAINY_CW_STATES[cj].cwSteps !== 0) {
+              validStates.push(BRAINY_CW_STATES[cj]); break;
+            }
           }
         }
-        if (targetCycleIdx < 0) return;
-        // 2 CCW rueckwaerts
-        var startCycleIdx = (targetCycleIdx + 2) % 12;
-        var startState = BRAINY_CW_STATES[startCycleIdx];
-        if (startState && startState.cwSteps !== 0) {
-          window._tutForceFallState = startState;
-        } else {
-          window._tutForceFallState = BRAINY_CW_STATES[(startCycleIdx + 1) % 12];
-        }
-        console.log('[MATCH-TUT] 2. Karte Pik Fall-Target: Q' + window._tutForceFallState.q + '/' + window._tutForceFallState.face);
+        var pick = validStates[Math.floor(Math.random() * validStates.length)];
+        window._tutForceFallState = pick;
+        console.log('[MATCH-TUT] 2. Karte: random Startpos Q' + pick.q + '/' + pick.face + ' (Ass auf ' + aFace + ' verdeckt)');
       })();
 
       // Alle Slots auf allen 3 Faces wieder aufdecken (slotAlpha=1) vor Eckblick
