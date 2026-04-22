@@ -5703,19 +5703,8 @@
         if (t < 1) requestAnimationFrame(fadeDark2);
       })();
 
-      // Zusaetzlich warten bis Eckblick-Hebe-Animation sicher fertig ist
+      // Kein Hand-Einblenden mehr - Spieler uebernimmt selbst
       await sleep(500);
-      // Hand zum Ass - getSlotScreen erst JETZT berechnen, wenn Wuerfel stabil schwebt
-      var aceScreen2 = getSlotScreen(deck.indexOf(12));
-      console.log('[MATCH-TUT-R2] aceScreen2=', aceScreen2.x, aceScreen2.y, ' topFace=', topFace, ' aceIdx=', deck.indexOf(12));
-      setHandPos(aceScreen2.x, 740);
-      handEl.style.opacity = '1';
-      updateHandShadow(aceScreen2.x, 740, true);
-      await moveHandSmooth(aceScreen2.x, aceScreen2.y, 900);
-      await sleep(1200);
-
-      // Würfel senkt sich
-      kipp21KniffAbort = true;
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
 
