@@ -5703,8 +5703,9 @@
         if (t < 1) requestAnimationFrame(fadeDark2);
       })();
 
-      // Kein Hand-Einblenden mehr - Spieler uebernimmt selbst
-      await sleep(500);
+      // Wuerfel ca. 2s in der Luft lassen (wie bei 1. Eckblick), dann senken
+      await sleep(2100);
+      kipp21KniffAbort = true;
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
 
