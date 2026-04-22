@@ -5692,12 +5692,60 @@
       // === Jetzt DU! Spieler übernimmt für zweite Ass ===
       _cardLockedDir = null;
       
-      // Beide Karten ueber Dunkel-Plane heben (gleiche Methode wie beim 1. Blur)
+      // PHASE 1: Fullscreen-Blur + Text + Hand liest mit (gleiche Mechanik wie erster Eckblick)
+      var blurOvJ = document.createElement('div');
+      blurOvJ.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
+      document.body.appendChild(blurOvJ);
+      requestAnimationFrame(function() { blurOvJ.style.opacity = '1'; });
+      await sleep(600);
+      
+      // Textzeilen (Container mittig, Zeilen einzeln eingeblendet)
+      var jLines = ['Jetzt DU.', 'Ass suchen, merken,', 'Würfel selber mit', 'dem Finger kippen.', 'ASS zu PIK.'];
+      var jContainer = document.createElement('div');
+      jContainer.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:320px;z-index:110;text-align:center;';
+      document.body.appendChild(jContainer);
+      var _uiRect_J = uiOv.getBoundingClientRect();
+      for (var jRead = 0; jRead < jLines.length; jRead++) {
+        if (!replayActive) break;
+        var jOuter = document.createElement('div');
+        jOuter.style.cssText = 'text-align:center;';
+        var jInner = document.createElement('div');
+        jInner.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
+          'opacity:0;transition:opacity 0.4s ease;';
+        jInner.textContent = jLines[jRead];
+        jOuter.appendChild(jInner);
+        jContainer.appendChild(jOuter);
+        await sleep(150);
+        jInner.style.opacity = '1';
+        var jR = jInner.getBoundingClientRect();
+        var jLx = Math.round(jR.left - _uiRect_J.left + 10);
+        var jRx = Math.round(jR.right - _uiRect_J.left - 10);
+        var jBy = Math.round(jR.bottom - _uiRect_J.top + 4);
+        setHandPos(jLx, jBy);
+        handEl.style.opacity = '1';
+        updateHandShadow(jLx, jBy, true);
+        await moveHandSmooth(jRx, jBy, 700);
+        await sleep(150);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(150);
+      }
+      await sleep(500);
+      jContainer.style.transition = 'opacity 0.5s ease';
+      jContainer.style.opacity = '0';
+      await sleep(500);
+      jContainer.remove();
+      blurOvJ.remove();
+      
+      // PHASE 2: 3D-Dunkel-Plane + Karten auf renderOrder=30 (wie beim ersten Eckblick)
       var _jRO1 = null, _jRO2 = null;
       if (pSlot && pSlot.mesh) { _jRO1 = pSlot.mesh.renderOrder; pSlot.mesh.renderOrder = 30; }
       if (pSlot2 && pSlot2.mesh) { _jRO2 = pSlot2.mesh.renderOrder; pSlot2.mesh.renderOrder = 30; }
-      
-      // 3D-Dunkel-Plane (ganz Spielfeld, Karten liegen darueber durch renderOrder)
       var zRow11_J = 0.734375;
       var zFarSouth_J = 2.0;
       var darkWidth_J = 3.0;
@@ -5716,108 +5764,13 @@
         if (t < 1) requestAnimationFrame(fadeDarkJ);
       })();
       
-      // Text-Container mit Einzelzeilen fuer Hand-Mitlesen
-      var jetztOv = document.createElement('div');
-      jetztOv.id = '_matchTutJetztOv';
-      jetztOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:99;pointer-events:none;' +
-        'opacity:1;';
-      var jLinesArr = ['Jetzt DU!', 'Kippe den Würfel', 'mit deinem Finger.', 'Das Ass zu Pik'];
-      var jLineEls = [];
-      var jTopStart = 90;
-      var jLineH = 38;
-      for (var jli = 0; jli < jLinesArr.length; jli++) {
-        var jl = document.createElement('div');
-        var jIsLast = (jli === jLinesArr.length - 1);
-        jl.style.cssText = 'position:absolute;top:' + (jTopStart + jli * jLineH) + 'px;left:0;width:100%;text-align:center;' +
-          'font:bold ' + (jIsLast ? '20px' : '26px') + ' Arial;' +
-          'color:' + (jIsLast ? '#e0d0b8' : '#ffd93d') + ';letter-spacing:' + (jIsLast ? '1.5px' : '2px') + ';' +
-          'text-shadow:0 2px 10px rgba(0,0,0,0.9),0 0 20px rgba(255,217,61,0.4);' +
-          'opacity:0;transition:opacity 0.3s ease;';
-        // Inline-Block-Wrapper fuer korrekte Text-Breite
-        var jInner = document.createElement('span');
-        jInner.style.cssText = 'display:inline-block;';
-        jInner.textContent = jLinesArr[jli];
-        jl.appendChild(jInner);
-        jetztOv.appendChild(jl);
-        jLineEls.push({ outer: jl, inner: jInner });
-      }
-      document.body.appendChild(jetztOv);
-      
-      // Tutorial-Overrides zurücksetzen
+      // Tutorial-Overrides zurücksetzen, Spieler übernimmt
       window._tutForceFallState = null;
       if (typeof _origGenModeSuits === 'function') window.generateModeSuits = _origGenModeSuits;
       window._matchTutorialMode = false;
       window._tutExtraKipp = 0;
-      
-      // Hand liest jede Zeile von links nach rechts
-      var _uiRect_J = uiOv.getBoundingClientRect();
-      for (var jRead = 0; jRead < jLineEls.length; jRead++) {
-        jLineEls[jRead].outer.style.opacity = '1';
-        await sleep(200);
-        var jR = jLineEls[jRead].inner.getBoundingClientRect();
-        var jLx = Math.round(jR.left - _uiRect_J.left + 10);
-        var jRx = Math.round(jR.right - _uiRect_J.left - 10);
-        var jBy = Math.round(jR.bottom - _uiRect_J.top + 4);
-        setHandPos(jLx, jBy);
-        handEl.style.opacity = '1';
-        updateHandShadow(jLx, jBy, true);
-        await moveHandSmooth(jRx, jBy, 700);
-        await sleep(150);
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await sleep(150);
-      }
-      await sleep(500);
-      
-      // Ausblenden: Text + Dark-Plane
-      jetztOv.style.transition = 'opacity 0.5s ease';
-      jetztOv.style.opacity = '0';
-      var fadeOutJ = performance.now();
-      (function fadeDarkOutJ() {
-        var t = Math.min((performance.now() - fadeOutJ) / 500, 1);
-        darkMatJ.opacity = 0.7 * (1 - t);
-        if (t < 1) requestAnimationFrame(fadeDarkOutJ);
-      })();
-      await sleep(550);
-      if (jetztOv.parentNode) jetztOv.remove();
-      scene.remove(darkPlaneJ); darkGeoJ.dispose(); darkMatJ.dispose();
-      if (pSlot && pSlot.mesh && _jRO1 !== null) pSlot.mesh.renderOrder = _jRO1;
-      if (pSlot2 && pSlot2.mesh && _jRO2 !== null) pSlot2.mesh.renderOrder = _jRO2;
-      
-      // Jetzt erst: Spieler-Kontrolle freigeben + Wobble
       replayActive = false;
       disableReplayBlocker();
-      startCubeWobble();
-      
-      // === Wuerfel kippt cw/ccw je 10° auf seiner Kante bis Spieler kippt ===
-      function startCubeWobble() {
-        if (!cube) return;
-        window._wobbleStop = false;
-        var amp = 10 * Math.PI / 180;
-        var period = 1400;
-        var t0 = performance.now();
-        var startQuat = cube.quaternion.clone();
-        // Pivot-Punkt an Unterkante Ost (Kippen cw um Ost-Kante, ccw um West-Kante)
-        // Einfachere Variante: kleine Rotation um Z-Achse (Kipp nach Ost/West) am Cube-Ursprung
-        function tick(now) {
-          if (window._wobbleStop) { cube.quaternion.copy(startQuat); return; }
-          var phase = ((now - t0) % period) / period;
-          var angle = Math.sin(phase * Math.PI * 2) * amp;
-          var q = new THREE.Quaternion();
-          q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), angle);
-          cube.quaternion.copy(startQuat).multiply(q);
-          requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-        var stopper = function() {
-          window._wobbleStop = true;
-          document.removeEventListener('touchstart', stopper, true);
-          document.removeEventListener('mousedown', stopper, true);
-        };
-        document.addEventListener('touchstart', stopper, true);
-        document.addEventListener('mousedown', stopper, true);
-      }
     }
     
     // Tutorial-Text updaten
