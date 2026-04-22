@@ -5048,6 +5048,14 @@
   
     // === BUMBLEBRAIN Tutorial: Hand klickt, echter HIT, Blur+Text, dann normal weiter ===
     async function runBumbleTutorial() {
+      // UIs sicher einblenden (numBtns, dirMeshes)
+      if (typeof showTrainingButtons === 'function') showTrainingButtons();
+      var _nb = document.getElementById('numBtns');
+      if (_nb) _nb.classList.remove('hidden');
+      if (window._dirCwMesh) window._dirCwMesh.visible = true;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
+      await sleep(300);
+      
       // Erstes Kippziel oeffnen (das Replay-Pendant, aber wir triggern es direkt)
       var firstIdx = kipp21CardStates.indexOf('verdeckt');
       if (firstIdx < 0) return;
@@ -5069,7 +5077,7 @@
       function simHit(dir, steps) {
         var startIdx = stateIndex(currentQuadrant, topFace);
         if (startIdx < 0) return false;
-        var newIdx = (dir === 'cw') ? (startIdx + steps) % 12 : (startIdx - steps + 12 * steps) % 12;
+        var newIdx = (dir === 'cw') ? (startIdx + steps) % 12 : ((startIdx - steps) % 12 + 12) % 12;
         var newQ = CW_CYCLE[newIdx][0];
         var newF = CW_CYCLE[newIdx][1];
         var faceOffset = { f0: 0, f1: 4, f2: 8 };
