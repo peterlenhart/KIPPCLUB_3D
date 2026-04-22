@@ -5619,8 +5619,57 @@
         }
       }
 
-      // Eckblick + Kipp + Lang-tippen + Reveal fuer Pik
+      // === Jetzt DU! Fullscreen-Blur + Text + Hand - BEVOR Wuerfel sich hebt ===
+      var blurOvJ = document.createElement('div');
+      blurOvJ.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
+      document.body.appendChild(blurOvJ);
+      requestAnimationFrame(function() { blurOvJ.style.opacity = '1'; });
+      await sleep(600);
+      var jLines_ = ['Jetzt DU.', 'Ass suchen, merken,', 'Würfel selber mit', 'dem Finger kippen.', 'ASS zu PIK.'];
+      var jContainer_ = document.createElement('div');
+      jContainer_.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:320px;z-index:110;text-align:center;';
+      document.body.appendChild(jContainer_);
+      var _uiRect_J_ = uiOv.getBoundingClientRect();
+      for (var jR_ = 0; jR_ < jLines_.length; jR_++) {
+        if (!replayActive) break;
+        var jO_ = document.createElement('div');
+        jO_.style.cssText = 'text-align:center;';
+        var jI_ = document.createElement('div');
+        jI_.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
+          'opacity:0;transition:opacity 0.4s ease;';
+        jI_.textContent = jLines_[jR_];
+        jO_.appendChild(jI_);
+        jContainer_.appendChild(jO_);
+        await sleep(150);
+        jI_.style.opacity = '1';
+        var jRR_ = jI_.getBoundingClientRect();
+        var jLx_ = Math.round(jRR_.left - _uiRect_J_.left + 10);
+        var jRx_ = Math.round(jRR_.right - _uiRect_J_.left - 10);
+        var jBy_ = Math.round(jRR_.bottom - _uiRect_J_.top + 4);
+        setHandPos(jLx_, jBy_);
+        handEl.style.opacity = '1';
+        updateHandShadow(jLx_, jBy_, true);
+        await moveHandSmooth(jRx_, jBy_, 700);
+        await sleep(150);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(150);
+      }
       await sleep(500);
+      jContainer_.style.transition = 'opacity 0.5s ease';
+      jContainer_.style.opacity = '0';
+      blurOvJ.style.opacity = '0';
+      await sleep(500);
+      jContainer_.remove();
+      blurOvJ.remove();
+
+      // Eckblick + Kipp + Lang-tippen + Reveal fuer Pik
+      await sleep(300);
       runKipp21EckblickKniff(true);
       await new Promise(function(res) {
         window._onEckblickRiseComplete = res;
@@ -5689,82 +5738,8 @@
       }
       await sleep(400);
 
-      // === Jetzt DU! Spieler übernimmt für zweite Ass ===
+      // === Wuerfel ist unten: Tutorial-Overrides zuruecksetzen ===
       _cardLockedDir = null;
-      
-      // PHASE 1: Fullscreen-Blur + Text + Hand liest mit (gleiche Mechanik wie erster Eckblick)
-      var blurOvJ = document.createElement('div');
-      blurOvJ.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
-        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
-        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
-      document.body.appendChild(blurOvJ);
-      requestAnimationFrame(function() { blurOvJ.style.opacity = '1'; });
-      await sleep(600);
-      
-      // Textzeilen (Container mittig, Zeilen einzeln eingeblendet)
-      var jLines = ['Jetzt DU.', 'Ass suchen, merken,', 'Würfel selber mit', 'dem Finger kippen.', 'ASS zu PIK.'];
-      var jContainer = document.createElement('div');
-      jContainer.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
-        'width:320px;z-index:110;text-align:center;';
-      document.body.appendChild(jContainer);
-      var _uiRect_J = uiOv.getBoundingClientRect();
-      for (var jRead = 0; jRead < jLines.length; jRead++) {
-        if (!replayActive) break;
-        var jOuter = document.createElement('div');
-        jOuter.style.cssText = 'text-align:center;';
-        var jInner = document.createElement('div');
-        jInner.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;' +
-          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
-          'opacity:0;transition:opacity 0.4s ease;';
-        jInner.textContent = jLines[jRead];
-        jOuter.appendChild(jInner);
-        jContainer.appendChild(jOuter);
-        await sleep(150);
-        jInner.style.opacity = '1';
-        var jR = jInner.getBoundingClientRect();
-        var jLx = Math.round(jR.left - _uiRect_J.left + 10);
-        var jRx = Math.round(jR.right - _uiRect_J.left - 10);
-        var jBy = Math.round(jR.bottom - _uiRect_J.top + 4);
-        setHandPos(jLx, jBy);
-        handEl.style.opacity = '1';
-        updateHandShadow(jLx, jBy, true);
-        await moveHandSmooth(jRx, jBy, 700);
-        await sleep(150);
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await sleep(150);
-      }
-      await sleep(500);
-      jContainer.style.transition = 'opacity 0.5s ease';
-      jContainer.style.opacity = '0';
-      await sleep(500);
-      jContainer.remove();
-      blurOvJ.remove();
-      
-      // PHASE 2: 3D-Dunkel-Plane + Karten auf renderOrder=30 (wie beim ersten Eckblick)
-      var _jRO1 = null, _jRO2 = null;
-      if (pSlot && pSlot.mesh) { _jRO1 = pSlot.mesh.renderOrder; pSlot.mesh.renderOrder = 30; }
-      if (pSlot2 && pSlot2.mesh) { _jRO2 = pSlot2.mesh.renderOrder; pSlot2.mesh.renderOrder = 30; }
-      var zRow11_J = 0.734375;
-      var zFarSouth_J = 2.0;
-      var darkWidth_J = 3.0;
-      var darkDepth_J = zFarSouth_J - zRow11_J;
-      var darkGeoJ = new THREE.PlaneGeometry(darkWidth_J, darkDepth_J);
-      var darkMatJ = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthWrite: false });
-      var darkPlaneJ = new THREE.Mesh(darkGeoJ, darkMatJ);
-      darkPlaneJ.rotation.x = -Math.PI / 2;
-      darkPlaneJ.position.set(0, 0.46975 + 0.003, zRow11_J + darkDepth_J/2);
-      darkPlaneJ.renderOrder = 20;
-      scene.add(darkPlaneJ);
-      var fadeStartJ = performance.now();
-      (function fadeDarkJ() {
-        var t = Math.min((performance.now() - fadeStartJ) / 400, 1);
-        darkMatJ.opacity = t * 0.7;
-        if (t < 1) requestAnimationFrame(fadeDarkJ);
-      })();
-      
-      // Tutorial-Overrides zurücksetzen, Spieler übernimmt
       window._tutForceFallState = null;
       if (typeof _origGenModeSuits === 'function') window.generateModeSuits = _origGenModeSuits;
       window._matchTutorialMode = false;
