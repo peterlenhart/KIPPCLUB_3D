@@ -4822,7 +4822,75 @@
         
         ensureAudioCtx();
         
-        // (altes 4cw+4ccw-Demo entfernt)
+        if (kipp21WithTutorial) {
+          // --- 4cw + 4ccw Kipp-Demo mit pulsierendem Auge ---
+          const _eyeIcon = document.getElementById('eyeIcon');
+          const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
+          _boxTopPt.project(camera);
+          const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
+          // Complete eye reset for clean state
+          _eyeIcon.style.cssText = '';
+          _eyeIcon.style.position = 'absolute';
+          _eyeIcon.style.top = _eyeTopPx + 'px';
+          _eyeIcon.style.left = '50%';
+          _eyeIcon.style.width = '156px';
+          _eyeIcon.style.height = 'auto';
+          _eyeIcon.style.opacity = '1';
+          _eyeIcon.style.zIndex = '15';
+          _eyeIcon.style.cursor = 'pointer';
+          _eyeIcon.style.filter = 'drop-shadow(0 2px 6px rgba(255,255,255,0.4))';
+          _eyeIcon.style.transform = 'translateX(-50%)';
+          _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
+          _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
+          _eyeIcon.style.display = 'block';
+          _eyeIcon.style.pointerEvents = 'none';
+          
+          await wait(50);
+          if (gamePhase !== 'kipp21') return;
+          
+          // 4 CW Kipps (Q3→Q0→Q1→Q2→Q3)
+          for (let _i = 0; _i < 4; _i++) {
+            if (gamePhase !== 'kipp21') return;
+            kippDirection = 'cw';
+            await performKipp(CW_KIPP[currentQuadrant], 1000);
+            advanceTopFace();
+            if (_i < 3) await wait(200);
+          }
+          
+          await wait(400);
+          if (gamePhase !== 'kipp21') return;
+          
+          // 4 CCW Kipps (Q3→Q2→Q1→Q0→Q3)
+          for (let _i = 0; _i < 4; _i++) {
+            if (gamePhase !== 'kipp21') return;
+            kippDirection = 'ccw';
+            await performKipp(CCW_KIPP[currentQuadrant], 1000);
+            advanceTopFace();
+            if (_i < 3) await wait(200);
+          }
+          
+          // Auge ausblenden
+          _eyeIcon.style.display = 'none';
+          
+          await wait(400);
+          if (gamePhase !== 'kipp21') return;
+          
+          // --- Challenge Text (nicht für BRAIN) ---
+          if (currentLevel < 3) {
+            await pgtInflate(pgtH, pgtS);
+            if (gamePhase !== 'kipp21') return;
+            await wait(3500);
+            if (gamePhase !== 'kipp21') return;
+          }
+          
+          // --- Text ausblenden ---
+          if (currentLevel < 3) {
+            await fadeOutText();
+            if (gamePhase !== 'kipp21') return;
+            await wait(300);
+            if (gamePhase !== 'kipp21') return;
+          }
+        }
         
         // --- UIs einblenden ---
         await fadeInUIs();
@@ -4845,11 +4913,14 @@
           }
         }
         
-        // --- NEUES Tutorial: Hand klickt Zahl + Richtung, HIT, Blur+Text, dann normaler Spielfluss ---
+        // --- Hand-Tutorial direkt starten (nur TRAINING, nicht BRAIN+) ---
         if (kipp21WithTutorial && currentLevel < 3 && gamePhase === 'kipp21') {
           await wait(800);
           if (gamePhase !== 'kipp21') return;
-          runBumbleTutorial().catch(function(e){ console.error('[BUMBLE-TUT]', e); });
+          startReplay().catch(err => {
+            if (err instanceof ReplayAbort) return;
+            console.error('[REPLAY] ERROR:', err);
+          });
         }
       })();
       
@@ -5045,160 +5116,7 @@
         resetTrainingInput();
       }
       
-  
-    // === BUMBLEBRAIN Tutorial: Hand klickt, echter HIT, Blur+Text, dann normal weiter ===
-    async function runBumbleTutorial() {
-      // UIs sicher einblenden (numBtns, dirMeshes)
-      if (typeof showTrainingButtons === 'function') showTrainingButtons();
-      var _nb = document.getElementById('numBtns');
-      if (_nb) _nb.classList.remove('hidden');
-      if (window._dirCwMesh) window._dirCwMesh.visible = true;
-      if (window._dirCcwMesh) window._dirCcwMesh.visible = true;
-      await sleep(300);
-      
-      // Erstes Kippziel oeffnen (das Replay-Pendant, aber wir triggern es direkt)
-      var firstIdx = kipp21CardStates.indexOf('verdeckt');
-      if (firstIdx < 0) return;
-      kipp21OnCardTap(firstIdx, true);
-      // warten bis Karte offen
-      for (var w = 0; w < 30; w++) {
-        if (kipp21CardStates[firstIdx] === 'offen') break;
-        await sleep(100);
-      }
-      await sleep(800);
-      
-      // Kippziel-Karte
-      var card = gameCards[firstIdx];
-      if (!card || card.zahl == null) return;
-      var targetDisplay = displayNum(card.zahl);
-      var targetColor = card.color.name;
-      
-      // Simuliere alle (dir, steps): finde Kombination die HIT ergibt
-      function simHit(dir, steps) {
-        var startIdx = stateIndex(currentQuadrant, topFace);
-        if (startIdx < 0) return false;
-        var newIdx = (dir === 'cw') ? (startIdx + steps) % 12 : ((startIdx - steps) % 12 + 12) % 12;
-        var newQ = CW_CYCLE[newIdx][0];
-        var newF = CW_CYCLE[newIdx][1];
-        var faceOffset = { f0: 0, f1: 4, f2: 8 };
-        var off = faceOffset[newF];
-        var visible = { S1: deck[off], S2: deck[off+1], S3: deck[off+2], S4: deck[off+3] };
-        for (var slot in visible) {
-          if (displayNum(visible[slot]) === targetDisplay) {
-            if (SLOT_NEIGHBOR_COLORS[newQ][slot] === targetColor) return true;
-          }
-        }
-        return false;
-      }
-      
-      var pickDir = 'cw', pickSteps = 1;
-      outer: for (var s = 1; s <= 6; s++) {
-        for (var di = 0; di < 2; di++) {
-          var dd = (di === 0) ? 'cw' : 'ccw';
-          if (simHit(dd, s)) { pickDir = dd; pickSteps = s; break outer; }
-        }
-      }
-      
-      // Hand klickt Zahl-Button
-      var handElL = document.getElementById('uiOverlay').querySelector('img[src*="handsilber"]') || handEl;
-      var numBtnEl = document.querySelector('.numBtn[data-num="' + pickSteps + '"]');
-      var uiRect = document.getElementById('uiOverlay').getBoundingClientRect();
-      if (numBtnEl) {
-        var nR = numBtnEl.getBoundingClientRect();
-        var nX = Math.round(nR.left - uiRect.left + nR.width/2);
-        var nY = Math.round(nR.top - uiRect.top + nR.height/2);
-        setHandPos(nX, nY + 80);
-        handEl.style.opacity = '1';
-        updateHandShadow(nX, nY + 80, true);
-        await moveHandSmooth(nX, nY, 800);
-        // Click-Effekt
-        numBtnEl.classList.add('selected');
-        await sleep(300);
-      }
-      onNumBtn(pickSteps);
-      await sleep(400);
-      
-      // Hand klickt Dir-Mesh (3D -> screen projizieren)
-      var dirMesh = (pickDir === 'cw') ? window._dirCwMesh : window._dirCcwMesh;
-      if (dirMesh) {
-        var wp = new THREE.Vector3();
-        dirMesh.getWorldPosition(wp);
-        wp.project(camera);
-        var dX = Math.round((wp.x * 0.5 + 0.5) * 360);
-        var dY = Math.round((-wp.y * 0.5 + 0.5) * 720);
-        await moveHandSmooth(dX, dY, 800);
-        await sleep(300);
-      }
-      onDirBtn(pickDir);
-      
-      // Kipp laeuft automatisch durch onDirBtn->executeTrainingKipp
-      // warten bis HIT
-      for (var ww = 0; ww < 200; ww++) {
-        if (!isAnimating && kipp21CardStates[firstIdx] === 'erledigt') break;
-        await sleep(100);
-      }
-      handEl.style.opacity = '0';
-      updateHandShadow(0, 0, false);
-      await sleep(500);
-      
-      // Blur + Text
-      var blurOv = document.createElement('div');
-      blurOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
-        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
-        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
-      document.body.appendChild(blurOv);
-      requestAnimationFrame(function() { blurOv.style.opacity = '1'; });
-      await sleep(600);
-      
-      var lines = ['Jetzt DU.', 'Merke dir die', 'Zahlenpositionen', 'Wähle die richtige', 'Kippanzahl & -richtung.', 'Mit Merken & Logik', 'kannst du immer treffen.'];
-      var container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
-        'width:320px;z-index:110;text-align:center;';
-      document.body.appendChild(container);
-      var uiRect2 = document.getElementById('uiOverlay').getBoundingClientRect();
-      for (var li = 0; li < lines.length; li++) {
-        var outer = document.createElement('div');
-        outer.style.cssText = 'text-align:center;';
-        var inner = document.createElement('div');
-        inner.style.cssText = 'display:inline-block;font:bold 20px Arial;color:#cedb25;' +
-          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1px;line-height:1.7;' +
-          'opacity:0;transition:opacity 0.4s ease;';
-        inner.textContent = lines[li];
-        outer.appendChild(inner);
-        container.appendChild(outer);
-        await sleep(150);
-        inner.style.opacity = '1';
-        var rr = inner.getBoundingClientRect();
-        var lLx = Math.round(rr.left - uiRect2.left + 10);
-        var lRx = Math.round(rr.right - uiRect2.left - 10);
-        var lBy = Math.round(rr.bottom - uiRect2.top + 4);
-        setHandPos(lLx, lBy);
-        handEl.style.opacity = '1';
-        updateHandShadow(lLx, lBy, true);
-        await moveHandSmooth(lRx, lBy, 600);
-        await sleep(120);
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await sleep(100);
-      }
-      await sleep(500);
-      
-      // Alles weg: Blur + Text + HIT-Anzeige
-      container.style.transition = 'opacity 0.5s ease';
-      container.style.opacity = '0';
-      blurOv.style.opacity = '0';
-      document.querySelectorAll('.hit-text-el').forEach(function(el){ el.remove(); });
-      await sleep(500);
-      container.remove();
-      blurOv.remove();
-      
-      // Spiel laeuft normal weiter - nachster Kippziel-Hinweis
-      kipp21Active = true;
-      if (typeof showTrainingButtons === 'function') showTrainingButtons();
-    }
-    
-    function checkTrainingResult(cardIdx) {
+      function checkTrainingResult(cardIdx) {
         activeCardIdx = cardIdx;
         const card = gameCards[cardIdx];
         const treffer = checkTreffer();
@@ -6417,6 +6335,142 @@
       if (window._updateDirBtnRotation) window._updateDirBtnRotation();
       kipp21Active = true;
       brainyStartNumPulse();
+      
+      // BUMBLEBRAIN Tutorial: beim ersten Kippzug Tutorial-Hand ausfuehren
+      if (window._brainyTutorialMode && brainyHits === 0 && brainyFails === 0) {
+        runBumbleTutorialHand();
+      }
+    }
+
+    // === BUMBLEBRAIN Tutorial-Hand: klickt Zahl + Richtung, liest Text mit ===
+    async function runBumbleTutorialHand() {
+      await new Promise(r => setTimeout(r, 600));
+      if (!brainyCurrentTarget || !kipp21Active) return;
+      
+      // Algo: finde richtige (dir, steps)
+      const target = brainyCurrentTarget;
+      const faceOff = { f0: 0, f1: 4, f2: 8 };
+      const slots = ['S1', 'S2', 'S3', 'S4'];
+      function startIdxOf(q, f) {
+        for (let i = 0; i < 12; i++) if (CW_CYCLE[i][0] === q && CW_CYCLE[i][1] === f) return i;
+        return -1;
+      }
+      const startI = startIdxOf(currentQuadrant, topFace);
+      function simHit(dir, steps) {
+        const ni = (dir === 'cw') ? (startI + steps) % 12 : ((startI - steps) % 12 + 12) % 12;
+        const nq = CW_CYCLE[ni][0], nf = CW_CYCLE[ni][1];
+        const off = faceOff[nf];
+        for (let si = 0; si < 4; si++) {
+          if (deck[off + si] === target.zahl && SLOT_NEIGHBOR_COLORS[nq][slots[si]] === target.colorName) return true;
+        }
+        return false;
+      }
+      let pickDir = 'cw', pickSteps = 1;
+      outer: for (let s = 1; s <= 6; s++) {
+        for (let di = 0; di < 2; di++) {
+          const dd = (di === 0) ? 'cw' : 'ccw';
+          if (simHit(dd, s)) { pickDir = dd; pickSteps = s; break outer; }
+        }
+      }
+      console.log('[BUMBLE-TUT] target=', target, ' pick=', pickDir, pickSteps);
+      
+      // Hand einblenden
+      if (typeof ensureHand === 'function') ensureHand();
+      if (!handEl) return;
+      const uiRect = document.getElementById('uiOverlay').getBoundingClientRect();
+      
+      // Hand zur Num-Taste
+      const numEl = document.querySelector('.numBtn[data-num="' + pickSteps + '"]');
+      if (numEl) {
+        const nR = numEl.getBoundingClientRect();
+        const nX = Math.round(nR.left - uiRect.left + nR.width / 2);
+        const nY = Math.round(nR.top - uiRect.top + nR.height / 2);
+        setHandPos(nX - 40, nY + 80);
+        handEl.style.opacity = '1';
+        updateHandShadow(nX - 40, nY + 80, true);
+        await new Promise(r => setTimeout(r, 200));
+        await moveHandSmooth(nX, nY, 700);
+      }
+      await new Promise(r => setTimeout(r, 250));
+      brainyOnNumBtn(pickSteps);
+      await new Promise(r => setTimeout(r, 400));
+      
+      // Hand zur Richtungs-Mesh (3D -> screen)
+      const dirMesh = (pickDir === 'cw') ? window._dirCwMesh : window._dirCcwMesh;
+      if (dirMesh) {
+        const wp = new THREE.Vector3();
+        dirMesh.getWorldPosition(wp);
+        wp.project(camera);
+        const dX = Math.round((wp.x * 0.5 + 0.5) * 360);
+        const dY = Math.round((-wp.y * 0.5 + 0.5) * 720);
+        await moveHandSmooth(dX, dY, 700);
+      }
+      await new Promise(r => setTimeout(r, 250));
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      brainyOnDirBtn(pickDir);
+      
+      // Jetzt kippt der Wuerfel. Warten bis HIT sichtbar (brainyCheckResult set showHitText).
+      for (let w = 0; w < 200; w++) {
+        if (document.querySelector('.hit-text-el')) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      await new Promise(r => setTimeout(r, 400));
+      
+      // Blur + Text + Hand liest
+      const blurOv = document.createElement('div');
+      blurOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
+      document.body.appendChild(blurOv);
+      requestAnimationFrame(() => { blurOv.style.opacity = '1'; });
+      await new Promise(r => setTimeout(r, 600));
+      
+      const lines = ['Jetzt DU.', 'Merke dir die', 'Zahlenpositionen', 'Wähle die richtige', 'Kippanzahl & -richtung.', 'Mit Merken & Logik', 'kannst du immer treffen.'];
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:320px;z-index:110;text-align:center;';
+      document.body.appendChild(container);
+      const uiRect2 = document.getElementById('uiOverlay').getBoundingClientRect();
+      for (let li = 0; li < lines.length; li++) {
+        const outer = document.createElement('div');
+        outer.style.cssText = 'text-align:center;';
+        const inner = document.createElement('div');
+        inner.style.cssText = 'display:inline-block;font:bold 20px Arial;color:#cedb25;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1px;line-height:1.7;' +
+          'opacity:0;transition:opacity 0.4s ease;';
+        inner.textContent = lines[li];
+        outer.appendChild(inner);
+        container.appendChild(outer);
+        await new Promise(r => setTimeout(r, 150));
+        inner.style.opacity = '1';
+        const rr = inner.getBoundingClientRect();
+        const lLx = Math.round(rr.left - uiRect2.left + 10);
+        const lRx = Math.round(rr.right - uiRect2.left - 10);
+        const lBy = Math.round(rr.bottom - uiRect2.top + 4);
+        setHandPos(lLx, lBy);
+        handEl.style.opacity = '1';
+        updateHandShadow(lLx, lBy, true);
+        await moveHandSmooth(lRx, lBy, 600);
+        await new Promise(r => setTimeout(r, 120));
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      await new Promise(r => setTimeout(r, 500));
+      
+      // Alles weg: Blur + Text + HIT-Anzeige
+      container.style.transition = 'opacity 0.5s ease';
+      container.style.opacity = '0';
+      blurOv.style.opacity = '0';
+      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
+      await new Promise(r => setTimeout(r, 500));
+      container.remove();
+      blurOv.remove();
+      
+      // Tutorial-Modus beenden, Spiel laeuft normal weiter (brainyCheckResult ruft naechste Runde)
+      window._brainyTutorialMode = false;
     }
 
     // === BRAINY RESULT CHECK ===
@@ -8773,16 +8827,9 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      if (withTutorial) {
-        startKipp21(true); // Tutorial bleibt wie gehabt
-      } else {
-        // BUMBLEBRAIN = Level 1 mit neuem Zielpad-System
-        currentLevel = 1;
-        for (let i = 0; i < 12; i++) visibleDeckIndices.add(i);
-        updateFaceSlots();
-        updateAllFaceTextures();
-        setTimeout(() => { startBrainyLevel(); }, 100);
-      }
+      currentLevel = 1;
+      window._brainyTutorialMode = !!withTutorial;
+      setTimeout(() => { startBrainyLevel(); }, 100);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
