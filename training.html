@@ -6383,17 +6383,44 @@
       if (!handEl) return;
       const uiRect = document.getElementById('uiOverlay').getBoundingClientRect();
       
-      // Hand kommt von Sueden (unten) und faehrt zur Num-Taste
+      // Hand kommt von Sueden, fahrt erst zu 3 zufaelligen falschen Tasten, dann zur richtigen
+      const allNums = [1,2,3,4,5,6].filter(n => n !== pickSteps);
+      // Mische und nimm 3
+      for (let i = allNums.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allNums[i], allNums[j]] = [allNums[j], allNums[i]];
+      }
+      const wrongPicks = allNums.slice(0, 3);
+      
+      const numElFirst = document.querySelector('.numBtn[data-num="' + wrongPicks[0] + '"]');
+      if (numElFirst) {
+        const fR = numElFirst.getBoundingClientRect();
+        const fX = Math.round(fR.left - uiRect.left + fR.width / 2);
+        const fY = Math.round(fR.top - uiRect.top + fR.height / 2);
+        setHandPos(fX, 740);
+        handEl.style.opacity = '1';
+        updateHandShadow(fX, 740, true);
+        await new Promise(r => setTimeout(r, 200));
+        await moveHandSmooth(fX, fY, 1400);
+        await new Promise(r => setTimeout(r, 250));
+      }
+      for (let wi = 1; wi < wrongPicks.length; wi++) {
+        const wEl = document.querySelector('.numBtn[data-num="' + wrongPicks[wi] + '"]');
+        if (!wEl) continue;
+        const wR = wEl.getBoundingClientRect();
+        const wX = Math.round(wR.left - uiRect.left + wR.width / 2);
+        const wY = Math.round(wR.top - uiRect.top + wR.height / 2);
+        await moveHandSmooth(wX, wY, 1000);
+        await new Promise(r => setTimeout(r, 200));
+      }
+      
+      // Jetzt zur richtigen Num-Taste
       const numEl = document.querySelector('.numBtn[data-num="' + pickSteps + '"]');
       if (numEl) {
         const nR = numEl.getBoundingClientRect();
         const nX = Math.round(nR.left - uiRect.left + nR.width / 2);
         const nY = Math.round(nR.top - uiRect.top + nR.height / 2);
-        setHandPos(nX, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(nX, 740, true);
-        await new Promise(r => setTimeout(r, 200));
-        await moveHandSmooth(nX, nY, 700);
+        await moveHandSmooth(nX, nY, 1400);
       }
       await new Promise(r => setTimeout(r, 250));
       // Zahl visuell selected + intern setzen
@@ -6412,7 +6439,7 @@
         wp.project(camera);
         const dX = Math.round((wp.x * 0.5 + 0.5) * 360);
         const dY = Math.round((-wp.y * 0.5 + 0.5) * 720);
-        await moveHandSmooth(dX, dY, 700);
+        await moveHandSmooth(dX, dY, 1400);
       }
       await new Promise(r => setTimeout(r, 250));
       handEl.style.opacity = '0';
@@ -6426,7 +6453,7 @@
         if (document.querySelector('.hit-text-el')) break;
         await new Promise(r => setTimeout(r, 100));
       }
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 1400));
       
       // Blur + Text + Hand liest
       const blurOv = document.createElement('div');
@@ -6448,8 +6475,8 @@
         const outer = document.createElement('div');
         outer.style.cssText = 'text-align:center;';
         const inner = document.createElement('div');
-        inner.style.cssText = 'display:inline-block;font:bold 20px Arial;color:#cedb25;' +
-          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1px;line-height:1.7;' +
+        inner.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
           'opacity:0;transition:opacity 0.4s ease;';
         inner.textContent = lines[li];
         outer.appendChild(inner);
@@ -6463,11 +6490,11 @@
         setHandPos(lLx, lBy);
         handEl.style.opacity = '1';
         updateHandShadow(lLx, lBy, true);
-        await moveHandSmooth(lRx, lBy, 600);
-        await new Promise(r => setTimeout(r, 120));
+        await moveHandSmooth(lRx, lBy, 700);
+        await new Promise(r => setTimeout(r, 150));
         handEl.style.opacity = '0';
         updateHandShadow(0, 0, false);
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 150));
       }
       await new Promise(r => setTimeout(r, 500));
       
