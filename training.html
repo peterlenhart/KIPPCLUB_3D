@@ -6345,7 +6345,11 @@
     // === BUMBLEBRAIN Tutorial-Hand: klickt Zahl + Richtung, liest Text mit ===
     async function runBumbleTutorialHand() {
       await new Promise(r => setTimeout(r, 600));
-      if (!brainyCurrentTarget || !kipp21Active) return;
+      if (!brainyCurrentTarget) return;
+      
+      // Spieler-Input sperren
+      kipp21Active = false;
+      brainyStopNumPulse();
       
       // Algo: finde richtige (dir, steps)
       const target = brainyCurrentTarget;
@@ -6379,21 +6383,26 @@
       if (!handEl) return;
       const uiRect = document.getElementById('uiOverlay').getBoundingClientRect();
       
-      // Hand zur Num-Taste
+      // Hand kommt von Sueden (unten) und faehrt zur Num-Taste
       const numEl = document.querySelector('.numBtn[data-num="' + pickSteps + '"]');
       if (numEl) {
         const nR = numEl.getBoundingClientRect();
         const nX = Math.round(nR.left - uiRect.left + nR.width / 2);
         const nY = Math.round(nR.top - uiRect.top + nR.height / 2);
-        setHandPos(nX - 40, nY + 80);
+        setHandPos(nX, 740);
         handEl.style.opacity = '1';
-        updateHandShadow(nX - 40, nY + 80, true);
+        updateHandShadow(nX, 740, true);
         await new Promise(r => setTimeout(r, 200));
         await moveHandSmooth(nX, nY, 700);
       }
       await new Promise(r => setTimeout(r, 250));
-      brainyOnNumBtn(pickSteps);
-      await new Promise(r => setTimeout(r, 400));
+      // Zahl visuell selected + intern setzen
+      brainySelectedNum = pickSteps;
+      document.querySelectorAll('.numBtn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (parseInt(btn.dataset.num) === pickSteps) btn.classList.add('selected');
+      });
+      await new Promise(r => setTimeout(r, 500));
       
       // Hand zur Richtungs-Mesh (3D -> screen)
       const dirMesh = (pickDir === 'cw') ? window._dirCwMesh : window._dirCcwMesh;
@@ -6408,7 +6417,9 @@
       await new Promise(r => setTimeout(r, 250));
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
-      brainyOnDirBtn(pickDir);
+      // Richtung intern setzen + Kipp ausfuehren
+      brainySelectedDir = pickDir;
+      brainyExecuteKipp();
       
       // Jetzt kippt der Wuerfel. Warten bis HIT sichtbar (brainyCheckResult set showHitText).
       for (let w = 0; w < 200; w++) {
