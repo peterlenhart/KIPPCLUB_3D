@@ -6496,7 +6496,7 @@
       requestAnimationFrame(() => { blurOv.style.opacity = '1'; });
       await new Promise(r => setTimeout(r, 600));
       
-      const lines = ['Jetzt DU.', 'Merke dir die', 'Zahlenpositionen', 'Wähle die richtige', 'Kippanzahl & -richtung.'];
+      const lines = ['Jetzt DU.'];
       const container = document.createElement('div');
       container.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
         'width:320px;z-index:110;text-align:center;';
@@ -6529,11 +6529,10 @@
       }
       await new Promise(r => setTimeout(r, 500));
       
-      // Alles weg: Blur + Text + HIT-Anzeige
+      // Blur + Text weg - HIT bleibt stehen
       container.style.transition = 'opacity 0.5s ease';
       container.style.opacity = '0';
       blurOv.style.opacity = '0';
-      document.querySelectorAll('.hit-text-el').forEach(el => el.remove());
       await new Promise(r => setTimeout(r, 500));
       container.remove();
       blurOv.remove();
