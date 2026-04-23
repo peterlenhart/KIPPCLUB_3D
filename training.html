@@ -6379,7 +6379,7 @@
       console.log('[BUMBLE-TUT] target=', target, ' pick=', pickDir, pickSteps);
       
       // Hand einblenden
-      if (typeof ensureHand === 'function') ensureHand();
+      if (typeof initHandEl === 'function') initHandEl();
       if (!handEl) return;
       const uiRect = document.getElementById('uiOverlay').getBoundingClientRect();
       
@@ -9334,18 +9334,20 @@
         }
         
         // Richtungsbuttons (3D) Raycasting → Kipprichtung wählen
-        if (window._dirCwMesh && window._dirCwMesh.visible) {
-          if (vkRaycaster.intersectObject(window._dirCwMesh).length > 0) {
-            if (window._onDirBtn) window._onDirBtn('cw');
-            lastTouchPos = null;
-            return;
+        if (!window._brainyTutorialMode) {
+          if (window._dirCwMesh && window._dirCwMesh.visible) {
+            if (vkRaycaster.intersectObject(window._dirCwMesh).length > 0) {
+              if (window._onDirBtn) window._onDirBtn('cw');
+              lastTouchPos = null;
+              return;
+            }
           }
-        }
-        if (window._dirCcwMesh && window._dirCcwMesh.visible) {
-          if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
-            if (window._onDirBtn) window._onDirBtn('ccw');
-            lastTouchPos = null;
-            return;
+          if (window._dirCcwMesh && window._dirCcwMesh.visible) {
+            if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
+              if (window._onDirBtn) window._onDirBtn('ccw');
+              lastTouchPos = null;
+              return;
+            }
           }
         }
         
@@ -9401,16 +9403,18 @@
         }
         
         // Richtungsbuttons (3D) Raycasting → Kipprichtung wählen (Desktop)
-        if (window._dirCwMesh && window._dirCwMesh.visible) {
-          if (vkRaycaster.intersectObject(window._dirCwMesh).length > 0) {
-            if (window._onDirBtn) window._onDirBtn('cw');
-            return;
+        if (!window._brainyTutorialMode) {
+          if (window._dirCwMesh && window._dirCwMesh.visible) {
+            if (vkRaycaster.intersectObject(window._dirCwMesh).length > 0) {
+              if (window._onDirBtn) window._onDirBtn('cw');
+              return;
+            }
           }
-        }
-        if (window._dirCcwMesh && window._dirCcwMesh.visible) {
-          if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
-            if (window._onDirBtn) window._onDirBtn('ccw');
-            return;
+          if (window._dirCcwMesh && window._dirCcwMesh.visible) {
+            if (vkRaycaster.intersectObject(window._dirCcwMesh).length > 0) {
+              if (window._onDirBtn) window._onDirBtn('ccw');
+              return;
+            }
           }
         }
       }
@@ -10745,6 +10749,7 @@
       let currentNum = null;
       
       function selectNum(n) {
+        if (window._brainyTutorialMode) return; // Tutorial sperrt Spieler-Input
         currentNum = n;
         btns.forEach(b => {
           if (parseInt(b.dataset.num) === n) b.classList.add('selected');
@@ -10763,6 +10768,7 @@
         btn.addEventListener('touchend', (e) => { e.stopPropagation(); setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: false });
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (window._brainyTutorialMode) return; // Tutorial: Spieler-Klick ignorieren
           const n = parseInt(btn.dataset.num);
           selectNum(n);
           
