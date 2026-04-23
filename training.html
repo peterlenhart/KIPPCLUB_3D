@@ -3485,7 +3485,7 @@
     }
     
     // --- Smooth easeInOut Bewegung ---
-    const HAND_SPEED_MUL = 2.0; // Tutorial-Hand doppelt so langsam
+    const HAND_SPEED_MUL = 1.33; // Tutorial-Hand doppelt so langsam
     function moveHandSmooth(toX, toY, durMs) {
       const _active = replayActive || window._brainyTutorialMode;
       const actualDur = _active ? durMs * HAND_SPEED_MUL : durMs;
@@ -6411,7 +6411,7 @@
         const wR = wEl.getBoundingClientRect();
         const wX = Math.round(wR.left - uiRect.left + wR.width / 2);
         const wY = Math.round(wR.top - uiRect.top + wR.height / 2);
-        await moveHandSmooth(wX, wY, 500);
+        await moveHandSmooth(wX, wY, 700);
         await new Promise(r => setTimeout(r, 200));
       }
       
