@@ -5769,6 +5769,96 @@
 
     // Fly card from above to frame position
     // End BRAINY game
+    // === GAME OVER: Wuerfel auf Ecke + Y-Rotation + versinkt, dann Text ===
+    async function runGameOverAnimation() {
+      // 1. Auf Ecke stellen (wie Eckblick-Anfang)
+      const cornerPos = new THREE.Vector3(0, 0, 0.109375);
+      const aufEckeDur = 1000;
+      
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(cornerPos);
+      kipGroup.add(pivotGroup);
+      
+      cube.updateMatrixWorld();
+      const cubeWorldPos = new THREE.Vector3(); cube.getWorldPosition(cubeWorldPos);
+      const cubeWorldQuat = new THREE.Quaternion(); cube.getWorldQuaternion(cubeWorldQuat);
+      
+      kipGroup.remove(cube);
+      cube.position.copy(cubeWorldPos.clone().sub(cornerPos));
+      cube.quaternion.copy(cubeWorldQuat);
+      pivotGroup.add(cube);
+      
+      const o = 0.234375;
+      const diagVectors = {
+        0: new THREE.Vector3(-o,  o, -o),
+        1: new THREE.Vector3( o,  o, -o),
+        2: new THREE.Vector3( o,  o,  o),
+        3: new THREE.Vector3(-o,  o,  o)
+      };
+      const diag = diagVectors[currentQuadrant].clone().normalize();
+      const upDir = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
+      
+      const startQuat = cube.quaternion.clone();
+      await new Promise(resolve => {
+        const st = performance.now();
+        (function tick() {
+          const t = Math.min((performance.now() - st) / aufEckeDur, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          cube.quaternion.slerpQuaternions(startQuat, aufEckeQuat, e);
+          if (t < 1) requestAnimationFrame(tick); else resolve();
+        })();
+      });
+      
+      // 2+3. Y-Rotation + y-Sinken bis Ecke bei y=-0.469531 (-3.005 Zellen * 0.15625)
+      // Cube steht auf Ecke: Mittelpunkt = Ecke + diag.normalize() * halbeDiagonale
+      // Halbe Diagonale = sqrt(3) * 0.234375 ≈ 0.40595
+      // Ecke unten liegt bei pivotGroup.position.y + (cube.position.y) - 0.40595
+      // Ziel: Ecke auf y = -0.469531
+      // pivotGroup.y = 0, cube.position.y initial = cubeWorldPos.y - 0 = ~0
+      // Nach aufEcke: cube.position.y ~ 0.40595 (Mittelpunkt ueber Ecke)
+      // Sinken bis cube.position.y - 0.40595 = -0.469531 => cube.position.y = -0.0636
+      // Das heisst cube.position.y muss von 0.40595 auf -0.0636 - das ist -0.47 Welt
+      
+      const startY = cube.position.y;
+      const targetY = -0.469531 + 0.40595; // Ecke soll y=-0.469531 erreichen
+      const sinkDur = 3000;
+      await new Promise(resolve => {
+        const st = performance.now();
+        (function tick() {
+          const t = Math.min((performance.now() - st) / sinkDur, 1);
+          const e = t; // linear
+          // Y-Rotation um senkrechte Achse (Koerper-Diagonale nach aufEcke = y-Achse)
+          const yAngle = t * Math.PI * 4; // 2 volle Umdrehungen
+          const yRot = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yAngle);
+          cube.quaternion.copy(aufEckeQuat).premultiply(yRot);
+          // Y-Position sinken
+          cube.position.y = startY + (targetY - startY) * e;
+          if (t < 1) requestAnimationFrame(tick); else resolve();
+        })();
+      });
+      
+      // 4. GAME OVER Text in Box-Mitte
+      const goEl = document.createElement('div');
+      goEl.textContent = 'GAME OVER';
+      goEl.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'font:bold 42px Arial;color:#ff3333;letter-spacing:3px;' +
+        'text-shadow:0 3px 12px rgba(0,0,0,0.9),0 0 24px rgba(255,51,51,0.6);' +
+        'z-index:200;opacity:0;transition:opacity 0.6s ease;';
+      document.body.appendChild(goEl);
+      requestAnimationFrame(() => { goEl.style.opacity = '1'; });
+      await new Promise(r => setTimeout(r, 2500));
+      goEl.style.opacity = '0';
+      await new Promise(r => setTimeout(r, 600));
+      goEl.remove();
+      
+      // Cleanup pivotGroup
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      kipGroup.add(cube);
+      cube.visible = false;
+    }
+
     async function brainyEndGame() {
       brainyActive = false;
       if (typeof brainyHideZielpad === 'function') brainyHideZielpad();
@@ -6506,7 +6596,7 @@
         const outer = document.createElement('div');
         outer.style.cssText = 'text-align:center;';
         const inner = document.createElement('div');
-        inner.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;' +
+        inner.style.cssText = 'display:inline-block;font:bold 24px Arial;color:#cedb25;' +
           'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
           'opacity:0;transition:opacity 0.4s ease;';
         inner.textContent = lines[li];
@@ -6514,20 +6604,9 @@
         container.appendChild(outer);
         await new Promise(r => setTimeout(r, 150));
         inner.style.opacity = '1';
-        const rr = inner.getBoundingClientRect();
-        const lLx = Math.round(rr.left - uiRect2.left + 10);
-        const lRx = Math.round(rr.right - uiRect2.left - 10);
-        const lBy = Math.round(rr.bottom - uiRect2.top + 4);
-        setHandPos(lLx, lBy);
-        handEl.style.opacity = '1';
-        updateHandShadow(lLx, lBy, true);
-        await moveHandSmooth(lRx, lBy, 700);
-        await new Promise(r => setTimeout(r, 150));
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await new Promise(r => setTimeout(r, 150));
+        await new Promise(r => setTimeout(r, 800));
       }
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 1000));
       
       // Blur + Text weg - HIT bleibt stehen
       container.style.transition = 'opacity 0.5s ease';
@@ -6600,6 +6679,7 @@
         // GAME OVER nach 5. Miss
         if (brainyFails >= 5) {
           if (brainyActive && gamePhase === 'kipp21') {
+            await runGameOverAnimation();
             await brainyEndGame();
           }
           return;
