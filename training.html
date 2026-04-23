@@ -3487,13 +3487,14 @@
     // --- Smooth easeInOut Bewegung ---
     const HAND_SPEED_MUL = 2.0; // Tutorial-Hand doppelt so langsam
     function moveHandSmooth(toX, toY, durMs) {
-      const actualDur = replayActive ? durMs * HAND_SPEED_MUL : durMs;
+      const _active = replayActive || window._brainyTutorialMode;
+      const actualDur = _active ? durMs * HAND_SPEED_MUL : durMs;
       return new Promise(resolve => {
         const sx = _handX;
         const sy = _handY;
         const startT = performance.now();
         function tick() {
-          if (!replayActive) { setHandPos(toX, toY); resolve(); return; }
+          if (!_active) { setHandPos(toX, toY); resolve(); return; }
           const t = Math.min((performance.now() - startT) / actualDur, 1);
           const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
           setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e);
@@ -6401,7 +6402,7 @@
         handEl.style.opacity = '1';
         updateHandShadow(fX, 740, true);
         await new Promise(r => setTimeout(r, 200));
-        await moveHandSmooth(fX, fY, 1400);
+        await moveHandSmooth(fX, fY, 700);
         await new Promise(r => setTimeout(r, 250));
       }
       for (let wi = 1; wi < wrongPicks.length; wi++) {
@@ -6410,7 +6411,7 @@
         const wR = wEl.getBoundingClientRect();
         const wX = Math.round(wR.left - uiRect.left + wR.width / 2);
         const wY = Math.round(wR.top - uiRect.top + wR.height / 2);
-        await moveHandSmooth(wX, wY, 1000);
+        await moveHandSmooth(wX, wY, 500);
         await new Promise(r => setTimeout(r, 200));
       }
       
@@ -6420,7 +6421,7 @@
         const nR = numEl.getBoundingClientRect();
         const nX = Math.round(nR.left - uiRect.left + nR.width / 2);
         const nY = Math.round(nR.top - uiRect.top + nR.height / 2);
-        await moveHandSmooth(nX, nY, 1400);
+        await moveHandSmooth(nX, nY, 700);
       }
       await new Promise(r => setTimeout(r, 250));
       // Zahl visuell selected + intern setzen
@@ -6439,7 +6440,7 @@
         wp.project(camera);
         const dX = Math.round((wp.x * 0.5 + 0.5) * 360);
         const dY = Math.round((-wp.y * 0.5 + 0.5) * 720);
-        await moveHandSmooth(dX, dY, 1400);
+        await moveHandSmooth(dX, dY, 700);
       }
       await new Promise(r => setTimeout(r, 250));
       handEl.style.opacity = '0';
