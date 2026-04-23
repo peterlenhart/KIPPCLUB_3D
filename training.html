@@ -5771,7 +5771,7 @@
     // End BRAINY game
     // === GAME OVER: Wuerfel auf Ecke + Y-Rotation + versinkt, dann Text ===
     async function runGameOverAnimation() {
-      // 1. Auf Ecke stellen (wie Eckblick-Anfang)
+      // 1. Auf Ecke stellen - Pivot = Boxboden-Mitte (wie Eckblick)
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
       const aufEckeDur = 1000;
       
@@ -5830,14 +5830,19 @@
         })();
       });
       
-      // 4. GAME OVER Text in Box-Mitte
+      // 4. GAME OVER Text auf Boxboden-Mitte (3D -> screen projiziert)
+      const boxCenter = new THREE.Vector3(0, 0, 0.109375);
+      boxCenter.project(camera);
+      const boxSX = Math.round((boxCenter.x * 0.5 + 0.5) * 360);
+      const boxSY = Math.round((-boxCenter.y * 0.5 + 0.5) * 720);
       const goEl = document.createElement('div');
       goEl.textContent = 'GAME OVER';
-      goEl.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+      goEl.style.cssText = 'position:absolute;left:' + boxSX + 'px;top:' + boxSY + 'px;' +
+        'transform:translate(-50%,-50%);' +
         'font:bold 42px Arial;color:#ff3333;letter-spacing:3px;' +
         'text-shadow:0 3px 12px rgba(0,0,0,0.9),0 0 24px rgba(255,51,51,0.6);' +
-        'z-index:200;opacity:0;transition:opacity 0.6s ease;';
-      document.body.appendChild(goEl);
+        'z-index:200;opacity:0;transition:opacity 0.6s ease;pointer-events:none;';
+      document.getElementById('uiOverlay').appendChild(goEl);
       requestAnimationFrame(() => { goEl.style.opacity = '1'; });
       await new Promise(r => setTimeout(r, 2500));
       goEl.style.opacity = '0';
@@ -5865,8 +5870,10 @@
       const total = brainyHits + brainyFails;
       console.log('[BRAINY] END: ' + brainyHits + ' hits, ' + brainyFails + ' fails, ' + total + ' attempts');
 
-      saveBestScore(currentLevel, brainyHits, brainyFails);
-      showLevelScore(brainyHits, brainyFails);
+      if (brainyFails < 5) {
+        saveBestScore(currentLevel, brainyHits, brainyFails);
+        showLevelScore(brainyHits, brainyFails);
+      }
       ['eyeIcon','numBtns','kippTarget','demoSubtitle','richtungButtons'].forEach(id => {
         const el = document.getElementById(id); if (el) { el.style.display = 'none'; el.classList.add('hidden'); }
       });
