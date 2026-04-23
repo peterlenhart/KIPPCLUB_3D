@@ -5866,7 +5866,7 @@
       const total = brainyHits + brainyFails;
       console.log('[BRAINY] END: ' + brainyHits + ' hits, ' + brainyFails + ' fails, ' + total + ' attempts');
 
-      if (brainyFails < 4) {
+      if (brainyFails < ((currentLevel === 1) ? 4 : 5)) {
         saveBestScore(currentLevel, brainyHits, brainyFails);
         showLevelScore(brainyHits, brainyFails);
       }
@@ -6049,7 +6049,7 @@
       wrap = document.createElement('div');
       wrap.id = 'brainyLivesWrap';
       wrap.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(calc(-50% + 22px));' +
-        'z-index:25;pointer-events:none;display:flex;gap:19px;';
+        'z-index:25;pointer-events:none;display:flex;gap:' + ((currentLevel === 1) ? 13 : 8) + 'px;';
       // SVG-Wuerfel: isometrisch mit 3 sichtbaren Flaechen (keine Augen)
       const cubeSVG =
         '<svg width="26" height="26" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' +
@@ -6074,7 +6074,8 @@
           // Right face
           '<polygon points="88,30 50,50 50,90 88,70" fill="url(#fRight)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
         '</svg>';
-      for (let i = 0; i < 4; i++) {
+      const _livesCount = (currentLevel === 1) ? 4 : 5;
+      for (let i = 0; i < _livesCount; i++) {
         const h = document.createElement('div');
         h.className = 'brainyLife';
         h.innerHTML = cubeSVG;
@@ -6672,7 +6673,7 @@
         gem.visible = false;
 
         // GAME OVER nach 5. Miss
-        if (brainyFails >= 4) {
+        if (brainyFails >= ((currentLevel === 1) ? 4 : 5)) {
           if (brainyActive && gamePhase === 'kipp21') {
             await runGameOverAnimation();
             await brainyEndGame();
