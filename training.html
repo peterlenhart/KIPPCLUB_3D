@@ -6061,6 +6061,30 @@
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
       
+      // Tutorial: Auge pulsierend ueber Eckblick einblenden
+      if (window._brainyTutorialMode) {
+        const _eyeIcon = document.getElementById('eyeIcon');
+        if (_eyeIcon) {
+          const _boxTopPt = new THREE.Vector3(0, 0.52, 0.1105);
+          _boxTopPt.project(camera);
+          const _eyeTopPx = Math.round((-_boxTopPt.y * 0.5 + 0.5) * 720) - 50;
+          _eyeIcon.style.cssText = '';
+          _eyeIcon.style.position = 'absolute';
+          _eyeIcon.style.top = _eyeTopPx + 'px';
+          _eyeIcon.style.left = '50%';
+          _eyeIcon.style.width = '156px';
+          _eyeIcon.style.height = 'auto';
+          _eyeIcon.style.opacity = '1';
+          _eyeIcon.style.zIndex = '15';
+          _eyeIcon.style.filter = 'drop-shadow(0 2px 6px rgba(255,255,255,0.4))';
+          _eyeIcon.style.transform = 'translateX(-50%)';
+          _eyeIcon.style.animation = 'none'; void _eyeIcon.offsetWidth;
+          _eyeIcon.style.animation = 'eyePulse 1.5s ease-in-out infinite';
+          _eyeIcon.style.display = 'block';
+          _eyeIcon.style.pointerEvents = 'none';
+        }
+      }
+      
       const cornerPos = new THREE.Vector3(0, 0, 0.109375);
       const aufEckeDur = 1200;
       
@@ -6211,6 +6235,12 @@
           if (t < 1) requestAnimationFrame(tick); else resolve();
         })();
       });
+      
+      // Tutorial: Auge ausblenden nachdem Wuerfel gefallen
+      if (window._brainyTutorialMode) {
+        const _eyeIcon2 = document.getElementById('eyeIcon');
+        if (_eyeIcon2) { _eyeIcon2.style.display = 'none'; _eyeIcon2.style.animation = 'none'; }
+      }
       
       cube.position.copy(targetPos);
       cube.quaternion.copy(targetQuat);
@@ -6466,7 +6496,7 @@
       requestAnimationFrame(() => { blurOv.style.opacity = '1'; });
       await new Promise(r => setTimeout(r, 600));
       
-      const lines = ['Jetzt DU.', 'Merke dir die', 'Zahlenpositionen', 'Wähle die richtige', 'Kippanzahl & -richtung.', 'Mit Merken & Logik', 'kannst du immer treffen.'];
+      const lines = ['Jetzt DU.', 'Merke dir die', 'Zahlenpositionen', 'Wähle die richtige', 'Kippanzahl & -richtung.'];
       const container = document.createElement('div');
       container.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
         'width:320px;z-index:110;text-align:center;';
