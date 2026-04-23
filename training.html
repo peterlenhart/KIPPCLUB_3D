@@ -5810,29 +5810,21 @@
         })();
       });
       
-      // 2+3. Y-Rotation + y-Sinken bis Ecke bei y=-0.469531 (-3.005 Zellen * 0.15625)
-      // Cube steht auf Ecke: Mittelpunkt = Ecke + diag.normalize() * halbeDiagonale
-      // Halbe Diagonale = sqrt(3) * 0.234375 ≈ 0.40595
-      // Ecke unten liegt bei pivotGroup.position.y + (cube.position.y) - 0.40595
-      // Ziel: Ecke auf y = -0.469531
-      // pivotGroup.y = 0, cube.position.y initial = cubeWorldPos.y - 0 = ~0
-      // Nach aufEcke: cube.position.y ~ 0.40595 (Mittelpunkt ueber Ecke)
-      // Sinken bis cube.position.y - 0.40595 = -0.469531 => cube.position.y = -0.0636
-      // Das heisst cube.position.y muss von 0.40595 auf -0.0636 - das ist -0.47 Welt
-      
+      // 2+3. Y-Rotation + y-Sinken - mehr als Koerperdiagonale (0.812) sinken
+      // Nach aufEcke: cube.position.y ~ 0.40595 (Mittelpunkt ueber Eck-Pivot)
+      // Ziel: cube.position.y = -1.0 (Wuerfel komplett unter Boxboden verschwunden)
       const startY = cube.position.y;
-      const targetY = -0.469531 + 0.40595; // Ecke soll y=-0.469531 erreichen
-      const sinkDur = 3000;
+      const targetY = -1.0;
+      const sinkDur = 3500;
       await new Promise(resolve => {
         const st = performance.now();
         (function tick() {
           const t = Math.min((performance.now() - st) / sinkDur, 1);
           const e = t; // linear
-          // Y-Rotation um senkrechte Achse (Koerper-Diagonale nach aufEcke = y-Achse)
+          // Y-Rotation um Koerperdiagonale (nach aufEcke = y-Achse)
           const yAngle = t * Math.PI * 4; // 2 volle Umdrehungen
           const yRot = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yAngle);
           cube.quaternion.copy(aufEckeQuat).premultiply(yRot);
-          // Y-Position sinken
           cube.position.y = startY + (targetY - startY) * e;
           if (t < 1) requestAnimationFrame(tick); else resolve();
         })();
@@ -6596,7 +6588,7 @@
         const outer = document.createElement('div');
         outer.style.cssText = 'text-align:center;';
         const inner = document.createElement('div');
-        inner.style.cssText = 'display:inline-block;font:bold 24px Arial;color:#cedb25;' +
+        inner.style.cssText = 'display:inline-block;font:bold 27px Arial;color:#cedb25;' +
           'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
           'opacity:0;transition:opacity 0.4s ease;';
         inner.textContent = lines[li];
