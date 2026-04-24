@@ -5546,6 +5546,50 @@
       gem.position.set(pos.x, 0.481, pos.z);
       gem.scale.set(1, 1, 1);
       gem.visible = true;
+      // Fragezeichen-Overlay erstellen/updaten
+      brainyUpdateGemQuestionmark(gemIdx, gem);
+    }
+    
+    // Weisses Fragezeichen als 2D-HTML-Overlay ueber jedes Gem
+    window._brainyGemQEls = window._brainyGemQEls || {};
+    function brainyUpdateGemQuestionmark(gemIdx, gem) {
+      let q = window._brainyGemQEls[gemIdx];
+      if (!q) {
+        q = document.createElement('div');
+        q.textContent = '?';
+        q.style.cssText = 'position:absolute;font:bold 24px Arial;color:#fff;' +
+          'text-shadow:0 1px 4px rgba(0,0,0,0.9);pointer-events:none;z-index:15;' +
+          'transform:translate(-50%,-50%);';
+        document.getElementById('uiOverlay').appendChild(q);
+        window._brainyGemQEls[gemIdx] = q;
+      }
+      q.style.display = gem.visible ? 'block' : 'none';
+    }
+    
+    // Fragezeichen-Positionen pro Frame updaten (rendert mit Gem-Rotation)
+    function brainyUpdateAllGemQuestionmarkPositions() {
+      if (!window._brainyGemQEls) return;
+      for (let i = 0; i < brainyGemMeshes.length; i++) {
+        const gem = brainyGemMeshes[i];
+        const q = window._brainyGemQEls[i];
+        if (!q) continue;
+        if (!gem || !gem.visible) { q.style.display = 'none'; continue; }
+        q.style.display = 'block';
+        const wp = new THREE.Vector3();
+        gem.getWorldPosition(wp);
+        wp.project(camera);
+        const sx = (wp.x * 0.5 + 0.5) * 360;
+        const sy = (-wp.y * 0.5 + 0.5) * 720;
+        q.style.left = sx + 'px';
+        q.style.top = sy + 'px';
+      }
+    }
+    
+    function brainyHideAllGemQuestionmarks() {
+      if (!window._brainyGemQEls) return;
+      for (const k in window._brainyGemQEls) {
+        window._brainyGemQEls[k].style.display = 'none';
+      }
     }
 
     function brainyStartGemPulse(gemIdx) {
@@ -5603,6 +5647,7 @@
     }
 
     function brainyHideGems() {
+      brainyHideAllGemQuestionmarks();
       brainyGemMeshes.forEach(g => { g.visible = false; });
       brainyStopGemPulse();
     }
@@ -6471,7 +6516,8 @@
       brainyPlaceGem(0, zielColor, _targetQ, _targetSlot);
       
       // Ablenkungs-Gems (gleiche Farbe, andere Positionen)
-      const _ablenkCount = _cfg_r.ablenkGems || 0;
+      let _ablenkCount = _cfg_r.ablenkGems || 0;
+      if (currentLevel === 1) _ablenkCount = bumbleStage - 1; // BUMBLEBRAIN Stufe 1..4 -> 0..3 Ablenker
       const _ablenkCand = [];
       for (let _q = 0; _q < 4; _q++) {
         for (let _si = 1; _si <= 4; _si++) {
