@@ -6089,6 +6089,9 @@
     }
 
     function brainyResetLives() {
+      // Alten wrap entfernen, damit UI bei Level-Wechsel neu (richtige Anzahl) aufgebaut wird
+      const old = document.getElementById('brainyLivesWrap');
+      if (old) old.remove();
       const wrap = brainyEnsureLivesUI();
       wrap.style.display = 'flex';
       const hearts = wrap.querySelectorAll('.brainyLife');
