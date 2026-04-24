@@ -5961,7 +5961,7 @@
 
     // === LEVEL-Konfig ===
     const LEVEL_CFG = {
-      1: { zahlenProFace: 1, maxZahl: 3,  ablenkGems: 0, name: 'BUMBLEBRAIN' },
+      1: { zahlenProFace: 1, maxZahl: 2,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: true },
       2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY' },
       3: { zahlenProFace: 3, maxZahl: 9,  ablenkGems: 2, name: 'BRAIN' },
       4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN' }
@@ -5970,17 +5970,47 @@
     function brainyBuildDeck(cfg) {
       deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
       visibleDeckIndices.clear();
-      for (var _fi = 0; _fi < 3; _fi++) {
-        var _baseZahl = _fi * cfg.zahlenProFace + 1;
-        var _slots = [0,1,2,3];
-        for (var _si = _slots.length - 1; _si > 0; _si--) {
-          var _rj = Math.floor(Math.random() * (_si + 1));
-          var _tmp = _slots[_si]; _slots[_si] = _slots[_rj]; _slots[_rj] = _tmp;
+      
+      if (cfg.pairMode) {
+        // BUMBLEBRAIN: 1+2 auf 2 ueber die Wuerfelkante gegenueberliegenden Slots
+        // Kanten-Paare (S1<->S4, S2<->S3) pro Face-Paarung:
+        // f0<->f1 an Kante: f0 S1/S2 vs f1 S3/S4
+        //   -> paare: (f0.S1, f1.S4) und (f0.S2, f1.S3)
+        // f0<->f2 an Kante: f0 S3/S4 vs f2 S1/S2
+        //   -> paare: (f0.S3, f2.S2) und (f0.S4, f2.S1)
+        // f1<->f2 an Kante: f1 S1/S2 vs f2 S3/S4
+        //   -> paare: (f1.S1, f2.S4) und (f1.S2, f2.S3)
+        // Slot-Nummer 1..4 -> deckIdx 0..3 (S1=0, S2=1, S3=2, S4=3)
+        var _edgePairs = [
+          [0*4+0, 1*4+3], // f0 S1 <-> f1 S4
+          [0*4+1, 1*4+2], // f0 S2 <-> f1 S3
+          [0*4+2, 2*4+1], // f0 S3 <-> f2 S2
+          [0*4+3, 2*4+0], // f0 S4 <-> f2 S1
+          [1*4+0, 2*4+3], // f1 S1 <-> f2 S4
+          [1*4+1, 2*4+2]  // f1 S2 <-> f2 S3
+        ];
+        var _p = _edgePairs[Math.floor(Math.random() * _edgePairs.length)];
+        // 1 und 2 zufaellig auf die beiden Slots verteilen
+        if (Math.random() < 0.5) {
+          deck[_p[0]] = 1; deck[_p[1]] = 2;
+        } else {
+          deck[_p[0]] = 2; deck[_p[1]] = 1;
         }
-        for (var _k = 0; _k < cfg.zahlenProFace; _k++) {
-          var _deckIdx = _fi * 4 + _slots[_k];
-          deck[_deckIdx] = _baseZahl + _k;
-          visibleDeckIndices.add(_deckIdx);
+        visibleDeckIndices.add(_p[0]);
+        visibleDeckIndices.add(_p[1]);
+      } else {
+        for (var _fi = 0; _fi < 3; _fi++) {
+          var _baseZahl = _fi * cfg.zahlenProFace + 1;
+          var _slots = [0,1,2,3];
+          for (var _si = _slots.length - 1; _si > 0; _si--) {
+            var _rj = Math.floor(Math.random() * (_si + 1));
+            var _tmp = _slots[_si]; _slots[_si] = _slots[_rj]; _slots[_rj] = _tmp;
+          }
+          for (var _k = 0; _k < cfg.zahlenProFace; _k++) {
+            var _deckIdx = _fi * 4 + _slots[_k];
+            deck[_deckIdx] = _baseZahl + _k;
+            visibleDeckIndices.add(_deckIdx);
+          }
         }
       }
       console.log('[' + cfg.name + '] deck=', deck, ' visible=', Array.from(visibleDeckIndices));
@@ -6054,7 +6084,7 @@
         'z-index:25;pointer-events:none;display:flex;gap:10px;';
       // SVG-Wuerfel: isometrisch mit 3 sichtbaren Flaechen (keine Augen)
       const cubeSVG =
-        '<svg width="26" height="26" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' +
+        '<svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' +
           '<defs>' +
             '<linearGradient id="fTop" x1="0" y1="0" x2="0" y2="1">' +
               '<stop offset="0" stop-color="#ff6b6b"/>' +
