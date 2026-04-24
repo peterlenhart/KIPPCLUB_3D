@@ -5962,7 +5962,7 @@
     // === LEVEL-Konfig ===
     const LEVEL_CFG = {
       1: { zahlenProFace: 1, maxZahl: 2,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: true },
-      2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY' },
+      2: { zahlenProFace: 2, maxZahl: 4,  ablenkGems: 1, name: 'BRAINY', pairMode: true, pairCount: 2 },
       3: { zahlenProFace: 3, maxZahl: 9,  ablenkGems: 2, name: 'BRAIN' },
       4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN' }
     };
@@ -5972,7 +5972,7 @@
       visibleDeckIndices.clear();
       
       if (cfg.pairMode) {
-        // BUMBLEBRAIN: 1+2 auf 2 ueber die Wuerfelkante gegenueberliegenden Slots
+        // BUMBLEBRAIN/BRAINY: paarweise auf ueber die Wuerfelkante gegenueberliegenden Slots
         // Kanten-Paare (S1<->S4, S2<->S3) pro Face-Paarung:
         // f0<->f1 an Kante: f0 S1/S2 vs f1 S3/S4
         //   -> paare: (f0.S1, f1.S4) und (f0.S2, f1.S3)
@@ -5989,15 +5989,36 @@
           [1*4+0, 2*4+3], // f1 S1 <-> f2 S4
           [1*4+1, 2*4+2]  // f1 S2 <-> f2 S3
         ];
-        var _p = _edgePairs[Math.floor(Math.random() * _edgePairs.length)];
-        // 1 und 2 zufaellig auf die beiden Slots verteilen
-        if (Math.random() < 0.5) {
-          deck[_p[0]] = 1; deck[_p[1]] = 2;
-        } else {
-          deck[_p[0]] = 2; deck[_p[1]] = 1;
+        var _pairCount = cfg.pairCount || 1;
+        // Shuffle _edgePairs
+        for (var _i = _edgePairs.length - 1; _i > 0; _i--) {
+          var _j = Math.floor(Math.random() * (_i + 1));
+          var _tmp = _edgePairs[_i]; _edgePairs[_i] = _edgePairs[_j]; _edgePairs[_j] = _tmp;
         }
-        visibleDeckIndices.add(_p[0]);
-        visibleDeckIndices.add(_p[1]);
+        // Waehle _pairCount Paare - keine Slots doppelt
+        var _chosen = [];
+        var _usedSlots = {};
+        for (var _pi = 0; _pi < _edgePairs.length && _chosen.length < _pairCount; _pi++) {
+          var _cand = _edgePairs[_pi];
+          if (!_usedSlots[_cand[0]] && !_usedSlots[_cand[1]]) {
+            _chosen.push(_cand);
+            _usedSlots[_cand[0]] = true;
+            _usedSlots[_cand[1]] = true;
+          }
+        }
+        // Zahlen 1..2*pairCount zufaellig verteilen auf alle gewaehlten Slots
+        var _allSlots = [];
+        _chosen.forEach(function(p){ _allSlots.push(p[0]); _allSlots.push(p[1]); });
+        var _nums = [];
+        for (var _n = 1; _n <= 2 * _pairCount; _n++) _nums.push(_n);
+        for (var _i = _nums.length - 1; _i > 0; _i--) {
+          var _j = Math.floor(Math.random() * (_i + 1));
+          var _tmp = _nums[_i]; _nums[_i] = _nums[_j]; _nums[_j] = _tmp;
+        }
+        for (var _k = 0; _k < _allSlots.length; _k++) {
+          deck[_allSlots[_k]] = _nums[_k];
+          visibleDeckIndices.add(_allSlots[_k]);
+        }
       } else {
         for (var _fi = 0; _fi < 3; _fi++) {
           var _baseZahl = _fi * cfg.zahlenProFace + 1;
