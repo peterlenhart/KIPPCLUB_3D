@@ -10477,82 +10477,58 @@
       // Intro-Blur entfernt — Tutorial/Anleitung stattdessen
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
-    // === DEBUG-LOG für TUTORIALS-Klickfolge ===
-    function _dbg(msg) {
-      let el = document.getElementById('_dbgLog');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = '_dbgLog';
-        el.style.cssText = 'position:fixed;top:5px;left:5px;z-index:99999;' +
-          'background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;' +
-          'padding:4px 6px;max-width:90vw;white-space:pre-wrap;' +
-          'border:1px solid #0f0;line-height:1.3;pointer-events:none;';
-        document.body.appendChild(el);
-      }
-      const ts = (performance.now() / 1000).toFixed(2);
-      el.textContent = ts + ' ' + msg + '\n' + el.textContent;
-      if (el.textContent.length > 800) el.textContent = el.textContent.slice(0, 800);
-    }
-
     document.getElementById('btnSpielen').addEventListener('click', () => {
-      _dbg('btnSp CLICK menuSel=' + window._menuSelState + ' ph=' + _cardModePhase);
       if (window._menuSelState === 1) {
-        _dbg('  -> Tutorial-Pfad START');
-        // setTimeout ZUERST anlegen, damit es auch läuft falls handleStart wirft
+        // Black-Overlay verdeckt Spiel-Flash, bis Tutorial-Intro übernimmt
+        const preOv = document.createElement('div');
+        preOv.id = '_tutPreOv';
+        preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
+          'z-index:99;background:#000;';
+        document.body.appendChild(preOv);
+        // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
         setTimeout(() => {
-          _dbg('  -> setTimeout feuert -> runCardTutorial');
           window._cardMode = 'offen';
-          try {
-            runCardTutorial();
-            _dbg('  -> runCardTutorial gerufen (ohne Throw)');
-          } catch(e) {
-            _dbg('  -> runCardTutorial ERROR: ' + e.message);
-          }
+          try { runCardTutorial(); } catch(e) {}
+          // Pre-Overlay entfernen, sobald Tutorial-Intro (z-index:100) sichtbar
+          setTimeout(() => {
+            const ov = document.getElementById('_tutPreOv');
+            if (ov) ov.remove();
+          }, 2000);
         }, 1100);
         window._menuSelState = 0;
         resetMenuButtons();
         _cardModePhase = 1;
         window._cardMode = 'offen';
-        try {
-          handleStart(false);
-          _dbg('  -> handleStart fertig (sync ok)');
-        } catch(e) {
-          _dbg('  -> handleStart THROW: ' + e.message);
-        }
+        try { handleStart(false); } catch(e) {}
         return;
       }
-      _dbg('  -> Spiel-Pfad (handleStart)');
       handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
-      _dbg('btnSp TOUCH menuSel=' + window._menuSelState + ' ph=' + _cardModePhase);
       if (window._menuSelState === 1) {
-        _dbg('  -> Tutorial-Pfad START (touch)');
-        // setTimeout ZUERST anlegen, damit es auch läuft falls handleStart wirft
+        // Black-Overlay verdeckt Spiel-Flash, bis Tutorial-Intro übernimmt
+        const preOv = document.createElement('div');
+        preOv.id = '_tutPreOv';
+        preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
+          'z-index:99;background:#000;';
+        document.body.appendChild(preOv);
+        // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
         setTimeout(() => {
-          _dbg('  -> setTimeout feuert -> runCardTutorial (touch)');
           window._cardMode = 'offen';
-          try {
-            runCardTutorial();
-            _dbg('  -> runCardTutorial gerufen (ohne Throw)');
-          } catch(e) {
-            _dbg('  -> runCardTutorial ERROR: ' + e.message);
-          }
+          try { runCardTutorial(); } catch(e) {}
+          setTimeout(() => {
+            const ov = document.getElementById('_tutPreOv');
+            if (ov) ov.remove();
+          }, 2000);
         }, 1100);
         window._menuSelState = 0;
         resetMenuButtons();
         _cardModePhase = 1;
         window._cardMode = 'offen';
-        try {
-          handleStart(false);
-          _dbg('  -> handleStart fertig (touch sync ok)');
-        } catch(e) {
-          _dbg('  -> handleStart THROW: ' + e.message);
-        }
+        try { handleStart(false); } catch(e) {}
         return;
       }
-      _dbg('  -> Spiel-Pfad (handleStart, touch)');
       handleStart(false);
     }, { passive: false });
     window._menuSelState = 0; // 0=normal, 1=tutorial-auswahl, 2=anleitung-auswahl
@@ -13473,7 +13449,6 @@
       if (window._tutBtnIconMesh && window._tutBtnIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._tutBtnIconMesh).length > 0 ||
             (window._tutBtnTextMesh && vkRaycaster.intersectObject(window._tutBtnTextMesh).length > 0)) {
-          if (typeof _dbg==='function') _dbg('handsilber CLICK -> runCardTutorial');
           window._cardMode = 'offen';
           runCardTutorial();
           return;
@@ -13485,7 +13460,6 @@
       if (window._tutBtnIconMesh && window._tutBtnIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._tutBtnIconMesh).length > 0 ||
             (window._tutBtnTextMesh && vkRaycaster.intersectObject(window._tutBtnTextMesh).length > 0)) {
-          if (typeof _dbg==='function') _dbg('handsilber CLICK#2 -> runCardTutorial');
           window._cardMode = 'offen';
           runCardTutorial();
           return;
