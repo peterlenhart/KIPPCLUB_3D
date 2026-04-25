@@ -4873,8 +4873,6 @@
 
       // Normales Spiel starten + Intro SOFORT gleichzeitig
       window._tutorialRunning = true;
-      window._cardMode = 'offen';
-      _cardModePhase = 1;
       handleStart(false);
 
       // === INTRO: Sofort Blur + Zeile für Zeile ===
@@ -10398,6 +10396,21 @@
         window._nextMatchBlock = false; 
         return; 
       }
+      if (window._menuSelState === 1) {
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+        return;
+      }
+      if (window._menuSelState === 1) {
+        // KIPP +1 Tutorial
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+        return;
+      }
 
       if (!texturesReady || _startBtnLock) return;
 
@@ -10466,8 +10479,11 @@
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (window._menuSelState === 1) {
+        // GOTO Absprung zu Tut+1 (wie handsilber-Klick im Spiel)
         window._menuSelState = 0;
         resetMenuButtons();
+        _cardModePhase = 1;
+        window._cardMode = 'offen';
         runCardTutorial();
         return;
       }
@@ -10476,8 +10492,11 @@
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
       if (window._menuSelState === 1) {
+        // GOTO Absprung zu Tut+1 (wie handsilber-Klick im Spiel)
         window._menuSelState = 0;
         resetMenuButtons();
+        _cardModePhase = 1;
+        window._cardMode = 'offen';
         runCardTutorial();
         return;
       }
