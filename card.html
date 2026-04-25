@@ -4842,6 +4842,7 @@
 
 
     async function runCardTutorial() {
+      console.log('[+1-TUT] runCardTutorial gestartet');
       // Alte Instanz killen
       replayActive = false;
       kipp21Generation++;
@@ -4876,6 +4877,7 @@
           lineEls.push(el);
         }
         document.body.appendChild(ov);
+        console.log('[+1-TUT] Intro-Overlay angefuegt, lines=', lineEls.length);
         requestAnimationFrame(() => { ov.style.opacity = '1'; });
         for (let i = 0; i < lineEls.length; i++) {
           await new Promise(r => setTimeout(r, 1000));
