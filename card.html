@@ -10374,7 +10374,8 @@
     }
 
     function handleStart(withTutorial) {
-      console.log('[DEBUG] handleStart aufgerufen, nextMatchBlock=' + window._nextMatchBlock + ', withTut=' + withTutorial + ', menuSelState=' + window._menuSelState + ', cardModePhase=' + _cardModePhase);
+      console.log('[DEBUG-V2] handleStart aufgerufen, nextMatchBlock=' + window._nextMatchBlock + ', withTut=' + withTutorial + ', menuSelState=' + window._menuSelState + ', cardModePhase=' + _cardModePhase);
+      document.title = 'TUT-DEBUG: menuSel=' + window._menuSelState;
       if (window._nextMatchBlock) { 
         console.log('[DEBUG] handleStart abgebrochen wegen nextMatchBlock');
         window._nextMatchBlock = false; 
