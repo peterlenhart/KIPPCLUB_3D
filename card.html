@@ -3343,7 +3343,27 @@
         
 
         const urlParams = new URLSearchParams(window.location.search);
+        const modeParam = urlParams.get('mode');
         const levelParam = urlParams.get('level');
+        if (modeParam === 'plus1') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          window._cardMode = 'offen';
+          _cardModePhase = 1;
+          setTimeout(function(){ try { handleStart(false); } catch(e){} }, 600);
+          return;
+        }
+        if (modeParam === 'match') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          window._cardMode = 'verdeckt';
+          window._bluffMode = true;
+          _cardModePhase = 1;
+          setTimeout(function(){ try { showBluffModeSelection(); } catch(e){} }, 600);
+          return;
+        }
         if (levelParam === 'brainy') {
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
@@ -4842,8 +4862,6 @@
 
 
     async function runCardTutorial() {
-      alert('TUT-START');
-      console.log('[+1-TUT] runCardTutorial gestartet');
       // Alte Instanz killen
       replayActive = false;
       kipp21Generation++;
@@ -4878,7 +4896,6 @@
           lineEls.push(el);
         }
         document.body.appendChild(ov);
-        console.log('[+1-TUT] Intro-Overlay angefuegt, lines=', lineEls.length);
         requestAnimationFrame(() => { ov.style.opacity = '1'; });
         for (let i = 0; i < lineEls.length; i++) {
           await new Promise(r => setTimeout(r, 1000));
@@ -10375,11 +10392,16 @@
     }
 
     function handleStart(withTutorial) {
-      alert('handleStart: menuSel=' + window._menuSelState + ' phase=' + _cardModePhase);
       if (window._nextMatchBlock) { 
-        console.log('[DEBUG] handleStart abgebrochen wegen nextMatchBlock');
         window._nextMatchBlock = false; 
         return; 
+      }
+      if (window._menuSelState === 1) {
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+        return;
       }
       if (window._menuSelState === 1) {
         // KIPP +1 Tutorial
@@ -12197,7 +12219,7 @@
         (T.cEffizienz || 'EFFIZIENZ') + ': ' + effizienz + '%\n' +
         shareGrid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
-        window._DIGIKIPP_URL + '\n' +
+        window._DIGIKIPP_URL + '?mode=plus1' + '\n' +
         '#KippClub #KippPlusOne';
 
       const btnShare = document.createElement('button');
