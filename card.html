@@ -10403,14 +10403,6 @@
         runCardTutorial();
         return;
       }
-      if (window._menuSelState === 1) {
-        // KIPP +1 Tutorial
-        window._menuSelState = 0;
-        window._cardMode = 'offen';
-        _cardModePhase = 1;
-        runCardTutorial();
-        return;
-      }
 
       if (!texturesReady || _startBtnLock) return;
 
@@ -10478,10 +10470,28 @@
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
+      if (window._menuSelState === 1) {
+        // KIPP +1 Tutorial
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        resetMenuButtons();
+        runCardTutorial();
+        return;
+      }
       handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
+      if (window._menuSelState === 1) {
+        // KIPP +1 Tutorial
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        resetMenuButtons();
+        runCardTutorial();
+        return;
+      }
       handleStart(false);
     }, { passive: false });
     window._menuSelState = 0; // 0=normal, 1=tutorial-auswahl, 2=anleitung-auswahl
