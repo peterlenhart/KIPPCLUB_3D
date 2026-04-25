@@ -588,7 +588,7 @@
       width: 360px;
       height: 720px;
       pointer-events: none;
-      z-index: 60;
+      z-index: 300;
     }
     #resetButton {
       display: none;
@@ -1132,7 +1132,7 @@
         e1:"IMMER 2 OPTIONEN", e2:"Zuerst auf Augen-Icon \u2013 W\u00fcrfelschauen (empfohlen)", e3:"Gleich auf Kippziel \u2013 Kippzug machen",
         k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit.<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
-        ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
+        ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIALS",
         wh:"WIEDERHOLEN", nm:"NEUES SPIEL", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",
@@ -1146,7 +1146,7 @@
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange",
         nml:"NOCHMAL", nxl:"NEXT LEVEL", sek:"Sek.", tout:"60 Sek.<br>\u00fcberschritten", h4b:"Mit 4 HITS ins BRAINY Level", h4r:"Mit 4 HITS ins BRAIN Level",
         exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH", cWaehlMatch:"W\u00c4HLE DEIN MATCH", cMTut1:"Erkippe ein Blatt", cMTut2:"wie dieses.", cMTut3:"am besten", cMTut4:"mit 2 Assen.", cMTut5:"Suche das Ass", cMTut6:"und behalte es", cMTut7:"gut im Auge.", cMTut8:"", cMTut9:"Kippe den W\u00fcrfel", cMTut10:"wie du willst, und", cMTut11:"versuche mit \u201eA\u201c", cMTut12:"auf {suit} zu kommen.",
         cSub1:"K\u00d6NNEN : GL\u00dcCK = 50 : 50", cSub2:"K\u00d6NNEN : GL\u00dcCK = 90 : 10",
         cEinfr:"EINFRIEREN", cWeiter:"WEITER",
         cForts:"FORTSETZEN", cPause:"PAUSE",
@@ -1155,7 +1155,7 @@
         cTeilen:"TEILEN", cKopiert:"KOPIERT!", cMenu:"MEN\u00dc",
         cSchaffst:"Schaffst du das auch?", cAnlBtn:"Anleitung",
         cTut1:"Decke die Bankkarte auf", cTut2:"Schau dir die Kartenwerte an", cTut3:"Kippe den Würfel", cTut4:"Zurückkippen nicht erlaubt!", cTut5:"Halte eine Karte gedrückt", cTut6:"NACH 6 PERFEKTEN STICHEN", cTut7:"BEISPIEL-ERGEBNIS", cTut8:"WIEDERHOLEN", cTut9:"Tippe auf den Würfel um ihn zu senken", cIntro:"Überbiete alle 6<br>Target-Karten um +1",
-        cAnlTitle:"ANLEITUNG", cAnlSec:["ZIEL","AUFDECKEN","KIPPEN","STICH-WERTUNG","STRATEGIE"],
+        cAnlTitle:"ANLEITUNG", cAnlBtnMenu:"ANLEITUNGEN", cAnlSec:["ZIEL","AUFDECKEN","KIPPEN","STICH-WERTUNG","STRATEGIE"],
         cAnl:[
           "Tippe aufs Augen-Icon in der Mitte der Box. Stich die Bank! Der W\u00fcrfel tr\u00e4gt 12 Kartenwerte von 3 bis Ass. Pr\u00e4ge dir ihre Positionen ein.",
           "Tippe auf die verdeckte Bankkarte. Sie zeigt einen Wert von 2 bis K\u00f6nig.",
@@ -1190,7 +1190,7 @@
         cTutL1:"Stich alle 6", cTutL2:"Target-Karten", cTutL3:"Mit gleicher", cTutL4:"Kartenfarbe und", cTutL5:"um 1 höher.",
         cTutK1:"Kippe den Würfel", cTutK2:"wie du willst,", cTutK3:"und versuche mit", cTutK4:"\u201E{val}\u201C auf ein", cTutK5:"{suit}symbol zu kommen.",
         cLongTap:"Lang tippen",
-        cBluffHand:"Erkippe z.B. ein Blatt, wie dieses",cDeal:"DEAL",cZurueck:"ZUR\u00dcCK",
+        cBluffHand:"Erkippe ein Blatt wie dieses.", cBluffHand2:"Je h\u00f6her, desto besser.",cDeal:"DEAL",cZurueck:"ZUR\u00dcCK",
         cArtDer:"der", cArtDem:"dem"
       },
       "en": {
@@ -1199,7 +1199,7 @@
         e1:"ALWAYS 2 OPTIONS", e2:"First tap eye icon \u2013 look at the cube (recommended)", e3:"Go straight to target \u2013 make your tipping move",
         k1:"LOOK & REMEMBER", k2:"Tip the cube inside the box in any direction from corner to corner. Memorize as many number positions as possible in the shortest time (Use LOOK seconds efficiently).<br>After LOOKING, uncover your first of six targets here on the left.",
         p1:"TAP & PUSH", p2:"The target on the left shows: <b>{zahl}</b> must reach <b>{farbe}</b>.<br><b>TAP</b> the cube one to six times.<br><b>PUSH</b> it in the desired direction to trigger the tipping move.",
-        ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIAL",
+        ma:"PLAY WITH TUTORIAL", sp:"PLAY", dm:"TUTORIALS",
         wh:"REPEAT", nm:"NEW GAME", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"Cube Insight<br>choose",kp:"Tip first!",kb:"TILT VIEW",eb:"CORNER VIEW",
@@ -1213,7 +1213,7 @@
         fV:"Violet", fB:"Blue", fG:"Green", fO:"Orange",
         nml:"AGAIN", nxl:"NEXT LEVEL", sek:"sec.", tout:"60 sec.<br>exceeded", h4b:"4 HITS to reach BRAINY Level", h4r:"4 HITS to reach BRAIN Level",
         exQ:"Really<br>quit the game?", exC:"Back", exE:"Quit",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH", cWaehlMatch:"CHOOSE YOUR MATCH", cMTut1:"Tip a hand", cMTut2:"like this.", cMTut3:"best with", cMTut4:"two Aces.", cMTut5:"Find the Ace", cMTut6:"and keep a", cMTut7:"close eye on it.", cMTut8:"", cMTut9:"Tip the cube", cMTut10:"as you wish, and", cMTut11:"try to land \"A\"", cMTut12:"on {suit}.",
         cSub1:"SKILL : LUCK = 50 : 50", cSub2:"SKILL : LUCK = 90 : 10",
         cEinfr:"FREEZE", cWeiter:"CONTINUE",
         cForts:"CONTINUE", cPause:"PAUSE",
@@ -1222,7 +1222,7 @@
         cStiche:"of 6 TRICKS", cPerfekt:"perfect +1", cEffizienz:"EFFICIENCY",
         cTeilen:"SHARE", cKopiert:"COPIED!", cMenu:"MENU",
         cSchaffst:"Can you beat this?", cAnlBtn:"Guide",
-        cAnlTitle:"GUIDE", cAnlSec:["GOAL","REVEAL","TIP","TRICK SCORE","STRATEGY"],
+        cAnlTitle:"GUIDE", cAnlBtnMenu:"GUIDES", cAnlSec:["GOAL","REVEAL","TIP","TRICK SCORE","STRATEGY"],
         cAnl:[
           "Tap the eye icon at the center of the box. Beat the bank! The cube carries 12 card values from 3 to Ace. Memorize their positions.",
           "Tap the face-down bank card. It shows a value from 2 to King.",
@@ -1239,7 +1239,7 @@
         cTutL1:"Beat all 6", cTutL2:"target cards", cTutL3:"with the same", cTutL4:"card suit and", cTutL5:"1 higher.",
         cTutK1:"Tip the cube", cTutK2:"any way you want,", cTutK3:"and try to get", cTutK4:"\u201E{val}\u201C onto a", cTutK5:"{suit} symbol.",
         cLongTap:"Long tap",
-        cBluffHand:"Tip e.g. a hand like this",cDeal:"DEAL",cZurueck:"BACK",
+        cBluffHand:"Tip a hand like this.", cBluffHand2:"The higher, the better.",cDeal:"DEAL",cZurueck:"BACK",
         cAnlSecO:["GOAL","GAMEPLAY","TIP MOVE","PLAY A CARD","CARD VALUES"],
         cAnlO:[
           "Beat all 6 target cards with the same card suit and 1 higher.\n\nChance with pure luck tips = 9%\nPerfect game result = 100% Efficiency\nAlways achievable with memory and logic.",
@@ -1265,7 +1265,7 @@
         e1:"SIEMPRE 2 OPCIONES", e2:"Primero pulsa el icono del ojo \u2013 mirar el cubo (recomendado)", e3:"Directo al objetivo \u2013 hacer tu jugada",
         k1:"MIRAR & RECORDAR", k2:"Volca el cubo dentro de la caja en cualquier direcci\u00f3n de esquina a esquina. Memoriza tantas posiciones de n\u00fameros como sea posible en el menor tiempo (Usa los segundos de MIRAR eficientemente).<br>Despu\u00e9s de MIRAR, descubre aqu\u00ed a la izquierda tu primer objetivo de seis.",
         p1:"TOCAR & EMPUJAR", p2:"El objetivo a la izquierda muestra: <b>{zahl}</b> debe llegar a <b>{farbe}</b>.<br><b>TOCA</b> el cubo de una a seis veces.<br><b>EMPUJA</b> en la direcci\u00f3n deseada para activar el volcado.",
-        ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIAL",
+        ma:"JUGAR CON GU\u00cdA", sp:"JUGAR", dm:"TUTORIALS",
         wh:"REPETIR", nm:"NUEVO JUEGO", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"Vista del cubo<br>elegir",kp:"\u00a1Vuelca!",kb:"VISTA GIRO",eb:"VISTA ESQUINA",
@@ -1279,7 +1279,7 @@
         fV:"Violeta", fB:"Azul", fG:"Verde", fO:"Naranja",
         nml:"OTRA VEZ", nxl:"SIGUIENTE NIVEL", sek:"seg.", tout:"60 seg.<br>superados", h4b:"4 HITS para el nivel BRAINY", h4r:"4 HITS para el nivel BRAIN",
         exQ:"\u00bfRealmente<br>salir?", exC:"Volver", exE:"Salir",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH", cWaehlMatch:"ELIGE TU MATCH", cMTut1:"Vuelca una mano", cMTut2:"como esta.", cMTut3:"lo mejor con", cMTut4:"dos Ases.", cMTut5:"Busca el As", cMTut6:"y no le pierdas", cMTut7:"la vista.", cMTut8:"", cMTut9:"Vuelca el cubo", cMTut10:"como quieras e", cMTut11:"intenta caer con \"A\"", cMTut12:"en {suit}.",
         cSub1:"HABILIDAD : SUERTE = 50 : 50", cSub2:"HABILIDAD : SUERTE = 90 : 10",
         cTut1:"Descubre la carta del banco", cTut2:"Mira los valores", cTut3:"Vuelca el cubo", cTut4:"\u00a1No se puede volver!", cTut5:"Mant\u00e9n una carta pulsada", cTut6:"TRAS 6 BAZAS PERFECTAS", cTut7:"RESULTADO DE EJEMPLO", cTut8:"REPETIR", cTut9:"Toca el cubo para bajarlo", cIntro:"Supera las 6 cartas<br>objetivo por +1",
         cEinfr:"CONGELAR", cWeiter:"SEGUIR",
@@ -1288,7 +1288,7 @@
         cStiche:"de 6 BAZAS", cPerfekt:"perfecto +1", cEffizienz:"EFICIENCIA",
         cTeilen:"COMPARTIR", cKopiert:"\u00a1COPIADO!", cMenu:"MEN\u00da",
         cSchaffst:"\u00bfPuedes superarlo?", cAnlBtn:"Gu\u00eda",
-        cAnlTitle:"GU\u00cdA", cAnlSec:["OBJETIVO","DESCUBRIR","VOLCAR","PUNTUACI\u00d3N","ESTRATEGIA"],
+        cAnlTitle:"GU\u00cdA", cAnlBtnMenu:"GU\u00cdAS", cAnlSec:["OBJETIVO","DESCUBRIR","VOLCAR","PUNTUACI\u00d3N","ESTRATEGIA"],
         cAnl:[
           "Toca el icono del ojo en el centro de la caja. \u00a1Gana a la banca! El cubo lleva 12 valores de carta del 3 al As. Memoriza sus posiciones.",
           "Toca la carta boca abajo de la banca. Muestra un valor del 2 al Rey.",
@@ -1305,7 +1305,7 @@
         cTutL1:"Supera las 6", cTutL2:"cartas objetivo", cTutL3:"con el mismo", cTutL4:"palo y", cTutL5:"1 m\u00e1s alto.",
         cTutK1:"Vuelca el cubo", cTutK2:"como quieras,", cTutK3:"e intenta poner", cTutK4:"\u201E{val}\u201C en un", cTutK5:"s\u00edmbolo de {suit}.",
         cLongTap:"Pulsar largo",
-        cBluffHand:"Vuelca p.ej. una mano como esta",cDeal:"DEAL",cZurueck:"ATR\u00c1S",
+        cBluffHand:"Vuelca una mano como esta.", cBluffHand2:"Cuanto m\u00e1s alta, mejor.",cDeal:"DEAL",cZurueck:"ATR\u00c1S",
         cAnlSecO:["OBJETIVO","DESARROLLO","MOVIMIENTO","JUGAR CARTA","VALORES"],
         cAnlO:[
           "Supera las 6 cartas objetivo con el mismo palo y 1 m\u00e1s alto.\n\nProbabilidad con volcadas de pura suerte = 9%\nResultado perfecto = Eficiencia 100%\nSiempre alcanzable con memoria y l\u00f3gica.",
@@ -1331,7 +1331,7 @@
         e1:"TOUJOURS 2 OPTIONS", e2:"D\u2019abord l\u2019ic\u00f4ne \u0153il \u2013 regarder le cube (recommand\u00e9)", e3:"Directement \u00e0 la cible \u2013 faire ton coup",
         k1:"REGARDER & RETENIR", k2:"Bascule le cube dans la bo\u00eete dans n\u2019importe quelle direction de coin en coin. M\u00e9morise autant de positions de chiffres que possible en un minimum de temps (Utilise les secondes de REGARD efficacement).<br>Apr\u00e8s avoir REGARD\u00c9, d\u00e9couvre ici \u00e0 gauche ta premi\u00e8re cible sur six.",
         p1:"TAPER & POUSSER", p2:"La cible \u00e0 gauche indique : <b>{zahl}</b> doit atteindre <b>{farbe}</b>.<br><b>TAPE</b> une \u00e0 six fois sur le cube.<br><b>POUSSE</b>-le dans la direction souhait\u00e9e pour d\u00e9clencher le basculement.",
-        ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIAL",
+        ma:"JOUER AVEC GUIDE", sp:"JOUER", dm:"TUTORIALS",
         wh:"R\u00c9P\u00c9TER", nm:"NOUVEAU JEU", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"Aper\u00e7u du cube<br>choisir",kp:"Bascule !",kb:"VUE BASCULE",eb:"VUE COIN",
@@ -1346,7 +1346,7 @@
         nml:"ENCORE", nxl:"NIVEAU SUIVANT", sek:"sec.", tout:"60 sec.<br>d\u00e9pass\u00e9es", h4b:"4 HITS pour le niveau BRAINY", h4r:"4 HITS pour le niveau BRAIN",
         cTut1:"R\u00e9v\u00e8le la carte banque", cTut2:"Regarde les valeurs", cTut3:"Bascule le cube", cTut4:"Pas de retour en arri\u00e8re !", cTut5:"Maintiens une carte appuy\u00e9e", cTut6:"APR\u00c8S 6 PLIS PARFAITS", cTut7:"R\u00c9SULTAT EXEMPLE", cTut8:"REJOUER", cTut9:"Touche le cube pour le baisser", cIntro:"Bats les 6 cartes<br>cibles de +1",
         exQ:"Vraiment<br>quitter ?", exC:"Retour", exE:"Quitter",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH", cWaehlMatch:"CHOISIS TON MATCH", cMTut1:"Bascule une main", cMTut2:"comme celle-ci.", cMTut3:"id\u00e9alement avec", cMTut4:"deux As.", cMTut5:"Cherche l\u0027As", cMTut6:"et garde-le bien", cMTut7:"\u00e0 l\u0027\u0153il.", cMTut8:"", cMTut9:"Bascule le cube", cMTut10:"comme tu veux et", cMTut11:"essaie de tomber sur \"A\"", cMTut12:"de {suit}.",
         cSub1:"COMP\u00c9TENCE : CHANCE = 50 : 50", cSub2:"COMP\u00c9TENCE : CHANCE = 90 : 10",
         cEinfr:"GELER", cWeiter:"CONTINUER",
         cForts:"REPRENDRE", cPause:"PAUSE",
@@ -1354,7 +1354,7 @@
         cStiche:"sur 6 PLIS", cPerfekt:"parfait +1", cEffizienz:"EFFICACIT\u00c9",
         cTeilen:"PARTAGER", cKopiert:"COPI\u00c9 !", cMenu:"MENU",
         cSchaffst:"Tu fais mieux ?", cAnlBtn:"Guide",
-        cAnlTitle:"GUIDE", cAnlSec:["OBJECTIF","D\u00c9COUVRIR","BASCULER","SCORE DU PLI","STRAT\u00c9GIE"],
+        cAnlTitle:"GUIDE", cAnlBtnMenu:"GUIDES", cAnlSec:["OBJECTIF","D\u00c9COUVRIR","BASCULER","SCORE DU PLI","STRAT\u00c9GIE"],
         cAnl:[
           "Touche l'icone de l'œil au centre de la boîte. Bats la banque ! Le cube porte 12 valeurs de carte du 3 \u00e0 l\u2019As. M\u00e9morise leurs positions.",
           "Touche la carte face cach\u00e9e de la banque. Elle montre une valeur du 2 au Roi.",
@@ -1371,7 +1371,7 @@
         cTutL1:"Bats les 6", cTutL2:"cartes cibles", cTutL3:"avec la m\u00eame", cTutL4:"couleur de carte et", cTutL5:"1 de plus.",
         cTutK1:"Bascule le cube", cTutK2:"comme tu veux,", cTutK3:"et essaie de mettre", cTutK4:"\u00ab\u00a0{val}\u00a0\u00bb sur un", cTutK5:"symbole {suit}.",
         cLongTap:"Appui long",
-        cBluffHand:"Bascule p.ex. une main comme celle-ci",cDeal:"DEAL",cZurueck:"RETOUR",
+        cBluffHand:"Bascule une main comme celle-ci.", cBluffHand2:"Plus c\u0027est haut, mieux c\u0027est.",cDeal:"DEAL",cZurueck:"RETOUR",
         cAnlSecO:["OBJECTIF","D\u00c9ROULEMENT","MOUVEMENT","JOUER UNE CARTE","VALEURS"],
         cAnlO:[
           "Bats les 6 cartes cibles avec la m\u00eame couleur et 1 de plus.\n\nChance avec des bascules de pure chance = 9%\nR\u00e9sultat parfait = Efficacit\u00e9 100%\nToujours r\u00e9alisable avec m\u00e9moire et logique.",
@@ -1397,7 +1397,7 @@
         e1:"SEMPRE 2 OPZIONI", e2:"Prima tocca l\u2019icona occhio \u2013 guardare il cubo (consigliato)", e3:"Diretto al bersaglio \u2013 fare la tua mossa",
         k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
         p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
-        ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
+        ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIALS",
         wh:"RIPETERE", nm:"NUOVO GIOCO", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"Vista del cubo<br>scegli",kp:"Ribalta!",kb:"VISTA KIPP",eb:"VISTA ANGOLO",
@@ -1413,7 +1413,7 @@
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione",
         nml:"ANCORA", nxl:"LIVELLO SUCCESSIVO", sek:"sec.", tout:"60 sec.<br>superati", h4b:"4 HITS per il livello BRAINY", h4r:"4 HITS per il livello BRAIN",
         exQ:"Vuoi davvero<br>uscire?", exC:"Indietro", exE:"Esci",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH", cWaehlMatch:"SCEGLI IL TUO MATCH", cMTut1:"Ribalta una mano", cMTut2:"come questa.", cMTut3:"meglio con", cMTut4:"due Assi.", cMTut5:"Cerca l\u0027Asso", cMTut6:"e tienilo bene", cMTut7:"d\u0027occhio.", cMTut8:"", cMTut9:"Ribalta il cubo", cMTut10:"come vuoi e", cMTut11:"prova a finire con \"A\"", cMTut12:"su {suit}.",
         cSub1:"ABILIT\u00c0 : FORTUNA = 50 : 50", cSub2:"ABILIT\u00c0 : FORTUNA = 90 : 10",
         cEinfr:"CONGELA", cWeiter:"CONTINUA",
         cForts:"RIPRENDI", cPause:"PAUSA",
@@ -1421,7 +1421,7 @@
         cStiche:"su 6 PRESE", cPerfekt:"perfetto +1", cEffizienz:"EFFICIENZA",
         cTeilen:"CONDIVIDI", cKopiert:"COPIATO!", cMenu:"MENU",
         cSchaffst:"Riesci a fare meglio?", cAnlBtn:"Guida",
-        cAnlTitle:"GUIDA", cAnlSec:["OBIETTIVO","SCOPRIRE","RIBALTARE","PUNTEGGIO","STRATEGIA"],
+        cAnlTitle:"GUIDA", cAnlBtnMenu:"GUIDE", cAnlSec:["OBIETTIVO","SCOPRIRE","RIBALTARE","PUNTEGGIO","STRATEGIA"],
         cAnl:[
           "Tocca l'icona dell'occhio al centro della scatola. Batti il banco! Il cubo porta 12 valori di carta dal 3 all\u2019Asso. Memorizza le loro posizioni.",
           "Tocca la carta coperta del banco. Mostra un valore dal 2 al Re.",
@@ -1438,7 +1438,7 @@
         cTutL1:"Batti tutte le 6", cTutL2:"carte obiettivo", cTutL3:"con lo stesso", cTutL4:"seme di carta e", cTutL5:"1 in pi\u00f9.",
         cTutK1:"Ribalta il cubo", cTutK2:"come vuoi,", cTutK3:"e prova a mettere", cTutK4:"\u201E{val}\u201C su un", cTutK5:"simbolo {suit}.",
         cLongTap:"Tocco lungo",
-        cBluffHand:"Ribalta ad es. una mano come questa",cDeal:"DEAL",cZurueck:"INDIETRO",
+        cBluffHand:"Ribalta una mano come questa.", cBluffHand2:"Pi\u00f9 \u00e8 alta, meglio \u00e8.",cDeal:"DEAL",cZurueck:"INDIETRO",
         cAnlSecO:["OBIETTIVO","SVOLGIMENTO","MOSSA","GIOCARE UNA CARTA","VALORI"],
         cAnlO:[
           "Batti tutte le 6 carte obiettivo con lo stesso seme e 1 in pi\u00f9.\n\nProbabilit\u00e0 con ribaltamenti di pura fortuna = 9%\nRisultato perfetto = Efficienza 100%\nSempre raggiungibile con memoria e logica.",
@@ -1464,7 +1464,7 @@
         e1:"HER ZAMAN 2 SE\u00c7ENEK", e2:"\u00d6nce g\u00f6z ikonuna dokun \u2013 k\u00fcpe bak (\u00f6nerilen)", e3:"Do\u011frudan hedefe \u2013 hamle yap",
         k1:"BAK & HATIRLA", k2:"K\u00fcp\u00fc kutunun i\u00e7inde herhangi bir y\u00f6ne k\u00f6\u015feden k\u00f6\u015feye devir. M\u00fcmk\u00fcn oldu\u011funca \u00e7ok say\u0131 pozisyonunu en k\u0131sa s\u00fcrede ezberle (BAKMA saniyelerini verimli kullan).<br>BAKTIKTAN sonra burada solda alt\u0131 hedefinden ilkini a\u00e7.",
         p1:"DOKUN & \u0130T", p2:"Soldaki hedef g\u00f6steriyor: <b>{zahl}</b> \u2192 <b>{farbe}</b> olmal\u0131.<br>K\u00fcpe <b>bir ile alt\u0131</b> kez <b>DOKUN</b>.<br>Sonra istedi\u011fin y\u00f6ne <b>\u0130T</b> ve devrilmeyi ba\u015flat.",
-        ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIAL",
+        ma:"REHBERL\u0130 OYNA", sp:"OYNA", dm:"TUTORIALS",
         wh:"TEKRAR", nm:"YEN\u0130 OYUN", bs:"HIGHSCORES",
         ch1:"4 HITS", ch2:"4 HITS",
         jw:"K\u00fcp g\u00f6r\u00fcn\u00fcm\u00fc<br>se\u00e7",kp:"Devir!",kb:"DEV\u0130R G\u00d6R\u00dc\u015e",eb:"K\u00d6\u015eE G\u00d6R\u00dc\u015e",
@@ -1479,7 +1479,7 @@
         fV:"Mor", fB:"Mavi", fG:"Ye\u015fil", fO:"Turuncu",
         nml:"TEKRAR", nxl:"SONRAK0130 SEV0130YE", sek:"sn.", tout:"60 sn.<br>a\u015f\u0131ld\u0131", h4b:"BRAINY seviyesi i\u00e7in 4 HITS", h4r:"BRAIN seviyesi i\u00e7in 4 HITS",
         exQ:"Oyundan \u00e7\u0131kmak<br>istiyor musun?", exC:"Geri", exE:"\u00c7\u0131k",
-        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH",
+        cOffen:"KIPP +1", cVerdeckt:"KIPP MATCH", cWaehlMatch:"E\u015eLEMEN\u0130 SE\u00c7", cMTut1:"\u015eu \u015fekilde bir el", cMTut2:"devir.", cMTut3:"en iyisi", cMTut4:"2 Asla.", cMTut5:"As\u0131 bul", cMTut6:"ve g\u00f6z\u00fcn\u00fc", cMTut7:"ondan ay\u0131rma.", cMTut8:"", cMTut9:"Zar\u0131 istedi\u011fin", cMTut10:"gibi devir ve", cMTut11:"\"A\" ile {suit}", cMTut12:"\u00fczerine gelmeye \u00e7al\u0131\u015f.",
         cSub1:"YETENEK : \u015eANS = 50 : 50", cSub2:"YETENEK : \u015eANS = 90 : 10",
         cEinfr:"DONDUR", cWeiter:"DEVAM",
         cForts:"DEVAM ET", cPause:"MOLA",
@@ -1487,7 +1487,7 @@
         cStiche:"/ 6 EL", cPerfekt:"m\u00fckemmel +1", cEffizienz:"VER\u0130ML\u0130L\u0130K",
         cTeilen:"PAYLA\u015e", cKopiert:"KOPYALANDI!", cMenu:"MEN\u00dc",
         cSchaffst:"Sen de yapabilir misin?", cAnlBtn:"K\u0131lavuz",
-        cAnlTitle:"REHBER", cAnlSec:["HEDEF","A\u00c7","DEV\u0130R","EL PUANI","STRATEJ\u0130"],
+        cAnlTitle:"REHBER", cAnlBtnMenu:"REHBERLER", cAnlSec:["HEDEF","A\u00c7","DEV\u0130R","EL PUANI","STRATEJ\u0130"],
         cAnl:[
           "G\u00f6z simgesine dokunun. Bankay\u0131 yen! K\u00fcp 3\u2019ten As\u2019a kadar 12 kart de\u011feri ta\u015f\u0131r. Pozisyonlar\u0131n\u0131 ezberle.",
           "Bankan\u0131n kapal\u0131 kart\u0131na dokun. 2\u2019den Papaz\u2019a kadar bir de\u011fer g\u00f6sterir.",
@@ -1504,7 +1504,7 @@
         cTutL1:"T\u00fcm 6 hedef", cTutL2:"kart\u0131", cTutL3:"ayn\u0131 kart rengiyle", cTutL4:"ve 1 fazlas\u0131yla", cTutL5:"yen.",
         cTutK1:"K\u00fcp\u00fc istedi\u011fin", cTutK2:"gibi devir,", cTutK3:"ve \u201E{val}\u201C de\u011ferini", cTutK4:"bir {suit}", cTutK5:"sembol\u00fcne getir.",
         cLongTap:"Uzun bas",
-        cBluffHand:"\u00d6rne\u011fin b\u00f6yle bir el devir",cDeal:"DEAL",cZurueck:"GER\u0130",
+        cBluffHand:"\u015eu \u015fekilde bir el devir.", cBluffHand2:"Ne kadar y\u00fcksek, o kadar iyi.",cDeal:"DEAL",cZurueck:"GER\u0130",
         cAnlSecO:["HEDEF","OYUN AKI\u015eI","DEV\u0130RME HAMLES\u0130","KART OYNAMA","KART DE\u011eERLER\u0130"],
         cAnlO:[
           "T\u00fcm 6 hedef kart\u0131 ayn\u0131 kart rengiyle ve 1 fazlas\u0131yla yen.\n\nSaf \u015fans devirmeleriyle isabet \u015fans\u0131 = %9\nM\u00fckemmel oyun sonucu = %100 Verimlilik\nHaf\u0131za ve mant\u0131kla her zaman ba\u015far\u0131labilir.",
@@ -1526,11 +1526,11 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
-        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIALS",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
-    document.getElementById("btnAnleitung").textContent = T.cAnlTitle || 'ANLEITUNG';
+    document.getElementById("btnAnleitung").textContent = T.cAnlBtnMenu || 'ANLEITUNGEN';
     // Exit overlay translations
     if (T.exQ) document.querySelector('.sgLine1').innerHTML = T.exQ;
     if (T.exC) document.getElementById('sgBtnSave').textContent = T.exC;
@@ -2410,6 +2410,47 @@
       window._anlBtnTextMesh.renderOrder = 3;
       window._anlBtnTextMesh.visible = false;
       scene.add(window._anlBtnTextMesh);
+
+      // TUTORIAL-Button im Spiel: handsilber 90° CCW links + "Tutorial" Text
+      window._tutBtnIconMesh = null;
+      new THREE.TextureLoader().load('handsilber.webp', (tutTex) => {
+        var tw = tutTex.image.width || 1;
+        var th = tutTex.image.height || 1;
+        var ratio = tw / th;
+        var tutH = pauseIconSize;
+        var tutW = tutH * ratio;
+        const tutGeo = new THREE.PlaneGeometry(tutW, tutH);
+        const tutMat = new THREE.MeshBasicMaterial({
+          map: tutTex, transparent: true, depthWrite: false
+        });
+        window._tutBtnIconMesh = new THREE.Mesh(tutGeo, tutMat);
+        window._tutBtnIconMesh.rotation.x = -Math.PI / 2;
+        window._tutBtnIconMesh.rotation.z = Math.PI / 2 - Math.PI / 12; // 75° CCW (90-15)
+        window._tutBtnIconMesh.position.set(pauseIconX, yPos + 0.003, pauseZ);
+        window._tutBtnIconMesh.renderOrder = 3;
+        window._tutBtnIconMesh.visible = false;
+        scene.add(window._tutBtnIconMesh);
+      });
+      const tutTc = document.createElement('canvas');
+      tutTc.width = 256; tutTc.height = 64;
+      const tutCtx = tutTc.getContext('2d');
+      tutCtx.font = 'bold 38px Arial';
+      tutCtx.textAlign = 'left';
+      tutCtx.textBaseline = 'middle';
+      tutCtx.fillStyle = '#e0d0b8';
+      tutCtx.fillText('Tutorial', 8, 32);
+      const tutTxtTex = new THREE.CanvasTexture(tutTc);
+      const tutTxtGeo = new THREE.PlaneGeometry(2.5 * 0.15625, 0.625 * 0.15625);
+      const tutTxtMat = new THREE.MeshBasicMaterial({
+        map: tutTxtTex, transparent: true, depthWrite: false
+      });
+      window._tutBtnTextMesh = new THREE.Mesh(tutTxtGeo, tutTxtMat);
+      window._tutBtnTextMesh.rotation.x = -Math.PI / 2;
+      window._tutBtnTextMesh.position.set(pauseIconX + 1.8 * 0.15625, yPos + 0.003, pauseZ);
+      window._tutBtnTextMesh.renderOrder = 3;
+      window._tutBtnTextMesh.visible = false;
+      scene.add(window._tutBtnTextMesh);
+
       const a11X = -4 * 0.15625; // linke Kante Spalte A
       const a11Z = -0.359375 + (11 - 4) * 0.15625; // Nordkante Zeile 11
       const targetFiles = ['target_1.webp','target_2.webp','target_3.webp','target_4.webp','target_5.webp','target_6.webp','target_verdeckt.webp'];
@@ -3276,6 +3317,21 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
+        // NEUES MATCH: nach reload Modi-Auswahl direkt oeffnen
+        try {
+          if (sessionStorage.getItem('kippOpenMatchModi') === '1') {
+            sessionStorage.removeItem('kippOpenMatchModi');
+            try { document.getElementById('startOverlay').style.display = 'none'; } catch(e){}
+            try { document.getElementById('startChallengeText').style.display = 'none'; } catch(e){}
+            try { unlockAndPlayBgMusic(); } catch(e){}
+            window._cardMode = 'verdeckt';
+            window._bluffMode = true;
+            _cardModePhase = 1;
+            setTimeout(function(){ try { showBluffModeSelection(); } catch(e){ console.error(e); } }, 600);
+            return;
+          }
+        } catch(e){}
+
         // Sequenz stoppen
         sctRunning = false;
         if (sctTimerId) { clearTimeout(sctTimerId); sctTimerId = null; }
@@ -3285,9 +3341,29 @@
         const sub = document.getElementById('sctSub');
         const best = document.getElementById('sctBest');
         
-        // URL-Parameter Check: ?level=brainy → direkt BRAINY starten
+
         const urlParams = new URLSearchParams(window.location.search);
+        const modeParam = urlParams.get('mode');
         const levelParam = urlParams.get('level');
+        if (modeParam === 'plus1') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          window._cardMode = 'offen';
+          _cardModePhase = 1;
+          setTimeout(function(){ try { handleStart(false); } catch(e){} }, 600);
+          return;
+        }
+        if (modeParam === 'match') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          window._cardMode = 'verdeckt';
+          window._bluffMode = true;
+          _cardModePhase = 1;
+          setTimeout(function(){ try { showBluffModeSelection(); } catch(e){} }, 600);
+          return;
+        }
         if (levelParam === 'brainy') {
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
@@ -3434,11 +3510,13 @@
     function saveMatchScore(modeKey, playerSum, bankSum) {
       try {
         const data = loadMatchScores();
-        if (!data.modes[modeKey]) data.modes[modeKey] = { count: 0, pl: 0, b: 0 };
+        if (!data.modes[modeKey]) data.modes[modeKey] = { count: 0, pl: 0, b: 0, bestSingle: 0 };
         const m = data.modes[modeKey];
         m.count++;
         m.pl += playerSum;
         m.b += bankSum;
+        if (typeof m.bestSingle !== 'number') m.bestSingle = 0;
+        if (playerSum > m.bestSingle) m.bestSingle = playerSum;
 
         // Check ob Modus > 9 → Saison-Reset
         if (m.count > 9) {
@@ -3446,9 +3524,21 @@
           const bTotal = MATCH_MODE_ORDER.reduce((s, k) => s + ((data.modes[k] || {}).b || 0), 0);
           const gesamtPl = plTotal;
           if (gesamtPl > data.best) data.best = gesamtPl;
-          // Reset alle Modi
+          // Reset alle Modi - aber bestSingle pro Modus erhalten
+          const _preservedBests = {};
+          for (const _k in data.modes) {
+            if (data.modes[_k] && typeof data.modes[_k].bestSingle === 'number') {
+              _preservedBests[_k] = data.modes[_k].bestSingle;
+            }
+          }
           data.modes = {};
-          data.modes[modeKey] = { count: 1, pl: playerSum, b: bankSum };
+          data.modes[modeKey] = { count: 1, pl: playerSum, b: bankSum, bestSingle: Math.max(_preservedBests[modeKey] || 0, playerSum) };
+          // bestSingle auch fuer andere Modi wiederherstellen (als leerer Eintrag nur mit bestSingle)
+          for (const _k in _preservedBests) {
+            if (_k !== modeKey) {
+              data.modes[_k] = { count: 0, pl: 0, b: 0, bestSingle: _preservedBests[_k] };
+            }
+          }
         }
 
         localStorage.setItem('digikipp_match_scores', JSON.stringify(data));
@@ -3840,16 +3930,90 @@
       positionSoundToggle();
     }
     
-    // === AUDIO ENGINE ===
-    const bgMusic = new Audio('brainloop.mp3');
-    bgMusic.preload = 'auto';
-    bgMusic.loop = true;
-    bgMusic.volume = 0.35;
+    // === AUDIO ENGINE — Web Audio Wrapper (main-thread independent) ===
+    const bgMusic = (function() {
+      const api = {
+        _ctx: null, _buffer: null, _source: null, _gainNode: null,
+        _startOffset: 0, _startTime: 0, _playing: false, _loaded: false,
+        _pendingPlay: false, _volume: 0.35, _loop: true,
+        _listeners: { error: [], canplaythrough: [] },
+        preload: 'auto', loop: true, volume: 0.35,
+        get paused() { return !this._playing; },
+        get currentTime() {
+          if (!this._ctx || !this._playing) return this._startOffset;
+          return (this._ctx.currentTime - this._startTime + this._startOffset) % (this._buffer ? this._buffer.duration : 1);
+        },
+        set currentTime(v) { this._startOffset = v; if (this._playing) { this._stopSource(); this._startSource(); } },
+        addEventListener(evt, fn) { if (this._listeners[evt]) this._listeners[evt].push(fn); },
+        _emit(evt) { (this._listeners[evt] || []).forEach(fn => { try { fn(); } catch(e){} }); },
+        _ensureCtx() {
+          if (!this._ctx) {
+            this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this._gainNode = this._ctx.createGain();
+            this._gainNode.gain.value = this._volume;
+            this._gainNode.connect(this._ctx.destination);
+          }
+          if (this._ctx.state === 'suspended') this._ctx.resume();
+        },
+        _load() {
+          if (this._loaded || this._loading) return;
+          this._loading = true;
+          this._ensureCtx();
+          fetch('kippclub.oga')
+            .then(r => r.arrayBuffer())
+            .then(buf => this._ctx.decodeAudioData(buf))
+            .then(decoded => {
+              this._buffer = decoded;
+              this._loaded = true;
+              this._loading = false;
+              this._emit('canplaythrough');
+              if (this._pendingPlay) { this._pendingPlay = false; this.play(); }
+            })
+            .catch(e => { this._loading = false; console.warn('[AUDIO] kippclub.oga konnte nicht geladen werden!', e); this._emit('error'); });
+        },
+        _startSource() {
+          if (!this._buffer || !this._ctx) return;
+          this._source = this._ctx.createBufferSource();
+          this._source.buffer = this._buffer;
+          this._source.loop = this._loop;
+          this._source.connect(this._gainNode);
+          this._source.start(0, this._startOffset % this._buffer.duration);
+          this._startTime = this._ctx.currentTime;
+          this._playing = true;
+        },
+        _stopSource() {
+          if (this._source) { try { this._source.stop(); } catch(e){} this._source = null; }
+          this._playing = false;
+        },
+        play() {
+          return new Promise((resolve, reject) => {
+            this._ensureCtx();
+            if (!this._loaded) { this._pendingPlay = true; this._load(); resolve(); return; }
+            if (this._playing) { resolve(); return; }
+            this._startSource();
+            resolve();
+          });
+        },
+        pause() {
+          if (this._playing && this._ctx && this._buffer) {
+            this._startOffset = (this._ctx.currentTime - this._startTime + this._startOffset) % this._buffer.duration;
+          }
+          this._stopSource();
+        }
+      };
+      Object.defineProperty(api, 'volume', {
+        get() { return this._volume; },
+        set(v) { this._volume = v; if (this._gainNode) this._gainNode.gain.value = v; }
+      });
+      Object.defineProperty(api, 'loop', {
+        get() { return this._loop; },
+        set(v) { this._loop = v; if (this._source) this._source.loop = v; }
+      });
+      api.volume = 0.35;
+      api.loop = true;
+      return api;
+    })();
     let bgMusicUnlocked = false;
-    
-    bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] brainloop.mp3 konnte nicht geladen werden!');
-    });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
     if (soundEnabled) {
@@ -4405,7 +4569,14 @@
       scene.add(handShadowMesh);
     }
     function updateHandShadow(screenX, screenY, visible) {
-      if (!handShadowMesh || !handShadowMesh.visible) return;
+      if (!handShadowMesh) return;
+      // Im Match-Tutorial: Schatten IMMER aus
+      if (window._matchTutorialMode) {
+        handShadowMesh.visible = false;
+        handShadowMesh.material.opacity = 0;
+        return;
+      }
+      if (!handShadowMesh.visible) return;
       if (!visible) { handShadowMesh.material.opacity = 0; return; }
       // Screen → 3D auf Bodenhöhe (Y=0.002)
       const ndc = new THREE.Vector3((screenX / 360) * 2 - 1, -(screenY / 720) * 2 + 1, 0.5);
@@ -4688,6 +4859,7 @@
         }, durMs);
       });
     }
+
 
     async function runCardTutorial() {
       // Alte Instanz killen
@@ -5244,731 +5416,901 @@
       }
     }
 
-    // Slot-Screen-Position aus Deck-Index berechnen
-    function getSlotScreenPos(deckIdx) {
-      // Über alle Faces + Slots suchen
-      for (const fk of ['f0','f1','f2']) {
-        const face = faceSlots[fk];
-        if (!face) continue;
-        for (const key in face.slotMap) {
-          if (face.slotMap[key].deckIdx === deckIdx) {
-            // UV → Screen
-            const rc = key.split(',').map(Number);
-            const u = (rc[1] + 0.5) / face.cols;
-            const v = (rc[0] + 0.5) / face.rows;
-            // Vereinfacht: Würfelmitte + Offset
-            const c = cubeScreenXY();
-            return { x: c.x + (u - 0.5) * 120, y: c.y + (v - 0.5) * 120 };
-          }
-        }
-      }
-      // Fallback: Würfelmitte
-      return cubeScreenXY();
-    }
+    async function runMatchTutorial() {
+      window._matchTutorialMode = true;
+      window._cardMode = 'verdeckt'; // Match-Modus
+      window._bluffMode = true;
 
-    // --- Karten-Screen-Position ---
-    function cardScreenX(ci) {
-      // 3D-Projektion der tatsächlichen Kartenposition
-      if (gameCards && gameCards[ci] && gameCards[ci].mesh) {
-        const pos = gameCards[ci].mesh.position.clone();
-        pos.project(camera);
-        return Math.round((pos.x * 0.5 + 0.5) * 360);
+      // +1 Target-Overrides aus scene entfernen (nicht nur visible=false)
+      if (window._targetMeshes) {
+        Object.values(window._targetMeshes).forEach(function(m) {
+          if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
+        });
       }
-      // Fallback: flache Berechnung
-      const cw = 45, gap = (360 - 6 * cw) / 5;
-      return cw / 2 + ci * (cw + gap);
-    }
-    
-    function cardScreenY(ci) {
-      if (gameCards && gameCards[ci] && gameCards[ci].mesh) {
-        const pos = gameCards[ci].mesh.position.clone();
-        pos.project(camera);
-        return Math.round((-pos.y * 0.5 + 0.5) * 720);
+      if (window._suitMeshes) {
+        Object.values(window._suitMeshes).forEach(function(m) {
+          if (m) { m.visible = false; if (m.parent) m.parent.remove(m); }
+        });
       }
-      return 612; // Fallback
-    }
-    
-    // --- Kniff-Icon-Position (liest aus DOM) ---
-    function getKniffIconPos(type) {
-      // 2 logische Icons (je bottom+top), Mitte des Paars anzielen
-      const iconCount = 2; // logisch
-      const totalWidth = 360, iconW = 58;
-      const gap = (totalWidth - iconCount * iconW) / (iconCount + 1);
-      const edgeShift = 45;
-      const idx = (type === 'wobble') ? 0 : 1;
-      const centerX = gap + idx * (iconW + gap) + iconW / 2;
-      const shifted = centerX + (idx === 0 ? -edgeShift : edgeShift);
-      const pairCenter = Math.round(shifted - 4); // Mitte zwischen bottom(-8) und top(0)
-      const rowTop = parseInt(document.getElementById('jokerIconsRow')?.style.top || '523');
-      console.log('[KNIFF-POS] type='+type, 'pairCenter='+pairCenter, 'rowTop='+rowTop);
-      return { x: pairCenter, y: rowTop + 29 };
-    }
-    
-    // --- Kipp-Zähler aktualisieren ---
-    function formatKipps(n) {
-      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + n + '</span><span style="font-size:18px"> K</span></span>';
-    }
-    
-    function formatTimer(totalMs) {
-      const totalSecs = Math.floor(totalMs / 1000);
-      const s = totalSecs < 10 ? '00' + totalSecs : totalSecs < 100 ? '0' + totalSecs : '' + totalSecs;
-      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + s + '</span><span style="font-size:18px"> S</span></span>';
-    }
-    
-    function formatCountdownLabel(totalMs) {
-      const totalSecs = Math.floor(totalMs / 1000);
-      const remaining = 21 - totalSecs;
-      if (remaining > 0) {
-        const s = remaining < 10 ? '0' + remaining : '' + remaining;
-        return '<span style="font-size:36px;line-height:36px">' + s + '</span>';
-      } else if (remaining === 0) {
-        return '<span style="font-size:36px;line-height:36px">00</span>';
-      } else {
-        const over = -remaining;
-        const os = over < 10 ? '00' + over : over < 100 ? '0' + over : '' + over;
-        return '<span style="font-size:36px;line-height:36px;color:#c85a5a">+' + os + '</span>';
+      if (window._targetRankMesh) {
+        window._targetRankMesh.visible = false;
+        if (window._targetRankMesh.parent) window._targetRankMesh.parent.remove(window._targetRankMesh);
       }
-    }
-    
-    function replayUpdateKippCount() {
-      kipp21KippCount++;
-      kipp21RoundKipps++;
-      const ht = document.getElementById('hintText');
-      if (ht) ht.innerHTML = formatKipps(kipp21KippCount);
-    }
-    
-    // --- Treffer-Richtung berechnen: CW oder CCW? ---
-    function findHitDirection(cardIdx) {
-      const card = gameCards[cardIdx];
-      const dist = kipp21CardDistances[cardIdx];
-      if (!card || !card.color || !dist) return 'cw';
-      
-      const fromIdx = stateIndex(currentQuadrant, topFace);
-      const faceOff = {f0: 0, f1: 4, f2: 8};
-      const slots = ['S1', 'S2', 'S3', 'S4'];
-      const targetDisplay = displayNum(card.zahl);
-      
-      // CW zuerst probieren, dann CCW
-      for (const dir of ['cw', 'ccw']) {
-        const delta = (dir === 'cw') ? dist : -dist;
-        const toIdx = ((fromIdx + delta) % 12 + 12) % 12;
-        const [tQ, tF] = CW_CYCLE[toIdx];
-        const off = faceOff[tF];
-        
-        for (let s = 0; s < 4; s++) {
-          if (displayNum(deck[off + s]) === targetDisplay) {
-            const nColor = SLOT_NEIGHBOR_COLORS[tQ][slots[s]];
-            if (nColor === card.color.name) return dir;
-          }
+      if (typeof stopTargetPulse === 'function') { try { stopTargetPulse(); } catch(e){} }
+
+      // === TUTORIAL-DETERMINISMUS (wie +1 Tut) ===
+      // deck bleibt zufallig - nach 4 CW Kipps von Q3/f2 landet Wuerfel auf Q3/f0.
+      // Dort liegt deck[1] auf S2, in Q3 ist S2-Nachbarfarbe=gruen=Karo -> immer Treffer
+      // generateModeSuits fuer Tutorial erzwingen: 1.Karte=Karo, 2.Karte=Pik
+      var _origGenModeSuits = window.generateModeSuits || generateModeSuits;
+      window.generateModeSuits = function(modeKey, numCards) {
+        if (modeKey === 'pair') return ['karo', 'pik'];
+        return _origGenModeSuits(modeKey, numCards);
+      };
+
+      // Auswahlseite öffnen
+      _cardModePhase = 1;
+      showBluffModeSelection();
+      await sleep(500);
+
+      // Tutorial/Anleitung-Zeile verstecken
+      var btnRowEl = document.getElementById('_matchBtnRow');
+      if (btnRowEl) btnRowEl.style.display = 'none';
+
+      // uiOverlay über die Auswahlseite heben
+      var uiOv = document.getElementById('uiOverlay');
+      var origZ = uiOv.style.zIndex;
+      var origOverflow = uiOv.style.overflow;
+      uiOv.style.zIndex = '200';
+      uiOv.style.overflow = 'visible';
+
+      // Replay-Infrastruktur
+      initHandEl();
+      replayActive = true;
+
+      var ovEl = document.getElementById('_bluffModeOverlay');
+      if (!ovEl) { replayActive = false; return; }
+      var scrollEl = ovEl.querySelector('[style*="overflow-y"]');
+      var uiRect = uiOv.getBoundingClientRect();
+
+      // Helper: Element-Mitte in uiOverlay-Koordinaten
+      function elPos(el) {
+        var r = el.getBoundingClientRect();
+        return { x: Math.round(r.left - uiRect.left + r.width / 2),
+                 y: Math.round(r.top - uiRect.top + r.height / 2) };
+      }
+
+      // Hand erscheint: waagrecht mittig, eine Handhöhe unter vertikaler Mitte
+      var startX = 180;
+      var startY = 360 + 120;
+      setHandPos(startX, startY);
+      handEl.style.opacity = '1';
+      updateHandShadow(startX, startY, true);
+      await sleep(400);
+
+      // Seite nach Norden scrollen (Straight Flush sichtbar machen)
+      if (scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight) {
+        var maxScr = scrollEl.scrollHeight - scrollEl.clientHeight;
+        var scrStart = scrollEl.scrollTop;
+        var scrDist = maxScr - scrStart;
+        var scrDur = 1200;
+        var scrT0 = performance.now();
+        // Hand bewegt sich parallel nach oben mit
+        var handStartY = startY;
+        var handEndY = 200;
+        await new Promise(function(res) {
+          (function step() {
+            if (!replayActive) { res(); return; }
+            var t = Math.min(1, (performance.now() - scrT0) / scrDur);
+            t = t * t * (3 - 2 * t); // smoothstep
+            scrollEl.scrollTop = scrStart + scrDist * t;
+            setHandPos(startX, handStartY + (handEndY - handStartY) * t);
+            if (t < 1) requestAnimationFrame(step); else res();
+          })();
+        });
+        await sleep(400);
+      }
+
+      // "Suchen": Hand wandert senkrecht von oben nach unten, Stopp auf jeder Zeile
+      var searchKeys = ['straightflush', 'fourofakind', 'fullhouse', 'flush', 'straight', 'threeofakind', 'twopair'];
+      // Feste X-Position: links der Zeilenmitte
+      var searchX = null;
+      for (var si = 0; si < searchKeys.length; si++) {
+        if (!replayActive) break;
+        var sRow = ovEl.querySelector('[data-mode-key="' + searchKeys[si] + '"]');
+        if (!sRow) continue;
+        var sRect = sRow.getBoundingClientRect();
+        if (searchX === null) {
+          // Linkes Drittel der Zeile
+          searchX = Math.round(sRect.left - uiRect.left + sRect.width * 0.28);
         }
+        var sY = Math.round(sRect.top - uiRect.top + sRect.height / 2 + 6);
+        var dur = 450 + Math.round(Math.random() * 200);
+        await moveHandSmooth(searchX, sY, dur);
+        var pause = 200 + Math.round(Math.random() * 300);
+        await sleep(pause);
       }
-      return 'cw'; // Fallback
-    }
-    
-    // --- Karte aufdecken (manuell per Tap) ---
-    // --- Kippziel-Karte kurz pulsieren bei Klick ---
-    function pulseCard(ci) {
-      const mesh = gameCards[ci]?.mesh;
-      if (!mesh) return;
-      const origScale = { x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z };
-      mesh.scale.set(origScale.x * 1.2, origScale.y * 1.2, origScale.z * 1.2);
-      setTimeout(() => {
-        mesh.scale.set(origScale.x, origScale.y, origScale.z);
-      }, 150);
-    }
-    
-    async function replayOpenCard(ci) {
-      if (!replayActive || replayGeneration !== kipp21Generation) return;
-      const nextV = kipp21NextVerdeckt();
-      if (nextV < 0) return;
-      dbgLog('Karte ' + nextV + ' aufdecken');
-      
-      const hasIcon = CARD_BLICK_MAP[nextV] !== null;
-      const tx = cardScreenX(nextV);
-      const ty = cardScreenY(nextV) + 15;
-      const SY = 740;
-      
-      if (!hasIcon) {
-        // Kein Blick-Icon → Hand hinfliegen, sofort beim Kontakt pulsen+öffnen
-        setHandPos(tx, SY);
+      await sleep(200);
+
+      // Diagonal zum Haken von PAAR
+      var paarRow = ovEl.querySelector('[data-mode-key="pair"]');
+      var paarBtn = paarRow ? paarRow.querySelector('img[src="buttonquadr_card.webp"]') : null;
+      if (!paarBtn) { replayActive = false; return; }
+
+      // Scroll zurück nach oben damit PAAR sichtbar
+      if (scrollEl && scrollEl.scrollTop > 0) {
+        var scrStart2 = scrollEl.scrollTop;
+        var scrDur2 = 800;
+        var scrT02 = performance.now();
+        var hStartY2 = _handY;
+        var hStartX2 = _handX;
+        await new Promise(function(res) {
+          (function step() {
+            if (!replayActive) { res(); return; }
+            var t = Math.min(1, (performance.now() - scrT02) / scrDur2);
+            t = t * t * (3 - 2 * t);
+            scrollEl.scrollTop = scrStart2 * (1 - t);
+            if (t < 1) requestAnimationFrame(step); else res();
+          })();
+        });
+      }
+
+      // Jetzt PAAR-Button Position (nach Scroll)
+      var btnRect = paarBtn.getBoundingClientRect();
+      var paarX = Math.round(btnRect.left - uiRect.left + btnRect.width / 2);
+      var paarY = Math.round(btnRect.top - uiRect.top + btnRect.height / 2);
+
+      // Erst senkrecht runter zur PAAR-Zeile (X bleibt auf searchX)
+      if (searchX !== null) {
+        await moveHandSmooth(searchX, paarY, 400);
+        await sleep(250);
+      }
+      // Dann waagrecht zum Haken
+      await moveHandSmooth(paarX, paarY, 500);
+      await sleep(400);
+
+      // Tap
+      await moveHandSmooth(paarX, paarY + 8, 100);
+      await sleep(50);
+      await moveHandSmooth(paarX, paarY, 100);
+      await sleep(200);
+
+      // Hand ausblenden
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      await sleep(300);
+
+      // uiOverlay zurücksetzen
+      uiOv.style.zIndex = origZ || '';
+      uiOv.style.overflow = origOverflow || 'hidden';
+      replayActive = false;
+
+      // PAAR-Button klicken
+      paarBtn.click();
+
+      // Warten bis Preview-Overlay da ist
+      await sleep(600);
+      var prevOv = document.getElementById('_bluffPreviewOverlay');
+      if (!prevOv) return;
+
+      uiOv.style.zIndex = '200';
+      // overflow NICHT auf visible - das verursacht seitliches Ruckeln der Bildfläche
+      // uiOv.style.overflow bleibt wie Original
+      // resetButtonWrap über das uiOverlay heben damit Zurück+Sound sichtbar bleiben
+      var _rbWrap = document.getElementById('resetButtonWrap');
+      var _origRbZ = _rbWrap ? _rbWrap.style.zIndex : '';
+      if (_rbWrap) _rbWrap.style.zIndex = '250';
+      replayActive = true;
+      uiRect = uiOv.getBoundingClientRect();
+
+      // Zeilen einzeln einblenden + Hand liest jede Zeile
+      var tutLineEls = prevOv.querySelectorAll('._mtutLine');
+      for (var li = 0; li < tutLineEls.length; li++) {
+        if (!replayActive) break;
+        var lineEl = tutLineEls[li];
+        lineEl.style.opacity = '1';
+        await sleep(300);
+
+        // Hand fährt unter der Zeile von links nach rechts
+        var lRect = lineEl.getBoundingClientRect();
+        var lLeft = Math.round(lRect.left - uiRect.left + 10);
+        var lRight = Math.round(lRect.right - uiRect.left - 10);
+        var lBottom = Math.round(lRect.bottom - uiRect.top + 4);
+
+        setHandPos(lLeft, lBottom);
         handEl.style.opacity = '1';
-        updateHandShadow(tx, SY, true);
-        await moveHandSmooth(tx, ty, 900);
-        // Sofort bei Kontakt: Pulse + Open
-        pulseCard(nextV);
-        kipp21OnCardTap(nextV, true);
-        await sleep(350);
-        // Hand zurück
-        await moveHandSmooth(tx, SY, 500);
+        updateHandShadow(lLeft, lBottom, true);
+        await moveHandSmooth(lRight, lBottom, 800);
+        await sleep(200);
         handEl.style.opacity = '0';
         updateHandShadow(0, 0, false);
-        await sleep(100);
-        return;
-      }
-      
-      // MIT Blick-Icon: volle Hand-Tap-Animation, dann Kniff
-      await handTapFromSouth(tx, ty, 600);
-      pulseCard(nextV);
-      
-      // Kippziel sofort öffnen (zeitgleich mit Blick)
-      hideBlickIcon(nextV);
-      kipp21OnCardTap(nextV, true);
-      
-      // Blick-Animation starten
-      kipp21BlickTargetCard = nextV;
-      const blickType = CARD_BLICK_MAP[nextV].includes('joker2') ? 'wobble' : 'eckblick';
-      
-      try {
-        if (blickType === 'eckblick') {
-          const eckP = runKipp21EckblickKniff(true);
-          await sleep(7000);
-          if (replayActive) kipp21KniffAbort = true;
-          await eckP;
-        } else {
-          await runKipp21WobbleKniff(true);
-        }
-      } catch(e) { console.error('[REPLAY-OPEN] kniff error:', e); }
-      
-      await sleep(400);
-    }
-    
-    // --- KNIFF ausführen: Hand sucht Kartenreihe, klickt Zielkarte ---
-    async function replayKniff(type, targetCard) {
-      if (!replayActive || replayGeneration !== kipp21Generation) return;
-      
-      const isFirstKniff = (kipp21WobbleUsed + kipp21EckblickUsed === 0);
-      const cardY_screen = cardScreenY(targetCard >= 0 ? targetCard : 0) + 15; // leicht unter Kartenmitte
-      
-      if (targetCard < 0) targetCard = kipp21NextVerdeckt();
-      if (targetCard < 0) return;
-      
-      if (isFirstKniff) {
-        // Suchend: links→rechts→zurück→auf Zielkarte klicken
-        const leftX = cardScreenX(0);
-        const rightX = cardScreenX(3);
-        const targetX = cardScreenX(targetCard);
-        
-        setHandPos(leftX, 740);
-        handEl.style.opacity = '1';
-        updateHandShadow(leftX, 740, true);
-        // Hoch zur Kartenreihe
-        await moveHandSmooth(leftX, cardY_screen, 800);
         await sleep(200);
-        // Nach rechts suchen
-        await moveHandSmooth(rightX, cardY_screen, 1400);
-        await sleep(250);
-        // Zurück nach links
-        await moveHandSmooth(leftX, cardY_screen, 1200);
-        await sleep(250);
-        // Zum Ziel
-        await moveHandSmooth(targetX, cardY_screen, 700);
-      } else {
-        // Direkt zur Zielkarte
-        const targetX = cardScreenX(targetCard);
-        setHandPos(targetX, 740);
+      }
+
+      await sleep(300);
+
+      // Hand fährt unterstreichend an den Karten entlang
+      var cardsRowEl = document.getElementById('_previewCardsRow');
+      if (cardsRowEl && replayActive) {
+        var cRect = cardsRowEl.getBoundingClientRect();
+        var cLeft = Math.round(cRect.left - uiRect.left);
+        var cRight = Math.round(cRect.right - uiRect.left);
+        var cBottom = Math.round(cRect.bottom - uiRect.top + 6);
+
+        setHandPos(cLeft, cBottom);
         handEl.style.opacity = '1';
-        updateHandShadow(targetX, 740, true);
-        await moveHandSmooth(targetX, cardY_screen, 900);
+        updateHandShadow(cLeft, cBottom, true);
+        await moveHandSmooth(cRight, cBottom, 1000);
+        await sleep(400);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
       }
-      
-      // Karte pulsieren ("klick")
-      pulseCard(targetCard);
-      await sleep(300);
-      
-      // Hand weg
-      await moveHandSmooth(cardScreenX(targetCard), 740, 500);
-      handEl.style.opacity = '0';
-      updateHandShadow(0, 0, false);
-      await sleep(100);
-      
-      // Kippziel sofort öffnen (zeitgleich mit Blick)
-      kipp21BlickTargetCard = targetCard;
-      hideBlickIcon(targetCard);
-      kipp21OnCardTap(targetCard, true);
-      
-      const blickSrc = CARD_BLICK_MAP[targetCard];
-      const blickType = (blickSrc && blickSrc.includes('joker2')) ? 'wobble' : 'eckblick';
-      
-      try {
-        if (blickType === 'eckblick') {
-          console.log('[REPLAY-KNIFF] calling eckblick for card ' + targetCard);
-          const eckP = runKipp21EckblickKniff(true);
-          await sleep(7000);
-          if (replayActive) kipp21KniffAbort = true;
-          await eckP;
-        } else {
-          console.log('[REPLAY-KNIFF] calling wobble for card ' + targetCard);
-          await runKipp21WobbleKniff(true);
+
+      await sleep(400);
+
+      // === TUTORIAL-FALL-POSITION BERECHNEN ===
+      // Finde Startposition so, dass nach 4 CW Kipps das Ass auf Karo-Nachbarfarbe liegt
+      (function computeTutFallState(){
+        var aIdx = deck.indexOf(12);
+        var aFace = (aIdx < 4) ? 'f0' : (aIdx < 8 ? 'f1' : 'f2');
+        var aSlotName = 'S' + ((aIdx % 4) + 1);
+        var targetCycleIdx = -1;
+        for (var ci = 0; ci < 12; ci++) {
+          var cQ = CW_CYCLE[ci][0], cF = CW_CYCLE[ci][1];
+          if (cF === aFace && SLOT_NEIGHBOR_COLORS[cQ] && SLOT_NEIGHBOR_COLORS[cQ][aSlotName] === 'gruen') {
+            targetCycleIdx = ci; break;
+          }
         }
-      } catch (err) {
-        console.error('[REPLAY-KNIFF] ERROR:', err);
+        if (targetCycleIdx < 0) return;
+        var startCycleIdx = (targetCycleIdx - 4 + 12) % 12;
+        var startState = BRAINY_CW_STATES[startCycleIdx];
+        if (startState && startState.cwSteps !== 0) {
+          window._tutForceFallState = startState;
+          console.log('[MATCH-TUT] Fall-Target: Q' + startState.q + '/' + startState.face + ' -> 4 CW -> Ass Karo');
+        } else {
+          window._tutForceFallState = BRAINY_CW_STATES[(startCycleIdx + 1) % 12];
+        }
+      })();
+
+      // Hand tippt auf DEAL
+      var dealBtnEl = document.getElementById('_previewDealBtn');
+      if (dealBtnEl && replayActive) {
+        var dRect = dealBtnEl.getBoundingClientRect();
+        var dealX = Math.round(dRect.left - uiRect.left + dRect.width / 2);
+        var dealY = Math.round(dRect.top - uiRect.top + dRect.height / 2);
+        await handTapFromSouth(dealX, dealY, 500);
+        await sleep(200);
+
+        // DEAL klicken
+        dealBtnEl.click();
       }
-      
-      await sleep(400);
-    }
-    
-    // --- Kippen für offene Karte ---
-    async function replayKippSequence(ci, kippDur) {
-      if (!replayActive) return;
-      const dist = kipp21CardDistances[ci];
-      if (!dist || dist <= 0) return;
-      
-      const dir = findHitDirection(ci);
-      dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' Q' + currentQuadrant + ' ' + topFace);
-      
-      for (let k = 0; k < dist; k++) {
-        if (!replayActive) break;
-        const Q = currentQuadrant;
-        const kDir = (dir === 'cw') ? CW_KIPP[Q] : CCW_KIPP[Q];
-        kippDirection = dir;
-        
-        await handKippAnim(kDir, kippDur);
-        replayUpdateKippCount();
-        
-        if (k < dist - 1) await sleep(40);
-      }
-      // Nach letztem Kipp: Auto-Confirm wenn HIT (Kippziel fliegt selbstständig)
-      checkOnTargetAfterKipp();
-    }
-    
-    // --- Bestätigen: Timer SOFORT stoppen, dann Hand animieren, dann CardTap ---
-    async function replayConfirm(ci) {
-      if (!replayActive || replayGeneration !== kipp21Generation) return;
-      const openIdx = kipp21CardStates.indexOf('offen');
-      if (openIdx < 0 || kipp21RoundKipps <= 0) return;
-      dbgLog('Bestätigen Karte ' + openIdx);
-      
-      // Timer sofort stoppen (ohne CardTap auszulösen)
-      kipp21StopRoundTimer();
-      
-      // Hand sichtbar auf Karte tippen
-      await handTapFromSouth(cardScreenX(openIdx), cardScreenY(openIdx), 700);
-      if (replayGeneration !== kipp21Generation) return; // Abgebrochen
-      pulseCard(openIdx);
-      
-      // DANN erst Karte verarbeiten (Treffer-Check etc.)
-      kipp21OnCardTap(openIdx, true);
+
+      // Auf Eckblick-Höchststand warten
+      await new Promise(function(res) {
+        window._onEckblickRiseComplete = res;
+        // Timeout-Fallback falls Hook nicht feuert
+        setTimeout(res, 8000);
+      });
+
       await sleep(300);
-    }
-    
-    // ============================================================
-    //  PERFECT GAME: alle 6 Treffer, optimale Richtungen
-    //  Kniff-Plan: 0=Eckblick, 2=Wobble, 3=Eckblick, 5=Wobble
-    // ============================================================
-    // === TUTORIAL CONTINUATION: Globaler State ===
-    let _tutContinuationNeeded = false;
-    let _tutContinuationDone = false;
-    
-    function _executeTutContinuation() {
-      if (!_tutContinuationNeeded || _tutContinuationDone) {
-        console.log('[TUT-CONT] SKIP: needed='+_tutContinuationNeeded+' done='+_tutContinuationDone);
-        return;
-      }
-      _tutContinuationDone = true;
-      console.log('[TUT-CONT] Spieler übernimmt. kipp21Done='+kipp21Done+' Q='+currentQuadrant+' F='+topFace);
-      
-      // Replay-Blocker entfernen — das ist alles was nötig ist.
-      // checkTrainingResult hat den HIT bereits korrekt verarbeitet:
-      // kipp21Done=1, Karte erledigt, goldener Rahmen, Flug, HIT-Text.
-      // Der 5s-Timeout hat kipp21Active=true gesetzt und Buttons gezeigt.
-      // Der Würfel steht an der korrekten Position nach den Tutorial-Kipps.
-      const jr = document.getElementById('jokerIconsRow');
-      replayCleanup(jr);
-      
-      // Tutorial-Flag löschen (damit showGameEnd später funktioniert)
-      kipp21WithTutorial = false;
-      
-      // Progress dots einblenden (waren während Tutorial versteckt)
-      const _pd = document.getElementById('progressDots');
-      if (_pd) { _pd.style.display = 'flex'; _pd.style.opacity = '1'; }
-      updateProgressDots(kipp21Done, -1);
-      
-      positionResetButton();
-      
-      console.log('[TUT-CONT] DONE. kipp21Active='+kipp21Active+' gamePhase='+gamePhase);
-    }
-    
-    async function startPerfectReplay() {
-      const myGen = kipp21Generation;
-      replayGeneration = myGen;
-      const jr = document.getElementById('jokerIconsRow');
-      
-      function aborted() { return !replayActive || myGen !== kipp21Generation; }
-      
-      try {
-        initHandEl();
-      } catch(e) { console.error('[TUT] initHandEl FAILED:', e); }
-      
-      replayActive = true;
-      enableReplayBlocker();
-      renderer.domElement.style.pointerEvents = 'none';
-      if (jr) jr.style.pointerEvents = 'none';
-      
-      const KIPP_DUR = 1000;
-      const TARGET_CARD = 2; // Karte mit Eckblick-Icon
-      
-      // Hilfsfunktionen
-      function getBtnCenter(id) {
-        const b = document.getElementById(id);
-        if (!b) return { x: 180, y: 600 }; // Fallback center
-        const l = parseInt(b.style.left) || 0;
-        const t = parseInt(b.style.top) || 0;
-        const w = b.offsetWidth || 45;
-        const h = b.offsetHeight || 45;
-        return { x: l + Math.round(w / 2), y: t + Math.round(h / 2) };
-      }
-      function pulseBtn(id) {
-        const b = document.getElementById(id);
-        if (!b) return;
-        b.style.transition = 'transform 0.12s ease-out';
-        b.style.transform = 'scale(1.3)';
-        setTimeout(() => { b.style.transform = 'scale(1)'; b.style.transition = ''; }, 160);
-      }
-      function hideButtons() {
-        if (window._dirCwMesh) window._dirCwMesh.visible = false;
-        if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-      }
-      function showButtons() {
-        if (window._dirCwMesh) window._dirCwMesh.visible = false;
-        if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (window._updateDirBtnRotation) window._updateDirBtnRotation();
-      }
-      
-      await sleep(500);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // ==============================================
-      // SCHRITT 1-3: Hand sucht Karten, klickt Karte 4 (Eckblick)
-      // ==============================================
-      const cardY_s = cardScreenY(TARGET_CARD) + 15;
-      const leftX = cardScreenX(0);
-      const rightX = cardScreenX(3);
-      const targetX = cardScreenX(TARGET_CARD);
-      
-      // Hand erscheint links unten, fährt hoch
-      setHandPos(leftX, 740);
-      handEl.style.opacity = '1';
-      updateHandShadow(leftX, 740, true);
-      await moveHandSmooth(leftX, cardY_s, 530);
-      if (aborted()) { replayCleanup(jr); return; }
-      await sleep(150);
-      // Suchend nach rechts
-      await moveHandSmooth(rightX, cardY_s, 930);
-      await sleep(170);
-      // Zurück — klickt Karte 4 direkt auf dem Rückweg
-      await moveHandSmooth(targetX, cardY_s, 470);
-      
-      // Klick-Pulse auf Karte
-      pulseCard(TARGET_CARD);
-      await sleep(300);
-      
-      // Hand runter
-      await moveHandSmooth(targetX, 740, 500);
-      handEl.style.opacity = '0';
-      updateHandShadow(0, 0, false);
-      await sleep(100);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // ==============================================
-      // SCHRITT 4: Eckblick-Animation + Karte öffnet sich
-      // ==============================================
-      kipp21BlickTargetCard = TARGET_CARD;
-      hideBlickIcon(TARGET_CARD);
-      // Kippziel sofort öffnen (zeitgleich mit Blick)
-      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
-        kipp21OnCardTap(TARGET_CARD, true);
-      }
-      try {
-        const eckP = runKipp21EckblickKniff(true);
-        await sleep(7000);
-        if (replayActive) kipp21KniffAbort = true;
-        await eckP;
-      } catch(e) { console.error('[TUT] Eckblick error:', e); }
-      
-      await sleep(400);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Buttons zeigen
-      if (window._showTrainingBtns) window._showTrainingBtns();
-      showButtons();
-      await sleep(800);
-      
-      // ==============================================
-      // SCHRITT 5-7: Hand klickt falsche Kippanzahl, dann falsche Richtung → FAIL
-      // ==============================================
-      
-      // Hilfsfunktion: 3D-Mesh Position auf Screen projizieren
-      function meshScreenPos(mesh) {
-        if (!mesh) return { x: 180, y: 600 };
-        const v = new THREE.Vector3();
-        mesh.getWorldPosition(v);
-        v.project(camera);
-        return { x: Math.round((v.x * 0.5 + 0.5) * 360), y: Math.round((-v.y * 0.5 + 0.5) * 720) };
-      }
-      
-      // numBtn Screen-Position (Mitte des Buttons)
-      function numBtnCenter(n) {
-        const btn = document.querySelector('.numBtn[data-num="' + n + '"]');
-        if (!btn) return { x: 180, y: 620 };
-        const r = btn.getBoundingClientRect();
-        const overlay = document.getElementById('uiOverlay');
-        const or2 = overlay ? overlay.getBoundingClientRect() : { left: 0, top: 0, width: 360, height: 720 };
-        const scaleX = 360 / or2.width;
-        const scaleY = 720 / or2.height;
+
+      // Helper: Slot-Screen-Position via 3D-Projektion
+      function getSlotScreen(dIdx) {
+        var half = 0.234375, cellSz = 0.15625;
+        // f0=matIdx4(+Z), f1=matIdx1(-X), f2=matIdx2(+Y)
+        var fMap = {
+          f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
+          f1: [[4,'0,0'],[5,'0,1'],[6,'1,2'],[7,'2,2']],
+          f2: [[8,'2,2'],[9,'2,1'],[10,'1,0'],[11,'0,0']]
+        };
+        var fk, row, col;
+        for (var f in fMap) {
+          for (var i = 0; i < fMap[f].length; i++) {
+            if (fMap[f][i][0] === dIdx) {
+              fk = f;
+              var rc = fMap[f][i][1].split(',').map(Number);
+              row = rc[0]; col = rc[1];
+              break;
+            }
+          }
+          if (fk) break;
+        }
+        if (!fk) return { x: 180, y: 360 };
+        var local = new THREE.Vector3();
+        if (fk === 'f0') {
+          local.set(-half + (col+0.5)*cellSz, half - (row+0.5)*cellSz, half);
+        } else if (fk === 'f1') {
+          local.set(-half, half - (row+0.5)*cellSz, -half + (col+0.5)*cellSz);
+        } else {
+          local.set(-half + (col+0.5)*cellSz, half, -half + (row+0.5)*cellSz);
+        }
+        renderer.render(scene, camera);
+        var wp = local.clone().applyMatrix4(cube.matrixWorld);
+        wp.project(camera);
         return {
-          x: Math.round((r.left + r.width / 2 - or2.left) * scaleX),
-          y: Math.round((r.top + r.height / 2 - or2.top) * scaleY) + 45
+          x: Math.round((wp.x * 0.5 + 0.5) * 360),
+          y: Math.round((-wp.y * 0.5 + 0.5) * 720)
         };
       }
-      
-      const cwP = meshScreenPos(window._dirCwMesh);
-      const ccwP = meshScreenPos(window._dirCcwMesh);
-      
-      // Hand schwebt suchend über Zahlen-Buttons
-      const nb3P = numBtnCenter(3);
-      const nb5P = numBtnCenter(5);
-      const nb1P = numBtnCenter(1);
-      
-      setHandPos(nb3P.x, 740);
+
+      // Ass finden
+      var aceIdx = deck.indexOf(12);
+      console.log('[MATCH-TUT] Ace at deckIdx=' + aceIdx);
+
+      // Halbkarte fuer spaeter (wird in Phase 2 benoetigt)
+      var pSlot = (window._bluffCardSlots && window._bluffCardSlots[0]) ? window._bluffCardSlots[0] : null;
+
+      // uiOverlay heben (ohne overflow:visible - das verursacht seitliches Ruckeln)
+      uiOv.style.zIndex = '200';
+      // resetButtonWrap ueber das uiOverlay heben damit Zurueck+Sound sichtbar bleiben
+      var _rbWrap2 = document.getElementById('resetButtonWrap');
+      var _origRbZ2 = _rbWrap2 ? _rbWrap2.style.zIndex : '';
+      if (_rbWrap2) _rbWrap2.style.zIndex = '250';
+      replayActive = true;
+
+      // === PHASE 1: Voller Blur + Text mit Hand lesen ===
+      var blurOv = document.createElement('div');
+      blurOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
+      document.body.appendChild(blurOv);
+      requestAnimationFrame(function() { blurOv.style.opacity = '1'; });
+      await sleep(600);
+
+      // Textzeilen mittig, einzeln eingeblendet, Hand liest
+      var tutLines4 = [
+        T.cMTut5 || 'Suche das Ass',
+        T.cMTut6 || 'und behalte es',
+        T.cMTut7 || 'gut im Auge.',
+        T.cMTut8 || ''
+      ].filter(function(s){ return s && s.length > 0; });
+
+      var lineContainer = document.createElement('div');
+      lineContainer.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:320px;z-index:110;text-align:center;';
+      document.body.appendChild(lineContainer);
+
+      for (var ti = 0; ti < tutLines4.length; ti++) {
+        if (!replayActive) break;
+        var lineDiv = document.createElement('div');
+        // Wrapper damit der Inhalt mittig bleibt, aber inner-div nur Text-Breite hat
+        var lineWrap = document.createElement('div');
+        lineWrap.style.cssText = 'text-align:center;';
+        lineDiv.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.9);' +
+          'letter-spacing:1.5px;line-height:1.8;opacity:0;transition:opacity 0.4s ease;';
+        lineDiv.textContent = tutLines4[ti];
+        lineWrap.appendChild(lineDiv);
+        lineContainer.appendChild(lineWrap);
+        await sleep(150);
+        lineDiv.style.opacity = '1';
+
+        var lRect2 = lineDiv.getBoundingClientRect();
+        var uiRect2 = uiOv.getBoundingClientRect();
+        var ll = Math.round(lRect2.left - uiRect2.left + 10);
+        var lr = Math.round(lRect2.right - uiRect2.left - 10);
+        var lb = Math.round(lRect2.bottom - uiRect2.top + 4);
+
+        setHandPos(ll, lb);
+        handEl.style.opacity = '1';
+        updateHandShadow(ll, lb, true);
+        await moveHandSmooth(lr, lb, 700);
+        await sleep(150);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(150);
+      }
+
+      await sleep(500);
+
+      // Text ausblenden
+      lineContainer.style.transition = 'opacity 0.5s ease';
+      lineContainer.style.opacity = '0';
+      await sleep(500);
+      lineContainer.remove();
+
+      // === PHASE 2: 2D-Blur weg, 3D-Dunkel-Plane ab Zeile 11 ===
+      blurOv.remove();
+
+      // Playercard-Halbkarte ueber Dunkel-Plane heben
+      var _origCardRO = null;
+      if (pSlot && pSlot.mesh) {
+        _origCardRO = pSlot.mesh.renderOrder;
+        pSlot.mesh.renderOrder = 30;
+      }
+
+      // 3D-Dunkel-Plane ab Zeile 11 südlich
+      var zRow11 = 0.734375;
+      var zFarSouth = 2.0;
+      var darkWidth = 3.0;
+      var darkDepth = zFarSouth - zRow11;
+      var darkGeo6 = new THREE.PlaneGeometry(darkWidth, darkDepth);
+      var darkMat6 = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0, depthWrite: false
+      });
+      var darkPlane6 = new THREE.Mesh(darkGeo6, darkMat6);
+      darkPlane6.rotation.x = -Math.PI / 2;
+      darkPlane6.position.set(0, 0.46975 + 0.003, zRow11 + darkDepth/2);
+      darkPlane6.renderOrder = 20;
+      scene.add(darkPlane6);
+
+      // Fade-In
+      var fadeStart6 = performance.now();
+      (function fadeDark() {
+        var t = Math.min((performance.now() - fadeStart6) / 400, 1);
+        darkMat6.opacity = t * 0.7;
+        if (t < 1) requestAnimationFrame(fadeDark);
+      })();
+      blurOv = null; // placeholder für spaeteres .remove()
+      await sleep(400);
+
+      // === PHASE 3: Hand fährt zur Ass ===
+      var aceScreen = getSlotScreen(aceIdx);
+      console.log('[MATCH-TUT] aceScreen x=' + aceScreen.x + ' y=' + aceScreen.y);
+      setHandPos(aceScreen.x, 740);
       handEl.style.opacity = '1';
-      updateHandShadow(nb3P.x, 740, true);
-      await moveHandSmooth(nb3P.x, nb3P.y, 600);
-      await sleep(200);
-      await moveHandSmooth(nb5P.x, nb5P.y, 400);
-      await sleep(200);
-      await moveHandSmooth(nb1P.x, nb1P.y, 400);
-      await sleep(300);
-      // Klick auf "1" (falsche Anzahl)
-      if (window._highlightNum) window._highlightNum(1);
-      await sleep(500);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Hand fährt zum falschen Richtungsbutton
-      const correctDir1 = findHitDirection(TARGET_CARD);
-      const wrongDir = (correctDir1 === 'cw') ? 'ccw' : 'cw';
-      const wrongBtnP = (wrongDir === 'ccw') ? ccwP : cwP;
-      
-      await moveHandSmooth(wrongBtnP.x, wrongBtnP.y, 600);
-      await sleep(200);
-      window._highlightDir(wrongDir);
-      await sleep(500);
-      
-      // Hand weg
-      await moveHandSmooth(wrongBtnP.x, 740, 500);
+      updateHandShadow(aceScreen.x, 740, true);
+      await moveHandSmooth(aceScreen.x, aceScreen.y, 900);
+      await sleep(1200);
+
+      // === PHASE 4: Würfel senkt sich + Hand fadet aus ===
+      kipp21KniffAbort = true;
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
-      window._highlightNum(null);
-      window._highlightDir(null);
-      hideButtons();
+
+      // Dunkel-Plane ausblenden
+      var fadeOut6 = performance.now();
+      (function fadeDarkOut() {
+        var t = Math.min((performance.now() - fadeOut6) / 500, 1);
+        darkMat6.opacity = 0.7 * (1 - t);
+        if (t < 1) requestAnimationFrame(fadeDarkOut);
+      })();
+      await sleep(600);
+      scene.remove(darkPlane6);
+      darkGeo6.dispose();
+      darkMat6.dispose();
+      if (pSlot && pSlot.mesh && _origCardRO !== null) {
+        pSlot.mesh.renderOrder = _origCardRO;
+      }
+
+      // === PHASE 5: Warten bis Würfel wieder unten liegt ===
+      for (var _w5 = 0; _w5 < 50; _w5++) {
+        if (!kipp21KniffActive) break;
+        await sleep(100);
+      }
+      await sleep(400);
+
+      // === PHASE 6: Kipp-Sequenz exakt 1:1 wie +1 Tutorial (2 CW, 1 CCW, 3 CW = netto 4 CW) ===
+      // Keine Richtungssperre im Tutorial
+      _cardLockedDir = null;
+
+      // Impuls-Kipp Funktion (COPY-PASTE aus runCardTutorial / tutImpulsKipp)
+      async function matchImpulsKipp(dir) {
+        if (!replayActive) return;
+        var kippDir = (dir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        var c = cubeScreenXY();
+        var fullOff = kippPixelDir(kippDir);
+        var len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
+        var nx = fullOff.dx / len * 112;
+        var ny = fullOff.dy / len * 112;
+
+        setHandPos(c.x, c.y);
+        handEl.style.opacity = '1';
+        handEl.style.transition = 'opacity 0.15s ease';
+        await sleep(200);
+
+        isAnimating = false;
+        kippDirection = dir;
+        var kippP = performKipp(kippDir, 800);
+
+        var swipeDur = 220;
+        var swipeStart = Date.now();
+        await new Promise(function(resolve) {
+          function frame() {
+            var elapsed = Date.now() - swipeStart;
+            var t = Math.min(elapsed / swipeDur, 1);
+            var eased = t * t;
+            setHandPos(c.x + nx * eased, c.y + ny * eased);
+            if (t < 1) requestAnimationFrame(frame);
+            else resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+
+        handEl.style.opacity = '0';
+        await kippP;
+        advanceTopFace();
+
+        handEl.style.transition = 'opacity 0.25s ease';
+        await sleep(200);
+      }
+
+      // Kipp 1 + 2 (CW)
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+
+      // Rueckkipp (echt, kein Block)
+      await sleep(300);
+      await matchImpulsKipp('ccw');
+      if (!replayActive) { return; }
+      await sleep(300);
+
+      // Wieder vorwaerts
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+
+      // Kipp 4 + 5 (CW) - netto 4 CW
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+      await matchImpulsKipp('cw');
+      if (!replayActive) { return; }
+
+      await sleep(600);
+      console.log('[MATCH-TUT] Kipp-Sequenz fertig: topFace=' + topFace + ' Q=' + currentQuadrant);
+
+      // === PHASE 7: Lange-tippen-Erklärung (1:1 wie +1 Tut) ===
+      // aceIdx Slot-Screen-Position berechnen
+      var aceSlotPos = getSlotScreen(aceIdx);
+      var tapSX = aceSlotPos.x;
+      var tapSY = aceSlotPos.y; // Hand genau auf Slot-Mitte
+
+      // === Ein 2x1-Rechteck im 3D-Raum (Slot-Zelle + Rahmen-Zelle östlich) ===
+      renderer.render(scene, camera);
+      var halfM = 0.234375, cellSzM = 0.15625;
+      var fMapM = {
+        f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
+        f1: [[4,'0,0'],[5,'0,1'],[6,'1,2'],[7,'2,2']],
+        f2: [[8,'2,2'],[9,'2,1'],[10,'1,0'],[11,'0,0']]
+      };
+      var fkM, rowM = 0, colM = 0;
+      for (var fxM in fMapM) {
+        for (var iM = 0; iM < fMapM[fxM].length; iM++) {
+          if (fMapM[fxM][iM][0] === aceIdx) {
+            fkM = fxM;
+            var rcM = fMapM[fxM][iM][1].split(',').map(Number);
+            rowM = rcM[0]; colM = rcM[1];
+            break;
+          }
+        }
+        if (fkM) break;
+      }
+      // === Ein 3D-Rechteck auf Spieltisch, umschliesst Slot-Zelle + Rahmen-Zelle ===
+      renderer.render(scene, camera);
+      var cellSz = 0.15625;
+      var hCell = cellSz / 2; // 0.078125
       
-      // Würfel kippt 1x in falsche Richtung (hier kommt das Klack vom Kipp)
-      isAnimating = false;
-      const wrongKipp = (wrongDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
-      kippDirection = wrongDir;
-      await performKipp(wrongKipp, KIPP_DUR);
-      advanceTopFace();
-      kipp21KippCount++;
-      kipp21RoundKipps++;
+      // Treffer-Logik: Slot-Name finden
+      var faceOff_P = { f0: 0, f1: 4, f2: 8 };
+      var offP = faceOff_P[topFace];
+      var aceSlotNameP = null;
+      for (var sP = 0; sP < 4; sP++) {
+        var slotNameP = 'S' + (sP + 1);
+        if (deck[offP + sP] === 12 && 
+            SLOT_NEIGHBOR_COLORS[currentQuadrant][slotNameP] === 'gruen') {
+          aceSlotNameP = slotNameP;
+          break;
+        }
+      }
+      var gemKey = currentQuadrant + '_' + aceSlotNameP;
+      var gemT = aceSlotNameP ? GEM_POSITIONS[gemKey] : null;
       
-      // Treffer prüfen → FAIL (1.5s Delay + Flug intern)
-      if (window._checkTrainingResult) {
-        window._checkTrainingResult(TARGET_CARD);
+      // Slot-Mitte (auf Spieltisch-Hoehe, visuell unter Wuerfel-Slot):
+      // Rahmen-Mitte aus GEM_POSITIONS, Slot-Mitte ist 1 Zelle zur Box-Mitte hin
+      var frameX = gemT.x, frameZ = gemT.z;
+      var slotXT, slotZT;
+      // Richtung: welche Rahmenseite?
+      if (frameX <= -0.46875) { // West-Rahmen -> Slot 1 Zelle östlich
+        slotXT = frameX + cellSz;
+        slotZT = frameZ;
+      } else if (frameX >= 0.46875) { // Ost-Rahmen -> Slot 1 Zelle westlich
+        slotXT = frameX - cellSz;
+        slotZT = frameZ;
+      } else if (frameZ <= -0.359375) { // Nord-Rahmen -> Slot 1 Zelle südlich
+        slotXT = frameX;
+        slotZT = frameZ + cellSz;
+      } else { // Süd-Rahmen -> Slot 1 Zelle nördlich
+        slotXT = frameX;
+        slotZT = frameZ - cellSz;
       }
       
-      // Warten bis FAIL-Animation komplett (1500 Delay + Flug 800 + Hold 2000 + Geste ~1500 + X 1200 + Fade 600)
-      await sleep(9000);
-      if (aborted()) { replayCleanup(jr); return; }
+      // 4 Eckpunkte des umschliessenden Rechtecks auf Y=0.46875
+      var rY = 0.46875;
+      var minX = Math.min(slotXT, frameX) - hCell;
+      var maxX = Math.max(slotXT, frameX) + hCell;
+      var minZ = Math.min(slotZT, frameZ) - hCell;
+      var maxZ = Math.max(slotZT, frameZ) + hCell;
+      var rec3D = [
+        new THREE.Vector3(minX, rY, minZ),  // NW
+        new THREE.Vector3(maxX, rY, minZ),  // NE
+        new THREE.Vector3(maxX, rY, maxZ),  // SE
+        new THREE.Vector3(minX, rY, maxZ)   // SW
+      ];
+      var rec2D = rec3D.map(function(p) {
+        var v = p.clone().project(camera);
+        return { x: Math.round((v.x * 0.5 + 0.5) * 360),
+                 y: Math.round((-v.y * 0.5 + 0.5) * 720) };
+      });
+      // 8px Erweiterung nur in Rahmen-Richtung
+      var PAD = 8;
+      var padN = 0, padS = 0, padE = 0, padW = 0;
+      if (frameX <= -0.46875) padW = PAD;        // Rahmen West
+      else if (frameX >= 0.46875) padE = PAD;    // Rahmen Ost
+      else if (frameZ <= -0.359375) padN = PAD;  // Rahmen Nord
+      else padS = PAD;                            // Rahmen Süd
+      // Screen: Y-Achse invertiert (Nord=oben=kleineres Y)
+      var r_nw = { x: rec2D[0].x - padW, y: rec2D[0].y - padN };
+      var r_ne = { x: rec2D[1].x + padE, y: rec2D[1].y - padN };
+      var r_se = { x: rec2D[2].x + padE, y: rec2D[2].y + padS };
+      var r_sw = { x: rec2D[3].x - padW, y: rec2D[3].y + padS };
+
+      var slotCx = aceSlotPos.x;
+      var slotCy = aceSlotPos.y;
+      var slotB = Math.max(r_se.y, r_sw.y);
       
-      // ==============================================
-      // SCHRITT 8-9: Hand klickt DIESELBE Karte nochmal
-      // ==============================================
-      const targetX2 = cardScreenX(TARGET_CARD);
-      const cardY2 = cardScreenY(TARGET_CARD) + 15;
-      
-      setHandPos(targetX2, 740);
+      var outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+      // Inner CW (entgegen outer CCW): NW -> SW -> SE -> NE -> NW
+      var innerM = r_nw.x+'px '+r_nw.y+'px, '+
+                   r_sw.x+'px '+r_sw.y+'px, '+
+                   r_se.x+'px '+r_se.y+'px, '+
+                   r_ne.x+'px '+r_ne.y+'px, '+
+                   r_nw.x+'px '+r_nw.y+'px';
+
+      var ltOv = document.createElement('div');
+      ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:100;pointer-events:none;' +
+        'opacity:0;transition:opacity 0.5s ease;';
+      var ltBlur = document.createElement('div');
+      ltBlur.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+        'clip-path:polygon(' + outerM + ', ' + innerM + ');' +
+        '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ');';
+      ltOv.appendChild(ltBlur);
+
+      // Text knapp unter dem freigestellten Bereich
+      var textBelow = slotB + 28;
+      var ltTxt = document.createElement('div');
+      ltTxt.style.cssText = 'position:absolute;top:' + textBelow + 'px;left:50%;transform:translateX(-50%);' +
+        'font:bold 20px Arial;color:#cedb25;' +
+        'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;' +
+        'opacity:0;transition:opacity 0.3s ease;';
+      ltTxt.textContent = T.cLongTap || 'Lang tippen';
+      ltOv.appendChild(ltTxt);
+
+      document.body.appendChild(ltOv);
+      requestAnimationFrame(function() { ltOv.style.opacity = '1'; });
+
+      // Hand von unten zum Slot
+      var SY_M = 740;
+      setHandPos(tapSX, SY_M);
       handEl.style.opacity = '1';
-      updateHandShadow(targetX2, 740, true);
-      await moveHandSmooth(targetX2, cardY2, 800);
-      
-      pulseCard(TARGET_CARD);
-      await sleep(300);
-      
-      await moveHandSmooth(targetX2, 740, 500);
+      updateHandShadow(tapSX, SY_M, true);
+
+      var moveP_M = moveHandSmooth(tapSX, tapSY, 900);
+      await sleep(400);
+      ltTxt.style.opacity = '1';
+      await moveP_M;
+
+      // Hand hält auf Slot
+      await sleep(1200);
+
+      // Blur + Text ausblenden
+      ltOv.style.opacity = '0';
+      await sleep(500);
+      ltOv.remove();
+
+      // Hand hält weiter (Long-tap), dann zurück
+      await sleep(900);
+      await moveHandSmooth(tapSX, SY_M, 600);
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
       await sleep(100);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Eckblick nochmal
-      kipp21BlickTargetCard = TARGET_CARD;
-      hideBlickIcon(TARGET_CARD);
-      // Kippziel sofort öffnen (zeitgleich mit Blick)
-      if (kipp21CardStates[TARGET_CARD] !== 'offen') {
-        kipp21OnCardTap(TARGET_CARD, true);
+
+      // Slot enthuellen: Ass-Wert sichtbar machen
+      var faceAce = faceSlots[topFace];
+      if (faceAce) {
+        var sKeys = Object.keys(faceAce.slotMap);
+        var slotIdxInFace = aceIdx % 4;
+        if (slotIdxInFace < sKeys.length) {
+          faceAce.slotMap[sKeys[slotIdxInFace]].slotAlpha = 1;
+          rebuildFaceMat(topFace, 1);
+        }
       }
-      try {
-        const eckP2 = runKipp21EckblickKniff(true);
-        await sleep(7000);
-        if (replayActive) kipp21KniffAbort = true;
-        await eckP2;
-      } catch(e) { console.error('[TUT] Eckblick2 error:', e); }
       
-      await sleep(400);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Buttons zeigen
-      if (window._showTrainingBtns) window._showTrainingBtns();
-      showButtons();
-      await sleep(800);
-      
-      // ==============================================
-      // SCHRITT 10-12: Hand wählt richtige Zahl, dann richtige Richtung → HIT
-      // ==============================================
-      const correctDir2 = findHitDirection(TARGET_CARD);
-      const dist2 = kipp21CardDistances[TARGET_CARD] || 1;
-      const correctBtnP = (correctDir2 === 'ccw') ? ccwP : cwP;
-      
-      const correctNumP = numBtnCenter(dist2);
-      
-      // Hand schwebt suchend über Buttons
-      const nb2P = numBtnCenter(2);
-      setHandPos(nb2P.x, 740);
-      handEl.style.opacity = '1';
-      updateHandShadow(nb2P.x, 740, true);
-      await moveHandSmooth(nb2P.x, nb2P.y, 600);
-      await sleep(200);
-      if (dist2 !== 2) {
-        await moveHandSmooth(correctNumP.x, correctNumP.y, 400);
-        await sleep(300);
+      // 1 Sek warten, dann Kartenwert (Ass = 'A') auf Player-Halbkarte zeichnen
+      await sleep(1000);
+      if (pSlot && pSlot.mesh) {
+        var pcCanvas = document.createElement('canvas');
+        pcCanvas.width = 196; pcCanvas.height = 280;
+        var pcCtx = pcCanvas.getContext('2d');
+        var pcImg = new Image();
+        pcImg.onload = function() {
+          pcCtx.drawImage(pcImg, 0, 0, 196, 280);
+          pcCtx.font = '900 94px "Noto Serif"';
+          pcCtx.fillStyle = 'rgba(38, 77, 120, 1.0)';
+          pcCtx.textAlign = 'center';
+          pcCtx.textBaseline = 'middle';
+          pcCtx.fillText('A', 98, 80);
+          var newTex = new THREE.CanvasTexture(pcCanvas);
+          pSlot.mesh.material.map = newTex;
+          pSlot.mesh.material.needsUpdate = true;
+        };
+        pcImg.src = 'karte' + pSlot.suit + '.webp';
+        pSlot.val = 12;
+        pSlot.filled = true;
       }
-      // Klick auf richtige Zahl
-      if (window._highlightNum) window._highlightNum(dist2);
+      await sleep(1500);
+
+      // === 2. RUNDE: Pik-Halbkarte ===
+      // 1. Karte bleibt liegen (mit Wert), 2. Karte (Pik) wird sichtbar
+      var pSlot2 = (window._bluffCardSlots && window._bluffCardSlots[1]) ? window._bluffCardSlots[1] : null;
+      if (pSlot2 && pSlot2.mesh) {
+        pSlot2.mesh.visible = true;
+        pSlot2.mesh.renderOrder = 30; // ueber Dunkel-Plane
+      }
+
+      // 2. Karte: Spieler erkippt selbst.
+      // Random Startpos waehlen, aber so dass Ass NICHT auf der topFace sichtbar ist.
+      (function computeTutFallState2(){
+        // Ass-Position im deck bestimmt sein Face
+        var aIdx = deck.indexOf(12);
+        var aFace = (aIdx < 4) ? 'f0' : (aIdx < 8 ? 'f1' : 'f2');
+        // Sammle alle Cycle-States deren topFace != aFace ist
+        var validStates = [];
+        for (var ci = 0; ci < 12; ci++) {
+          var s = BRAINY_CW_STATES[ci];
+          if (!s || s.cwSteps === 0) continue;
+          if (s.face !== aFace) validStates.push(s);
+        }
+        if (validStates.length === 0) {
+          // fallback: irgendein nicht-Null state
+          for (var cj = 0; cj < 12; cj++) {
+            if (BRAINY_CW_STATES[cj] && BRAINY_CW_STATES[cj].cwSteps !== 0) {
+              validStates.push(BRAINY_CW_STATES[cj]); break;
+            }
+          }
+        }
+        var pick = validStates[Math.floor(Math.random() * validStates.length)];
+        window._tutForceFallState = pick;
+        console.log('[MATCH-TUT] 2. Karte: random Startpos Q' + pick.q + '/' + pick.face + ' (Ass auf ' + aFace + ' verdeckt)');
+      })();
+
+      // Alle Slots auf allen 3 Faces wieder aufdecken (slotAlpha=1) vor Eckblick
+      var _fBaseR2 = { f0: 0, f1: 4, f2: 8 };
+      for (var _fkR2 = 0; _fkR2 < 3; _fkR2++) {
+        var _fK = ['f0','f1','f2'][_fkR2];
+        var _fR2 = faceSlots[_fK];
+        if (_fR2) {
+          var _baseR2 = _fBaseR2[_fK];
+          var _siR2 = 0;
+          for (var _kR2 in _fR2.slotMap) {
+            if (!window._playedSlots || !window._playedSlots.has(_baseR2 + _siR2)) {
+              _fR2.slotMap[_kR2].slotAlpha = 1;
+            }
+            _siR2++;
+          }
+          rebuildFaceMat(_fK, 1);
+        }
+      }
+
+      // === Jetzt DU! Fullscreen-Blur + Text + Hand - BEVOR Wuerfel sich hebt ===
+      var blurOvJ = document.createElement('div');
+      blurOvJ.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+        'width:360px;height:' + window.innerHeight + 'px;z-index:95;pointer-events:none;' +
+        'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+        'background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.5s ease;';
+      document.body.appendChild(blurOvJ);
+      requestAnimationFrame(function() { blurOvJ.style.opacity = '1'; });
+      await sleep(600);
+      var jLines_ = ['Jetzt DU.', 'Ass suchen, merken,', 'Würfel selber mit', 'dem Finger kippen.', 'ASS zu PIK.'];
+      var jContainer_ = document.createElement('div');
+      jContainer_.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:320px;z-index:110;text-align:center;';
+      document.body.appendChild(jContainer_);
+      var _uiRect_J_ = uiOv.getBoundingClientRect();
+      for (var jR_ = 0; jR_ < jLines_.length; jR_++) {
+        if (!replayActive) break;
+        var jO_ = document.createElement('div');
+        jO_.style.cssText = 'text-align:center;';
+        var jI_ = document.createElement('div');
+        jI_.style.cssText = 'display:inline-block;font:bold 22px Arial;color:#cedb25;' +
+          'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;line-height:1.8;' +
+          'opacity:0;transition:opacity 0.4s ease;';
+        jI_.textContent = jLines_[jR_];
+        jO_.appendChild(jI_);
+        jContainer_.appendChild(jO_);
+        await sleep(150);
+        jI_.style.opacity = '1';
+        var jRR_ = jI_.getBoundingClientRect();
+        var jLx_ = Math.round(jRR_.left - _uiRect_J_.left + 10);
+        var jRx_ = Math.round(jRR_.right - _uiRect_J_.left - 10);
+        var jBy_ = Math.round(jRR_.bottom - _uiRect_J_.top + 4);
+        setHandPos(jLx_, jBy_);
+        handEl.style.opacity = '1';
+        updateHandShadow(jLx_, jBy_, true);
+        await moveHandSmooth(jRx_, jBy_, 700);
+        await sleep(150);
+        handEl.style.opacity = '0';
+        updateHandShadow(0, 0, false);
+        await sleep(150);
+      }
       await sleep(500);
-      if (aborted()) { replayCleanup(jr); return; }
-      
-      // Hand zum richtigen Richtungsbutton
-      await moveHandSmooth(correctBtnP.x, correctBtnP.y, 500);
+      jContainer_.style.transition = 'opacity 0.5s ease';
+      jContainer_.style.opacity = '0';
+      blurOvJ.style.opacity = '0';
+      await sleep(500);
+      jContainer_.remove();
+      blurOvJ.remove();
+
+      // Eckblick + Kipp + Lang-tippen + Reveal fuer Pik
       await sleep(300);
-      window._highlightDir(correctDir2);
-      await sleep(500);
-      
-      // Hand weg
-      await moveHandSmooth(correctBtnP.x, 740, 500);
+      runKipp21EckblickKniff(true);
+      await new Promise(function(res) {
+        window._onEckblickRiseComplete = res;
+        setTimeout(res, 8000);
+      });
+      await sleep(300);
+
+      // Dunkel-Plane 2
+      var _origCardRO2 = null;
+      if (pSlot2 && pSlot2.mesh) {
+        _origCardRO2 = pSlot2.mesh.renderOrder;
+        pSlot2.mesh.renderOrder = 30;
+      }
+      var zRow11_2 = 0.734375;
+      var zFarSouth_2 = 2.0;
+      var darkWidth_2 = 3.0;
+      var darkDepth_2 = zFarSouth_2 - zRow11_2;
+      var darkGeo6_2 = new THREE.PlaneGeometry(darkWidth_2, darkDepth_2);
+      var darkMat6_2 = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0, depthWrite: false
+      });
+      var darkPlane6_2 = new THREE.Mesh(darkGeo6_2, darkMat6_2);
+      darkPlane6_2.rotation.x = -Math.PI / 2;
+      darkPlane6_2.position.set(0, 0.46975 + 0.003, zRow11_2 + darkDepth_2/2);
+      darkPlane6_2.renderOrder = 20;
+      scene.add(darkPlane6_2);
+      var fadeStart6_2 = performance.now();
+      (function fadeDark2() {
+        var t = Math.min((performance.now() - fadeStart6_2) / 400, 1);
+        darkMat6_2.opacity = t * 0.7;
+        if (t < 1) requestAnimationFrame(fadeDark2);
+      })();
+
+      // Wuerfel ca. 2s in der Luft lassen (wie bei 1. Eckblick), dann senken
+      await sleep(2100);
+      kipp21KniffAbort = true;
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
-      window._highlightNum(null);
-      window._highlightDir(null);
-      hideButtons();
-      
-      // Würfel kippt (Klack kommt hier natürlich)
-      isAnimating = false;
-      kipp21RoundKipps = 0;
-      for (let i = 0; i < dist2; i++) {
-        const kDir = (correctDir2 === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
-        kippDirection = correctDir2;
-        isAnimating = false;
-        await performKipp(kDir, KIPP_DUR);
-        advanceTopFace();
-        kipp21KippCount++;
-        kipp21RoundKipps++;
-        if (i < dist2 - 1) await sleep(400);
-      }
-      
-      // Treffer → HIT (1.5s Delay + Flug intern)
-      if (window._checkTrainingResult) {
-        window._checkTrainingResult(TARGET_CARD);
-      }
-      
-      // Tutorial-Continuation markieren (Spielzustand ist bereits korrekt
-      // durch checkTrainingResult — nur Replay-Blocker muss später weg)
-      _tutContinuationNeeded = true;
-      _tutContinuationDone = false;
-      console.log('[TUT] HIT done. kipp21Done='+kipp21Done+' Q='+currentQuadrant+' F='+topFace);
-      
-      // Warten bis HIT komplett sichtbar + 2s Stehzeit
-      // (1500 Delay + 800 Flug + 200 Pulse = ~2500ms bis HIT sichtbar, dann +2000ms Stehzeit)
-      await sleep(4500);
-      if (aborted()) { replayCleanup(jr); _executeTutContinuation(); return; }
-      // Extra 2s damit HIT-Text klar sichtbar bleibt
-      await sleep(2000);
-      if (aborted()) { replayCleanup(jr); _executeTutContinuation(); return; }
-      
-      // ==============================================
-      // BLUR + "JETZT DU!" + Spiel starten
-      // ==============================================
-      
-      // Blur-Overlay erzeugen
-      const blurOverlay = document.createElement('div');
-      blurOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:28;' +
-        'backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);' +
-        'background:rgba(0,0,0,0);transition:all 0.8s ease-out;pointer-events:none;';
-      document.body.appendChild(blurOverlay);
-      
-      // "JETZT DU!" Text
-      const jetztDuEl = document.createElement('div');
-      jetztDuEl.textContent = 'JETZT DU!';
-      jetztDuEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
-        'transform:translateY(-50%) scale(0.3);text-align:center;' +
-        'font:bold 52px Arial;color:#e8dcc8;letter-spacing:1.5px;' +
-        'text-shadow:0 2px 8px rgba(0,0,0,0.7),0 0 20px rgba(42,24,16,0.5);' +
-        'opacity:0;transition:transform 0.6s ease-out, opacity 0.5s ease-out;' +
-        'pointer-events:none;';
-      document.body.appendChild(jetztDuEl);
-      
-      // Blur einblenden
-      requestAnimationFrame(() => {
-        blurOverlay.style.backdropFilter = 'blur(8px)';
-        blurOverlay.style.webkitBackdropFilter = 'blur(8px)';
-        blurOverlay.style.background = 'rgba(0,0,0,0.4)';
-      });
-      
-      await sleep(600);
-      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); _executeTutContinuation(); return; }
-      
-      // "JETZT DU!" einblenden
-      requestAnimationFrame(() => {
-        jetztDuEl.style.opacity = '1';
-        jetztDuEl.style.transform = 'translateY(-50%) scale(1)';
-      });
-      
-      await sleep(2000);
-      if (aborted()) { blurOverlay.remove(); jetztDuEl.remove(); replayCleanup(jr); _executeTutContinuation(); return; }
-      
-      // Alles ausblenden
-      jetztDuEl.style.opacity = '0';
-      jetztDuEl.style.transform = 'translateY(-50%) scale(1.3)';
-      blurOverlay.style.backdropFilter = 'blur(0px)';
-      blurOverlay.style.webkitBackdropFilter = 'blur(0px)';
-      blurOverlay.style.background = 'rgba(0,0,0,0)';
-      
-      await sleep(800);
-      blurOverlay.remove();
-      jetztDuEl.remove();
-      
-      // localStorage: erstes Spiel absolviert
-      // TESTING: localStorage deaktiviert
 
-      
-      // Tutorial beenden, SPIELZUSTAND BEIBEHALTEN (1 HIT mitnehmen)
-      // → Zentrale Continuation-Funktion aufrufen
-      _executeTutContinuation();
-    }
-    
-    // ============================================================
-    //  RANDOM GAME: zufällige Richtungen, keine KNIFFs,
-    //  längere Denkpausen, zögerlicheres Kippen
-    // ============================================================
-    // --- Aufräumen ---
-    function replayCleanup(jr) {
+      // Dark-Plane ausblenden
+      var fadeOut6_2 = performance.now();
+      (function fadeDarkOut2() {
+        var t = Math.min((performance.now() - fadeOut6_2) / 500, 1);
+        darkMat6_2.opacity = 0.7 * (1 - t);
+        if (t < 1) requestAnimationFrame(fadeDarkOut2);
+      })();
+      await sleep(600);
+      scene.remove(darkPlane6_2);
+      darkGeo6_2.dispose();
+      darkMat6_2.dispose();
+
+      // Warten bis Würfel unten
+      for (var _w5b = 0; _w5b < 50; _w5b++) {
+        if (!kipp21KniffActive) break;
+        await sleep(100);
+      }
+      await sleep(400);
+
+      // === Wuerfel ist unten: Tutorial-Overrides zuruecksetzen ===
+      _cardLockedDir = null;
+      window._tutForceFallState = null;
+      if (typeof _origGenModeSuits === 'function') window.generateModeSuits = _origGenModeSuits;
+      window._matchTutorialMode = false;
+      window._tutExtraKipp = 0;
       replayActive = false;
       disableReplayBlocker();
-      renderer.domElement.style.pointerEvents = 'auto';
-      if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
-      if (jr) jr.style.pointerEvents = 'auto';
-      const _eye = document.getElementById('eyeIcon');
-      if (_eye) _eye.style.pointerEvents = 'auto';
-      dbgLog('Replay fertig!');
-      setTimeout(() => { if (replayDbg) replayDbg.style.display = 'none'; }, 3000);
     }
     
     // Tutorial-Text updaten
@@ -8089,6 +8431,12 @@
         animRise();
       });
 
+      // Tutorial-Hook: Würfel auf Höchststand
+      if (window._matchTutorialMode && typeof window._onEckblickRiseComplete === 'function') {
+        window._onEckblickRiseComplete();
+        window._onEckblickRiseComplete = null;
+      }
+
       // 3. Tilt separat — sanft
       const tiltInDur = 1000;
       if (!kipp21KniffAbort) {
@@ -8184,8 +8532,14 @@
       let fallToPos, fallToQuat, fallQ, fallFace;
       if (window._bluffMode) {
         // BLUFF: Zufällige andere Position (wie BRAINY Numbers)
-        const valid = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
-        const pick = valid[Math.floor(Math.random() * valid.length)];
+        let pick;
+        if (window._tutForceFallState) {
+          // Tutorial: exakt vorgegebene Fall-Position
+          pick = window._tutForceFallState;
+        } else {
+          const valid = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
+          pick = valid[Math.floor(Math.random() * valid.length)];
+        }
         fallToPos = _bluffGetQuadPos(pick.q);
         fallToQuat = _bluffGetStateQuat(pick.cwSteps);
         fallQ = pick.q;
@@ -10038,6 +10392,26 @@
     }
 
     function handleStart(withTutorial) {
+      if (window._nextMatchBlock) { 
+        window._nextMatchBlock = false; 
+        return; 
+      }
+      if (window._menuSelState === 1) {
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+        return;
+      }
+      if (window._menuSelState === 1) {
+        // KIPP +1 Tutorial
+        window._menuSelState = 0;
+        window._cardMode = 'offen';
+        _cardModePhase = 1;
+        runCardTutorial();
+        return;
+      }
+
       if (!texturesReady || _startBtnLock) return;
 
       if (_cardModePhase === 0) {
@@ -10090,38 +10464,128 @@
       initScores3D();
       // BEREIT-Button jetzt zeigen
       // Pause deaktiviert — Anleitung-Button stattdessen
-      if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = true;
-      if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = true;
+      if (!window._tutorialRunning) {
+        if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = true;
+        if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = true;
+        if (window._tutBtnIconMesh) window._tutBtnIconMesh.visible = true;
+        if (window._tutBtnTextMesh) window._tutBtnTextMesh.visible = true;
+      }
+      if (!window._tutorialRunning) document.getElementById('btnBestScores').style.display = '';
       
       startKipp21(false);
       // Intro-Blur nur im normalen Spiel (Tutorial hat eigenen)
-      if (!window._tutorialRunning) {
-        showBlurHint(T.cIntro || 'Überbiete alle 6<br>Target-Karten um +1', 3500);
-      }
+      // Intro-Blur entfernt — Tutorial/Anleitung stattdessen
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
+      if (window._menuSelState === 1) {
+        // Black-Overlay verdeckt Spiel-Flash, bis Tutorial-Intro übernimmt
+        const preOv = document.createElement('div');
+        preOv.id = '_tutPreOv';
+        preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
+          'z-index:99;background:#000;opacity:1;transition:opacity 2s ease;';
+        document.body.appendChild(preOv);
+        // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
+        setTimeout(() => {
+          window._cardMode = 'offen';
+          try { runCardTutorial(); } catch(e) {}
+          // Pre-Overlay langsam ausfaden, sobald Tutorial-Intro übernommen hat
+          setTimeout(() => {
+            const ov = document.getElementById('_tutPreOv');
+            if (ov) {
+              ov.style.opacity = '0';
+              setTimeout(() => { if (ov.parentNode) ov.remove(); }, 2100);
+            }
+          }, 2000);
+        }, 1100);
+        window._menuSelState = 0;
+        resetMenuButtons();
+        _cardModePhase = 1;
+        window._cardMode = 'offen';
+        try { handleStart(false); } catch(e) {}
+        return;
+      }
       handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
+      if (window._menuSelState === 1) {
+        // Black-Overlay verdeckt Spiel-Flash, bis Tutorial-Intro übernimmt
+        const preOv = document.createElement('div');
+        preOv.id = '_tutPreOv';
+        preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
+          'z-index:99;background:#000;opacity:1;transition:opacity 2s ease;';
+        document.body.appendChild(preOv);
+        // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
+        setTimeout(() => {
+          window._cardMode = 'offen';
+          try { runCardTutorial(); } catch(e) {}
+          setTimeout(() => {
+            const ov = document.getElementById('_tutPreOv');
+            if (ov) {
+              ov.style.opacity = '0';
+              setTimeout(() => { if (ov.parentNode) ov.remove(); }, 2100);
+            }
+          }, 2000);
+        }, 1100);
+        window._menuSelState = 0;
+        resetMenuButtons();
+        _cardModePhase = 1;
+        window._cardMode = 'offen';
+        try { handleStart(false); } catch(e) {}
+        return;
+      }
       handleStart(false);
     }, { passive: false });
+    window._menuSelState = 0; // 0=normal, 1=tutorial-auswahl, 2=anleitung-auswahl
+    function showMenuSelection(mode) {
+      window._menuSelState = mode; // 1=tutorial, 2=anleitung
+      var btnS = document.getElementById('btnSpielen');
+      var btnD = document.getElementById('btnDemo');
+      var btnA = document.getElementById('btnAnleitung');
+      var btnDy = document.getElementById('btnDaily');
+      if (btnA) btnA.style.display = 'none';
+      if (btnDy) btnDy.style.display = 'none';
+      btnS.textContent = T.cOffen || 'KIPP +1';
+      btnD.textContent = T.cVerdeckt || 'KIPP MATCH';
+    }
+    function resetMenuButtons() {
+      window._menuSelState = 0;
+      var btnS = document.getElementById('btnSpielen');
+      var btnD = document.getElementById('btnDemo');
+      var btnA = document.getElementById('btnAnleitung');
+      var btnDy = document.getElementById('btnDaily');
+      btnS.textContent = T.sp || 'SPIELEN';
+      btnD.textContent = T.dm || 'TUTORIALS';
+      if (btnA) { btnA.textContent = T.cAnlBtnMenu || 'ANLEITUNGEN'; btnA.style.display = ''; }
+      if (btnDy) btnDy.style.display = '';
+    }
     document.getElementById('btnDemo').addEventListener('click', () => {
+      if (window._menuSelState === 1) {
+        // KIPP MATCH Tutorial
+        window._menuSelState = 0;
+        resetMenuButtons();
+        runMatchTutorial();
+        return;
+      }
+
       if (_cardModePhase === 0) {
-        window._cardMode = 'offen';
-        _cardModePhase = 1;
-        runCardTutorial();
+        showMenuSelection(1); // Tutorial-Auswahl
       } else {
         showBluffModeSelection();
       }
     });
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault();
+      if (window._menuSelState === 1) {
+        window._menuSelState = 0;
+        resetMenuButtons();
+        runMatchTutorial();
+        return;
+      }
+
       if (_cardModePhase === 0) {
-        window._cardMode = 'offen';
-        _cardModePhase = 1;
-        runCardTutorial();
+        showMenuSelection(1);
       } else {
         showBluffModeSelection();
       }
@@ -10321,14 +10785,41 @@
       content.appendChild(diffEl);
 
       // Hinweistext
-      const hintEl = document.createElement('div');
-      hintEl.style.cssText = 'font:bold 16px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
-        'text-align:center;letter-spacing:1px;margin-bottom:12px;';
-      hintEl.textContent = T.cBluffHand || 'Erkippe z.B. ein Blatt, wie dieses';
-      content.appendChild(hintEl);
+      const hintWrap = document.createElement('div');
+      hintWrap.id = '_previewHintWrap';
+      hintWrap.style.cssText = 'text-align:center;margin-bottom:12px;';
+      if (window._matchTutorialMode) {
+        var tutLines = [
+          T.cMTut1 || 'Erkippe ein Blatt',
+          T.cMTut2 || 'wie dieses.',
+          T.cMTut3 || 'Je h\u00f6her',
+          T.cMTut4 || 'desto besser.'
+        ];
+        tutLines.forEach(function(txt) {
+          var el = document.createElement('div');
+          el.className = '_mtutLine';
+          el.style.cssText = 'font:bold 22px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
+            'letter-spacing:1px;line-height:1.6;opacity:0;transition:opacity 0.4s ease;';
+          el.textContent = txt;
+          hintWrap.appendChild(el);
+        });
+      } else {
+        var hintEl1 = document.createElement('div');
+        hintEl1.style.cssText = 'font:bold 16px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
+          'letter-spacing:1px;line-height:1.6;';
+        hintEl1.textContent = T.cBluffHand || 'Erkippe ein Blatt wie dieses.';
+        hintWrap.appendChild(hintEl1);
+        var hintEl2 = document.createElement('div');
+        hintEl2.style.cssText = 'font:bold 16px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);' +
+          'letter-spacing:1px;line-height:1.6;';
+        hintEl2.textContent = T.cBluffHand2 || 'Je h\u00f6her, desto besser.';
+        hintWrap.appendChild(hintEl2);
+      }
+      content.appendChild(hintWrap);
 
       // Karten-Container
       const cardsRow = document.createElement('div');
+      cardsRow.id = '_previewCardsRow';
       cardsRow.style.cssText = 'display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;';
 
       const hand = BLUFF_EXAMPLE_HANDS[mode.key] || [];
@@ -10377,11 +10868,13 @@
         return btn;
       };
 
-      btnRow.appendChild(makeBtn(T.cDeal || 'DEAL', () => {
+      var dealBtn = makeBtn(T.cDeal || 'DEAL', () => {
         ov.remove();
         window._bluffSelectedMode = mode;
         startBluffGame(mode);
-      }));
+      });
+      dealBtn.id = '_previewDealBtn';
+      btnRow.appendChild(dealBtn);
       btnRow.appendChild(makeBtn(T.cZurueck || 'ZURÜCK', () => {
         ov.remove();
         showBluffModeSelection();
@@ -10524,8 +11017,53 @@
       const h1 = document.createElement('div');
       h1.style.cssText = 'font:bold 24px Arial;letter-spacing:3px;text-transform:uppercase;' +
         'color:rgb(187,183,32);text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:18px;';
-      h1.textContent = 'KIPP MATCH';
+      h1.textContent = T.cWaehlMatch || 'W\u00c4HLE DEIN MATCH';
       scroll.appendChild(h1);
+
+
+      // Tutorial + Anleitung Zeile
+      const btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;justify-content:center;gap:30px;margin-bottom:14px;';
+
+      // Tutorial (handsilber + Text)
+      const tutWrap = document.createElement('div');
+      tutWrap.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;pointer-events:auto;';
+      const tutImg = document.createElement('img');
+      tutImg.src = 'handsilber.webp';
+      tutImg.style.cssText = 'width:28px;height:auto;transform:rotate(-75deg);opacity:0.85;';
+      const tutLbl = document.createElement('span');
+      tutLbl.style.cssText = 'font:bold 16px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);';
+      tutLbl.textContent = 'Tutorial';
+      tutWrap.appendChild(tutImg);
+      tutWrap.appendChild(tutLbl);
+      tutWrap.onclick = function() {
+        var ovEl = document.getElementById('_bluffModeOverlay');
+        if (ovEl) ovEl.remove();
+        window._cardMode = 'verdeckt';
+        runMatchTutorial();
+      };
+      btnRow.appendChild(tutWrap);
+
+      // Anleitung (reset_card gespiegelt + Text)
+      const anlWrap = document.createElement('div');
+      anlWrap.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;pointer-events:auto;';
+      const anlImg = document.createElement('img');
+      anlImg.src = 'reset_card.webp';
+      anlImg.style.cssText = 'width:28px;height:28px;transform:scaleX(-1);opacity:0.85;';
+      const anlLbl = document.createElement('span');
+      anlLbl.style.cssText = 'font:bold 16px Arial;color:#e0d0b8;text-shadow:0 1px 3px rgba(0,0,0,0.7);';
+      anlLbl.textContent = T.cAnlBtn || 'Anleitung';
+      anlWrap.appendChild(anlImg);
+      anlWrap.appendChild(anlLbl);
+      anlWrap.onclick = function() {
+        var ovEl = document.getElementById('_bluffModeOverlay');
+        if (ovEl) ovEl.remove();
+        showCardAnleitung('verdeckt');
+      };
+      btnRow.appendChild(anlWrap);
+
+      btnRow.id = '_matchBtnRow';
+      scroll.appendChild(btnRow);
 
       // Modi-Liste
       BLUFF_MODES.forEach(mode => {
@@ -10541,6 +11079,21 @@
           'text-shadow:0 1px 3px rgba(0,0,0,0.7);';
         nameEl.innerHTML = mode.label + ' <span style="font-size:16px;font-weight:normal;color:#aaa;">' + mode.cards + (mode.cards === 1 ? ' Karte' : ' Karten') + '</span>';
         textDiv.appendChild(nameEl);
+        
+        // Bestleistung fuer diesen Modus
+        const _msData = loadMatchScores();
+        const _mEntry = _msData.modes && _msData.modes[mode.key];
+        const _bestSingle = (_mEntry && _mEntry.bestSingle) ? _mEntry.bestSingle : 0;
+        if (_bestSingle > 0) {
+          const bestEl = document.createElement('div');
+          const _bestLabelMap = { de: 'Beste', en: 'Best', es: 'Mejor', fr: 'Meilleur', it: 'Migliore', tr: 'En iyi' };
+          const _userLang = localStorage.getItem('digikipp_lang') || 'de';
+          const _bestLabel = _bestLabelMap[_userLang] || _bestLabelMap.de;
+          bestEl.style.cssText = 'font:bold 12px Arial;color:#cedb25;letter-spacing:1px;' +
+            'text-shadow:0 1px 2px rgba(0,0,0,0.6);margin-top:2px;';
+          bestEl.textContent = _bestLabel + ': ' + _bestSingle;
+          textDiv.appendChild(bestEl);
+        }
 
         // Quadrat-Button rechts mit gelbem Haken
         const qWrap = document.createElement('div');
@@ -10572,6 +11125,7 @@
           qBtn.click();
         }, { passive: false });
 
+        row.dataset.modeKey = mode.key;
         scroll.appendChild(row);
       });
 
@@ -10743,6 +11297,9 @@
           if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
           if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
           if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
+          if (window._tutBtnIconMesh) window._tutBtnIconMesh.visible = false;
+          if (window._tutBtnTextMesh) window._tutBtnTextMesh.visible = false;
+          // Tutorial: resetButtonWrap sichtbar lassen (User soll Zurueck/Sound nutzen können)
           // Farbvorgabe-Karten generieren
           const suits = ['herz', 'karo', 'kreuz', 'pik'];
           window._bluffCardSlots = [];
@@ -10824,7 +11381,7 @@
       return 'KIPP MATCH \u2014 ' + modeLabel + ' ' + result + '\n' +
         'Player ' + plScore + ' | Bank ' + bScore + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
-        'https://peterlenhart.github.io/KIPPCLUB_3D/' + '\n' +
+        'https://peterlenhart.github.io/KIPPCLUB_3D/card.html?mode=match' + '\n' +
         '#KippClub #KippMatch';
     }
 
@@ -10946,70 +11503,90 @@
         // Score auf overlay_bet anzeigen
         showMatchScores(group);
 
-        // Nach 3.5s: NOCHMAL Button zeigen (Ergebnis-Text bleibt)
+        // Nach 3.5s: Menü-Buttons wiederverwenden (exakt gleiche Größe)
         setTimeout(() => {
-          // NOCHMAL Button
-          const nmCanvas = document.createElement('canvas');
-          nmCanvas.width = 812; nmCanvas.height = 252;
-          const nmCtx = nmCanvas.getContext('2d');
-          const nmImg = new Image();
-          nmImg.onload = () => {
-            nmCtx.drawImage(nmImg, 0, 0, 812, 252);
-            nmCtx.font = 'bold 70px Arial';
-            nmCtx.fillStyle = '#e0d0b8';
-            nmCtx.textAlign = 'center';
-            nmCtx.textBaseline = 'middle';
-            nmCtx.shadowColor = 'rgba(0,0,0,0.6)';
-            nmCtx.shadowBlur = 8;
-            nmCtx.fillText('NOCHMAL', 406, 130);
-            const nmTex = new THREE.CanvasTexture(nmCanvas);
-            const nmW = 0.94; const nmH = 0.29;
-            const nmGeo = new THREE.PlaneGeometry(nmW, nmH);
-            const nmMat = new THREE.MeshBasicMaterial({
-              map: nmTex, transparent: true, alphaTest: 0.1,
-              side: THREE.DoubleSide, depthWrite: false
-            });
-            window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
-            window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208);
-            window._bluffNochmalBtn.renderOrder = 8;
-            if (group) group.add(window._bluffNochmalBtn);
-            else scene.add(window._bluffNochmalBtn);
-            window._bluffNochmalActive = true;
+          var overlay = document.getElementById('startOverlay');
+          var sct = document.getElementById('startChallengeText');
+          if (sct) sct.style.display = 'none';
+          overlay.style.display = 'block';
 
-            // TEILEN Button (südlich unter NOCHMAL)
-            const tCanvas = document.createElement('canvas');
-            tCanvas.width = 812; tCanvas.height = 252;
-            const tCtx = tCanvas.getContext('2d');
-            const tImg = new Image();
-            tImg.onload = () => {
-              tCtx.drawImage(tImg, 0, 0, 812, 252);
-              tCtx.font = 'bold 70px Arial';
-              tCtx.fillStyle = '#e0d0b8';
-              tCtx.textAlign = 'center';
-              tCtx.textBaseline = 'middle';
-              tCtx.shadowColor = 'rgba(0,0,0,0.6)';
-              tCtx.shadowBlur = 8;
-              tCtx.fillText(T.cTeilen || 'TEILEN', 406, 130);
-              const tTex = new THREE.CanvasTexture(tCanvas);
-              const tGeo = new THREE.PlaneGeometry(nmW, nmH);
-              const tMat = new THREE.MeshBasicMaterial({
-                map: tTex, transparent: true, alphaTest: 0.1,
-                side: THREE.DoubleSide, depthWrite: false
-              });
-              window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
-              window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
-              window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
-              window._bluffTeilenBtn.position.z += 0.34;
-              window._bluffTeilenBtn.renderOrder = 8;
-              if (group) group.add(window._bluffTeilenBtn);
-              else scene.add(window._bluffTeilenBtn);
-              window._bluffTeilenActive = true;
-            };
-            tImg.src = 'buttonfilz.webp';
+          var btnS = document.getElementById('btnSpielen');
+          var btnD = document.getElementById('btnDemo');
+          var btnA = document.getElementById('btnAnleitung');
+          var btnDy = document.getElementById('btnDaily');
+          var btnKP = document.getElementById('btnKippPrinzip');
 
+          // Alle erstmal verstecken
+          if (btnA) btnA.style.display = 'none';
+          if (btnDy) btnDy.style.display = 'none';
+          if (btnKP) btnKP.style.display = 'none';
+
+          // NEUES MATCH: Position EXAKT auf Result-Text-Mesh berechnen via camera.project()
+          var _resultY = 720 - 42; // fallback: untere Mitte
+          if (window._bluffResultMesh) {
+            var _wp = new THREE.Vector3();
+            window._bluffResultMesh.getWorldPosition(_wp);
+            _wp.project(camera);
+            _resultY = Math.round((-_wp.y * 0.5 + 0.5) * 720) - 21; // -21 = halbe Button-Hoehe (42px)
+          }
+          // Result-Text entfernen
+          if (window._bluffResultMesh) { 
+            try { if (window._bluffResultMesh.parent) window._bluffResultMesh.parent.remove(window._bluffResultMesh); } catch(e){} 
+            window._bluffResultMesh = null; 
+          }
+          btnS.style.display = 'none';
+          var oldNeu = document.getElementById('_neuesMatchBtn');
+          if (oldNeu) oldNeu.remove();
+          var neuBtn = document.createElement('button');
+          neuBtn.id = '_neuesMatchBtn';
+          neuBtn.className = 'startClickZone';
+          neuBtn.textContent = 'NEUES MATCH';
+          neuBtn.style.cssText = 'top:' + _resultY + 'px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(neuBtn);
+          neuBtn.onclick = function() {
+            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
+            location.reload();
           };
-          nmImg.src = 'buttonfilz.webp';
+
+          // MENÜ: zurueck zum Hauptmenue
+          var oldNM = document.getElementById('_nmReloadBtn');
+          if (oldNM) oldNM.remove();
+          var nmBtn = document.createElement('button');
+          nmBtn.id = '_nmReloadBtn';
+          nmBtn.className = 'startClickZone';
+          nmBtn.textContent = 'MENÜ';
+          nmBtn.style.cssText = 'top:504px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(nmBtn);
+          nmBtn.onclick = function() { location.reload(); };
+
+          // TEILEN: eigener Button - btnD hat addEventListener der zur Modi-Auswahl fuehrt
+          btnD.style.display = 'none';
+          var oldTL = document.getElementById('_tlShareBtn');
+          if (oldTL) oldTL.remove();
+          var tlBtn = document.createElement('button');
+          tlBtn.id = '_tlShareBtn';
+          tlBtn.className = 'startClickZone';
+          tlBtn.textContent = T.cTeilen || 'TEILEN';
+          tlBtn.style.cssText = 'top:561px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(tlBtn);
+          tlBtn.onclick = function() {
+            var shareText = buildMatchShareText(
+              window._lastMatchModeLabel || '',
+              window._lastMatchWinner || '',
+              window._matchScorePlayer || 0,
+              window._matchScoreBank || 0
+            );
+            if (navigator.share) {
+              navigator.share({ text: shareText }).catch(function(){});
+            } else {
+              navigator.clipboard.writeText(shareText).then(function() {
+                tlBtn.textContent = T.cKopiert || 'KOPIERT!';
+                setTimeout(function() { tlBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+              }).catch(function(){});
+            }
+          };
+
+          window._bluffNochmalActive = false;
         }, 3500);
       }
     }
@@ -11140,7 +11717,79 @@
         rtCtx.textBaseline = 'middle';
         rtCtx.shadowColor = 'rgba(0,0,0,0.7)';
         rtCtx.shadowBlur = 10;
-        rtCtx.fillText('KEIN ' + label, 512, 64);
+        // Grammatikalisch korrekte "Kein ..."-Texte je Modus und Sprache
+        const _verfehltTexts = {
+          de: {
+            highcard: 'KEINE HIGH CARD',
+            pair: 'KEIN PAAR',
+            three: 'KEIN DRILLING',
+            four: 'KEIN VIERLING',
+            twopair: 'KEINE 2 PAARE',
+            straight: 'KEINE STRASSE',
+            flush: 'KEIN FLUSH',
+            fullhouse: 'KEIN FULL HOUSE',
+            straightfl: 'KEIN STRAIGHT FLUSH'
+          },
+          en: {
+            highcard: 'NO HIGH CARD',
+            pair: 'NO PAIR',
+            three: 'NO THREE OF A KIND',
+            four: 'NO FOUR OF A KIND',
+            twopair: 'NO TWO PAIR',
+            straight: 'NO STRAIGHT',
+            flush: 'NO FLUSH',
+            fullhouse: 'NO FULL HOUSE',
+            straightfl: 'NO STRAIGHT FLUSH'
+          },
+          es: {
+            highcard: 'SIN CARTA ALTA',
+            pair: 'SIN PAREJA',
+            three: 'SIN TR\u00cdO',
+            four: 'SIN POKER',
+            twopair: 'SIN DOBLE PAREJA',
+            straight: 'SIN ESCALERA',
+            flush: 'SIN COLOR',
+            fullhouse: 'SIN FULL',
+            straightfl: 'SIN ESCALERA DE COLOR'
+          },
+          fr: {
+            highcard: 'PAS DE CARTE HAUTE',
+            pair: 'PAS DE PAIRE',
+            three: 'PAS DE BRELAN',
+            four: 'PAS DE CARR\u00c9',
+            twopair: 'PAS DE DEUX PAIRES',
+            straight: 'PAS DE SUITE',
+            flush: 'PAS DE COULEUR',
+            fullhouse: 'PAS DE FULL',
+            straightfl: 'PAS DE QUINTE FLUSH'
+          },
+          it: {
+            highcard: 'NESSUNA CARTA ALTA',
+            pair: 'NESSUNA COPPIA',
+            three: 'NESSUN TRIS',
+            four: 'NESSUN POKER',
+            twopair: 'NESSUNA DOPPIA COPPIA',
+            straight: 'NESSUNA SCALA',
+            flush: 'NESSUN COLORE',
+            fullhouse: 'NESSUN FULL',
+            straightfl: 'NESSUNA SCALA REALE'
+          },
+          tr: {
+            highcard: 'Y\u00dcKSEK KART YOK',
+            pair: 'ÇİFT YOK',
+            three: '\u00dc\u00c7L\u00dc YOK',
+            four: 'KARE YOK',
+            twopair: '\u0130K\u0130 \u00c7\u0130FT YOK',
+            straight: 'STRE\u0130T YOK',
+            flush: 'FLA\u015e YOK',
+            fullhouse: 'FULL YOK',
+            straightfl: 'STRE\u0130T FLA\u015e YOK'
+          }
+        };
+        const _userLangV = localStorage.getItem('digikipp_lang') || 'de';
+        const _verfTexts = _verfehltTexts[_userLangV] || _verfehltTexts.de;
+        const _verfText = _verfTexts[mode.key] || ('KEIN ' + label);
+        rtCtx.fillText(_verfText, 512, 64);
         const rtTex = new THREE.CanvasTexture(rtCanvas);
         const rtW = 1.638; const rtH = rtW * (128 / 1024);
         const rtGeo = new THREE.PlaneGeometry(rtW, rtH);
@@ -11165,68 +11814,90 @@
         // Scores anzeigen
         showMatchScores(group);
 
-        // Nach 3.5s: NOCHMAL Button
+        // Nach 3.5s: Menü-Buttons wiederverwenden (exakt gleiche Größe)
         setTimeout(() => {
-          const nmCanvas = document.createElement('canvas');
-          nmCanvas.width = 812; nmCanvas.height = 252;
-          const nmCtx = nmCanvas.getContext('2d');
-          const nmImg = new Image();
-          nmImg.onload = () => {
-            nmCtx.drawImage(nmImg, 0, 0, 812, 252);
-            nmCtx.font = 'bold 70px Arial';
-            nmCtx.fillStyle = '#e0d0b8';
-            nmCtx.textAlign = 'center';
-            nmCtx.textBaseline = 'middle';
-            nmCtx.shadowColor = 'rgba(0,0,0,0.6)';
-            nmCtx.shadowBlur = 8;
-            nmCtx.fillText('NOCHMAL', 406, 130);
-            const nmTex = new THREE.CanvasTexture(nmCanvas);
-            const nmW = 0.94; const nmH = 0.29;
-            const nmGeo = new THREE.PlaneGeometry(nmW, nmH);
-            const nmMat = new THREE.MeshBasicMaterial({
-              map: nmTex, transparent: true, alphaTest: 0.1,
-              side: THREE.DoubleSide, depthWrite: false
-            });
-            window._bluffNochmalBtn = new THREE.Mesh(nmGeo, nmMat);
-            window._bluffNochmalBtn.rotation.x = -Math.PI / 2;
-            window._bluffNochmalBtn.position.set(0, 0.46975 + 0.006, playerZ2 + cH2 / 2 + 0.08 + 0.15625 + 0.486 + 0.208);
-            window._bluffNochmalBtn.renderOrder = 8;
-            if (group) group.add(window._bluffNochmalBtn);
-            window._bluffNochmalActive = true;
+          var overlay = document.getElementById('startOverlay');
+          var sct = document.getElementById('startChallengeText');
+          if (sct) sct.style.display = 'none';
+          overlay.style.display = 'block';
 
-            // TEILEN Button (südlich unter NOCHMAL)
-            const tCanvas = document.createElement('canvas');
-            tCanvas.width = 812; tCanvas.height = 252;
-            const tCtx = tCanvas.getContext('2d');
-            const tImg = new Image();
-            tImg.onload = () => {
-              tCtx.drawImage(tImg, 0, 0, 812, 252);
-              tCtx.font = 'bold 70px Arial';
-              tCtx.fillStyle = '#e0d0b8';
-              tCtx.textAlign = 'center';
-              tCtx.textBaseline = 'middle';
-              tCtx.shadowColor = 'rgba(0,0,0,0.6)';
-              tCtx.shadowBlur = 8;
-              tCtx.fillText(T.cTeilen || 'TEILEN', 406, 130);
-              const tTex = new THREE.CanvasTexture(tCanvas);
-              const tGeo = new THREE.PlaneGeometry(nmW, nmH);
-              const tMat = new THREE.MeshBasicMaterial({
-                map: tTex, transparent: true, alphaTest: 0.1,
-                side: THREE.DoubleSide, depthWrite: false
-              });
-              window._bluffTeilenBtn = new THREE.Mesh(tGeo, tMat);
-              window._bluffTeilenBtn.rotation.x = -Math.PI / 2;
-              window._bluffTeilenBtn.position.copy(window._bluffNochmalBtn.position);
-              window._bluffTeilenBtn.position.z += 0.34;
-              window._bluffTeilenBtn.renderOrder = 8;
-              if (group) group.add(window._bluffTeilenBtn);
-              else scene.add(window._bluffTeilenBtn);
-              window._bluffTeilenActive = true;
-            };
-            tImg.src = 'buttonfilz.webp';
+          var btnS = document.getElementById('btnSpielen');
+          var btnD = document.getElementById('btnDemo');
+          var btnA = document.getElementById('btnAnleitung');
+          var btnDy = document.getElementById('btnDaily');
+          var btnKP = document.getElementById('btnKippPrinzip');
 
+          // Alle erstmal verstecken
+          if (btnA) btnA.style.display = 'none';
+          if (btnDy) btnDy.style.display = 'none';
+          if (btnKP) btnKP.style.display = 'none';
+
+          // NEUES MATCH: Position EXAKT auf Result-Text-Mesh berechnen via camera.project()
+          var _resultY = 720 - 42; // fallback: untere Mitte
+          if (window._bluffResultMesh) {
+            var _wp = new THREE.Vector3();
+            window._bluffResultMesh.getWorldPosition(_wp);
+            _wp.project(camera);
+            _resultY = Math.round((-_wp.y * 0.5 + 0.5) * 720) - 21; // -21 = halbe Button-Hoehe (42px)
+          }
+          // Result-Text entfernen
+          if (window._bluffResultMesh) { 
+            try { if (window._bluffResultMesh.parent) window._bluffResultMesh.parent.remove(window._bluffResultMesh); } catch(e){} 
+            window._bluffResultMesh = null; 
+          }
+          btnS.style.display = 'none';
+          var oldNeu = document.getElementById('_neuesMatchBtn');
+          if (oldNeu) oldNeu.remove();
+          var neuBtn = document.createElement('button');
+          neuBtn.id = '_neuesMatchBtn';
+          neuBtn.className = 'startClickZone';
+          neuBtn.textContent = 'NEUES MATCH';
+          neuBtn.style.cssText = 'top:' + _resultY + 'px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(neuBtn);
+          neuBtn.onclick = function() {
+            try { sessionStorage.setItem('kippOpenMatchModi', '1'); } catch(e){}
+            location.reload();
           };
-          nmImg.src = 'buttonfilz.webp';
+
+          // MENÜ: zurueck zum Hauptmenue
+          var oldNM = document.getElementById('_nmReloadBtn');
+          if (oldNM) oldNM.remove();
+          var nmBtn = document.createElement('button');
+          nmBtn.id = '_nmReloadBtn';
+          nmBtn.className = 'startClickZone';
+          nmBtn.textContent = 'MENÜ';
+          nmBtn.style.cssText = 'top:504px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(nmBtn);
+          nmBtn.onclick = function() { location.reload(); };
+
+          // TEILEN: eigener Button - btnD hat addEventListener der zur Modi-Auswahl fuehrt
+          btnD.style.display = 'none';
+          var oldTL = document.getElementById('_tlShareBtn');
+          if (oldTL) oldTL.remove();
+          var tlBtn = document.createElement('button');
+          tlBtn.id = '_tlShareBtn';
+          tlBtn.className = 'startClickZone';
+          tlBtn.textContent = T.cTeilen || 'TEILEN';
+          tlBtn.style.cssText = 'top:561px;font-size:18px;letter-spacing:2.5px;opacity:1;z-index:60;';
+          document.getElementById('startOverlay').appendChild(tlBtn);
+          tlBtn.onclick = function() {
+            var shareText = buildMatchShareText(
+              window._lastMatchModeLabel || '',
+              window._lastMatchWinner || '',
+              window._matchScorePlayer || 0,
+              window._matchScoreBank || 0
+            );
+            if (navigator.share) {
+              navigator.share({ text: shareText }).catch(function(){});
+            } else {
+              navigator.clipboard.writeText(shareText).then(function() {
+                tlBtn.textContent = T.cKopiert || 'KOPIERT!';
+                setTimeout(function() { tlBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+              }).catch(function(){});
+            }
+          };
+
+          window._bluffNochmalActive = false;
         }, 3500);
       }
     }
@@ -11329,7 +12000,7 @@
       })();
     }
 
-    function showCardAnleitung() {
+    function showCardAnleitung(directMode) {
       const old = document.getElementById('_cardAnleitungOverlay');
       if (old) old.remove();
 
@@ -11351,7 +12022,7 @@
       const title = document.createElement('div');
       title.style.cssText = 'font:bold 28px Arial;letter-spacing:3px;text-transform:uppercase;' +
         'color:rgb(187,183,32);text-shadow:0 2px 8px rgba(0,0,0,0.9);text-align:center;margin-bottom:10px;';
-      title.textContent = T.cAnlTitle || 'ANLEITUNG';
+      title.textContent = T.cAnlBtnMenu || 'ANLEITUNGEN';
       selectWrap.appendChild(title);
 
       function makeBtn(label, sub, onClick) {
@@ -11360,7 +12031,7 @@
         const btn = document.createElement('button');
         btn.textContent = label;
         btn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+          'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
         btn.onclick = onClick;
@@ -11374,28 +12045,34 @@
         return wrap;
       }
 
-      selectWrap.appendChild(makeBtn(T.cOffen || 'OFFEN', '', () => showAnlContent('offen')));
-      selectWrap.appendChild(makeBtn(T.cVerdeckt || 'VERDECKT', '', () => showAnlContent('verdeckt')));
+      selectWrap.appendChild(makeBtn(T.cOffen || 'KIPP +1', '', () => showAnlContent('offen')));
+      selectWrap.appendChild(makeBtn(T.cVerdeckt || 'KIPP MATCH', '', () => showAnlContent('verdeckt')));
+      if (directMode) { setTimeout(function(){ showAnlContent(directMode); }, 50); }
 
-      const backWrap = document.createElement('div');
-      backWrap.style.cssText = 'position:relative;z-index:1;flex-shrink:0;display:flex;' +
-        'justify-content:center;padding:12px 0 20px 0;background:rgba(0,0,0,0.45);';
+
       const backBtn = document.createElement('button');
       backBtn.textContent = 'OK';
       backBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
-        'display:flex;align-items:center;justify-content:center;';
-      backBtn.onclick = () => ov.remove();
-      backWrap.appendChild(backBtn);
+        'display:flex;align-items:center;justify-content:center;margin-top:35px;';
+      backBtn.onclick = () => {
+        ov.remove();
+        if (directMode) showBluffModeSelection();
+      };
+      backBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        ov.remove();
+        if (directMode) showBluffModeSelection();
+      }, { passive: false });
+      selectWrap.appendChild(backBtn);
 
       ov.appendChild(selectWrap);
-      ov.appendChild(backWrap);
+      // backWrap entfernt — OK ist jetzt in selectWrap
       document.body.appendChild(ov);
 
       function showAnlContent(mode) {
         selectWrap.remove();
-        backWrap.remove();
 
         const sections = mode === 'verdeckt'
           ? (T.cAnlSecV || T.cAnlSec || [])
@@ -11444,10 +12121,15 @@
         const okBtn = document.createElement('button');
         okBtn.textContent = 'OK';
         okBtn.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-          'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+          'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
           'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
           'display:flex;align-items:center;justify-content:center;';
-        okBtn.onclick = () => { ov.remove(); showCardAnleitung(); };
+        okBtn.onclick = () => {
+          ov.remove();
+          if (directMode) {
+            showBluffModeSelection();
+          }
+        };
         btnWrap2.appendChild(okBtn);
         ov.appendChild(btnWrap2);
       }
@@ -11540,7 +12222,7 @@
 
       // Effizienz-Balken
       const effBox = document.createElement('div');
-      effBox.style.cssText = 'width:282px;margin:6px 0;';
+      effBox.style.cssText = 'width:226px;margin:6px 0;';
 
       const effLabel = document.createElement('div');
       effLabel.style.cssText = 'font:bold 14px Arial;color:#e0d0b8;letter-spacing:2px;' +
@@ -11549,7 +12231,7 @@
       effBox.appendChild(effLabel);
 
       const barOuter = document.createElement('div');
-      barOuter.style.cssText = 'width:282px;height:30px;border-radius:6px;overflow:hidden;' +
+      barOuter.style.cssText = 'width:226px;height:24px;border-radius:6px;overflow:hidden;' +
         'background:rgba(224,208,184,0.2);border:1px solid rgba(224,208,184,0.3);position:relative;';
 
       const barFill = document.createElement('div');
@@ -11590,14 +12272,14 @@
         (T.cEffizienz || 'EFFIZIENZ') + ': ' + effizienz + '%\n' +
         shareGrid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
-        window._DIGIKIPP_URL + '\n' +
+        window._DIGIKIPP_URL + '?mode=plus1' + '\n' +
         '#KippClub #KippPlusOne';
 
       const btnShare = document.createElement('button');
       btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">' + (T.cTeilen || 'TEILEN') + '</span>';
       btnShare.style.cssText = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
         'border:none;' +
-        'width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#cedb25;cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:10px;' +
         'text-shadow:0 1px 3px rgba(0,0,0,0.6);';
@@ -11618,7 +12300,7 @@
 
       // Buttons
       const btnStyle = 'background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;' +
         'display:flex;align-items:center;justify-content:center;margin-top:6px;';
 
@@ -11671,7 +12353,7 @@
       const btn1 = document.createElement('button');
       btn1.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:6px;">' + (T.cEinfr || 'EINFRIEREN') + ' <span style="font-size:1.2em;line-height:1">&#10052;</span></span>';
       btn1.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
       btn1.onclick = () => {
         // Vollständigen Spielstand einfrieren
@@ -11715,7 +12397,7 @@
       const btn2 = document.createElement('button');
       btn2.textContent = T.cWeiter || 'WEITER';
       btn2.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:url("buttonfilz.webp") center/cover no-repeat;' +
-        'border:none;width:282px;height:52px;font:bold 18px Arial;letter-spacing:2px;' +
+        'border:none;width:226px;height:42px;font:bold 18px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;';
       btn2.onclick = () => ov.remove();
 
@@ -11794,6 +12476,8 @@
       if (window._pauseTextMesh) window._pauseTextMesh.visible = false;
       if (window._anlBtnIconMesh) window._anlBtnIconMesh.visible = false;
       if (window._anlBtnTextMesh) window._anlBtnTextMesh.visible = false;
+      if (window._tutBtnIconMesh) window._tutBtnIconMesh.visible = false;
+      if (window._tutBtnTextMesh) window._tutBtnTextMesh.visible = false;
       if (window._targetMeshes) Object.values(window._targetMeshes).forEach(m => m.visible = false);
       if (window._suitMeshes) Object.values(window._suitMeshes).forEach(m => m.visible = false);
       if (window._targetRankMesh) window._targetRankMesh.visible = false;
@@ -12434,7 +13118,7 @@
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
             (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
-          showCardAnleitung();
+          showCardAnleitung(window._cardMode || 'offen');
           lastTouchPos = null;
           return;
         }
@@ -12766,11 +13450,33 @@
         }
       }
 
+
+      // Tutorial-Button (handsilber) Desktop-Raycaster
+      if (window._tutBtnIconMesh && window._tutBtnIconMesh.visible) {
+        if (vkRaycaster.intersectObject(window._tutBtnIconMesh).length > 0 ||
+            (window._tutBtnTextMesh && vkRaycaster.intersectObject(window._tutBtnTextMesh).length > 0)) {
+          window._cardMode = 'offen';
+          runCardTutorial();
+          return;
+        }
+      }
+
+
+      // Tutorial-Button (handsilber) Desktop-Raycaster
+      if (window._tutBtnIconMesh && window._tutBtnIconMesh.visible) {
+        if (vkRaycaster.intersectObject(window._tutBtnIconMesh).length > 0 ||
+            (window._tutBtnTextMesh && vkRaycaster.intersectObject(window._tutBtnTextMesh).length > 0)) {
+          window._cardMode = 'offen';
+          runCardTutorial();
+          return;
+        }
+      }
+
       // ANLEITUNG-Button (3D) click (Desktop)
       if (window._anlBtnIconMesh && window._anlBtnIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
             (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
-          showCardAnleitung();
+          showCardAnleitung(window._cardMode || 'offen');
           return;
         }
       }
@@ -13602,6 +14308,13 @@
         e.preventDefault();
         
         const touch = e.touches[0];
+        // Nur kippen wenn Touch auf dem Würfel
+        const _r = renderer.domElement.getBoundingClientRect();
+        const _nx = ((touch.clientX - _r.left) / _r.width) * 2 - 1;
+        const _ny = -((touch.clientY - _r.top) / _r.height) * 2 + 1;
+        const _rc = new THREE.Raycaster();
+        _rc.setFromCamera(new THREE.Vector2(_nx, _ny), camera);
+        if (_rc.intersectObject(cube).length === 0) return;
         swipeStartX = touch.clientX;
         swipeStartY = touch.clientY;
         isSwiping = true;
