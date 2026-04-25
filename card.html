@@ -4871,6 +4871,25 @@
       disableReplayBlocker();
       await new Promise(r => setTimeout(r, 100));
 
+      // Debug-Log
+      let _tdbg = document.getElementById('_tutDbg');
+      if (!_tdbg) {
+        _tdbg = document.createElement('div');
+        _tdbg.id = '_tutDbg';
+        _tdbg.style.cssText = 'position:fixed;top:5px;right:5px;z-index:99999;' +
+          'background:rgba(0,0,0,0.85);color:#0f0;font:10px monospace;' +
+          'padding:3px 5px;max-width:140px;white-space:pre-wrap;' +
+          'border:1px solid #0f0;line-height:1.2;pointer-events:none;';
+        document.body.appendChild(_tdbg);
+      }
+      _tdbg.textContent = '';
+      const _tlog = (m) => {
+        const t = (performance.now()/1000).toFixed(1);
+        _tdbg.textContent = t+' '+m+'\n'+_tdbg.textContent;
+        if (_tdbg.textContent.length > 600) _tdbg.textContent = _tdbg.textContent.slice(0,600);
+      };
+      _tlog('TUT START');
+
       window._tutorialRunning = true;
 
       // === INTRO Overlay ZUERST erstellen (überdeckt Themenseite und evtl. Spiel-Flash) ===
@@ -5165,26 +5184,34 @@
         }
 
         // Kipp 1 + 2 (CW)
+        _tlog('K1 CW');
         await tutImpulsKipp('cw');
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { _tlog('ABORT nach K1'); throw new ReplayAbort(); }
+        _tlog('K2 CW');
         await tutImpulsKipp('cw');
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { _tlog('ABORT nach K2'); throw new ReplayAbort(); }
 
         // === SCHRITT 4: Rückkipp (echt, kein Block) ===
         await sleep(300);
+        _tlog('K3 CCW');
         await tutImpulsKipp('ccw');
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { _tlog('ABORT nach K3'); throw new ReplayAbort(); }
         await sleep(300);
 
         // === SCHRITT 5: Wieder vorwärts ===
+        _tlog('K4 CW');
         await tutImpulsKipp('cw');
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { _tlog('ABORT nach K4'); throw new ReplayAbort(); }
 
         // Kipp 4 + 5 (CW) — netto 4 CW
+        _tlog('K5 CW');
         await tutImpulsKipp('cw');
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { _tlog('ABORT nach K5'); throw new ReplayAbort(); }
+        _tlog('K6 CW');
         await tutImpulsKipp('cw');
-        if (aborted()) throw new ReplayAbort();
+        if (aborted()) { _tlog('ABORT nach K6'); throw new ReplayAbort(); }
+
+        _tlog('-> SCHRITT 6 LongTap');
 
         // === SCHRITT 6: Slot antippen ===
         await sleep(600);
@@ -5329,7 +5356,8 @@
         await sleep(7000);
 
       } catch(e) {
-        if (!(e instanceof ReplayAbort)) console.error('[TUT]', e);
+        if (e instanceof ReplayAbort) { _tlog('ReplayAbort caught'); }
+        else { _tlog('ERR: '+(e.message||e)); console.error('[TUT]', e); }
       } finally {
         replayActive = false;
         disableReplayBlocker();
@@ -5409,8 +5437,7 @@
             if (handShadowMesh) handShadowMesh.visible = true;
             disableReplayBlocker();
             backToStartScreen();
-            _cardModePhase = 1; window._cardMode = 'offen';
-            setTimeout(() => handleStart(false), 500);
+            // Themenseite bleibt sichtbar — User wählt selbst SPIELEN/TUTORIALS
           };
           btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
           innerDiv.appendChild(btnPlay);
