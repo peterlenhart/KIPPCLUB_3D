@@ -10498,12 +10498,7 @@
       _dbg('btnSp CLICK menuSel=' + window._menuSelState + ' ph=' + _cardModePhase);
       if (window._menuSelState === 1) {
         _dbg('  -> Tutorial-Pfad START');
-        window._menuSelState = 0;
-        resetMenuButtons();
-        _cardModePhase = 1;
-        window._cardMode = 'offen';
-        handleStart(false);
-        _dbg('  -> handleStart fertig, warte 1100ms');
+        // setTimeout ZUERST anlegen, damit es auch läuft falls handleStart wirft
         setTimeout(() => {
           _dbg('  -> setTimeout feuert -> runCardTutorial');
           window._cardMode = 'offen';
@@ -10511,9 +10506,19 @@
             runCardTutorial();
             _dbg('  -> runCardTutorial gerufen (ohne Throw)');
           } catch(e) {
-            _dbg('  -> ERROR: ' + e.message);
+            _dbg('  -> runCardTutorial ERROR: ' + e.message);
           }
         }, 1100);
+        window._menuSelState = 0;
+        resetMenuButtons();
+        _cardModePhase = 1;
+        window._cardMode = 'offen';
+        try {
+          handleStart(false);
+          _dbg('  -> handleStart fertig (sync ok)');
+        } catch(e) {
+          _dbg('  -> handleStart THROW: ' + e.message);
+        }
         return;
       }
       _dbg('  -> Spiel-Pfad (handleStart)');
@@ -10524,12 +10529,7 @@
       _dbg('btnSp TOUCH menuSel=' + window._menuSelState + ' ph=' + _cardModePhase);
       if (window._menuSelState === 1) {
         _dbg('  -> Tutorial-Pfad START (touch)');
-        window._menuSelState = 0;
-        resetMenuButtons();
-        _cardModePhase = 1;
-        window._cardMode = 'offen';
-        handleStart(false);
-        _dbg('  -> handleStart fertig (touch), warte 1100ms');
+        // setTimeout ZUERST anlegen, damit es auch läuft falls handleStart wirft
         setTimeout(() => {
           _dbg('  -> setTimeout feuert -> runCardTutorial (touch)');
           window._cardMode = 'offen';
@@ -10537,9 +10537,19 @@
             runCardTutorial();
             _dbg('  -> runCardTutorial gerufen (ohne Throw)');
           } catch(e) {
-            _dbg('  -> ERROR: ' + e.message);
+            _dbg('  -> runCardTutorial ERROR: ' + e.message);
           }
         }, 1100);
+        window._menuSelState = 0;
+        resetMenuButtons();
+        _cardModePhase = 1;
+        window._cardMode = 'offen';
+        try {
+          handleStart(false);
+          _dbg('  -> handleStart fertig (touch sync ok)');
+        } catch(e) {
+          _dbg('  -> handleStart THROW: ' + e.message);
+        }
         return;
       }
       _dbg('  -> Spiel-Pfad (handleStart, touch)');
