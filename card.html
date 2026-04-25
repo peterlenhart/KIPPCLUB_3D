@@ -6471,6 +6471,7 @@
           hintText.style.display = 'none';
           // Counter zurück an Originalposition falls noch in Mitte
           counterOrigPos = null;
+          window._menuSelState = 0;
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
           startKipp21(false);
         };
@@ -12433,6 +12434,7 @@
       document.getElementById('btnAnleitung').style.display = '';
       document.getElementById('btnDaily').style.display = '';
       _cardModePhase = 0;
+      window._menuSelState = 0;
       const _s1 = document.getElementById('_cardSub1');
       const _s2 = document.getElementById('_cardSub2');
       if (_s1) _s1.style.display = 'none';
