@@ -10483,16 +10483,19 @@
         const preOv = document.createElement('div');
         preOv.id = '_tutPreOv';
         preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
-          'z-index:99;background:#000;';
+          'z-index:99;background:#000;opacity:1;transition:opacity 2s ease;';
         document.body.appendChild(preOv);
         // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
         setTimeout(() => {
           window._cardMode = 'offen';
           try { runCardTutorial(); } catch(e) {}
-          // Pre-Overlay entfernen, sobald Tutorial-Intro (z-index:100) sichtbar
+          // Pre-Overlay langsam ausfaden, sobald Tutorial-Intro übernommen hat
           setTimeout(() => {
             const ov = document.getElementById('_tutPreOv');
-            if (ov) ov.remove();
+            if (ov) {
+              ov.style.opacity = '0';
+              setTimeout(() => { if (ov.parentNode) ov.remove(); }, 2100);
+            }
           }, 2000);
         }, 1100);
         window._menuSelState = 0;
@@ -10511,7 +10514,7 @@
         const preOv = document.createElement('div');
         preOv.id = '_tutPreOv';
         preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
-          'z-index:99;background:#000;';
+          'z-index:99;background:#000;opacity:1;transition:opacity 2s ease;';
         document.body.appendChild(preOv);
         // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
         setTimeout(() => {
@@ -10519,7 +10522,10 @@
           try { runCardTutorial(); } catch(e) {}
           setTimeout(() => {
             const ov = document.getElementById('_tutPreOv');
-            if (ov) ov.remove();
+            if (ov) {
+              ov.style.opacity = '0';
+              setTimeout(() => { if (ov.parentNode) ov.remove(); }, 2100);
+            }
           }, 2000);
         }, 1100);
         window._menuSelState = 0;
