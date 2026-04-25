@@ -10479,12 +10479,16 @@
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (window._menuSelState === 1) {
-        // GOTO Absprung zu Tut+1 (wie handsilber-Klick im Spiel)
+        // GOTO: Spiel starten, dann Tut+1 (wie handsilber-Klick im laufenden Spiel)
         window._menuSelState = 0;
         resetMenuButtons();
         _cardModePhase = 1;
         window._cardMode = 'offen';
-        runCardTutorial();
+        handleStart(false);
+        setTimeout(() => {
+          window._cardMode = 'offen';
+          runCardTutorial();
+        }, 1100);
         return;
       }
       handleStart(false);
@@ -10492,12 +10496,16 @@
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
       if (window._menuSelState === 1) {
-        // GOTO Absprung zu Tut+1 (wie handsilber-Klick im Spiel)
+        // GOTO: Spiel starten, dann Tut+1 (wie handsilber-Klick im laufenden Spiel)
         window._menuSelState = 0;
         resetMenuButtons();
         _cardModePhase = 1;
         window._cardMode = 'offen';
-        runCardTutorial();
+        handleStart(false);
+        setTimeout(() => {
+          window._cardMode = 'offen';
+          runCardTutorial();
+        }, 1100);
         return;
       }
       handleStart(false);
