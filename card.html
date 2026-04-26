@@ -988,7 +988,7 @@
 
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AD-01</div>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -6216,7 +6216,12 @@
 
         // === JETZT Eckblick starten (Würfel hebt sich) ===
         runKipp21EckblickKniff(true);
-        await sleep(2000); // Würfel steigt auf Höchststand
+        // Auf Eckblick-Höchststand warten (Hook statt fixer sleep)
+        await new Promise(function(res) {
+          window._onEckblickRiseComplete = res;
+          setTimeout(res, 8000); // Timeout-Fallback
+        });
+        await sleep(300);
         if (aborted()) throw new ReplayAbort();
 
         // === Box-Freistellung: "Achtung! „K" finden und merken." ===
@@ -6227,9 +6232,55 @@
         }
         if (aborted()) throw new ReplayAbort();
 
-        // === SCHRITT 2: Würfel antippen → senkt sich ===
+        // === SCHRITT 2: Hand tippt auf relevanten Slot (Wert = playerValShort) → Würfel senkt sich ===
+        // Slot mit deck[i] dessen displayNum gleich playerValShort entspricht
+        let _tutTapDeckIdx = -1;
+        for (let i = 0; i < 12; i++) {
+          if (displayNum(deck[i]).replace('.','') === playerValShort) {
+            _tutTapDeckIdx = i;
+            break;
+          }
+        }
+        // Slot-Bildschirmposition via 3D-Projektion (cube.matrixWorld) — wie Match-Tut
+        function _tutGetSlotScreen(dIdx) {
+          var half = 0.234375, cellSz = 0.15625;
+          var fMap = {
+            f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
+            f1: [[4,'0,0'],[5,'0,1'],[6,'1,2'],[7,'2,2']],
+            f2: [[8,'2,2'],[9,'2,1'],[10,'1,0'],[11,'0,0']]
+          };
+          var fk, row, col;
+          for (var f in fMap) {
+            for (var i = 0; i < fMap[f].length; i++) {
+              if (fMap[f][i][0] === dIdx) {
+                fk = f;
+                var rc = fMap[f][i][1].split(',').map(Number);
+                row = rc[0]; col = rc[1];
+                break;
+              }
+            }
+            if (fk) break;
+          }
+          if (!fk) return { x: 180, y: 360 };
+          var local = new THREE.Vector3();
+          if (fk === 'f0') {
+            local.set(-half + (col+0.5)*cellSz, half - (row+0.5)*cellSz, half);
+          } else if (fk === 'f1') {
+            local.set(-half, half - (row+0.5)*cellSz, -half + (col+0.5)*cellSz);
+          } else {
+            local.set(-half + (col+0.5)*cellSz, half, -half + (row+0.5)*cellSz);
+          }
+          renderer.render(scene, camera);
+          var wp = local.clone().applyMatrix4(cube.matrixWorld);
+          wp.project(camera);
+          return {
+            x: Math.round((wp.x * 0.5 + 0.5) * 360),
+            y: Math.round((-wp.y * 0.5 + 0.5) * 720)
+          };
+        }
+        var _tutSlotScr = (_tutTapDeckIdx >= 0) ? _tutGetSlotScreen(_tutTapDeckIdx) : { x: 178, y: 232 };
         await sleep(600);
-        await handTapFromSouth(178, 232, 400);
+        await handTapFromSouth(_tutSlotScr.x, _tutSlotScr.y, 400);
         if (aborted()) throw new ReplayAbort();
         kipp21KniffAbort = true;
         if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
