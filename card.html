@@ -988,6 +988,7 @@
 
 </head>
 <body>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 01</div>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -6476,21 +6477,18 @@
             'clip-path:polygon('+outer+', '+inner+');';
           ltOv.appendChild(blurDiv);
 
-          // Text rechts neben C10, auf Höhe Zeile 10
+          // Text rechts neben C10, auf Höhe Zeile 10 — als separates Element mit z-index 102
           const z10 = new THREE.Vector3(0, Y, 0.658);
           z10.project(camera);
           const textY = Math.round((-z10.y * 0.5 + 0.5) * 720);
           const txt = document.createElement('div');
-          txt.style.cssText = 'position:absolute;top:'+textY+'px;left:'+(ne.x+10)+'px;' +
-            'transform:translateY(-50%);' +
+          txt.style.cssText = 'position:fixed;top:'+textY+'px;left:calc(50% - 180px + '+(ne.x+10)+'px);' +
+            'transform:translateY(-50%);z-index:102;pointer-events:none;' +
             'font:bold 20px Arial;color:#cedb25;' +
-            'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;';
+            'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;' +
+            'opacity:0;transition:opacity 0.3s ease;';
           txt.textContent = T.cLongTap || 'Lang tippen';
-          ltOv.appendChild(txt);
-
-          // Text anfangs unsichtbar
-          txt.style.opacity = '0';
-          txt.style.transition = 'opacity 0.3s ease';
+          document.body.appendChild(txt);
 
           document.body.appendChild(ltOv);
           requestAnimationFrame(() => { ltOv.style.opacity = '1'; });
@@ -6499,7 +6497,7 @@
           const SY = 740;
           setHandPos(sx, SY);
           handEl.style.opacity = '1';
-          handEl.style.zIndex = '101';   // über dem Blur-Overlay (z-index:100)
+          handEl.style.zIndex = '101';   // über Blur (100), unter Text (102)
           updateHandShadow(sx, SY, true);
 
           // Hand bewegt sich nach oben — nach 400ms Text einblenden
@@ -6510,18 +6508,20 @@
 
           // Hand hält auf Slot
           await sleep(1200);
-          if (aborted()) { ltOv.remove(); handEl.style.opacity='0'; handEl.style.zIndex='20'; throw new ReplayAbort(); }
+          if (aborted()) { ltOv.remove(); txt.remove(); handEl.style.opacity='0'; handEl.style.zIndex='20'; throw new ReplayAbort(); }
 
           // Blur + Text ausblenden
           ltOv.style.opacity = '0';
+          txt.style.opacity = '0';
           await sleep(500);
           ltOv.remove();
+          txt.remove();
 
           // Hand hält weiter (Long-tap), dann zurück
           await sleep(900);
           await moveHandSmooth(sx, SY, 600);
           handEl.style.opacity = '0';
-          handEl.style.zIndex = '20';   // z-index zurücksetzen
+          handEl.style.zIndex = '20';
           updateHandShadow(0, 0, false);
           await sleep(100);
         }
