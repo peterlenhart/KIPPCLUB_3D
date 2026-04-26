@@ -988,7 +988,7 @@
 
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AM-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AN-02</div>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -5494,10 +5494,9 @@
         '-webkit-clip-path:polygon(' + outerM + ', ' + innerM + ');';
       ltOv.appendChild(ltBlur);
 
-      // Text knapp unter dem freigestellten Bereich
-      var textBelow = slotB + 28;
+      // Text immer südlich der Hand-Position
       var ltTxt = document.createElement('div');
-      ltTxt.style.cssText = 'position:absolute;top:' + textBelow + 'px;left:50%;transform:translateX(-50%);' +
+      ltTxt.style.cssText = 'position:absolute;top:' + (tapSY + 70) + 'px;left:' + tapSX + 'px;transform:translateX(-50%);' +
         'font:bold 20px Arial;color:#cedb25;' +
         'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;' +
         'opacity:0;transition:opacity 0.3s ease;';
@@ -5889,9 +5888,8 @@
           '-webkit-clip-path:polygon(' + outerM2 + ', ' + innerM2 + ');';
         ltOv2.appendChild(ltBlur2);
         
-        var slotB2 = Math.max(r_se2.y, r_sw2.y);
         var ltTxt2 = document.createElement('div');
-        ltTxt2.style.cssText = 'position:absolute;top:' + (slotB2 + 28) + 'px;left:50%;transform:translateX(-50%);' +
+        ltTxt2.style.cssText = 'position:absolute;top:' + (tapSY2 + 70) + 'px;left:' + tapSX2 + 'px;transform:translateX(-50%);' +
           'font:bold 20px Arial;color:#cedb25;' +
           'text-shadow:0 2px 6px rgba(0,0,0,0.9);letter-spacing:1.5px;white-space:nowrap;' +
           'opacity:0;transition:opacity 0.3s ease;';
