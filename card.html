@@ -6499,6 +6499,7 @@
           const SY = 740;
           setHandPos(sx, SY);
           handEl.style.opacity = '1';
+          handEl.style.zIndex = '101';   // über dem Blur-Overlay (z-index:100)
           updateHandShadow(sx, SY, true);
 
           // Hand bewegt sich nach oben — nach 400ms Text einblenden
@@ -6509,7 +6510,7 @@
 
           // Hand hält auf Slot
           await sleep(1200);
-          if (aborted()) { ltOv.remove(); handEl.style.opacity='0'; throw new ReplayAbort(); }
+          if (aborted()) { ltOv.remove(); handEl.style.opacity='0'; handEl.style.zIndex='20'; throw new ReplayAbort(); }
 
           // Blur + Text ausblenden
           ltOv.style.opacity = '0';
@@ -6520,6 +6521,7 @@
           await sleep(900);
           await moveHandSmooth(sx, SY, 600);
           handEl.style.opacity = '0';
+          handEl.style.zIndex = '20';   // z-index zurücksetzen
           updateHandShadow(0, 0, false);
           await sleep(100);
         }
