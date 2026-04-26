@@ -4871,9 +4871,49 @@
       disableReplayBlocker();
       await new Promise(r => setTimeout(r, 100));
 
-      // Normales Spiel starten + Intro SOFORT gleichzeitig
       window._tutorialRunning = true;
-      handleStart(false);
+      
+      // === Spiel-Setup direkt (ohne handleStart/startKipp21, die kipp21Generation invalidieren) ===
+      window._cardMode = 'offen';
+      _cardModePhase = 1;
+      try { unlockAndPlayBgMusic(); } catch(e) {}
+      document.getElementById('startOverlay').style.display = 'none';
+      if (window._buttonOverlay) window._buttonOverlay.visible = false;
+      // Targets gestapelt sichtbar
+      if (window._targetMeshes) {
+        Object.entries(window._targetMeshes).forEach(([name, m]) => { m.visible = true; });
+      }
+      if (window._targetRankMesh) window._targetRankMesh.visible = false;
+      Object.values(window._suitMeshes || {}).forEach(m => m.visible = false);
+      try { startTargetPulse(); } catch(e) {}
+      // Stich-State initialisieren
+      window._stichNum = 0;
+      window._stichCycle = 0;
+      window._stichResults = [];
+      window._playerWinCount = 0;
+      window._bankWinCount = 0;
+      window._stichGeneration = (window._stichGeneration || 0) + 1;
+      window._playedSlots = new Set();
+      // Target-State zurücksetzen
+      if (window._cardTargetState) {
+        window._cardTargetState.usedNumbers.clear();
+        window._cardTargetState.drawsCount = 0;
+        window._cardTargetState.currentTarget = null;
+        window._cardTargetState.round = 1;
+      }
+      // Stich-Grafiken ausblenden
+      if (window._stichMeshes) Object.values(window._stichMeshes).forEach(m => m.visible = false);
+      // Playercard ausblenden
+      if (window._playerCardMesh) window._playerCardMesh.visible = false;
+      if (window._playerRankMesh) window._playerRankMesh.visible = false;
+      Object.values(window._playerSuitMeshes || {}).forEach(m => m.visible = false);
+      // Würfel-Texturen zurücksetzen
+      if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+      // Scores sichtbar
+      if (window._scorePLMesh) window._scorePLMesh.visible = true;
+      if (window._scoreBKMesh) window._scoreBKMesh.visible = true;
+      try { initScores3D(); } catch(e) {}
+      await new Promise(r => setTimeout(r, 200));
 
       // === INTRO: Sofort Blur + Zeile für Zeile ===
       {
@@ -5222,6 +5262,11 @@
             }
           }
         }
+        // Letzter Notfall: Slot 0, _playedSlots ignorieren
+        if (targetSlot < 0 && face) {
+          targetSlot = 0;
+          targetDeckIdx = baseIdx;
+        }
 
         // Hand zum Slot — Position via deckIdx
         const slotPos = getSlotScreenPos(targetDeckIdx);
@@ -5407,8 +5452,7 @@
             if (handShadowMesh) handShadowMesh.visible = true;
             disableReplayBlocker();
             backToStartScreen();
-            _cardModePhase = 1; window._cardMode = 'offen';
-            setTimeout(() => handleStart(false), 500);
+            // Themenseite bleibt sichtbar — User wählt selbst SPIELEN/TUTORIALS
           };
           btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
           innerDiv.appendChild(btnPlay);
@@ -6469,6 +6513,7 @@
           hintText.style.display = 'none';
           // Counter zurück an Originalposition falls noch in Mitte
           counterOrigPos = null;
+          window._menuSelState = 0;
           if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
           startKipp21(false);
         };
@@ -10403,14 +10448,6 @@
         runCardTutorial();
         return;
       }
-      if (window._menuSelState === 1) {
-        // KIPP +1 Tutorial
-        window._menuSelState = 0;
-        window._cardMode = 'offen';
-        _cardModePhase = 1;
-        runCardTutorial();
-        return;
-      }
 
       if (!texturesReady || _startBtnLock) return;
 
@@ -10479,30 +10516,12 @@
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (window._menuSelState === 1) {
-        // Black-Overlay verdeckt Spiel-Flash, bis Tutorial-Intro übernimmt
-        const preOv = document.createElement('div');
-        preOv.id = '_tutPreOv';
-        preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
-          'z-index:99;background:#000;opacity:1;transition:opacity 2s ease;';
-        document.body.appendChild(preOv);
-        // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
-        setTimeout(() => {
-          window._cardMode = 'offen';
-          try { runCardTutorial(); } catch(e) {}
-          // Pre-Overlay langsam ausfaden, sobald Tutorial-Intro übernommen hat
-          setTimeout(() => {
-            const ov = document.getElementById('_tutPreOv');
-            if (ov) {
-              ov.style.opacity = '0';
-              setTimeout(() => { if (ov.parentNode) ov.remove(); }, 2100);
-            }
-          }, 2000);
-        }, 1100);
+        // KIPP +1 Tutorial direkt starten (wie handsilber-Klick)
         window._menuSelState = 0;
         resetMenuButtons();
         _cardModePhase = 1;
         window._cardMode = 'offen';
-        try { handleStart(false); } catch(e) {}
+        runCardTutorial();
         return;
       }
       handleStart(false);
@@ -10510,29 +10529,11 @@
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
       if (window._menuSelState === 1) {
-        // Black-Overlay verdeckt Spiel-Flash, bis Tutorial-Intro übernimmt
-        const preOv = document.createElement('div');
-        preOv.id = '_tutPreOv';
-        preOv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
-          'z-index:99;background:#000;opacity:1;transition:opacity 2s ease;';
-        document.body.appendChild(preOv);
-        // setTimeout ZUERST, damit Tutorial auch läuft falls handleStart wirft
-        setTimeout(() => {
-          window._cardMode = 'offen';
-          try { runCardTutorial(); } catch(e) {}
-          setTimeout(() => {
-            const ov = document.getElementById('_tutPreOv');
-            if (ov) {
-              ov.style.opacity = '0';
-              setTimeout(() => { if (ov.parentNode) ov.remove(); }, 2100);
-            }
-          }, 2000);
-        }, 1100);
         window._menuSelState = 0;
         resetMenuButtons();
         _cardModePhase = 1;
         window._cardMode = 'offen';
-        try { handleStart(false); } catch(e) {}
+        runCardTutorial();
         return;
       }
       handleStart(false);
@@ -12467,6 +12468,7 @@
       document.getElementById('btnAnleitung').style.display = '';
       document.getElementById('btnDaily').style.display = '';
       _cardModePhase = 0;
+      window._menuSelState = 0;
       const _s1 = document.getElementById('_cardSub1');
       const _s2 = document.getElementById('_cardSub2');
       if (_s1) _s1.style.display = 'none';
