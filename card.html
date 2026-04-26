@@ -988,7 +988,7 @@
 
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AP-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AP-03</div>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -3352,22 +3352,26 @@
           unlockAndPlayBgMusic();
           window._cardMode = 'offen';
           _cardModePhase = 1;
-          // Polling: warten bis texturesReady true ist, dann handleStart
+          // Polling: warten bis ALLE relevanten Meshes existieren, dann handleStart
           var _playReadyPoll = setInterval(function(){
-            if (texturesReady) {
+            var allReady = texturesReady
+              && window._buttonOverlay
+              && window._targetMeshes && Object.keys(window._targetMeshes).length >= 7
+              && window._tutBtnIconMesh && window._tutBtnTextMesh
+              && window._anlBtnIconMesh && window._anlBtnTextMesh
+              && window._scorePLMesh && window._scoreBKMesh
+              && window._playerCardMesh
+              && window._stichMeshes && Object.keys(window._stichMeshes).length >= 12;
+            if (allReady) {
               clearInterval(_playReadyPoll);
               try { handleStart(false); } catch(e){}
             }
           }, 100);
-          // Sicherheitsnetz: nach 10s aufgeben
-          setTimeout(function(){ clearInterval(_playReadyPoll); }, 10000);
-          // _buttonOverlay nachträglich verstecken (lädt async, kann nach handleStart erscheinen)
-          var _ovHidePoll = setInterval(function(){
-            if (window._buttonOverlay) {
-              window._buttonOverlay.visible = false;
-            }
-          }, 100);
-          setTimeout(function(){ clearInterval(_ovHidePoll); }, 10000);
+          // Sicherheitsnetz: nach 15s Fallback-Aufruf
+          setTimeout(function(){
+            clearInterval(_playReadyPoll);
+            try { handleStart(false); } catch(e){}
+          }, 15000);
           return;
         }
         if (levelParam === 'brainy') {
