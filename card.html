@@ -988,7 +988,7 @@
 
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AT-01</div>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -3371,6 +3371,35 @@
           setTimeout(function(){
             clearInterval(_playReadyPoll);
             try { handleStart(false); } catch(e){}
+          }, 15000);
+          return;
+        }
+        if (playParam === 'match') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          document.getElementById('startChallengeText').style.display = 'none';
+          unlockAndPlayBgMusic();
+          window._cardMode = 'verdeckt';
+          window._bluffMode = true;
+          _cardModePhase = 1;
+          // Polling: warten bis kritische Meshes existieren, dann showBluffModeSelection
+          var _matchReadyPoll = setInterval(function(){
+            var allReady = texturesReady
+              && window._buttonOverlay
+              && window._targetMeshes && Object.keys(window._targetMeshes).length >= 7
+              && window._tutBtnIconMesh && window._tutBtnTextMesh
+              && window._anlBtnIconMesh && window._anlBtnTextMesh
+              && window._scorePLMesh && window._scoreBKMesh
+              && window._playerCardMesh
+              && window._stichMeshes && Object.keys(window._stichMeshes).length >= 12;
+            if (allReady) {
+              clearInterval(_matchReadyPoll);
+              try { showBluffModeSelection(); } catch(e){ console.error(e); }
+            }
+          }, 100);
+          setTimeout(function(){
+            clearInterval(_matchReadyPoll);
+            try { showBluffModeSelection(); } catch(e){ console.error(e); }
           }, 15000);
           return;
         }
@@ -12538,7 +12567,7 @@
       return 'KIPP MATCH \u2014 ' + modeLabel + ' ' + result + '\n' +
         'Player ' + plScore + ' | Bank ' + bScore + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
-        'https://peterlenhart.github.io/KIPPCLUB_3D/' + '\n' +
+        'https://peterlenhart.github.io/KIPPCLUB_3D/card.html?play=match' + '\n' +
         '#KippClub #KippMatch';
     }
 
