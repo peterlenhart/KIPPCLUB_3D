@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BB-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BC-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3130,30 +3130,33 @@
           });
         }, 1500);
       } else {
-        // MISS — roter Rand, Karte fliegt zur passenden Farbe
-        card.ctx.save();
-        card.ctx.strokeStyle = '#ff0000';
-        card.ctx.lineWidth = 8;
-        card.ctx.strokeRect(1, 1, 83, 168);
-        card.ctx.strokeStyle = '#ff6666';
-        card.ctx.lineWidth = 3;
-        card.ctx.strokeRect(5, 5, 75, 160);
-        card.ctx.restore();
-        card.texture.needsUpdate = true;
-        
-        const cardColorName = card.color.name;
-        const neighborColors = SLOT_NEIGHBOR_COLORS[currentQuadrant];
-        let failSlot = 'S1';
-        for (const [slot, color] of Object.entries(neighborColors)) {
-          if (color === cardColorName) { failSlot = slot; break; }
+        // MISS — Lebens-Würfel 3× blinken, dann ausgrauen
+        brainyFails++;
+        const wrap = brainyEnsureLivesUI();
+        const hearts = wrap.querySelectorAll('.brainyLife');
+        const idx = brainyFails - 1;
+        if (idx >= 0 && idx < hearts.length) {
+          const h = hearts[idx];
+          let blinks = 0;
+          (function blinkTick() {
+            if (blinks >= 6) {
+              // 3× blinken = 6 Toggles, danach ausgrauen
+              h.style.opacity = '0.4';
+              h.style.filter = 'grayscale(1) brightness(0.5)';
+              return;
+            }
+            h.style.opacity = (blinks % 2 === 0) ? '0.2' : '1';
+            blinks++;
+            setTimeout(blinkTick, 180);
+          })();
         }
+        // Kippziel-Karte zurück zu leernohit für nächste Runde
         setTimeout(() => {
-          animateCardFly(card, currentQuadrant, failSlot, true).then(() => {
-            card.mesh.material.transparent = true;
-            card.mesh.material.opacity = 0.35;
-            card.mesh.material.depthWrite = false;
-            card.mesh.material.needsUpdate = true;
-          });
+          if (leerImage) {
+            card.ctx.clearRect(0, 0, 85, 170);
+            card.ctx.drawImage(leerImage, 0, 0, 85, 170);
+            card.texture.needsUpdate = true;
+          }
         }, 1500);
       }
     }
@@ -6236,7 +6239,7 @@
           // Right face
           '<polygon points="88,30 50,50 50,90 88,70" fill="url(#fRight)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
         '</svg>';
-      const _livesCount = 3;
+      const _livesCount = 4;
       for (let i = 0; i < _livesCount; i++) {
         const h = document.createElement('div');
         h.className = 'brainyLife';
@@ -6939,6 +6942,7 @@
       
       // BUMBLEBRAIN: nur das mittige leernohit-Kärtchen sichtbar, pulsierend
       if (currentLevel === 1) {
+        if (typeof brainyResetLives === 'function') brainyResetLives();
         if (gameCards[0] && gameCards[0].mesh) {
           if (leerImage) {
             gameCards[0].ctx.clearRect(0, 0, 85, 170);
