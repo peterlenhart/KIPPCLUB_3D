@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BE-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BE-04</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -6331,7 +6331,7 @@
       const _btnPos = new THREE.Vector3(0, 0.47275, 1.28415);
       _btnPos.project(camera);
       const _screenY = Math.round((-_btnPos.y * 0.5 + 0.5) * 720);
-      wrap.style.cssText = 'position:absolute;top:' + (_screenY - 70) + 'px;left:0;width:100%;' +
+      wrap.style.cssText = 'position:absolute;top:' + (_screenY - 48) + 'px;left:0;width:100%;' +
         'z-index:25;pointer-events:none;display:flex;justify-content:space-around;align-items:center;padding:0 30px;box-sizing:border-box;';
       const hearts = wrap.querySelectorAll('.brainyLife');
       hearts.forEach(h => {
