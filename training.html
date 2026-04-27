@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BC-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BD-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3159,6 +3159,74 @@
           }
         }, 1500);
       }
+    }
+    
+    // === BUMBLEBRAIN: Finger-Kipp-Suite (aus card.html) ===
+    const BUMBLE_DRAG_SENSITIVITY = 80;
+    const BUMBLE_CW_DIRS = new Set(['east', 'south_from_q1', 'west_from_q2', 'north']);
+    let bumbleDragActive = false;
+    let bumbleDragPivotGroup = null;
+    let bumbleDragAxis = 'x';
+    let bumbleDragTargetSign = 1;
+    let bumbleDragToQ = 0;
+    let bumbleDragCurrentAngle = 0;
+    let bumbleCurrentDragDir = null;
+    let bumbleSwipeStartX = 0;
+    let bumbleSwipeStartY = 0;
+    let bumbleIsSwiping = false;
+    
+    function getBumbleKippConfig(direction) {
+      const configs = {
+        'north':         { pivotPoint: new THREE.Vector3(-0.234375, 0, 0.109375), axis: 'x', targetRotation: -Math.PI/2, toQ: 0 },
+        'south':         { pivotPoint: new THREE.Vector3(-0.234375, 0, 0.109375), axis: 'x', targetRotation:  Math.PI/2, toQ: 3 },
+        'east':          { pivotPoint: new THREE.Vector3(0, 0, 0.343125),         axis: 'z', targetRotation: -Math.PI/2, toQ: 1 },
+        'west':          { pivotPoint: new THREE.Vector3(0, 0, 0.343125),         axis: 'z', targetRotation:  Math.PI/2, toQ: 0 },
+        'south_from_q1': { pivotPoint: new THREE.Vector3(0.234375, 0, 0.109375),  axis: 'x', targetRotation:  Math.PI/2, toQ: 2 },
+        'north_from_q2': { pivotPoint: new THREE.Vector3(0.234375, 0, 0.109375),  axis: 'x', targetRotation: -Math.PI/2, toQ: 1 },
+        'west_from_q2':  { pivotPoint: new THREE.Vector3(0, 0, 0.343125),         axis: 'z', targetRotation:  Math.PI/2, toQ: 3 },
+        'east_from_q3':  { pivotPoint: new THREE.Vector3(0, 0, 0.343125),         axis: 'z', targetRotation: -Math.PI/2, toQ: 2 }
+      };
+      return configs[direction];
+    }
+    
+    function getBumbleValidDirection(deltaX, deltaY) {
+      if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+        if (deltaY < 0) {
+          if (currentQuadrant === 3) return 'north';
+          if (currentQuadrant === 2) return 'north_from_q2';
+        } else {
+          if (currentQuadrant === 0) return 'south';
+          if (currentQuadrant === 1) return 'south_from_q1';
+        }
+      } else {
+        if (deltaX > 0) {
+          if (currentQuadrant === 0) return 'east';
+          if (currentQuadrant === 3) return 'east_from_q3';
+        } else {
+          if (currentQuadrant === 1) return 'west';
+          if (currentQuadrant === 2) return 'west_from_q2';
+        }
+      }
+      return null;
+    }
+    
+    function bumbleFinalizeKipp(newQ) {
+      if (cube.parent === kipGroup) {
+        return;
+      }
+      cube.updateMatrixWorld();
+      const newWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(newWorldPos);
+      const newWorldQuat = new THREE.Quaternion();
+      cube.getWorldQuaternion(newWorldQuat);
+      const parent = cube.parent;
+      if (parent && parent.parent) {
+        parent.parent.remove(parent);
+      }
+      cube.position.copy(newWorldPos);
+      cube.quaternion.copy(newWorldQuat);
+      kipGroup.add(cube);
+      currentQuadrant = newQ;
     }
     
     function checkTreffer() {
@@ -9888,6 +9956,18 @@
         window._bumbleLongTapPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         window._bumbleLongTapStart = Date.now();
       }
+      // BUMBLEBRAIN: Finger-Kipp Touchstart — Würfelberührung erkennen
+      if (currentLevel === 1 && !bumbleDragActive && !window._bumbleEckblickRunning && !window._bumbleResultRunning && !isAnimating) {
+        const rectBD = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((e.touches[0].clientX - rectBD.left) / rectBD.width) * 2 - 1;
+        vkMouse.y = -((e.touches[0].clientY - rectBD.top) / rectBD.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(cube, true).length > 0) {
+          bumbleSwipeStartX = e.touches[0].clientX;
+          bumbleSwipeStartY = e.touches[0].clientY;
+          bumbleIsSwiping = true;
+        }
+      }
       // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active) {
         dismissKippenWarning();
@@ -9906,11 +9986,124 @@
           window._bumbleLongTapPos = null;
         }
       }
+      
+      // BUMBLEBRAIN: Finger-Kipp Touchmove
+      if (currentLevel === 1 && bumbleIsSwiping && e.touches[0]) {
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - bumbleSwipeStartX;
+        const deltaY = touch.clientY - bumbleSwipeStartY;
+        
+        if (!bumbleDragActive) {
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return;
+          const direction = getBumbleValidDirection(deltaX, deltaY);
+          if (!direction) { bumbleIsSwiping = false; return; }
+          
+          bumbleCurrentDragDir = direction;
+          const cfg = getBumbleKippConfig(direction);
+          bumbleDragAxis = cfg.axis;
+          bumbleDragTargetSign = cfg.targetRotation > 0 ? 1 : -1;
+          bumbleDragToQ = cfg.toQ;
+          
+          bumbleDragPivotGroup = new THREE.Group();
+          bumbleDragPivotGroup.position.copy(cfg.pivotPoint);
+          kipGroup.add(bumbleDragPivotGroup);
+          
+          cube.updateMatrixWorld();
+          const cubeWorldPos = new THREE.Vector3();
+          cube.getWorldPosition(cubeWorldPos);
+          kipGroup.remove(cube);
+          cube.position.copy(cubeWorldPos.clone().sub(cfg.pivotPoint));
+          bumbleDragPivotGroup.add(cube);
+          
+          bumbleDragActive = true;
+          bumbleDragCurrentAngle = 0;
+        }
+        
+        // Live-Rotation berechnen
+        const relevantDelta = (bumbleDragAxis === 'x') ? deltaY : -deltaX;
+        let angle = (relevantDelta / BUMBLE_DRAG_SENSITIVITY) * (Math.PI / 2);
+        if (bumbleDragTargetSign > 0) {
+          angle = Math.max(0, Math.min(Math.PI / 2, angle));
+        } else {
+          angle = Math.min(0, Math.max(-Math.PI / 2, angle));
+        }
+        bumbleDragCurrentAngle = angle;
+        if (bumbleDragAxis === 'x') {
+          bumbleDragPivotGroup.rotation.x = bumbleDragCurrentAngle;
+        } else {
+          bumbleDragPivotGroup.rotation.z = bumbleDragCurrentAngle;
+        }
+      }
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchend', (e) => {
       if (replayActive) return;
       if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
+      
+      // BUMBLEBRAIN: Finger-Kipp Touchend — Snap zur Ziel- oder Ausgangs-Position
+      if (currentLevel === 1 && bumbleDragActive) {
+        bumbleIsSwiping = false;
+        const absAngle = Math.abs(bumbleDragCurrentAngle);
+        let targetAngle, finalQ;
+        if (absAngle > Math.PI / 4) {
+          targetAngle = bumbleDragTargetSign * Math.PI / 2;
+          finalQ = bumbleDragToQ;
+        } else {
+          targetAngle = 0;
+          finalQ = currentQuadrant;
+        }
+        isAnimating = true;
+        let bumbleKlackFired = false;
+        const startAngle = bumbleDragCurrentAngle;
+        const angleDiff = targetAngle - startAngle;
+        const fallDuration = Math.max(150, Math.abs(angleDiff) / (Math.PI / 2) * 420);
+        const startTime = Date.now();
+        (function animateBumbleFall() {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / fallDuration, 1);
+          const eased = progress * progress;
+          const currentAngle = startAngle + angleDiff * eased;
+          if (bumbleDragAxis === 'x') {
+            bumbleDragPivotGroup.rotation.x = currentAngle;
+          } else {
+            bumbleDragPivotGroup.rotation.z = currentAngle;
+          }
+          if (!bumbleKlackFired && eased > 0.68 && targetAngle !== 0) {
+            bumbleKlackFired = true;
+            if (typeof playKlack === 'function') playKlack();
+          }
+          if (progress < 1) {
+            requestAnimationFrame(animateBumbleFall);
+          } else {
+            if (targetAngle === 0) {
+              // Zurückgefallen
+              cube.updateMatrixWorld();
+              const newPos = new THREE.Vector3();
+              cube.getWorldPosition(newPos);
+              const newQuat = new THREE.Quaternion();
+              cube.getWorldQuaternion(newQuat);
+              bumbleDragPivotGroup.remove(cube);
+              kipGroup.remove(bumbleDragPivotGroup);
+              cube.position.copy(newPos);
+              cube.quaternion.copy(newQuat);
+              kipGroup.add(cube);
+            } else {
+              // Gekippt
+              bumbleFinalizeKipp(finalQ);
+              if (bumbleCurrentDragDir) {
+                const isCW = BUMBLE_CW_DIRS.has(bumbleCurrentDragDir);
+                kippDirection = isCW ? 'cw' : 'ccw';
+                advanceTopFace();
+              }
+            }
+            bumbleDragActive = false;
+            bumbleDragPivotGroup = null;
+            isAnimating = false;
+          }
+        })();
+        return;
+      }
+      bumbleIsSwiping = false;
       
       // BUMBLEBRAIN: Long-Tap (≥500ms) auf Würfel → Treffererkennung
       if (currentLevel === 1 && window._bumbleSlotsHidden && window._bumbleTarget && !window._bumbleResultRunning &&
