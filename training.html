@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BF-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BG-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3121,6 +3121,17 @@
       
       // Helfer: nach Ergebnis-Anzeige neuen Kippzug starten
       function startNextBumbleRound() {
+        // Spielende-Check
+        if ((window._bumbleHits || 0) >= 4) {
+          // Alle 4 HITs → Spielende positiv
+          return;
+        }
+        if (brainyFails >= 4) {
+          // Alle Leben verbraucht → Game Over
+          if (typeof runGameOverAnimation === 'function') runGameOverAnimation();
+          if (typeof brainyEndGame === 'function') brainyEndGame();
+          return;
+        }
         // Karte zurück zu leernohit, Pulsation wieder an, Position mittig
         card.isHit = false;
         card.isMiss = false;
@@ -3131,6 +3142,7 @@
         card.mesh.material.depthWrite = true;
         card.mesh.material.needsUpdate = true;
         card.mesh.position.set(0, cardY, cardZ);
+        card.mesh.rotation.set(-Math.PI / 2, 0, 0);
         card.mesh.scale.set(1, 1, 1);
         card.mesh.visible = true;
         if (leerImage) {
@@ -3161,9 +3173,15 @@
         card.isHit = true;
         drawGoldenBorder(card);
         card.texture.needsUpdate = true;
+        gamePhase = 'kipp21';
+        if (typeof window._bumbleHits !== 'number') window._bumbleHits = 0;
+        const hitIdx = window._bumbleHits; // 0,1,2,3 — links nach rechts
+        window._bumbleHits++;
         setTimeout(() => {
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
-            showHitText(cardIdx);
+            gamePhase = 'kipp21';
+            // HIT-Text links→rechts aufgeteilt (cardIdx 0..3 wäre die Standard-Positionen)
+            showHitText(hitIdx);
             // Nach HIT-Text-Anzeige neuen Kippzug starten
             setTimeout(startNextBumbleRound, 2000);
           });
@@ -7049,6 +7067,7 @@
       
       // BUMBLEBRAIN: nur das mittige leernohit-Kärtchen sichtbar, pulsierend
       if (currentLevel === 1) {
+        window._bumbleHits = 0;
         if (typeof brainyResetLives === 'function') brainyResetLives();
         if (gameCards[0] && gameCards[0].mesh) {
           if (leerImage) {
