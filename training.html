@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BA-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BB-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -7319,6 +7319,11 @@
         const pick = candidates[Math.floor(Math.random() * candidates.length)];
         bereitsAusgegeben.add(pick.zahl + '_' + pick.color);
         window._bumbleTarget = pick;
+        
+        // gameCards[0] mit Kippziel-Info ausstatten (für checkTreffer)
+        const colorObj = GAME_COLORS.find(c => c.name === pick.color);
+        gameCards[0].zahl = pick.zahl;
+        gameCards[0].color = colorObj;
 
         // Auf gameCards[0] zeichnen: farbzielhit als Hintergrund + Zielzahl in oberer Hälfte
         const card = gameCards[0];
@@ -9829,6 +9834,11 @@
       if (currentLevel === 1 && gameCards[0] && gameCards[0].mesh.visible) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
+      // BUMBLEBRAIN: Long-Tap-Timer auf Würfel-Slot
+      if (currentLevel === 1 && window._bumbleSlotsHidden && window._bumbleTarget && !window._bumbleResultRunning) {
+        window._bumbleLongTapPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        window._bumbleLongTapStart = Date.now();
+      }
       // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active) {
         dismissKippenWarning();
@@ -9838,11 +9848,43 @@
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchmove', (e) => {
+      // BUMBLEBRAIN: Long-Tap abbrechen wenn Finger wandert
+      if (window._bumbleLongTapStart && window._bumbleLongTapPos && e.touches[0]) {
+        const dx = e.touches[0].clientX - window._bumbleLongTapPos.x;
+        const dy = e.touches[0].clientY - window._bumbleLongTapPos.y;
+        if (dx*dx + dy*dy > 144) { // > 12px
+          window._bumbleLongTapStart = 0;
+          window._bumbleLongTapPos = null;
+        }
+      }
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchend', (e) => {
       if (replayActive) return;
       if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
+      
+      // BUMBLEBRAIN: Long-Tap (≥500ms) auf Würfel → Treffererkennung
+      if (currentLevel === 1 && window._bumbleSlotsHidden && window._bumbleTarget && !window._bumbleResultRunning &&
+          window._bumbleLongTapStart && (Date.now() - window._bumbleLongTapStart) >= 500 &&
+          window._bumbleLongTapPos) {
+        const rectLT = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((window._bumbleLongTapPos.x - rectLT.left) / rectLT.width) * 2 - 1;
+        vkMouse.y = -((window._bumbleLongTapPos.y - rectLT.top) / rectLT.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(cube, true).length > 0) {
+          window._bumbleResultRunning = true;
+          window._bumbleLongTapStart = 0;
+          window._bumbleLongTapPos = null;
+          // Slot-Verdecken aufheben damit Zahl wieder sichtbar wird
+          window._bumbleSlotsHidden = false;
+          if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+          // Treffererkennung & Fluganimation
+          activeCardIdx = 0;
+          checkTrainingResult(0);
+          lastTouchPos = null;
+          return;
+        }
+      }
       
       // Eckblick: Tap auf den Würfel beendet den Eckblick sofort (1:1 aus card.html)
       if (kipp21KniffActive && eckblickPivot && lastTouchPos) {
