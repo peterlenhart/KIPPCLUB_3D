@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -6886,7 +6886,6 @@
           gameCards[0].mesh.material.opacity = 1;
           gameCards[0].mesh.material.transparent = true;
           gameCards[0].mesh.material.needsUpdate = true;
-          kipp21CardStates[0] = 'verdeckt';
           // Pulsation
           window._bumblePulseActive = true;
           let _phase = 0;
@@ -9602,12 +9601,14 @@
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         
-        // BUMBLEBRAIN: Tap auf leernohit (verdecktesMesh) → Eckblick & Kippziel
-        if (currentLevel === 1 && verdecktesMesh.visible && !window._bumbleRoundActive) {
-          if (vkRaycaster.intersectObject(verdecktesMesh).length > 0) {
-            window._bumbleRoundActive = true;
+        // BUMBLEBRAIN Schritt 1: Klick auf links äußerstes leernohit → nur Eckblick
+        if (currentLevel === 1 && gameCards[0] && gameCards[0].mesh.visible && !window._bumbleEckblickRunning) {
+          if (vkRaycaster.intersectObject(gameCards[0].mesh).length > 0) {
+            window._bumbleEckblickRunning = true;
+            window._bumblePulseActive = false;
+            gameCards[0].mesh.scale.set(1, 1, 1);
             lastTouchPos = null;
-            brainyNextRound().finally(function(){ window._bumbleRoundActive = false; });
+            runKipp21EckblickKniff(true).finally(function(){ window._bumbleEckblickRunning = false; });
             return;
           }
         }
