@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BG-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BI-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2094,10 +2094,10 @@
     deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
     visibleDeckIndices.clear();
     (function initBumbleDeck(){
-      for (var _fi = 0; _fi < 3; _fi++) {
+      for (var _fi = 0; _fi < 2; _fi++) {
         var _slotRand = Math.floor(Math.random() * 4);
         var _deckIdx = _fi * 4 + _slotRand;
-        deck[_deckIdx] = _fi + 1; // f0=1, f1=2, f2=3
+        deck[_deckIdx] = _fi + 1; // f0=1, f1=2
         visibleDeckIndices.add(_deckIdx);
       }
     })();
@@ -2164,9 +2164,18 @@
         const [r, c] = key.split(',').map(Number);
         const { val, rot } = slotMap[key];
         if (slotMap[key].vis === false) continue; // Kantenpaar-Sichtbarkeit
-        if (!val || val <= 0) continue; // Leerer Slot (BRAINY-System: deck=0 = leer)
         const cx = c * cell + cell / 2;
         const cy = r * cell + cell / 2;
+        
+        // BUMBLEBRAIN: leerer-Slot-Tap-Signal → roter Hintergrund
+        if (slotMap[key]._flashRed) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+          ctx.fillRect(c * cell + 4, r * cell + 4, cell - 8, cell - 8);
+          ctx.restore();
+        }
+        
+        if (!val || val <= 0) continue; // Leerer Slot (BRAINY-System: deck=0 = leer)
         
         // BUMBLEBRAIN: Slots verdeckt → dunkelbrauner Hintergrund + beiges "?"
         if (window._bumbleSlotsHidden) {
@@ -2465,6 +2474,16 @@
         // URL-Parameter Check: ?level=brainy → direkt BRAINY starten
         const urlParams = new URLSearchParams(window.location.search);
         const levelParam = urlParams.get('level');
+        if (levelParam === 'bumblebrain' || levelParam === 'bumble') {
+          sct.style.display = 'none';
+          document.getElementById('startOverlay').style.display = 'none';
+          unlockAndPlayBgMusic();
+          currentLevel = 1;
+          gamePhase = 'kipp21';
+          kipp21Active = true;
+          setTimeout(() => { startBrainyLevel(); }, 200);
+          return;
+        }
         if (levelParam === 'brainy') {
           sct.style.display = 'none';
           document.getElementById('startOverlay').style.display = 'none';
@@ -2595,11 +2614,15 @@
       const total = hits + fails;
       const pct = total > 0 ? Math.round(hits / total * 100) : 0;
       const grid = window._hitMissSeq.map(r => r === 'hit' ? '\u{1F7E9}' : '\u{1F7E5}').join('');
+      // Nur BUMBLEBRAIN bekommt Level-Param (andere Levels kommen später)
+      const shareUrl = (currentLevel === 1)
+        ? window._DIGIKIPP_URL + 'training.html?level=bumblebrain'
+        : window._DIGIKIPP_URL;
       return 'KIPP NUMBERS \u2014 ' + levelName + '\n' +
         pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
         grid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
-        window._DIGIKIPP_URL + '\n' +
+        shareUrl + '\n' +
         '#KippClub #KippNumbers';
     }
 
@@ -3282,6 +3305,35 @@
       cube.quaternion.copy(newWorldQuat);
       kipGroup.add(cube);
       currentQuadrant = newQ;
+    }
+    
+    // BUMBLEBRAIN: Finger-Tap → Slot-Key auf Top-Face ermitteln
+    // Returns { faceKey, gridKey, slotData } oder null
+    function findBumbleTappedSlot(tapX, tapY) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const ndcX = ((tapX - rect.left) / rect.width) * 2 - 1;
+      const ndcY = -((tapY - rect.top) / rect.height) * 2 + 1;
+      const rc = new THREE.Raycaster();
+      rc.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+      const hits = rc.intersectObject(cube);
+      if (hits.length === 0) return null;
+      const hit = hits[0];
+      const faceIdx = Math.floor(hit.faceIndex / 2);
+      const matToFace = { 1: 'f1', 2: 'f2', 4: 'f0' };
+      const faceKey = matToFace[faceIdx];
+      if (!faceKey || faceKey !== topFace) return null;
+      if (!hit.uv) return null;
+      const px = hit.uv.x * 256;
+      const py = (1 - hit.uv.y) * 256;
+      const cell = 256 / 3;
+      const col = Math.floor(px / cell);
+      const row = Math.floor(py / cell);
+      if (row < 0 || row > 2 || col < 0 || col > 2) return null;
+      const gridKey = row + ',' + col;
+      const face = faceSlots[faceKey];
+      if (!face) return null;
+      const slotData = face.slotMap[gridKey];
+      return { faceKey, gridKey, slotData: slotData || null };
     }
     
     function checkTreffer() {
@@ -10175,6 +10227,31 @@
         vkMouse.y = -((window._bumbleLongTapPos.y - rectLT.top) / rectLT.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(cube, true).length > 0) {
+          // Slot-Tap-Erkennung: leerer Slot → Signal, kein Result
+          const tapped = findBumbleTappedSlot(window._bumbleLongTapPos.x, window._bumbleLongTapPos.y);
+          if (tapped && (!tapped.slotData || !tapped.slotData.val || tapped.slotData.val <= 0)) {
+            // Leerer Slot — kurz rot blinken, KEIN Lebensverlust
+            const face = faceSlots[tapped.faceKey];
+            if (face) {
+              // Temporärer Eintrag im slotMap mit _flashRed
+              const orig = face.slotMap[tapped.gridKey];
+              face.slotMap[tapped.gridKey] = { val: 0, rot: 0, vis: true, _flashRed: true };
+              rebuildFaceMat(tapped.faceKey, 1);
+              setTimeout(() => {
+                if (orig === undefined) {
+                  delete face.slotMap[tapped.gridKey];
+                } else {
+                  face.slotMap[tapped.gridKey] = orig;
+                }
+                rebuildFaceMat(tapped.faceKey, 1);
+              }, 500);
+            }
+            window._bumbleLongTapStart = 0;
+            window._bumbleLongTapPos = null;
+            lastTouchPos = null;
+            return;
+          }
+          
           window._bumbleResultRunning = true;
           window._bumbleLongTapStart = 0;
           window._bumbleLongTapPos = null;
