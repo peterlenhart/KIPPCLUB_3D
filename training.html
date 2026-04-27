@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-04</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -7131,6 +7131,177 @@
     // --- KNIFF 2: Eckblick (joker3, rechts) ---
     let eckblickPivot = null;
     
+    // --- BUMBLEBRAIN: Eckblick im Card-Stil (heben + neigen + halten + senken) ---
+    async function runBumbleEckblick() {
+      if (kipp21KniffActive) return false;
+      kipp21KniffActive = true;
+      kipp21KniffAbort = false;
+
+      const savedPos = cube.position.clone();
+      const savedQuat = cube.quaternion.clone();
+      const savedQ = currentQuadrant;
+      const savedF = topFace;
+
+      const cornerPos = new THREE.Vector3(0, 0, 0.109375);
+      const aufEckeDur = 1200;
+
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(cornerPos);
+      kipGroup.add(pivotGroup);
+
+      cube.updateMatrixWorld();
+      const cubeWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(cubeWorldPos);
+      const cubeWorldQuat = new THREE.Quaternion();
+      cube.getWorldQuaternion(cubeWorldQuat);
+
+      kipGroup.remove(cube);
+      cube.position.copy(cubeWorldPos.clone().sub(cornerPos));
+      cube.quaternion.copy(cubeWorldQuat);
+      pivotGroup.add(cube);
+
+      const o = 0.234375;
+      const diagVectors = {
+        0: new THREE.Vector3(-o,  o, -o),
+        1: new THREE.Vector3( o,  o, -o),
+        2: new THREE.Vector3( o,  o,  o),
+        3: new THREE.Vector3(-o,  o,  o)
+      };
+      const diag = diagVectors[currentQuadrant].clone().normalize();
+
+      const perQ = [{y:45,t:14.5},{y:75,t:14.5},{y:45,t:14.5},{y:15,t:14.5}];
+      const { y: yDeg, t: tiltDeg } = perQ[currentQuadrant];
+
+      const upDir       = new THREE.Vector3(0, 1, 0);
+      const aufEckeQuat = new THREE.Quaternion().setFromUnitVectors(diag, upDir);
+      const yRot45      = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yDeg * Math.PI/180);
+      const aufEckeY45  = yRot45.clone().multiply(aufEckeQuat);
+      const xTilt       = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), tiltDeg * Math.PI/180);
+      const tiltQuat    = xTilt.clone().multiply(aufEckeY45);
+
+      // 1. Auf Ecke kippen
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animate() {
+          const t = Math.min((performance.now() - startTime) / aufEckeDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.quaternion.copy(new THREE.Quaternion().slerp(aufEckeY45, ease));
+          if (t < 1) requestAnimationFrame(animate);
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+        }
+        animate();
+      });
+
+      eckblickPivot = pivotGroup;
+
+      // 2. Hochsteigen
+      const liftHeight  = 0.40625;
+      const liftRiseDur = 800;
+      const origY = pivotGroup.position.y;
+
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animRise() {
+          const t = Math.min((performance.now() - startTime) / liftRiseDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * ease;
+          if (t < 1) requestAnimationFrame(animRise);
+          else { pivotGroup.position.y = origY + liftHeight; resolve(); }
+        }
+        animRise();
+      });
+
+      // 3. Tilt
+      const tiltInDur = 1000;
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          const startTime = performance.now();
+          function animTilt() {
+            const t = Math.min((performance.now() - startTime) / tiltInDur, 1);
+            const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+            pivotGroup.quaternion.copy(aufEckeY45.clone().slerp(tiltQuat, ease));
+            if (t < 1) requestAnimationFrame(animTilt);
+            else { pivotGroup.quaternion.copy(tiltQuat); resolve(); }
+          }
+          animTilt();
+        });
+      }
+
+      // 4. Halten
+      if (!kipp21KniffAbort) {
+        await new Promise(resolve => {
+          kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
+          const checkAbort = setInterval(() => {
+            if (kipp21KniffAbort) {
+              clearInterval(checkAbort);
+              clearTimeout(kipp21KniffTimeout);
+              kipp21KniffTimeout = null;
+              resolve();
+            }
+          }, 100);
+        });
+      }
+
+      // 5. Tilt zurück
+      const untiltDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animUntilt() {
+          const t = Math.min((performance.now() - startTime) / untiltDur, 1);
+          const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          pivotGroup.quaternion.copy(tiltQuat.clone().slerp(aufEckeY45, ease));
+          if (t < 1) requestAnimationFrame(animUntilt);
+          else { pivotGroup.quaternion.copy(aufEckeY45); resolve(); }
+        }
+        animUntilt();
+      });
+
+      // 6. Absinken
+      const liftLowerDur = 800;
+      await new Promise(resolve => {
+        const startTime = performance.now();
+        function animLower() {
+          const t = Math.min((performance.now() - startTime) / liftLowerDur, 1);
+          const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          pivotGroup.position.y = origY + liftHeight * (1 - ease);
+          if (t < 1) requestAnimationFrame(animLower);
+          else { pivotGroup.position.y = origY; resolve(); }
+        }
+        animLower();
+      });
+
+      // 7. Zurückfallen — Cleanup + Fall zur Ausgangsposition
+      cube.updateMatrixWorld();
+      const fallFromPos = new THREE.Vector3(); cube.getWorldPosition(fallFromPos);
+      const fallFromQuat = new THREE.Quaternion(); cube.getWorldQuaternion(fallFromQuat);
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      kipGroup.add(cube);
+      cube.position.copy(fallFromPos);
+      cube.quaternion.copy(fallFromQuat);
+      eckblickPivot = null;
+
+      const fallDur = 800;
+      await new Promise(resolve => {
+        const st = performance.now();
+        function tick() {
+          const t = Math.min((performance.now() - st) / fallDur, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          cube.position.lerpVectors(fallFromPos, savedPos, e);
+          cube.quaternion.slerpQuaternions(fallFromQuat, savedQuat, e);
+          if (t < 1) requestAnimationFrame(tick);
+          else { cube.position.copy(savedPos); cube.quaternion.copy(savedQuat); resolve(); }
+        }
+        tick();
+      });
+
+      currentQuadrant = savedQ;
+      topFace = savedF;
+      kipp21KniffActive = false;
+      kipp21KniffAbort = false;
+      return true;
+    }
+
     async function runKipp21EckblickKniff(skipOpenGuard) {
       console.log('[ECKBLICK] Guards: kniffActive='+kipp21KniffActive, 'phase='+gamePhase, 'used='+kipp21EckblickUsed, 'nextV='+kipp21NextVerdeckt());
       if (kipp21KniffActive || (gamePhase !== 'kipp21' && gamePhase !== 'demo')) { console.warn('[ECKBLICK] BLOCKED: active/phase'); return false; }
@@ -9613,7 +9784,7 @@
           kipp21Active = true;
           kipp21CardTouchHandled = true;
           setTimeout(() => { kipp21CardTouchHandled = false; }, 600);
-          runKipp21EckblickKniff(true).finally(function(){ window._bumbleEckblickRunning = false; });
+          runBumbleEckblick().finally(function(){ window._bumbleEckblickRunning = false; });
           return;
         }
       }
