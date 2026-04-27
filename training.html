@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-03</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -9579,6 +9579,10 @@
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
+      // BUMBLEBRAIN Schritt 1: lastTouchPos auch garantieren wenn nur leernohit links sichtbar
+      if (currentLevel === 1 && gameCards[0] && gameCards[0].mesh.visible) {
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
       // KIPP 21: Card tap detection
       if (gamePhase === 'kipp21' && kipp21Active) {
         dismissKippenWarning();
@@ -9593,6 +9597,25 @@
     renderer.domElement.addEventListener('touchend', (e) => {
       if (replayActive) return;
       if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
+      
+      // BUMBLEBRAIN Schritt 1: vor allen anderen Filtern — Klick auf links äußerstes leernohit → Eckblick
+      if (currentLevel === 1 && lastTouchPos && !dragActive && gameCards[0] && gameCards[0].mesh.visible && !window._bumbleEckblickRunning) {
+        const rectBB = renderer.domElement.getBoundingClientRect();
+        vkMouse.x = ((lastTouchPos.x - rectBB.left) / rectBB.width) * 2 - 1;
+        vkMouse.y = -((lastTouchPos.y - rectBB.top) / rectBB.height) * 2 + 1;
+        vkRaycaster.setFromCamera(vkMouse, camera);
+        if (vkRaycaster.intersectObject(gameCards[0].mesh).length > 0) {
+          window._bumbleEckblickRunning = true;
+          window._bumblePulseActive = false;
+          gameCards[0].mesh.scale.set(1, 1, 1);
+          lastTouchPos = null;
+          gamePhase = 'kipp21';
+          kipp21Active = true;
+          runKipp21EckblickKniff(true).finally(function(){ window._bumbleEckblickRunning = false; });
+          return;
+        }
+      }
+      
       // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
         const rect2 = renderer.domElement.getBoundingClientRect();
@@ -9600,18 +9623,6 @@
         vkMouse.x = ((lastTouchPos.x - rect2.left) / rect2.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
-        
-        // BUMBLEBRAIN Schritt 1: Klick auf links äußerstes leernohit → nur Eckblick
-        if (currentLevel === 1 && gameCards[0] && gameCards[0].mesh.visible && !window._bumbleEckblickRunning) {
-          if (vkRaycaster.intersectObject(gameCards[0].mesh).length > 0) {
-            window._bumbleEckblickRunning = true;
-            window._bumblePulseActive = false;
-            gameCards[0].mesh.scale.set(1, 1, 1);
-            lastTouchPos = null;
-            runKipp21EckblickKniff(true).finally(function(){ window._bumbleEckblickRunning = false; });
-            return;
-          }
-        }
         
         for (let ci = 0; ci < numActiveCards; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
