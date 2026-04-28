@@ -369,10 +369,6 @@
       <div class="lvl-btn" id="lvlK21"><img class="lvl-bg" src="button_lang_gold_glow.webp">MASTER BRAIN</div>
       <div class="lvl-best" id="lvlBestK21"></div>
     </div>
-    <div style="margin-top:12px;border-top:1px solid rgba(138,122,102,0.3);padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:14px;">
-      <div class="lvl-btn" id="lvlKP"><img class="lvl-bg" id="lvlKPBg" src="button_lang_grau.webp">KIPP PRINZIP</div>
-      <div class="lvl-sub-big" id="lvlSub3">für Supertüftler</div>
-    </div>
   </div>
 
   <!-- Modal -->
@@ -557,25 +553,21 @@
       document.getElementById("levelOverlay").classList.add("show");
     };
     function updateLevelLinks() {
-      let base, mb, kp;
+      let base, mb;
       if (selectedSkin === 'icons') {
         base = 'coloricon.html';
         mb = 'kipp21_icon.html';
-        kp = 'kipp-prinzip-icon.html';
       } else if (selectedSkin === 'card') {
         base = 'card.html';
         mb = 'card.html?level=masterbrain';
-        kp = 'kipp-prinzip.html';
       } else {
         base = 'training.html';
         mb = 'training.html?level=masterbrain';
-        kp = 'kipp-prinzip.html';
       }
       document.getElementById('lvlTraining').onclick = () => location.href = base;
       document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
       document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
       document.getElementById('lvlK21').onclick = () => location.href = mb;
-      document.getElementById('lvlKP').onclick = () => location.href = kp;
       document.getElementById('lvlK21').style.display = selectedSkin === 'icons' ? 'none' : '';
       // Die ganze Group (inkl. Best-Zeile) verstecken bei icons
       const _k21Group = document.getElementById('lvlK21').closest('.lvl-group');
@@ -585,14 +577,12 @@
         document.getElementById('lvlTrainingBg').src = 'button_lang_icon_1.webp';
         document.getElementById('lvlBrainyBg').src = 'button_lang_icon_1.webp';
         document.getElementById('lvlBrainBg').src = 'button_lang_icon_2.webp';
-        document.getElementById('lvlKPBg').src = 'button_lang_icon_2.webp';
         document.getElementById('levelCloseBg').src = 'reset_icon.png';
         var iconImgStyle = 'position:absolute;width:288px;height:auto;top:50%;left:50%;pointer-events:none;z-index:-1;';
         document.getElementById('lvlTrainingBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%) rotate(180deg);';
         document.getElementById('lvlBrainyBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%);';
         document.getElementById('lvlBrainBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%) rotate(180deg);';
-        document.getElementById('lvlKPBg').style.cssText = iconImgStyle + 'transform:translate(-50%,-50%);';
-        ['lvlTraining','lvlBrainy','lvlBrain','lvlKP'].forEach(function(id) {
+        ['lvlTraining','lvlBrainy','lvlBrain'].forEach(function(id) {
           document.getElementById(id).style.color = '#3a2210';
           document.getElementById(id).style.textShadow = '0 1px 1px rgba(255,255,255,0.3), 0 -1px 1px rgba(0,0,0,0.15)';
         });
@@ -600,13 +590,12 @@
         document.getElementById('lvlTrainingBg').src = 'button_lang_braun.webp';
         document.getElementById('lvlBrainyBg').src = 'button_lang_rotbraun_glow.webp';
         document.getElementById('lvlBrainBg').src = 'button_lang_orange_glow.webp';
-        document.getElementById('lvlKPBg').src = 'button_lang_grau.webp';
         document.getElementById('levelCloseBg').src = 'rw.webp';
         var origImgStyle = 'position:absolute;width:360px;height:auto;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:-1;';
-        ['lvlTrainingBg','lvlBrainyBg','lvlBrainBg','lvlKPBg'].forEach(function(id) {
+        ['lvlTrainingBg','lvlBrainyBg','lvlBrainBg'].forEach(function(id) {
           document.getElementById(id).style.cssText = origImgStyle;
         });
-        ['lvlTraining','lvlBrainy','lvlBrain','lvlKP'].forEach(function(id) {
+        ['lvlTraining','lvlBrainy','lvlBrain'].forEach(function(id) {
           document.getElementById(id).style.color = '#d0d0d0';
           document.getElementById(id).style.textShadow = '0 1px 1px rgba(255,255,255,0.4),0 -1px 1px rgba(0,0,0,0.6)';
         });
@@ -780,11 +769,6 @@
     function applyLevelLang() {
       const t = LVL_T[currentLang] || LVL_T.de;
       document.getElementById('lvlTitle').textContent = t.title;
-      const kpEl = document.getElementById('lvlKP');
-      const kpImg = kpEl.querySelector('img');
-      kpEl.textContent = t.kp;
-      if (kpImg) kpEl.insertBefore(kpImg, kpEl.firstChild);
-      document.getElementById('lvlSub3').textContent = t.s3;
       document.getElementById('lvlSubTraining').textContent = t.s1;
       document.getElementById('modalTitle').textContent = t.mT;
       document.getElementById('modalSub').innerHTML = t.mS;
