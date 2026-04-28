@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BQ-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BQ-03</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3207,7 +3207,7 @@
           _showLevelEndButtonsAndStats();
           return;
         }
-        if (brainyFails >= 4) {
+        if (brainyFails >= 6) {
           // Alle Leben verbraucht → Game Over
           if (card && card.mesh) card.mesh.visible = false;
           // Pulsation/State stoppen
@@ -3241,6 +3241,8 @@
           if (typeof hitTextEls !== 'undefined') hitTextEls.length = 0;
           // GameOver-Animation läuft mit sichtbarem Würfel; Buttons direkt im Anschluss
           const _showGOBtns = () => {
+            const _liv = document.getElementById('brainyLivesWrap');
+            if (_liv) _liv.style.display = 'none';
             const _endLvlNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
             const _curName = _endLvlNames[currentLevel] || 'BUMBLEBRAIN';
             const _nextLvl = currentLevel < 4 ? currentLevel + 1 : null;
@@ -3356,7 +3358,7 @@
         }
         // Nach Blink-Animation: Game-Over-Check, oder neuer Spielzug wenn alle Slots offen, sonst weiter mit gleichem Kippziel
         setTimeout(() => {
-          if (brainyFails >= 4) {
+          if (brainyFails >= 6) {
             startNextKippRound();
             return;
           }
@@ -6431,7 +6433,7 @@
           // Right face
           '<polygon points="88,30 50,50 50,90 88,70" fill="url(#fRight)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
         '</svg>';
-      const _livesCount = 4;
+      const _livesCount = 6;
       for (let i = 0; i < _livesCount; i++) {
         const h = document.createElement('div');
         h.className = 'brainyLife';
