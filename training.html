@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BP-04</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BP-05</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2659,13 +2659,6 @@
       const btnNochmal = mkBtn(T.nml || 'NOCHMAL', baseTop);
       const btnTeilen = mkBtn(T.cTeilen || 'TEILEN', baseTop + gap);
       const btnNext = btn2Label ? mkBtn(btn2Label, baseTop + gap * 2) : null;
-      if (btnNext && btn2Label.indexOf('<br>') !== -1) {
-        // Mehrzeiliger Button (z.B. MASTER<br>BRAIN)
-        btnNext.innerHTML = btn2Label;
-        btnNext.style.lineHeight = '1.0';
-        btnNext.style.fontSize = '15px';
-        btnNext.style.padding = '0';
-      }
 
       btnNochmal.onclick = () => {
         document.querySelectorAll('.levelEndBtn').forEach(el => el.remove());
@@ -3184,18 +3177,17 @@
       
       // NEXT-LEVEL-Verknüpfung
       const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
-      const _nextDisplay = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTER<br>BRAIN', 4: null };
+      const _nextDisplayBtn = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTERBRAIN', 4: null };
+      const _nextDisplayIntro = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTER<br>BRAIN', 4: null };
       const _nextKey = _nextMap[currentLevel];
       const btn1Action = () => {
         location.href = 'training.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
       };
       let btn2Label = null, btn2Action = null;
       if (_nextKey) {
-        btn2Label = _nextDisplay[currentLevel];
-        // Blur-Intro mit Levelname, dann Levelwechsel
+        btn2Label = _nextDisplayBtn[currentLevel];
         btn2Action = async () => {
-          const introText = _nextDisplay[currentLevel].replace('<br>', ' '); // "MASTER BRAIN" (Leerzeichen für Anzeige)
-          const introHTML = _nextDisplay[currentLevel]; // mit <br>
+          const introHTML = _nextDisplayIntro[currentLevel];
           const blurOv = document.createElement('div');
           blurOv.style.cssText = 'position:fixed;inset:0;z-index:28;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);background:rgba(0,0,0,0);transition:all 0.6s ease-out;pointer-events:none;';
           document.body.appendChild(blurOv);
