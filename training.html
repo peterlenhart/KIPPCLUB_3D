@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BN-04</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BO-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2178,7 +2178,7 @@
         if (!val || val <= 0) continue; // Leerer Slot (BRAINY-System: deck=0 = leer)
         
         // BUMBLEBRAIN: Slots verdeckt → dunkelbrauner Hintergrund + beiges "?"
-        if (window._bumbleSlotsHidden) {
+        if (window._kippSlotsHidden) {
           ctx.save();
           ctx.fillStyle = '#2a1810';
           ctx.fillRect(c * cell - 4, r * cell - 4, cell + 8, cell + 8);
@@ -3139,7 +3139,7 @@
     };
 
     // BUMBLEBRAIN: minimale Treffererkennung mit Fluganimation (Top-Level)
-    function _showBumbleEndButtons() {
+    function _showLevelEndButtonsAndStats() {
       // Spiel-UIs verstecken bevor End-Buttons erscheinen
       // Lebenswürfel
       const _livesWrap = document.getElementById('brainyLivesWrap');
@@ -3151,7 +3151,7 @@
         gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
       }
       // Pulsation stoppen
-      window._bumblePulseActive = false;
+      window._kippPulseActive = false;
       // Spieltisch-Bezogene UI-Elemente
       if (window._dirCwMesh) window._dirCwMesh.visible = false;
       if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
@@ -3165,6 +3165,25 @@
       
       // Levelname für Sharetext + Anzeige
       const levelName = SCORE_LEVEL_NAMES[currentLevel] || ('LEVEL ' + currentLevel);
+      
+      // Soll/Ist-Kipps Info-Overlay
+      (function showKippStats(){
+        const soll = window._kippSumSoll || 0;
+        const ist  = window._kippSumIst  || 0;
+        if (window._kippHits < 1) return;
+        const txt = document.createElement('div');
+        txt.className = 'levelEndBtn'; // wird mit den Buttons zusammen entfernt
+        txt.textContent = 'Optimum: ' + soll + ' Kipps  ·  Du: ' + ist + ' Kipps';
+        const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
+        cardCenter3D.project(camera);
+        const baseTop = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720) - 45;
+        txt.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);' +
+          'top:' + (baseTop - 40) + 'px;width:282px;text-align:center;' +
+          'pointer-events:none;z-index:15;font:14px Arial;letter-spacing:1px;' +
+          'color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.6);';
+        document.getElementById('uiOverlay').appendChild(txt);
+      })();
+      
       // NEXT-LEVEL-Verknüpfung
       const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
       const _nextKey = _nextMap[currentLevel];
@@ -3177,30 +3196,30 @@
         btn2Label = T.nxl || 'NEXT LEVEL';
         btn2Action = () => { location.href = 'training.html?level=' + _nextKey; };
       }
-      showLevelEndButtons(levelName, window._bumbleHits, brainyFails, btn1Action, btn2Label, btn2Action);
+      showLevelEndButtons(levelName, window._kippHits, brainyFails, btn1Action, btn2Label, btn2Action);
     }
     
-    function bumbleCheckResult(cardIdx) {
+    function kippCheckResult(cardIdx) {
       activeCardIdx = cardIdx;
       const card = gameCards[cardIdx];
       const treffer = checkTreffer();
       
       // Helfer: nach Ergebnis-Anzeige neuen Kippzug starten
-      function startNextBumbleRound() {
+      function startNextKippRound() {
         // Spielende-Check
-        if ((window._bumbleHits || 0) >= 4) {
+        if ((window._kippHits || 0) >= 4) {
           // Alle 4 HITs → Spielende positiv: Wertung anzeigen + Buttons
           if (card && card.mesh) card.mesh.visible = false;
-          if (typeof saveBestScore === 'function') saveBestScore(currentLevel, window._bumbleHits, brainyFails);
-          if (typeof showLevelScore === 'function') showLevelScore(window._bumbleHits, brainyFails);
-          _showBumbleEndButtons();
+          if (typeof saveBestScore === 'function') saveBestScore(currentLevel, window._kippHits, brainyFails);
+          if (typeof showLevelScore === 'function') showLevelScore(window._kippHits, brainyFails);
+          _showLevelEndButtonsAndStats();
           return;
         }
         if (brainyFails >= 4) {
           // Alle Leben verbraucht → Game Over
           if (card && card.mesh) card.mesh.visible = false;
           // UIs verstecken
-          window._bumblePulseActive = false;
+          window._kippPulseActive = false;
           if (typeof gameCards !== 'undefined') {
             gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
           }
@@ -3231,20 +3250,20 @@
           card.texture.needsUpdate = true;
         }
         // Slots wieder mit Zahlen (Verdeckung wird beim nächsten Eckblick wieder gesetzt)
-        window._bumbleSlotsHidden = false;
+        window._kippSlotsHidden = false;
         if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
         // State zurücksetzen
-        window._bumbleTarget = null;
-        window._bumbleResultRunning = false;
+        window._kippTarget = null;
+        window._kippResultRunning = false;
         // Pulsation wieder starten
-        window._bumblePulseActive = true;
+        window._kippPulseActive = true;
         let _phase = 0;
-        (function _bumblePulseTick() {
-          if (!window._bumblePulseActive || !card.mesh.visible) return;
+        (function _kippPulseTick() {
+          if (!window._kippPulseActive || !card.mesh.visible) return;
           _phase += 0.04;
           const s = 1.0 + 0.08 * Math.sin(_phase * 1.5);
           card.mesh.scale.set(s, s, 1);
-          requestAnimationFrame(_bumblePulseTick);
+          requestAnimationFrame(_kippPulseTick);
         })();
       }
       
@@ -3254,16 +3273,19 @@
         drawGoldenBorder(card);
         card.texture.needsUpdate = true;
         gamePhase = 'kipp21';
-        if (typeof window._bumbleHits !== 'number') window._bumbleHits = 0;
-        const hitIdx = window._bumbleHits; // 0,1,2,3 — links nach rechts
-        window._bumbleHits++;
+        if (typeof window._kippHits !== 'number') window._kippHits = 0;
+        const hitIdx = window._kippHits; // 0,1,2,3 — links nach rechts
+        window._kippHits++;
+        // Soll/Ist-Kipps akkumulieren (nur HITs zählen für Endscreen-Statistik)
+        window._kippSumSoll = (window._kippSumSoll || 0) + (window._kippSollKipps || 0);
+        window._kippSumIst  = (window._kippSumIst  || 0) + (window._kippIstKipps  || 0);
         setTimeout(() => {
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             gamePhase = 'kipp21';
             // HIT-Text links→rechts aufgeteilt (cardIdx 0..3 wäre die Standard-Positionen)
             showHitText(hitIdx);
             // Nach HIT-Text-Anzeige neuen Kippzug starten
-            setTimeout(startNextBumbleRound, 2000);
+            setTimeout(startNextKippRound, 2000);
           });
         }, 1500);
       } else {
@@ -3288,25 +3310,25 @@
           })();
         }
         // Nach Blink-Animation neuen Kippzug starten
-        setTimeout(startNextBumbleRound, 1500);
+        setTimeout(startNextKippRound, 1500);
       }
     }
     
     // === BUMBLEBRAIN: Finger-Kipp-Suite (aus card.html) ===
-    const BUMBLE_DRAG_SENSITIVITY = 150;
-    const BUMBLE_CW_DIRS = new Set(['east', 'south_from_q1', 'west_from_q2', 'north']);
-    let bumbleDragActive = false;
-    let bumbleDragPivotGroup = null;
-    let bumbleDragAxis = 'x';
-    let bumbleDragTargetSign = 1;
-    let bumbleDragToQ = 0;
-    let bumbleDragCurrentAngle = 0;
-    let bumbleCurrentDragDir = null;
-    let bumbleSwipeStartX = 0;
-    let bumbleSwipeStartY = 0;
-    let bumbleIsSwiping = false;
+    const KIPP_DRAG_SENSITIVITY = 150;
+    const KIPP_CW_DIRS = new Set(['east', 'south_from_q1', 'west_from_q2', 'north']);
+    let kippDragActive = false;
+    let kippDragPivotGroup = null;
+    let kippDragAxis = 'x';
+    let kippDragTargetSign = 1;
+    let kippDragToQ = 0;
+    let kippDragCurrentAngle = 0;
+    let kippCurrentDragDir = null;
+    let kippSwipeStartX = 0;
+    let kippSwipeStartY = 0;
+    let kippIsSwiping = false;
     
-    function getBumbleKippConfig(direction) {
+    function getKippDirConfig(direction) {
       const configs = {
         'north':         { pivotPoint: new THREE.Vector3(-0.234375, 0, 0.109375), axis: 'x', targetRotation: -Math.PI/2, toQ: 0 },
         'south':         { pivotPoint: new THREE.Vector3(-0.234375, 0, 0.109375), axis: 'x', targetRotation:  Math.PI/2, toQ: 3 },
@@ -3320,7 +3342,7 @@
       return configs[direction];
     }
     
-    function getBumbleValidDirection(deltaX, deltaY) {
+    function getKippValidDirection(deltaX, deltaY) {
       if (Math.abs(deltaY) >= Math.abs(deltaX)) {
         if (deltaY < 0) {
           if (currentQuadrant === 3) return 'north';
@@ -3341,7 +3363,7 @@
       return null;
     }
     
-    function bumbleFinalizeKipp(newQ) {
+    function kippFinalizeKipp(newQ) {
       if (cube.parent === kipGroup) {
         return;
       }
@@ -3358,11 +3380,15 @@
       cube.quaternion.copy(newWorldQuat);
       kipGroup.add(cube);
       currentQuadrant = newQ;
+      // Ist-Kipps zählen (nur wenn Kippziel aktiv)
+      if (window._kippTarget) {
+        window._kippIstKipps = (window._kippIstKipps || 0) + 1;
+      }
     }
     
     // BUMBLEBRAIN: Finger-Tap → Slot-Key auf Top-Face ermitteln
     // Returns { faceKey, gridKey, slotData } oder null
-    function findBumbleTappedSlot(tapX, tapY) {
+    function findKippTappedSlot(tapX, tapY) {
       const rect = renderer.domElement.getBoundingClientRect();
       const ndcX = ((tapX - rect.left) / rect.width) * 2 - 1;
       const ndcY = -((tapY - rect.top) / rect.height) * 2 + 1;
@@ -7175,7 +7201,9 @@
       brainyHideGems();
       
       // Alle Level: nur das mittige leernohit-Kärtchen sichtbar, pulsierend
-      window._bumbleHits = 0;
+      window._kippHits = 0;
+      window._kippSumSoll = 0;
+      window._kippSumIst = 0;
       if (typeof brainyResetLives === 'function') brainyResetLives();
       if (gameCards[0] && gameCards[0].mesh) {
         if (leerImage) {
@@ -7189,14 +7217,14 @@
         gameCards[0].mesh.material.transparent = true;
         gameCards[0].mesh.material.needsUpdate = true;
         // Pulsation
-        window._bumblePulseActive = true;
+        window._kippPulseActive = true;
         let _phase = 0;
-        (function _bumblePulseTick() {
-          if (!window._bumblePulseActive || !gameCards[0] || !gameCards[0].mesh.visible) return;
+        (function _kippPulseTick() {
+          if (!window._kippPulseActive || !gameCards[0] || !gameCards[0].mesh.visible) return;
           _phase += 0.04;
           const s = 1.0 + 0.08 * Math.sin(_phase * 1.5);
           gameCards[0].mesh.scale.set(s, s, 1);
-          requestAnimationFrame(_bumblePulseTick);
+          requestAnimationFrame(_kippPulseTick);
         })();
       }
 
@@ -7427,7 +7455,7 @@
     let eckblickPivot = null;
     
     // --- BUMBLEBRAIN: Eckblick im Card-Stil (heben + neigen + halten + senken) ---
-    async function runBumbleEckblick() {
+    async function runKippEckblick() {
       if (kipp21KniffActive) return false;
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
@@ -7566,11 +7594,11 @@
       });
 
       // BUMBLEBRAIN: Slots verdecken — Würfel-ECKE hat Y=0 erreicht (analog card.html)
-      window._bumbleSlotsHidden = true;
+      window._kippSlotsHidden = true;
       if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
 
       // Kippziel generieren: random Farbe + random Zielzahl (aus belegten Slots), keine Kombi doppelt
-      (function generateBumbleTarget(){
+      (function generateKippTarget(){
         const colorNames = ['blau', 'orange', 'gruen', 'violett'];
         // Zahlen aus dem aktuellen Deck (nur sichtbar belegte Slots)
         const possibleZahlen = [];
@@ -7594,12 +7622,49 @@
 
         const pick = candidates[Math.floor(Math.random() * candidates.length)];
         bereitsAusgegeben.add(pick.zahl + '_' + pick.color);
-        window._bumbleTarget = pick;
+        window._kippTarget = pick;
         
         // gameCards[0] mit Kippziel-Info ausstatten (für checkTreffer)
         const colorObj = GAME_COLORS.find(c => c.name === pick.color);
         gameCards[0].zahl = pick.zahl;
         gameCards[0].color = colorObj;
+        
+        // === Soll-Kippzahl berechnen (Optimum auf 12er-CW-Kreis) ===
+        (function computeOptimum(){
+          const faceOff = { f0: 0, f1: 4, f2: 8 };
+          const slots = ['S1', 'S2', 'S3', 'S4'];
+          let tFace = null, tSlot = null;
+          for (const fk of ['f0','f1','f2']) {
+            const off = faceOff[fk];
+            for (let si = 0; si < 4; si++) {
+              if (deck[off + si] === pick.zahl) { tFace = fk; tSlot = slots[si]; break; }
+            }
+            if (tFace) break;
+          }
+          let tQ = null;
+          if (tSlot) {
+            for (let q = 0; q < 4; q++) {
+              if (SLOT_NEIGHBOR_COLORS[q][tSlot] === pick.color) { tQ = q; break; }
+            }
+          }
+          let tCw = null;
+          if (tQ !== null && tFace) {
+            for (const st of BRAINY_CW_STATES) {
+              if (st.q === tQ && st.face === tFace) { tCw = st.cwSteps; break; }
+            }
+          }
+          let cCw = null;
+          for (const st of BRAINY_CW_STATES) {
+            if (st.q === currentQuadrant && st.face === topFace) { cCw = st.cwSteps; break; }
+          }
+          if (tCw !== null && cCw !== null) {
+            const d = ((tCw - cCw) % 12 + 12) % 12;
+            window._kippSollKipps = Math.min(d, 12 - d);
+          } else {
+            window._kippSollKipps = 0;
+          }
+          window._kippIstKipps = 0;
+        })();
 
         // Auf gameCards[0] zeichnen: farbzielhit als Hintergrund + Zielzahl in oberer Hälfte
         const card = gameCards[0];
@@ -10111,20 +10176,20 @@
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
       // BUMBLEBRAIN: Long-Tap-Timer auf Würfel-Slot
-      if (window._bumbleSlotsHidden && window._bumbleTarget && !window._bumbleResultRunning) {
-        window._bumbleLongTapPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        window._bumbleLongTapStart = Date.now();
+      if (window._kippSlotsHidden && window._kippTarget && !window._kippResultRunning) {
+        window._kippLongTapPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        window._kippLongTapStart = Date.now();
       }
       // BUMBLEBRAIN: Finger-Kipp Touchstart — Würfelberührung erkennen
-      if (!bumbleDragActive && !window._bumbleEckblickRunning && !window._bumbleResultRunning && !isAnimating) {
+      if (!kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating) {
         const rectBD = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((e.touches[0].clientX - rectBD.left) / rectBD.width) * 2 - 1;
         vkMouse.y = -((e.touches[0].clientY - rectBD.top) / rectBD.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(cube, true).length > 0) {
-          bumbleSwipeStartX = e.touches[0].clientX;
-          bumbleSwipeStartY = e.touches[0].clientY;
-          bumbleIsSwiping = true;
+          kippSwipeStartX = e.touches[0].clientX;
+          kippSwipeStartY = e.touches[0].clientY;
+          kippIsSwiping = true;
         }
       }
       // KIPP 21: Card tap detection
@@ -10137,60 +10202,60 @@
     
     renderer.domElement.addEventListener('touchmove', (e) => {
       // BUMBLEBRAIN: Long-Tap abbrechen wenn Finger wandert
-      if (window._bumbleLongTapStart && window._bumbleLongTapPos && e.touches[0]) {
-        const dx = e.touches[0].clientX - window._bumbleLongTapPos.x;
-        const dy = e.touches[0].clientY - window._bumbleLongTapPos.y;
+      if (window._kippLongTapStart && window._kippLongTapPos && e.touches[0]) {
+        const dx = e.touches[0].clientX - window._kippLongTapPos.x;
+        const dy = e.touches[0].clientY - window._kippLongTapPos.y;
         if (dx*dx + dy*dy > 144) { // > 12px
-          window._bumbleLongTapStart = 0;
-          window._bumbleLongTapPos = null;
+          window._kippLongTapStart = 0;
+          window._kippLongTapPos = null;
         }
       }
       
       // BUMBLEBRAIN: Finger-Kipp Touchmove
-      if (bumbleIsSwiping && e.touches[0]) {
+      if (kippIsSwiping && e.touches[0]) {
         const touch = e.touches[0];
-        const deltaX = touch.clientX - bumbleSwipeStartX;
-        const deltaY = touch.clientY - bumbleSwipeStartY;
+        const deltaX = touch.clientX - kippSwipeStartX;
+        const deltaY = touch.clientY - kippSwipeStartY;
         
-        if (!bumbleDragActive) {
+        if (!kippDragActive) {
           if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return;
-          const direction = getBumbleValidDirection(deltaX, deltaY);
-          if (!direction) { bumbleIsSwiping = false; return; }
+          const direction = getKippValidDirection(deltaX, deltaY);
+          if (!direction) { kippIsSwiping = false; return; }
           
-          bumbleCurrentDragDir = direction;
-          const cfg = getBumbleKippConfig(direction);
-          bumbleDragAxis = cfg.axis;
-          bumbleDragTargetSign = cfg.targetRotation > 0 ? 1 : -1;
-          bumbleDragToQ = cfg.toQ;
+          kippCurrentDragDir = direction;
+          const cfg = getKippDirConfig(direction);
+          kippDragAxis = cfg.axis;
+          kippDragTargetSign = cfg.targetRotation > 0 ? 1 : -1;
+          kippDragToQ = cfg.toQ;
           
-          bumbleDragPivotGroup = new THREE.Group();
-          bumbleDragPivotGroup.position.copy(cfg.pivotPoint);
-          kipGroup.add(bumbleDragPivotGroup);
+          kippDragPivotGroup = new THREE.Group();
+          kippDragPivotGroup.position.copy(cfg.pivotPoint);
+          kipGroup.add(kippDragPivotGroup);
           
           cube.updateMatrixWorld();
           const cubeWorldPos = new THREE.Vector3();
           cube.getWorldPosition(cubeWorldPos);
           kipGroup.remove(cube);
           cube.position.copy(cubeWorldPos.clone().sub(cfg.pivotPoint));
-          bumbleDragPivotGroup.add(cube);
+          kippDragPivotGroup.add(cube);
           
-          bumbleDragActive = true;
-          bumbleDragCurrentAngle = 0;
+          kippDragActive = true;
+          kippDragCurrentAngle = 0;
         }
         
         // Live-Rotation berechnen
-        const relevantDelta = (bumbleDragAxis === 'x') ? deltaY : -deltaX;
-        let angle = (relevantDelta / BUMBLE_DRAG_SENSITIVITY) * (Math.PI / 2);
-        if (bumbleDragTargetSign > 0) {
+        const relevantDelta = (kippDragAxis === 'x') ? deltaY : -deltaX;
+        let angle = (relevantDelta / KIPP_DRAG_SENSITIVITY) * (Math.PI / 2);
+        if (kippDragTargetSign > 0) {
           angle = Math.max(0, Math.min(Math.PI / 2, angle));
         } else {
           angle = Math.min(0, Math.max(-Math.PI / 2, angle));
         }
-        bumbleDragCurrentAngle = angle;
-        if (bumbleDragAxis === 'x') {
-          bumbleDragPivotGroup.rotation.x = bumbleDragCurrentAngle;
+        kippDragCurrentAngle = angle;
+        if (kippDragAxis === 'x') {
+          kippDragPivotGroup.rotation.x = kippDragCurrentAngle;
         } else {
-          bumbleDragPivotGroup.rotation.z = bumbleDragCurrentAngle;
+          kippDragPivotGroup.rotation.z = kippDragCurrentAngle;
         }
       }
     }, { passive: false });
@@ -10200,39 +10265,39 @@
       if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
       
       // BUMBLEBRAIN: Finger-Kipp Touchend — Snap zur Ziel- oder Ausgangs-Position
-      if (bumbleDragActive) {
-        bumbleIsSwiping = false;
-        const absAngle = Math.abs(bumbleDragCurrentAngle);
+      if (kippDragActive) {
+        kippIsSwiping = false;
+        const absAngle = Math.abs(kippDragCurrentAngle);
         let targetAngle, finalQ;
         if (absAngle > Math.PI / 4) {
-          targetAngle = bumbleDragTargetSign * Math.PI / 2;
-          finalQ = bumbleDragToQ;
+          targetAngle = kippDragTargetSign * Math.PI / 2;
+          finalQ = kippDragToQ;
         } else {
           targetAngle = 0;
           finalQ = currentQuadrant;
         }
         isAnimating = true;
-        let bumbleKlackFired = false;
-        const startAngle = bumbleDragCurrentAngle;
+        let kippKlackFired = false;
+        const startAngle = kippDragCurrentAngle;
         const angleDiff = targetAngle - startAngle;
         const fallDuration = Math.max(150, Math.abs(angleDiff) / (Math.PI / 2) * 420);
         const startTime = Date.now();
-        (function animateBumbleFall() {
+        (function animateKippFall() {
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / fallDuration, 1);
           const eased = progress * progress;
           const currentAngle = startAngle + angleDiff * eased;
-          if (bumbleDragAxis === 'x') {
-            bumbleDragPivotGroup.rotation.x = currentAngle;
+          if (kippDragAxis === 'x') {
+            kippDragPivotGroup.rotation.x = currentAngle;
           } else {
-            bumbleDragPivotGroup.rotation.z = currentAngle;
+            kippDragPivotGroup.rotation.z = currentAngle;
           }
-          if (!bumbleKlackFired && eased > 0.68 && targetAngle !== 0) {
-            bumbleKlackFired = true;
+          if (!kippKlackFired && eased > 0.68 && targetAngle !== 0) {
+            kippKlackFired = true;
             if (typeof playKlack === 'function') playKlack();
           }
           if (progress < 1) {
-            requestAnimationFrame(animateBumbleFall);
+            requestAnimationFrame(animateKippFall);
           } else {
             if (targetAngle === 0) {
               // Zurückgefallen
@@ -10241,40 +10306,40 @@
               cube.getWorldPosition(newPos);
               const newQuat = new THREE.Quaternion();
               cube.getWorldQuaternion(newQuat);
-              bumbleDragPivotGroup.remove(cube);
-              kipGroup.remove(bumbleDragPivotGroup);
+              kippDragPivotGroup.remove(cube);
+              kipGroup.remove(kippDragPivotGroup);
               cube.position.copy(newPos);
               cube.quaternion.copy(newQuat);
               kipGroup.add(cube);
             } else {
               // Gekippt
-              bumbleFinalizeKipp(finalQ);
-              if (bumbleCurrentDragDir) {
-                const isCW = BUMBLE_CW_DIRS.has(bumbleCurrentDragDir);
+              kippFinalizeKipp(finalQ);
+              if (kippCurrentDragDir) {
+                const isCW = KIPP_CW_DIRS.has(kippCurrentDragDir);
                 kippDirection = isCW ? 'cw' : 'ccw';
                 advanceTopFace();
               }
             }
-            bumbleDragActive = false;
-            bumbleDragPivotGroup = null;
+            kippDragActive = false;
+            kippDragPivotGroup = null;
             isAnimating = false;
           }
         })();
         return;
       }
-      bumbleIsSwiping = false;
+      kippIsSwiping = false;
       
       // BUMBLEBRAIN: Long-Tap (≥500ms) auf Würfel → Treffererkennung
-      if (window._bumbleSlotsHidden && window._bumbleTarget && !window._bumbleResultRunning &&
-          window._bumbleLongTapStart && (Date.now() - window._bumbleLongTapStart) >= 500 &&
-          window._bumbleLongTapPos) {
+      if (window._kippSlotsHidden && window._kippTarget && !window._kippResultRunning &&
+          window._kippLongTapStart && (Date.now() - window._kippLongTapStart) >= 500 &&
+          window._kippLongTapPos) {
         const rectLT = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((window._bumbleLongTapPos.x - rectLT.left) / rectLT.width) * 2 - 1;
-        vkMouse.y = -((window._bumbleLongTapPos.y - rectLT.top) / rectLT.height) * 2 + 1;
+        vkMouse.x = ((window._kippLongTapPos.x - rectLT.left) / rectLT.width) * 2 - 1;
+        vkMouse.y = -((window._kippLongTapPos.y - rectLT.top) / rectLT.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(cube, true).length > 0) {
           // Slot-Tap-Erkennung: leerer Slot → Signal, kein Result
-          const tapped = findBumbleTappedSlot(window._bumbleLongTapPos.x, window._bumbleLongTapPos.y);
+          const tapped = findKippTappedSlot(window._kippLongTapPos.x, window._kippLongTapPos.y);
           if (tapped && (!tapped.slotData || !tapped.slotData.val || tapped.slotData.val <= 0)) {
             // Leerer Slot — kurz rot blinken, KEIN Lebensverlust
             const face = faceSlots[tapped.faceKey];
@@ -10292,21 +10357,21 @@
                 rebuildFaceMat(tapped.faceKey, 1);
               }, 500);
             }
-            window._bumbleLongTapStart = 0;
-            window._bumbleLongTapPos = null;
+            window._kippLongTapStart = 0;
+            window._kippLongTapPos = null;
             lastTouchPos = null;
             return;
           }
           
-          window._bumbleResultRunning = true;
-          window._bumbleLongTapStart = 0;
-          window._bumbleLongTapPos = null;
+          window._kippResultRunning = true;
+          window._kippLongTapStart = 0;
+          window._kippLongTapPos = null;
           // Slot-Verdecken aufheben damit Zahl wieder sichtbar wird
-          window._bumbleSlotsHidden = false;
+          window._kippSlotsHidden = false;
           if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
           // Treffererkennung & Fluganimation
           activeCardIdx = 0;
-          bumbleCheckResult(0);
+          kippCheckResult(0);
           lastTouchPos = null;
           return;
         }
@@ -10331,21 +10396,21 @@
       
       // BUMBLEBRAIN Schritt 1: Klick auf leernohit → Eckblick
       // Nur wenn noch kein Kippziel aktiv (also noch leernohit, nicht farbzielhit)
-      if (lastTouchPos && !dragActive && gameCards[0] && gameCards[0].mesh.visible && !window._bumbleEckblickRunning && !window._bumbleTarget && !window._bumbleSlotsHidden) {
+      if (lastTouchPos && !dragActive && gameCards[0] && gameCards[0].mesh.visible && !window._kippEckblickRunning && !window._kippTarget && !window._kippSlotsHidden) {
         const rectBB = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((lastTouchPos.x - rectBB.left) / rectBB.width) * 2 - 1;
         vkMouse.y = -((lastTouchPos.y - rectBB.top) / rectBB.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(gameCards[0].mesh).length > 0) {
-          window._bumbleEckblickRunning = true;
-          window._bumblePulseActive = false;
+          window._kippEckblickRunning = true;
+          window._kippPulseActive = false;
           gameCards[0].mesh.scale.set(1, 1, 1);
           lastTouchPos = null;
           gamePhase = 'kipp21';
           kipp21Active = true;
           kipp21CardTouchHandled = true;
           setTimeout(() => { kipp21CardTouchHandled = false; }, 600);
-          runBumbleEckblick().finally(function(){ window._bumbleEckblickRunning = false; });
+          runKippEckblick().finally(function(){ window._kippEckblickRunning = false; });
           return;
         }
       }
