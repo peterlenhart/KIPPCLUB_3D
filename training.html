@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BP-08</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BQ-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3239,15 +3239,30 @@
           });
           document.querySelectorAll('.hit-text-el, .hitFloater, .hitKippInfo, .levelEndStats').forEach(el => el.remove());
           if (typeof hitTextEls !== 'undefined') hitTextEls.length = 0;
-          // GameOver-Animation läuft mit sichtbarem Würfel; brainyEndGame zeigt Buttons
+          // GameOver-Animation läuft mit sichtbarem Würfel; Buttons direkt im Anschluss
+          const _showGOBtns = () => {
+            const _endLvlNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+            const _curName = _endLvlNames[currentLevel] || 'BUMBLEBRAIN';
+            const _nextLvl = currentLevel < 4 ? currentLevel + 1 : null;
+            const _nextName = _nextLvl ? _endLvlNames[_nextLvl] : null;
+            const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
+            if (_nextName) {
+              showLevelEndButtons(_curName, window._kippHits || 0, brainyFails,
+                () => { location.href = 'training.html?level=' + _lvlMap[currentLevel]; },
+                _nextName,
+                () => { location.href = 'training.html?level=' + _lvlMap[_nextLvl]; }
+              );
+            } else {
+              showLevelEndButtons(_curName, window._kippHits || 0, brainyFails,
+                () => { location.href = 'training.html?level=' + _lvlMap[currentLevel]; },
+                null, null
+              );
+            }
+          };
           if (typeof runGameOverAnimation === 'function') {
-            runGameOverAnimation().then(() => {
-              if (typeof brainyEndGame === 'function') brainyEndGame();
-            }).catch(() => {
-              if (typeof brainyEndGame === 'function') brainyEndGame();
-            });
-          } else if (typeof brainyEndGame === 'function') {
-            brainyEndGame();
+            runGameOverAnimation().then(_showGOBtns).catch(_showGOBtns);
+          } else {
+            _showGOBtns();
           }
           return;
         }
@@ -3320,7 +3335,7 @@
           });
         }, 1500);
       } else {
-        // MISS — Lebens-Würfel 3× blinken, dann ausgrauen
+        // MISS — Lebens-Würfel 3× blinken, dann ausgrauen. Slots bleiben verdeckt (außer angetippter), Kippziel bleibt.
         brainyFails++;
         const wrap = brainyEnsureLivesUI();
         const hearts = wrap.querySelectorAll('.brainyLife');
@@ -3330,12 +3345,8 @@
           let blinks = 0;
           (function blinkTick() {
             if (blinks >= 6) {
-              // 3× blinken = 6 Toggles, danach ausgrauen
               h.style.opacity = '0.4';
               h.style.filter = 'grayscale(1) brightness(0.5)';
-              // Erst NACH Ausgrauen Slots aufdecken
-              window._kippSlotsHidden = false;
-              if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
               return;
             }
             h.style.opacity = (blinks % 2 === 0) ? '0.2' : '1';
@@ -3343,8 +3354,16 @@
             setTimeout(blinkTick, 180);
           })();
         }
-        // Nach Blink-Animation neuen Kippzug starten
-        setTimeout(startNextKippRound, 1500);
+        // Nach Blink-Animation: Game-Over-Check oder weiter mit gleichem Kippziel
+        setTimeout(() => {
+          if (brainyFails >= 4) {
+            // Game Over → startNextKippRound triggert Game-Over-Pfad
+            startNextKippRound();
+          } else {
+            // Weiter: Spieler kann erneut kippen, Kippziel + verdeckte Slots bleiben
+            window._kippResultRunning = false;
+          }
+        }, 1500);
       }
     }
     
@@ -4844,45 +4863,7 @@
             },
             // MASTERBRAIN
             'MASTERBRAIN',
-            async () => {
-              const blurOv = document.createElement('div');
-              blurOv.style.cssText = 'position:fixed;inset:0;z-index:28;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);background:rgba(0,0,0,0);transition:all 0.6s ease-out;pointer-events:none;';
-              document.body.appendChild(blurOv);
-              requestAnimationFrame(() => {
-                blurOv.style.backdropFilter = 'blur(8px)';
-                blurOv.style.webkitBackdropFilter = 'blur(8px)';
-                blurOv.style.background = 'rgba(0,0,0,0.45)';
-              });
-              await new Promise(r => setTimeout(r, 700));
-              const mbEl = document.createElement('div');
-              mbEl.innerHTML = '<div>MASTER</div><div>BRAIN</div>';
-              mbEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
-                'transform:translateY(-50%) scale(0.3);text-align:center;' +
-                'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;line-height:1.1;' +
-                'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
-                'opacity:0;pointer-events:none;';
-              document.body.appendChild(mbEl);
-              requestAnimationFrame(() => {
-                mbEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
-                mbEl.style.opacity = '1';
-                mbEl.style.transform = 'translateY(-50%) scale(1)';
-              });
-              await new Promise(r => setTimeout(r, 2200));
-              mbEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
-              mbEl.style.opacity = '0';
-              mbEl.style.transform = 'translateY(-50%) scale(1.2)';
-              blurOv.style.backdropFilter = 'blur(0px)';
-              blurOv.style.webkitBackdropFilter = 'blur(0px)';
-              blurOv.style.background = 'rgba(0,0,0,0)';
-              await new Promise(r => setTimeout(r, 600));
-              mbEl.remove();
-              blurOv.remove();
-              currentLevel = 4;
-              gamePhase = 'kipp21';
-              await new Promise(r => setTimeout(r, 300));
-              await waitForScoreClosed();
-              startBrainyLevel();
-            }
+            () => { location.href = 'training.html?level=masterbrain'; }
           );
           return;
         } else {
@@ -5523,61 +5504,9 @@
               showLevelEndButtons('BUMBLEBRAIN', kipp21Done, kipp21Fails,
                 // NOCHMAL
                 () => { gamePhase = 'start'; startKipp21(false); },
-                // BRAINY Label + Action
+                // BRAINY Label + Action — direkter Übergang
                 'BRAINY',
-                async () => {
-                  // Würfel zurück in Startposition
-                  kipGroup.add(cube);
-                  cube.position.set(-offset, offset, 0.109375 + offset);
-                  cube.quaternion.set(0, 0, 0, 1);
-                  currentQuadrant = 3;
-                  topFace = 'f2';
-
-                  // Blur + "BRAINY" Inflate
-                  const blurOv = document.createElement('div');
-                  blurOv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:28;' +
-                    'backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);' +
-                    'background:rgba(0,0,0,0);transition:all 0.8s ease-out;pointer-events:none;';
-                  document.body.appendChild(blurOv);
-                  requestAnimationFrame(() => {
-                    blurOv.style.backdropFilter = 'blur(8px)';
-                    blurOv.style.webkitBackdropFilter = 'blur(8px)';
-                    blurOv.style.background = 'rgba(0,0,0,0.45)';
-                  });
-                  await wait(700);
-                  const brainyEl = document.createElement('div');
-                  brainyEl.textContent = 'BRAINY';
-                  brainyEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
-                    'transform:translateY(-50%) scale(0.3);text-align:center;' +
-                    'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
-                    'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
-                    'opacity:0;pointer-events:none;';
-                  document.body.appendChild(brainyEl);
-                  requestAnimationFrame(() => {
-                    brainyEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
-                    brainyEl.style.opacity = '1';
-                    brainyEl.style.transform = 'translateY(-50%) scale(1)';
-                  });
-                  await wait(2200);
-                  brainyEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
-                  brainyEl.style.opacity = '0';
-                  brainyEl.style.transform = 'translateY(-50%) scale(1.2)';
-                  blurOv.style.backdropFilter = 'blur(0px)';
-                  blurOv.style.webkitBackdropFilter = 'blur(0px)';
-                  blurOv.style.background = 'rgba(0,0,0,0)';
-                  await wait(600);
-                  brainyEl.remove();
-                  blurOv.remove();
-                  currentLevel = 2;
-                  updateFaceSlots();
-                  updateAllFaceTextures();
-                  const _eyeIcon = document.getElementById('eyeIcon');
-                  _eyeIcon.style.display = 'none';
-                  gamePhase = 'kipp21';
-                  await wait(300);
-                  await waitForScoreClosed();
-                  startBrainyLevel();
-                }
+                () => { location.href = 'training.html?level=brainy'; }
               );
               
             }, 7000); // 7s: HIT ~2.3s + 2.7s sichtbar + 2s Score
@@ -6311,46 +6240,11 @@
       showLevelEndButtons(_curName, brainyHits, brainyFails,
         // NOCHMAL (gleiches Level)
         () => { gamePhase = 'kipp21'; startBrainyLevel(); },
-        // Naechstes Level Label + Action
+        // Naechstes Level Label + Action — direkter Übergang, kein Blur
         _nextName,
-        async () => {
-          const blurOv = document.createElement('div');
-          blurOv.style.cssText = 'position:fixed;inset:0;z-index:28;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);background:rgba(0,0,0,0);transition:all 0.6s ease-out;pointer-events:none;';
-          document.body.appendChild(blurOv);
-          requestAnimationFrame(() => {
-            blurOv.style.backdropFilter = 'blur(8px)';
-            blurOv.style.webkitBackdropFilter = 'blur(8px)';
-            blurOv.style.background = 'rgba(0,0,0,0.45)';
-          });
-          await new Promise(r => setTimeout(r, 700));
-          const nextEl = document.createElement('div');
-          nextEl.textContent = _nextName;
-          nextEl.style.cssText = 'position:fixed;top:50%;left:0;width:100%;z-index:29;' +
-            'transform:translateY(-50%) scale(0.3);text-align:center;' +
-            'font:bold 56px Arial;color:#e8dcc8;letter-spacing:2px;' +
-            'text-shadow:0 2px 12px rgba(0,0,0,0.8),0 0 30px rgba(206,219,37,0.4);' +
-            'opacity:0;pointer-events:none;';
-          document.body.appendChild(nextEl);
-          requestAnimationFrame(() => {
-            nextEl.style.transition = 'transform 0.7s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease-out';
-            nextEl.style.opacity = '1';
-            nextEl.style.transform = 'translateY(-50%) scale(1)';
-          });
-          await new Promise(r => setTimeout(r, 2200));
-          nextEl.style.transition = 'transform 0.5s ease-in, opacity 0.4s ease-in';
-          nextEl.style.opacity = '0';
-          nextEl.style.transform = 'translateY(-50%) scale(1.2)';
-          blurOv.style.backdropFilter = 'blur(0px)';
-          blurOv.style.webkitBackdropFilter = 'blur(0px)';
-          blurOv.style.background = 'rgba(0,0,0,0)';
-          await new Promise(r => setTimeout(r, 600));
-          nextEl.remove();
-          blurOv.remove();
-          currentLevel = _nextLvl;
-          gamePhase = 'kipp21';
-          await new Promise(r => setTimeout(r, 300));
-          await waitForScoreClosed();
-          startBrainyLevel();
+        () => {
+          const _lvlMap = { 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
+          location.href = 'training.html?level=' + (_lvlMap[_nextLvl] || 'bumblebrain');
         }
       );
     }
@@ -7138,11 +7032,27 @@
         await new Promise(r => setTimeout(r, 1200));
         gem.visible = false;
 
-        // GAME OVER nach 5. Miss
+        // GAME OVER nach 5. Miss (alter Pfad - läuft nur falls brainyExecuteKipp aktiv)
         if (brainyFails >= 3) {
           if (brainyActive && gamePhase === 'kipp21') {
             await runGameOverAnimation();
-            await brainyEndGame();
+            // Direkt Buttons zeigen, ohne brainyEndGame-Wartezeit
+            const _endLvlNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+            const _curName = _endLvlNames[currentLevel] || 'BUMBLEBRAIN';
+            const _nextLvl = currentLevel < 4 ? currentLevel + 1 : null;
+            const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
+            if (_nextLvl) {
+              showLevelEndButtons(_curName, brainyHits, brainyFails,
+                () => { location.href = 'training.html?level=' + _lvlMap[currentLevel]; },
+                _endLvlNames[_nextLvl],
+                () => { location.href = 'training.html?level=' + _lvlMap[_nextLvl]; }
+              );
+            } else {
+              showLevelEndButtons(_curName, brainyHits, brainyFails,
+                () => { location.href = 'training.html?level=' + _lvlMap[currentLevel]; },
+                null, null
+              );
+            }
           }
           return;
         }
@@ -10155,7 +10065,8 @@
         window._kippLongTapStart = Date.now();
       }
       // BUMBLEBRAIN: Finger-Kipp Touchstart — Würfelberührung erkennen
-      if (!kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating) {
+      // Kippen nur wenn Kippziel aktiv (nicht in leernohit-Phase)
+      if (!kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating && window._kippTarget) {
         const rectBD = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((e.touches[0].clientX - rectBD.left) / rectBD.width) * 2 - 1;
         vkMouse.y = -((e.touches[0].clientY - rectBD.top) / rectBD.height) * 2 + 1;
