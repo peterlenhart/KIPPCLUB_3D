@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BO-05</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BP-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2178,7 +2178,8 @@
         if (!val || val <= 0) continue; // Leerer Slot (BRAINY-System: deck=0 = leer)
         
         // BUMBLEBRAIN: Slots verdeckt → dunkelbrauner Hintergrund + beiges "?"
-        if (window._kippSlotsHidden) {
+        // Ausnahme: einzelner Slot kann mit _revealedNow=true einzeln aufgedeckt werden
+        if (window._kippSlotsHidden && !slotMap[key]._revealedNow) {
           ctx.save();
           ctx.fillStyle = '#2a1810';
           ctx.fillRect(c * cell - 4, r * cell - 4, cell + 8, cell + 8);
@@ -3250,6 +3251,15 @@
           card.texture.needsUpdate = true;
         }
         // Slots wieder mit Zahlen (Verdeckung wird beim nächsten Eckblick wieder gesetzt)
+        // _revealedNow-Flags der vorherigen Runde löschen
+        ['f0','f1','f2'].forEach(fk => {
+          const fs = faceSlots[fk];
+          if (fs && fs.slotMap) {
+            for (const k in fs.slotMap) {
+              if (fs.slotMap[k]._revealedNow) delete fs.slotMap[k]._revealedNow;
+            }
+          }
+        });
         window._kippSlotsHidden = false;
         if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
         // State zurücksetzen
@@ -3280,6 +3290,11 @@
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             gamePhase = 'kipp21';
             showHitText(hitIdx);
+            // Nach HIT-Anzeige Slots aufdecken
+            setTimeout(() => {
+              window._kippSlotsHidden = false;
+              if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+            }, 600);
             setTimeout(startNextKippRound, 2000);
           });
         }, 1500);
@@ -3297,6 +3312,9 @@
               // 3× blinken = 6 Toggles, danach ausgrauen
               h.style.opacity = '0.4';
               h.style.filter = 'grayscale(1) brightness(0.5)';
+              // Erst NACH Ausgrauen Slots aufdecken
+              window._kippSlotsHidden = false;
+              if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
               return;
             }
             h.style.opacity = (blinks % 2 === 0) ? '0.2' : '1';
@@ -10318,9 +10336,14 @@
           window._kippResultRunning = true;
           window._kippLongTapStart = 0;
           window._kippLongTapPos = null;
-          // Slot-Verdecken aufheben damit Zahl wieder sichtbar wird
-          window._kippSlotsHidden = false;
-          if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+          // Slots bleiben verdeckt — nur den getippten Slot einzeln aufdecken
+          if (tapped && tapped.faceKey && tapped.gridKey) {
+            const _face = faceSlots[tapped.faceKey];
+            if (_face && _face.slotMap[tapped.gridKey]) {
+              _face.slotMap[tapped.gridKey]._revealedNow = true;
+              rebuildFaceMat(tapped.faceKey, 1);
+            }
+          }
           // Treffererkennung & Fluganimation
           activeCardIdx = 0;
           kippCheckResult(0);
