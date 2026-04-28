@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BQ-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BQ-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3354,13 +3354,27 @@
             setTimeout(blinkTick, 180);
           })();
         }
-        // Nach Blink-Animation: Game-Over-Check oder weiter mit gleichem Kippziel
+        // Nach Blink-Animation: Game-Over-Check, oder neuer Spielzug wenn alle Slots offen, sonst weiter mit gleichem Kippziel
         setTimeout(() => {
           if (brainyFails >= 4) {
-            // Game Over → startNextKippRound triggert Game-Over-Pfad
+            startNextKippRound();
+            return;
+          }
+          // Prüfen ob alle belegten Slots aufgedeckt sind
+          let allRevealed = true;
+          ['f0','f1','f2'].forEach(fk => {
+            const fs = faceSlots[fk];
+            if (!fs || !fs.slotMap) return;
+            for (const k in fs.slotMap) {
+              const sd = fs.slotMap[k];
+              if (sd && sd.val && sd.val > 0 && !sd._revealedNow) allRevealed = false;
+            }
+          });
+          if (allRevealed) {
+            // Letzter Slot mit MISS aufgedeckt → neuer Spielzug
             startNextKippRound();
           } else {
-            // Weiter: Spieler kann erneut kippen, Kippziel + verdeckte Slots bleiben
+            // Spieler kann weiterversuchen
             window._kippResultRunning = false;
           }
         }, 1500);
