@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BO-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BO-04</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3179,24 +3179,6 @@
         btn2Action = () => { location.href = 'training.html?level=' + _nextKey; };
       }
       showLevelEndButtons(levelName, window._kippHits, brainyFails, btn1Action, btn2Label, btn2Action);
-      
-      // Soll/Ist-Kipps Info — NACH Buttons damit nicht von showLevelEndButtons gelöscht
-      (function showKippStats(){
-        const soll = window._kippSumSoll || 0;
-        const ist  = window._kippSumIst  || 0;
-        if ((window._kippHits || 0) < 1) return;
-        const txt = document.createElement('div');
-        txt.className = 'levelEndStats';
-        txt.textContent = 'Optimum: ' + soll + ' Kipps  ·  Du: ' + ist + ' Kipps';
-        const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
-        cardCenter3D.project(camera);
-        const baseTop = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720) - 45;
-        txt.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);' +
-          'top:' + (baseTop - 50) + 'px;width:300px;text-align:center;' +
-          'pointer-events:none;z-index:16;font:bold 15px Arial;letter-spacing:1px;' +
-          'color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);';
-        document.getElementById('uiOverlay').appendChild(txt);
-      })();
     }
     
     function kippCheckResult(cardIdx) {
@@ -3239,6 +3221,8 @@
           if (typeof brainyEndGame === 'function') brainyEndGame();
           return;
         }
+        // Pro-HIT-Info entfernen — neue leernohit-Runde startet
+        document.querySelectorAll('.hitKippInfo').forEach(el => el.remove());
         // Karte zurück zu leernohit, Pulsation wieder an, Position mittig
         card.isHit = false;
         card.isMiss = false;
@@ -3284,37 +3268,10 @@
         if (typeof window._kippHits !== 'number') window._kippHits = 0;
         const hitIdx = window._kippHits; // 0,1,2,3 — links nach rechts
         window._kippHits++;
-        // Soll/Ist-Kipps akkumulieren (nur HITs zählen für Endscreen-Statistik)
-        const _sollDieserHit = window._kippSollKipps || 0;
-        const _istDieserHit  = window._kippIstKipps  || 0;
-        window._kippSumSoll = (window._kippSumSoll || 0) + _sollDieserHit;
-        window._kippSumIst  = (window._kippSumIst  || 0) + _istDieserHit;
         setTimeout(() => {
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             gamePhase = 'kipp21';
-            // HIT-Text links→rechts aufgeteilt (cardIdx 0..3 wäre die Standard-Positionen)
             showHitText(hitIdx);
-            // Pro-HIT Kipp-Info kurz einblenden
-            (function showHitKippInfo(){
-              const info = document.createElement('div');
-              info.className = 'hitKippInfo';
-              info.textContent = 'Optimum: ' + _sollDieserHit + ' · Du: ' + _istDieserHit;
-              const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
-              cardCenter3D.project(camera);
-              const baseTop = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
-              info.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);' +
-                'top:' + (baseTop + 40) + 'px;width:282px;text-align:center;' +
-                'pointer-events:none;z-index:16;font:bold 16px Arial;letter-spacing:1px;' +
-                'color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);' +
-                'opacity:0;transition:opacity 0.3s;';
-              document.getElementById('uiOverlay').appendChild(info);
-              requestAnimationFrame(() => { info.style.opacity = '1'; });
-              setTimeout(() => {
-                info.style.opacity = '0';
-                setTimeout(() => { if (info.parentNode) info.remove(); }, 300);
-              }, 1500);
-            })();
-            // Nach HIT-Text-Anzeige neuen Kippzug starten
             setTimeout(startNextKippRound, 2000);
           });
         }, 1500);
@@ -3410,10 +3367,6 @@
       cube.quaternion.copy(newWorldQuat);
       kipGroup.add(cube);
       currentQuadrant = newQ;
-      // Ist-Kipps zählen (nur wenn Kippziel aktiv)
-      if (window._kippTarget) {
-        window._kippIstKipps = (window._kippIstKipps || 0) + 1;
-      }
     }
     
     // BUMBLEBRAIN: Finger-Tap → Slot-Key auf Top-Face ermitteln
@@ -7232,8 +7185,6 @@
       
       // Alle Level: nur das mittige leernohit-Kärtchen sichtbar, pulsierend
       window._kippHits = 0;
-      window._kippSumSoll = 0;
-      window._kippSumIst = 0;
       if (typeof brainyResetLives === 'function') brainyResetLives();
       if (gameCards[0] && gameCards[0].mesh) {
         if (leerImage) {
@@ -7658,43 +7609,6 @@
         const colorObj = GAME_COLORS.find(c => c.name === pick.color);
         gameCards[0].zahl = pick.zahl;
         gameCards[0].color = colorObj;
-        
-        // === Soll-Kippzahl berechnen (Optimum auf 12er-CW-Kreis) ===
-        (function computeOptimum(){
-          const faceOff = { f0: 0, f1: 4, f2: 8 };
-          const slots = ['S1', 'S2', 'S3', 'S4'];
-          let tFace = null, tSlot = null;
-          for (const fk of ['f0','f1','f2']) {
-            const off = faceOff[fk];
-            for (let si = 0; si < 4; si++) {
-              if (deck[off + si] === pick.zahl) { tFace = fk; tSlot = slots[si]; break; }
-            }
-            if (tFace) break;
-          }
-          let tQ = null;
-          if (tSlot) {
-            for (let q = 0; q < 4; q++) {
-              if (SLOT_NEIGHBOR_COLORS[q][tSlot] === pick.color) { tQ = q; break; }
-            }
-          }
-          let tCw = null;
-          if (tQ !== null && tFace) {
-            for (const st of BRAINY_CW_STATES) {
-              if (st.q === tQ && st.face === tFace) { tCw = st.cwSteps; break; }
-            }
-          }
-          let cCw = null;
-          for (const st of BRAINY_CW_STATES) {
-            if (st.q === currentQuadrant && st.face === topFace) { cCw = st.cwSteps; break; }
-          }
-          if (tCw !== null && cCw !== null) {
-            const d = ((tCw - cCw) % 12 + 12) % 12;
-            window._kippSollKipps = Math.min(d, 12 - d);
-          } else {
-            window._kippSollKipps = 0;
-          }
-          window._kippIstKipps = 0;
-        })();
 
         // Auf gameCards[0] zeichnen: farbzielhit als Hintergrund + Zielzahl in oberer Hälfte
         const card = gameCards[0];
