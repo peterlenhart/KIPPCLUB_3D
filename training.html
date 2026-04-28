@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BN-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BN-03</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3140,6 +3140,29 @@
 
     // BUMBLEBRAIN: minimale Treffererkennung mit Fluganimation (Top-Level)
     function _showBumbleEndButtons() {
+      // Spiel-UIs verstecken bevor End-Buttons erscheinen
+      // Lebenswürfel
+      const _livesWrap = document.getElementById('brainyLivesWrap');
+      if (_livesWrap) _livesWrap.style.display = 'none';
+      // Würfel selbst
+      if (typeof cube !== 'undefined' && cube) cube.visible = false;
+      // Restliche Kärtchen
+      if (typeof gameCards !== 'undefined') {
+        gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
+      }
+      // Pulsation stoppen
+      window._bumblePulseActive = false;
+      // Spieltisch-Bezogene UI-Elemente
+      if (window._dirCwMesh) window._dirCwMesh.visible = false;
+      if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
+      const _kb = document.getElementById('numBtns');
+      if (_kb) { _kb.classList.add('hidden'); _kb.style.display = 'none'; }
+      // Themenseiten-Header etc.
+      ['eyeIcon','kippTarget','demoSubtitle','progressDots','hintText','entscheidungText','countdown','startChallengeText'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      
       // Levelname für Sharetext + Anzeige
       const levelName = SCORE_LEVEL_NAMES[currentLevel] || ('LEVEL ' + currentLevel);
       // NEXT-LEVEL-Verknüpfung
@@ -3176,6 +3199,15 @@
         if (brainyFails >= 4) {
           // Alle Leben verbraucht → Game Over
           if (card && card.mesh) card.mesh.visible = false;
+          // UIs verstecken
+          window._bumblePulseActive = false;
+          if (typeof gameCards !== 'undefined') {
+            gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
+          }
+          if (window._dirCwMesh) window._dirCwMesh.visible = false;
+          if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
+          const _kbGO = document.getElementById('numBtns');
+          if (_kbGO) { _kbGO.classList.add('hidden'); _kbGO.style.display = 'none'; }
           if (typeof runGameOverAnimation === 'function') runGameOverAnimation();
           if (typeof brainyEndGame === 'function') brainyEndGame();
           return;
