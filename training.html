@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BO-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BO-03</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3140,55 +3140,37 @@
 
     // BUMBLEBRAIN: minimale Treffererkennung mit Fluganimation (Top-Level)
     function _showLevelEndButtonsAndStats() {
-      // Spiel-UIs verstecken bevor End-Buttons erscheinen
-      // Lebenswürfel
+      // Spieltisch leeren — alle Spielelemente weg
       const _livesWrap = document.getElementById('brainyLivesWrap');
       if (_livesWrap) _livesWrap.style.display = 'none';
-      // Würfel selbst
       if (typeof cube !== 'undefined' && cube) cube.visible = false;
-      // Restliche Kärtchen
       if (typeof gameCards !== 'undefined') {
         gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
       }
-      // Pulsation stoppen
+      // Pulsation + Drag stoppen
       window._kippPulseActive = false;
-      // Spieltisch-Bezogene UI-Elemente
+      window._kippEckblickRunning = false;
+      window._kippResultRunning = false;
+      // Richtungs-Buttons + Zahlen-Tasten
       if (window._dirCwMesh) window._dirCwMesh.visible = false;
       if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
       const _kb = document.getElementById('numBtns');
       if (_kb) { _kb.classList.add('hidden'); _kb.style.display = 'none'; }
-      // Themenseiten-Header etc.
+      // Themenseiten-Header / Subtitles / HIT-Texte
       ['eyeIcon','kippTarget','demoSubtitle','progressDots','hintText','entscheidungText','countdown','startChallengeText'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
+      // HIT/MISS Floating-Texte und Hit-Kipp-Infos entfernen
+      document.querySelectorAll('.hitFloater, .hitKippInfo, .levelEndStats').forEach(el => el.remove());
       
       // Levelname für Sharetext + Anzeige
       const levelName = SCORE_LEVEL_NAMES[currentLevel] || ('LEVEL ' + currentLevel);
-      
-      // Soll/Ist-Kipps Info-Overlay
-      (function showKippStats(){
-        const soll = window._kippSumSoll || 0;
-        const ist  = window._kippSumIst  || 0;
-        if (window._kippHits < 1) return;
-        const txt = document.createElement('div');
-        txt.className = 'levelEndBtn'; // wird mit den Buttons zusammen entfernt
-        txt.textContent = 'Optimum: ' + soll + ' Kipps  ·  Du: ' + ist + ' Kipps';
-        const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
-        cardCenter3D.project(camera);
-        const baseTop = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720) - 45;
-        txt.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);' +
-          'top:' + (baseTop - 40) + 'px;width:282px;text-align:center;' +
-          'pointer-events:none;z-index:15;font:14px Arial;letter-spacing:1px;' +
-          'color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.6);';
-        document.getElementById('uiOverlay').appendChild(txt);
-      })();
       
       // NEXT-LEVEL-Verknüpfung
       const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
       const _nextKey = _nextMap[currentLevel];
       const btn1Action = () => {
-        // NOCHMAL: aktuelles Level neu starten
         location.href = 'training.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
       };
       let btn2Label = null, btn2Action = null;
@@ -3197,6 +3179,24 @@
         btn2Action = () => { location.href = 'training.html?level=' + _nextKey; };
       }
       showLevelEndButtons(levelName, window._kippHits, brainyFails, btn1Action, btn2Label, btn2Action);
+      
+      // Soll/Ist-Kipps Info — NACH Buttons damit nicht von showLevelEndButtons gelöscht
+      (function showKippStats(){
+        const soll = window._kippSumSoll || 0;
+        const ist  = window._kippSumIst  || 0;
+        if ((window._kippHits || 0) < 1) return;
+        const txt = document.createElement('div');
+        txt.className = 'levelEndStats';
+        txt.textContent = 'Optimum: ' + soll + ' Kipps  ·  Du: ' + ist + ' Kipps';
+        const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
+        cardCenter3D.project(camera);
+        const baseTop = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720) - 45;
+        txt.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);' +
+          'top:' + (baseTop - 50) + 'px;width:300px;text-align:center;' +
+          'pointer-events:none;z-index:16;font:bold 15px Arial;letter-spacing:1px;' +
+          'color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);';
+        document.getElementById('uiOverlay').appendChild(txt);
+      })();
     }
     
     function kippCheckResult(cardIdx) {
@@ -3218,8 +3218,11 @@
         if (brainyFails >= 4) {
           // Alle Leben verbraucht → Game Over
           if (card && card.mesh) card.mesh.visible = false;
-          // UIs verstecken
+          // Spieltisch leeren — alle Spielelemente weg
           window._kippPulseActive = false;
+          window._kippEckblickRunning = false;
+          window._kippResultRunning = false;
+          if (typeof cube !== 'undefined' && cube) cube.visible = false;
           if (typeof gameCards !== 'undefined') {
             gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
           }
@@ -3227,6 +3230,11 @@
           if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
           const _kbGO = document.getElementById('numBtns');
           if (_kbGO) { _kbGO.classList.add('hidden'); _kbGO.style.display = 'none'; }
+          ['eyeIcon','kippTarget','demoSubtitle','progressDots','hintText','entscheidungText','countdown','startChallengeText'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          document.querySelectorAll('.hitFloater, .hitKippInfo, .levelEndStats').forEach(el => el.remove());
           if (typeof runGameOverAnimation === 'function') runGameOverAnimation();
           if (typeof brainyEndGame === 'function') brainyEndGame();
           return;
@@ -3277,13 +3285,35 @@
         const hitIdx = window._kippHits; // 0,1,2,3 — links nach rechts
         window._kippHits++;
         // Soll/Ist-Kipps akkumulieren (nur HITs zählen für Endscreen-Statistik)
-        window._kippSumSoll = (window._kippSumSoll || 0) + (window._kippSollKipps || 0);
-        window._kippSumIst  = (window._kippSumIst  || 0) + (window._kippIstKipps  || 0);
+        const _sollDieserHit = window._kippSollKipps || 0;
+        const _istDieserHit  = window._kippIstKipps  || 0;
+        window._kippSumSoll = (window._kippSumSoll || 0) + _sollDieserHit;
+        window._kippSumIst  = (window._kippSumIst  || 0) + _istDieserHit;
         setTimeout(() => {
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             gamePhase = 'kipp21';
             // HIT-Text links→rechts aufgeteilt (cardIdx 0..3 wäre die Standard-Positionen)
             showHitText(hitIdx);
+            // Pro-HIT Kipp-Info kurz einblenden
+            (function showHitKippInfo(){
+              const info = document.createElement('div');
+              info.className = 'hitKippInfo';
+              info.textContent = 'Optimum: ' + _sollDieserHit + ' · Du: ' + _istDieserHit;
+              const cardCenter3D = new THREE.Vector3(0, cardY, cardZ);
+              cardCenter3D.project(camera);
+              const baseTop = Math.round((-cardCenter3D.y * 0.5 + 0.5) * 720);
+              info.style.cssText = 'position:absolute;display:block;left:50%;transform:translateX(-50%);' +
+                'top:' + (baseTop + 40) + 'px;width:282px;text-align:center;' +
+                'pointer-events:none;z-index:16;font:bold 16px Arial;letter-spacing:1px;' +
+                'color:#cedb25;text-shadow:0 1px 4px rgba(0,0,0,0.7);' +
+                'opacity:0;transition:opacity 0.3s;';
+              document.getElementById('uiOverlay').appendChild(info);
+              requestAnimationFrame(() => { info.style.opacity = '1'; });
+              setTimeout(() => {
+                info.style.opacity = '0';
+                setTimeout(() => { if (info.parentNode) info.remove(); }, 300);
+              }, 1500);
+            })();
             // Nach HIT-Text-Anzeige neuen Kippzug starten
             setTimeout(startNextKippRound, 2000);
           });
