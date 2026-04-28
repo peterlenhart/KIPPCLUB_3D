@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BM-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BN-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2614,9 +2614,11 @@
       const total = hits + fails;
       const pct = total > 0 ? Math.round(hits / total * 100) : 0;
       const grid = window._hitMissSeq.map(r => r === 'hit' ? '\u{1F7E9}' : '\u{1F7E5}').join('');
-      // Nur BUMBLEBRAIN bekommt Level-Param (andere Levels kommen später)
-      const shareUrl = (currentLevel === 1)
-        ? window._DIGIKIPP_URL + 'training.html?level=bumblebrain'
+      // Sharelink: jedes Level eigener Direkt-Einstieg
+      const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
+      const _lvlKey = _lvlMap[currentLevel];
+      const shareUrl = _lvlKey
+        ? window._DIGIKIPP_URL + 'training.html?level=' + _lvlKey
         : window._DIGIKIPP_URL;
       return 'KIPP NUMBERS \u2014 ' + levelName + '\n' +
         pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
@@ -3137,6 +3139,24 @@
     };
 
     // BUMBLEBRAIN: minimale Treffererkennung mit Fluganimation (Top-Level)
+    function _showBumbleEndButtons() {
+      // Levelname für Sharetext + Anzeige
+      const levelName = SCORE_LEVEL_NAMES[currentLevel] || ('LEVEL ' + currentLevel);
+      // NEXT-LEVEL-Verknüpfung
+      const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
+      const _nextKey = _nextMap[currentLevel];
+      const btn1Action = () => {
+        // NOCHMAL: aktuelles Level neu starten
+        location.href = 'training.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
+      };
+      let btn2Label = null, btn2Action = null;
+      if (_nextKey) {
+        btn2Label = T.nxl || 'NEXT LEVEL';
+        btn2Action = () => { location.href = 'training.html?level=' + _nextKey; };
+      }
+      showLevelEndButtons(levelName, window._bumbleHits, brainyFails, btn1Action, btn2Label, btn2Action);
+    }
+    
     function bumbleCheckResult(cardIdx) {
       activeCardIdx = cardIdx;
       const card = gameCards[cardIdx];
@@ -3146,17 +3166,16 @@
       function startNextBumbleRound() {
         // Spielende-Check
         if ((window._bumbleHits || 0) >= 4) {
-          // Alle 4 HITs → Spielende positiv: Wertung anzeigen
+          // Alle 4 HITs → Spielende positiv: Wertung anzeigen + Buttons
+          if (card && card.mesh) card.mesh.visible = false;
           if (typeof saveBestScore === 'function') saveBestScore(currentLevel, window._bumbleHits, brainyFails);
           if (typeof showLevelScore === 'function') showLevelScore(window._bumbleHits, brainyFails);
+          _showBumbleEndButtons();
           return;
         }
         if (brainyFails >= 4) {
           // Alle Leben verbraucht → Game Over
-          // Letzte Kippziel-Karte vom Spieltisch entfernen, bevor Buttons erscheinen
-          if (card && card.mesh) {
-            card.mesh.visible = false;
-          }
+          if (card && card.mesh) card.mesh.visible = false;
           if (typeof runGameOverAnimation === 'function') runGameOverAnimation();
           if (typeof brainyEndGame === 'function') brainyEndGame();
           return;
@@ -6250,10 +6269,10 @@
 
     // === LEVEL-Konfig ===
     const LEVEL_CFG = {
-      1: { zahlenProFace: 1, maxZahl: 2,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: true },
+      1: { zahlenProFace: 1, maxZahl: 2,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: true, pairCount: 1 },
       2: { zahlenProFace: 2, maxZahl: 4,  ablenkGems: 1, name: 'BRAINY', pairMode: true, pairCount: 2 },
-      3: { zahlenProFace: 3, maxZahl: 9,  ablenkGems: 2, name: 'BRAIN' },
-      4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN' }
+      3: { zahlenProFace: 3, maxZahl: 8,  ablenkGems: 2, name: 'BRAIN', pairMode: true, pairCount: 4 },
+      4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN', pairMode: true, pairCount: 6 }
     };
     
     function brainyBuildDeck(cfg) {
