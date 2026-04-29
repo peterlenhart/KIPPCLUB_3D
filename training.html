@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-13</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-14</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2185,10 +2185,10 @@
           ctx.rotate(rot);
           // Rechteck größer als Slot — überdeckt die Trennlinien zwischen Slots
           const half = cell / 2;
-          const rx = -half - 4;
-          const ry = -half;
+          const rx = -half + 4;
+          const ry = -half + 4;
           const rw = cell;
-          const rh = cell + 4;
+          const rh = cell;
           ctx.fillStyle = '#2a1810';
           ctx.fillRect(rx, ry, rw, rh);
           // Inline-Rahmen beige 4px (komplett innerhalb der Fläche)
@@ -4022,7 +4022,12 @@
     
     // === BUMBLEBRAIN Numbers Tutorial ===
     async function runBumbleNumbersTutorial() {
-      // Tutorial wartet bis Würfel auf Höchststand mit Neigung erreicht ist (via _onEckblickRiseComplete)
+      // Spieler-Input komplett sperren während Tutorial
+      kipp21Active = false;
+      kippDragActive = false;
+      window._kippResultRunning = true;  // blockt Long-Tap-Resolve
+      replayActive = true;                // blockt Würfel-Drag im Touch-Handler
+      
       // 1. Box-Freistellung + Text mit mitlesendem Finger
       await showMaskedBlurLines([
         'Zahlenpositionen merken!',
@@ -4039,6 +4044,9 @@
       
       // Tutorial-Modus aus, normaler Spielfluss übernimmt
       window._brainyTutorialMode = false;
+      replayActive = false;
+      window._kippResultRunning = false;
+      kipp21Active = true;
     }
     
     async function handTapFromSouth(tx, ty, holdMs) {
