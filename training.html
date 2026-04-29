@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BR-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BR-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -6539,10 +6539,15 @@
       jEl.style.filter = 'grayscale(1) brightness(0.5)';
       jEl.style.transform = 'scale(0.9)';
       _jokerCount--;
-      // Eckblick starten
+      // Slots offen während Joker-Eckblick
+      window._kippSlotsHidden = false;
+      if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+      // Eckblick starten — ohne abschließendes Verdecken
       if (typeof runKippEckblick === 'function') {
         window._kippEckblickRunning = true;
-        runKippEckblick().finally(() => { window._kippEckblickRunning = false; });
+        runKippEckblick({ noHideSlots: false }).finally(() => {
+          window._kippEckblickRunning = false;
+        });
       }
     }
 
@@ -7460,7 +7465,8 @@
     let eckblickPivot = null;
     
     // --- BUMBLEBRAIN: Eckblick im Card-Stil (heben + neigen + halten + senken) ---
-    async function runKippEckblick() {
+    async function runKippEckblick(opts) {
+      const _noHideSlots = opts && opts.noHideSlots;
       if (kipp21KniffActive) return false;
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
@@ -7599,8 +7605,11 @@
       });
 
       // BUMBLEBRAIN: Slots verdecken — Würfel-ECKE hat Y=0 erreicht (analog card.html)
-      window._kippSlotsHidden = true;
-      if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+      // Bei Joker-Aufruf zur Vergewisserung: Slots offen lassen
+      if (!_noHideSlots) {
+        window._kippSlotsHidden = true;
+        if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+      }
 
       // Kippziel generieren: random Farbe + random Zielzahl (aus belegten Slots), keine Kombi doppelt
       (function generateKippTarget(){
