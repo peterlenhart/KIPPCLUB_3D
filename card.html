@@ -988,7 +988,7 @@
 
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AT-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AT-04</div>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -4918,7 +4918,7 @@
       const [nw, ne, se, sw] = corners2D;
       const z10 = new THREE.Vector3(0, Y, 0.658);
       z10.project(camera);
-      const textScreenY = Math.round((-z10.y * 0.5 + 0.5) * 720);
+      const textScreenY = Math.round((-z10.y * 0.5 + 0.5) * 720) + 22;
       const outer = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
       const inner = nw.x + 'px ' + nw.y + 'px, ' +
                     sw.x + 'px ' + sw.y + 'px, ' +
