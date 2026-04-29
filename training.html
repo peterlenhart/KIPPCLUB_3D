@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BR-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BR-04</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -6456,8 +6456,8 @@
       const old = document.getElementById('brainyLivesWrap');
       if (old) old.remove();
       const wrap = brainyEnsureLivesUI();
-      // Lebenswürfel oben zwischen Tonbutton und Pokal
-      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(-50%);' +
+      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts)
+      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
         'z-index:25;pointer-events:none;display:flex;gap:8px;align-items:center;';
       const hearts = wrap.querySelectorAll('.brainyLife');
       hearts.forEach(h => {
