@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-09</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-11</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2181,11 +2181,14 @@
         // Ausnahme: einzelner Slot kann mit _revealedNow=true einzeln aufgedeckt werden
         if (window._kippSlotsHidden && !slotMap[key]._revealedNow) {
           ctx.save();
-          // Rechteck: links +2, rechts +4, oben +4 verkürzt, unten +4 verlängert (gegen Würfelflächenrahmen)
-          const rx = c * cell - 2;
-          const ry = r * cell + 4;
-          const rw = cell + 2 + 4;
-          const rh = cell - 4 + 4;
+          ctx.translate(cx, cy);
+          ctx.rotate(rot);
+          // Rechteck größer als Slot — überdeckt die Trennlinien zwischen Slots
+          const half = cell / 2;
+          const rx = -half - 4;
+          const ry = -half - 4;
+          const rw = cell + 8;
+          const rh = cell + 8;
           ctx.fillStyle = '#2a1810';
           ctx.fillRect(rx, ry, rw, rh);
           // Inline-Rahmen beige 4px (komplett innerhalb der Fläche)
@@ -2194,8 +2197,6 @@
           ctx.strokeRect(rx + 2, ry + 2, rw - 4, rh - 4);
           ctx.fillStyle = '#e8dcc8';
           ctx.font = 'bold 56px Arial';
-          ctx.translate(cx, cy);
-          ctx.rotate(rot);
           ctx.fillText('?', 0, 0);
           ctx.restore();
           // wieder zur normalen Schriftfarbe
