@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BQ-06</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. BR-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3144,6 +3144,7 @@
       // Spieltisch leeren — alle Spielelemente weg
       const _livesWrap = document.getElementById('brainyLivesWrap');
       if (_livesWrap) _livesWrap.style.display = 'none';
+      hideJokers();
       if (typeof cube !== 'undefined' && cube) cube.visible = false;
       if (typeof gameCards !== 'undefined') {
         gameCards.forEach(c => { if (c && c.mesh) c.mesh.visible = false; });
@@ -3207,7 +3208,7 @@
           _showLevelEndButtonsAndStats();
           return;
         }
-        if (brainyFails >= 6) {
+        if (brainyFails >= 5) {
           // Alle Leben verbraucht → Game Over
           if (card && card.mesh) card.mesh.visible = false;
           // Pulsation/State stoppen
@@ -3243,6 +3244,7 @@
           const _showGOBtns = () => {
             const _liv = document.getElementById('brainyLivesWrap');
             if (_liv) _liv.style.display = 'none';
+            hideJokers();
             const _endLvlNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
             const _curName = _endLvlNames[currentLevel] || 'BUMBLEBRAIN';
             const _nextLvl = currentLevel < 4 ? currentLevel + 1 : null;
@@ -3313,6 +3315,14 @@
           card.mesh.scale.set(s, s, 1);
           requestAnimationFrame(_kippPulseTick);
         })();
+        // Eckblick automatisch starten (nach kurzer Verzögerung)
+        setTimeout(() => {
+          if (window._kippEckblickRunning || window._kippTarget) return;
+          window._kippEckblickRunning = true;
+          window._kippPulseActive = false;
+          if (card && card.mesh) card.mesh.scale.set(1, 1, 1);
+          runKippEckblick().finally(() => { window._kippEckblickRunning = false; });
+        }, 500);
       }
       
       if (treffer) {
@@ -3358,7 +3368,7 @@
         }
         // Nach Blink-Animation: Game-Over-Check, sonst weiter mit gleichem Kippziel (Slot wieder verdeckt)
         setTimeout(() => {
-          if (brainyFails >= 6) {
+          if (brainyFails >= 5) {
             startNextKippRound();
             return;
           }
@@ -6427,7 +6437,7 @@
           // Right face
           '<polygon points="88,30 50,50 50,90 88,70" fill="url(#fRight)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
         '</svg>';
-      const _livesCount = 6;
+      const _livesCount = 5;
       for (let i = 0; i < _livesCount; i++) {
         const h = document.createElement('div');
         h.className = 'brainyLife';
@@ -6446,15 +6456,13 @@
       const old = document.getElementById('brainyLivesWrap');
       if (old) old.remove();
       const wrap = brainyEnsureLivesUI();
-      // Lebenswürfel über die ganze Breite verteilen, an ehemaliger Richtungs-Buttons-Position
-      // Z=1.28415 (dirBtnZ), Y=0.47275 (Spieltisch), X=0 (Mitte) — projizieren zu Screen-Y
-      const _btnPos = new THREE.Vector3(0, 0.47275, 1.28415);
-      _btnPos.project(camera);
-      const _screenY = Math.round((-_btnPos.y * 0.5 + 0.5) * 720);
-      wrap.style.cssText = 'position:absolute;top:' + (_screenY - 26) + 'px;left:0;width:100%;' +
-        'z-index:25;pointer-events:none;display:flex;justify-content:space-around;align-items:center;padding:0 30px;box-sizing:border-box;';
+      // Lebenswürfel oben zwischen Tonbutton und Pokal
+      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(-50%);' +
+        'z-index:25;pointer-events:none;display:flex;gap:8px;align-items:center;';
       const hearts = wrap.querySelectorAll('.brainyLife');
       hearts.forEach(h => {
+        h.style.width = '28px';
+        h.style.height = '28px';
         h.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
         h.style.opacity = '1';
         h.style.transform = 'scale(1)';
@@ -6481,6 +6489,61 @@
     function brainyHideLives() {
       const wrap = document.getElementById('brainyLivesWrap');
       if (wrap) wrap.style.display = 'none';
+    }
+
+    // === JOKER UI === (Eckblick-Token, 5 Stück)
+    let _jokerCount = 5;
+    function ensureJokersUI() {
+      let wrap = document.getElementById('jokersWrap');
+      if (wrap) return wrap;
+      wrap = document.createElement('div');
+      wrap.id = 'jokersWrap';
+      // Position wie alte Lebenswürfel-Reihe (an ehemaliger Richtungs-Buttons-Position)
+      const _btnPos = new THREE.Vector3(0, 0.47275, 1.28415);
+      _btnPos.project(camera);
+      const _screenY = Math.round((-_btnPos.y * 0.5 + 0.5) * 720);
+      wrap.style.cssText = 'position:absolute;top:' + (_screenY - 26) + 'px;left:0;width:100%;' +
+        'z-index:25;display:flex;justify-content:space-around;align-items:center;padding:0 30px;box-sizing:border-box;';
+      for (let i = 0; i < 5; i++) {
+        const j = document.createElement('div');
+        j.className = 'jokerSlot';
+        j.dataset.idx = i;
+        j.style.cssText = 'width:52px;height:52px;background-image:url(joker4.webp);' +
+          'background-size:contain;background-repeat:no-repeat;background-position:center;' +
+          'cursor:pointer;pointer-events:auto;transition:opacity 0.3s, transform 0.3s, filter 0.3s;' +
+          'filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));';
+        j.addEventListener('click', () => onJokerClick(j));
+        wrap.appendChild(j);
+      }
+      document.getElementById('uiOverlay').appendChild(wrap);
+      return wrap;
+    }
+    function resetJokers() {
+      const old = document.getElementById('jokersWrap');
+      if (old) old.remove();
+      _jokerCount = 5;
+      ensureJokersUI();
+    }
+    function hideJokers() {
+      const wrap = document.getElementById('jokersWrap');
+      if (wrap) wrap.style.display = 'none';
+    }
+    function onJokerClick(jEl) {
+      // Eckblick erlaubt sobald Kippziel aktiv und nichts läuft (Eckblick/Result/Drag/Animation)
+      if (!window._kippTarget) return;
+      if (window._kippEckblickRunning || window._kippResultRunning) return;
+      if (kippDragActive || isAnimating) return;
+      // Joker verbrauchen (visuell + Counter)
+      jEl.style.pointerEvents = 'none';
+      jEl.style.opacity = '0.25';
+      jEl.style.filter = 'grayscale(1) brightness(0.5)';
+      jEl.style.transform = 'scale(0.9)';
+      _jokerCount--;
+      // Eckblick starten
+      if (typeof runKippEckblick === 'function') {
+        window._kippEckblickRunning = true;
+        runKippEckblick().finally(() => { window._kippEckblickRunning = false; });
+      }
     }
 
     // === BRAINY ROUND ===
@@ -7131,6 +7194,7 @@
       gamePhase = 'kipp21';
 
       brainyResetLives();
+      resetJokers();
 
       const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
@@ -7153,6 +7217,7 @@
       // Alle Level: nur das mittige leernohit-Kärtchen sichtbar, pulsierend
       window._kippHits = 0;
       if (typeof brainyResetLives === 'function') brainyResetLives();
+      if (typeof resetJokers === 'function') resetJokers();
       if (gameCards[0] && gameCards[0].mesh) {
         if (leerImage) {
           gameCards[0].ctx.clearRect(0, 0, 85, 170);
@@ -7185,9 +7250,18 @@
       window._onNumBtn = brainyOnNumBtn;
       window._onDirBtn = brainyOnDirBtn;
 
-      // Alle Level: NICHT automatisch starten — Spieler muss erst auf leernohit tippen
+      // Eckblick startet automatisch zu Spielbeginn (nach kurzer Verzögerung damit UI fertig ist)
       kipp21Active = true;
       positionResetButton();
+      setTimeout(() => {
+        if (window._kippEckblickRunning || window._kippTarget) return;
+        window._kippEckblickRunning = true;
+        window._kippPulseActive = false;
+        if (gameCards[0] && gameCards[0].mesh) gameCards[0].mesh.scale.set(1, 1, 1);
+        kipp21CardTouchHandled = true;
+        setTimeout(() => { kipp21CardTouchHandled = false; }, 600);
+        runKippEckblick().finally(() => { window._kippEckblickRunning = false; });
+      }, 600);
     }
 
     // === BRAIN LEVEL START ===
@@ -10294,26 +10368,7 @@
         }
       }
       
-      // BUMBLEBRAIN Schritt 1: Klick auf leernohit → Eckblick
-      // Nur wenn noch kein Kippziel aktiv (also noch leernohit, nicht farbzielhit)
-      if (lastTouchPos && !dragActive && gameCards[0] && gameCards[0].mesh.visible && !window._kippEckblickRunning && !window._kippTarget && !window._kippSlotsHidden) {
-        const rectBB = renderer.domElement.getBoundingClientRect();
-        vkMouse.x = ((lastTouchPos.x - rectBB.left) / rectBB.width) * 2 - 1;
-        vkMouse.y = -((lastTouchPos.y - rectBB.top) / rectBB.height) * 2 + 1;
-        vkRaycaster.setFromCamera(vkMouse, camera);
-        if (vkRaycaster.intersectObject(gameCards[0].mesh).length > 0) {
-          window._kippEckblickRunning = true;
-          window._kippPulseActive = false;
-          gameCards[0].mesh.scale.set(1, 1, 1);
-          lastTouchPos = null;
-          gamePhase = 'kipp21';
-          kipp21Active = true;
-          kipp21CardTouchHandled = true;
-          setTimeout(() => { kipp21CardTouchHandled = false; }, 600);
-          runKippEckblick().finally(function(){ window._kippEckblickRunning = false; });
-          return;
-        }
-      }
+      // (Klick auf leernohit für Eckblick wurde entfernt — Eckblick startet automatisch bei Spielstart und nach HIT, manuell nach MISS via Joker)
       
       // KIPP 21: Card tap + Direction button detection
       if (gamePhase === 'kipp21' && kipp21Active && lastTouchPos && !dragActive) {
