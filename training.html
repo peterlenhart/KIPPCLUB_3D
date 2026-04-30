@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-15</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-16</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -7018,7 +7018,16 @@
 
       // === NEUE REIHENFOLGE: Fall-Position ZUERST (random), Ziel NACHHER ===
       // Random Fall-Position (ohne Target-Constraint)
-      const _validStates = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
+      let _validStates = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
+      // Tutorial: nur Fall-States wählen, bei denen die LEERE Face oben landet
+      if (window._brainyTutorialMode) {
+        const _fOff = { f0: 0, f1: 4, f2: 8 };
+        const _emptyOnly = _validStates.filter(st => {
+          const _off = _fOff[st.face];
+          return deck[_off] === 0 && deck[_off+1] === 0 && deck[_off+2] === 0 && deck[_off+3] === 0;
+        });
+        if (_emptyOnly.length > 0) _validStates = _emptyOnly;
+      }
       const fallState = _validStates[Math.floor(Math.random() * _validStates.length)];
       console.log('[BRAINY] Fall: Q=' + fallState.q + ' face=' + fallState.face + ' (hits=' + brainyHits + ' fails=' + brainyFails + ')');
 
