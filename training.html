@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AT-06</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4121,6 +4121,87 @@
           (T.kpT3||'Die „{zahl}" soll').replace('{zahl}', _zahl),
           (T.kpT4||'zu {farbe}.').replace('{farbe}', _farbe)
         ], 1700, 1200, { extraY: 35 });
+      }
+      
+      // 6. Hand-Kipp-Sequenz: kippt eine FALSCHE Zahl zur Zielfarbe, auf Umwegen (ein Rückkipp dazwischen)
+      if (_t) {
+        // Falsche Zahl finden (BUMBLEBRAIN hat 1-2 Zahlen im Deck)
+        const _possibleZahlen = [];
+        for (let _di = 0; _di < deck.length; _di++) {
+          if (visibleDeckIndices.has(_di) && deck[_di] > 0) {
+            if (_possibleZahlen.indexOf(deck[_di]) < 0) _possibleZahlen.push(deck[_di]);
+          }
+        }
+        const _correctZahl = _t.zahl;
+        const _wrongZahl = _possibleZahlen.find(z => z !== _correctZahl);
+        const _solveZahl = _wrongZahl || _correctZahl; // Fallback wenn nur 1 Zahl
+        const _solution = solveKippziel(_solveZahl, _t.color, currentQuadrant, topFace);
+        
+        if (_solution && _solution.steps >= 1) {
+          await sleep(400);
+          
+          // Umweg-Sequenz bauen: ein Rückkipp irgendwo random eingebaut
+          const _dir = _solution.dir; // 'cw' oder 'ccw'
+          const _opp = (_dir === 'cw') ? 'ccw' : 'cw';
+          const _seq = [];
+          if (_solution.steps >= 2) {
+            // Rückkipp an zufälliger Stelle einbauen — nach Schritt 1, 2 oder 3
+            const _insertAt = 1 + Math.floor(Math.random() * Math.min(_solution.steps - 1, 3));
+            for (let i = 0; i < _solution.steps; i++) {
+              _seq.push(_dir);
+              if (i === _insertAt - 1) {
+                _seq.push(_opp);
+                _seq.push(_dir); // Rückkipp ausgleichen, damit netto = solution.steps
+              }
+            }
+          } else {
+            _seq.push(_dir);
+          }
+          
+          // Tutorial-Impuls-Kipp wie card.html
+          if (typeof initHandEl === 'function') initHandEl();
+          for (let i = 0; i < _seq.length; i++) {
+            const _stepDir = _seq[i];
+            const _kippDir = (_stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+            if (!_kippDir) break;
+            const c = cubeScreenXY();
+            const fullOff = kippPixelDir(_kippDir);
+            const len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
+            const nx = fullOff.dx / len * 112;
+            const ny = fullOff.dy / len * 112;
+            
+            setHandPos(c.x, c.y);
+            handEl.style.opacity = '1';
+            if (typeof updateHandShadow === 'function') updateHandShadow(c.x, c.y, true);
+            await sleep(200);
+            
+            isAnimating = false;
+            kippDirection = _stepDir;
+            const kippP = performKipp(_kippDir, 800);
+            
+            const swipeDur = 220;
+            const swipeStart = Date.now();
+            await new Promise(resolve => {
+              function frame() {
+                const elapsed = Date.now() - swipeStart;
+                const t = Math.min(elapsed / swipeDur, 1);
+                const eased = t * t;
+                setHandPos(c.x + nx * eased, c.y + ny * eased);
+                if (typeof updateHandShadow === 'function') updateHandShadow(c.x + nx * eased, c.y + ny * eased, true);
+                if (t < 1) requestAnimationFrame(frame);
+                else resolve();
+              }
+              requestAnimationFrame(frame);
+            });
+            
+            handEl.style.opacity = '0';
+            if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
+            await kippP;
+            advanceTopFace();
+            
+            await sleep(400);
+          }
+        }
       }
       
       // Tutorial-Modus aus, normaler Spielfluss übernimmt
