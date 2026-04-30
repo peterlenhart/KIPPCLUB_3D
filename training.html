@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-22</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AS-24</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2164,8 +2164,6 @@
       ctx.font = 'bold 56px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // BUMBLEBRAIN: Slot-Verdeckungen sammeln, NACH dem Rand zeichnen (sonst überdeckt der Rand den unteren Bildrand)
-      const _verdecktList = [];
       for (const key in slotMap) {
         const [r, c] = key.split(',').map(Number);
         const { val, rot } = slotMap[key];
@@ -2183,15 +2181,18 @@
         
         if (!val || val <= 0) continue; // Leerer Slot (BRAINY-System: deck=0 = leer)
         
-        // BUMBLEBRAIN: Slots verdeckt → slot_verdeckt.webp (für nach dem Rand vormerken)
-        if (window._kippSlotsHidden && !slotMap[key]._revealedNow) {
-          _verdecktList.push({ c: c, r: r });
-          continue;
-        }
-        
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(rot);
+        // BUMBLEBRAIN: Slots verdeckt → numbers_verdeckt.webp (wird wie eine Zahl behandelt: zentriert + rotiert)
+        if (window._kippSlotsHidden && !slotMap[key]._revealedNow) {
+          if (slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
+            // Für nach dem Rand vormerken (sonst überdeckt der Rand den Bildunterrand)
+            _verdecktList.push({ cx: cx, cy: cy, rot: rot });
+          }
+          ctx.restore();
+          continue;
+        }
         const dVal = displayNum(val);
         drawCenteredText(ctx, dVal, 0, 0);
         ctx.restore();
@@ -2203,12 +2204,16 @@
       ctx.lineWidth = 6;
       ctx.strokeRect(3, 3, 250, 250);
       
-      // Slot-Verdeckungen NACH dem Rand zeichnen (liegen darüber)
+      // Slot-Verdeckungen NACH dem Rand zeichnen (Bild wie Zahl behandelt)
       if (_verdecktList.length > 0 && slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
         ctx.globalAlpha = 1;
         for (let i = 0; i < _verdecktList.length; i++) {
           const v = _verdecktList[i];
-          ctx.drawImage(slotVerdecktImg, v.c * cell, v.r * cell, cell, cell);
+          ctx.save();
+          ctx.translate(v.cx, v.cy);
+          ctx.rotate(v.rot);
+          ctx.drawImage(slotVerdecktImg, -cell / 2, -cell / 2, cell, cell);
+          ctx.restore();
         }
       }
 
