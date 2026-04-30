@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-12</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-13</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8087,17 +8087,17 @@
         }
         if (possibleZahlen.length === 0) return;
 
-        // Tutorial-Sonderregel: jede Wand-Farbe an der ein verdeckter Zahlen-Slot liegt → tabu
-        // Alle 3 sichtbaren Faces durchgehen
+        // Tutorial-Sonderregel: Wand-Farbe an der ein verdeckter Zahlen-Slot AUF DER TOP-FACE liegt → tabu
         const _verboteneTutFarben = new Set();
         if (window._brainyTutorialMode) {
-          for (const _face of ['f0', 'f1', 'f2']) {
-            const _fs = faceSlots[_face];
-            if (!_fs || !_fs.slotMap) continue;
-            for (const _k in _fs.slotMap) {
-              const _sm = _fs.slotMap[_k];
-              if (_sm.val > 0 && _sm.vis !== false && _sm.name) {
-                const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][_sm.name];
+          const _faceOff = { f0: 0, f1: 4, f2: 8 };
+          const _slots = ['S1', 'S2', 'S3', 'S4'];
+          const _off = _faceOff[topFace];
+          if (_off !== undefined && SLOT_NEIGHBOR_COLORS[currentQuadrant]) {
+            for (let _i = 0; _i < 4; _i++) {
+              if (deck[_off + _i] > 0 && visibleDeckIndices.has(_off + _i)) {
+                const _slotName = _slots[_i];
+                const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotName];
                 if (_wandFarbe) _verboteneTutFarben.add(_wandFarbe);
               }
             }
