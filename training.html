@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AT-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AT-03</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1123,7 +1123,7 @@
         d5a:"Tutorial wiederholen?<br>Oder die sechs", d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?", d5c:"Klick auf Beginn-Button,<br>unten links.",
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange",
         nml:"NOCHMAL", cTeilen:"TEILEN", cSchaffst:"Schaffst du das auch?", cKopiert:"KOPIERT!", nxl:"NEXT LEVEL", sek:"Sek.", tout:"60 Sek.<br>\u00fcberschritten", h4b:"Mit 4 HITS ins BRAINY Level", h4r:"Mit 4 HITS ins BRAIN Level",
-        kpT1:"Kipp den W\u00fcrfel", kpT2:"wie du willst.", kpT3:"Die \u201E{zahl}\u201C soll", kpT4:"zu {farbe}.", exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden"
+        kpT1:"Kippe den W\u00fcrfel", kpT2:"wie du willst.", kpT3:"Die \u201E{zahl}\u201C soll", kpT4:"zu {farbe}.", exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden"
       },
       "en": {
         s1:"OBJECTIVE", s2:"\u2022 Find the right number of tips and the correct direction so the cube hits the target. E.g. <b>{zahl}</b> to <b>{farbe}</b>.<br>It\u2019s never more than <b>6</b> tips if the direction is right.<br>\u2022 Use <b>LOOK</b> seconds efficiently.",
@@ -4081,8 +4081,36 @@
       // Etwas extra warten damit alles stabil ist
       await sleep(400);
       
-      // 4b. Kippziel 1.5 Sek sichtbar zeigen, BEVOR die Plane mit Hinweistext kommt
-      await sleep(1500);
+      // 4b. Hand umkreist das Kippziel-Kärtchen (Karte 0), dann verschwindet sie
+      if (typeof initHandEl === 'function') initHandEl();
+      const _ccx = cardScreenX(0);
+      const _ccy = cardScreenY(0);
+      const _radius = 38;
+      // Hand erscheint südwestlich von Karte
+      setHandPos(_ccx - _radius, _ccy + _radius + 50);
+      handEl.style.opacity = '1';
+      if (typeof updateHandShadow === 'function') updateHandShadow(_ccx - _radius, _ccy + _radius + 50, true);
+      await moveHandSmooth(_ccx, _ccy + _radius, 500);
+      // 1.5 Umkreisungen (540°) im Uhrzeigersinn
+      const _circDur = 1500;
+      const _circStart = performance.now();
+      await new Promise(r => {
+        function _animCirc() {
+          const t = Math.min((performance.now() - _circStart) / _circDur, 1);
+          // Start bei 270° (unten), 540° im Uhrzeigersinn
+          const ang = (270 + 540 * t) * Math.PI / 180;
+          const x = _ccx + _radius * Math.cos(ang);
+          const y = _ccy + _radius * Math.sin(ang);
+          setHandPos(x, y);
+          if (typeof updateHandShadow === 'function') updateHandShadow(x, y, true);
+          if (t < 1) requestAnimationFrame(_animCirc);
+          else r();
+        }
+        _animCirc();
+      });
+      handEl.style.opacity = '0';
+      if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
+      await sleep(400);
       
       // 5. Box-Freistellung mit Kippziel-Erklärung (wie card Tut+1)
       const _t = window._kippTarget;
@@ -4092,7 +4120,7 @@
         const _farbeMap = { blau: T.fB, orange: T.fO, gruen: T.fG, violett: T.fV };
         const _farbe = _farbeMap[_farbeKey] || _farbeKey;
         await showMaskedBlurLines([
-          (T.kpT1||'Kipp den Würfel'),
+          (T.kpT1||'Kippe den Würfel'),
           (T.kpT2||'wie du willst.'),
           (T.kpT3||'Die „{zahl}" soll').replace('{zahl}', _zahl),
           (T.kpT4||'zu {farbe}.').replace('{farbe}', _farbe)
