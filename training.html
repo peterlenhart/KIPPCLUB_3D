@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-09</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-12</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8087,14 +8087,19 @@
         }
         if (possibleZahlen.length === 0) return;
 
-        // Tutorial-Sonderregel: jede Wand-Farbe an der aktuell ein VERDECKTER Slot anliegt → tabu
-        // (im Tutorial-Modus sind alle Slots verdeckt: _kippSlotsHidden=true)
+        // Tutorial-Sonderregel: jede Wand-Farbe an der ein verdeckter Zahlen-Slot liegt → tabu
+        // Alle 3 sichtbaren Faces durchgehen
         const _verboteneTutFarben = new Set();
-        if (window._brainyTutorialMode && typeof solveKippziel === 'function') {
-          for (const _z of possibleZahlen) {
-            for (const _c of colorNames) {
-              const _sol = solveKippziel(_z, _c, currentQuadrant, topFace);
-              if (_sol && _sol.steps === 0) _verboteneTutFarben.add(_c);
+        if (window._brainyTutorialMode) {
+          for (const _face of ['f0', 'f1', 'f2']) {
+            const _fs = faceSlots[_face];
+            if (!_fs || !_fs.slotMap) continue;
+            for (const _k in _fs.slotMap) {
+              const _sm = _fs.slotMap[_k];
+              if (_sm.val > 0 && _sm.vis !== false && _sm.name) {
+                const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][_sm.name];
+                if (_wandFarbe) _verboteneTutFarben.add(_wandFarbe);
+              }
             }
           }
         }
