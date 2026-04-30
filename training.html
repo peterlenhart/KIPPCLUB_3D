@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-23</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-24</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4197,12 +4197,105 @@
           advanceTopFace();
           await sleep(400);
         } else if (_step.longTap) {
-          // Long-Tap auf festen Slot
+          // Long-Tap-Sequenz mit Plane, Freistellung der Rasterzellen, Hand
           await sleep(600);
-          const _f = faceSlots[_step.longTap.face];
-          if (_f && _f.slotMap[_step.longTap.grid]) {
-            _f.slotMap[_step.longTap.grid]._revealedNow = true;
-            rebuildFaceMat(_step.longTap.face, 1);
+          
+          const _bct = window.brainyCurrentTarget || brainyCurrentTarget;
+          if (_bct && GEM_POSITIONS[_bct.targetQ + '_' + _bct.targetSlot]) {
+            const _gemT = GEM_POSITIONS[_bct.targetQ + '_' + _bct.targetSlot];
+            const _frameX = _gemT.x, _frameZ = _gemT.z;
+            
+            const _colFromX = (x) => {
+              if (x < -0.15) return 2; if (x < 0) return 3;
+              if (x < 0.15) return 4; return 5;
+            };
+            const _rowFromZ = (z) => {
+              if (z < -0.05) return 4; if (z < 0.1) return 5;
+              if (z < 0.27) return 6; return 7;
+            };
+            
+            let _slotCol, _slotRow, _frameCol, _frameRow;
+            if (_frameX <= -0.46875) {
+              _frameCol = 0; _slotCol = 1;
+              _frameRow = _slotRow = _rowFromZ(_frameZ);
+            } else if (_frameX >= 0.46875) {
+              _frameCol = 7; _slotCol = 6;
+              _frameRow = _slotRow = _rowFromZ(_frameZ);
+            } else if (_frameZ <= -0.359375) {
+              _frameRow = 2; _slotRow = 3;
+              _frameCol = _slotCol = _colFromX(_frameX);
+            } else {
+              _frameRow = 9; _slotRow = 8;
+              _frameCol = _slotCol = _colFromX(_frameX);
+            }
+            
+            const _minColPx = Math.min(_slotCol, _frameCol) * 45;
+            const _maxColPx = (Math.max(_slotCol, _frameCol) + 1) * 45;
+            const _minRowPx = Math.min(_slotRow, _frameRow) * 45;
+            const _maxRowPx = (Math.max(_slotRow, _frameRow) + 1) * 45;
+            const r_nw = { x: _minColPx, y: _minRowPx };
+            const r_ne = { x: _maxColPx, y: _minRowPx };
+            const r_se = { x: _maxColPx, y: _maxRowPx };
+            const r_sw = { x: _minColPx, y: _maxRowPx };
+            const _tapSX = _slotCol * 45 + 22;
+            const _tapSY = _slotRow * 45 + 22;
+            
+            const _outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
+            const _innerM = r_nw.x+'px '+r_nw.y+'px, '+r_sw.x+'px '+r_sw.y+'px, '+
+                            r_se.x+'px '+r_se.y+'px, '+r_ne.x+'px '+r_ne.y+'px, '+r_nw.x+'px '+r_nw.y+'px';
+            
+            const _ltOv = document.createElement('div');
+            _ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+              'width:360px;height:'+window.innerHeight+'px;z-index:100;pointer-events:none;' +
+              'opacity:0;transition:opacity 0.5s ease;';
+            const _ltBlur = document.createElement('div');
+            _ltBlur.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
+              'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
+              'clip-path:polygon('+_outerM+', '+_innerM+');';
+            _ltOv.appendChild(_ltBlur);
+            
+            const _ltTxt = document.createElement('div');
+            _ltTxt.style.cssText = 'position:absolute;top:'+(_tapSY + 147)+'px;left:'+_tapSX+'px;transform:translateX(-50%);' +
+              'font:bold 20px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.9);' +
+              'letter-spacing:1.5px;white-space:nowrap;opacity:0;transition:opacity 0.3s ease;';
+            _ltTxt.textContent = T.cLongTap || 'Lang tippen';
+            _ltOv.appendChild(_ltTxt);
+            
+            document.body.appendChild(_ltOv);
+            requestAnimationFrame(() => { _ltOv.style.opacity = '1'; });
+            
+            const _uiOv = document.getElementById('uiOverlay');
+            const _origZ = _uiOv.style.zIndex;
+            _uiOv.style.zIndex = '200';
+            
+            const _SY = 740;
+            setHandPos(_tapSX, _SY);
+            handEl.style.opacity = '1';
+            if (typeof updateHandShadow === 'function') updateHandShadow(_tapSX, _SY, true);
+            
+            const _moveP = moveHandSmooth(_tapSX, _tapSY, 900);
+            await sleep(400);
+            _ltTxt.style.opacity = '1';
+            await _moveP;
+            
+            await sleep(1500);
+            
+            // Slot aufdecken
+            const _f = faceSlots[_step.longTap.face];
+            if (_f && _f.slotMap[_step.longTap.grid]) {
+              _f.slotMap[_step.longTap.grid]._revealedNow = true;
+              rebuildFaceMat(_step.longTap.face, 1);
+            }
+            
+            await sleep(800);
+            _ltOv.style.opacity = '0';
+            await sleep(500);
+            _ltOv.remove();
+            
+            await moveHandSmooth(_tapSX, _SY, 600);
+            handEl.style.opacity = '0';
+            if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
+            _uiOv.style.zIndex = _origZ || '';
           }
         }
       }
