@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-04</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-08</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4202,57 +4202,63 @@
             await sleep(400);
           }
           
-          // 7. "Lang tippen"-Sequenz: Plane mit einem Slot freigestellt (Y=0.46875), Hand tippt darauf
+          // 7. "Lang tippen"-Sequenz: Loch direkt aus Rastersystem (4×4 Slots, je 45px)
+          // Mapping: West=B, Ost=G, Nord=Zeile4, Süd=Zeile9
+          //         Rahmen: West=A, Ost=H, Nord=Zeile3, Süd=Zeile10
           await sleep(600);
           
-          // Slot auf Top-Face wählen — erster mit val>0 und vis≠false
-          const _topFaceObj = faceSlots[topFace];
-          let _ltSlotKey = null;
-          if (_topFaceObj) {
-            for (const _k in _topFaceObj.slotMap) {
-              const _sm = _topFaceObj.slotMap[_k];
-              if (_sm.val > 0 && _sm.vis !== false) { _ltSlotKey = _k; break; }
+          const _bct = window.brainyCurrentTarget || brainyCurrentTarget;
+          if (_bct && GEM_POSITIONS[_bct.targetQ + '_' + _bct.targetSlot]) {
+            const _gemT = GEM_POSITIONS[_bct.targetQ + '_' + _bct.targetSlot];
+            const _frameX = _gemT.x, _frameZ = _gemT.z;
+            
+            // X-Position → Spalte (für N/S Slots)
+            // -0.234 → C(2), -0.078 → D(3), +0.078 → E(4), +0.234 → F(5)
+            // (0-indiziert: A=0, B=1, C=2, ...)
+            const _colFromX = (x) => {
+              if (x < -0.15) return 2; // C
+              if (x < 0) return 3;     // D
+              if (x < 0.15) return 4;  // E
+              return 5;                // F
+            };
+            // Z-Position → Zeile (für W/O Slots), 0-indiziert (Zeile 1 = 0)
+            // -0.125 → 4 (Zeile 5), 0.03125 → 5 (Zeile 6), 0.1875 → 6 (Zeile 7), 0.34375 → 7 (Zeile 8)
+            const _rowFromZ = (z) => {
+              if (z < -0.05) return 4;  // Zeile 5
+              if (z < 0.1)  return 5;   // Zeile 6
+              if (z < 0.27) return 6;   // Zeile 7
+              return 7;                 // Zeile 8
+            };
+            
+            let _slotCol, _slotRow, _frameCol, _frameRow;
+            if (_frameX <= -0.46875) {           // West
+              _frameCol = 0; _slotCol = 1;       // A → B
+              _frameRow = _slotRow = _rowFromZ(_frameZ);
+            } else if (_frameX >= 0.46875) {     // Ost
+              _frameCol = 7; _slotCol = 6;       // H → G
+              _frameRow = _slotRow = _rowFromZ(_frameZ);
+            } else if (_frameZ <= -0.359375) {   // Nord
+              _frameRow = 2; _slotRow = 3;       // Zeile 3 → Zeile 4
+              _frameCol = _slotCol = _colFromX(_frameX);
+            } else {                              // Süd
+              _frameRow = 9; _slotRow = 8;       // Zeile 10 → Zeile 9
+              _frameCol = _slotCol = _colFromX(_frameX);
             }
-          }
-          
-          if (_ltSlotKey) {
-            // Slot-Position (row, col) → World-Koord auf Y=0.46875 (Spieltisch-Höhe = Würfeloberseite)
-            const _parts = _ltSlotKey.split(',').map(Number);
-            const _r = _parts[0], _cIdx = _parts[1];
-            const _cellSz = 0.15625;
-            const _hCell = _cellSz / 2;
-            const _rY = 0.46875;
-            // Lokale Slot-Mitte auf Würfeloberseite, dann nur X,Z extrahieren
-            const _slotLocal = new THREE.Vector3((_cIdx - 1) * _cellSz, 0.234375, (_r - 1) * _cellSz);
-            const _slotWorld = _slotLocal.clone().applyMatrix4(cube.matrixWorld);
-            const _slotXT = _slotWorld.x;
-            const _slotZT = _slotWorld.z;
             
-            // 4 Eckpunkte auf Y=0.46875 (analog card Match-Tutorial)
-            const _rec3D = [
-              new THREE.Vector3(_slotXT - _hCell, _rY, _slotZT - _hCell),  // NW
-              new THREE.Vector3(_slotXT + _hCell, _rY, _slotZT - _hCell),  // NE
-              new THREE.Vector3(_slotXT + _hCell, _rY, _slotZT + _hCell),  // SE
-              new THREE.Vector3(_slotXT - _hCell, _rY, _slotZT + _hCell)   // SW
-            ];
-            renderer.render(scene, camera);
-            const _rec2D = _rec3D.map(p => {
-              const v = p.clone().project(camera);
-              return {
-                x: Math.round((v.x * 0.5 + 0.5) * 360),
-                y: Math.round((-v.y * 0.5 + 0.5) * 720)
-              };
-            });
-            const PAD = 8;
-            const r_nw = { x: _rec2D[0].x - PAD, y: _rec2D[0].y - PAD };
-            const r_ne = { x: _rec2D[1].x + PAD, y: _rec2D[1].y - PAD };
-            const r_se = { x: _rec2D[2].x + PAD, y: _rec2D[2].y + PAD };
-            const r_sw = { x: _rec2D[3].x - PAD, y: _rec2D[3].y + PAD };
+            // Bildschirm-Pixel-Bounding-Box (Rahmen + Slot zusammen)
+            const _minColPx = Math.min(_slotCol, _frameCol) * 45;
+            const _maxColPx = (Math.max(_slotCol, _frameCol) + 1) * 45;
+            const _minRowPx = Math.min(_slotRow, _frameRow) * 45;
+            const _maxRowPx = (Math.max(_slotRow, _frameRow) + 1) * 45;
             
-            // Slot-Mitte auf Bildschirm (Hand tippt hier)
-            const _slotCenter3D = new THREE.Vector3(_slotXT, _rY, _slotZT).project(camera);
-            const _tapSX = Math.round((_slotCenter3D.x * 0.5 + 0.5) * 360);
-            const _tapSY = Math.round((-_slotCenter3D.y * 0.5 + 0.5) * 720);
+            const r_nw = { x: _minColPx, y: _minRowPx };
+            const r_ne = { x: _maxColPx, y: _minRowPx };
+            const r_se = { x: _maxColPx, y: _maxRowPx };
+            const r_sw = { x: _minColPx, y: _maxRowPx };
+            
+            // Slot-Mitte (Hand tippt hier) — Pixel-Mitte der Slot-Zelle
+            const _tapSX = _slotCol * 45 + 22;
+            const _tapSY = _slotRow * 45 + 22;
             
             const _outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
             const _innerM = r_nw.x+'px '+r_nw.y+'px, '+
@@ -4309,10 +4315,18 @@
             await sleep(500);
             _ltOv.remove();
             
-            // Slot aufdecken
-            if (_topFaceObj && _topFaceObj.slotMap[_ltSlotKey]) {
-              _topFaceObj.slotMap[_ltSlotKey]._revealedNow = true;
-              rebuildFaceMat(topFace, 1);
+            // Slot aufdecken: Ziel-Face + Ziel-Slot
+            // Slot-Key in faceSlots ermitteln aus targetFace + targetSlot
+            const _tFace = faceSlots[_bct.targetFace];
+            if (_tFace) {
+              for (const _k in _tFace.slotMap) {
+                const _sm = _tFace.slotMap[_k];
+                if (_sm.name === _bct.targetSlot) {
+                  _sm._revealedNow = true;
+                  break;
+                }
+              }
+              rebuildFaceMat(_bct.targetFace, 1);
             }
             
             // Hand hält weiter (Long-tap), dann zurück
@@ -8079,6 +8093,11 @@
           for (const c of colorNames) {
             const key = z + '_' + c;
             if (bereitsAusgegeben.has(key)) continue;
+            // Tutorial-Sonderregel: wenn DIESE Zahl bereits an DIESER Farbe liegt → verboten
+            if (window._brainyTutorialMode && typeof solveKippziel === 'function') {
+              const _sol = solveKippziel(z, c, currentQuadrant, topFace);
+              if (_sol && _sol.steps === 0) continue;
+            }
             candidates.push({ zahl: z, color: c });
           }
         }
