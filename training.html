@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-06</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-07</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4270,8 +4270,8 @@
       }
       
       const _SY = 740;
-      // Wie card: Hand-Y = Slot-Y + 22 (Fingerspitzen-Offset in handsilber.webp)
-      const _handAdj = 22;
+      // Hand-Y = Slot-Y + 11 (Fingerspitzen-Offset, halber Wert von card)
+      const _handAdj = 11;
       setHandPos(_tapSX, _SY);
       handEl.style.opacity = '1';
       if (typeof updateHandShadow === 'function') updateHandShadow(_tapSX, _SY, true);
@@ -4407,7 +4407,7 @@
       // Zeile 1 erscheint
       await sleep(400);
       _line1.style.opacity = '1';
-      await sleep(1500);
+      await sleep(1700);
       
       // Hand fährt zum 1. Lebens-Würfel (links außen)
       const _livesWrap = document.getElementById('brainyLivesWrap');
@@ -4415,20 +4415,18 @@
       if (_livesWrap) _firstLife = _livesWrap.querySelector('.brainyLife');
       if (_firstLife) {
         const _lifeRect = _firstLife.getBoundingClientRect();
-        // Bildschirm-Mitte = 360/2 = 180 (relativ zu fixed-Container width 360)
-        // Aber Page kann breiter sein → screen-X muss in 360-System rein
         const _bodyRect = document.body.getBoundingClientRect();
         const _screenScale = 360 / _bodyRect.width;
         const _lifeCenterX = (_lifeRect.left + _lifeRect.width/2 - _bodyRect.left) * _screenScale;
         const _lifeCenterY = (_lifeRect.top + _lifeRect.height/2) * _screenScale;
         
-        // Hand fährt von aktueller Position (südlich) zum Lebens-Würfel
-        await moveHandSmooth(_lifeCenterX, _lifeCenterY + 22, 800);
+        // Hand fährt langsamer zum Lebens-Würfel
+        await moveHandSmooth(_lifeCenterX, _lifeCenterY + 11, 1500);
         handEl.style.opacity = '1';
-        if (typeof updateHandShadow === 'function') updateHandShadow(_lifeCenterX, _lifeCenterY + 22, true);
+        if (typeof updateHandShadow === 'function') updateHandShadow(_lifeCenterX, _lifeCenterY + 11, true);
         
         // Würfel "platzt" — schnelle Skalierung + grayscale + opacity
-        await sleep(300);
+        await sleep(400);
         _firstLife.style.transition = 'transform 0.3s, filter 0.3s, opacity 0.3s';
         _firstLife.style.transform = 'scale(1.4)';
         await sleep(300);
@@ -4438,26 +4436,26 @@
         await sleep(800);
       }
       
-      // Hand zurück zur Textzeile (südlich)
-      await moveHandSmooth(_tapSX, _SY, 700);
+      // Hand zurück zur Textzeile (südlich) — auch langsamer
+      await moveHandSmooth(_tapSX, _SY, 1200);
       handEl.style.opacity = '0';
       if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
       
       // Zeile 1 wechselt: "falsch gekippt." → "Ein Leben verloren."
-      await sleep(300);
+      await sleep(400);
       _line1.style.opacity = '0';
       await sleep(500);
       _line1.textContent = (T.tutLebenVerloren || 'Ein Leben verloren.');
       _line1.style.opacity = '1';
-      await sleep(1300);
+      await sleep(1700);
       
-      // Zeilen 2, 3, 4 erscheinen nacheinander
+      // Zeilen 2, 3, 4 erscheinen nacheinander mit Lesegeschwindigkeit 1700ms (wie vorige Plane)
       _line2.style.opacity = '1';
-      await sleep(1100);
+      await sleep(1700);
       _line3.style.opacity = '1';
-      await sleep(1100);
+      await sleep(1700);
       _line4.style.opacity = '1';
-      await sleep(1500);
+      await sleep(1700);
       
       // Plane ausblenden
       _plContainer.style.opacity = '0';
