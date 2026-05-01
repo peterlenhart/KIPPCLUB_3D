@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-05</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2213,6 +2213,10 @@
       canvas.height = 256;
       const ctx = canvas.getContext('2d');
       const cell = 256 / 3;
+      
+      // Ab Level 2 (BRAINY/BRAIN/MASTERBRAIN): Top-Face niemals verdecken
+      // (bis zum ersten Spieler-Kipp)
+      const _isTopFaceUnverdeckt = (typeof currentLevel !== 'undefined' && currentLevel >= 2 && _faceKey === topFace && !window._offenFirstKippDone);
 
       // Würfel-Textur als Hintergrund (optional rotiert, Sättigung reduziert)
       ctx.save();
@@ -2255,9 +2259,8 @@
         ctx.translate(cx, cy);
         ctx.rotate(rot);
         // BUMBLEBRAIN: Slots verdeckt → numbers_verdeckt.webp (wird wie eine Zahl behandelt: zentriert + rotiert)
-        // Ab Level 2 (BRAINY/BRAIN/MASTERBRAIN): Top-Face sichtbar BIS zum ersten Kipp
-        const _topVisible = (typeof currentLevel !== 'undefined' && currentLevel >= 2 && _faceKey === topFace && !window._offenFirstKippDone);
-        if (window._kippSlotsHidden && !slotMap[key]._revealedNow && !_topVisible) {
+        // Ab Level 2 (BRAINY/BRAIN/MASTERBRAIN): Top-Face NIE verdecken
+        if (window._kippSlotsHidden && !slotMap[key]._revealedNow && !_isTopFaceUnverdeckt) {
           if (slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
             // Für nach dem Rand vormerken (sonst überdeckt der Rand den Bildunterrand)
             _verdecktList.push({ cx: cx, cy: cy, rot: rot });
@@ -2277,7 +2280,8 @@
       ctx.strokeRect(3, 3, 250, 250);
       
       // Slot-Verdeckungen NACH dem Rand zeichnen (Bild wie Zahl behandelt)
-      if (_verdecktList.length > 0 && slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
+      // Ab Level 2: Top-Face nie verdecken
+      if (!_isTopFaceUnverdeckt && _verdecktList.length > 0 && slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
         ctx.globalAlpha = 1;
         for (let i = 0; i < _verdecktList.length; i++) {
           const v = _verdecktList[i];
