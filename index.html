@@ -348,6 +348,14 @@
     </div>
   </div>
 
+  <!-- Modus-Auswahl Overlay (Numbers: OFFEN / BLIND) -->
+  <div id="modeOverlay" style="display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.82);backdrop-filter:blur(6px);z-index:8000;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:18vh;gap:18px;">
+    <button id="modeClose" style="position:absolute;top:12px;left:16px;width:48px;height:48px;cursor:pointer;background:none;border:none;padding:0;-webkit-tap-highlight-color:transparent;"><img src="rw.webp" alt="Zurück" style="width:100%;height:100%;object-fit:contain;"></button>
+    <h2 style="font-size:26px;font-weight:bold;letter-spacing:3px;color:#d4b48c;text-shadow:0 2px 6px rgba(0,0,0,0.8);margin-bottom:8px;">SPIELVARIANTE</h2>
+    <div class="lvl-btn" id="modeOffen"><img class="lvl-bg" src="button_lang_braun.webp">OFFEN</div>
+    <div class="lvl-btn" id="modeBlind"><img class="lvl-bg" src="button_lang_rotbraun_glow.webp">BLIND</div>
+  </div>
+
   <!-- Level-Auswahl Overlay -->
   <div id="levelOverlay">
     <button id="levelClose" onclick="document.getElementById('levelOverlay').classList.remove('show')"><img id="levelCloseBg" src="rw.webp" alt="Zurück"></button>
@@ -540,14 +548,33 @@
 
     // Game navigation
     let selectedSkin = 'numbers';
+    let selectedMode = 'blind'; // 'offen' oder 'blind' (nur für Numbers)
     document.getElementById("clickColor").onclick = () => {
       selectedSkin = 'numbers';
+      // Numbers: zuerst Modus-Auswahl
+      document.getElementById("modeOverlay").style.display = 'flex';
+    };
+    document.getElementById("clickCard").onclick = () => {
+      selectedSkin = 'icons';
       updateLevelLinks();
       updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
     };
-    document.getElementById("clickCard").onclick = () => {
-      selectedSkin = 'icons';
+    
+    // Modus-Overlay Buttons (nur Numbers)
+    document.getElementById("modeClose").onclick = () => {
+      document.getElementById("modeOverlay").style.display = 'none';
+    };
+    document.getElementById("modeOffen").onclick = () => {
+      selectedMode = 'offen';
+      document.getElementById("modeOverlay").style.display = 'none';
+      updateLevelLinks();
+      updateLevelBests();
+      document.getElementById("levelOverlay").classList.add("show");
+    };
+    document.getElementById("modeBlind").onclick = () => {
+      selectedMode = 'blind';
+      document.getElementById("modeOverlay").style.display = 'none';
       updateLevelLinks();
       updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
@@ -564,10 +591,15 @@
         base = 'training.html';
         mb = 'training.html?level=masterbrain';
       }
-      document.getElementById('lvlTraining').onclick = () => location.href = base;
-      document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
-      document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain';
-      document.getElementById('lvlK21').onclick = () => location.href = mb;
+      // Numbers OFFEN-Modus: Parameter dranhängen
+      const _isOffen = (selectedSkin === 'numbers' && selectedMode === 'offen');
+      const _modeParam = _isOffen ? '&mode=offen' : '';
+      const _modeOnly = _isOffen ? '?mode=offen' : '';
+      const _mbWithMode = _isOffen ? mb + '&mode=offen' : mb;
+      document.getElementById('lvlTraining').onclick = () => location.href = base + _modeOnly;
+      document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy' + _modeParam;
+      document.getElementById('lvlBrain').onclick = () => location.href = base + '?level=brain' + _modeParam;
+      document.getElementById('lvlK21').onclick = () => location.href = _mbWithMode;
       document.getElementById('lvlK21').style.display = selectedSkin === 'icons' ? 'none' : '';
       // Die ganze Group (inkl. Best-Zeile) verstecken bei icons
       const _k21Group = document.getElementById('lvlK21').closest('.lvl-group');
