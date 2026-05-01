@@ -524,6 +524,35 @@
       transform: scale(0.92);
     }
 
+    /* OFFEN-Modus Scrollband (numBtn) */
+    .numBtn {
+      min-width: 56px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: bold 30px Arial;
+      color: #5a4a3a;
+      background: transparent;
+      border: none;
+      border-right: 1px solid rgba(138,122,102,0.4);
+      border-radius: 0;
+      box-shadow: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .numBtn:last-child { border-right: none; }
+    .numBtn.selected { background: #5a4a3a; color: #e8dcc8; }
+    .numBtn.center { font-weight: 900; color: #2a1a0a; }
+    #scrollBandWrap::before, #scrollBandWrap::after {
+      content: ''; position: absolute; top: 0; width: 35%; height: 100%;
+      z-index: 2; pointer-events: none;
+    }
+    #scrollBandWrap::before { left: 0; background: linear-gradient(to right, rgba(40,30,20,0.6) 0%, transparent 100%); }
+    #scrollBandWrap::after { right: 0; background: linear-gradient(to left, rgba(40,30,20,0.6) 0%, transparent 100%); }
+
     /* BRAINY Level Animations */
     /* brainy num pulse removed */
 
@@ -969,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-02</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-03</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1067,6 +1096,34 @@
     <div id="demoSubtitle"></div>
     <div id="jokerIconsRow"></div>
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
+    
+    <!-- OFFEN-Modus: Scrollband 1-11 (statt Joker) -->
+    <div id="numBtns" class="hidden" style="display:none; position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
+      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); position:relative;">
+        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease; position:relative; z-index:1;">
+          <div class="numBtn" data-num="1">1</div>
+          <div class="numBtn" data-num="2">2</div>
+          <div class="numBtn" data-num="3">3</div>
+          <div class="numBtn" data-num="4">4</div>
+          <div class="numBtn" data-num="5">5</div>
+          <div class="numBtn" data-num="6">6</div>
+          <div class="numBtn" data-num="7">7</div>
+          <div class="numBtn" data-num="8">8</div>
+          <div class="numBtn" data-num="9">9</div>
+          <div class="numBtn" data-num="10">10</div>
+          <div class="numBtn" data-num="11">11</div>
+        </div>
+        <div id="scrollBandCenter" style="
+          position:absolute; top:0; bottom:0;
+          left:50%; transform:translateX(-50%);
+          width:56px;
+          border-left:2px solid rgba(90,60,20,0.55);
+          border-right:2px solid rgba(90,60,20,0.55);
+          pointer-events:none; z-index:3;
+          box-shadow: inset 0 0 8px rgba(90,60,20,0.12);
+        "></div>
+      </div>
+    </div>
     
     <!-- KIPP-TIPP Overlay -->
     <div id="perfektGameText">
@@ -2150,7 +2207,7 @@
     }
     
     // Canvas-Textur: 3x3 Gitter, slotMap = { "row,col": { val, rot } }
-    function createFaceTexture(slotMap, imgRotation, numberAlpha) {
+    function createFaceTexture(slotMap, imgRotation, numberAlpha, _faceKey) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 256;
@@ -2198,7 +2255,9 @@
         ctx.translate(cx, cy);
         ctx.rotate(rot);
         // BUMBLEBRAIN: Slots verdeckt → numbers_verdeckt.webp (wird wie eine Zahl behandelt: zentriert + rotiert)
-        if (window._kippSlotsHidden && !slotMap[key]._revealedNow) {
+        // OFFEN-Modus: Top-Face NIE verdecken (Spieler sieht oben immer alles)
+        const _isTopFaceOffen = (window._digikippMode === 'offen' && _faceKey === topFace);
+        if (window._kippSlotsHidden && !slotMap[key]._revealedNow && !_isTopFaceOffen) {
           if (slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
             // Für nach dem Rand vormerken (sonst überdeckt der Rand den Bildunterrand)
             _verdecktList.push({ cx: cx, cy: cy, rot: rot });
@@ -2233,9 +2292,9 @@
       return canvas;
     }
 
-    function mat(slotMap, imgRotation, numberAlpha) {
+    function mat(slotMap, imgRotation, numberAlpha, _faceKey) {
       return new THREE.MeshStandardMaterial({
-        map: new THREE.CanvasTexture(createFaceTexture(slotMap || {}, imgRotation, numberAlpha)),
+        map: new THREE.CanvasTexture(createFaceTexture(slotMap || {}, imgRotation, numberAlpha, _faceKey)),
         metalness: 0.3, roughness: 0.7
       });
     }
@@ -2296,16 +2355,16 @@
     function updateAllFaceTextures() {
       updateFaceSlots();
       if (cubeMaterial && cubeMaterial.length === 6) {
-        cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 1);
-        cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 1);
-        cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 1);
+        cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 1, 'f1');
+        cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 1, 'f2');
+        cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 1, 'f0');
         cube.material = cubeMaterial;
       }
     }
 
     function rebuildFaceMat(faceKey, alpha) {
       const f = faceSlots[faceKey];
-      const newMat = mat(f.slotMap, f.imgRot, alpha);
+      const newMat = mat(f.slotMap, f.imgRot, alpha, faceKey);
       cubeMaterial[f.matIdx] = newMat;
       cube.material = cubeMaterial;
     }
@@ -2315,10 +2374,10 @@
       // Start mit unsichtbaren Zahlen (alpha=0)
       cubeMaterial = [
         matLeer(),                                    // [0] +X
-        mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 0), // [1] -X = f1
-        mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 0), // [2] +Y = f2
+        mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 0, 'f1'), // [1] -X = f1
+        mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 0, 'f2'), // [2] +Y = f2
         matLeer(),                                    // [3] -Y
-        mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 0), // [4] +Z = f0
+        mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 0, 'f0'), // [4] +Z = f0
         matLeer()                                     // [5] -Z
       ];
       cube.material = cubeMaterial;
@@ -3123,6 +3182,12 @@
       const _msg = '[TRACK] KIPP ' + kippDirection + ': Q ' + oldQ + '->' + currentQuadrant + ' face ' + oldFace + '->' + topFace;
       console.log(_msg);
       if (window._trackLog) window._trackLog.push(_msg);
+      // OFFEN-Modus: Alle 3 Faces neu rendern, damit neue Top-Face sichtbar + alte verdeckt wird
+      if (window._digikippMode === 'offen' && window._kippSlotsHidden) {
+        rebuildFaceMat('f0', 1);
+        rebuildFaceMat('f1', 1);
+        rebuildFaceMat('f2', 1);
+      }
     }
     
     // Tracker-Log + Copy-Button
@@ -7218,6 +7283,17 @@
     // === JOKER UI === (Eckblick-Token, 4 Stück)
     let _jokerCount = 4;
     function ensureJokersUI() {
+      // OFFEN-Modus: keine Joker (Eckblick gibt's nicht)
+      if (window._digikippMode === 'offen') {
+        let wrap = document.getElementById('jokersWrap');
+        if (!wrap) {
+          wrap = document.createElement('div');
+          wrap.id = 'jokersWrap';
+          wrap.style.display = 'none';
+          document.getElementById('uiOverlay').appendChild(wrap);
+        }
+        return wrap;
+      }
       let wrap = document.getElementById('jokersWrap');
       if (wrap) return wrap;
       wrap = document.createElement('div');
