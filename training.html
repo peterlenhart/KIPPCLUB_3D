@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-30</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-31</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4413,6 +4413,11 @@
         _jOrigParent = _jOrig.parentNode;
         _jOrigNext = _jOrig.nextSibling;
         if (_jOrigParent) _jOrigParent.removeChild(_jOrig);
+        // Auf window referenzieren für Cleanup am Tutorial-Ende
+        window._tutJokerClone = _jClone;
+        window._tutJokerOrig = _jOrig;
+        window._tutJokerOrigParent = _jOrigParent;
+        window._tutJokerOrigNext = _jOrigNext;
       }
       
       const _SY = 740;
@@ -4444,13 +4449,7 @@
       _ltTxt.style.opacity = '0';
       await sleep(500);
       // _ltOv NICHT entfernen — bleibt visuell als Plane-Hintergrund bis Falsch-Plane übernimmt
-      
-      // Joker-Klon entfernen, Original wieder in DOM
-      if (_jClone) _jClone.remove();
-      if (_jOrig && _jOrigParent) {
-        if (_jOrigNext) _jOrigParent.insertBefore(_jOrig, _jOrigNext);
-        else _jOrigParent.appendChild(_jOrig);
-      }
+      // Joker NICHT zurückbringen — Falsch-Plane übernimmt direkt und macht eigenen Klon
       
       // Hand zurück nach Süden
       await moveHandSmooth(_tapSX, _SY, 600);
@@ -4748,6 +4747,15 @@
         if (_llJOrigNext) _llJOrigParent.insertBefore(_llJOrig, _llJOrigNext);
         else _llJOrigParent.appendChild(_llJOrig);
       }
+      // Long-Tap-Joker-Klon entfernen + Original zurück (aus window-Refs)
+      if (window._tutJokerClone) { window._tutJokerClone.remove(); window._tutJokerClone = null; }
+      if (window._tutJokerOrig && window._tutJokerOrigParent && !window._tutJokerOrig.parentNode) {
+        if (window._tutJokerOrigNext) window._tutJokerOrigParent.insertBefore(window._tutJokerOrig, window._tutJokerOrigNext);
+        else window._tutJokerOrigParent.appendChild(window._tutJokerOrig);
+      }
+      window._tutJokerOrig = null;
+      window._tutJokerOrigParent = null;
+      window._tutJokerOrigNext = null;
       restoreCountersAfterPlane();
       _llUiOv.style.zIndex = _llOrigUiZ || '';
       
