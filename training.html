@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-26</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-27</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4148,41 +4148,12 @@
         ], 1700, 1200, { extraY: 35 });
       }
       
-      // 6. Tutorial-Drehbuch: solveKippziel(falsche Zahl, Zielfarbe) → Kipp-Folge
-      const _t2 = window._kippTarget;
-      if (!_t2) return;
-      const _correctZahl = _t2.zahl;
-      const _zielFarbe = _t2.color;
-      // Falsche Zahl finden
-      const _possibleZahlen = [];
-      for (let _di = 0; _di < deck.length; _di++) {
-        if (deck[_di] > 0 && _possibleZahlen.indexOf(deck[_di]) < 0) _possibleZahlen.push(deck[_di]);
-      }
-      const _wrongZahl = _possibleZahlen.find(z => z !== _correctZahl) || _correctZahl;
-      const _solution = solveKippziel(_wrongZahl, _zielFarbe, currentQuadrant, topFace);
-      if (!_solution || !_solution.steps) {
-        window._brainyTutorialMode = false; replayActive = false;
-        window._kippResultRunning = false; kipp21Active = true;
-        return;
-      }
-      
-      // Kippfolge mit Umweg (1 Rückkipp dazwischen, damit nicht zielgerichtet wirkt)
-      const _dir = _solution.dir;
-      const _opp = (_dir === 'cw') ? 'ccw' : 'cw';
-      const _seq = [];
-      if (_solution.steps >= 2) {
-        const _ins = 1 + Math.floor(Math.random() * Math.min(_solution.steps - 1, 3));
-        for (let i = 0; i < _solution.steps; i++) {
-          _seq.push(_dir);
-          if (i === _ins - 1) { _seq.push(_opp); _seq.push(_dir); }
-        }
-      } else {
-        _seq.push(_dir);
-      }
-      
-      // Long-Tap-Ziel: nach allen Kipps liegt _wrongZahl im Slot der an _zielFarbe grenzt
-      // Welcher Slot das ist hängt vom Endzustand ab — berechnen wir nach den Kipps
-      
+      // 6. Tutorial-Drehbuch: feste Kippfolge (deine aufgezeichnete Sequenz)
+      // Würfellage: Q=1, face=f2, deck=[2,0,0,0,0,0,0,1,0,0,0,0]
+      // Zielzahl=1, Zielfarbe=orange. Falsche Zahl 2 landet auf Q1-S1 (=orange) f0
+      const _seq = ['ccw','ccw','cw','ccw','ccw','ccw','ccw'];
+      const _wrongZahl = 2;
+      const _zielFarbe = 'orange';
       if (typeof initHandEl === 'function') initHandEl();
       for (const _stepDir of _seq) {
         const _kippDir = (_stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
@@ -7295,7 +7266,20 @@
           }
         }
       }
-      const zielColor = _zielColorCandidates[Math.floor(Math.random() * _zielColorCandidates.length)];
+      const zielColor = window._brainyTutorialMode ? 'orange' : _zielColorCandidates[Math.floor(Math.random() * _zielColorCandidates.length)];
+      // Tutorial: feste Zielzahl=1 (überschreibt Random)
+      if (window._brainyTutorialMode) {
+        zahl = 1;
+        // Slot-Suche neu mit fester Zahl
+        _targetFace = null; _targetSlotIdx = -1;
+        for (const _face of ['f0', 'f1', 'f2']) {
+          const _off2 = _faceOffR[_face];
+          for (let _si = 0; _si < 4; _si++) {
+            if (deck[_off2 + _si] === 1) { _targetFace = _face; _targetSlotIdx = _si; break; }
+          }
+          if (_targetFace) break;
+        }
+      }
       
       const _zWasVisible = _visZahlenSet.has(zahl);
       const _dbgProbVis = ((_visZahlenSet.size * _visAllow) / (_visZahlenSet.size * _visAllow + (_cfg_r.maxZahl - _visZahlenSet.size) * 1.0) * 100).toFixed(1);
@@ -8201,8 +8185,8 @@
       let _validStates = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
       let fallState;
       if (window._brainyTutorialMode) {
-        // Tutorial-Drehbuch: fester Fall Q=2, face=f2
-        const _fixed = BRAINY_CW_STATES.find(st => st.q === 2 && st.face === 'f2');
+        // Tutorial-Drehbuch: fester Fall Q=1, face=f2
+        const _fixed = BRAINY_CW_STATES.find(st => st.q === 1 && st.face === 'f2');
         fallState = _fixed || _validStates[0];
       } else {
         fallState = _validStates[Math.floor(Math.random() * _validStates.length)];
