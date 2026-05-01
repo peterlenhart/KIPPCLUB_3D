@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-25</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-26</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4221,30 +4221,32 @@
       }
       
       // Endlage: falsche Zahl liegt jetzt an Zielfarbe-Wand
-      // Slot finden der jetzt an Zielfarbe grenzt
+      // Slot-Name finden (S1-S4) der an Zielfarbe grenzt im aktuellen Quadrant
       let _ltFace = null, _ltGrid = null;
-      for (const _face of ['f0', 'f1', 'f2']) {
-        if (_face !== topFace) continue;
-        const _fs = faceSlots[_face];
-        if (!_fs) continue;
-        for (const _k in _fs.slotMap) {
-          const _sm = _fs.slotMap[_k];
-          if (_sm.val !== _wrongZahl || _sm.vis === false) continue;
-          // Slot-Name aus deck-Index
-          const _faceOff = { f0: 0, f1: 4, f2: 8 };
-          const _slotsArr = ['S1','S2','S3','S4'];
-          const _off = _faceOff[_face];
-          for (let _i = 0; _i < 4; _i++) {
-            if (deck[_off + _i] !== _wrongZahl) continue;
-            const _slotName = _slotsArr[_i];
-            if (SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotName] === _zielFarbe) {
-              _ltFace = _face; _ltGrid = _k;
-              break;
+      const _faceOff = { f0: 0, f1: 4, f2: 8 };
+      const _slotsArr = ['S1','S2','S3','S4'];
+      // 1) Welcher Slot-Name (S1-S4) grenzt an _zielFarbe im currentQuadrant?
+      let _targetSlotName = null;
+      for (const _sn of _slotsArr) {
+        if (SLOT_NEIGHBOR_COLORS[currentQuadrant][_sn] === _zielFarbe) { _targetSlotName = _sn; break; }
+      }
+      // 2) Auf der Top-Face: deck-Index des _targetSlotName
+      if (_targetSlotName) {
+        const _tOff = _faceOff[topFace];
+        const _tIdx = _slotsArr.indexOf(_targetSlotName);
+        if (_tOff !== undefined && _tIdx >= 0 && deck[_tOff + _tIdx] === _wrongZahl) {
+          // 3) gridKey in faceSlots[topFace].slotMap zum Slot-Namen finden
+          const _fs = faceSlots[topFace];
+          if (_fs && _fs.slotMap) {
+            // Slots in slotMap sind in derselben Reihenfolge wie deck-Slots der Face
+            const _keys = Object.keys(_fs.slotMap);
+            // S1=keys[0], S2=keys[1], ... (Annahme nach Definition)
+            if (_keys[_tIdx]) {
+              _ltFace = topFace;
+              _ltGrid = _keys[_tIdx];
             }
           }
-          if (_ltFace) break;
         }
-        if (_ltFace) break;
       }
       
       // Long-Tap mit Plane + Freistellung
