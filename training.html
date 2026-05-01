@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-24</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-26</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4082,6 +4082,31 @@
       const _rbWrap = document.getElementById('resetButtonWrap');
       const _origRbZ = _rbWrap ? _rbWrap.style.zIndex : '';
       if (_rbWrap) _rbWrap.style.zIndex = '250';
+      // HIT/MISS-Counter UNTER die Plane verschieben (in body parken mit z-index 50, Plane=100)
+      const _hcEl = document.getElementById('hitCounter');
+      const _mcEl = document.getElementById('missCounter');
+      const _hcOrigDisp = _hcEl ? _hcEl.style.display : '';
+      const _mcOrigDisp = _mcEl ? _mcEl.style.display : '';
+      const _hcOrigZ = _hcEl ? _hcEl.style.zIndex : '';
+      const _mcOrigZ = _mcEl ? _mcEl.style.zIndex : '';
+      const _hcRect = _hcEl ? _hcEl.getBoundingClientRect() : null;
+      const _mcRect = _mcEl ? _mcEl.getBoundingClientRect() : null;
+      const _hcOrigParent = _hcEl ? _hcEl.parentNode : null;
+      const _mcOrigParent = _mcEl ? _mcEl.parentNode : null;
+      if (_hcEl && _hcOrigDisp !== 'none') {
+        _hcEl.style.position = 'fixed';
+        _hcEl.style.left = (_hcRect.left + _hcRect.width / 2) + 'px';
+        _hcEl.style.top = (_hcRect.top + _hcRect.height / 2) + 'px';
+        _hcEl.style.zIndex = '50';
+        document.body.appendChild(_hcEl);
+      }
+      if (_mcEl && _mcOrigDisp !== 'none') {
+        _mcEl.style.position = 'fixed';
+        _mcEl.style.left = (_mcRect.left + _mcRect.width / 2) + 'px';
+        _mcEl.style.top = (_mcRect.top + _mcRect.height / 2) + 'px';
+        _mcEl.style.zIndex = '50';
+        document.body.appendChild(_mcEl);
+      }
       // Joker-Wrap während Plane unter Plane halten (Plane ist z-index 100)
       // Da uiOverlay jetzt 200 hat, klonen wir jokersWrap in body mit z-index 50,
       // und verstecken das Original — so bleibt CSS unverändert
@@ -4157,6 +4182,31 @@
       // uiOverlay zurücksetzen
       uiOv.style.zIndex = _origUiZ || '';
       if (_rbWrap) _rbWrap.style.zIndex = _origRbZ || '';
+      // HIT/MISS-Counter wiederherstellen
+      if (_hcEl) {
+        _hcEl.style.position = 'absolute';
+        _hcEl.style.zIndex = _hcOrigZ;
+        if (_hcOrigParent) _hcOrigParent.appendChild(_hcEl);
+      }
+      if (_mcEl) {
+        _mcEl.style.position = 'absolute';
+        _mcEl.style.zIndex = _mcOrigZ;
+        if (_mcOrigParent) _mcOrigParent.appendChild(_mcEl);
+      }
+      // Position neu setzen (3D-Projektion)
+      if (typeof resetHitMissCounters === 'function') {
+        // Nur Position nicht Counts: ich rufe nicht resetHitMissCounters, da das auch die Counter zurücksetzt
+        // Stattdessen: position neu via 3D-Projektion
+        const _r10Z = 0.658;
+        const _r10Pt = new THREE.Vector3(0, 0.46875, _r10Z); _r10Pt.project(camera);
+        const _r10Y = Math.round((-_r10Pt.y * 0.5 + 0.5) * 720);
+        const _abPt = new THREE.Vector3(-0.34375, 0.46875, _r10Z); _abPt.project(camera);
+        const _abX = Math.round((_abPt.x * 0.5 + 0.5) * 360) - 36;
+        const _ghPt = new THREE.Vector3(0.34375, 0.46875, _r10Z); _ghPt.project(camera);
+        const _ghX = Math.round((_ghPt.x * 0.5 + 0.5) * 360) + 36;
+        if (_hcEl) { _hcEl.style.left = _abX + 'px'; _hcEl.style.top = _r10Y + 'px'; }
+        if (_mcEl) { _mcEl.style.left = _ghX + 'px'; _mcEl.style.top = _r10Y + 'px'; }
+      }
       // Joker-Klon entfernen, Original wieder sichtbar
       if (_jClone) _jClone.remove();
       if (_jOrig) _jOrig.style.visibility = '';
