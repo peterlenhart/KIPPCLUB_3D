@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AW-06</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2255,8 +2255,8 @@
         ctx.translate(cx, cy);
         ctx.rotate(rot);
         // BUMBLEBRAIN: Slots verdeckt → numbers_verdeckt.webp (wird wie eine Zahl behandelt: zentriert + rotiert)
-        // OFFEN-Modus: Top-Face NIE verdecken (Spieler sieht oben immer alles)
-        const _isTopFaceOffen = (window._digikippMode === 'offen' && _faceKey === topFace);
+        // OFFEN-Modus: Top-Face nur sichtbar BIS zum ersten Kipp (danach wie BLIND)
+        const _isTopFaceOffen = (window._digikippMode === 'offen' && _faceKey === topFace && !window._offenFirstKippDone);
         if (window._kippSlotsHidden && !slotMap[key]._revealedNow && !_isTopFaceOffen) {
           if (slotVerdecktImg.complete && slotVerdecktImg.naturalWidth > 0) {
             // Für nach dem Rand vormerken (sonst überdeckt der Rand den Bildunterrand)
@@ -3182,8 +3182,9 @@
       const _msg = '[TRACK] KIPP ' + kippDirection + ': Q ' + oldQ + '->' + currentQuadrant + ' face ' + oldFace + '->' + topFace;
       console.log(_msg);
       if (window._trackLog) window._trackLog.push(_msg);
-      // OFFEN-Modus: Alle 3 Faces neu rendern, damit neue Top-Face sichtbar + alte verdeckt wird
+      // OFFEN-Modus: nach erstem Kipp Flag setzen → alle Slots verdeckt (auch ehemalige Top-Face)
       if (window._digikippMode === 'offen' && window._kippSlotsHidden) {
+        window._offenFirstKippDone = true;
         rebuildFaceMat('f0', 1);
         rebuildFaceMat('f1', 1);
         rebuildFaceMat('f2', 1);
@@ -8470,6 +8471,8 @@
       // Bei Joker-Aufruf zur Vergewisserung: Slots offen lassen
       if (!_noHideSlots) {
         window._kippSlotsHidden = true;
+        // OFFEN-Modus: Top-Face wieder sichtbar (bis zum ersten Kipp)
+        window._offenFirstKippDone = false;
         if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
       }
 
@@ -8507,6 +8510,22 @@
         }
 
         // Kombi-Kandidaten = alle Zahlen × alle Farben, abzüglich bereits ausgegebener
+        // ZUSÄTZLICH: Kombis wo die Zahl bereits an der Zielfarbe-Wand auf Top-Face liegt → ausschließen
+        // (sonst wäre das Kippziel bereits in Ausgangslage erfüllt)
+        const _faceOffR2 = { f0: 0, f1: 4, f2: 8 };
+        const _slotsR2 = ['S1', 'S2', 'S3', 'S4'];
+        const _topOff = _faceOffR2[topFace];
+        const _bereitsErfuellt = new Set();
+        if (_topOff !== undefined && SLOT_NEIGHBOR_COLORS[currentQuadrant]) {
+          for (let _i = 0; _i < 4; _i++) {
+            const _z = deck[_topOff + _i];
+            if (_z > 0) {
+              const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotsR2[_i]];
+              if (_wandFarbe) _bereitsErfuellt.add(_z + '_' + _wandFarbe);
+            }
+          }
+        }
+        
         const candidates = [];
         for (const z of possibleZahlen) {
           for (const c of colorNames) {
@@ -8514,6 +8533,8 @@
             if (bereitsAusgegeben.has(key)) continue;
             // Tutorial: Farben an denen ein Slot bereits anliegt → komplett verboten
             if (_verboteneTutFarben.has(c)) continue;
+            // Bereits in Ausgangslage erfüllt → ausschließen
+            if (_bereitsErfuellt.has(key)) continue;
             candidates.push({ zahl: z, color: c });
           }
         }
