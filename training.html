@@ -1103,6 +1103,17 @@
 
     var _digikippLang = "de";
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
+    
+    // === SPIELMODUS: 'blind' (default) oder 'offen' ===
+    var _digikippMode = 'blind';
+    try {
+      const _mp = new URLSearchParams(window.location.search).get('mode');
+      if (_mp === 'offen') _digikippMode = 'offen';
+    } catch(e) {}
+    window._digikippMode = _digikippMode;
+    // Storage-Suffix: leer für blind (Bestand), '_offen' für offen
+    var _scoreSuffix = (_digikippMode === 'offen') ? '_offen' : '';
+    window._scoreSuffix = _scoreSuffix;
     var T = {
       "de": {
         s1:"SPIEL ZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>",
@@ -2576,16 +2587,16 @@
     let soundEnabled = localStorage.getItem('digikipp_sound') !== 'off';
     
     // Personal Best
-    let personalBestKipps = parseInt(localStorage.getItem('digikipp_bestKipps') || '0');
-    let personalBestGames = parseInt(localStorage.getItem('digikipp_games') || '0');
+    let personalBestKipps = parseInt(localStorage.getItem('digikipp_bestKipps' + _scoreSuffix) || '0');
+    let personalBestGames = parseInt(localStorage.getItem('digikipp_games' + _scoreSuffix) || '0');
     
     function updatePersonalBest(kipps) {
       try {
         personalBestGames++;
-        localStorage.setItem('digikipp_games', personalBestGames);
+        localStorage.setItem('digikipp_games' + _scoreSuffix, personalBestGames);
         if (personalBestKipps === 0 || kipps < personalBestKipps) {
           personalBestKipps = kipps;
-          localStorage.setItem('digikipp_bestKipps', personalBestKipps);
+          localStorage.setItem('digikipp_bestKipps' + _scoreSuffix, personalBestKipps);
           return true; // new record!
         }
       } catch(e) {
@@ -2603,7 +2614,7 @@
     // ===== BEST SCORES SYSTEM =====
     function loadBestScores() {
       try {
-        const raw = localStorage.getItem('digikipp_bestscores_v2');
+        const raw = localStorage.getItem('digikipp_bestscores_v2' + _scoreSuffix);
         if (raw) return JSON.parse(raw);
       } catch(e) {}
       return [];
@@ -2611,7 +2622,7 @@
 
     function saveTutorialScore(hits, kipps) {
       try {
-        localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ level: 1, hits: hits, kipps: kipps, tutorial: true }));
+        localStorage.setItem('digikipp_tutorialscore' + _scoreSuffix, JSON.stringify({ level: 1, hits: hits, kipps: kipps, tutorial: true }));
       } catch(e) {}
     }
 
@@ -2628,10 +2639,13 @@
       // Sharelink: jedes Level eigener Direkt-Einstieg
       const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
       const _lvlKey = _lvlMap[currentLevel];
+      const _modeQuery = (_digikippMode === 'offen') ? '&mode=offen' : '';
+      const _modeQueryOnly = (_digikippMode === 'offen') ? '?mode=offen' : '';
       const shareUrl = _lvlKey
-        ? window._DIGIKIPP_URL + 'training.html?level=' + _lvlKey
-        : window._DIGIKIPP_URL;
-      return 'KIPP NUMBERS \u2014 ' + levelName + '\n' +
+        ? window._DIGIKIPP_URL + 'training.html?level=' + _lvlKey + _modeQuery
+        : window._DIGIKIPP_URL + 'training.html' + _modeQueryOnly;
+      const _modeLabel = (_digikippMode === 'offen') ? ' OFFEN' : ' BLIND';
+      return 'KIPP NUMBERS' + _modeLabel + ' \u2014 ' + levelName + '\n' +
         pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
         grid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
@@ -2710,7 +2724,7 @@
         scores.push({ level: level, hits: hits, fails: fails, pct: pct, levelName: SCORE_LEVEL_NAMES[level] || 'LEVEL '+level, ts: Date.now() });
         scores.sort((a, b) => b.pct - a.pct || a.fails - b.fails);
         const top11 = scores.slice(0, 11);
-        localStorage.setItem('digikipp_bestscores_v2', JSON.stringify(top11));
+        localStorage.setItem('digikipp_bestscores_v2' + _scoreSuffix, JSON.stringify(top11));
         return top11;
       } catch(e) {
         return [];

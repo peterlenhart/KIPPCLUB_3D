@@ -637,9 +637,11 @@
 
     // === Bestleistungen pro Level aus localStorage anzeigen ===
     function updateLevelBests() {
+      // Storage-Suffix bei Numbers OFFEN
+      const _suffix = (selectedSkin === 'numbers' && selectedMode === 'offen') ? '_offen' : '';
       let scores = [];
       try {
-        const raw = localStorage.getItem('digikipp_bestscores_v2');
+        const raw = localStorage.getItem('digikipp_bestscores_v2' + _suffix);
         if (raw) scores = JSON.parse(raw) || [];
       } catch(e) { scores = []; }
       
