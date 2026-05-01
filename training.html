@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-11</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-12</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4292,13 +4292,7 @@
         rebuildFaceMat('f1', 1);
       }
       
-      await sleep(2000);
-      
-      // numbers_verdeckt wieder einblenden
-      if (_f1 && _slotKey1) {
-        delete _f1.slotMap[_slotKey1]._revealedNow;
-        rebuildFaceMat('f1', 1);
-      }
+      // Slot bleibt offen — Wieder-Verdecken erst nach "falsch gekippt"-Text-Ausblenden
       
       // Plane + Text ausblenden
       _ltOv.style.opacity = '0';
@@ -4449,6 +4443,11 @@
       // Zeile 1 wechselt: "falsch gekippt." → "Ein Leben verloren."
       await sleep(400);
       _line1.style.opacity = '0';
+      // Jetzt wo "falsch gekippt" weg ist, Slot wieder verdecken
+      if (_f1 && _slotKey1) {
+        delete _f1.slotMap[_slotKey1]._revealedNow;
+        rebuildFaceMat('f1', 1);
+      }
       await sleep(500);
       _line1.textContent = (T.tutLebenVerloren || 'Ein Leben verloren.');
       _line1.style.opacity = '1';
