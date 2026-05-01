@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-28</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AX-30</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4440,10 +4440,10 @@
       
       // Slot bleibt offen — Wieder-Verdecken erst nach "falsch gekippt"-Text-Ausblenden
       
-      // Plane + Text ausblenden
-      _ltOv.style.opacity = '0';
+      // Nur Text ausblenden, Container behalten (Falsch-Plane folgt direkt)
+      _ltTxt.style.opacity = '0';
       await sleep(500);
-      _ltOv.remove();
+      // _ltOv NICHT entfernen — bleibt visuell als Plane-Hintergrund bis Falsch-Plane übernimmt
       
       // Joker-Klon entfernen, Original wieder in DOM
       if (_jClone) _jClone.remove();
@@ -4456,8 +4456,7 @@
       await moveHandSmooth(_tapSX, _SY, 600);
       handEl.style.opacity = '0';
       if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
-      restoreCountersAfterPlane();
-      _uiOv.style.zIndex = _origZ || '';
+      // _uiOv-zIndex behalten (Falsch-Plane übernimmt direkt)
       
       // 8. Box-Freistellung mit Tut-Text — komplexe Sequenz mit Lebens-Würfel
       await sleep(400);
@@ -4508,7 +4507,7 @@
       const _plUiOv = document.getElementById('uiOverlay');
       const _plOrigUiZ = _plUiOv.style.zIndex;
       _plUiOv.style.zIndex = '200';
-      hideCountersForPlane();
+      // Counter bleiben durchgehend versteckt — kein hideCountersForPlane (Long-Tap hat sie schon versteckt)
       
       const _plContainer = document.createElement('div');
       _plContainer.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -4548,6 +4547,8 @@
       
       document.body.appendChild(_plContainer);
       requestAnimationFrame(() => { _plContainer.style.opacity = '1'; });
+      // Crossfade: alte Long-Tap-Plane entfernen NACHDEM neue eingefadet ist
+      setTimeout(() => { if (_ltOv && _ltOv.parentNode) _ltOv.remove(); }, 500);
       
       // Zeile 1 erscheint
       await sleep(400);
@@ -4647,10 +4648,12 @@
         if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
       }
       
-      // Plane ausblenden
-      _plContainer.style.opacity = '0';
+      // Nur Text ausblenden, Container behalten (Leg-los-Plane folgt direkt — Crossfade)
+      _line2.style.opacity = '0';
+      _line3.style.opacity = '0';
+      _line4.style.opacity = '0';
       await sleep(500);
-      _plContainer.remove();
+      // _plContainer NICHT entfernen — bleibt visuell als Plane bis Leg-los-Plane übernimmt
       
       // Joker zurück
       if (_plJClone) _plJClone.remove();
@@ -4658,8 +4661,7 @@
         if (_plJOrigNext) _plJOrigParent.insertBefore(_plJOrig, _plJOrigNext);
         else _plJOrigParent.appendChild(_plJOrig);
       }
-      restoreCountersAfterPlane();
-      _plUiOv.style.zIndex = _plOrigUiZ || '';
+      // _plUiOv-zIndex behalten (Leg-los-Plane übernimmt direkt)
       
       // 9. Zweite Plane: "LEG LOS!" — eigene Plane ohne Hand-Mitlesen, 3pt größer
       await sleep(400);
@@ -4705,7 +4707,7 @@
       const _llUiOv = document.getElementById('uiOverlay');
       const _llOrigUiZ = _llUiOv.style.zIndex;
       _llUiOv.style.zIndex = '200';
-      hideCountersForPlane();
+      // Counter bleiben durchgehend versteckt — kein hideCountersForPlane hier (Falsch-Plane hat sie schon versteckt)
       
       const _llContainer = document.createElement('div');
       _llContainer.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -4730,6 +4732,8 @@
       
       document.body.appendChild(_llContainer);
       requestAnimationFrame(() => { _llContainer.style.opacity = '1'; });
+      // Crossfade: alte Falsch-Plane entfernen NACHDEM neue eingefadet ist
+      setTimeout(() => { if (_plContainer && _plContainer.parentNode) _plContainer.remove(); }, 500);
       
       await sleep(400);
       _llText.style.opacity = '1';
