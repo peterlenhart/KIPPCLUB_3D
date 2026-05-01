@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-04</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -4192,26 +4192,35 @@
         await sleep(400);
       }
       
-      // 7. Long-Tap-Sequenz auf Zelle D9 (Slot) + D10 (Rahmen)
-      // D = Spalte 4 (0-indiziert: A=0, B=1, C=2, D=3, ...) → Pixel 3*45=135..180
-      // Zeile 9 = Pixel 8*45=360..405, Zeile 10 = Pixel 9*45=405..450
+      // 7. Long-Tap-Sequenz auf Zelle D9 (Slot) + D10 (Rahmen) — Methode aus card Tut+1
       await sleep(600);
       
-      const _slotCol = 3; // D
-      const _slotRow = 8; // Zeile 9 (0-indiziert)
-      const _frameCol = 3; // D
-      const _frameRow = 9; // Zeile 10
-      const _minColPx = Math.min(_slotCol, _frameCol) * 45;
-      const _maxColPx = (Math.max(_slotCol, _frameCol) + 1) * 45;
-      const _minRowPx = Math.min(_slotRow, _frameRow) * 45;
-      const _maxRowPx = (Math.max(_slotRow, _frameRow) + 1) * 45;
-      const _tapSX = _slotCol * 45 + 22;
-      const _tapSY = _slotRow * 45 + 22;
+      const _rY = 0.46875;
+      // D-Spalte: X=-0.15625 bis 0.0; Zeile 9 oben Z=0.421875, Zeile 10 unten Z=0.736125
+      const _cellD9D10 = [
+        new THREE.Vector3(-0.15625, _rY, 0.421875),  // NW (D9 oben)
+        new THREE.Vector3(0.0,      _rY, 0.421875),  // NE
+        new THREE.Vector3(0.0,      _rY, 0.736125),  // SE (D10 unten)
+        new THREE.Vector3(-0.15625, _rY, 0.736125)   // SW
+      ];
+      renderer.render(scene, camera);
+      const _c2d = _cellD9D10.map(p => {
+        const v = p.clone().project(camera);
+        return {
+          x: Math.round((v.x * 0.5 + 0.5) * 360),
+          y: Math.round((-v.y * 0.5 + 0.5) * 720)
+        };
+      });
+      const r_nw = _c2d[0], r_ne = _c2d[1], r_se = _c2d[2], r_sw = _c2d[3];
+      
+      // Slot-Mitte D9 (X=-0.078125, Z=0.5)
+      const _slotCenter3D = new THREE.Vector3(-0.078125, _rY, 0.5).project(camera);
+      const _tapSX = Math.round((_slotCenter3D.x * 0.5 + 0.5) * 360);
+      const _tapSY = Math.round((-_slotCenter3D.y * 0.5 + 0.5) * 720);
       
       const _outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-      const _innerM = _minColPx+'px '+_minRowPx+'px, '+_minColPx+'px '+_maxRowPx+'px, '+
-                      _maxColPx+'px '+_maxRowPx+'px, '+_maxColPx+'px '+_minRowPx+'px, '+
-                      _minColPx+'px '+_minRowPx+'px';
+      const _innerM = r_nw.x+'px '+r_nw.y+'px, '+r_sw.x+'px '+r_sw.y+'px, '+
+                      r_se.x+'px '+r_se.y+'px, '+r_ne.x+'px '+r_ne.y+'px, '+r_nw.x+'px '+r_nw.y+'px';
       
       const _ltOv = document.createElement('div');
       _ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
@@ -4224,7 +4233,6 @@
         '-webkit-clip-path:polygon('+_outerM+', '+_innerM+');';
       _ltOv.appendChild(_ltBlur);
       
-      // Text "Lange tippen" südlich der Hand-Datei
       const _ltTxt = document.createElement('div');
       _ltTxt.style.cssText = 'position:absolute;top:'+(_tapSY + 147)+'px;left:'+_tapSX+'px;transform:translateX(-50%);' +
         'font:bold 20px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.9);' +
@@ -4239,35 +4247,71 @@
       const _origZ = _uiOv.style.zIndex;
       _uiOv.style.zIndex = '200';
       
+      // Joker unter Plane: Original temporär aus DOM nehmen, Klon mit z-index 50 platzieren
+      const _jOrig = document.getElementById('jokersWrap');
+      let _jClone = null;
+      let _jOrigParent = null, _jOrigNext = null;
+      if (_jOrig) {
+        const _jr = _jOrig.getBoundingClientRect();
+        _jClone = _jOrig.cloneNode(true);
+        _jClone.id = 'jokersWrapTutClone2';
+        _jClone.style.position = 'fixed';
+        _jClone.style.top = _jr.top + 'px';
+        _jClone.style.left = _jr.left + 'px';
+        _jClone.style.width = _jr.width + 'px';
+        _jClone.style.transform = '';
+        _jClone.style.zIndex = '50';
+        _jClone.style.pointerEvents = 'none';
+        document.body.appendChild(_jClone);
+        // Original aus DOM nehmen, Position merken
+        _jOrigParent = _jOrig.parentNode;
+        _jOrigNext = _jOrig.nextSibling;
+        if (_jOrigParent) _jOrigParent.removeChild(_jOrig);
+      }
+      
       const _SY = 740;
+      // Hand-Datei Fingerspitze ist nicht in der Element-Mitte — Hand 22px höher setzen
+      // damit Fingerspitze auf D9 statt D10 landet
+      const _handAdj = -22;
       setHandPos(_tapSX, _SY);
       handEl.style.opacity = '1';
       if (typeof updateHandShadow === 'function') updateHandShadow(_tapSX, _SY, true);
-      const _moveP = moveHandSmooth(_tapSX, _tapSY, 900);
+      const _moveP = moveHandSmooth(_tapSX, _tapSY + _handAdj, 900);
       await sleep(400);
       _ltTxt.style.opacity = '1';
       await _moveP;
       
-      // Long-Tap-Halt + Aufdeckung: numbers_verdeckt 2 Sek lang opacity 0
+      // Long-Tap-Halt
       await sleep(800);
       
-      // Slot aufdecken: f1-S1 (deck[4]=1)
+      // 2 Sek lang: numbers_verdeckt-Opacity auf 0 (Slot scheint kurz frei)
+      // Wir nutzen _revealedNow temporär für 2 Sek
       const _f1 = faceSlots['f1'];
-      if (_f1 && _f1.slotMap) {
-        const _keys = Object.keys(_f1.slotMap);
-        if (_keys[0]) {
-          _f1.slotMap[_keys[0]]._revealedNow = true;
-          rebuildFaceMat('f1', 1);
-        }
+      const _slotKey1 = _f1 ? Object.keys(_f1.slotMap)[0] : null;
+      if (_f1 && _slotKey1) {
+        _f1.slotMap[_slotKey1]._revealedNow = true;
+        rebuildFaceMat('f1', 1);
       }
       
-      // 2 Sek aufgedeckt zeigen
       await sleep(2000);
+      
+      // numbers_verdeckt wieder einblenden
+      if (_f1 && _slotKey1) {
+        delete _f1.slotMap[_slotKey1]._revealedNow;
+        rebuildFaceMat('f1', 1);
+      }
       
       // Plane + Text ausblenden
       _ltOv.style.opacity = '0';
       await sleep(500);
       _ltOv.remove();
+      
+      // Joker-Klon entfernen, Original wieder in DOM
+      if (_jClone) _jClone.remove();
+      if (_jOrig && _jOrigParent) {
+        if (_jOrigNext) _jOrigParent.insertBefore(_jOrig, _jOrigNext);
+        else _jOrigParent.appendChild(_jOrig);
+      }
       
       // Hand zurück nach Süden
       await moveHandSmooth(_tapSX, _SY, 600);
