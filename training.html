@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-28</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AU-30</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3103,8 +3103,10 @@
       const cw  = { f2: 'f0', f0: 'f1', f1: 'f2' };
       const ccw = { f2: 'f1', f1: 'f0', f0: 'f2' };
       const oldFace = topFace;
+      const oldQ = currentQuadrant;
       topFace = (kippDirection === 'cw') ? cw[topFace] : ccw[topFace];
-      const _msg = '[TRACK] KIPP dir=' + kippDirection + ' Q=' + currentQuadrant + ' topFace ' + oldFace + ' -> ' + topFace;
+      // Log NACH Update (currentQuadrant ist bereits durch performKipp aktualisiert)
+      const _msg = '[TRACK] KIPP ' + kippDirection + ': Q ' + oldQ + '->' + currentQuadrant + ' face ' + oldFace + '->' + topFace;
       console.log(_msg);
       if (window._trackLog) window._trackLog.push(_msg);
     }
@@ -4148,12 +4150,11 @@
         ], 1700, 1200, { extraY: 35 });
       }
       
-      // 6. Tutorial-Drehbuch: feste Kippfolge (deine aufgezeichnete Sequenz)
-      // Würfellage: Q=1, face=f2, deck=[2,0,0,0,0,0,0,1,0,0,0,0]
-      // Zielzahl=1, Zielfarbe=orange. Falsche Zahl 2 landet auf Q1-S1 (=orange) f0
-      const _seq = ['ccw','ccw','cw','ccw','ccw','ccw','ccw'];
-      const _wrongZahl = 2;
-      const _zielFarbe = 'orange';
+      // 6. Tutorial-Drehbuch: feste Kippfolge
+      // Würfellage Eckblick-Ende: Q=3, topFace=f0
+      // Hand-Kippfolge: 5 cw, 1 ccw → Endlage Q=3, topFace=f1
+      // Verdeckte Zahl 1 auf Zelle D9 → Slot Neighbour D10 = violett
+      const _seq = ['cw','cw','cw','cw','cw','ccw'];
       if (typeof initHandEl === 'function') initHandEl();
       for (const _stepDir of _seq) {
         const _kippDir = (_stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
@@ -4190,123 +4191,6 @@
         advanceTopFace();
         await sleep(400);
       }
-      
-      // Endlage: falsche Zahl liegt jetzt an Zielfarbe-Wand
-      // Slot-Name finden (S1-S4) der an Zielfarbe grenzt im aktuellen Quadrant
-      let _ltFace = null, _ltGrid = null;
-      const _faceOff = { f0: 0, f1: 4, f2: 8 };
-      const _slotsArr = ['S1','S2','S3','S4'];
-      // 1) Welcher Slot-Name (S1-S4) grenzt an _zielFarbe im currentQuadrant?
-      let _targetSlotName = null;
-      for (const _sn of _slotsArr) {
-        if (SLOT_NEIGHBOR_COLORS[currentQuadrant][_sn] === _zielFarbe) { _targetSlotName = _sn; break; }
-      }
-      // 2) Auf der Top-Face: deck-Index des _targetSlotName
-      if (_targetSlotName) {
-        const _tOff = _faceOff[topFace];
-        const _tIdx = _slotsArr.indexOf(_targetSlotName);
-        if (_tOff !== undefined && _tIdx >= 0 && deck[_tOff + _tIdx] === _wrongZahl) {
-          // 3) gridKey in faceSlots[topFace].slotMap zum Slot-Namen finden
-          const _fs = faceSlots[topFace];
-          if (_fs && _fs.slotMap) {
-            // Slots in slotMap sind in derselben Reihenfolge wie deck-Slots der Face
-            const _keys = Object.keys(_fs.slotMap);
-            // S1=keys[0], S2=keys[1], ... (Annahme nach Definition)
-            if (_keys[_tIdx]) {
-              _ltFace = topFace;
-              _ltGrid = _keys[_tIdx];
-            }
-          }
-        }
-      }
-      
-      // Long-Tap mit Plane + Freistellung
-      if (_ltFace && _ltGrid) {
-        await sleep(600);
-        
-        const _bct = window.brainyCurrentTarget || brainyCurrentTarget;
-        if (_bct && GEM_POSITIONS[_bct.targetQ + '_' + _bct.targetSlot]) {
-          const _gemT = GEM_POSITIONS[_bct.targetQ + '_' + _bct.targetSlot];
-          const _frameX = _gemT.x, _frameZ = _gemT.z;
-          const _colFromX = (x) => { if (x < -0.15) return 2; if (x < 0) return 3; if (x < 0.15) return 4; return 5; };
-          const _rowFromZ = (z) => { if (z < -0.05) return 4; if (z < 0.1) return 5; if (z < 0.27) return 6; return 7; };
-          let _slotCol, _slotRow, _frameCol, _frameRow;
-          if (_frameX <= -0.46875) {
-            _frameCol = 0; _slotCol = 1;
-            _frameRow = _slotRow = _rowFromZ(_frameZ);
-          } else if (_frameX >= 0.46875) {
-            _frameCol = 7; _slotCol = 6;
-            _frameRow = _slotRow = _rowFromZ(_frameZ);
-          } else if (_frameZ <= -0.359375) {
-            _frameRow = 2; _slotRow = 3;
-            _frameCol = _slotCol = _colFromX(_frameX);
-          } else {
-            _frameRow = 9; _slotRow = 8;
-            _frameCol = _slotCol = _colFromX(_frameX);
-          }
-          const _minColPx = Math.min(_slotCol, _frameCol) * 45;
-          const _maxColPx = (Math.max(_slotCol, _frameCol) + 1) * 45;
-          const _minRowPx = Math.min(_slotRow, _frameRow) * 45;
-          const _maxRowPx = (Math.max(_slotRow, _frameRow) + 1) * 45;
-          const r_nw = { x: _minColPx, y: _minRowPx };
-          const r_ne = { x: _maxColPx, y: _minRowPx };
-          const r_se = { x: _maxColPx, y: _maxRowPx };
-          const r_sw = { x: _minColPx, y: _maxRowPx };
-          const _tapSX = _slotCol * 45 + 22;
-          const _tapSY = _slotRow * 45 + 22;
-          const _outerM = '0px 0px, 360px 0px, 360px 720px, 0px 720px, 0px 0px';
-          const _innerM = r_nw.x+'px '+r_nw.y+'px, '+r_sw.x+'px '+r_sw.y+'px, '+
-                          r_se.x+'px '+r_se.y+'px, '+r_ne.x+'px '+r_ne.y+'px, '+r_nw.x+'px '+r_nw.y+'px';
-          const _ltOv = document.createElement('div');
-          _ltOv.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-            'width:360px;height:'+window.innerHeight+'px;z-index:100;pointer-events:none;' +
-            'opacity:0;transition:opacity 0.5s ease;';
-          const _ltBlur = document.createElement('div');
-          _ltBlur.style.cssText = 'position:absolute;top:0;left:0;width:360px;height:720px;' +
-            'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(0,0,0,0.5);' +
-            'clip-path:polygon('+_outerM+', '+_innerM+');';
-          _ltOv.appendChild(_ltBlur);
-          const _ltTxt = document.createElement('div');
-          _ltTxt.style.cssText = 'position:absolute;top:'+(_tapSY + 147)+'px;left:'+_tapSX+'px;transform:translateX(-50%);' +
-            'font:bold 20px Arial;color:#cedb25;text-shadow:0 2px 6px rgba(0,0,0,0.9);' +
-            'letter-spacing:1.5px;white-space:nowrap;opacity:0;transition:opacity 0.3s ease;';
-          _ltTxt.textContent = T.cLongTap || 'Lang tippen';
-          _ltOv.appendChild(_ltTxt);
-          document.body.appendChild(_ltOv);
-          requestAnimationFrame(() => { _ltOv.style.opacity = '1'; });
-          
-          const _uiOv = document.getElementById('uiOverlay');
-          const _origZ = _uiOv.style.zIndex;
-          _uiOv.style.zIndex = '200';
-          
-          const _SY = 740;
-          setHandPos(_tapSX, _SY);
-          handEl.style.opacity = '1';
-          if (typeof updateHandShadow === 'function') updateHandShadow(_tapSX, _SY, true);
-          const _moveP = moveHandSmooth(_tapSX, _tapSY, 900);
-          await sleep(400);
-          _ltTxt.style.opacity = '1';
-          await _moveP;
-          await sleep(1500);
-          
-          const _f = faceSlots[_ltFace];
-          if (_f && _f.slotMap[_ltGrid]) {
-            _f.slotMap[_ltGrid]._revealedNow = true;
-            rebuildFaceMat(_ltFace, 1);
-          }
-          
-          await sleep(800);
-          _ltOv.style.opacity = '0';
-          await sleep(500);
-          _ltOv.remove();
-          await moveHandSmooth(_tapSX, _SY, 600);
-          handEl.style.opacity = '0';
-          if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
-          _uiOv.style.zIndex = _origZ || '';
-        }
-      }
-      
-      // Tutorial-Modus aus, normaler Spielfluss übernimmt
       window._brainyTutorialMode = false;
       replayActive = false;
       window._kippResultRunning = false;
@@ -6698,9 +6582,9 @@
       deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
       visibleDeckIndices.clear();
       
-      // Tutorial: festes Deck Q=2/f2-Fall mit dieser Verteilung
+      // Tutorial: festes Deck — 1 auf f1-S1 (deck[4]), 2 auf f2-S4 (deck[11])
       if (window._brainyTutorialMode && currentLevel === 1) {
-        deck = [2,0,0,0, 0,0,0,1, 0,0,0,0];
+        deck = [0,0,0,0, 1,0,0,0, 0,0,0,2];
         for (let _i = 0; _i < 12; _i++) if (deck[_i] > 0) visibleDeckIndices.add(_i);
         return;
       }
@@ -7266,16 +7150,16 @@
           }
         }
       }
-      const zielColor = window._brainyTutorialMode ? 'orange' : _zielColorCandidates[Math.floor(Math.random() * _zielColorCandidates.length)];
-      // Tutorial: feste Zielzahl=1 (überschreibt Random)
+      const zielColor = window._brainyTutorialMode ? 'violett' : _zielColorCandidates[Math.floor(Math.random() * _zielColorCandidates.length)];
+      // Tutorial: feste Zielzahl=2 (überschreibt Random)
       if (window._brainyTutorialMode) {
-        zahl = 1;
+        zahl = 2;
         // Slot-Suche neu mit fester Zahl
         _targetFace = null; _targetSlotIdx = -1;
         for (const _face of ['f0', 'f1', 'f2']) {
           const _off2 = _faceOffR[_face];
           for (let _si = 0; _si < 4; _si++) {
-            if (deck[_off2 + _si] === 1) { _targetFace = _face; _targetSlotIdx = _si; break; }
+            if (deck[_off2 + _si] === 2) { _targetFace = _face; _targetSlotIdx = _si; break; }
           }
           if (_targetFace) break;
         }
@@ -8143,10 +8027,10 @@
         }
         if (candidates.length === 0) return; // Alle Kombis vergeben
 
-        // Tutorial: feste Zielzahl=1 + Zielfarbe=orange
+        // Tutorial: feste Zielzahl=2 + Zielfarbe=violett
         let pick;
         if (window._brainyTutorialMode) {
-          pick = { zahl: 1, color: 'orange' };
+          pick = { zahl: 2, color: 'violett' };
         } else {
           pick = candidates[Math.floor(Math.random() * candidates.length)];
         }
@@ -8191,8 +8075,8 @@
       let _validStates = BRAINY_CW_STATES.filter(st => st.cwSteps !== 0);
       let fallState;
       if (window._brainyTutorialMode) {
-        // Tutorial-Drehbuch: fester Fall Q=1, face=f2
-        const _fixed = BRAINY_CW_STATES.find(st => st.q === 1 && st.face === 'f2');
+        // Tutorial-Drehbuch: fester Fall Q=3, face=f0
+        const _fixed = BRAINY_CW_STATES.find(st => st.q === 3 && st.face === 'f0');
         fallState = _fixed || _validStates[0];
       } else {
         fallState = _validStates[Math.floor(Math.random() * _validStates.length)];
