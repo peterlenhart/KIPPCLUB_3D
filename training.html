@@ -969,7 +969,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-17</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AV-18</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -10952,6 +10952,10 @@
     let lastTouchPos = null;
     
     renderer.domElement.addEventListener('touchstart', (e) => {
+      // DEBUG: State bei touchstart
+      const _dbg = '[TRACK] TOUCHSTART replayActive=' + replayActive + ' tut=' + (!!window._brainyTutorialMode) + ' slotsHidden=' + (!!window._kippSlotsHidden) + ' target=' + (!!window._kippTarget) + ' resultRunning=' + (!!window._kippResultRunning);
+      console.log(_dbg);
+      if (window._trackLog) window._trackLog.push(_dbg);
       if (replayActive) return; // Tutorial: keine Interaktion
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -11116,6 +11120,9 @@
       kippIsSwiping = false;
       
       // BUMBLEBRAIN: Long-Tap (≥500ms) auf Würfel → Treffererkennung
+      const _dbgLT = '[TRACK] TOUCHEND-LT slotsHidden=' + (!!window._kippSlotsHidden) + ' target=' + (!!window._kippTarget) + ' resultRunning=' + (!!window._kippResultRunning) + ' lts=' + window._kippLongTapStart + ' dt=' + (window._kippLongTapStart ? (Date.now() - window._kippLongTapStart) : 'NA');
+      console.log(_dbgLT);
+      if (window._trackLog) window._trackLog.push(_dbgLT);
       if (window._kippSlotsHidden && window._kippTarget && !window._kippResultRunning &&
           window._kippLongTapStart && (Date.now() - window._kippLongTapStart) >= 500 &&
           window._kippLongTapPos) {
