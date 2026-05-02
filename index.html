@@ -552,6 +552,14 @@
       updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
     };
+    // KIPP QUEEN: direkt ins Spiel (SPIELEN/TUTORIAL-Auswahl in training.html)
+    document.getElementById("clickQueen").onclick = () => {
+      location.href = 'training.html?theme=queen';
+    };
+    // KIPP KING: direkt ins Spiel (SPIELEN/TUTORIAL-Auswahl in training.html)
+    document.getElementById("clickKing").onclick = () => {
+      location.href = 'training.html?theme=king';
+    };
     function updateLevelLinks() {
       let base, mb;
       if (selectedSkin === 'icons') {
