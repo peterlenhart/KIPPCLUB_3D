@@ -552,13 +552,13 @@
       updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
     };
-    // KIPP QUEEN: direkt ins Spiel (SPIELEN/TUTORIAL-Auswahl in training.html)
+    // KIPP QUEEN: eigene HTML
     document.getElementById("clickQueen").onclick = () => {
-      location.href = 'training.html?theme=queen';
+      location.href = 'kipp_queen.html';
     };
-    // KIPP KING: direkt ins Spiel (SPIELEN/TUTORIAL-Auswahl in training.html)
+    // KIPP KING: eigene HTML
     document.getElementById("clickKing").onclick = () => {
-      location.href = 'training.html?theme=king';
+      location.href = 'kipp_king.html';
     };
     function updateLevelLinks() {
       let base, mb;
