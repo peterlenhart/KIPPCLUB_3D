@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-15</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-18</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1535,6 +1535,26 @@
     boxboden.position.set(-0.00694, 0.001, 0.109375);
     boxboden.receiveShadow = true;
     scene.add(boxboden); // Zurück zu scene direkt
+    
+    // CODETAFEL (Queen-Theme) — über Spieltisch, Z südlich von Zeile 10
+    const codetafelTexture = new THREE.TextureLoader().load('codetafel.webp');
+    // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
+    // 205px = 4.555 Zellen × 0.15625 = 0.7118 units breit
+    // 121px = 2.689 Zellen × 0.15625 = 0.4201 units hoch
+    const _codeW = 0.7118;
+    const _codeH = 0.4201;
+    const codetafelGeometry = new THREE.PlaneGeometry(_codeW, _codeH);
+    const codetafelMaterial = new THREE.MeshBasicMaterial({ map: codetafelTexture, transparent: true });
+    const codetafel = new THREE.Mesh(codetafelGeometry, codetafelMaterial);
+    codetafel.rotation.x = -Math.PI / 2; // flach hinlegen
+    // Y = Spieltisch (3 Zellen über π1) + bisschen drüber
+    // Z: Oberkante 10px unter Zeile 10 → Z-Top = 0.579875 + 10*(2.5/720) = 0.61458
+    //    Mitte = 0.61458 + Höhe/2
+    const _codeZTop = 0.658 - 0.078125 + 10 * (2.5 / 720);
+    const _codeZMid = _codeZTop + _codeH / 2;
+    codetafel.position.set(0, 0.46975 + 0.005, _codeZMid);
+    codetafel.renderOrder = 2;
+    scene.add(codetafel);
     
     const gridSize = 16 * 0.15625;
     const gridDivisions = 16;
@@ -6151,7 +6171,7 @@
         if (!kipp21WithTutorial || currentLevel >= 3) {
           showBlickIcons();
           for (let i = 0; i < numActiveCards; i++) {
-            gameCards[i].mesh.visible = true;
+            gameCards[i].mesh.visible = false; // Queen: Kippziel-Kärtchen nie zeigen
             gameCards[i].mesh.material.transparent = false;
             gameCards[i].mesh.material.opacity = 1;
             gameCards[i].mesh.material.needsUpdate = true;
@@ -7426,7 +7446,7 @@
         const j = document.createElement('div');
         j.className = 'jokerSlot';
         j.dataset.idx = i;
-        j.style.cssText = 'width:52px;height:52px;background-image:url(joker4.webp);' +
+        j.style.cssText = 'width:52px;height:52px;background-image:url(joker_qu_king.webp);' +
           'background-size:contain;background-repeat:no-repeat;background-position:center;' +
           'cursor:pointer;pointer-events:auto;transition:opacity 0.3s, transform 0.3s, filter 0.3s;' +
           'filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));';
@@ -8193,7 +8213,7 @@
           gameCards[0].texture.needsUpdate = true;
         }
         gameCards[0].mesh.position.set(0, cardY, cardZ);
-        gameCards[0].mesh.visible = true;
+        gameCards[0].mesh.visible = false; // Queen: Kippziel-Kärtchen nie zeigen
         gameCards[0].mesh.material.opacity = 1;
         gameCards[0].mesh.material.transparent = true;
         gameCards[0].mesh.material.needsUpdate = true;
