@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-21</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-22</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1515,6 +1515,15 @@
     const fillLightSouth = new THREE.DirectionalLight(0xffffff, 0.28);
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
+    
+    // Ambientes Licht: damit Eckblick-Würfel-Faces nie zu dunkel werden
+    const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+    scene.add(ambient);
+    
+    // Zusätzliches Licht von Süden-Oben (Spieler-Perspektive) — beleuchtet Eckblick-Top-Face
+    const eckblickLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    eckblickLight.position.set(0, 4, 5);
+    scene.add(eckblickLight);
 
     // =========================
     // TISCH (π1 Ebene)
