@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-41</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-42</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1555,7 +1555,114 @@
     scene.add(boxboden); // Zurück zu scene direkt
     
     // CODETAFEL (Queen-Theme) — über Spieltisch, Z südlich von Zeile 10
-    const codetafelTexture = new THREE.TextureLoader().load('codetafel.webp');
+    const _codetafelImg = new Image();
+    _codetafelImg.src = 'codetafel.webp';
+    // Canvas für dynamische Codes auf der Tafel
+    const _codetafelCanvas = document.createElement('canvas');
+    _codetafelCanvas.width = 616;
+    _codetafelCanvas.height = 364;
+    const _codetafelCtx = _codetafelCanvas.getContext('2d');
+    const codetafelTexture = new THREE.CanvasTexture(_codetafelCanvas);
+    codetafelTexture.minFilter = THREE.LinearFilter;
+    
+    // 6 Slot-Mittelpunkte auf der Codetafel (in Pixel-Koordinaten der 616×364 Datei)
+    // Ausgehend von der Datei: oberer Streifen (Code-Schriftzug) füllt obersten ~22% (~80px)
+    // Unten 6 Zellen: 3 spalten × 2 reihen, etwa Zeilen 90-220 und 230-360
+    const _codeSlotPos = [
+      // Top-Reihe (S0, S1, S2) — links/mitte/rechts
+      { x: 110, y: 162 }, { x: 308, y: 162 }, { x: 506, y: 162 },
+      // Bottom-Reihe (S3, S4, S5) — links/mitte/rechts
+      { x: 110, y: 295 }, { x: 308, y: 295 }, { x: 506, y: 295 }
+    ];
+    // Welche Slots werden befüllt je Schwierigkeit (1-6)
+    // Schema: 1=Mitte oben; 2=außen oben; 3=alle oben; 4=alle oben + Mitte unten; 5=alle oben + außen unten; 6=alle
+    const _codeSlotMap = {
+      1: [1],
+      2: [0, 2],
+      3: [0, 1, 2],
+      4: [0, 1, 2, 4],
+      5: [0, 1, 2, 3, 5],
+      6: [0, 1, 2, 3, 4, 5]
+    };
+    // Aktuelle Codes (oder 'X-X' Platzhalter); _codetafelCodes[slotIdx] = "F-3" oder "X-X" oder null
+    let _codetafelCodes = [null, null, null, null, null, null];
+    // Strikethrough-Flags
+    let _codetafelHits = [false, false, false, false, false, false];
+    
+    function _drawCodetafel() {
+      const ctx = _codetafelCtx;
+      ctx.clearRect(0, 0, 616, 364);
+      // Hintergrund: codetafel.webp
+      if (_codetafelImg.complete && _codetafelImg.naturalWidth > 0) {
+        ctx.drawImage(_codetafelImg, 0, 0, 616, 364);
+      }
+      // Codes auf die Slots zeichnen
+      ctx.font = 'bold 50px "Times New Roman", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < 6; i++) {
+        const code = _codetafelCodes[i];
+        if (!code) continue;
+        const p = _codeSlotPos[i];
+        // Bevel/Inset-Effekt: Highlight unten-rechts, Schatten oben-links
+        ctx.fillStyle = 'rgba(255,235,180,0.55)';
+        ctx.fillText(code, p.x + 1.5, p.y + 1.5);
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillText(code, p.x - 1.5, p.y - 1.5);
+        // Hauptschrift Gold/Messing
+        ctx.fillStyle = '#d4a838';
+        ctx.fillText(code, p.x, p.y);
+        // Durchgestrichen wenn HIT
+        if (_codetafelHits[i]) {
+          const w = ctx.measureText(code).width;
+          ctx.strokeStyle = '#a01818';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(p.x - w/2 - 5, p.y);
+          ctx.lineTo(p.x + w/2 + 5, p.y);
+          ctx.stroke();
+        }
+      }
+      codetafelTexture.needsUpdate = true;
+    }
+    _codetafelImg.onload = _drawCodetafel;
+    if (_codetafelImg.complete) _drawCodetafel();
+    
+    // API für andere Code-Teile
+    window._setCodetafelPlatzhalter = function(stichZahl) {
+      const slots = _codeSlotMap[stichZahl] || [];
+      _codetafelCodes = [null, null, null, null, null, null];
+      _codetafelHits = [false, false, false, false, false, false];
+      for (const idx of slots) _codetafelCodes[idx] = 'X-X';
+      _drawCodetafel();
+    };
+    window._setCodetafelCodes = function(codeArr) {
+      // codeArr = ["F-3", "A-1", ...] in Reihenfolge der ausgewählten Slots
+      const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
+      _codetafelCodes = [null, null, null, null, null, null];
+      _codetafelHits = [false, false, false, false, false, false];
+      slots.forEach((slotIdx, i) => {
+        _codetafelCodes[slotIdx] = codeArr[i] || 'X-X';
+      });
+      _drawCodetafel();
+    };
+    window._codetafelMarkHit = function(code) {
+      // Findet Code-Position und markiert als HIT
+      for (let i = 0; i < 6; i++) {
+        if (_codetafelCodes[i] === code && !_codetafelHits[i]) {
+          _codetafelHits[i] = true;
+          _drawCodetafel();
+          return true;
+        }
+      }
+      return false;
+    };
+    window._codetafelClear = function() {
+      _codetafelCodes = [null, null, null, null, null, null];
+      _codetafelHits = [false, false, false, false, false, false];
+      _drawCodetafel();
+    };
+    
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
     // 205px = 4.555 Zellen × 0.15625 = 0.7118 units breit
     // 121px = 2.689 Zellen × 0.15625 = 0.4201 units hoch
@@ -7498,7 +7605,7 @@
       const _topY = Math.round((-_topPt.y * 0.5 + 0.5) * 720);
       // Höhe: 4 Rasterzellen = 180px
       const _bandH = 180;
-      wrap.style.top = (_topY + 12) + 'px';
+      wrap.style.top = (_topY + 18) + 'px';
       wrap.style.height = _bandH + 'px';
       wrap.style.display = 'block';
       
@@ -7559,15 +7666,56 @@
       if (!previewWrap) return;
       const idx = parseInt(previewWrap.dataset.idx) || 0;
       _selectedStatusIdx = idx;
-      // Selected-Marker im Scrollband
-      const items = document.querySelectorAll('.statusItem');
-      items.forEach((it, i) => {
-        if (i === idx) it.classList.add('selected');
-        else it.classList.remove('selected');
-      });
       // Code-Schwierigkeit = idx + 1
       window._codeStichZiel = idx + 1;
-      previewWrap.style.display = 'none';
+      // X-X Platzhalter auf Codetafel zeigen
+      if (typeof window._setCodetafelPlatzhalter === 'function') {
+        window._setCodetafelPlatzhalter(window._codeStichZiel);
+      }
+      // Großbild + Scrollband ausfaden
+      const scrollWrap = document.getElementById('statusScrollWrap');
+      previewWrap.style.transition = 'opacity 0.5s ease';
+      previewWrap.style.opacity = '0';
+      if (scrollWrap) {
+        scrollWrap.style.transition = 'opacity 0.5s ease';
+        scrollWrap.style.opacity = '0';
+      }
+      setTimeout(() => {
+        previewWrap.style.display = 'none';
+        previewWrap.style.opacity = '1';
+        if (scrollWrap) scrollWrap.style.display = 'none';
+        // Spielstart Queen
+        if (typeof startQueenSpiel === 'function') startQueenSpiel();
+      }, 500);
+    }
+    
+    // Spielstart Queen: Eckblick → Codes random ausgeben
+    async function startQueenSpiel() {
+      if (typeof runKippEckblick === 'function') {
+        window._kippEckblickRunning = true;
+        try { await runKippEckblick({}); } catch(e){}
+        window._kippEckblickRunning = false;
+      }
+      _generateQueenCodes();
+    }
+    
+    // Random Codes (Buchstabe A-L + Zahl 1-4) für die ausgewählten Slots
+    function _generateQueenCodes() {
+      const stichZahl = window._codeStichZiel || 1;
+      const used = new Set();
+      const codes = [];
+      let tries = 0;
+      while (codes.length < stichZahl && tries < 300) {
+        tries++;
+        const L = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
+        const N = 1 + Math.floor(Math.random() * 4);
+        const c = L + '-' + N;
+        if (used.has(c)) continue;
+        used.add(c);
+        codes.push(c);
+      }
+      window._codetafelCodesArr = codes;
+      if (typeof window._setCodetafelCodes === 'function') window._setCodetafelCodes(codes);
     }
     function onJokerClick(jEl) {
       // Eckblick erlaubt sobald Kippziel aktiv und nichts läuft (Eckblick/Result/Drag/Animation)
