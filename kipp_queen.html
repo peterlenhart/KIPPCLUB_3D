@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-33</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-36</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1097,6 +1097,21 @@
     <div id="jokerIconsRow"></div>
     <!-- HIT/MISS-Counter (Spielfeld-Zeile 8, Spalten A-B links / G-H rechts) -->
     <!-- HIT/MISS-Counter entfernt für Queen-Theme -->
+    <!-- Statussymbol-Scrollband (Position via JS auf Zeile 11 Oberkante) -->
+    <div id="statusScrollWrap" style="display:none;position:absolute;left:0;width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:60;pointer-events:auto;">
+      <div id="statusScrollInner" style="display:flex;align-items:center;gap:0;padding:0 50%;height:100%;">
+        <!-- 6 Symbole werden via JS eingefügt -->
+      </div>
+    </div>
+    <style>
+      #statusScrollWrap::-webkit-scrollbar { display: none; }
+      .statusItem { flex-shrink:0; cursor:pointer; transition:transform 0.2s ease; position:relative; }
+      .statusItem.selected { transform: scale(1.15); }
+      .statusItem.selected::after {
+        content:''; position:absolute; inset:-4px; border:2px solid #f0c050;
+        border-radius:6px; box-shadow:0 0 12px rgba(240,192,80,0.7); pointer-events:none;
+      }
+    </style>
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     
     <!-- OFFEN-Modus: Scrollband 1-11 (statt Joker) -->
@@ -1989,7 +2004,14 @@
     const randTexture = new THREE.TextureLoader().load('boxrand_qu_king.webp');
     
     const wallGeometry = new THREE.BoxGeometry(0.9375, 0.46875, 0.0335);
-    const wallMaterial = new THREE.MeshBasicMaterial({ map: wallTexture });
+    // 6 Materials: [+X,-X,+Y(Oberkante=Boxrand),-Y,+Z,-Z]
+    const _wallMatSide = new THREE.MeshBasicMaterial({ map: wallTexture });
+    const _wallMatTop = new THREE.MeshBasicMaterial({ map: randTexture });
+    const wallMaterial = [
+      _wallMatSide, _wallMatSide,
+      _wallMatTop,  _wallMatSide,
+      _wallMatSide, _wallMatSide
+    ];
     
     const wall = new THREE.Mesh(wallGeometry, wallMaterial);
     wall.position.set(0, 0.234375, 0.597125);
@@ -2509,6 +2531,10 @@
       cube.quaternion.set(0, 0, 0, 1);
       loadingAnimDone = true;
       checkEnableButtons();
+      // Statussymbol-Scrollband einblenden (nach Würfel-Setup)
+      if (typeof initStatusScrollband === 'function') {
+        setTimeout(initStatusScrollband, 100);
+      }
     }
 
     // === Start-Challenge-Text: Abwechselnd blähen ===
@@ -7452,6 +7478,60 @@
     function hideJokers() {
       const wrap = document.getElementById('jokersWrap');
       if (wrap) wrap.style.display = 'none';
+    }
+    
+    // === STATUSSYMBOL-SCROLLBAND === (6 Symbole horizontal, Auswahl = Code-Schwierigkeit)
+    // Reihenfolge in qu_statussymbole.webp (von links nach rechts):
+    // 0=Schuhe(1Code), 1=Tasche(2), 2=Halskette(3), 3=VIP(4), 4=Auto(5), 5=Jet(6)
+    let _selectedStatusIdx = 0; // Default: Schuhe = 1 Code
+    function initStatusScrollband() {
+      const wrap = document.getElementById('statusScrollWrap');
+      if (!wrap) return;
+      // Position: Oberkante Zeile 11 (Z = 0.736125), in Pixel via Kamera-Projektion
+      const _topPt = new THREE.Vector3(0, 0.46975, 0.736125);
+      _topPt.project(camera);
+      const _topY = Math.round((-_topPt.y * 0.5 + 0.5) * 720);
+      // Höhe: 4 Rasterzellen = 180px
+      const _bandH = 180;
+      wrap.style.top = _topY + 'px';
+      wrap.style.height = _bandH + 'px';
+      wrap.style.display = 'block';
+      
+      const inner = document.getElementById('statusScrollInner');
+      if (!inner || inner.children.length > 0) return;
+      inner.style.height = _bandH + 'px';
+      
+      // Sprite-Sheet: 1568x364 px, 6 Symbole je 261x364 (1568/6 ≈ 261.33)
+      const _spriteW = 1568, _spriteH = 364, _symW = _spriteW / 6;
+      // Anzeigegröße: Höhe ans Band anpassen, Breite proportional
+      const _itemH = _bandH;
+      const _itemW = _itemH * (_symW / _spriteH); // ≈ 129px
+      
+      for (let i = 0; i < 6; i++) {
+        const it = document.createElement('div');
+        it.className = 'statusItem' + (i === 0 ? ' selected' : '');
+        it.dataset.idx = i;
+        it.style.cssText = 'width:' + _itemW + 'px;height:' + _itemH + 'px;' +
+          'background-image:url(qu_statussymbole.webp);' +
+          'background-size:' + (6 * _itemW) + 'px ' + _itemH + 'px;' +
+          'background-position:-' + (i * _itemW) + 'px 0;' +
+          'background-repeat:no-repeat;';
+        it.addEventListener('click', () => onStatusSelect(i));
+        inner.appendChild(it);
+      }
+    }
+    function onStatusSelect(idx) {
+      _selectedStatusIdx = idx;
+      const items = document.querySelectorAll('.statusItem');
+      items.forEach((it, i) => {
+        if (i === idx) it.classList.add('selected');
+        else it.classList.remove('selected');
+      });
+      // Code-Schwierigkeit = idx + 1 (Schuhe=1, Tasche=2, ..., Jet=6)
+      window._codeStichZiel = idx + 1;
+      // Symbol horizontal in die Mitte scrollen
+      const sel = items[idx];
+      if (sel) sel.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
     function onJokerClick(jEl) {
       // Eckblick erlaubt sobald Kippziel aktiv und nichts läuft (Eckblick/Result/Drag/Animation)
