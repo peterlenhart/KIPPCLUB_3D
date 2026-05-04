@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-55</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-58</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1769,7 +1769,7 @@
     // Codetafel: vertikal 10 px unter Süd-Linie Zeile 10
     // Süd-Linie Zeile 10 Z = 0.658 + 0.078125 = 0.736125
     // 10 px = 10 * (2.5/720) = 0.0347
-    const _codeZTop = 0.736125 + 10 * (2.5 / 720);
+    const _codeZTop = 0.736125 + 10 * (2.5 / 720) + 10 * (2.5 / 720); // 10px unter Süd-Linie + 10px südlicher
     const _codeZMid = _codeZTop + _codeH / 2;
     codetafel.position.set(0, 0.476, _codeZMid);
     codetafel.renderOrder = 2;
@@ -2303,7 +2303,7 @@
         const tischoverlay = new THREE.Mesh(overlayGeometry, overlayMaterial);
         tischoverlay.rotation.x = -Math.PI / 2;
         const oxCenter = -0.625 + SPIEL_WIDTH / 2;
-        const ozCenter = -0.828125 + overlayHeight / 2 + 20 * (2.5 / 720); // +20px südlicher
+        const ozCenter = -0.828125 + overlayHeight / 2 + 32 * (2.5 / 720); // +32px südlicher (20+12)
         const oyPos = yPos + 0.0002; // 0.02 mm über Spieltisch (gegen Z-Fighting, optisch nicht sichtbar)
         tischoverlay.position.set(oxCenter, oyPos, ozCenter);
         tischoverlay.receiveShadow = false;
@@ -8175,6 +8175,11 @@
       }
       
       brainyCurrentTarget = { zahl, colorName: zielColor, targetQ: _targetQ, targetSlot: _targetSlot, targetFace: _targetFace };
+      
+      // QUEEN: nach Eckblick wenn Würfel wieder liegt → ersten X-X zu Code aktivieren
+      if (window._codeStichZiel && typeof window._activateNextQueenCode === 'function') {
+        window._activateNextQueenCode();
+      }
       
       // Richtiges Gem platzieren (nicht für BUMBLEBRAIN)
       if (currentLevel !== 1) {
