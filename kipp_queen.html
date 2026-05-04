@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-51</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-55</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1773,6 +1773,8 @@
     const _codeZMid = _codeZTop + _codeH / 2;
     codetafel.position.set(0, 0.476, _codeZMid);
     codetafel.renderOrder = 2;
+    codetafel.visible = false; // erst sichtbar nach ✓-Bestätigung
+    window._codetafelMesh = codetafel;
     scene.add(codetafel);
     
     const gridSize = 16 * 0.15625;
@@ -2301,7 +2303,7 @@
         const tischoverlay = new THREE.Mesh(overlayGeometry, overlayMaterial);
         tischoverlay.rotation.x = -Math.PI / 2;
         const oxCenter = -0.625 + SPIEL_WIDTH / 2;
-        const ozCenter = -0.828125 + overlayHeight / 2;
+        const ozCenter = -0.828125 + overlayHeight / 2 + 20 * (2.5 / 720); // +20px südlicher
         const oyPos = yPos + 0.0002; // 0.02 mm über Spieltisch (gegen Z-Fighting, optisch nicht sichtbar)
         tischoverlay.position.set(oxCenter, oyPos, ozCenter);
         tischoverlay.receiveShadow = false;
@@ -2310,6 +2312,10 @@
         tischoverlay.matrixAutoUpdate = false;
         tischoverlay.updateMatrix();
         scene.add(tischoverlay);
+        window._tischoverlay = tischoverlay;
+        // Während Auswahl-Phase: Overlay sichtbar (verdeckt Spielfläche darunter)
+        // Codetafel ist auch verdeckt, da unter Overlay
+        tischoverlay.visible = true;
       });
       
       // Richtungsbuttons CW (west) und CCW (ost)
@@ -7776,6 +7782,10 @@
       if (typeof window._setCodetafelPlatzhalter === 'function') {
         window._setCodetafelPlatzhalter(window._codeStichZiel);
       }
+      // Erster Slot wird direkt zum Random-Code (Rest bleibt X-X)
+      if (typeof window._activateNextQueenCode === 'function') {
+        window._activateNextQueenCode();
+      }
       // Großbild + Scrollband ausfaden
       const scrollWrap = document.getElementById('statusScrollWrap');
       previewWrap.style.transition = 'opacity 0.5s ease';
@@ -7788,6 +7798,10 @@
         previewWrap.style.display = 'none';
         previewWrap.style.opacity = '1';
         if (scrollWrap) scrollWrap.style.display = 'none';
+        // Tischoverlay ausblenden — Spiel beginnt
+        if (window._tischoverlay) window._tischoverlay.visible = false;
+        // Codetafel sichtbar (zeigt X-X Platzhalter, erster wird Code nach Eckblick)
+        if (window._codetafelMesh) window._codetafelMesh.visible = true;
         // Spielstart Queen
         if (typeof startQueenSpiel === 'function') startQueenSpiel();
       }, 500);
@@ -7800,8 +7814,6 @@
       if (typeof startBrainyLevel === 'function') {
         startBrainyLevel();
       }
-      // Codes random generieren — kurze Verzögerung damit Eckblick beginnt
-      setTimeout(_generateQueenCodes, 100);
     }
     
     // Nach Eckblick: ersten Code aktivieren (nur 1 sichtbar, Rest bleibt X-X)
@@ -11606,6 +11618,8 @@
     let lastTouchPos = null;
     
     renderer.domElement.addEventListener('touchstart', (e) => {
+      // Queen: keine Würfel-Interaktion bis Symbol-Auswahl
+      if (window._queenWaitForSymbol) return;
       if (replayActive) return; // Tutorial: keine Interaktion
       if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -11641,6 +11655,7 @@
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchmove', (e) => {
+      if (window._queenWaitForSymbol) return;
       // (Long-Tap-Wackelbruch entfernt — wie card.html)
       
       // BUMBLEBRAIN: Finger-Kipp Touchmove
@@ -11693,6 +11708,7 @@
     }, { passive: false });
     
     renderer.domElement.addEventListener('touchend', (e) => {
+      if (window._queenWaitForSymbol) return;
       if (replayActive) return;
       if (window._numBtnTouchActive) return; // NumBtn tap, don't process on canvas
       
@@ -11907,6 +11923,7 @@
     
     // Desktop-Klick: Kippziel aufdecken (kippen) oder Schauen starten (entscheidung)
     renderer.domElement.addEventListener('click', (e) => {
+      if (window._queenWaitForSymbol) return;
       if (replayActive) return; // Tutorial: keine Interaktion
       const rect = renderer.domElement.getBoundingClientRect();
       vkMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -12580,6 +12597,8 @@
 
 
     renderer.domElement.addEventListener('touchstart', (e) => {
+      // Queen: Würfel komplett gesperrt bis Symbol-Auswahl bestätigt
+      if (window._queenWaitForSymbol) return;
       // Start-Phase: keine Touch-Interaktion
       if (gamePhase === 'start') return;
       // Demo-Phase: KEINE Touch-Interaktion (Demo läuft automatisch)
@@ -12618,6 +12637,7 @@
     });
 
     renderer.domElement.addEventListener('touchmove', (e) => {
+      if (window._queenWaitForSymbol) return;
       if (gamePhase === 'pause' && pauseDragActive && pausePivotGroup) {
         e.preventDefault();
         const touch = e.touches[0];
@@ -12762,6 +12782,7 @@
     }
 
     renderer.domElement.addEventListener('touchend', () => {
+      if (window._queenWaitForSymbol) return;
       if (replayActive) return; // Tutorial: keine Interaktion
       if (gamePhase === 'pause') {
         pauseDragActive = false;
@@ -12863,6 +12884,7 @@
 
     // Desktop-Support: Click startet Spielphase
     renderer.domElement.addEventListener('click', (e) => {
+      if (window._queenWaitForSymbol) return;
       // Demo-Phase: KEINE Click-Interaktion
       if (gamePhase === 'demo') return;
     });
