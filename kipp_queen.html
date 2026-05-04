@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-44</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-48</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1557,22 +1557,20 @@
     // CODETAFEL (Queen-Theme) — über Spieltisch, Z südlich von Zeile 10
     const _codetafelImg = new Image();
     _codetafelImg.src = 'codetafel.webp';
-    // Canvas für dynamische Codes auf der Tafel
+    // Canvas für dynamische Codes auf der Tafel — 918×512 (tight cropped)
     const _codetafelCanvas = document.createElement('canvas');
-    _codetafelCanvas.width = 616;
-    _codetafelCanvas.height = 364;
+    _codetafelCanvas.width = 918;
+    _codetafelCanvas.height = 512;
     const _codetafelCtx = _codetafelCanvas.getContext('2d');
     const codetafelTexture = new THREE.CanvasTexture(_codetafelCanvas);
     codetafelTexture.minFilter = THREE.LinearFilter;
     
-    // 6 Slot-Mittelpunkte auf der Codetafel (in Pixel-Koordinaten der 616×364 Datei)
-    // Ausgehend von der Datei: oberer Streifen (Code-Schriftzug) füllt obersten ~22% (~80px)
-    // Unten 6 Zellen: 3 spalten × 2 reihen, etwa Zeilen 90-220 und 230-360
+    // 6 Slot-Mittelpunkte auf der Codetafel 918×512 (Pixel-Koordinaten)
+    // Top-Reihe (3 Felder): y≈255, Spalten x=159, 459, 760
+    // Bottom-Reihe: y≈420
     const _codeSlotPos = [
-      // Top-Reihe (S0, S1, S2) — links/mitte/rechts
-      { x: 110, y: 162 }, { x: 308, y: 162 }, { x: 506, y: 162 },
-      // Bottom-Reihe (S3, S4, S5) — links/mitte/rechts
-      { x: 110, y: 295 }, { x: 308, y: 295 }, { x: 506, y: 295 }
+      { x: 159, y: 255 }, { x: 459, y: 255 }, { x: 760, y: 255 },
+      { x: 159, y: 420 }, { x: 459, y: 420 }, { x: 760, y: 420 }
     ];
     // Welche Slots werden befüllt je Schwierigkeit (1-6)
     // Schema: 1=Mitte oben; 2=außen oben; 3=alle oben; 4=alle oben + Mitte unten; 5=alle oben + außen unten; 6=alle
@@ -1591,13 +1589,13 @@
     
     function _drawCodetafel() {
       const ctx = _codetafelCtx;
-      ctx.clearRect(0, 0, 616, 364);
+      ctx.clearRect(0, 0, 918, 512);
       // Hintergrund: codetafel.webp
       if (_codetafelImg.complete && _codetafelImg.naturalWidth > 0) {
-        ctx.drawImage(_codetafelImg, 0, 0, 616, 364);
+        ctx.drawImage(_codetafelImg, 0, 0, 918, 512);
       }
       // Codes auf die Slots zeichnen
-      ctx.font = 'bold 50px "Times New Roman", serif';
+      ctx.font = 'bold 70px "Times New Roman", serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let i = 0; i < 6; i++) {
@@ -1636,48 +1634,144 @@
       for (const idx of slots) _codetafelCodes[idx] = 'X-X';
       _drawCodetafel();
     };
-    window._setCodetafelCodes = function(codeArr) {
-      // codeArr = ["F-3", "A-1", ...] in Reihenfolge der ausgewählten Slots
-      const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
-      _codetafelCodes = [null, null, null, null, null, null];
-      _codetafelHits = [false, false, false, false, false, false];
-      slots.forEach((slotIdx, i) => {
-        _codetafelCodes[slotIdx] = codeArr[i] || 'X-X';
-      });
-      _drawCodetafel();
-    };
-    window._codetafelMarkHit = function(code) {
-      // Findet Code-Position und markiert als HIT
+    
+    // Reihenfolge der aktiven Slots je nach Schwierigkeit
+    function _activeSlotsForStich(stichZahl) {
+      return _codeSlotMap[stichZahl] || [];
+    }
+    
+    // Aktuelle aktive-Code-Position (Index in der Slot-Reihenfolge), 0 = erster aktiver Slot
+    window._queenActiveCodeIdx = 0;
+    
+    // Aktuell erfüllte Würfel-Kombis (Buchstabe-Zahl) holen
+    function _currentDiceCombos() {
+      const set = new Set();
+      const faceOff = { f0: 0, f1: 4, f2: 8 };
+      const slotsH = ['S1', 'S2', 'S3', 'S4'];
+      const COL_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
+      const off = faceOff[topFace];
+      if (off === undefined) return set;
+      for (let si = 0; si < 4; si++) {
+        const z = deck[off + si];
+        const c = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotsH[si]];
+        if (!z || !c) continue;
+        const letter = 'ABCDEFGHIJKL'[z - 1];
+        const num = COL_TO_NUM[c];
+        if (letter && num) set.add(letter + '-' + num);
+      }
+      return set;
+    }
+    
+    function _generateRandomCode(blacklist) {
+      let tries = 0;
+      while (tries++ < 300) {
+        const L = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
+        const N = 1 + Math.floor(Math.random() * 4);
+        const c = L + '-' + N;
+        if (!blacklist.has(c)) return c;
+      }
+      return 'A-1';
+    }
+    
+    // Aktiviert den nächsten X-X Slot (setzt einen random Code), restliche bleiben X-X
+    window._activateNextQueenCode = function() {
+      const stichZahl = window._codeStichZiel || 1;
+      const slots = _activeSlotsForStich(stichZahl);
+      // Nächster nicht-getroffener Slot suchen (vom aktuellen Index aus)
+      let nextSlotIdx = -1;
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        if (!_codetafelHits[slot]) { nextSlotIdx = slot; break; }
+      }
+      if (nextSlotIdx < 0) return null; // alle getroffen
+      
+      // Alle anderen Slots auf X-X setzen, nur der aktive bekommt Random-Code
+      const blacklist = _currentDiceCombos();
+      // Auch bereits durchgestrichene + bereits aktive Codes ausschließen
       for (let i = 0; i < 6; i++) {
-        if (_codetafelCodes[i] === code && !_codetafelHits[i]) {
-          _codetafelHits[i] = true;
-          _drawCodetafel();
-          return true;
+        if (_codetafelHits[i] && _codetafelCodes[i] && _codetafelCodes[i] !== 'X-X') {
+          blacklist.add(_codetafelCodes[i]);
         }
       }
-      return false;
+      const newCode = _generateRandomCode(blacklist);
+      
+      for (const slot of slots) {
+        if (_codetafelHits[slot]) continue; // getroffene Slots bleiben durchgestrichen
+        _codetafelCodes[slot] = (slot === nextSlotIdx) ? newCode : 'X-X';
+      }
+      _drawCodetafel();
+      window._queenActiveCode = newCode;
+      window._queenActiveSlotIdx = nextSlotIdx;
+      return newCode;
     };
+    
+    // HIT: aktiver Code wird durchgestrichen
+    window._queenMarkActiveHit = function() {
+      const slot = window._queenActiveSlotIdx;
+      if (slot === undefined || slot < 0) return false;
+      if (_codetafelHits[slot]) return false;
+      _codetafelHits[slot] = true;
+      _drawCodetafel();
+      return true;
+    };
+    
+    // MISS: aktiver Code wird zu X-X, nächster X-X wird zum neuen Code
+    window._queenRotateActiveCode = function() {
+      const stichZahl = window._codeStichZiel || 1;
+      const slots = _activeSlotsForStich(stichZahl);
+      const curSlot = window._queenActiveSlotIdx;
+      if (curSlot === undefined || curSlot < 0) return null;
+      // Aktuellen Code zurück auf X-X
+      _codetafelCodes[curSlot] = 'X-X';
+      // Nächsten nicht-getroffenen Slot in Reihenfolge finden (nach curSlot, mit Wrap-around)
+      const curIdx = slots.indexOf(curSlot);
+      let nextSlot = -1;
+      for (let i = 1; i <= slots.length; i++) {
+        const slot = slots[(curIdx + i) % slots.length];
+        if (!_codetafelHits[slot]) { nextSlot = slot; break; }
+      }
+      if (nextSlot < 0) {
+        // alle anderen getroffen — bleiben am gleichen Slot
+        nextSlot = curSlot;
+      }
+      // Neuen Random-Code für nextSlot
+      const blacklist = _currentDiceCombos();
+      for (let i = 0; i < 6; i++) {
+        if (_codetafelCodes[i] && _codetafelCodes[i] !== 'X-X') blacklist.add(_codetafelCodes[i]);
+      }
+      const newCode = _generateRandomCode(blacklist);
+      _codetafelCodes[nextSlot] = newCode;
+      _drawCodetafel();
+      window._queenActiveCode = newCode;
+      window._queenActiveSlotIdx = nextSlot;
+      return newCode;
+    };
+    
     window._codetafelClear = function() {
       _codetafelCodes = [null, null, null, null, null, null];
       _codetafelHits = [false, false, false, false, false, false];
+      window._queenActiveSlotIdx = -1;
+      window._queenActiveCode = null;
       _drawCodetafel();
     };
     
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
-    // 205px = 4.555 Zellen × 0.15625 = 0.7118 units breit
-    // 121px = 2.689 Zellen × 0.15625 = 0.4201 units hoch
-    const _codeW = 0.7118;
-    const _codeH = 0.4201;
+    // Datei 918×512 → bei 3× Retina = 306×170.67 px Anzeige
+    // 306 px = 6.8 Zellen × 0.15625 = 1.0625 units breit
+    // 170.67 px = 3.793 Zellen × 0.15625 = 0.5926 units hoch
+    const _codeW = 1.0625;
+    const _codeH = 0.5926;
+    
     const codetafelGeometry = new THREE.PlaneGeometry(_codeW, _codeH);
     const codetafelMaterial = new THREE.MeshBasicMaterial({ map: codetafelTexture, transparent: true });
     const codetafel = new THREE.Mesh(codetafelGeometry, codetafelMaterial);
     codetafel.rotation.x = -Math.PI / 2; // flach hinlegen
-    // Y = Spieltisch (3 Zellen über π1) + bisschen drüber
-    // Z: Oberkante 10px unter Zeile 10 → Z-Top = 0.579875 + 10*(2.5/720) = 0.61458
-    //    Mitte = 0.61458 + Höhe/2
-    const _codeZTop = 0.658 - 0.078125 + 10 * (2.5 / 720) + 49 * (2.5 / 720); // +49px südlicher gesamt
+    // Codetafel: vertikal 10 px unter Süd-Linie Zeile 10
+    // Süd-Linie Zeile 10 Z = 0.658 + 0.078125 = 0.736125
+    // 10 px = 10 * (2.5/720) = 0.0347
+    const _codeZTop = 0.736125 + 10 * (2.5 / 720);
     const _codeZMid = _codeZTop + _codeH / 2;
-    codetafel.position.set(0, 0.46975 + 0.005, _codeZMid);
+    codetafel.position.set(0, 0.476, _codeZMid);
     codetafel.renderOrder = 2;
     scene.add(codetafel);
     
@@ -2190,6 +2284,33 @@
       
       // Direkt zu Scene hinzufügen
       scene.add(spieltisch);
+      
+      // Tischoverlay (gleiche Anker-Position wie Spieltisch, knapp drüber)
+      new THREE.TextureLoader().load('qu_king_tischoverlay.webp', (overlayTex) => {
+        const overlayAspect = overlayTex.image.height / overlayTex.image.width;
+        const overlayHeight = SPIEL_WIDTH * overlayAspect;
+        const overlayGeometry = new THREE.PlaneGeometry(SPIEL_WIDTH, overlayHeight);
+        const overlayMaterial = new THREE.MeshStandardMaterial({
+          map: overlayTex,
+          transparent: true,
+          alphaTest: 0.05,
+          roughness: 0.85,
+          metalness: 0.15,
+          depthWrite: false
+        });
+        const tischoverlay = new THREE.Mesh(overlayGeometry, overlayMaterial);
+        tischoverlay.rotation.x = -Math.PI / 2;
+        const oxCenter = -0.625 + SPIEL_WIDTH / 2;
+        const ozCenter = -0.828125 + overlayHeight / 2;
+        const oyPos = yPos + 0.002; // 2 mm über Spieltisch
+        tischoverlay.position.set(oxCenter, oyPos, ozCenter);
+        tischoverlay.receiveShadow = false;
+        tischoverlay.castShadow = false;
+        tischoverlay.renderOrder = 1.5;
+        tischoverlay.matrixAutoUpdate = false;
+        tischoverlay.updateMatrix();
+        scene.add(tischoverlay);
+      });
       
       // Richtungsbuttons CW (west) und CCW (ost)
       const dirBtnSize = 0.23148; // 200/3 px
@@ -7559,6 +7680,10 @@
     // === JOKER UI === (Eckblick-Token, 4 Stück, nur BLIND)
     let _jokerCount = 3;
     function ensureJokersUI() {
+      // Queen: keine Joker mehr — Funktion deaktiviert
+      const wrap = document.getElementById('jokersWrap');
+      if (wrap) wrap.style.display = 'none';
+      return;
       let wrap = document.getElementById('jokersWrap');
       if (wrap) return wrap;
       wrap = document.createElement('div');
@@ -7702,23 +7827,11 @@
       setTimeout(_generateQueenCodes, 100);
     }
     
-    // Random Codes (Buchstabe A-L + Zahl 1-4) für die ausgewählten Slots
+    // Nach Eckblick: ersten Code aktivieren (nur 1 sichtbar, Rest bleibt X-X)
     function _generateQueenCodes() {
-      const stichZahl = window._codeStichZiel || 1;
-      const used = new Set();
-      const codes = [];
-      let tries = 0;
-      while (codes.length < stichZahl && tries < 300) {
-        tries++;
-        const L = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
-        const N = 1 + Math.floor(Math.random() * 4);
-        const c = L + '-' + N;
-        if (used.has(c)) continue;
-        used.add(c);
-        codes.push(c);
+      if (typeof window._activateNextQueenCode === 'function') {
+        window._activateNextQueenCode();
       }
-      window._codetafelCodesArr = codes;
-      if (typeof window._setCodetafelCodes === 'function') window._setCodetafelCodes(codes);
     }
     function onJokerClick(jEl) {
       // Eckblick erlaubt sobald Kippziel aktiv und nichts läuft (Eckblick/Result/Drag/Animation)
@@ -8304,10 +8417,11 @@
       }
       console.log('[BRAINY] Result: topFace=' + topFace + ' Q=' + currentQuadrant + ' hit=' + isHit);
       
-      // === QUEEN-CODES Check ===
-      // Mappe orange=1, gruen=2, violett=3, blau=4 — Buchstabe = Zahl 1-12 → A-L
+      // === QUEEN-CODES Logik ===
+      // Aktueller Top-Face hat 4 Slots in den Ecken; wenn aktiver Queen-Code von einem davon erfüllt → HIT
       const _COLOR_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
-      if (window._codetafelCodesArr && window._codetafelCodesArr.length > 0) {
+      let queenHit = false;
+      if (window._queenActiveCode) {
         for (let si = 0; si < 4; si++) {
           const z = deck[offH + si];
           const c = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotsH[si]];
@@ -8315,10 +8429,19 @@
           const letter = 'ABCDEFGHIJKL'[z - 1];
           const colorNum = _COLOR_TO_NUM[c];
           if (!letter || !colorNum) continue;
-          const code = letter + '-' + colorNum;
-          if (typeof window._codetafelMarkHit === 'function') {
-            window._codetafelMarkHit(code);
-          }
+          if (letter + '-' + colorNum === window._queenActiveCode) { queenHit = true; break; }
+        }
+      }
+      if (window._queenActiveCode) {
+        if (queenHit) {
+          // Code durchstreichen → nächsten X-X aktivieren
+          if (typeof window._queenMarkActiveHit === 'function') window._queenMarkActiveHit();
+          setTimeout(() => {
+            if (typeof window._activateNextQueenCode === 'function') window._activateNextQueenCode();
+          }, 800);
+        } else {
+          // MISS: aktiven Code rotieren (neuer Random-Code an gleicher Position)
+          if (typeof window._queenRotateActiveCode === 'function') window._queenRotateActiveCode();
         }
       }
 
