@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-59</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-61</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1112,7 +1112,7 @@
     </div>
     <!-- Statussymbol-Großbild-Vorschau (oberhalb Scrollband, mit Auswahl/Schließen) -->
     <div id="statusPreviewWrap" style="display:none;position:absolute;left:0;width:100%;z-index:65;pointer-events:auto;">
-      <img id="statusPreviewImg" src="" style="display:block;margin:0 auto;height:100%;width:auto;">
+      <img id="statusPreviewImg" src="" style="display:block;margin:0 auto;height:90%;width:auto;">
       <div id="statusPreviewClose" style="position:absolute;right:80px;bottom:10px;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;font-size:32px;line-height:48px;text-align:center;cursor:pointer;border:2px solid #888;">✕</div>
       <div id="statusPreviewOK" style="position:absolute;right:20px;bottom:10px;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.7);color:#f0c050;font-size:32px;line-height:48px;text-align:center;cursor:pointer;border:2px solid #f0c050;box-shadow:0 0 12px rgba(240,192,80,0.5);">✓</div>
     </div>
@@ -7722,7 +7722,7 @@
       const _topY = Math.round((-_topPt.y * 0.5 + 0.5) * 720);
       // Höhe: 4 Rasterzellen = 180px
       const _bandH = 180;
-      wrap.style.top = (_topY + 18) + 'px';
+      wrap.style.top = (_topY + 26) + 'px';
       wrap.style.height = _bandH + 'px';
       wrap.style.display = 'block';
       // Boutique-Text einblenden (oberhalb Scrollband)
@@ -7798,10 +7798,7 @@
       if (typeof window._setCodetafelPlatzhalter === 'function') {
         window._setCodetafelPlatzhalter(window._codeStichZiel);
       }
-      // Erster Slot wird direkt zum Random-Code (Rest bleibt X-X)
-      if (typeof window._activateNextQueenCode === 'function') {
-        window._activateNextQueenCode();
-      }
+      // Erster X-X wird ERST nach Eckblick zu Code (in brainyCurrentTarget-Setter)
       // Großbild + Scrollband ausfaden
       const scrollWrap = document.getElementById('statusScrollWrap');
       previewWrap.style.transition = 'opacity 0.5s ease';
@@ -7819,7 +7816,7 @@
         if (_bt) _bt.style.display = 'none';
         // Tischoverlay ausblenden — Spiel beginnt
         if (window._tischoverlay) window._tischoverlay.visible = false;
-        // Codetafel sichtbar (zeigt X-X Platzhalter, erster wird Code nach Eckblick)
+        // Codetafel mit X-X Platzhaltern sofort sichtbar (X-X bleibt während Eckblick)
         if (window._codetafelMesh) window._codetafelMesh.visible = true;
         // Spielstart Queen
         if (typeof startQueenSpiel === 'function') startQueenSpiel();
