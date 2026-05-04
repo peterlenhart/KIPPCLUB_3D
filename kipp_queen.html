@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-48</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-49</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -7684,29 +7684,6 @@
       const wrap = document.getElementById('jokersWrap');
       if (wrap) wrap.style.display = 'none';
       return;
-      let wrap = document.getElementById('jokersWrap');
-      if (wrap) return wrap;
-      wrap = document.createElement('div');
-      wrap.id = 'jokersWrap';
-      // Position wie alte Lebenswürfel-Reihe (an ehemaliger Richtungs-Buttons-Position)
-      const _btnPos = new THREE.Vector3(0, 0.47275, 1.28415);
-      _btnPos.project(camera);
-      const _screenY = Math.round((-_btnPos.y * 0.5 + 0.5) * 720);
-      wrap.style.cssText = 'position:absolute;top:' + (_screenY - 18) + 'px;left:0;width:100%;' +
-        'z-index:25;display:flex;justify-content:space-around;align-items:center;padding:0 30px;box-sizing:border-box;';
-      for (let i = 0; i < 3; i++) {
-        const j = document.createElement('div');
-        j.className = 'jokerSlot';
-        j.dataset.idx = i;
-        j.style.cssText = 'width:52px;height:52px;background-image:url(joker_qu_king.webp);' +
-          'background-size:contain;background-repeat:no-repeat;background-position:center;' +
-          'cursor:pointer;pointer-events:auto;transition:opacity 0.3s, transform 0.3s, filter 0.3s;' +
-          'filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));';
-        j.addEventListener('click', () => onJokerClick(j));
-        wrap.appendChild(j);
-      }
-      document.getElementById('uiOverlay').appendChild(wrap);
-      return wrap;
     }
     function resetJokers() {
       const old = document.getElementById('jokersWrap');
