@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-74</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-75</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1602,20 +1602,23 @@
       if (_codetafelImg.complete && _codetafelImg.naturalWidth > 0) {
         ctx.drawImage(_codetafelImg, 0, 0, 918, 512);
       }
-      ctx.font = 'bold 70px "Times New Roman", serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let i = 0; i < 6; i++) {
         const code = _codetafelCodes[i];
         if (!code) continue;
         const p = _codeSlotPos[i];
+        // Bei MISS-Pulsation: größere rote Schrift
+        const isRed = _codetafelRedSlots[i];
+        const fontSize = isRed ? 95 : 70;
+        ctx.font = 'bold ' + fontSize + 'px "Times New Roman", serif';
         // Bevel/Inset
         ctx.fillStyle = 'rgba(255,235,180,0.55)';
         ctx.fillText(code, p.x + 1.5, p.y + 1.5);
         ctx.fillStyle = 'rgba(0,0,0,0.55)';
         ctx.fillText(code, p.x - 1.5, p.y - 1.5);
         // Hauptschrift: rot wenn MISS-Pulsation, sonst gold
-        ctx.fillStyle = _codetafelRedSlots[i] ? '#e63333' : '#d4a838';
+        ctx.fillStyle = isRed ? '#e63333' : '#d4a838';
         ctx.fillText(code, p.x, p.y);
         // Durchstreichen wenn HIT
         if (_codetafelHits[i]) {
@@ -1638,13 +1641,14 @@
       const slot = window._queenActiveSlotIdx;
       if (slot === undefined || slot < 0) { if (callback) callback(); return; }
       let pulses = 0;
-      const total = 3;
+      const total = 4;
+      const dur = 350;
       function tick() {
         _codetafelRedSlots[slot] = !_codetafelRedSlots[slot];
         _drawCodetafel();
         if (_codetafelRedSlots[slot] === false) pulses++;
         if (pulses < total) {
-          setTimeout(tick, 220);
+          setTimeout(tick, dur);
         } else {
           _codetafelRedSlots[slot] = false;
           // Code zu X-X zurücksetzen
@@ -1657,7 +1661,7 @@
       }
       _codetafelRedSlots[slot] = true;
       _drawCodetafel();
-      setTimeout(tick, 220);
+      setTimeout(tick, dur);
     };
     
     // Pro Durchgang: Anzahl noch nicht abgehakter Slots beim Durchgang-Start
@@ -1666,22 +1670,25 @@
     
     // Nach jedem Wurf (HIT oder MISS): Kippzug zählen, prüfen ob Durchgang zu Ende
     window._queenAfterTurn = function(wasHit) {
-      const allHits = _codetafelHits.every((h, i) => {
-        const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
-        return !slots.includes(i) || h;
-      });
-      // Win-Szenario später — erstmal nur Spielablauf
+      const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
+      const allHits = slots.every(i => _codetafelHits[i]);
       if (allHits) {
         console.log('[QUEEN] WIN');
         return;
       }
-      if (!wasHit) {
-        // MISS: Versuche -1 sofort
-        brainyUpdateLives();
-        if ((window._queenVersuche || 0) <= 0) {
-          // Game Over
-          window._queenGameOver();
-          return;
+      // Durchgang-Ende? = jeder Slot war einmal aktiv (oder ist durchgestrichen)
+      const allTouched = slots.every(s => _codetafelHits[s] || window._queenSlotsUsedThisRound.has(s));
+      if (allTouched) {
+        // Mindestens ein X-X übrig → Versuch -1
+        const stillOpen = slots.some(s => !_codetafelHits[s]);
+        if (stillOpen) {
+          brainyUpdateLives();
+          if ((window._queenVersuche || 0) <= 0) {
+            window._queenGameOver();
+            return;
+          }
+          // Neuer Durchgang: Tracker leeren
+          window._queenSlotsUsedThisRound.clear();
         }
       }
       // Nächster Eckblick + neues Kippziel
@@ -3975,22 +3982,16 @@
             setTimeout(() => {
               window._kippTarget = null;
               window._kippResultRunning = false;
-              // Win-Check
-              const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
-              const allHits = slots.every(i => _codetafelHits[i]);
-              if (allHits) { console.log('[QUEEN] WIN'); return; }
-              window._queenNextKipp();
+              window._queenAfterTurn(true);
             }, 800);
             return;
           }
           // treffer aber Würfel erfüllt Code nicht (sollte nicht vorkommen) → wie MISS
           window._kippResultRunning = true;
           window._queenMissPulse(() => {
-            brainyUpdateLives();
-            if ((window._queenVersuche || 0) <= 0) { window._queenGameOver(); return; }
             window._kippTarget = null;
             window._kippResultRunning = false;
-            window._queenNextKipp();
+            window._queenAfterTurn(false);
           });
           return;
         }
@@ -4016,16 +4017,10 @@
         }, 1500);
       } else {
         // MISS — Lebens-Würfel 3× blinken, dann ausgrauen. Slots bleiben verdeckt (außer angetippter), Kippziel bleibt.
-        // === QUEEN: eigene MISS-Logik (rote Pulsation, X-X, -1 Versuch, Eckblick) ===
+        // === QUEEN: eigene MISS-Logik (rote Pulsation, X-X, dann Durchgang-Check) ===
         if (window._codeStichZiel && window._queenActiveCode) {
           window._kippResultRunning = true;
           window._queenMissPulse(() => {
-            // Versuche -1
-            brainyUpdateLives();
-            if ((window._queenVersuche || 0) <= 0) {
-              window._queenGameOver();
-              return;
-            }
             // Aufgedeckten Slot wieder verdecken
             ['f0','f1','f2'].forEach(fk => {
               const fs = faceSlots[fk];
@@ -4037,8 +4032,8 @@
             if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
             window._kippTarget = null;
             window._kippResultRunning = false;
-            // Eckblick + neues Kippziel
-            window._queenNextKipp();
+            // Durchgang-Check: wenn alle Slots dran waren und X-X übrig → Versuch -1
+            window._queenAfterTurn(false);
           });
           return;
         }
