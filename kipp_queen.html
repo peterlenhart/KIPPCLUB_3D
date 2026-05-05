@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-67</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-69</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8728,7 +8728,19 @@
           }
           window._onEckblickRiseComplete = () => { runBumbleNumbersTutorial(); };
         }
-        runKippEckblick().finally(() => { window._kippEckblickRunning = false; });
+        runKippEckblick().finally(() => {
+          window._kippEckblickRunning = false;
+          // QUEEN: random Buchstabe A-L + random Zahl 1-4 → auf Codetafel schreiben
+          if (window._codeStichZiel) {
+            const letter = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
+            const num = 1 + Math.floor(Math.random() * 4);
+            const code = letter + '-' + num;
+            window._queenActiveCode = code;
+            if (typeof window._setQueenCodeAtNextSlot === 'function') {
+              window._setQueenCodeAtNextSlot(code);
+            }
+          }
+        });
       }, 600);
     }
 
