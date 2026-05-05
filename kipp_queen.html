@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-69</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-70</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1594,14 +1594,14 @@
     // Strikethrough-Flags
     let _codetafelHits = [false, false, false, false, false, false];
     
+    let _codetafelRedSlots = [false, false, false, false, false, false];
+    
     function _drawCodetafel() {
       const ctx = _codetafelCtx;
       ctx.clearRect(0, 0, 918, 512);
-      // Hintergrund: codetafel.webp
       if (_codetafelImg.complete && _codetafelImg.naturalWidth > 0) {
         ctx.drawImage(_codetafelImg, 0, 0, 918, 512);
       }
-      // Codes auf die Slots zeichnen
       ctx.font = 'bold 70px "Times New Roman", serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1609,15 +1609,15 @@
         const code = _codetafelCodes[i];
         if (!code) continue;
         const p = _codeSlotPos[i];
-        // Bevel/Inset-Effekt: Highlight unten-rechts, Schatten oben-links
+        // Bevel/Inset
         ctx.fillStyle = 'rgba(255,235,180,0.55)';
         ctx.fillText(code, p.x + 1.5, p.y + 1.5);
         ctx.fillStyle = 'rgba(0,0,0,0.55)';
         ctx.fillText(code, p.x - 1.5, p.y - 1.5);
-        // Hauptschrift Gold/Messing
-        ctx.fillStyle = '#d4a838';
+        // Hauptschrift: rot wenn MISS-Pulsation, sonst gold
+        ctx.fillStyle = _codetafelRedSlots[i] ? '#e63333' : '#d4a838';
         ctx.fillText(code, p.x, p.y);
-        // Durchgestrichen wenn HIT
+        // Durchstreichen wenn HIT
         if (_codetafelHits[i]) {
           const w = ctx.measureText(code).width;
           ctx.strokeStyle = '#a01818';
@@ -1633,24 +1633,157 @@
     _codetafelImg.onload = _drawCodetafel;
     if (_codetafelImg.complete) _drawCodetafel();
     
-    // QUEEN: Polling-Watcher — wenn Numbers-Target gesetzt ist, übersetze zu Buchstabe-Zahl
-    setInterval(() => {
-      if (!window._codeStichZiel) return;
-      let tgt = null;
-      try { tgt = brainyCurrentTarget; } catch(e) { return; }
-      if (!tgt || !tgt.zahl || !tgt.colorName) return;
-      const _COLOR_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
-      const letter = 'ABCDEFGHIJKL'[tgt.zahl - 1];
-      const num = _COLOR_TO_NUM[tgt.colorName];
-      if (!letter || !num) return;
-      const code = letter + '-' + num;
-      if (window._queenActiveCode === code) return;
-      window._queenActiveCode = code;
-      if (typeof window._setQueenCodeAtNextSlot === 'function') {
-        window._setQueenCodeAtNextSlot(code);
-        console.log('[QUEEN POLL] code on tafel: ' + code);
+    // MISS-Pulsation: aktiver Code rot pulsiert 3× → wird zu X-X
+    window._queenMissPulse = function(callback) {
+      const slot = window._queenActiveSlotIdx;
+      if (slot === undefined || slot < 0) { if (callback) callback(); return; }
+      let pulses = 0;
+      const total = 3;
+      function tick() {
+        _codetafelRedSlots[slot] = !_codetafelRedSlots[slot];
+        _drawCodetafel();
+        if (_codetafelRedSlots[slot] === false) pulses++;
+        if (pulses < total) {
+          setTimeout(tick, 220);
+        } else {
+          _codetafelRedSlots[slot] = false;
+          // Code zu X-X zurücksetzen
+          _codetafelCodes[slot] = 'X-X';
+          window._queenActiveCode = null;
+          window._queenActiveSlotIdx = -1;
+          _drawCodetafel();
+          if (callback) callback();
+        }
       }
-    }, 200);
+      _codetafelRedSlots[slot] = true;
+      _drawCodetafel();
+      setTimeout(tick, 220);
+    };
+    
+    // Pro Durchgang: Anzahl noch nicht abgehakter Slots beim Durchgang-Start
+    window._queenTurnsThisRound = 0;       // bisher gespielte Kippzüge in diesem Durchgang
+    window._queenSlotsThisRound = 0;       // wie viele Slots dieser Durchgang hatte
+    
+    // Nach jedem Wurf (HIT oder MISS): Kippzug zählen, prüfen ob Durchgang zu Ende
+    window._queenAfterTurn = function(wasHit) {
+      window._queenTurnsThisRound++;
+      const allHits = _codetafelHits.every((h, i) => {
+        const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
+        return !slots.includes(i) || h;
+      });
+      // Win-Szenario später — erstmal nur Spielablauf
+      if (allHits) {
+        console.log('[QUEEN] WIN');
+        return;
+      }
+      // Durchgang-Ende?
+      if (window._queenTurnsThisRound >= window._queenSlotsThisRound) {
+        // Versuche -1
+        brainyUpdateLives();
+        if ((window._queenVersuche || 0) <= 0) {
+          // Game Over
+          window._queenGameOver();
+          return;
+        }
+        // Neuer Durchgang
+        window._queenStartRound();
+      } else {
+        // Innerhalb Durchgang: nächster Eckblick + neues Kippziel
+        window._queenNextKipp();
+      }
+    };
+    
+    // Anzahl noch X-X Slots zählen
+    function _queenCountOpenSlots() {
+      const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
+      let n = 0;
+      for (const s of slots) if (!_codetafelHits[s]) n++;
+      return n;
+    }
+    
+    // Neuen Durchgang starten
+    window._queenStartRound = function() {
+      window._queenTurnsThisRound = 0;
+      window._queenSlotsThisRound = _queenCountOpenSlots();
+      // Alle nicht abgehakten Slots auf X-X setzen
+      const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
+      for (const s of slots) {
+        if (!_codetafelHits[s]) _codetafelCodes[s] = 'X-X';
+      }
+      _drawCodetafel();
+      window._queenNextKipp();
+    };
+    
+    // Nächster Kippzug: Eckblick → Random-Code an erster X-X-Position
+    window._queenNextKipp = function() {
+      if (typeof runKippEckblick !== 'function') return;
+      window._kippEckblickRunning = true;
+      runKippEckblick().finally(() => {
+        window._kippEckblickRunning = false;
+        // Random Code generieren
+        const letter = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
+        const num = 1 + Math.floor(Math.random() * 4);
+        const code = letter + '-' + num;
+        window._queenActiveCode = code;
+        if (typeof window._setQueenCodeAtNextSlot === 'function') {
+          window._setQueenCodeAtNextSlot(code);
+        }
+      });
+    };
+    
+    // Game Over
+    window._queenGameOver = function() {
+      console.log('[QUEEN] GAME OVER');
+      // Tischoverlay einblenden
+      if (window._tischoverlay) window._tischoverlay.visible = true;
+      // Großbild der gewählten Trophäe einblenden mit Fade
+      const idx = window._selectedStatusIdxFinal !== undefined ? window._selectedStatusIdxFinal : (window._codeStichZiel - 1);
+      const _trophyFiles = ['highheels.webp','handtasche.webp','qu_kette.webp','qu_vip.webp','qu_lambo.webp','qu_jet.webp'];
+      const previewWrap = document.getElementById('statusPreviewWrap');
+      const previewImg = document.getElementById('statusPreviewImg');
+      if (previewWrap && previewImg) {
+        previewImg.src = _trophyFiles[idx] || _trophyFiles[0];
+        previewImg.style.transition = 'filter 1.2s ease, opacity 1s ease 1s';
+        previewImg.style.filter = 'none';
+        previewImg.style.opacity = '1';
+        previewWrap.style.display = 'block';
+        // Fade nach Grau
+        setTimeout(() => { previewImg.style.filter = 'grayscale(1) brightness(0.8)'; }, 100);
+        // Dann auf 0 ausfaden
+        setTimeout(() => { previewImg.style.opacity = '0'; }, 1400);
+        // Wenn unsichtbar: Großbild weg, Auswahl-Phase wiederherstellen
+        setTimeout(() => {
+          previewWrap.style.display = 'none';
+          previewImg.style.transition = '';
+          previewImg.style.filter = '';
+          previewImg.style.opacity = '1';
+          // Codetafel weg, Tischoverlay bleibt, "Code nicht geknackt"-Text einblenden
+          if (window._codetafelMesh) window._codetafelMesh.visible = false;
+          window._codetafelClear();
+          // Boutique-Text einblenden mit Game-Over-Variante
+          const _bt = document.getElementById('boutiqueText');
+          if (_bt) {
+            _bt.innerHTML = '<div style="font-size:30px;font-weight:bold;margin-top:50px;letter-spacing:0.05em;text-shadow:0 2px 4px rgba(0,0,0,0.95);">Code nicht geknackt</div>' +
+                            '<div style="font-size:24px;font-style:italic;margin-top:20px;letter-spacing:0.04em;">Wähle wieder neu</div>';
+            _bt.style.display = 'block';
+          }
+          // Scrollband wieder rein
+          const sw = document.getElementById('statusScrollWrap');
+          if (sw) {
+            sw.style.opacity = '1';
+            sw.style.display = 'block';
+          }
+          // Versuche-Anzeige verstecken
+          const lw = document.getElementById('brainyLivesWrap');
+          if (lw) lw.style.display = 'none';
+          // Auswahl-Phase wieder aktiv
+          window._queenWaitForSymbol = true;
+          window._codeStichZiel = 0;
+          window._queenActiveCode = null;
+          window._queenActiveSlotIdx = -1;
+        }, 2700);
+      }
+    };
     
     // API für andere Code-Teile
     window._setCodetafelPlatzhalter = function(stichZahl) {
@@ -7690,38 +7823,27 @@
     }
 
     function brainyResetLives() {
-      // Alten wrap entfernen, damit UI bei Level-Wechsel neu (richtige Anzahl) aufgebaut wird
+      // Queen: Statt Lebenswürfel → Text "X Versuche"
       const old = document.getElementById('brainyLivesWrap');
       if (old) old.remove();
-      const wrap = brainyEnsureLivesUI();
-      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts)
-      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
-        'z-index:25;pointer-events:none;display:flex;gap:8px;align-items:center;';
-      const hearts = wrap.querySelectorAll('.brainyLife');
-      hearts.forEach(h => {
-        h.style.width = '28px';
-        h.style.height = '28px';
-        h.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
-        h.style.opacity = '1';
-        h.style.transform = 'scale(1)';
-      });
+      const wrap = document.createElement('div');
+      wrap.id = 'brainyLivesWrap';
+      wrap.style.cssText = 'position:absolute;top:22px;left:50%;transform:translateX(calc(-50% + 24px));' +
+        'z-index:25;pointer-events:none;color:#f0c050;font-family:"Times New Roman",serif;font-weight:bold;font-size:22px;' +
+        'letter-spacing:0.04em;text-shadow:0 1px 2px rgba(0,0,0,0.85),0 0 12px rgba(240,192,80,0.4);';
+      wrap.textContent = '3 Versuche';
+      document.getElementById('uiOverlay').appendChild(wrap);
+      // Counter-Variable
+      window._queenVersuche = 3;
     }
 
     function brainyUpdateLives() {
-      const wrap = brainyEnsureLivesUI();
-      const hearts = wrap.querySelectorAll('.brainyLife');
-      // brainyFails wurde bereits inkrementiert - den (brainyFails)-ten Wuerfel (1-indexed) ausgrauen
-      const idx = brainyFails - 1;
-      if (idx >= 0 && idx < hearts.length) {
-        const h = hearts[idx];
-        // kurzer Puls dann entsaettigt + halbtransparent
-        h.style.transform = 'scale(1.25)';
-        setTimeout(() => {
-          h.style.filter = 'grayscale(1) brightness(0.5)';
-          h.style.opacity = '0.4';
-          h.style.transform = 'scale(1)';
-        }, 200);
-      }
+      // Queen: Versuche dekrementieren
+      const wrap = document.getElementById('brainyLivesWrap');
+      if (!wrap) return;
+      window._queenVersuche = Math.max(0, (window._queenVersuche || 3) - 1);
+      const v = window._queenVersuche;
+      wrap.textContent = (v === 1) ? '1 Versuch' : v + ' Versuche';
     }
 
     function brainyHideLives() {
@@ -7755,6 +7877,11 @@
     function initStatusScrollband() {
       const wrap = document.getElementById('statusScrollWrap');
       if (!wrap) return;
+      // Boutique-Text Original-HTML einmalig speichern
+      const _boutiqueText = document.getElementById('boutiqueText');
+      if (_boutiqueText && !window._boutiqueOrigHTML) {
+        window._boutiqueOrigHTML = _boutiqueText.innerHTML;
+      }
       // Position: Oberkante Zeile 11 (Z = 0.736125), in Pixel via Kamera-Projektion
       const _topPt = new THREE.Vector3(0, 0.46975, 0.736125);
       _topPt.project(camera);
@@ -7765,7 +7892,6 @@
       wrap.style.height = _bandH + 'px';
       wrap.style.display = 'block';
       // Boutique-Text einblenden (oberhalb Scrollband)
-      const _boutiqueText = document.getElementById('boutiqueText');
       if (_boutiqueText) _boutiqueText.style.display = 'block';
       
       const inner = document.getElementById('statusScrollInner');
@@ -7822,15 +7948,19 @@
     function closeStatusPreview() {
       const previewWrap = document.getElementById('statusPreviewWrap');
       if (previewWrap) previewWrap.style.display = 'none';
-      // Boutique-Text wieder rein
+      // Boutique-Text wieder rein (Original-Text)
       const _bt = document.getElementById('boutiqueText');
-      if (_bt) _bt.style.display = 'block';
+      if (_bt) {
+        if (window._boutiqueOrigHTML) _bt.innerHTML = window._boutiqueOrigHTML;
+        _bt.style.display = 'block';
+      }
     }
     function confirmStatusSelect() {
       const previewWrap = document.getElementById('statusPreviewWrap');
       if (!previewWrap) return;
       const idx = parseInt(previewWrap.dataset.idx) || 0;
       _selectedStatusIdx = idx;
+      window._selectedStatusIdxFinal = idx;
       // Code-Schwierigkeit = idx + 1
       window._codeStichZiel = idx + 1;
       // X-X Platzhalter auf Codetafel zeigen
@@ -7850,9 +7980,15 @@
         previewWrap.style.display = 'none';
         previewWrap.style.opacity = '1';
         if (scrollWrap) scrollWrap.style.display = 'none';
-        // Boutique-Text aus
+        // Boutique-Text aus + Original-HTML wiederherstellen für nächste Auswahl-Phase
         const _bt = document.getElementById('boutiqueText');
-        if (_bt) _bt.style.display = 'none';
+        if (_bt) {
+          if (window._boutiqueOrigHTML) _bt.innerHTML = window._boutiqueOrigHTML;
+          _bt.style.display = 'none';
+        }
+        // Versuche-Anzeige wieder zeigen (war ggf. nach Game Over versteckt)
+        const lw = document.getElementById('brainyLivesWrap');
+        if (lw) lw.style.display = '';
         // Tischoverlay ausblenden — Spiel beginnt
         if (window._tischoverlay) window._tischoverlay.visible = false;
         // Codetafel mit X-X Platzhaltern sofort sichtbar (X-X bleibt während Eckblick)
@@ -8480,11 +8616,11 @@
       }
       console.log('[BRAINY] Result: topFace=' + topFace + ' Q=' + currentQuadrant + ' hit=' + isHit);
       
-      // === QUEEN-CODES Logik ===
-      // Aktueller Top-Face hat 4 Slots in den Ecken; wenn aktiver Queen-Code von einem davon erfüllt → HIT
-      const _COLOR_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
-      let queenHit = false;
-      if (window._queenActiveCode) {
+      // === QUEEN-Spielablauf ===
+      if (window._codeStichZiel && window._queenActiveCode) {
+        // Prüfen: erfüllt der aktuelle Top-Face den Queen-Code?
+        const _COLOR_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
+        let queenHit = false;
         for (let si = 0; si < 4; si++) {
           const z = deck[offH + si];
           const c = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotsH[si]];
@@ -8494,18 +8630,24 @@
           if (!letter || !colorNum) continue;
           if (letter + '-' + colorNum === window._queenActiveCode) { queenHit = true; break; }
         }
-      }
-      if (window._queenActiveCode) {
+        
         if (queenHit) {
-          // Code durchstreichen → nächsten X-X aktivieren
-          if (typeof window._queenMarkActiveHit === 'function') window._queenMarkActiveHit();
-          setTimeout(() => {
-            if (typeof window._activateNextQueenCode === 'function') window._activateNextQueenCode();
-          }, 800);
+          // HIT: Slot durchstreichen
+          const slot = window._queenActiveSlotIdx;
+          if (slot >= 0) _codetafelHits[slot] = true;
+          window._queenActiveCode = null;
+          window._queenActiveSlotIdx = -1;
+          _drawCodetafel();
+          // Durchgang-Zähler erhöhen, dann nächster Eckblick
+          setTimeout(() => { window._queenAfterTurn(true); }, 800);
         } else {
-          // MISS: aktiven Code rotieren (neuer Random-Code an gleicher Position)
-          if (typeof window._queenRotateActiveCode === 'function') window._queenRotateActiveCode();
+          // MISS: rot pulsieren, dann zu X-X
+          window._queenMissPulse(() => {
+            // Durchgang-Zähler erhöhen, dann nächster Eckblick
+            window._queenAfterTurn(false);
+          });
         }
+        return; // keine Numbers-Standard-Logik weiter
       }
 
       if (isHit) {
@@ -8730,8 +8872,11 @@
         }
         runKippEckblick().finally(() => {
           window._kippEckblickRunning = false;
-          // QUEEN: random Buchstabe A-L + random Zahl 1-4 → auf Codetafel schreiben
+          // QUEEN: ersten Durchgang initialisieren (zählt Slots, erster Random-Code)
           if (window._codeStichZiel) {
+            window._queenTurnsThisRound = 0;
+            window._queenSlotsThisRound = _queenCountOpenSlots();
+            // Direkter Random-Code (ohne nochmal Eckblick)
             const letter = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
             const num = 1 + Math.floor(Math.random() * 4);
             const code = letter + '-' + num;
