@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-70</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-71</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1720,10 +1720,8 @@
       window._kippEckblickRunning = true;
       runKippEckblick().finally(() => {
         window._kippEckblickRunning = false;
-        // Random Code generieren
-        const letter = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
-        const num = 1 + Math.floor(Math.random() * 4);
-        const code = letter + '-' + num;
+        // Random Code (Filter: keine Kombi die der Würfel zeigt)
+        const code = _queenRandomCodeSafe();
         window._queenActiveCode = code;
         if (typeof window._setQueenCodeAtNextSlot === 'function') {
           window._setQueenCodeAtNextSlot(code);
@@ -1830,6 +1828,18 @@
         if (!blacklist.has(c)) return c;
       }
       return 'A-1';
+    }
+    
+    // Sauberer Random-Code: keine Kombi die der Würfel aktuell zeigt
+    function _queenRandomCodeSafe() {
+      const blacklist = _currentDiceCombos();
+      // Auch alle Codes die schon auf der Tafel stehen ausschließen
+      for (let i = 0; i < 6; i++) {
+        if (_codetafelCodes[i] && _codetafelCodes[i] !== 'X-X') {
+          blacklist.add(_codetafelCodes[i]);
+        }
+      }
+      return _generateRandomCode(blacklist);
     }
     
     // Aktiviert den nächsten X-X Slot (setzt einen random Code), restliche bleiben X-X
@@ -8876,10 +8886,8 @@
           if (window._codeStichZiel) {
             window._queenTurnsThisRound = 0;
             window._queenSlotsThisRound = _queenCountOpenSlots();
-            // Direkter Random-Code (ohne nochmal Eckblick)
-            const letter = 'ABCDEFGHIJKL'[Math.floor(Math.random() * 12)];
-            const num = 1 + Math.floor(Math.random() * 4);
-            const code = letter + '-' + num;
+            // Random Code (Filter: keine Kombi die der Würfel zeigt)
+            const code = _queenRandomCodeSafe();
             window._queenActiveCode = code;
             if (typeof window._setQueenCodeAtNextSlot === 'function') {
               window._setQueenCodeAtNextSlot(code);
