@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-06</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2977,9 +2977,18 @@
         pivotGroup.add(cube);
         
         const startTime = performance.now();
+        const _myRunId = window._currentKippRunId;
         function animateKipp() {
-          // Sofortiger Abbruch wenn _kippHardAbort gesetzt
-          if (window._kippHardAbort) { isAnimating = false; return; }
+          // Sofortiger Abbruch wenn Generation veraltet (Spielabbruch)
+          if (_myRunId !== kipp21Generation || window._kippHardAbort) {
+            // Cube aus Pivot lösen, zurück zu kipGroup, Position fixieren
+            if (cube.parent && cube.parent !== kipGroup) {
+              cube.parent.remove(cube);
+              kipGroup.add(cube);
+            }
+            isAnimating = false;
+            return;
+          }
           const elapsed = performance.now() - startTime;
           const t = Math.min(elapsed / duration, 1);
           // Schwerkraft-realistisch
@@ -3648,6 +3657,8 @@
     
     let audioCtxResumed = false;
     function playKlack() {
+      // Während Hard-Abort keine Klack-Sounds (Reset während laufender Animation)
+      if (window._kippHardAbort) return;
       // Klack spielt IMMER, unabhängig von soundEnabled
       if (!audioCtx || !klackBuffer) return;
       if (audioCtx.state === 'suspended') { audioCtx.resume(); }
@@ -12194,8 +12205,14 @@
         const angleDiff = targetAngle - startAngle;
         const fallDuration = Math.max(150, Math.abs(angleDiff) / (Math.PI / 2) * 420);
         const startTime = Date.now();
+        const _myRunId2 = kipp21Generation;
         (function animateKippFall() {
-          if (window._kippHardAbort) return;
+          if (_myRunId2 !== kipp21Generation || window._kippHardAbort) {
+            if (kippDragPivotGroup && kippDragPivotGroup.parent) {
+              kippDragPivotGroup.parent.remove(kippDragPivotGroup);
+            }
+            return;
+          }
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / fallDuration, 1);
           const eased = progress * progress;
@@ -12828,148 +12845,10 @@
     // - In Spielziel-Phase → zurück zum Start-Overlay
     // - In allen anderen Phasen → Reset + zurück zum Start-Overlay
     // Quit confirmation handlers
-    document.getElementById('sgBtnSave').addEventListener('click', () => {
-      document.getElementById('saveGameOverlay').style.display = 'none';
-    });
-    document.getElementById('sgBtnSave').addEventListener('touchend', (e) => {
-      e.preventDefault();
-      document.getElementById('saveGameOverlay').style.display = 'none';
-    }, { passive: false });
-    document.getElementById('sgBtnQuit').addEventListener('click', () => {
-      window.location.href = 'index.html?noflash=1';
-    });
-    document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
-      e.preventDefault();
-      window.location.href = 'index.html?noflash=1';
-    }, { passive: false });
-
     resetButton.addEventListener('click', () => {
-      // Queen: zweistufig — wenn Spiel läuft → zurück zur Startsituation; wenn schon dort → Themenauswahl
-      const inGame = !window._queenWaitForSymbol && window._codeStichZiel;
-      if (inGame) {
-        // ===== Vollständiger sofortiger Reset auf Queen-Startsituation =====
-        // 1. Hard-Abort aller laufenden Animationen
-        window._kippHardAbort = true;
-        // 2. Alle Async-Chains/Flags resetten
-        kipp21Generation++;
-        autoDemoActive = false;
-        replayActive = false;
-        kipp21Active = false;
-        brainyActive = false;
-        kipp21TimerRunning = false;
-        kipp21KniffActive = false;
-        kipp21KniffAbort = true;
-        schauenWobbleActive = false;
-        isDemoAnimating = false;
-        isAnimating = false;
-        dragActive = false;
-        window._kippEckblickRunning = false;
-        window._kippResultRunning = false;
-        if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
-        if (typeof stopCountdown === 'function') stopCountdown();
-        if (typeof disableReplayBlocker === 'function') disableReplayBlocker();
-        if (typeof brainyStopNumPulse === 'function') brainyStopNumPulse();
-        if (typeof brainyHideGems === 'function') brainyHideGems();
-        renderer.domElement.style.pointerEvents = 'auto';
-        
-        // 3. 3D-Zustand zurück auf Anfangsposition (sofort, ohne Animation)
-        // Cube aus Pivot-Gruppe lösen falls noch dort
-        if (cube.parent !== kipGroup) {
-          const oldP = cube.parent;
-          if (oldP) { oldP.remove(cube); if (oldP.parent) oldP.parent.remove(oldP); }
-          kipGroup.add(cube);
-        }
-        // Pivot-Group bei Drag aufräumen
-        if (typeof dragPivotGroup !== 'undefined' && dragPivotGroup) {
-          if (dragPivotGroup.parent) dragPivotGroup.parent.remove(dragPivotGroup);
-          dragPivotGroup = null;
-        }
-        cube.quaternion.set(0, 0, 0, 1);
-        cube.position.set(-offset, offset, 0.109375 + offset);
-        currentQuadrant = 3;
-        topFace = 'f2';
-        kippCount = 0;
-        lockedKippDir = null;
-        currentDragDir = null;
-        erstesKippziel = null;
-        kippzielChecked = false;
-        cubeLocked = false;
-        tapCount = 0;
-        bereitsGetroffen.clear();
-        bereitsAusgegeben.clear();
-        rebuildFaceMat('f0', 1);
-        rebuildFaceMat('f1', 1);
-        rebuildFaceMat('f2', 1);
-        ['f0','f1','f2'].forEach(fk => {
-          const fs = faceSlots[fk];
-          if (!fs || !fs.slotMap) return;
-          for (const k in fs.slotMap) {
-            if (fs.slotMap[k]._revealedNow) delete fs.slotMap[k]._revealedNow;
-          }
-        });
-        if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
-        gameCards.forEach(c => c.mesh.visible = false);
-        if (verdecktesMesh) verdecktesMesh.visible = false;
-        if (tapIndicatorA && tapIndicatorA.mesh) tapIndicatorA.mesh.visible = false;
-        if (tapIndicatorB && tapIndicatorB.mesh) tapIndicatorB.mesh.visible = false;
-        if (handDemo) handDemo.visible = false;
-        if (typeof handEl !== 'undefined' && handEl) { handEl.style.opacity = '0'; }
-        
-        // 4. Queen-Zustand zurücksetzen
-        window._queenWaitForSymbol = true;
-        window._codeStichZiel = 0;
-        window._queenActiveCode = null;
-        window._queenActiveSlotIdx = -1;
-        if (window._queenSlotsUsedThisRound) window._queenSlotsUsedThisRound.clear();
-        window._kippTarget = null;
-        gamePhase = 'start';
-        
-        // 5. UI-Elemente
-        if (window._codetafelMesh) window._codetafelMesh.visible = false;
-        if (typeof window._codetafelClear === 'function') window._codetafelClear();
-        if (window._tischoverlay) window._tischoverlay.visible = true;
-        const lw = document.getElementById('brainyLivesWrap');
-        if (lw) lw.style.display = 'none';
-        const pw = document.getElementById('statusPreviewWrap');
-        if (pw) {
-          pw.style.display = 'none';
-          const _img = document.getElementById('statusPreviewImg');
-          if (_img) {
-            _img.style.transition = '';
-            _img.style.filter = '';
-            _img.style.opacity = '1';
-          }
-        }
-        const _bt = document.getElementById('boutiqueText');
-        if (_bt && typeof _buildBoutiqueHTML === 'function') {
-          _bt.innerHTML = _buildBoutiqueHTML();
-          _bt.style.transition = '';
-          _bt.style.opacity = '1';
-          _bt.style.display = 'block';
-        }
-        const sw = document.getElementById('statusScrollWrap');
-        if (sw) {
-          sw.style.transition = '';
-          sw.style.opacity = '1';
-          sw.style.display = 'block';
-        }
-        ['instructionText','tutorialText','eyeIcon','entscheidungText',
-         'zumSpielBtn','perfektGameText','gameEndText','spielZielText','skipEndBtn',
-         'kippTarget','demoSubtitle'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
-        });
-        if (countdown) countdown.style.display = 'none';
-        if (hintText) hintText.style.display = 'none';
-        if (actionButton) actionButton.style.display = 'none';
-        
-        // 6. Hard-Abort-Flag zurücksetzen nach kurzer Verzögerung (damit alle laufenden Frames es noch sehen)
-        setTimeout(() => { window._kippHardAbort = false; }, 50);
-      } else {
-        // Schon in Startsituation → zur Themenauswahl
-        window.location.href = 'index.html';
-      }
+      window.location.href = 'kipp_queen.html?level=masterbrain';
     });
+
 
     function _doNukeAndReset() {
       // ===== NUKLEARER CLEANUP =====
@@ -13482,6 +13361,8 @@
       console.log('[KIPP] performKipp ENTER dir='+direction, 'dur='+duration, 'isAnim='+isAnimating);
       if (isAnimating) { console.warn('[KIPP] BLOCKED by isAnimating!'); return; }
       isAnimating = true;
+      const _kippRunId = kipp21Generation;
+      window._currentKippRunId = _kippRunId;
       
       let pivotPoint, axis, targetRotation, fromQ, toQ;
       
