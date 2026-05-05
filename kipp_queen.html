@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-75</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-76</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1736,35 +1736,53 @@
       console.log('[QUEEN] GAME OVER');
       // Tischoverlay einblenden
       if (window._tischoverlay) window._tischoverlay.visible = true;
-      // Großbild der gewählten Trophäe einblenden mit Fade
+      // Codetafel weg
+      if (window._codetafelMesh) window._codetafelMesh.visible = false;
+      // Großbild der gewählten Trophäe einblenden mit langsamem Fade
       const idx = window._selectedStatusIdxFinal !== undefined ? window._selectedStatusIdxFinal : (window._codeStichZiel - 1);
       const _trophyFiles = ['highheels.webp','handtasche.webp','qu_kette.webp','qu_vip.webp','qu_lambo.webp','qu_jet.webp'];
       const previewWrap = document.getElementById('statusPreviewWrap');
       const previewImg = document.getElementById('statusPreviewImg');
       if (previewWrap && previewImg) {
+        // Position wie bei normaler Vorschau
+        const scrollWrap = document.getElementById('statusScrollWrap');
+        const _scrollTop = parseInt(scrollWrap.style.top) || 480;
+        previewWrap.style.top = '75px';
+        previewWrap.style.height = (_scrollTop - 80) + 'px';
         previewImg.src = _trophyFiles[idx] || _trophyFiles[0];
-        previewImg.style.transition = 'filter 1.2s ease, opacity 1s ease 1s';
+        // Start: unsichtbar
+        previewImg.style.transition = 'none';
         previewImg.style.filter = 'none';
-        previewImg.style.opacity = '1';
+        previewImg.style.opacity = '0';
         previewWrap.style.display = 'block';
-        // Fade nach Grau
-        setTimeout(() => { previewImg.style.filter = 'grayscale(1) brightness(0.8)'; }, 100);
-        // Dann auf 0 ausfaden
-        setTimeout(() => { previewImg.style.opacity = '0'; }, 1400);
-        // Wenn unsichtbar: Großbild weg, Auswahl-Phase wiederherstellen
+        // Fade-In über 1.5s
+        setTimeout(() => {
+          previewImg.style.transition = 'opacity 1.5s ease';
+          previewImg.style.opacity = '1';
+        }, 50);
+        // Nach Fade-In komplett: Fade zu Grau über 1.5s
+        setTimeout(() => {
+          previewImg.style.transition = 'filter 1.5s ease';
+          previewImg.style.filter = 'grayscale(1) brightness(0.7)';
+        }, 1700);
+        // Nach Grau-Fade: Fade-Out über 1.5s
+        setTimeout(() => {
+          previewImg.style.transition = 'opacity 1.5s ease';
+          previewImg.style.opacity = '0';
+        }, 3400);
+        // Auswahl-Phase wiederherstellen
         setTimeout(() => {
           previewWrap.style.display = 'none';
           previewImg.style.transition = '';
           previewImg.style.filter = '';
           previewImg.style.opacity = '1';
-          // Codetafel weg, Tischoverlay bleibt, "Code nicht geknackt"-Text einblenden
-          if (window._codetafelMesh) window._codetafelMesh.visible = false;
           window._codetafelClear();
-          // Boutique-Text einblenden mit Game-Over-Variante
+          // Boutique-Text mit Game-Over-Variante
           const _bt = document.getElementById('boutiqueText');
           if (_bt) {
-            _bt.innerHTML = '<div style="font-size:30px;font-weight:bold;margin-top:50px;letter-spacing:0.05em;text-shadow:0 2px 4px rgba(0,0,0,0.95);">Code nicht geknackt</div>' +
-                            '<div style="font-size:24px;font-style:italic;margin-top:20px;letter-spacing:0.04em;">Wähle wieder neu</div>';
+            _bt.innerHTML = '<div style="font-size:42px;font-weight:bold;margin-top:30px;letter-spacing:0.05em;text-shadow:0 2px 4px rgba(0,0,0,0.95);">CODE</div>' +
+                            '<div style="font-size:28px;margin-top:8px;letter-spacing:0.04em;">nicht geknackt</div>' +
+                            '<div style="font-size:24px;font-style:italic;margin-top:30px;letter-spacing:0.04em;">Wähle neu.</div>';
             _bt.style.display = 'block';
           }
           // Scrollband wieder rein
@@ -1781,7 +1799,7 @@
           window._codeStichZiel = 0;
           window._queenActiveCode = null;
           window._queenActiveSlotIdx = -1;
-        }, 2700);
+        }, 5100);
       }
     };
     
@@ -9177,6 +9195,19 @@
       if (kipp21KniffActive) return false;
       kipp21KniffActive = true;
       kipp21KniffAbort = false;
+      
+      // QUEEN: Slots aufdecken vor Eckblick (sonst nur X sichtbar)
+      if (window._codeStichZiel) {
+        window._kippSlotsHidden = false;
+        ['f0','f1','f2'].forEach(fk => {
+          const fs = faceSlots[fk];
+          if (!fs || !fs.slotMap) return;
+          for (const k in fs.slotMap) {
+            fs.slotMap[k]._revealedNow = true;
+          }
+        });
+        if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+      }
 
       const savedPos = cube.position.clone();
       const savedQuat = cube.quaternion.clone();
