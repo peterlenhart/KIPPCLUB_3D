@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-73</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-74</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1920,22 +1920,37 @@
     };
     
     // Setzt einen konkreten Code (z.B. "F-3") an den ersten noch nicht durchgestrichenen Slot
+    // Slots die in diesem Durchgang schon aktiv waren (auch nach MISS)
+    window._queenSlotsUsedThisRound = new Set();
+    
     window._setQueenCodeAtNextSlot = function(code) {
       const stichZahl = window._codeStichZiel || 1;
       const slots = _codeSlotMap[stichZahl] || [];
-      // Erster Slot, der nicht durchgestrichen ist (X-X oder bereits ein Code) wird neu beschrieben
+      // Erster Slot der: nicht durchgestrichen UND in diesem Durchgang noch nicht dran war
       let target = -1;
       for (let i = 0; i < slots.length; i++) {
         const s = slots[i];
-        if (!_codetafelHits[s]) { target = s; break; }
+        if (_codetafelHits[s]) continue;
+        if (window._queenSlotsUsedThisRound.has(s)) continue;
+        target = s; break;
+      }
+      // Wenn alle nicht-durchgestrichenen Slots schon dran waren in diesem Durchgang
+      // → neuer Durchgang: Tracker leeren, von vorne
+      if (target < 0) {
+        window._queenSlotsUsedThisRound.clear();
+        for (let i = 0; i < slots.length; i++) {
+          const s = slots[i];
+          if (!_codetafelHits[s]) { target = s; break; }
+        }
       }
       if (target < 0) return;
-      // Andere nicht-getroffene Slots zurück auf X-X (nur einer aktiv)
+      // Anderen nicht-getroffenen Slots: X-X; aktiver Slot: Code
       for (const s of slots) {
         if (!_codetafelHits[s]) _codetafelCodes[s] = (s === target) ? code : 'X-X';
       }
       window._queenActiveSlotIdx = target;
       window._queenActiveCode = code;
+      window._queenSlotsUsedThisRound.add(target);
       _drawCodetafel();
     };
     
@@ -8954,6 +8969,7 @@
           if (window._codeStichZiel) {
             window._queenTurnsThisRound = 0;
             window._queenSlotsThisRound = _queenCountOpenSlots();
+            window._queenSlotsUsedThisRound.clear();
             // Random Code (Filter: keine Kombi die der Würfel zeigt)
             const code = _queenRandomCodeSafe();
             window._queenActiveCode = code;
