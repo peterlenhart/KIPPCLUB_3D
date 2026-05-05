@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -12844,21 +12844,94 @@
       // Queen: zweistufig — wenn Spiel läuft → zurück zur Startsituation; wenn schon dort → Themenauswahl
       const inGame = !window._queenWaitForSymbol && window._codeStichZiel;
       if (inGame) {
-        // Zur Startsituation: Spielablauf beenden, Auswahl-Phase wiederherstellen
+        // ===== Vollständiger Reset auf Queen-Startsituation =====
+        // 1. Alle Async-Chains abbrechen
+        kipp21Generation++;
+        autoDemoActive = false;
+        replayActive = false;
+        kipp21Active = false;
+        brainyActive = false;
+        kipp21TimerRunning = false;
+        kipp21KniffActive = false;
+        kipp21KniffAbort = true;
+        schauenWobbleActive = false;
+        isDemoAnimating = false;
+        isAnimating = false;
+        dragActive = false;
+        window._kippEckblickRunning = false;
+        window._kippResultRunning = false;
+        if (kipp21TimerInterval) { clearInterval(kipp21TimerInterval); kipp21TimerInterval = null; }
+        if (typeof stopCountdown === 'function') stopCountdown();
+        if (typeof disableReplayBlocker === 'function') disableReplayBlocker();
+        if (typeof brainyStopNumPulse === 'function') brainyStopNumPulse();
+        if (typeof brainyHideGems === 'function') brainyHideGems();
+        renderer.domElement.style.pointerEvents = 'auto';
+        
+        // 2. 3D-Zustand zurück auf Anfangsposition
+        if (cube.parent !== kipGroup) {
+          const oldP = cube.parent;
+          if (oldP) { oldP.remove(cube); if (oldP.parent) oldP.parent.remove(oldP); }
+          kipGroup.add(cube);
+        }
+        cube.quaternion.set(0, 0, 0, 1);
+        cube.position.set(-offset, offset, 0.109375 + offset);
+        currentQuadrant = 3;
+        topFace = 'f2';
+        kippCount = 0;
+        lockedKippDir = null;
+        currentDragDir = null;
+        erstesKippziel = null;
+        kippzielChecked = false;
+        cubeLocked = false;
+        tapCount = 0;
+        bereitsGetroffen.clear();
+        bereitsAusgegeben.clear();
+        // Faces wieder voll sichtbar
+        rebuildFaceMat('f0', 1);
+        rebuildFaceMat('f1', 1);
+        rebuildFaceMat('f2', 1);
+        // _revealedNow Flags löschen + Slots wieder verdeckt für nächsten Eckblick
+        ['f0','f1','f2'].forEach(fk => {
+          const fs = faceSlots[fk];
+          if (!fs || !fs.slotMap) return;
+          for (const k in fs.slotMap) {
+            if (fs.slotMap[k]._revealedNow) delete fs.slotMap[k]._revealedNow;
+          }
+        });
+        if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+        gameCards.forEach(c => c.mesh.visible = false);
+        if (verdecktesMesh) verdecktesMesh.visible = false;
+        if (tapIndicatorA && tapIndicatorA.mesh) tapIndicatorA.mesh.visible = false;
+        if (tapIndicatorB && tapIndicatorB.mesh) tapIndicatorB.mesh.visible = false;
+        if (handDemo) handDemo.visible = false;
+        if (typeof handEl !== 'undefined' && handEl) { handEl.style.opacity = '0'; }
+        
+        // 3. Queen-Zustand zurücksetzen
         window._queenWaitForSymbol = true;
         window._codeStichZiel = 0;
         window._queenActiveCode = null;
         window._queenActiveSlotIdx = -1;
         if (window._queenSlotsUsedThisRound) window._queenSlotsUsedThisRound.clear();
-        // Codetafel weg
+        window._kippTarget = null;
+        gamePhase = 'start';
+        
+        // 4. UI-Elemente: Codetafel weg, Tischoverlay rein, Versuche weg, Großbild weg
         if (window._codetafelMesh) window._codetafelMesh.visible = false;
         if (typeof window._codetafelClear === 'function') window._codetafelClear();
-        // Tischoverlay einblenden
         if (window._tischoverlay) window._tischoverlay.visible = true;
-        // Versuche-Anzeige verstecken
         const lw = document.getElementById('brainyLivesWrap');
         if (lw) lw.style.display = 'none';
-        // Boutique-Text auf Original (de/en/...) setzen + einblenden
+        const pw = document.getElementById('statusPreviewWrap');
+        if (pw) {
+          pw.style.display = 'none';
+          const _img = document.getElementById('statusPreviewImg');
+          if (_img) {
+            _img.style.transition = '';
+            _img.style.filter = '';
+            _img.style.opacity = '1';
+          }
+        }
+        // Boutique-Text auf Original setzen + einblenden
         const _bt = document.getElementById('boutiqueText');
         if (_bt && typeof _buildBoutiqueHTML === 'function') {
           _bt.innerHTML = _buildBoutiqueHTML();
@@ -12866,16 +12939,23 @@
           _bt.style.opacity = '1';
           _bt.style.display = 'block';
         }
-        // Scrollband wieder zeigen
+        // Scrollband zeigen
         const sw = document.getElementById('statusScrollWrap');
         if (sw) {
           sw.style.transition = '';
           sw.style.opacity = '1';
           sw.style.display = 'block';
         }
-        // Großbild ggf. weg
-        const pw = document.getElementById('statusPreviewWrap');
-        if (pw) pw.style.display = 'none';
+        // Sonstige Tutorial/Spielziel-Texte/Buttons aus
+        ['instructionText','tutorialText','eyeIcon','entscheidungText',
+         'zumSpielBtn','perfektGameText','gameEndText','spielZielText','skipEndBtn',
+         'kippTarget','demoSubtitle'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        if (countdown) countdown.style.display = 'none';
+        if (hintText) hintText.style.display = 'none';
+        if (actionButton) actionButton.style.display = 'none';
       } else {
         // Schon in Startsituation → zur Themenauswahl
         window.location.href = 'index.html';
