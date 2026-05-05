@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-72</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AA-73</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -3932,6 +3932,53 @@
       }
       
       if (treffer) {
+        // === QUEEN: eigener HIT (Code abhaken, neuer Eckblick) ===
+        if (window._codeStichZiel && window._queenActiveCode) {
+          // Prüfen ob Würfel den Queen-Code wirklich erfüllt
+          const _COL = { orange: 1, gruen: 2, violett: 3, blau: 4 };
+          const _faceOff = { f0: 0, f1: 4, f2: 8 };
+          const _slotsH = ['S1','S2','S3','S4'];
+          const _off = _faceOff[topFace];
+          let _hit = false;
+          if (_off !== undefined) {
+            for (let _si = 0; _si < 4; _si++) {
+              const _z = deck[_off + _si];
+              const _c = SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotsH[_si]];
+              if (!_z || !_c) continue;
+              const _let = 'ABCDEFGHIJKL'[_z - 1];
+              const _num = _COL[_c];
+              if (_let && _num && _let + '-' + _num === window._queenActiveCode) { _hit = true; break; }
+            }
+          }
+          if (_hit) {
+            const slot = window._queenActiveSlotIdx;
+            if (slot >= 0) _codetafelHits[slot] = true;
+            window._queenActiveCode = null;
+            window._queenActiveSlotIdx = -1;
+            _drawCodetafel();
+            window._kippResultRunning = true;
+            setTimeout(() => {
+              window._kippTarget = null;
+              window._kippResultRunning = false;
+              // Win-Check
+              const slots = _codeSlotMap[window._codeStichZiel || 1] || [];
+              const allHits = slots.every(i => _codetafelHits[i]);
+              if (allHits) { console.log('[QUEEN] WIN'); return; }
+              window._queenNextKipp();
+            }, 800);
+            return;
+          }
+          // treffer aber Würfel erfüllt Code nicht (sollte nicht vorkommen) → wie MISS
+          window._kippResultRunning = true;
+          window._queenMissPulse(() => {
+            brainyUpdateLives();
+            if ((window._queenVersuche || 0) <= 0) { window._queenGameOver(); return; }
+            window._kippTarget = null;
+            window._kippResultRunning = false;
+            window._queenNextKipp();
+          });
+          return;
+        }
         // HIT
         card.isHit = true;
         drawGoldenBorder(card);
@@ -3954,6 +4001,32 @@
         }, 1500);
       } else {
         // MISS — Lebens-Würfel 3× blinken, dann ausgrauen. Slots bleiben verdeckt (außer angetippter), Kippziel bleibt.
+        // === QUEEN: eigene MISS-Logik (rote Pulsation, X-X, -1 Versuch, Eckblick) ===
+        if (window._codeStichZiel && window._queenActiveCode) {
+          window._kippResultRunning = true;
+          window._queenMissPulse(() => {
+            // Versuche -1
+            brainyUpdateLives();
+            if ((window._queenVersuche || 0) <= 0) {
+              window._queenGameOver();
+              return;
+            }
+            // Aufgedeckten Slot wieder verdecken
+            ['f0','f1','f2'].forEach(fk => {
+              const fs = faceSlots[fk];
+              if (!fs || !fs.slotMap) return;
+              for (const k in fs.slotMap) {
+                if (fs.slotMap[k]._revealedNow) delete fs.slotMap[k]._revealedNow;
+              }
+            });
+            if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
+            window._kippTarget = null;
+            window._kippResultRunning = false;
+            // Eckblick + neues Kippziel
+            window._queenNextKipp();
+          });
+          return;
+        }
         brainyFails++;
         const wrap = brainyEnsureLivesUI();
         const hearts = wrap.querySelectorAll('.brainyLife');
