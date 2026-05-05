@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-08</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-09</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1099,6 +1099,13 @@
     <!-- HIT/MISS-Counter entfernt für Queen-Theme -->
     <!-- Statussymbol-Scrollband (Position via JS auf Zeile 11 Oberkante) -->
     <div id="boutiqueText" style="display:none;position:absolute;left:0;top:90px;width:100%;height:360px;z-index:55;pointer-events:none;text-align:center;font-family:'Times New Roman',serif;color:#f0c050;text-shadow:0 1px 2px rgba(0,0,0,0.85),0 0 16px rgba(240,192,80,0.45);">
+    </div>
+    <!-- Queen-Trophäen-Galerie (Pokal-Klick) -->
+    <div id="queenTrophyOverlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);pointer-events:auto;">
+      <div id="queenTrophyGrid" style="position:absolute;left:50%;top:50%;transform:translate(-50%, -52%);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:8px;width:340px;height:540px;">
+        <!-- 6 Slots werden via JS gefüllt -->
+      </div>
+      <div id="queenTrophyOK" style="position:absolute;left:50%;bottom:60px;transform:translateX(-50%);width:196px;height:47px;background-image:url(button_kurz_qu_k.webp);background-size:contain;background-repeat:no-repeat;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#f0c050;font-family:'Times New Roman',serif;font-weight:bold;font-size:24px;letter-spacing:0.08em;text-shadow:0 1px 2px rgba(0,0,0,0.95);">OK</div>
     </div>
     <div id="statusScrollWrap" style="display:none;position:absolute;left:12px;width:calc(100% - 24px);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:60;pointer-events:auto;">
       <div id="statusScrollInner" style="display:flex;align-items:center;gap:0;height:100%;">
@@ -1851,6 +1858,9 @@
     // Großbild fade-in (1.5s) → 2s zeigen → schrumpft + fliegt zum Pokal (1.2s) → schlüpft rein → Pokal pulsiert
     window._queenWin = function() {
       console.log('[QUEEN] WIN');
+      // Trophäen-Counter erhöhen
+      const _winIdx = window._selectedStatusIdxFinal !== undefined ? window._selectedStatusIdxFinal : (window._codeStichZiel - 1);
+      _queenTrophyIncrement(_winIdx);
       // Tischoverlay einblenden (verdeckt Spielfläche)
       if (window._tischoverlay) window._tischoverlay.visible = true;
       // Codetafel weg
@@ -1931,6 +1941,63 @@
     };
     
     function _getPokalEl() { return document.getElementById('btnBestScores'); }
+    
+    // === TROPHÄEN-GALERIE ===
+    // localStorage: pro Trophäe Gewinn-Zähler. Key = "queen_trophy_<idx>" mit Wert "n"
+    function _queenTrophyCount(idx) {
+      try { return parseInt(localStorage.getItem('queen_trophy_' + idx) || '0', 10) || 0; } catch(e) { return 0; }
+    }
+    function _queenTrophyIncrement(idx) {
+      try {
+        const n = _queenTrophyCount(idx) + 1;
+        localStorage.setItem('queen_trophy_' + idx, String(n));
+        return n;
+      } catch(e) { return 0; }
+    }
+    
+    function _showQueenTrophyGallery() {
+      const overlay = document.getElementById('queenTrophyOverlay');
+      const grid = document.getElementById('queenTrophyGrid');
+      if (!overlay || !grid) return;
+      grid.innerHTML = '';
+      const _files = ['highheels.webp','handtasche.webp','qu_kette.webp','qu_vip.webp','qu_lambo.webp','qu_jet.webp'];
+      // Z-Shape: links oben → rechts oben → links Mitte → rechts Mitte → links unten → rechts unten
+      // Reihenfolge im Array: 0..5 entspricht Schwierigkeit 1..6
+      for (let i = 0; i < 6; i++) {
+        const cnt = _queenTrophyCount(i);
+        const won = cnt > 0;
+        const slot = document.createElement('div');
+        slot.style.cssText = 'position:relative;width:100%;height:100%;border:2px solid ' + (won ? '#f0c050' : '#444') + ';' +
+          'border-radius:6px;overflow:hidden;box-shadow:' + (won ? '0 0 12px rgba(240,192,80,0.5)' : 'none') + ';';
+        const img = document.createElement('img');
+        img.src = _files[i];
+        img.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;' +
+          'filter:' + (won ? 'none' : 'grayscale(1) brightness(0.6)') + ';';
+        slot.appendChild(img);
+        // Zähler rechts unten
+        const counter = document.createElement('div');
+        counter.style.cssText = 'position:absolute;right:6px;bottom:4px;color:#f0c050;font-family:"Times New Roman",serif;' +
+          'font-weight:bold;font-size:18px;text-shadow:0 1px 3px rgba(0,0,0,0.95),0 0 8px rgba(0,0,0,0.85);';
+        counter.textContent = cnt + '×';
+        slot.appendChild(counter);
+        grid.appendChild(slot);
+      }
+      overlay.style.display = 'block';
+    }
+    
+    function _hideQueenTrophyGallery() {
+      const overlay = document.getElementById('queenTrophyOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+    
+    // OK-Button schließt Galerie
+    setTimeout(() => {
+      const okBtn = document.getElementById('queenTrophyOK');
+      if (okBtn) {
+        okBtn.addEventListener('click', _hideQueenTrophyGallery);
+        okBtn.addEventListener('touchend', (e) => { e.preventDefault(); _hideQueenTrophyGallery(); }, { passive: false });
+      }
+    }, 100);
 
     // API für andere Code-Teile
     window._setCodetafelPlatzhalter = function(stichZahl) {
@@ -3650,10 +3717,8 @@
       });
     }
     function showBestScores() {
-      renderBestScores();
-      _savedKipp21Active = kipp21Active;
-      kipp21Active = false;
-      document.getElementById('bestScoresOverlay').style.display = 'block';
+      // Queen: Trophäen-Galerie statt Scoretafel
+      _showQueenTrophyGallery();
     }
     
     document.getElementById('bestScoresClose').addEventListener('click', () => {
