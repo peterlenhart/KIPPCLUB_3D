@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-04</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-05</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8361,77 +8361,81 @@
     function _runBoutiqueIntroHand() {
       const wrap = document.getElementById('statusScrollWrap');
       if (!wrap || wrap.style.display === 'none') return;
-      // Hand-Element erstellen
       let hand = document.getElementById('queenIntroHand');
       if (!hand) {
         hand = document.createElement('img');
         hand.id = 'queenIntroHand';
         hand.src = 'handgold.webp';
         hand.style.cssText = 'position:absolute;width:103px;height:auto;z-index:70;pointer-events:none;' +
-          'opacity:0;transition:opacity 0.5s ease, transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);' +
-          'filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
+          'opacity:0;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
         document.getElementById('uiOverlay').appendChild(hand);
       }
-      // Hand-Position: zentriert auf Scrollband-Höhe
-      const wrapRect = wrap.getBoundingClientRect();
-      const overlayRect = document.getElementById('uiOverlay').getBoundingClientRect();
-      const _bandTop = parseInt(wrap.style.top) || 0;
-      const _handTop = _bandTop + 88; // 60px südlicher als vorher (28+60)
-      // Hand startet rechts der Mitte (bei "Halskette/VIP-Übergang")
       const inner = document.getElementById('statusScrollInner');
-      const _startLeft = 188; // ungefähr Mitte zwischen Sym3+Sym4 (Bandbreite ca 336, Mitte 168)
+      const _bandTop = parseInt(wrap.style.top) || 0;
+      const _handTop = _bandTop + 88;
+      const _startLeft = 188;
       hand.style.top = _handTop + 'px';
       hand.style.left = _startLeft + 'px';
       hand.style.transform = 'translateY(60px)';
       hand.style.opacity = '0';
+      hand.style.transition = 'opacity 0.5s ease, transform 0.7s ease';
       
-      // Phase 1: Hand fadet ein, kommt von Süden hoch
+      // Phase 1: Hand fadet ein
       setTimeout(() => {
         hand.style.opacity = '1';
         hand.style.transform = 'translateY(0)';
       }, 50);
       
-      // Phase 2: Wisch nach LINKS (Hand bewegt sich nach links + Band scrollt mit)
+      // Phasen 2-4: rAF-Loop steuert Hand UND Band synchron
       setTimeout(() => {
-        hand.style.transition = 'none';
-        void hand.offsetWidth;
-        hand.style.transition = 'left 1.0s cubic-bezier(0.42, 0, 0.58, 1)';
-        hand.style.left = (_startLeft - 130) + 'px';
-        const startScroll = wrap.scrollLeft;
-        _animateScroll(wrap, startScroll, startScroll + 130, 1000);
+        hand.style.transition = 'opacity 0.5s ease'; // CSS für left raus, manuell steuern
+        const initialScroll = wrap.scrollLeft;
+        // Sequenz: 3 Segmente
+        // Segment 1 (links): Hand left -130, Band scroll +130
+        // Segment 2 (rechts): Hand right +160 (relativ zu Seg1-Ende), Band scroll -160
+        // Segment 3 (links zur Mitte): Hand zurück zu _startLeft, Band auf Mitte
+        const seg1HandFrom = _startLeft, seg1HandTo = _startLeft - 130;
+        const seg1ScrollFrom = initialScroll, seg1ScrollTo = initialScroll + 130;
+        const seg2HandFrom = seg1HandTo, seg2HandTo = seg1HandTo + 160;
+        const seg2ScrollFrom = seg1ScrollTo, seg2ScrollTo = Math.max(0, seg1ScrollTo - 160);
+        const seg3HandFrom = seg2HandTo, seg3HandTo = _startLeft;
+        const seg3ScrollFrom = seg2ScrollTo;
+        const seg3ScrollTo = Math.max(0, (inner.scrollWidth - wrap.clientWidth) / 2);
+        const segments = [
+          { hf: seg1HandFrom, ht: seg1HandTo, sf: seg1ScrollFrom, st: seg1ScrollTo, dur: 1000 },
+          { hf: seg2HandFrom, ht: seg2HandTo, sf: seg2ScrollFrom, st: seg2ScrollTo, dur: 1100 },
+          { hf: seg3HandFrom, ht: seg3HandTo, sf: seg3ScrollFrom, st: seg3ScrollTo, dur: 800 }
+        ];
+        let segIdx = 0;
+        let segStart = performance.now();
+        function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+        function tick(now) {
+          if (segIdx >= segments.length) {
+            // Alle Bewegungen fertig → Phase 5: Hand verschwindet
+            hand.style.transition = 'opacity 0.6s ease, transform 0.7s ease';
+            hand.style.transform = 'translateY(80px)';
+            hand.style.opacity = '0';
+            setTimeout(() => {
+              if (hand.parentNode) hand.parentNode.removeChild(hand);
+            }, 800);
+            return;
+          }
+          const seg = segments[segIdx];
+          const t = Math.min(1, (now - segStart) / seg.dur);
+          const e = easeInOut(t);
+          // BEIDE Updates im gleichen Frame, mit gleichem t → garantiert synchron
+          hand.style.left = (seg.hf + (seg.ht - seg.hf) * e) + 'px';
+          wrap.scrollLeft = seg.sf + (seg.st - seg.sf) * e;
+          if (t < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            segIdx++;
+            segStart = performance.now();
+            requestAnimationFrame(tick);
+          }
+        }
+        requestAnimationFrame(tick);
       }, 1100);
-      
-      // Phase 3: Wisch nach RECHTS (Hand zurück + etwas weiter, Band scrollt zurück)
-      setTimeout(() => {
-        hand.style.transition = 'none';
-        void hand.offsetWidth;
-        hand.style.transition = 'left 1.0s cubic-bezier(0.42, 0, 0.58, 1)';
-        hand.style.left = (_startLeft + 30) + 'px';
-        const startScroll = wrap.scrollLeft;
-        _animateScroll(wrap, startScroll, Math.max(0, startScroll - 160), 1000);
-      }, 2400);
-      
-      // Phase 4: Hand zurück in die Mitte (zwischen Kette und VIP)
-      setTimeout(() => {
-        hand.style.transition = 'none';
-        void hand.offsetWidth;
-        hand.style.transition = 'left 0.8s cubic-bezier(0.42, 0, 0.58, 1)';
-        hand.style.left = _startLeft + 'px';
-        const targetScroll = Math.max(0, (inner.scrollWidth - wrap.clientWidth) / 2);
-        _animateScroll(wrap, wrap.scrollLeft, targetScroll, 800);
-      }, 3700);
-      
-      // Phase 5: Hand verschwindet nach Süden + faded aus
-      setTimeout(() => {
-        hand.style.transition = 'opacity 0.6s ease, transform 0.7s ease';
-        hand.style.transform = 'translateY(80px)';
-        hand.style.opacity = '0';
-      }, 4700);
-      
-      // Phase 6: Hand-Element entfernen
-      setTimeout(() => {
-        if (hand.parentNode) hand.parentNode.removeChild(hand);
-      }, 5500);
     }
     
     function _animateScroll(el, from, to, duration) {
