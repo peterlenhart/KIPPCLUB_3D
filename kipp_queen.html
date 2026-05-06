@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-01</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-02</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8376,7 +8376,7 @@
       const wrapRect = wrap.getBoundingClientRect();
       const overlayRect = document.getElementById('uiOverlay').getBoundingClientRect();
       const _bandTop = parseInt(wrap.style.top) || 0;
-      const _handTop = _bandTop + 28; // ein bisschen nach unten ins Band
+      const _handTop = _bandTop + 88; // 60px südlicher als vorher (28+60)
       // Hand startet rechts der Mitte (bei "Halskette/VIP-Übergang")
       const inner = document.getElementById('statusScrollInner');
       const _startLeft = 188; // ungefähr Mitte zwischen Sym3+Sym4 (Bandbreite ca 336, Mitte 168)
@@ -8393,9 +8393,9 @@
       
       // Phase 2: Wisch nach LINKS (Hand bewegt sich nach links + Band scrollt mit)
       setTimeout(() => {
-        hand.style.transition = 'left 1.0s cubic-bezier(0.45, 0.05, 0.55, 0.95), opacity 0.5s ease';
+        hand.style.transition = 'left 1.0s cubic-bezier(0.42, 0, 0.58, 1), opacity 0.5s ease';
         hand.style.left = (_startLeft - 130) + 'px';
-        // Band synchron scrollen
+        // Band synchron scrollen (gleiche Easing wie Hand)
         const startScroll = wrap.scrollLeft;
         _animateScroll(wrap, startScroll, startScroll + 130, 1000);
       }, 1100);
@@ -8409,6 +8409,7 @@
       
       // Phase 4: Hand zurück in die Mitte (zwischen Kette und VIP)
       setTimeout(() => {
+        hand.style.transition = 'left 0.8s cubic-bezier(0.42, 0, 0.58, 1), opacity 0.5s ease';
         hand.style.left = _startLeft + 'px';
         // Band auf Mitte scrollen
         const targetScroll = Math.max(0, (inner.scrollWidth - wrap.clientWidth) / 2);
@@ -8432,6 +8433,7 @@
       const start = performance.now();
       function tick(now) {
         const t = Math.min(1, (now - start) / duration);
+        // ease-in-out (entspricht cubic-bezier(0.42, 0, 0.58, 1))
         const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
         el.scrollLeft = from + (to - from) * ease;
         if (t < 1) requestAnimationFrame(tick);
