@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-10</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-11</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1102,10 +1102,12 @@
     </div>
     <!-- Queen-Trophäen-Galerie (Pokal-Klick) -->
     <div id="queenTrophyOverlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);pointer-events:auto;">
-      <div id="queenTrophyGrid" style="position:absolute;left:50%;top:50%;transform:translate(-50%, calc(-52% - 30px));display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:8px;width:340px;height:540px;">
-        <!-- 6 Slots werden via JS gefüllt -->
+      <div id="queenTrophyGalleryWrap" style="position:absolute;left:50%;top:50%;transform:translate(-50%, calc(-50% - 30px));display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <div id="queenTrophyGrid" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:8px;width:340px;height:540px;">
+          <!-- 6 Slots werden via JS gefüllt -->
+        </div>
+        <div id="queenTrophyOK" style="width:196px;height:47px;background-image:url(button_kurz_qu_k.webp);background-size:contain;background-repeat:no-repeat;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#f0c050;font-family:'Times New Roman',serif;font-weight:bold;font-size:24px;letter-spacing:0.08em;text-shadow:0 1px 2px rgba(0,0,0,0.95);">OK</div>
       </div>
-      <div id="queenTrophyOK" style="position:absolute;left:50%;bottom:60px;transform:translateX(-50%);width:196px;height:47px;background-image:url(button_kurz_qu_k.webp);background-size:contain;background-repeat:no-repeat;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#f0c050;font-family:'Times New Roman',serif;font-weight:bold;font-size:24px;letter-spacing:0.08em;text-shadow:0 1px 2px rgba(0,0,0,0.95);">OK</div>
     </div>
     <div id="statusScrollWrap" style="display:none;position:absolute;left:12px;width:calc(100% - 24px);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:60;pointer-events:auto;">
       <div id="statusScrollInner" style="display:flex;align-items:center;gap:0;height:100%;">
@@ -1959,10 +1961,16 @@
       const overlay = document.getElementById('queenTrophyOverlay');
       const grid = document.getElementById('queenTrophyGrid');
       if (!overlay || !grid) return;
+      
+      // Spielzustand pausieren: alle laufenden Animationen stoppen
+      window._queenPaused = true;
+      window._kippHardAbort = true;
+      // Touch-Events am Würfel sperren — über _queenWaitForSymbol-Mechanismus
+      window._queenTrophyOpenSavedWait = window._queenWaitForSymbol;
+      window._queenWaitForSymbol = true;
+      
       grid.innerHTML = '';
       const _files = ['highheels.webp','handtasche.webp','qu_kette.webp','qu_vip.webp','qu_lambo.webp','qu_jet.webp'];
-      // Z-Shape: links oben → rechts oben → links Mitte → rechts Mitte → links unten → rechts unten
-      // Reihenfolge im Array: 0..5 entspricht Schwierigkeit 1..6
       for (let i = 0; i < 6; i++) {
         const cnt = _queenTrophyCount(i);
         const won = cnt > 0;
@@ -1974,7 +1982,6 @@
         img.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;' +
           'filter:' + (won ? 'none' : 'grayscale(1) brightness(0.6)') + ';';
         slot.appendChild(img);
-        // Zähler rechts unten
         const counter = document.createElement('div');
         counter.style.cssText = 'position:absolute;right:6px;bottom:4px;color:#f0c050;font-family:"Times New Roman",serif;' +
           'font-weight:bold;font-size:18px;text-shadow:0 1px 3px rgba(0,0,0,0.95),0 0 8px rgba(0,0,0,0.85);';
@@ -1986,7 +1993,16 @@
     }
     
     function _hideQueenTrophyGallery() {
-      window.location.href = 'kipp_queen.html?level=masterbrain';
+      const overlay = document.getElementById('queenTrophyOverlay');
+      if (overlay) overlay.style.display = 'none';
+      // Spielzustand fortsetzen
+      window._kippHardAbort = false;
+      window._queenPaused = false;
+      // Wait-Flag wiederherstellen
+      if (window._queenTrophyOpenSavedWait !== undefined) {
+        window._queenWaitForSymbol = window._queenTrophyOpenSavedWait;
+        delete window._queenTrophyOpenSavedWait;
+      }
     }
     
     // OK-Button schließt Galerie
