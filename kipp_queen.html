@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-12</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-13</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1863,6 +1863,7 @@
     // Großbild fade-in (1.5s) → 2s zeigen → schrumpft + fliegt zum Pokal (1.2s) → schlüpft rein → Pokal pulsiert
     window._queenWin = function() {
       console.log('[QUEEN] WIN');
+      window._queenWinJustHappened = true; // wird in _hideQueenTrophyGallery ausgewertet
       // Trophäen-Counter erhöhen
       const _winIdx = window._selectedStatusIdxFinal !== undefined ? window._selectedStatusIdxFinal : (window._codeStichZiel - 1);
       _queenTrophyIncrement(_winIdx);
@@ -2013,11 +2014,21 @@
     }
     
     function _hideQueenTrophyGallery() {
+      // Wenn nach Gewinn: zur Startsituation (Page-Reload), sonst normal weiterspielen
+      if (window._queenWinJustHappened) {
+        window._queenWinJustHappened = false;
+        window.location.href = 'kipp_queen.html?level=masterbrain';
+        return;
+      }
       const overlay = document.getElementById('queenTrophyOverlay');
       if (overlay) overlay.style.display = 'none';
       // Spielzustand fortsetzen
       window._kippHardAbort = false;
       window._queenPaused = false;
+      // Touch/Drag-State sauber zurücksetzen (sonst hängt Long-Tap etc.)
+      dragActive = false;
+      isAnimating = false;
+      if (typeof currentDragDir !== 'undefined') currentDragDir = null;
       // Wait-Flag wiederherstellen
       if (window._queenTrophyOpenSavedWait !== undefined) {
         window._queenWaitForSymbol = window._queenTrophyOpenSavedWait;
