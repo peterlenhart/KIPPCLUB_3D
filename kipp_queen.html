@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-03</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-04</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8393,15 +8393,19 @@
       
       // Phase 2: Wisch nach LINKS (Hand bewegt sich nach links + Band scrollt mit)
       setTimeout(() => {
-        hand.style.transition = 'left 1.0s cubic-bezier(0.42, 0, 0.58, 1), opacity 0.5s ease';
+        hand.style.transition = 'none';
+        void hand.offsetWidth;
+        hand.style.transition = 'left 1.0s cubic-bezier(0.42, 0, 0.58, 1)';
         hand.style.left = (_startLeft - 130) + 'px';
-        // Band synchron scrollen (gleiche Easing wie Hand)
         const startScroll = wrap.scrollLeft;
         _animateScroll(wrap, startScroll, startScroll + 130, 1000);
       }, 1100);
       
       // Phase 3: Wisch nach RECHTS (Hand zurück + etwas weiter, Band scrollt zurück)
       setTimeout(() => {
+        hand.style.transition = 'none';
+        void hand.offsetWidth;
+        hand.style.transition = 'left 1.0s cubic-bezier(0.42, 0, 0.58, 1)';
         hand.style.left = (_startLeft + 30) + 'px';
         const startScroll = wrap.scrollLeft;
         _animateScroll(wrap, startScroll, Math.max(0, startScroll - 160), 1000);
@@ -8409,12 +8413,10 @@
       
       // Phase 4: Hand zurück in die Mitte (zwischen Kette und VIP)
       setTimeout(() => {
-        // Transition komplett resetten + reflow erzwingen damit neue Transition greift
         hand.style.transition = 'none';
         void hand.offsetWidth;
-        hand.style.transition = 'left 0.8s cubic-bezier(0.42, 0, 0.58, 1), opacity 0.5s ease';
+        hand.style.transition = 'left 0.8s cubic-bezier(0.42, 0, 0.58, 1)';
         hand.style.left = _startLeft + 'px';
-        // Band auf Mitte scrollen (gleiche Dauer 800ms)
         const targetScroll = Math.max(0, (inner.scrollWidth - wrap.clientWidth) / 2);
         _animateScroll(wrap, wrap.scrollLeft, targetScroll, 800);
       }, 3700);
