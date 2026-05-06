@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AB-13</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-01</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -8344,6 +8344,99 @@
       const _btnOK = document.getElementById('statusPreviewOK');
       if (_btnClose) _btnClose.addEventListener('click', closeStatusPreview);
       if (_btnOK) _btnOK.addEventListener('click', confirmStatusSelect);
+      // Tutorial-Hand zeigen wenn unter 3 Eintritte
+      _maybeRunBoutiqueIntro();
+    }
+    
+    // === BOUTIQUE-INTRO HAND-ANIMATION ===
+    // Zeigt 3× insgesamt (localStorage-Counter)
+    function _maybeRunBoutiqueIntro() {
+      let seen = 0;
+      try { seen = parseInt(localStorage.getItem('queen_intro_seen') || '0', 10) || 0; } catch(e) {}
+      if (seen >= 3) return;
+      try { localStorage.setItem('queen_intro_seen', String(seen + 1)); } catch(e) {}
+      setTimeout(_runBoutiqueIntroHand, 600);
+    }
+    
+    function _runBoutiqueIntroHand() {
+      const wrap = document.getElementById('statusScrollWrap');
+      if (!wrap || wrap.style.display === 'none') return;
+      // Hand-Element erstellen
+      let hand = document.getElementById('queenIntroHand');
+      if (!hand) {
+        hand = document.createElement('img');
+        hand.id = 'queenIntroHand';
+        hand.src = 'handgold.webp';
+        hand.style.cssText = 'position:absolute;width:103px;height:auto;z-index:70;pointer-events:none;' +
+          'opacity:0;transition:opacity 0.5s ease, transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);' +
+          'filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
+        document.getElementById('uiOverlay').appendChild(hand);
+      }
+      // Hand-Position: zentriert auf Scrollband-Höhe
+      const wrapRect = wrap.getBoundingClientRect();
+      const overlayRect = document.getElementById('uiOverlay').getBoundingClientRect();
+      const _bandTop = parseInt(wrap.style.top) || 0;
+      const _handTop = _bandTop + 28; // ein bisschen nach unten ins Band
+      // Hand startet rechts der Mitte (bei "Halskette/VIP-Übergang")
+      const inner = document.getElementById('statusScrollInner');
+      const _startLeft = 188; // ungefähr Mitte zwischen Sym3+Sym4 (Bandbreite ca 336, Mitte 168)
+      hand.style.top = _handTop + 'px';
+      hand.style.left = _startLeft + 'px';
+      hand.style.transform = 'translateY(60px)';
+      hand.style.opacity = '0';
+      
+      // Phase 1: Hand fadet ein, kommt von Süden hoch
+      setTimeout(() => {
+        hand.style.opacity = '1';
+        hand.style.transform = 'translateY(0)';
+      }, 50);
+      
+      // Phase 2: Wisch nach LINKS (Hand bewegt sich nach links + Band scrollt mit)
+      setTimeout(() => {
+        hand.style.transition = 'left 1.0s cubic-bezier(0.45, 0.05, 0.55, 0.95), opacity 0.5s ease';
+        hand.style.left = (_startLeft - 130) + 'px';
+        // Band synchron scrollen
+        const startScroll = wrap.scrollLeft;
+        _animateScroll(wrap, startScroll, startScroll + 130, 1000);
+      }, 1100);
+      
+      // Phase 3: Wisch nach RECHTS (Hand zurück + etwas weiter, Band scrollt zurück)
+      setTimeout(() => {
+        hand.style.left = (_startLeft + 30) + 'px';
+        const startScroll = wrap.scrollLeft;
+        _animateScroll(wrap, startScroll, Math.max(0, startScroll - 160), 1000);
+      }, 2400);
+      
+      // Phase 4: Hand zurück in die Mitte (zwischen Kette und VIP)
+      setTimeout(() => {
+        hand.style.left = _startLeft + 'px';
+        // Band auf Mitte scrollen
+        const targetScroll = Math.max(0, (inner.scrollWidth - wrap.clientWidth) / 2);
+        _animateScroll(wrap, wrap.scrollLeft, targetScroll, 800);
+      }, 3700);
+      
+      // Phase 5: Hand verschwindet nach Süden + faded aus
+      setTimeout(() => {
+        hand.style.transition = 'opacity 0.6s ease, transform 0.7s ease';
+        hand.style.transform = 'translateY(80px)';
+        hand.style.opacity = '0';
+      }, 4700);
+      
+      // Phase 6: Hand-Element entfernen
+      setTimeout(() => {
+        if (hand.parentNode) hand.parentNode.removeChild(hand);
+      }, 5500);
+    }
+    
+    function _animateScroll(el, from, to, duration) {
+      const start = performance.now();
+      function tick(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+        el.scrollLeft = from + (to - from) * ease;
+        if (t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
     }
     function onStatusSelect(idx) {
       // Großbild-Vorschau zeigen (über Scrollband, unter Pokal-Icon)
