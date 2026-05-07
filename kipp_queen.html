@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-18</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-21</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2364,65 +2364,22 @@
       const seq = _queenKippSequences[sim.steps];
       if (!seq) return;
       const oppDir = (sim.dir === 'cw') ? 'ccw' : 'cw';
-      // Hand-Element (handgold.webp)
-      let hand = document.getElementById('queenKippHand');
-      if (!hand) {
-        hand = document.createElement('img');
-        hand.id = 'queenKippHand';
-        hand.src = 'handgold.webp';
-        hand.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:30;opacity:0;will-change:transform;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
-        document.getElementById('uiOverlay').appendChild(hand);
-      }
-      function _setPos(x, y) {
-        hand.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
-      }
-      // Würfel-Bildschirm-Position
-      function _cubeXY() {
-        const p = cube.position.clone().project(camera);
-        return { x: (p.x * 0.5 + 0.5) * 360, y: (-p.y * 0.5 + 0.5) * 720 };
-      }
-      // Kipp-Pixel-Richtung pro Quadrant (vereinfacht: cw geht bei Q3 nach Norden = -y)
-      function _kippOff(Q, dir) {
-        // cw: Würfel kippt nach Norden bei Q3, Osten bei Q0, Süden bei Q1, Westen bei Q2
-        // ccw umgekehrt
-        const cwMap = { 3: {dx: 0, dy: -1}, 0: {dx: 1, dy: 0}, 1: {dx: 0, dy: 1}, 2: {dx: -1, dy: 0} };
-        const m = cwMap[Q];
-        if (!m) return {dx: 0, dy: -1};
-        if (dir === 'cw') return m;
-        return {dx: -m.dx, dy: -m.dy};
-      }
+      // Replay-Modus aktivieren damit handKippAnim läuft, Hand-Element initialisieren
+      const _wasReplay = replayActive;
+      replayActive = true;
+      if (typeof initHandEl === 'function') initHandEl();
+      // Hand-Bild auf gold umstellen für Queen
+      if (typeof handEl !== 'undefined' && handEl) handEl.src = 'handgold.webp';
       
       for (const sym of seq) {
         const stepDir = (sym === '+') ? sim.dir : oppDir;
         const kippDir = (stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
         if (!kippDir) continue;
-        const c = _cubeXY();
-        const off = kippPixelDir(kippDir);
-        _setPos(c.x, c.y);
-        hand.style.opacity = '1';
-        await new Promise(r => setTimeout(r, 350));
-        isAnimating = false;
         kippDirection = stepDir;
-        const kippDur = 800;
-        // Hand und Kipp parallel mit gleicher Dauer (wie handKippAnim in training)
-        const swipeStart = performance.now();
-        const swipeP = new Promise(resolve => {
-          function frame() {
-            const t = Math.min((performance.now() - swipeStart) / kippDur, 1);
-            _setPos(c.x + off.dx * t, c.y + off.dy * t);
-            if (t < 1) requestAnimationFrame(frame);
-            else resolve();
-          }
-          requestAnimationFrame(frame);
-        });
-        await performKipp(kippDir, kippDur);
-        advanceTopFace();
-        await swipeP;
-        hand.style.opacity = '0';
-        await new Promise(r => setTimeout(r, 60));
+        await handKippAnim(kippDir, 800);
+        await new Promise(r => setTimeout(r, 200));
       }
-      // Hand entfernen
-      setTimeout(() => { if (hand.parentNode) hand.parentNode.removeChild(hand); }, 400);
+      replayActive = _wasReplay;
     }
     
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
