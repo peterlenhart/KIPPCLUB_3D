@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-22</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-24</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2406,6 +2406,84 @@
         advanceTopFace();
         await sleep(400);
       }
+      // Long-Tap auf Treffer-Slot, Slot öffnen, Win
+      await _queenLongTapAndWin();
+    }
+    
+    async function _queenLongTapAndWin() {
+      if (!window._queenActiveCode) return;
+      // Treffer-Slot identifizieren (S1..S4 auf Top-Face)
+      const _COL_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
+      const faceOffMap = { f0: 0, f1: 4, f2: 8 };
+      const off = faceOffMap[topFace];
+      const slotsH = ['S1','S2','S3','S4'];
+      let hitSlotIdx = -1;
+      for (let si = 0; si < 4; si++) {
+        const z = deck[off + si];
+        const c = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotsH[si]];
+        if (!z || !c) continue;
+        const letter = 'ABCDEFGHIJKL'[z - 1];
+        const num = _COL_TO_NUM[c];
+        if (letter && num && (letter + '-' + num) === window._queenActiveCode) {
+          hitSlotIdx = si; break;
+        }
+      }
+      // Slot-Index → grid-key pro Face (gemäß slotMap-Reihenfolge)
+      const slotKeyMap = {
+        f0: ['2,0', '1,0', '0,1', '0,2'],
+        f1: ['0,0', '0,1', '1,2', '2,2'],
+        f2: ['2,2', '2,1', '1,0', '0,0']
+      };
+      
+      // Slot-3D-Position auf Top-Face → Bildschirm-Pixel (1:1 wie training Z 4362-4365)
+      let _tapSX, _tapSY;
+      if (hitSlotIdx >= 0) {
+        const gridKey = slotKeyMap[topFace][hitSlotIdx];
+        const [row, col] = gridKey.split(',').map(Number);
+        // Slot-Mitte in Würfel-lokaler Top-Face-Koordinate
+        // Cell-Größe = cubeSize / 3 = 0.15625
+        // row 0 = oben (-z), row 2 = unten (+z); col 0 = links (-x), col 2 = rechts (+x)
+        const cellS = 0.15625;
+        const localX = (col - 1) * cellS;
+        const localZ = (row - 1) * cellS;
+        const localPos = new THREE.Vector3(localX, 0.234375, localZ);
+        const worldPos = cube.localToWorld(localPos.clone());
+        const v = worldPos.clone().project(camera);
+        _tapSX = Math.round((v.x * 0.5 + 0.5) * 360);
+        _tapSY = Math.round((-v.y * 0.5 + 0.5) * 720);
+      } else {
+        const c = cubeScreenXY();
+        _tapSX = c.x; _tapSY = c.y;
+      }
+      
+      // === 1:1 wie training Z 4424-4445 ===
+      const _SY = 740;
+      const _handAdj = 11;
+      setHandPos(_tapSX, _SY);
+      handEl.style.opacity = '1';
+      if (typeof updateHandShadow === 'function') updateHandShadow(_tapSX, _SY, true);
+      const _moveP = moveHandSmooth(_tapSX, _tapSY + _handAdj, 900);
+      await sleep(400);
+      await _moveP;
+      // Long-Tap-Halt
+      await sleep(800);
+      // Slot öffnen via _revealedNow
+      if (hitSlotIdx >= 0) {
+        const fs = faceSlots[topFace];
+        const gridKey = slotKeyMap[topFace][hitSlotIdx];
+        if (fs && fs.slotMap[gridKey]) {
+          fs.slotMap[gridKey]._revealedNow = true;
+          if (typeof rebuildFaceMat === 'function') rebuildFaceMat(topFace, 1);
+        }
+      }
+      await sleep(800);
+      // Hand zurück nach Süden
+      await moveHandSmooth(_tapSX, _SY, 600);
+      handEl.style.opacity = '0';
+      if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
+      await sleep(400);
+      // Gewinn-Szenario
+      if (typeof window._queenWin === 'function') window._queenWin();
     }
     
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
