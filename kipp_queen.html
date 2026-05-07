@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-38</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-39</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1995,21 +1995,22 @@
     
     // Tutorial: Hand-Sequenz nach Pokal-Pulsation
     async function _queenTutorialPokalSequence() {
-      // Hand am südlichen Displayrand erstellen
+      // Hand am südlichen Displayrand erstellen — direkt im body (nicht uiOverlay), damit Hand über Pokal liegt
       let hand = document.getElementById('queenIntroHand');
       if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
       hand = document.createElement('img');
       hand.id = 'queenIntroHand';
       hand.src = 'handgold.webp';
-      hand.style.cssText = 'position:absolute;width:103px;height:auto;z-index:210;pointer-events:none;' +
+      hand.style.cssText = 'position:absolute;width:103px;height:auto;z-index:9999;pointer-events:none;' +
         'opacity:0;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
-      document.getElementById('uiOverlay').appendChild(hand);
+      document.body.appendChild(hand);
       
       // Pokal-Position
       const pokal = document.getElementById('btnBestScores');
       if (!pokal) return;
       const pRect = pokal.getBoundingClientRect();
-      const pokalX = pRect.left + pRect.width / 2 - 23;
+      // Anker-Korrektur: Fingerspitze bei x-1 (statt x-23) → 22px westlicher als alte Berechnung
+      const pokalX = pRect.left + pRect.width / 2 - 1;
       const pokalY = pRect.top + pRect.height / 2 - 30;
       
       // Hand startet 740px (südlicher Rand) unter Pokal-X
@@ -2041,7 +2042,8 @@
       const okBtn = document.querySelector('#queenTrophyGalleryWrap button, #queenTrophyOverlay button');
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
-        const okX = okRect.left + okRect.width / 2 - 23;
+        // Anker-Korrektur: -1 statt -23 (22px westlicher)
+        const okX = okRect.left + okRect.width / 2 - 1;
         const okY = okRect.top + okRect.height / 2 - 30;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
         hand.style.left = okX + 'px';
@@ -8904,7 +8906,8 @@
       if (!highheelsEl) return;
       // Bildschirm-Mitte des Highheels-Items berechnen
       const rect = highheelsEl.getBoundingClientRect();
-      const targetX = rect.left + rect.width / 2 - 23; // -23 = Hand-Anker
+      // Anker-Korrektur: -1 statt -23 (22px westlicher)
+      const targetX = rect.left + rect.width / 2 - 1;
       const targetY = rect.top + rect.height / 2 - 30;
       
       // Hand smooth zur Highheels-Mitte bewegen
@@ -8931,7 +8934,8 @@
       const okBtn = document.getElementById('statusPreviewOK');
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
-        const okX = okRect.left + okRect.width / 2 - 23;
+        // Anker-Korrektur: -1 statt -23 (22px westlicher)
+        const okX = okRect.left + okRect.width / 2 - 1;
         const okY = okRect.top + okRect.height / 2 - 30;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
         hand.style.left = okX + 'px';
