@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-40</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-42</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2009,9 +2009,9 @@
       const pokal = document.getElementById('btnBestScores');
       if (!pokal) return;
       const pRect = pokal.getBoundingClientRect();
-      // 22px westlicher als zuvor (von -1 auf -23)
-      const pokalX = pRect.left + pRect.width / 2 - 23;
-      const pokalY = pRect.top + pRect.height / 2 - 30;
+      const _hpP = _queenHandPosForCenter(pRect.left + pRect.width / 2, pRect.top + pRect.height / 2);
+      const pokalX = _hpP.left;
+      const pokalY = _hpP.top;
       
       // Hand startet 740px (südlicher Rand) unter Pokal-X
       hand.style.left = pokalX + 'px';
@@ -2039,12 +2039,12 @@
       await _qSleep(900); // Galerie-Einblendung abwarten
       
       // Hand zum OK-Button der Galerie wandern
-      const okBtn = document.querySelector('#queenTrophyGalleryWrap button, #queenTrophyOverlay button');
+      const okBtn = document.getElementById('queenTrophyOK');
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
-        // Anker-Korrektur: -1 statt -23 (22px westlicher)
-        const okX = okRect.left + okRect.width / 2 - 1;
-        const okY = okRect.top + okRect.height / 2 - 30;
+        const _hpOK = _queenHandPosForCenter(okRect.left + okRect.width / 2, okRect.top + okRect.height / 2);
+        const okX = _hpOK.left;
+        const okY = _hpOK.top;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
         hand.style.left = okX + 'px';
         hand.style.top = okY + 'px';
@@ -8906,9 +8906,9 @@
       if (!highheelsEl) return;
       // Bildschirm-Mitte des Highheels-Items berechnen
       const rect = highheelsEl.getBoundingClientRect();
-      // Anker-Korrektur: -1 statt -23 (22px westlicher)
-      const targetX = rect.left + rect.width / 2 - 1;
-      const targetY = rect.top + rect.height / 2 - 30;
+      const _hp = _queenHandPosForCenter(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      const targetX = _hp.left;
+      const targetY = _hp.top;
       
       // Hand smooth zur Highheels-Mitte bewegen
       const startLeft = parseFloat(hand.style.left) || 0;
@@ -8934,9 +8934,9 @@
       const okBtn = document.getElementById('statusPreviewOK');
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
-        // 17px westlicher (von -1 auf -18) und 18px südlicher (von -30 auf -12)
-        const okX = okRect.left + okRect.width / 2 - 18;
-        const okY = okRect.top + okRect.height / 2 - 12;
+        const _hp2 = _queenHandPosForCenter(okRect.left + okRect.width / 2, okRect.top + okRect.height / 2);
+        const okX = _hp2.left;
+        const okY = _hp2.top;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
         hand.style.left = okX + 'px';
         hand.style.top = okY + 'px';
@@ -8961,6 +8961,21 @@
     }
     
     function _qSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    
+    // Fingerspitzen-Anker der handgold.webp-Datei
+    // Original 308x448 Pixel, Anzeigebreite 103px → Scale 103/308 = 0.3344
+    // Fingerspitze in Originalkoordinaten: x=75, y=2
+    // In Anzeigekoordinaten relativ zum linken oberen Eckpunkt: x=25, y=1
+    const _QUEEN_HAND_ANCHOR_X = 25;
+    const _QUEEN_HAND_ANCHOR_Y = 1;
+    
+    // Berechnet linke obere Ecke der Hand-Datei, sodass Fingerspitze exakt auf (centerX, centerY) liegt
+    function _queenHandPosForCenter(centerX, centerY) {
+      return {
+        left: centerX - _QUEEN_HAND_ANCHOR_X,
+        top:  centerY - _QUEEN_HAND_ANCHOR_Y
+      };
+    }
     
     // Tutorial-Klicksperre entfernen (wird vom Win/Long-Tap-Ende gerufen)
     function _queenRemoveTutBlocker() {
