@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-15</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-16</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2285,6 +2285,8 @@
       });
       hand.style.opacity = '0';
       setTimeout(() => { if (hand.parentNode) hand.parentNode.removeChild(hand); }, 400);
+      // Nach Einkreisen: Hand kippt den Würfel zum Treffer
+      setTimeout(() => { _queenAutoKippToHit(); }, 600);
     }
     function _queenMoveHand(hand, setPos, fromX, fromY, toX, toY, durMs) {
       return new Promise(resolve => {
@@ -2298,6 +2300,132 @@
         }
         requestAnimationFrame(tick);
       });
+    }
+    
+    // === Sim: Mindest-Kipps + Richtung zum Treffer ===
+    // Returns {steps: 1..6, dir: 'cw'|'ccw'} oder null
+    function _queenSimKippsToHit(initQ, initFace, code) {
+      const _COL_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
+      const _faceCw = { f2: 'f0', f0: 'f1', f1: 'f2' };
+      const _faceCcw = { f2: 'f1', f1: 'f0', f0: 'f2' };
+      const _faceOff = { f0: 0, f1: 4, f2: 8 };
+      const _slotsH = ['S1','S2','S3','S4'];
+      function checkHit(Q, face) {
+        const off = _faceOff[face];
+        if (off === undefined) return false;
+        for (let si = 0; si < 4; si++) {
+          const z = deck[off + si];
+          const c = SLOT_NEIGHBOR_COLORS[Q] && SLOT_NEIGHBOR_COLORS[Q][_slotsH[si]];
+          if (!z || !c) continue;
+          const letter = 'ABCDEFGHIJKL'[z - 1];
+          const num = _COL_TO_NUM[c];
+          if (letter && num && (letter + '-' + num) === code) return true;
+        }
+        return false;
+      }
+      let bestSteps = -1, bestDir = null;
+      for (const dir of ['cw', 'ccw']) {
+        let Q = initQ, face = initFace;
+        for (let step = 1; step <= 6; step++) {
+          if (dir === 'cw') {
+            Q = (Q - 1 + 4) % 4;
+            face = _faceCw[face];
+          } else {
+            Q = (Q + 1) % 4;
+            face = _faceCcw[face];
+          }
+          if (checkHit(Q, face)) {
+            if (bestSteps < 0 || step < bestSteps) {
+              bestSteps = step;
+              bestDir = dir;
+            }
+            break;
+          }
+        }
+      }
+      if (bestSteps < 0) return null;
+      return { steps: bestSteps, dir: bestDir };
+    }
+    
+    // Sequenzen pro Mindest-Kippanzahl: '+' = richtige Richtung, '-' = entgegengesetzt
+    const _queenKippSequences = {
+      1: ['+','+','+','-','-'],            // 3 hin, 2 zurück
+      2: ['-','+','+','+'],                // 1 falsch, 3 zurück (= +2 netto)
+      3: ['+','+','+','+','-'],            // 4 hin, 1 zurück
+      4: ['+','+','+','-','+','+'],        // 3 hin, 1 zurück, 2 hin
+      5: ['+','+','+','-','+','+','+'],    // 3 hin, 1 zurück, 3 hin
+      6: ['+','+','+','+','-','+','+','+'] // 4 hin, 1 zurück, 3 hin
+    };
+    
+    async function _queenAutoKippToHit() {
+      if (!window._queenActiveCode) return;
+      const sim = _queenSimKippsToHit(currentQuadrant, topFace, window._queenActiveCode);
+      if (!sim) return;
+      const seq = _queenKippSequences[sim.steps];
+      if (!seq) return;
+      const oppDir = (sim.dir === 'cw') ? 'ccw' : 'cw';
+      // Hand-Element (handgold.webp)
+      let hand = document.getElementById('queenKippHand');
+      if (!hand) {
+        hand = document.createElement('img');
+        hand.id = 'queenKippHand';
+        hand.src = 'handgold.webp';
+        hand.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:30;opacity:0;will-change:transform;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
+        document.getElementById('uiOverlay').appendChild(hand);
+      }
+      function _setPos(x, y) {
+        hand.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
+      }
+      // Würfel-Bildschirm-Position
+      function _cubeXY() {
+        const p = cube.position.clone().project(camera);
+        return { x: (p.x * 0.5 + 0.5) * 360, y: (-p.y * 0.5 + 0.5) * 720 };
+      }
+      // Kipp-Pixel-Richtung pro Quadrant (vereinfacht: cw geht bei Q3 nach Norden = -y)
+      function _kippOff(Q, dir) {
+        // cw: Würfel kippt nach Norden bei Q3, Osten bei Q0, Süden bei Q1, Westen bei Q2
+        // ccw umgekehrt
+        const cwMap = { 3: {dx: 0, dy: -1}, 0: {dx: 1, dy: 0}, 1: {dx: 0, dy: 1}, 2: {dx: -1, dy: 0} };
+        const m = cwMap[Q];
+        if (!m) return {dx: 0, dy: -1};
+        if (dir === 'cw') return m;
+        return {dx: -m.dx, dy: -m.dy};
+      }
+      
+      for (const sym of seq) {
+        const stepDir = (sym === '+') ? sim.dir : oppDir;
+        const kippDir = (stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        if (!kippDir) continue;
+        const c = _cubeXY();
+        const off = _kippOff(currentQuadrant, stepDir);
+        const len = 112;
+        const nx = off.dx * len;
+        const ny = off.dy * len;
+        _setPos(c.x, c.y);
+        hand.style.opacity = '1';
+        await new Promise(r => setTimeout(r, 200));
+        isAnimating = false;
+        kippDirection = stepDir;
+        const kippP = performKipp(kippDir, 800);
+        const swipeDur = 220;
+        const swipeStart = performance.now();
+        await new Promise(resolve => {
+          function frame() {
+            const t = Math.min((performance.now() - swipeStart) / swipeDur, 1);
+            const e = t * t;
+            _setPos(c.x + nx * e, c.y + ny * e);
+            if (t < 1) requestAnimationFrame(frame);
+            else resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+        hand.style.opacity = '0';
+        await kippP;
+        advanceTopFace();
+        await new Promise(r => setTimeout(r, 400));
+      }
+      // Hand entfernen
+      setTimeout(() => { if (hand.parentNode) hand.parentNode.removeChild(hand); }, 400);
     }
     
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
