@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-21</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-22</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2361,25 +2361,51 @@
       if (!window._queenActiveCode) return;
       const sim = _queenSimKippsToHit(currentQuadrant, topFace, window._queenActiveCode);
       if (!sim) return;
-      const seq = _queenKippSequences[sim.steps];
-      if (!seq) return;
+      const seqMap = _queenKippSequences[sim.steps];
+      if (!seqMap) return;
       const oppDir = (sim.dir === 'cw') ? 'ccw' : 'cw';
-      // Replay-Modus aktivieren damit handKippAnim läuft, Hand-Element initialisieren
-      const _wasReplay = replayActive;
-      replayActive = true;
+      // Queen-Sequenz '+' / '-' → cw/ccw übersetzen
+      const _seq = seqMap.map(s => (s === '+') ? sim.dir : oppDir);
+      
+      // === ab hier: 1:1 wie training BUMBLEBRAIN-Tutorial Z 4304-4339 ===
       if (typeof initHandEl === 'function') initHandEl();
       // Hand-Bild auf gold umstellen für Queen
       if (typeof handEl !== 'undefined' && handEl) handEl.src = 'handgold.webp';
-      
-      for (const sym of seq) {
-        const stepDir = (sym === '+') ? sim.dir : oppDir;
-        const kippDir = (stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
-        if (!kippDir) continue;
-        kippDirection = stepDir;
-        await handKippAnim(kippDir, 800);
-        await new Promise(r => setTimeout(r, 200));
+      for (const _stepDir of _seq) {
+        const _kippDir = (_stepDir === 'cw') ? CW_KIPP[currentQuadrant] : CCW_KIPP[currentQuadrant];
+        if (!_kippDir) continue;
+        const c = cubeScreenXY();
+        const fullOff = kippPixelDir(_kippDir);
+        const len = Math.sqrt(fullOff.dx * fullOff.dx + fullOff.dy * fullOff.dy);
+        const nx = fullOff.dx / len * 112;
+        const ny = fullOff.dy / len * 112;
+        setHandPos(c.x, c.y);
+        handEl.style.opacity = '1';
+        if (typeof updateHandShadow === 'function') updateHandShadow(c.x, c.y, true);
+        await sleep(200);
+        isAnimating = false;
+        kippDirection = _stepDir;
+        const kippP = performKipp(_kippDir, 800);
+        const swipeDur = 220;
+        const swipeStart = Date.now();
+        await new Promise(resolve => {
+          function frame() {
+            const elapsed = Date.now() - swipeStart;
+            const t = Math.min(elapsed / swipeDur, 1);
+            const eased = t * t;
+            setHandPos(c.x + nx * eased, c.y + ny * eased);
+            if (typeof updateHandShadow === 'function') updateHandShadow(c.x + nx * eased, c.y + ny * eased, true);
+            if (t < 1) requestAnimationFrame(frame);
+            else resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+        handEl.style.opacity = '0';
+        if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
+        await kippP;
+        advanceTopFace();
+        await sleep(400);
       }
-      replayActive = _wasReplay;
     }
     
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
