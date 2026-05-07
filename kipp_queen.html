@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-29</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-32</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2412,31 +2412,14 @@
     
     async function _queenLongTapAndWin() {
       if (!window._queenActiveCode) return;
-      // Treffer-Slot identifizieren (S1..S4 auf Top-Face)
-      const _COL_TO_NUM = { orange: 1, gruen: 2, violett: 3, blau: 4 };
-      const faceOffMap = { f0: 0, f1: 4, f2: 8 };
-      const off = faceOffMap[topFace];
-      const slotsH = ['S1','S2','S3','S4'];
-      let hitSlotIdx = -1;
-      for (let si = 0; si < 4; si++) {
-        const z = deck[off + si];
-        const c = SLOT_NEIGHBOR_COLORS[currentQuadrant][slotsH[si]];
-        if (!z || !c) continue;
-        const letter = 'ABCDEFGHIJKL'[z - 1];
-        const num = _COL_TO_NUM[c];
-        if (letter && num && (letter + '-' + num) === window._queenActiveCode) {
-          hitSlotIdx = si; break;
-        }
-      }
-      // Slot-Index → grid-key pro Face (gemäß slotMap-Reihenfolge)
-      const slotKeyMap = {
-        f0: ['2,0', '1,0', '0,1', '0,2'],
-        f1: ['0,0', '0,1', '1,2', '2,2'],
-        f2: ['2,2', '2,1', '1,0', '0,0']
-      };
+      // Code "G-3" → Buchstabe → deck-Index (1:1 wie card.html: deck.indexOf(12))
+      const codeStr = window._queenActiveCode;
+      const letter = codeStr.charAt(0);
+      const buchstabenZahl = 'ABCDEFGHIJKL'.indexOf(letter) + 1;
+      const aceIdx = deck.indexOf(buchstabenZahl);
       
-      // Slot-Position 1:1 wie card.html getSlotScreen (Z 5246-5282)
-      function _getSlotScreen(dIdx) {
+      // getSlotScreen 1:1 aus card.html Z 5246-5282
+      function getSlotScreen(dIdx) {
         var half = 0.234375, cellSz = 0.15625;
         var fMap = {
           f0: [[0,'2,0'],[1,'1,0'],[2,'0,1'],[3,'0,2']],
@@ -2473,38 +2456,44 @@
         };
       }
       
-      let _tapSX, _tapSY;
-      if (hitSlotIdx >= 0) {
-        const deckIdx = off + hitSlotIdx;
-        const sp = _getSlotScreen(deckIdx);
-        _tapSX = sp.x;
-        _tapSY = sp.y;
-      } else {
-        const c = cubeScreenXY();
-        _tapSX = c.x; _tapSY = c.y;
-      }
+      // === 1:1 wie card.html Z 5523-5675 ===
+      var aceSlotPos = getSlotScreen(aceIdx);
+      var tapSX = aceSlotPos.x;
+      var tapSY = aceSlotPos.y;
       
-      // === Long-Tap 1:1 wie card.html: Hand direkt auf Slot-Mitte (kein Offset) ===
-      const _SY = 740;
-      setHandPos(_tapSX, _SY);
+      var SY_M = 740;
+      setHandPos(tapSX, SY_M);
       handEl.style.opacity = '1';
-      if (typeof updateHandShadow === 'function') updateHandShadow(_tapSX, _SY, true);
-      const _moveP = moveHandSmooth(_tapSX, _tapSY, 900);
+      if (typeof updateHandShadow === 'function') updateHandShadow(tapSX, SY_M, true);
+      var moveP_M = moveHandSmooth(tapSX, tapSY, 900);
       await sleep(400);
-      await _moveP;
-      // Long-Tap-Halt
-      await sleep(800);
-      // Slot öffnen via _revealedNow
-      if (hitSlotIdx >= 0) {
-        const fs = faceSlots[topFace];
-        const gridKey = slotKeyMap[topFace][hitSlotIdx];
-        if (fs && fs.slotMap[gridKey]) {
-          fs.slotMap[gridKey]._revealedNow = true;
-          if (typeof rebuildFaceMat === 'function') rebuildFaceMat(topFace, 1);
+      await moveP_M;
+      await sleep(1200);
+      await sleep(900);
+      
+      // Slot aufdecken (Würfel-Slot mit dem deck-Index)
+      const slotKeyMapByDeck = {
+        f0: { 0:'2,0', 1:'1,0', 2:'0,1', 3:'0,2' },
+        f1: { 4:'0,0', 5:'0,1', 6:'1,2', 7:'2,2' },
+        f2: { 8:'2,2', 9:'2,1', 10:'1,0', 11:'0,0' }
+      };
+      let _hitFace = null, _hitGridKey = null;
+      for (const fk of ['f0','f1','f2']) {
+        if (slotKeyMapByDeck[fk][aceIdx] !== undefined) {
+          _hitFace = fk;
+          _hitGridKey = slotKeyMapByDeck[fk][aceIdx];
+          break;
+        }
+      }
+      if (_hitFace && _hitGridKey) {
+        const fs = faceSlots[_hitFace];
+        if (fs && fs.slotMap[_hitGridKey]) {
+          fs.slotMap[_hitGridKey]._revealedNow = true;
+          if (typeof rebuildFaceMat === 'function') rebuildFaceMat(_hitFace, 1);
         }
       }
       await sleep(800);
-      // Hand komplett verschwinden lassen (wird nicht mehr gebraucht)
+      
       handEl.style.opacity = '0';
       if (typeof updateHandShadow === 'function') updateHandShadow(0, 0, false);
       if (handEl.parentNode) handEl.parentNode.removeChild(handEl);
