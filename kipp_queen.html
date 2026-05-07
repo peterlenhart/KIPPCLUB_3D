@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-14</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-15</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2219,7 +2219,86 @@
       window._queenActiveCode = code;
       window._queenSlotsUsedThisRound.add(target);
       _drawCodetafel();
+      // Tutorial-Hand: aktiven Slot einkreisen
+      _queenCircleActiveCode(target);
     };
+    
+    // === Tutorial: Hand kreist aktiven Code ein (wie training.html BUMBLEBRAIN) ===
+    async function _queenCircleActiveCode(slotIdx) {
+      // Slot-Pixel auf Codetafel-Canvas
+      const sp = _codeSlotPos[slotIdx];
+      if (!sp || !window._codetafelMesh) return;
+      // Canvas-Pixel → 3D-Position auf Codetafel-Mesh
+      // Codetafel ist Plane 1.0625 × 0.5926 units, rotation_x = -π/2 (flach), position (0, 0.476, _codeZMid)
+      // Canvas 918×512 → links/oben ist (0,0), rechts/unten (918,512)
+      // dx von Canvas-Mitte: (sp.x - 459) / 918 * 1.0625
+      // Die Plane ist nach -π/2 um X gedreht. In ihrer lokalen XY-Ebene ist X horizontal, Y nach "vorne unten" → in Welt: X bleibt X, Y wird Z
+      const _mesh = window._codetafelMesh;
+      const _w = 1.0625, _h = 0.5926;
+      const localX = (sp.x - 918/2) / 918 * _w;
+      const localY = -(sp.y - 512/2) / 512 * _h; // Canvas y nach unten, lokal y nach oben
+      // Nach -π/2 X-Rotation: localY (nach oben) → in Welt: -Z (nach Norden)
+      // → World-Pos: meshPos + (localX, 0, -localY)
+      const worldPos = new THREE.Vector3(
+        _mesh.position.x + localX,
+        _mesh.position.y + 0.005,
+        _mesh.position.z - localY
+      );
+      // 3D → Bildschirm-Pixel
+      const _ndc = worldPos.clone().project(camera);
+      const _cx = (_ndc.x * 0.5 + 0.5) * 360;
+      const _cy = (-_ndc.y * 0.5 + 0.5) * 720;
+      
+      // Hand-Element (handgold.webp)
+      let hand = document.getElementById('queenCircleHand');
+      if (!hand) {
+        hand = document.createElement('img');
+        hand.id = 'queenCircleHand';
+        hand.src = 'handgold.webp';
+        hand.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:30;opacity:0;transition:opacity 0.25s ease;will-change:transform;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
+        document.getElementById('uiOverlay').appendChild(hand);
+      }
+      function _setPos(x, y) {
+        hand.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
+      }
+      const _radius = 38;
+      // Hand erscheint südlich des Slots
+      const _startY = _cy + _radius + 80;
+      _setPos(_cx, _startY);
+      hand.style.opacity = '1';
+      // Smooth zum unteren Punkt des Kreises (90°)
+      await _queenMoveHand(hand, _setPos, _cx, _startY, _cx, _cy + _radius, 500);
+      // 1.5 Umkreisungen (540°) gegen Uhrzeigersinn, Start unten
+      const _circDur = 1500;
+      const _circStart = performance.now();
+      await new Promise(r => {
+        function _animCirc() {
+          const t = Math.min((performance.now() - _circStart) / _circDur, 1);
+          const ang = (90 - 540 * t) * Math.PI / 180;
+          const x = _cx + _radius * Math.cos(ang);
+          const y = _cy + _radius * Math.sin(ang);
+          _setPos(x, y);
+          if (t < 1) requestAnimationFrame(_animCirc);
+          else r();
+        }
+        _animCirc();
+      });
+      hand.style.opacity = '0';
+      setTimeout(() => { if (hand.parentNode) hand.parentNode.removeChild(hand); }, 400);
+    }
+    function _queenMoveHand(hand, setPos, fromX, fromY, toX, toY, durMs) {
+      return new Promise(resolve => {
+        const startT = performance.now();
+        function tick() {
+          const t = Math.min((performance.now() - startT) / durMs, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          setPos(fromX + (toX - fromX) * e, fromY + (toY - fromY) * e);
+          if (t < 1) requestAnimationFrame(tick);
+          else { setPos(toX, toY); resolve(); }
+        }
+        requestAnimationFrame(tick);
+      });
+    }
     
     // Datei 616×364 → bei 3× Retina = 205×121 px Anzeige
     // Datei 918×512 → bei 3× Retina = 306×170.67 px Anzeige
