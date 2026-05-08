@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-46</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-47</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1756,14 +1756,13 @@
     window._queenNextKipp = function() {
       if (typeof runKippEckblick !== 'function') return;
       window._kippEckblickRunning = true;
-      // Tutorial: Hand tippt nach halbierter Eckblick-Phase auf Auge-Mitte
-      // Eckblick-Halten = 11500ms, halbiert = 5750ms
+      // Tutorial: Halten-Phase mit geneigtem Würfel auf 2 Sek verkürzen
       if (!window._queenSkipTutorial) {
         setTimeout(() => {
           if (window._kippEckblickRunning) {
-            _queenTutorialTapEckblick();
+            kipp21KniffAbort = true;
           }
-        }, 5750);
+        }, 2000);
       }
       runKippEckblick().finally(() => {
         window._kippEckblickRunning = false;
