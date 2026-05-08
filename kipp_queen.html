@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-45</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-46</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1756,13 +1756,14 @@
     window._queenNextKipp = function() {
       if (typeof runKippEckblick !== 'function') return;
       window._kippEckblickRunning = true;
-      // Tutorial: Nach 2s Auge-Anzeige Hand auf Würfel-Ecke klicken, um Eckblick zu beenden
+      // Tutorial: Hand tippt nach halbierter Eckblick-Phase auf Auge-Mitte
+      // Eckblick-Halten = 11500ms, halbiert = 5750ms
       if (!window._queenSkipTutorial) {
         setTimeout(() => {
           if (window._kippEckblickRunning) {
             _queenTutorialTapEckblick();
           }
-        }, 2000);
+        }, 5750);
       }
       runKippEckblick().finally(() => {
         window._kippEckblickRunning = false;
@@ -1775,26 +1776,39 @@
       });
     };
     
-    // Tutorial: Hand klickt Würfel-Ecke (1:1 wie training Z 4234-4239)
+    // Tutorial: Hand tippt auf Auge-Mitte, beendet Eckblick
     async function _queenTutorialTapEckblick() {
-      console.log('[QUEEN-TUT] Eckblick-Tap gestartet');
+      console.log('[QUEEN-TUT] Auge-Tap gestartet');
+      // Auge-Element-Mitte berechnen
+      const _eyeIcon = document.getElementById('eyeIcon');
+      if (!_eyeIcon) {
+        console.warn('[QUEEN-TUT] eyeIcon nicht gefunden');
+        kipp21KniffAbort = true;
+        return;
+      }
+      const eRect = _eyeIcon.getBoundingClientRect();
+      // Auge-Position relativ zu container (für setHandPos im uiOverlay)
+      const _ctn = document.getElementById('container');
+      const cRect = _ctn ? _ctn.getBoundingClientRect() : { left: 0, top: 0 };
+      const tx = Math.round(eRect.left + eRect.width / 2 - cRect.left);
+      const ty = Math.round(eRect.top + eRect.height / 2 - cRect.top);
+      console.log('[QUEEN-TUT] Auge-Mitte:', tx, ty);
+      
       // Setup damit handTapFromSouth läuft
       if (typeof initHandEl === 'function') initHandEl();
       if (typeof handEl !== 'undefined' && handEl) {
         handEl.src = 'handgold.webp';
-        // Sicherstellen dass Hand sichtbar über alles liegt
         handEl.style.zIndex = '9999';
       }
       const _wasReplay = replayActive;
       replayActive = true;
       try {
-        const tip = _tutGetCubeTopCornerScreen();
-        console.log('[QUEEN-TUT] Tap-Position:', tip);
-        await handTapFromSouth(tip.x, tip.y, 400);
+        await handTapFromSouth(tx, ty, 400);
         console.log('[QUEEN-TUT] Hand-Tap fertig, setze kipp21KniffAbort');
         kipp21KniffAbort = true;
       } catch(e) {
         console.error('[QUEEN-TUT] Fehler:', e);
+        kipp21KniffAbort = true;
       } finally {
         replayActive = _wasReplay;
       }
@@ -3712,6 +3726,8 @@
       // Codetafel UND Tischoverlay ausblenden — nur Würfel + Box sichtbar
       if (window._codetafelMesh) window._codetafelMesh.visible = false;
       if (window._tischoverlay) window._tischoverlay.visible = false;
+      // Flag: Reset-Button auf dieser Seite führt zur Themenauswahl
+      window._queenAtStartChoice = true;
       // Wrap-Container für die 2 Buttons
       let wrap = document.getElementById('queenStartChoiceWrap');
       if (wrap) wrap.remove();
@@ -3736,6 +3752,7 @@
       
       const btnPlay = _mkBtn(_tSpielen, () => {
         window._queenSkipTutorial = true;
+        window._queenAtStartChoice = false;
         wrap.remove();
         if (window._codetafelMesh) window._codetafelMesh.visible = true;
         if (window._tischoverlay) window._tischoverlay.visible = true;
@@ -3743,6 +3760,7 @@
       });
       const btnTut = _mkBtn(_tTutorial, () => {
         window._queenSkipTutorial = false;
+        window._queenAtStartChoice = false;
         // Ursprünglichen Highheels-Trophy-Count merken (für Reset nach Tutorial)
         try {
           window._queenTutorialOrigTrophyCount = parseInt(localStorage.getItem('queen_trophy_0') || '0', 10) || 0;
@@ -13773,9 +13791,9 @@
     // - In allen anderen Phasen → Reset + zurück zum Start-Overlay
     // Quit confirmation handlers
     resetButton.addEventListener('click', () => {
-      // In Auswahl-Phase (Boutique sichtbar) → zur Themenauswahl
-      // Im Spielverlauf → Page-Reload (Spielabbruch, zurück zur Startsituation)
-      if (window._queenWaitForSymbol) {
+      // Auf SPIELEN/TUTORIAL-Auswahlseite → zur Themenauswahl
+      // Sonst (Boutique, Spielverlauf, Win, Game Over) → zur SPIELEN/TUTORIAL-Auswahlseite
+      if (window._queenAtStartChoice) {
         window.location.href = 'index.html';
       } else {
         window.location.href = 'kipp_queen.html?level=masterbrain';
