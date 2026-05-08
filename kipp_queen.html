@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-49</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-51</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1756,17 +1756,8 @@
     window._queenNextKipp = function() {
       if (typeof runKippEckblick !== 'function') return;
       window._kippEckblickRunning = true;
-      // Tutorial: Eckblick endet nach 5 Auge-Pulsationen (1.5s × 5 = 7500ms)
-      if (!window._queenSkipTutorial) {
-        setTimeout(() => {
-          if (window._kippEckblickRunning) {
-            kipp21KniffAbort = true;
-          }
-        }, 7500);
-      }
       runKippEckblick().finally(() => {
         window._kippEckblickRunning = false;
-        // Random Code (Filter: keine Kombi die der Würfel zeigt)
         const code = _queenRandomCodeSafe();
         window._queenActiveCode = code;
         if (typeof window._setQueenCodeAtNextSlot === 'function') {
@@ -3752,6 +3743,7 @@
       const btnPlay = _mkBtn(_tSpielen, () => {
         window._queenSkipTutorial = true;
         window._queenAtStartChoice = false;
+        KNIFF_SHOW_DURATION = 11500; // Normal-Spiel: volle Dauer
         wrap.remove();
         if (window._codetafelMesh) window._codetafelMesh.visible = true;
         if (window._tischoverlay) window._tischoverlay.visible = true;
@@ -3760,6 +3752,7 @@
       const btnTut = _mkBtn(_tTutorial, () => {
         window._queenSkipTutorial = false;
         window._queenAtStartChoice = false;
+        KNIFF_SHOW_DURATION = 2000; // Tutorial: kurze Eckblick-Dauer
         // Ursprünglichen Highheels-Trophy-Count merken (für Reset nach Tutorial)
         try {
           window._queenTutorialOrigTrophyCount = parseInt(localStorage.getItem('queen_trophy_0') || '0', 10) || 0;
@@ -10059,7 +10052,7 @@
     let kipp21WobbleUsed = 0;
     let kipp21EckblickUsed = 0;
     const KNIFF_MAX_USES = 2; // 2 Eckblick (Karten 0,5), 2 Kippblick (Karten 2,3)
-    const KNIFF_SHOW_DURATION = 11500; // 11,5 Sekunden Showzeit
+    let KNIFF_SHOW_DURATION = 11500; // Default 11,5s, im Tutorial wird auf 2000 gesetzt
     
     function refreshKniffIcons() {
       const allImgs = document.querySelectorAll('#jokerIconsRow img');
