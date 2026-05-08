@@ -999,7 +999,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-61</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-64</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1107,7 +1107,10 @@
         <div id="queenTrophyGrid" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:8px;width:340px;height:540px;">
           <!-- 6 Slots werden via JS gefüllt -->
         </div>
-        <div id="queenTrophyOK" style="width:196px;height:47px;background-image:url(button_kurz_qu_k.webp);background-size:contain;background-repeat:no-repeat;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#f0c050;font-family:'Times New Roman',serif;font-weight:bold;font-size:24px;letter-spacing:0.08em;text-shadow:0 1px 2px rgba(0,0,0,0.95);">OK</div>
+        <div style="display:flex;flex-direction:row;gap:14px;align-items:center;justify-content:center;">
+          <div id="queenTrophyOK" style="width:160px;height:47px;background-image:url(button_kurz_qu_k.webp);background-size:100% 100%;background-repeat:no-repeat;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#f0c050;font-family:'Times New Roman',serif;font-weight:bold;font-size:22px;letter-spacing:0.08em;text-shadow:0 1px 2px rgba(0,0,0,0.95);">OK</div>
+          <div id="queenTrophyShare" style="width:160px;height:47px;background-image:url(button_kurz_qu_k.webp);background-size:100% 100%;background-repeat:no-repeat;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#f0c050;font-family:'Times New Roman',serif;font-weight:bold;font-size:22px;letter-spacing:0.08em;text-shadow:0 1px 2px rgba(0,0,0,0.95);">TEILEN</div>
+        </div>
       </div>
     </div>
     <div id="statusScrollWrap" style="display:none;position:absolute;left:12px;width:calc(100% - 24px);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:60;pointer-events:auto;">
@@ -1958,15 +1961,20 @@
       // Pokal-Element schon mal holen für die Schritte 2 + 3
       const pokal = document.getElementById('btnBestScores');
       
+      // Tutorial: Slot 1s länger sichtbar, Großbild 1s kürzer (sonst Standard-Timing)
+      const _isTut = !window._queenSkipTutorial;
+      const _t_fadeStart = _isTut ? 1050 : 50;       // Wartezeit bevor Großbild fadet
+      const _t_winShow = _isTut ? 1000 : 2000;       // Wie lange Großbild sichtbar
+      
       // Schritt 1: Fade-In über 1.5s (Bild + Text)
       setTimeout(() => {
         previewImg.style.transition = 'opacity 1.5s ease';
         previewImg.style.opacity = '1';
         _winLabel.style.transition = 'opacity 1.5s ease';
         _winLabel.style.opacity = '1';
-      }, 50);
+      }, _t_fadeStart);
       
-      // Schritt 2: 2s sichtbar, dann Schrumpf-/Flug-Animation
+      // Schritt 2: nach Sichtbarkeitsphase Schrumpf-/Flug-Animation
       setTimeout(() => {
         if (!pokal) return;
         const pRect = pokal.getBoundingClientRect();
@@ -1981,7 +1989,7 @@
         previewWrap.style.transformOrigin = '50% 50%';
         previewWrap.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + scaleEnd + ')';
         previewWrap.style.opacity = '0.9';
-      }, 1700 + 2000); // 1.5s Fade-In + 200ms + 2s sichtbar
+      }, _t_fadeStart + 1500 + 200 + _t_winShow); // FadeStart + 1.5s Fade-In + 200ms + winShow
       
       // Schritt 3: nach Flug-Animation Großbild weg, Pokal pulsiert
       setTimeout(() => {
@@ -2005,7 +2013,7 @@
             _queenReturnToBoutique();
           }
         }, 3600);
-      }, 1700 + 2000 + 1200);
+      }, _t_fadeStart + 1500 + 200 + _t_winShow + 1200);
     };
     
     // Nach Win zurück in den Spielstart-Zustand mit Boutique
@@ -2218,12 +2226,43 @@
       }
     }
     
-    // OK-Button schließt Galerie
+    // OK-Button schließt Galerie + TEILEN-Button teilt Trophäen-Stand
     setTimeout(() => {
       const okBtn = document.getElementById('queenTrophyOK');
       if (okBtn) {
+        // Beschriftung aus Sprache: keine eigene Übersetzung, OK ist universal
         okBtn.addEventListener('click', _hideQueenTrophyGallery);
         okBtn.addEventListener('touchend', (e) => { e.preventDefault(); _hideQueenTrophyGallery(); }, { passive: false });
+      }
+      const shareBtn = document.getElementById('queenTrophyShare');
+      if (shareBtn) {
+        // Beschriftung aus Sprache
+        shareBtn.textContent = (T.cTeilen || 'TEILEN');
+        const _doShare = () => {
+          const _trophyFiles = ['highheels.webp','handtasche.webp','qu_kette.webp','qu_vip.webp','qu_lambo.webp','qu_jet.webp'];
+          let totalCount = 0;
+          let collected = 0;
+          for (let i = 0; i < 6; i++) {
+            const c = _queenTrophyCount(i);
+            totalCount += c;
+            if (c > 0) collected++;
+          }
+          const _shareUrl = (window._DIGIKIPP_URL || 'https://peterlenhart.github.io/KIPPCLUB_3D/') + 'kipp_queen.html';
+          const _txt = 'KIPP QUEEN \u2014 ' + collected + '/6 ' + (T.qWin || 'Trophäen') + ' (' + totalCount + ' Wins)\n' +
+                       (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
+                       _shareUrl + '\n' +
+                       '#KippClub #KippQueen';
+          if (navigator.share) {
+            navigator.share({ text: _txt }).catch(() => {});
+          } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(_txt).then(() => {
+              shareBtn.textContent = (T.cKopiert || 'KOPIERT!');
+              setTimeout(() => { shareBtn.textContent = (T.cTeilen || 'TEILEN'); }, 2000);
+            }).catch(() => {});
+          }
+        };
+        shareBtn.addEventListener('click', _doShare);
+        shareBtn.addEventListener('touchend', (e) => { e.preventDefault(); _doShare(); }, { passive: false });
       }
     }, 100);
 
