@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KIPP CLUB – NUMBERS</title>
+  <title>KIPP CLUB – QUEEN</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -999,7 +999,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-66</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-67</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2276,7 +2276,7 @@
                        _shareUrl + '\n' +
                        '#KippClub #KippQueen';
           if (navigator.share) {
-            navigator.share({ text: _txt }).catch(() => {});
+            navigator.share({ title: 'KIPP CLUB – QUEEN', text: _txt }).catch(() => {});
           } else if (navigator.clipboard) {
             navigator.clipboard.writeText(_txt).then(() => {
               shareBtn.textContent = (T.cKopiert || 'KOPIERT!');
