@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-47</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-49</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1756,13 +1756,13 @@
     window._queenNextKipp = function() {
       if (typeof runKippEckblick !== 'function') return;
       window._kippEckblickRunning = true;
-      // Tutorial: Halten-Phase mit geneigtem Würfel auf 2 Sek verkürzen
+      // Tutorial: Eckblick endet nach 5 Auge-Pulsationen (1.5s × 5 = 7500ms)
       if (!window._queenSkipTutorial) {
         setTimeout(() => {
           if (window._kippEckblickRunning) {
             kipp21KniffAbort = true;
           }
-        }, 2000);
+        }, 7500);
       }
       runKippEckblick().finally(() => {
         window._kippEckblickRunning = false;
@@ -3248,9 +3248,9 @@
         tischoverlay.updateMatrix();
         scene.add(tischoverlay);
         window._tischoverlay = tischoverlay;
-        // Während Auswahl-Phase: Overlay sichtbar (verdeckt Spielfläche darunter)
-        // Codetafel ist auch verdeckt, da unter Overlay
-        tischoverlay.visible = true;
+        // Falls SPIELEN/TUTORIAL-Auswahl aktiv ist beim Texture-Load, Overlay unsichtbar
+        // (sonst würde das Overlay nachträglich die Buttons auf der Spielansicht verdecken)
+        tischoverlay.visible = !window._queenAtStartChoice;
       });
       
       // Richtungsbuttons CW (west) und CCW (ost)
