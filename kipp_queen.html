@@ -999,7 +999,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-59</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-60</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2129,21 +2129,6 @@
       // Tutorial-Klicksperre aufheben
       _queenRemoveTutBlocker();
       
-      // Tutorial-Ende: zurück zur SPIELEN/TUTORIAL-Auswahlseite
-      // Tischoverlay aus, Codetafel aus, Scrollband aus
-      if (window._tischoverlay) window._tischoverlay.visible = false;
-      if (window._codetafelMesh) window._codetafelMesh.visible = false;
-      const _scrollWrap = document.getElementById('statusScrollWrap');
-      if (_scrollWrap) {
-        _scrollWrap.style.display = 'none';
-        _scrollWrap.style.transition = '';
-        _scrollWrap.style.opacity = '1';
-      }
-      const _bt = document.getElementById('boutiqueText');
-      if (_bt) _bt.style.display = 'none';
-      // GEWONNEN-Label entfernen (falls vorhanden)
-      const _wl = document.getElementById('queenWinLabel');
-      if (_wl && _wl.parentNode) _wl.parentNode.removeChild(_wl);
       // Aufgedeckten Slot wieder verdecken (alle _revealedNow zurücksetzen)
       ['f0','f1','f2'].forEach(fk => {
         const fs = faceSlots[fk];
@@ -2153,18 +2138,9 @@
         }
         if (typeof rebuildFaceMat === 'function') rebuildFaceMat(fk, 1);
       });
-      // Spielzustand zurücksetzen
-      window._queenWaitForSymbol = true;
-      window._codeStichZiel = 0;
-      window._selectedStatusIdxFinal = undefined;
-      window._queenSlotsUsedThisRound = new Set();
-      window._queenActiveCode = null;
-      window._queenActiveSlotIdx = -1;
-      if (typeof _codetafelCodes !== 'undefined') {
-        for (let i = 0; i < 6; i++) { _codetafelCodes[i] = ''; _codetafelHits[i] = false; }
-      }
-      // SPIELEN/TUTORIAL-Auswahlseite anzeigen
-      _showQueenStartChoice();
+      
+      // Spieler darf jetzt selbstständig weiterspielen → Boutique einblenden
+      _queenReturnToBoutique();
     }
     
     function _getPokalEl() { return document.getElementById('btnBestScores'); }
