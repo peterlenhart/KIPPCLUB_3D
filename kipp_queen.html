@@ -999,7 +999,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-53</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-57</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -2523,10 +2523,10 @@
         let Q = initQ, face = initFace;
         for (let step = 1; step <= 6; step++) {
           if (dir === 'cw') {
-            Q = (Q - 1 + 4) % 4;
+            Q = (Q + 1) % 4;
             face = _faceCw[face];
           } else {
-            Q = (Q + 1) % 4;
+            Q = (Q - 1 + 4) % 4;
             face = _faceCcw[face];
           }
           if (checkHit(Q, face)) {
@@ -2607,11 +2607,34 @@
     
     async function _queenLongTapAndWin() {
       if (!window._queenActiveCode) return;
-      // Code "G-3" → Buchstabe → deck-Index (1:1 wie card.html: deck.indexOf(12))
+      // Code "G-3" → Buchstabe + Farb-Nummer
       const codeStr = window._queenActiveCode;
       const letter = codeStr.charAt(0);
       const buchstabenZahl = 'ABCDEFGHIJKL'.indexOf(letter) + 1;
-      const aceIdx = deck.indexOf(buchstabenZahl);
+      
+      // Treffer-Slot in der AKTUELLEN Würfel-Pose finden
+      // (Top-Face + Quadrant-Farbe muss zum Code passen)
+      const _COL_TO_NUM_LT = { orange: 1, gruen: 2, violett: 3, blau: 4 };
+      const _faceOff = { f0: 0, f1: 4, f2: 8 };
+      const _slotsH = ['S1','S2','S3','S4'];
+      const off = _faceOff[topFace];
+      let aceIdx = -1;
+      for (let si = 0; si < 4; si++) {
+        const z = deck[off + si];
+        const c = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotsH[si]];
+        if (!z || !c) continue;
+        const slotLetter = 'ABCDEFGHIJKL'[z - 1];
+        const num = _COL_TO_NUM_LT[c];
+        if (slotLetter && num && (slotLetter + '-' + num) === codeStr) {
+          aceIdx = off + si;
+          break;
+        }
+      }
+      // Eine der 6 Kippsequenzen führt immer zum Code → kein Fallback nötig
+      if (aceIdx < 0) {
+        console.error('[QUEEN-TUT] BUG: Kein Treffer in aktueller Pose für Code', codeStr, '- Q=' + currentQuadrant + ' face=' + topFace);
+        return;
+      }
       
       // getSlotScreen 1:1 aus card.html Z 5246-5282
       function getSlotScreen(dIdx) {
