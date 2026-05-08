@@ -998,7 +998,7 @@
   </style>
 </head>
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-42</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. AC-44</div>
   <div id="container"></div>
   
   <!-- START-OVERLAY -->
@@ -1756,6 +1756,14 @@
     window._queenNextKipp = function() {
       if (typeof runKippEckblick !== 'function') return;
       window._kippEckblickRunning = true;
+      // Tutorial: Nach 2s Auge-Anzeige Hand auf Würfel-Ecke klicken, um Eckblick zu beenden
+      if (!window._queenSkipTutorial) {
+        setTimeout(() => {
+          if (window._kippEckblickRunning) {
+            _queenTutorialTapEckblick();
+          }
+        }, 2000);
+      }
       runKippEckblick().finally(() => {
         window._kippEckblickRunning = false;
         // Random Code (Filter: keine Kombi die der Würfel zeigt)
@@ -1766,6 +1774,19 @@
         }
       });
     };
+    
+    // Tutorial: Hand klickt Würfel-Ecke (1:1 wie training Z 4234-4239)
+    async function _queenTutorialTapEckblick() {
+      // Setup damit handTapFromSouth läuft
+      if (typeof initHandEl === 'function') initHandEl();
+      if (typeof handEl !== 'undefined' && handEl) handEl.src = 'handgold.webp';
+      const _wasReplay = replayActive;
+      replayActive = true;
+      const tip = _tutGetCubeTopCornerScreen();
+      await handTapFromSouth(tip.x, tip.y, 400);
+      kipp21KniffAbort = true;
+      replayActive = _wasReplay;
+    }
     
     // Game Over
     window._queenGameOver = function() {
@@ -1989,6 +2010,12 @@
       if (typeof _codetafelCodes !== 'undefined') {
         for (let i = 0; i < 6; i++) { _codetafelCodes[i] = ''; _codetafelHits[i] = false; }
       }
+      // Scrollband-Container Opacity zurücksetzen (war beim Spielstart auf 0 gefadet)
+      const _scrollWrap = document.getElementById('statusScrollWrap');
+      if (_scrollWrap) {
+        _scrollWrap.style.transition = '';
+        _scrollWrap.style.opacity = '1';
+      }
       // Boutique mit Hinweistext + Scrollband einblenden
       if (typeof initStatusScrollband === 'function') initStatusScrollband();
     }
@@ -2003,13 +2030,20 @@
       hand.src = 'handgold.webp';
       hand.style.cssText = 'position:absolute;width:103px;height:auto;z-index:9999;pointer-events:none;' +
         'opacity:0;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7));';
-      document.body.appendChild(hand);
+      // In #container statt body — Layout-Shift vermeiden, da Container feste Breite hat
+      const _hostContainer = document.getElementById('container') || document.body;
+      _hostContainer.appendChild(hand);
       
       // Pokal-Position
       const pokal = document.getElementById('btnBestScores');
       if (!pokal) return;
       const pRect = pokal.getBoundingClientRect();
-      const _hpP = _queenHandPosForCenter(pRect.left + pRect.width / 2, pRect.top + pRect.height / 2);
+      // Container-Offset ermitteln, damit getBoundingClientRect (Viewport) zu Container-relativ wird
+      const _ctnRect = _hostContainer.getBoundingClientRect();
+      const _hpP = _queenHandPosForCenter(
+        pRect.left + pRect.width / 2 - _ctnRect.left,
+        pRect.top + pRect.height / 2 - _ctnRect.top
+      );
       const pokalX = _hpP.left;
       const pokalY = _hpP.top;
       
@@ -2042,7 +2076,11 @@
       const okBtn = document.getElementById('queenTrophyOK');
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
-        const _hpOK = _queenHandPosForCenter(okRect.left + okRect.width / 2, okRect.top + okRect.height / 2);
+        const _ctnRect2 = _hostContainer.getBoundingClientRect();
+        const _hpOK = _queenHandPosForCenter(
+          okRect.left + okRect.width / 2 - _ctnRect2.left,
+          okRect.top + okRect.height / 2 - _ctnRect2.top
+        );
         const okX = _hpOK.left;
         const okY = _hpOK.top;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
@@ -8935,7 +8973,7 @@
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
         const _hp2 = _queenHandPosForCenter(okRect.left + okRect.width / 2, okRect.top + okRect.height / 2);
-        const okX = _hp2.left;
+        const okX = _hp2.left - 6; // 6px westlicher
         const okY = _hp2.top;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
         hand.style.left = okX + 'px';
