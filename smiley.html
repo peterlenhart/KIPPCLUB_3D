@@ -9867,13 +9867,21 @@
       const HAND_SIZE = 90;
       // Fingerspitze soll auf Scrollband-Mitte sitzen (Bandhoehe / 2)
       const handTopOnBand = sbRect.top + sbRect.height / 2 - 4;
-      // X-Positionen: Hand-Bild oben links = Fingerspitze. Wischweg ca. 130px.
-      const wischDelta = 130;
+      // Wisch-Distanz: gross genug, damit Strip-Bewegung deutlich sichtbar ist
+      // Ein numBtn ist 56px breit, Wisch über etwa 3 Buttons = 168px
+      const wischDelta = 168;
       const xCenter = sbRect.left + sbRect.width / 2 - 4;
       const xLeft = xCenter - wischDelta / 2;
       const xRight = xCenter + wischDelta / 2;
       // Startposition unter dem Display (Süden)
       const ySouth = window.innerHeight + 60;
+      
+      // Strip-Initial-Transform-Wert sichern (numerisch in pixels)
+      const stripInitX = (function() {
+        const t = strip.style.transform || '';
+        const m = t.match(/translateX\(([\-\d.]+)px\)/);
+        return m ? parseFloat(m[1]) : 0;
+      })();
       
       // Hand erstellen — im body (über allem)
       let hand = document.getElementById('_smileyTutHand');
@@ -9911,13 +9919,13 @@
         hand.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
         hand.style.transform = 'translate(' + xRight + 'px,' + handTopOnBand + 'px)';
         strip.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
-        strip.style.transform = 'translateX(-' + wischDelta + 'px)';
+        strip.style.transform = 'translateX(' + (stripInitX - wischDelta) + 'px)';
       }, 1100);
       
       // Phase 3 (nach 2300ms): Wisch zurück nach links, Strip mit zurück
       setTimeout(() => {
         hand.style.transform = 'translate(' + xLeft + 'px,' + handTopOnBand + 'px)';
-        strip.style.transform = _origStripTrans;
+        strip.style.transform = 'translateX(' + stripInitX + 'px)';
       }, 2300);
       
       // Phase 4 (nach 3500ms): Hand fährt nach Süden raus
