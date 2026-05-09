@@ -9842,11 +9842,16 @@
         kzHint.id = '_smileyKippZahlHint';
         document.getElementById('container').appendChild(kzHint);
       }
+      // Position vertikal an derselben Stelle wie der sG1-Text vor LOS GEHT'S
+      // (3D-projiziert auf Würfel-Zeile 11.5, dieselbe Höhe wie "Pass gut auf...")
+      const _kzPt = new THREE.Vector3(0, 0.001 + 3 * 0.15625, 0.890625);
+      _kzPt.project(camera);
+      const _kzSy = Math.round((-_kzPt.y * 0.5 + 0.5) * 720) - 42;
       kzHint.innerHTML = T.sKZ || 'Wähle eine KIPP-Zahl<br>von 1 bis 11';
-      kzHint.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:395px;' +
-        'font:bold 21px Arial;letter-spacing:1px;color:#FFD700;line-height:1.2;' +
+      kzHint.style.cssText = 'position:absolute;left:0;width:360px;top:' + (_kzSy + 6) + 'px;' +
+        'font:bold 21px Arial;letter-spacing:1px;color:#FFD700;line-height:1.1;' +
         'text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;' +
-        'z-index:25;pointer-events:none;display:block;white-space:nowrap;';
+        'z-index:25;pointer-events:none;display:block;';
       // Tutorial-Hand-Wisch-Animation (nur einmal pro Spiel)
       _smileyShowScrollTutorialHand();
     }
