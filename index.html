@@ -418,9 +418,18 @@
 
       const gridW = cols * cell;
       const vw = window.innerWidth;
+      const vh = window.innerHeight;
 
       const targetW = vw * 0.94;
-      const scale = Math.min(1, targetW / gridW);
+      // Layout braucht min. 13.5 Zeilen (KIPP KING auf Zeile 12 + Button-Höhe + etwas Puffer)
+      const minRows = 13.5;
+      const targetH = vh * 0.98;
+      const requiredH = minRows * cell;
+      
+      // scale auf Breite UND Höhe begrenzen, damit auf kürzeren Geräten/Tablets nichts abgeschnitten wird
+      const scaleByW = targetW / gridW;
+      const scaleByH = targetH / requiredH;
+      const scale = Math.min(1, scaleByW, scaleByH);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
