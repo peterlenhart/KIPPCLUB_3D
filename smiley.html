@@ -9857,46 +9857,47 @@
       if (window._smileyScrollTutorialDone) return;
       window._smileyScrollTutorialDone = true;
       
-      const ctn = document.getElementById('container');
-      if (!ctn) return;
       const sb = document.getElementById('numBtns');
       if (!sb) return;
-      const ctnRect = ctn.getBoundingClientRect();
       const sbRect = sb.getBoundingClientRect();
-      const sbLeft = sbRect.left - ctnRect.left;
-      const sbTop = sbRect.top - ctnRect.top;
+      
+      // Body-Display ist 360px breit, mittig zentriert. Wir nutzen body-Koordinaten.
+      // Display-Mitte X
+      const displayCenterX = window.innerWidth / 2;
+      const displayLeft = displayCenterX - 180; // 360/2
+      const sbLeft = sbRect.left;          // viewport-Koordinaten
+      const sbTop = sbRect.top;            // viewport-Koordinaten
       const sbWidth = sbRect.width;
       const sbHeight = sbRect.height;
       
-      // Tutor-Hand erstellen (90px = 2 Rasterzellen)
+      // Tutor-Hand erstellen — direkt in body (nicht in container, weil container eigenen Stacking-Context hat)
       let hand = document.getElementById('_smileyTutHand');
       if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
       hand = document.createElement('img');
       hand.id = '_smileyTutHand';
       hand.src = 'tutorhand_smiley.webp';
-      hand.style.cssText = 'position:absolute;width:90px;height:90px;z-index:50;' +
-        'pointer-events:none;left:0;top:0;' +
+      hand.style.cssText = 'position:fixed;width:90px;height:90px;z-index:9999;' +
+        'pointer-events:none;left:0;top:0;will-change:transform;' +
         'transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);';
-      ctn.appendChild(hand);
+      document.body.appendChild(hand);
       
-      // Zielposition: Fingerspitze über Scrollband-Mitte
-      // Hand-Bild oben links = Fingerspitze. Hand soll bei xStart auf Scrollband sitzen.
+      // Zielpositionen: Fingerspitze (oben links im Bild) auf Scrollband
       const handTopFinal = sbTop + sbHeight / 2 - 8;
-      const xStart = sbLeft + sbWidth * 0.25 - 8;  // 25% = links auf Scrollband
-      const xEnd = sbLeft + sbWidth * 0.75 - 8;    // 75% = rechts auf Scrollband
+      const xStart = sbLeft + sbWidth * 0.25 - 8;
+      const xEnd = sbLeft + sbWidth * 0.75 - 8;
       
-      // Startposition: weit unten (südlich vom Display), leicht nach rechts
-      const handBelowY = ctnRect.height + 60;
+      // Startposition: weit unter dem Display
+      const handBelowY = window.innerHeight + 60;
       hand.style.transform = 'translate(' + xStart + 'px,' + handBelowY + 'px)';
+      // Force-Reflow damit Initial-Transform vor Transition wirkt
+      hand.offsetHeight;
       
       // Phase 1: Hand fährt von Süden hoch zum Scrollband
       setTimeout(() => {
         hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
       }, 50);
       
-      // Phase 2: Wisch nach rechts. Band-Verschiebung muss EXAKT der Hand-Verschiebung
-      // entsprechen, damit es wie echtes Scrollen wirkt. Hand wandert (xEnd - xStart) px,
-      // Strip muss um denselben Betrag negativ verschoben werden.
+      // Phase 2: Wisch nach rechts. Strip muss SYNCHRON mitlaufen.
       const _wischDelta = xEnd - xStart;
       const strip = document.getElementById('scrollBandStrip');
       const _origTrans = strip ? (strip.style.transform || '') : '';
@@ -9908,13 +9909,13 @@
         }
       }, 850);
       
-      // Phase 3: Pause, dann zurück nach links
+      // Phase 3: zurück nach links
       setTimeout(() => {
         hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
         if (strip) strip.style.transform = _origTrans;
       }, 2050);
       
-      // Phase 4: Hand fährt nach unten raus
+      // Phase 4: Hand fährt nach Süden raus
       setTimeout(() => {
         hand.style.transform = 'translate(' + xStart + 'px,' + handBelowY + 'px)';
       }, 3150);
