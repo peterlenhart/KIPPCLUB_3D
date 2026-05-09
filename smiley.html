@@ -9874,7 +9874,7 @@
       hand = document.createElement('img');
       hand.id = '_smileyTutHand';
       hand.src = 'tutorhand_smiley.webp';
-      hand.style.cssText = 'position:absolute;width:90px;height:90px;z-index:30;' +
+      hand.style.cssText = 'position:absolute;width:90px;height:90px;z-index:50;' +
         'pointer-events:none;left:0;top:0;' +
         'transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);';
       ctn.appendChild(hand);
@@ -9894,14 +9894,17 @@
         hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
       }, 50);
       
-      // Phase 2: Wisch nach rechts
+      // Phase 2: Wisch nach rechts. Band-Verschiebung muss EXAKT der Hand-Verschiebung
+      // entsprechen, damit es wie echtes Scrollen wirkt. Hand wandert (xEnd - xStart) px,
+      // Strip muss um denselben Betrag negativ verschoben werden.
+      const _wischDelta = xEnd - xStart;
       const strip = document.getElementById('scrollBandStrip');
       const _origTrans = strip ? (strip.style.transform || '') : '';
       setTimeout(() => {
         hand.style.transform = 'translate(' + xEnd + 'px,' + handTopFinal + 'px)';
         if (strip) {
-          strip.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
-          strip.style.transform = 'translateX(-112px)';
+          strip.style.transition = 'transform 0.7s cubic-bezier(0.4,0,0.2,1)';
+          strip.style.transform = 'translateX(-' + _wischDelta + 'px)';
         }
       }, 850);
       
