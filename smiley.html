@@ -9851,80 +9851,86 @@
       _smileyShowScrollTutorialHand();
     }
     
-    // Tutorial-Hand: Smiley-Hand kommt von Süden, wischt Scrollband nach rechts
+    // Tutorial-Hand: Smiley-Hand kommt von Süden ins Bild, wischt das Scrollband
+    // einmal nach rechts und wieder nach links zurück, fährt nach Süden raus.
+    // Während der Wisch-Bewegung läuft das Scrollband-Strip synchron mit.
     function _smileyShowScrollTutorialHand() {
-      // Nur einmal pro Spiel
       if (window._smileyScrollTutorialDone) return;
       window._smileyScrollTutorialDone = true;
       
       const sb = document.getElementById('numBtns');
-      if (!sb) return;
+      const strip = document.getElementById('scrollBandStrip');
+      if (!sb || !strip) return;
       const sbRect = sb.getBoundingClientRect();
       
-      // Body-Display ist 360px breit, mittig zentriert. Wir nutzen body-Koordinaten.
-      // Display-Mitte X
-      const displayCenterX = window.innerWidth / 2;
-      const displayLeft = displayCenterX - 180; // 360/2
-      const sbLeft = sbRect.left;          // viewport-Koordinaten
-      const sbTop = sbRect.top;            // viewport-Koordinaten
-      const sbWidth = sbRect.width;
-      const sbHeight = sbRect.height;
+      // Hand-Bilddatei: 90px x 90px, Fingerspitze in oberer linker Ecke
+      const HAND_SIZE = 90;
+      // Fingerspitze soll auf Scrollband-Mitte sitzen (Bandhoehe / 2)
+      const handTopOnBand = sbRect.top + sbRect.height / 2 - 4;
+      // X-Positionen: Hand-Bild oben links = Fingerspitze. Wischweg ca. 130px.
+      const wischDelta = 130;
+      const xCenter = sbRect.left + sbRect.width / 2 - 4;
+      const xLeft = xCenter - wischDelta / 2;
+      const xRight = xCenter + wischDelta / 2;
+      // Startposition unter dem Display (Süden)
+      const ySouth = window.innerHeight + 60;
       
-      // Tutor-Hand erstellen — direkt in body (nicht in container, weil container eigenen Stacking-Context hat)
+      // Hand erstellen — im body (über allem)
       let hand = document.getElementById('_smileyTutHand');
       if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
       hand = document.createElement('img');
       hand.id = '_smileyTutHand';
       hand.src = 'tutorhand_smiley.webp';
-      hand.style.cssText = 'position:fixed;width:90px;height:90px;z-index:9999;' +
-        'pointer-events:none;left:0;top:0;will-change:transform;' +
-        'transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);';
+      hand.style.position = 'fixed';
+      hand.style.left = '0';
+      hand.style.top = '0';
+      hand.style.width = HAND_SIZE + 'px';
+      hand.style.height = HAND_SIZE + 'px';
+      hand.style.zIndex = '9999';
+      hand.style.pointerEvents = 'none';
+      hand.style.willChange = 'transform';
+      // Initial-Position: SÜDEN unter dem Display, an x=xLeft
+      hand.style.transform = 'translate(' + xLeft + 'px,' + ySouth + 'px)';
+      hand.style.transition = 'none';
       document.body.appendChild(hand);
       
-      // Zielpositionen: Fingerspitze (oben links im Bild) auf Scrollband
-      const handTopFinal = sbTop + sbHeight / 2 - 8;
-      const xStart = sbLeft + sbWidth * 0.25 - 8;
-      const xEnd = sbLeft + sbWidth * 0.75 - 8;
+      // Force Reflow damit Initial-Position OHNE Transition wirkt
+      void hand.offsetWidth;
       
-      // Startposition: weit unter dem Display
-      const handBelowY = window.innerHeight + 60;
-      hand.style.transform = 'translate(' + xStart + 'px,' + handBelowY + 'px)';
-      // Force-Reflow damit Initial-Transform vor Transition wirkt
-      hand.offsetHeight;
+      const _origStripTrans = strip.style.transform || '';
+      const _origStripTransition = strip.style.transition || '';
       
-      // Phase 1: Hand fährt von Süden hoch zum Scrollband
+      // Phase 1 (300ms nach Erscheinen): Hand fährt von Süden hoch
+      requestAnimationFrame(() => {
+        hand.style.transition = 'transform 0.7s cubic-bezier(0.4,0,0.2,1)';
+        hand.style.transform = 'translate(' + xLeft + 'px,' + handTopOnBand + 'px)';
+      });
+      
+      // Phase 2 (nach 1100ms): Wisch nach rechts, Strip läuft synchron mit
       setTimeout(() => {
-        hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
-      }, 50);
+        hand.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+        hand.style.transform = 'translate(' + xRight + 'px,' + handTopOnBand + 'px)';
+        strip.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+        strip.style.transform = 'translateX(-' + wischDelta + 'px)';
+      }, 1100);
       
-      // Phase 2: Wisch nach rechts. Strip muss SYNCHRON mitlaufen.
-      const _wischDelta = xEnd - xStart;
-      const strip = document.getElementById('scrollBandStrip');
-      const _origTrans = strip ? (strip.style.transform || '') : '';
+      // Phase 3 (nach 2300ms): Wisch zurück nach links, Strip mit zurück
       setTimeout(() => {
-        hand.style.transform = 'translate(' + xEnd + 'px,' + handTopFinal + 'px)';
-        if (strip) {
-          strip.style.transition = 'transform 0.7s cubic-bezier(0.4,0,0.2,1)';
-          strip.style.transform = 'translateX(-' + _wischDelta + 'px)';
-        }
-      }, 850);
+        hand.style.transform = 'translate(' + xLeft + 'px,' + handTopOnBand + 'px)';
+        strip.style.transform = _origStripTrans;
+      }, 2300);
       
-      // Phase 3: zurück nach links
+      // Phase 4 (nach 3500ms): Hand fährt nach Süden raus
       setTimeout(() => {
-        hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
-        if (strip) strip.style.transform = _origTrans;
-      }, 2050);
+        hand.style.transition = 'transform 0.7s cubic-bezier(0.4,0,0.2,1)';
+        hand.style.transform = 'translate(' + xLeft + 'px,' + ySouth + 'px)';
+      }, 3500);
       
-      // Phase 4: Hand fährt nach Süden raus
-      setTimeout(() => {
-        hand.style.transform = 'translate(' + xStart + 'px,' + handBelowY + 'px)';
-      }, 3150);
-      
-      // Aufräumen
+      // Phase 5 (nach 4300ms): Aufräumen
       setTimeout(() => {
         if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
-        if (strip) strip.style.transition = 'transform 0.25s ease';
-      }, 3950);
+        strip.style.transition = _origStripTransition || 'transform 0.25s ease';
+      }, 4300);
     }
 
     function hideScrollband() {
