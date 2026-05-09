@@ -9414,18 +9414,6 @@
         const gt = document.getElementById('_smileyGuideText');
         if (gt) gt.style.display = 'none';
         window._smileyWaitingForLos = false;
-        // Hinweis "Wähle eine KIPP-Zahl" oberhalb des Scrollbandes einblenden
-        let kzHint = document.getElementById('_smileyKippZahlHint');
-        if (!kzHint) {
-          kzHint = document.createElement('div');
-          kzHint.id = '_smileyKippZahlHint';
-          document.getElementById('container').appendChild(kzHint);
-        }
-        kzHint.textContent = T.sKZ || 'Wähle eine KIPP-Zahl';
-        kzHint.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:455px;' +
-          'font:bold 21px Arial;letter-spacing:1px;color:#FFD700;' +
-          'text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;' +
-          'z-index:25;pointer-events:none;display:block;white-space:nowrap;';
         runKipp21WobbleKniff(true);
       };
     });
@@ -9847,6 +9835,92 @@
       el.style.top = '497px';
       el.style.display = '';
       el.classList.remove('hidden');
+      // KIPP-Zahl-Hinweis erst jetzt einblenden (Scrollband ist sichtbar)
+      let kzHint = document.getElementById('_smileyKippZahlHint');
+      if (!kzHint) {
+        kzHint = document.createElement('div');
+        kzHint.id = '_smileyKippZahlHint';
+        document.getElementById('container').appendChild(kzHint);
+      }
+      kzHint.textContent = T.sKZ || 'Wähle eine KIPP-Zahl';
+      kzHint.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);top:455px;' +
+        'font:bold 21px Arial;letter-spacing:1px;color:#FFD700;' +
+        'text-shadow:0 2px 6px rgba(0,0,0,0.9);text-align:center;' +
+        'z-index:25;pointer-events:none;display:block;white-space:nowrap;';
+      // Tutorial-Hand-Wisch-Animation (nur einmal pro Spiel)
+      _smileyShowScrollTutorialHand();
+    }
+    
+    // Tutorial-Hand: Smiley-Hand kommt von Süden, wischt Scrollband nach rechts
+    function _smileyShowScrollTutorialHand() {
+      // Nur einmal pro Spiel
+      if (window._smileyScrollTutorialDone) return;
+      window._smileyScrollTutorialDone = true;
+      
+      const ctn = document.getElementById('container');
+      if (!ctn) return;
+      const sb = document.getElementById('numBtns');
+      if (!sb) return;
+      const ctnRect = ctn.getBoundingClientRect();
+      const sbRect = sb.getBoundingClientRect();
+      const sbLeft = sbRect.left - ctnRect.left;
+      const sbTop = sbRect.top - ctnRect.top;
+      const sbWidth = sbRect.width;
+      const sbHeight = sbRect.height;
+      
+      // Tutor-Hand erstellen (90px = 2 Rasterzellen)
+      let hand = document.getElementById('_smileyTutHand');
+      if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
+      hand = document.createElement('img');
+      hand.id = '_smileyTutHand';
+      hand.src = 'tutorhand_smiley.webp';
+      hand.style.cssText = 'position:absolute;width:90px;height:90px;z-index:30;' +
+        'pointer-events:none;left:0;top:0;' +
+        'transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);';
+      ctn.appendChild(hand);
+      
+      // Zielposition: Fingerspitze über Scrollband-Mitte
+      // Hand-Bild oben links = Fingerspitze. Hand soll bei xStart auf Scrollband sitzen.
+      const handTopFinal = sbTop + sbHeight / 2 - 8;
+      const xStart = sbLeft + sbWidth * 0.25 - 8;  // 25% = links auf Scrollband
+      const xEnd = sbLeft + sbWidth * 0.75 - 8;    // 75% = rechts auf Scrollband
+      
+      // Startposition: weit unten (südlich vom Display), leicht nach rechts
+      const handBelowY = ctnRect.height + 60;
+      hand.style.transform = 'translate(' + xStart + 'px,' + handBelowY + 'px)';
+      
+      // Phase 1: Hand fährt von Süden hoch zum Scrollband
+      setTimeout(() => {
+        hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
+      }, 50);
+      
+      // Phase 2: Wisch nach rechts
+      const strip = document.getElementById('scrollBandStrip');
+      const _origTrans = strip ? (strip.style.transform || '') : '';
+      setTimeout(() => {
+        hand.style.transform = 'translate(' + xEnd + 'px,' + handTopFinal + 'px)';
+        if (strip) {
+          strip.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+          strip.style.transform = 'translateX(-112px)';
+        }
+      }, 850);
+      
+      // Phase 3: Pause, dann zurück nach links
+      setTimeout(() => {
+        hand.style.transform = 'translate(' + xStart + 'px,' + handTopFinal + 'px)';
+        if (strip) strip.style.transform = _origTrans;
+      }, 2050);
+      
+      // Phase 4: Hand fährt nach unten raus
+      setTimeout(() => {
+        hand.style.transform = 'translate(' + xStart + 'px,' + handBelowY + 'px)';
+      }, 3150);
+      
+      // Aufräumen
+      setTimeout(() => {
+        if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
+        if (strip) strip.style.transition = 'transform 0.25s ease';
+      }, 3950);
     }
 
     function hideScrollband() {
