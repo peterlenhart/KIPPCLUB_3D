@@ -9914,12 +9914,12 @@
         hand.style.transform = 'translate(' + xLeft + 'px,' + handTopOnBand + 'px)';
       });
       
-      // Phase 2 (nach 1100ms): Wisch nach rechts, Strip läuft synchron mit
+      // Phase 2 (nach 1100ms): Wisch nach rechts, Strip läuft synchron mit (gleiche Richtung)
       setTimeout(() => {
         hand.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
         hand.style.transform = 'translate(' + xRight + 'px,' + handTopOnBand + 'px)';
         strip.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
-        strip.style.transform = 'translateX(' + (stripInitX - wischDelta) + 'px)';
+        strip.style.transform = 'translateX(' + (stripInitX + wischDelta) + 'px)';
       }, 1100);
       
       // Phase 3 (nach 2300ms): Wisch zurück nach links, Strip mit zurück
