@@ -83,7 +83,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      background-image: url("themenseite.webp");
+      background-image: url("walls_hintergrund.png");
       background-repeat: no-repeat;
       background-size: 100% auto;
       background-position:
@@ -91,6 +91,46 @@
         calc(0px + var(--bg-off-y));
       pointer-events:none;
       z-index:0;
+    }
+
+    /* Wall-Karussell: horizontal scrollbar, vertikal ab Zelle A5,5 (Hintergrund bleibt statisch auf 0/0) */
+    #wallCarousel {
+      position: absolute;
+      left: 0;
+      top: calc(4.5 * var(--cell));
+      width: var(--gridW);
+      height: calc(var(--gridH) - 4.5 * var(--cell));
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      z-index: 8;
+      pointer-events: auto;
+    }
+    #wallCarousel::-webkit-scrollbar { display: none; }
+
+    .wallTrack {
+      display: flex;
+      flex-direction: row;
+      width: max-content;
+      height: 100%;
+    }
+
+    .wallSlide {
+      flex: 0 0 var(--gridW);
+      width: var(--gridW);
+      height: 100%;
+      scroll-snap-align: center;
+      display: block;
+      box-sizing: border-box;
+    }
+
+    .wallSlide img {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: auto;
     }
 
     .dimOverlay {
@@ -316,13 +356,32 @@
 
       <div class="uiLayer">
 
-        <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild -->
+        <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
+        <div id="wallCarousel">
+          <div class="wallTrack">
+            <div class="wallSlide"><img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers"></div>
+            <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"></div>
+            <div class="wallSlide"><img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys"></div>
+            <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
+            <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
+            <div class="wallSlide"><img src="kingpaywall.webp" alt="KIPP KING" data-theme="king"></div>
+          </div>
+        </div>
+
+        <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild (DEAKTIVIERT — kommen später ueber den Walls)
         <div id="clickColor" class="gameClickArea"></div>
         <div id="clickCard" class="gameClickArea"></div>
         <div id="clickKippCard" class="gameClickArea"></div>
         <div id="clickSmiley" class="gameClickArea"></div>
         <div id="clickQueen" class="gameClickArea"></div>
         <div id="clickKing" class="gameClickArea"></div>
+        -->
+        <div id="clickColor" class="gameClickArea" style="display:none"></div>
+        <div id="clickCard" class="gameClickArea" style="display:none"></div>
+        <div id="clickKippCard" class="gameClickArea" style="display:none"></div>
+        <div id="clickSmiley" class="gameClickArea" style="display:none"></div>
+        <div id="clickQueen" class="gameClickArea" style="display:none"></div>
+        <div id="clickKing" class="gameClickArea" style="display:none"></div>
 
         <!-- Unsichtbare Klickbereiche für Icons -->
         <div id="closeBtn" class="iconClickArea"></div>
@@ -418,18 +477,9 @@
 
       const gridW = cols * cell;
       const vw = window.innerWidth;
-      const vh = window.innerHeight;
 
       const targetW = vw * 0.94;
-      // Layout braucht min. 13.5 Zeilen (KIPP KING auf Zeile 12 + Button-Höhe + etwas Puffer)
-      const minRows = 13.5;
-      const targetH = vh * 0.98;
-      const requiredH = minRows * cell;
-      
-      // scale auf Breite UND Höhe begrenzen, damit auf kürzeren Geräten/Tablets nichts abgeschnitten wird
-      const scaleByW = targetW / gridW;
-      const scaleByH = targetH / requiredH;
-      const scale = Math.min(1, scaleByW, scaleByH);
+      const scale = Math.min(1, targetW / gridW);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
