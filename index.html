@@ -93,31 +93,13 @@
       z-index:0;
     }
 
-    /* Untertitel "Merken, Logik, Kopfzerbrechen." in Zellenreihe oberhalb des Karussells */
-    #kippClubSubtitle {
-      position: absolute;
-      left: 0;
-      top: calc(3.6 * var(--cell));
-      width: var(--gridW);
-      text-align: center;
-      font: bold 0.45 * var(--cell) Arial, sans-serif;
-      font-size: calc(0.45 * var(--cell));
-      color: #e8dcc0;
-      letter-spacing: 2px;
-      text-shadow: 0 0.04em 0.12em rgba(0,0,0,0.85), 0 0 0.3em rgba(0,0,0,0.4);
-      pointer-events: none;
-      z-index: 9;
-      font-family: Arial, sans-serif;
-      font-weight: bold;
-    }
-
-    /* Wall-Karussell: horizontal scrollbar, vertikal ab Zelle A5,5 (Hintergrund bleibt statisch auf 0/0) */
+    /* Wall-Karussell: horizontal scrollbar mit Snap (Erstversuch-Werte) */
     #wallCarousel {
       position: absolute;
       left: 0;
-      top: calc(4.5 * var(--cell));
+      top: 22%;
       width: var(--gridW);
-      height: calc(var(--gridH) - 4.5 * var(--cell));
+      height: 70%;
       overflow-x: auto;
       overflow-y: hidden;
       scroll-snap-type: x mandatory;
@@ -125,7 +107,6 @@
       scrollbar-width: none;
       z-index: 8;
       pointer-events: auto;
-      /* Padding links/rechts damit erstes und letztes Slide mittig snappen koennen */
       padding-left: 9%;
       padding-right: 9%;
       box-sizing: border-box;
@@ -145,14 +126,17 @@
       width: 82%;
       height: 100%;
       scroll-snap-align: center;
-      display: block;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
       box-sizing: border-box;
     }
 
     .wallSlide img {
-      display: block;
       width: 100%;
       height: auto;
+      max-height: 100%;
+      object-fit: contain;
       pointer-events: auto;
     }
 
@@ -378,9 +362,6 @@
       <div class="dimOverlay" id="dimOverlay"></div>
 
       <div class="uiLayer">
-
-        <!-- Untertitel zwischen KIPP CLUB Schriftzug und Wall-Karussell -->
-        <div id="kippClubSubtitle">Merken, Logik, Kopfzerbrechen.</div>
 
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
