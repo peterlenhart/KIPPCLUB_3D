@@ -93,6 +93,24 @@
       z-index:0;
     }
 
+    /* Untertitel "Merken, Logik, Kopfzerbrechen." in Zellenreihe oberhalb des Karussells */
+    #kippClubSubtitle {
+      position: absolute;
+      left: 0;
+      top: calc(3.6 * var(--cell));
+      width: var(--gridW);
+      text-align: center;
+      font: bold 0.45 * var(--cell) Arial, sans-serif;
+      font-size: calc(0.45 * var(--cell));
+      color: #e8dcc0;
+      letter-spacing: 2px;
+      text-shadow: 0 0.04em 0.12em rgba(0,0,0,0.85), 0 0 0.3em rgba(0,0,0,0.4);
+      pointer-events: none;
+      z-index: 9;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+
     /* Wall-Karussell: horizontal scrollbar, vertikal ab Zelle A5,5 (Hintergrund bleibt statisch auf 0/0) */
     #wallCarousel {
       position: absolute;
@@ -107,19 +125,24 @@
       scrollbar-width: none;
       z-index: 8;
       pointer-events: auto;
+      /* Padding links/rechts damit erstes und letztes Slide mittig snappen koennen */
+      padding-left: 9%;
+      padding-right: 9%;
+      box-sizing: border-box;
     }
     #wallCarousel::-webkit-scrollbar { display: none; }
 
     .wallTrack {
       display: flex;
       flex-direction: row;
+      gap: 8px;
       width: max-content;
       height: 100%;
     }
 
     .wallSlide {
-      flex: 0 0 var(--gridW);
-      width: var(--gridW);
+      flex: 0 0 82%;
+      width: 82%;
       height: 100%;
       scroll-snap-align: center;
       display: block;
@@ -355,6 +378,9 @@
       <div class="dimOverlay" id="dimOverlay"></div>
 
       <div class="uiLayer">
+
+        <!-- Untertitel zwischen KIPP CLUB Schriftzug und Wall-Karussell -->
+        <div id="kippClubSubtitle">Merken, Logik, Kopfzerbrechen.</div>
 
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
