@@ -93,7 +93,7 @@
       z-index:0;
     }
 
-    /* Wall-Karussell: horizontal scrollbar mit Snap (Erstversuch-Werte) */
+    /* Wall-Karussell: horizontal scrollbar mit Snap */
     #wallCarousel {
       position: absolute;
       left: 0;
@@ -107,29 +107,28 @@
       scrollbar-width: none;
       z-index: 8;
       pointer-events: auto;
-      padding-left: 4%;
-      padding-right: 4%;
-      box-sizing: border-box;
     }
     #wallCarousel::-webkit-scrollbar { display: none; }
 
     .wallTrack {
       display: flex;
       flex-direction: row;
-      gap: 0px;
+      gap: 0;
       width: max-content;
       height: 100%;
     }
 
     .wallSlide {
-      flex: 0 0 92%;
-      width: 92%;
+      flex: 0 0 var(--gridW);
+      width: var(--gridW);
       height: 100%;
       scroll-snap-align: center;
       display: flex;
       align-items: flex-start;
       justify-content: center;
       box-sizing: border-box;
+      padding: 0;
+      margin: 0;
     }
 
     .wallSlide img {
