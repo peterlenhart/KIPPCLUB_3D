@@ -187,35 +187,6 @@
       position: relative;
     }
     
-    /* Buttons auf den Walls: SPIELEN, Preise, Bundle */
-    .wallButton {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 50px;
-      line-height: 50px;
-      text-align: center;
-      font-family: Arial, sans-serif;
-      font-weight: bold;
-      letter-spacing: 3px;
-      cursor: pointer;
-      z-index: 12;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    
-    .wallButtonSpielen {
-      top: calc(9 * 45px);
-      font-size: 26px;
-      color: #FFD700;
-      text-shadow: 0 3px 8px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.6);
-      background: linear-gradient(180deg, rgba(60,40,10,0.85) 0%, rgba(30,20,5,0.85) 100%);
-      border: 2px solid #FFD700;
-      border-radius: 8px;
-      box-shadow: 0 0 12px rgba(255,215,0,0.4);
-    }
-    
     /* Walls um 135px ueberlappen ab dem zweiten Slide */
     .wallSlide + .wallSlide {
       margin-left: -135px;
@@ -245,14 +216,14 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      width: 70%;
-      height: calc(2 * 142px);
-      line-height: calc(2 * 142px);
+      width: calc(220px * var(--uiscale));
+      height: calc(50px * var(--uiscale));
+      line-height: calc(50px * var(--uiscale));
       text-align: center;
-      font-size: 67px;
+      font-size: calc(22px * var(--uiscale));
       font-family: Arial, sans-serif;
       font-weight: bold;
-      letter-spacing: 6px;
+      letter-spacing: calc(3px * var(--uiscale));
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
@@ -261,34 +232,35 @@
     }
     /* SPIELEN-Button: weiss, kein Rahmen, hellgrauer Outer-Glow, sanft pulsierend */
     .wallButtonSpielen {
-      top: 50%;
+      top: calc(50% - 15px * var(--uiscale));
       color: #ffffff;
       background: transparent;
       border: none;
       text-shadow:
-        0 0 12px rgba(220,220,220,0.95),
-        0 0 24px rgba(200,200,200,0.7),
-        0 0 40px rgba(180,180,180,0.5),
-        0 4px 8px rgba(0,0,0,0.8);
+        0 0 calc(8px * var(--uiscale)) rgba(220,220,220,0.95),
+        0 0 calc(16px * var(--uiscale)) rgba(200,200,200,0.7),
+        0 0 calc(28px * var(--uiscale)) rgba(180,180,180,0.5),
+        0 calc(2px * var(--uiscale)) calc(4px * var(--uiscale)) rgba(0,0,0,0.8);
       animation: spielenPulse 1.8s ease-in-out infinite;
     }
     @keyframes spielenPulse {
-      0%, 100% {
-        text-shadow:
-          0 0 12px rgba(220,220,220,0.95),
-          0 0 24px rgba(200,200,200,0.7),
-          0 0 40px rgba(180,180,180,0.5),
-          0 4px 8px rgba(0,0,0,0.8);
-        transform: translateX(-50%) scale(1);
-      }
-      50% {
-        text-shadow:
-          0 0 20px rgba(255,255,255,1),
-          0 0 40px rgba(220,220,220,0.9),
-          0 0 60px rgba(200,200,200,0.7),
-          0 4px 8px rgba(0,0,0,0.8);
-        transform: translateX(-50%) scale(1.06);
-      }
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50%      { transform: translateX(-50%) scale(1.06); }
+    }
+    
+    /* SPIELEN-Button braun mit beigem Glow (fuer kidskippwall) */
+    .wallButtonSpielenBraun {
+      top: calc(50% - 15px * var(--uiscale));
+      color: #3a2410;
+      background: transparent;
+      border: none;
+      -webkit-text-stroke: calc(1px * var(--uiscale)) #3a2410;
+      text-shadow:
+        0 0 calc(8px * var(--uiscale)) rgba(232,220,192,0.95),
+        0 0 calc(16px * var(--uiscale)) rgba(210,195,160,0.75),
+        0 0 calc(28px * var(--uiscale)) rgba(190,170,130,0.55),
+        0 calc(2px * var(--uiscale)) calc(4px * var(--uiscale)) rgba(255,245,220,0.6);
+      animation: spielenPulse 1.8s ease-in-out infinite;
     }
 
     .dimOverlay {
@@ -528,7 +500,7 @@
               <img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers">
               <div class="wallButton wallButtonSpielen" data-theme="numbers">SPIELEN</div>
             </div>
-            <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"></div>
+            <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"><div class="wallButton wallButtonSpielenBraun" data-theme="icons">SPIELEN</div></div>
             <div class="wallSlide"><img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys"></div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
