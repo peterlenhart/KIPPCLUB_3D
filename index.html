@@ -93,7 +93,7 @@
       z-index:0;
     }
 
-    /* Wall-Karussell: horizontal scrollbar mit Snap */
+    /* Wall-Karussell: horizontal scrollbar mit Snap, Peek-Layout */
     #wallCarousel {
       position: absolute;
       left: 0;
@@ -107,6 +107,9 @@
       scrollbar-width: none;
       z-index: 8;
       pointer-events: auto;
+      padding-left: 3%;
+      padding-right: 3%;
+      box-sizing: border-box;
     }
     #wallCarousel::-webkit-scrollbar { display: none; }
 
@@ -119,8 +122,8 @@
     }
 
     .wallSlide {
-      flex: 0 0 var(--gridW);
-      width: var(--gridW);
+      flex: 0 0 94%;
+      width: 94%;
       height: 100%;
       scroll-snap-align: center;
       display: flex;
