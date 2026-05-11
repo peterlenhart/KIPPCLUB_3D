@@ -151,7 +151,7 @@
     #wallCarousel {
       position: absolute;
       left: 0;
-      top: calc(2 * var(--cell));
+      top: calc(22% + 112px);
       width: var(--gridW);
       height: calc(70% - 142px);
       overflow-x: auto;
@@ -261,7 +261,7 @@
     }
     /* SPIELEN-Button auf numberwall (silberne Pille bei ~y=780 im 1232px Wall-Asset) */
     .wallButtonSpielen {
-      top: calc(10 * var(--cell));
+      top: 0;
       color: #ffffff;
       background: transparent;
       border: none;
@@ -283,7 +283,7 @@
     
     /* SPIELEN-Button braun auf Holzleiste der kidskippwall */
     .wallButtonSpielenBraun {
-      top: calc(10 * var(--cell));
+      top: 0;
       color: #3a2410;
       background: transparent;
       border: none;
@@ -754,6 +754,16 @@
       langIcon.style.top = (iconRow - 8) + "px";
       langIcon.style.width = (cellPx * 1.303) + "px";
       langIcon.style.height = (cellPx * 1.303) + "px";
+
+      // SPIELEN-Texte: globales Raster, Zeile 11.
+      // Die Texte liegen in den Wall-Slides und scrollen mit,
+      // aber ihre vertikale Position wird vom Displayraster aus berechnet.
+      const wallCarousel = document.getElementById("wallCarousel");
+      const spielenRow11Y = 10 * cellPx;
+      const wallTopY = wallCarousel ? wallCarousel.offsetTop : 0;
+      document.querySelectorAll('[data-theme-button]').forEach(el => {
+        el.style.top = (spielenRow11Y - wallTopY) + "px";
+      });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
       const langDD = document.getElementById("langDropdown");
