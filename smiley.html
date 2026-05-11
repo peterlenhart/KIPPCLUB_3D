@@ -5,6 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KIPP CLUB – SMILEY</title>
   <style>
+    /* ===== KIPP CLUB Paywall ===== */
+    #kippclubPaywall {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 100000;
+      background: #000;
+      overflow: hidden;
+    }
+    #kippclubPaywallBg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      user-select: none;
+    }
+    #paywallTextEinzel {
+      position: absolute;
+      top: 555px;
+      left: 50%;
+      transform: translateX(-148px);
+      font: bold 20px Arial, sans-serif;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(220,220,220,0.95), 0 0 24px rgba(200,200,200,0.7), 0 4px 8px rgba(0,0,0,0.85);
+      z-index: 100001;
+      pointer-events: auto;
+      cursor: pointer;
+      padding: 12px 14px;
+      margin: -12px -14px;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+      user-select: none;
+      white-space: nowrap;
+      animation: pwPulse 1.8s ease-in-out infinite;
+    }
+    #paywallTextBundle {
+      position: absolute;
+      top: 555px;
+      left: 50%;
+      transform: translateX(0);
+      z-index: 100001;
+      pointer-events: auto;
+      cursor: pointer;
+      padding: 12px 14px;
+      margin: -12px -14px;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+      user-select: none;
+      text-align: center;
+      animation: pwPulse 1.8s ease-in-out infinite;
+    }
+    #paywallTextBundle .pwMain {
+      font: bold 20px Arial, sans-serif;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(220,220,220,0.95), 0 0 24px rgba(200,200,200,0.7), 0 4px 8px rgba(0,0,0,0.85);
+      white-space: nowrap;
+    }
+    #paywallTextBundle .pwSub {
+      font: bold 11px Arial, sans-serif;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+      line-height: 1.2;
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+    @keyframes pwPulse {
+      0%, 100% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      50%      { filter: drop-shadow(0 0 8px rgba(255,255,255,0.5)); }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
@@ -1088,6 +1162,15 @@
   </style>
 </head>
 <body>
+  <!-- ===================== KIPP CLUB Paywall fuer Smileys ===================== -->
+  <div id="kippclubPaywall" style="display:none;">
+    <img id="kippclubPaywallBg" src="smileypaywall.webp" alt="KIPP CLUB Paywall">
+    <div id="paywallTextEinzel">€ 0,99</div>
+    <div id="paywallTextBundle">
+      <div class="pwMain">ALLES € 4,99</div>
+      <div class="pwSub">SMILEY, CARD<br>QUEEN u. KING</div>
+    </div>
+  </div>
   <div id="container"></div>
 
   <!-- Leveltafel Overlay — A1 verankert, left:0 top:0 -->
@@ -1500,6 +1583,76 @@
     if (T.sLm) document.getElementById('spielzielLine1').textContent = T.sLm;
     { const neuBtn = document.getElementById('btnNeuWaehlen');
       if (neuBtn && T.sNw) neuBtn.textContent = T.sNw; }
+    
+    // ============= KIPP CLUB Paywall Logik =============
+    (function setupPaywall() {
+      function hasToken(key) {
+        try { return localStorage.getItem(key) === '1'; } catch(e) { return false; }
+      }
+      function setToken(key) {
+        try { localStorage.setItem(key, '1'); } catch(e) {}
+      }
+      
+      // Bundle gekauft → alles frei
+      if (hasToken('kippclub_bundle_unlocked')) return;
+      // Smileys einzeln gekauft → frei
+      if (hasToken('kippclub_smileys_unlocked')) return;
+      
+      // Sharelink-Aufruf pruefen (?c=... mit 4 gueltigen Smiley-Namen)
+      const params = new URLSearchParams(window.location.search);
+      const cParam = params.get('c');
+      let isSharelinkCall = false;
+      if (cParam) {
+        const parts = cParam.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        if (parts.length === 4) {
+          const validColors = ['orange','gruen','blau','violett'];
+          const allValid = parts.every(p => validColors.some(col => p.indexOf('smiley_'+col+'_') === 0));
+          if (allValid) isSharelinkCall = true;
+        }
+      }
+      
+      // Sharelink + Test nicht verbraucht → 1 Testrunde
+      if (isSharelinkCall && !hasToken('kippclub_test_used')) {
+        setToken('kippclub_test_used');
+        return; // normaler Spielablauf
+      }
+      
+      // Paywall anzeigen
+      function showPaywall() {
+        const ov = document.getElementById('kippclubPaywall');
+        if (!ov) return;
+        ov.style.display = 'block';
+        const tEin = document.getElementById('paywallTextEinzel');
+        const tBun = document.getElementById('paywallTextBundle');
+        if (tEin) tEin.addEventListener('click', () => triggerPurchase('kippclub_smileys'));
+        if (tBun) tBun.addEventListener('click', () => triggerPurchase('kippclub_bundle_all'));
+      }
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', showPaywall);
+      } else {
+        setTimeout(showPaywall, 0);
+      }
+      
+      function triggerPurchase(productId) {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
+          window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
+            .then(result => {
+              if (result && result.success) {
+                if (productId === 'kippclub_bundle_all') setToken('kippclub_bundle_unlocked');
+                else if (productId === 'kippclub_smileys') setToken('kippclub_smileys_unlocked');
+                window.location.reload();
+              }
+            })
+            .catch(err => console.error('[PAYWALL] Kauf abgebrochen:', err));
+        } else {
+          if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase)')) {
+            if (productId === 'kippclub_bundle_all') setToken('kippclub_bundle_unlocked');
+            else if (productId === 'kippclub_smileys') setToken('kippclub_smileys_unlocked');
+            window.location.reload();
+          }
+        }
+      }
+    })();
     
     // Kipp-Prinzip Button Text & Overlay Content
     const KIPP_PRINZIP = {
