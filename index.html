@@ -113,6 +113,35 @@
       font-weight: bold;
     }
 
+    /* Scroll-Pfeile links und rechts */
+    .wallArrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 90px;
+      height: 142px;
+      line-height: 142px;
+      text-align: center;
+      font-size: 90px;
+      color: #FFD700;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.95), 0 0 20px rgba(0,0,0,0.6);
+      pointer-events: none;
+      z-index: 11;
+      opacity: 0.85;
+      transition: opacity 0.3s ease;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+    .wallArrow.hidden {
+      opacity: 0;
+    }
+    #wallArrowLeft {
+      left: 0;
+    }
+    #wallArrowRight {
+      right: 0;
+    }
+
     /* Wall-Karussell: 6 Walls aneinander, je 360px, 1 cell suedlicher als zuvor */
     #wallCarousel {
       position: absolute;
@@ -400,6 +429,10 @@
         <!-- Slogan in der Zeile oberhalb der Walls -->
         <div id="kippClubSubtitle">Merken, Logik, Kopfzerbrechen.</div>
 
+        <!-- Scroll-Pfeile links und rechts -->
+        <div id="wallArrowLeft" class="wallArrow">&#10094;</div>
+        <div id="wallArrowRight" class="wallArrow">&#10095;</div>
+
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
           <div class="wallTrack">
@@ -640,6 +673,27 @@
 
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
+    
+    // Scroll-Pfeile dynamisch ein-/ausblenden je nach Karussell-Position
+    (function setupWallArrows() {
+      function updateArrows() {
+        const car = document.getElementById('wallCarousel');
+        const arrL = document.getElementById('wallArrowLeft');
+        const arrR = document.getElementById('wallArrowRight');
+        if (!car || !arrL || !arrR) return;
+        const atStart = car.scrollLeft <= 2;
+        const atEnd = car.scrollLeft >= (car.scrollWidth - car.clientWidth - 2);
+        if (atStart) arrL.classList.add('hidden'); else arrL.classList.remove('hidden');
+        if (atEnd) arrR.classList.add('hidden'); else arrR.classList.remove('hidden');
+      }
+      window.addEventListener('load', () => {
+        const car = document.getElementById('wallCarousel');
+        if (car) {
+          car.addEventListener('scroll', updateArrows);
+          setTimeout(updateArrows, 100);
+        }
+      });
+    })();
 
     // Game navigation
     let selectedSkin = 'numbers';
