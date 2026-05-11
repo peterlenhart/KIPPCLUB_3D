@@ -28,7 +28,7 @@
   <style>
     :root{
       --cols: 8;
-      --cell: 142px;
+      --cell: 135px;
 
       --scale: 1;
       --uiscale: 1;
@@ -82,11 +82,11 @@
       position:absolute;
       left: 0;
       top: 0;
-      width: var(--gridW);
+      width: calc(8 * var(--cell));
       height: var(--gridH);
       background-image: url("walls_hintergrund.png");
       background-repeat: no-repeat;
-      background-size: 100% auto;
+      background-size: calc(8 * var(--cell)) auto;
       background-position:
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
@@ -101,8 +101,8 @@
       left: 0;
       top: 22%;
       width: var(--gridW);
-      height: 142px;
-      line-height: 142px;
+      height: 135px;
+      line-height: 135px;
       text-align: center;
       font-size: 47px;
       color: #e8dcc0;
@@ -120,8 +120,8 @@
       top: 50%;
       transform: translateY(-50%);
       width: 90px;
-      height: 142px;
-      line-height: 142px;
+      height: 135px;
+      line-height: 135px;
       text-align: center;
       font-size: 90px;
       color: #FFD700;
@@ -147,7 +147,7 @@
       right: 0;
     }
 
-    /* Wall-Karussell: 6 Walls aneinander, je 360px, 1 cell suedlicher als zuvor */
+    /* Wall-Karussell: 6 Walls aneinander, je 1080px Retina / 360px sichtbar, 1 cell suedlicher als zuvor */
     #wallCarousel {
       position: absolute;
       left: 0;
@@ -175,8 +175,8 @@
     }
 
     .wallSlide {
-      flex: 0 0 var(--gridW);
-      width: var(--gridW);
+      flex: 0 0 calc(8 * var(--cell));
+      width: calc(8 * var(--cell));
       height: 100%;
       scroll-snap-align: center;
       display: flex;
@@ -233,6 +233,7 @@
         0 0 80px rgba(180,180,180,0.5),
         0 8px 16px rgba(0,0,0,0.85);
       z-index: 100;
+      display: none;
       pointer-events: auto;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -244,9 +245,9 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      width: 600px;
-      height: 130px;
-      line-height: 130px;
+      width: var(--gridW);
+      height: var(--cell);
+      line-height: var(--cell);
       text-align: center;
       font-size: 62px;
       font-family: Arial, sans-serif;
@@ -353,7 +354,7 @@
 
     .modalImage{
       display:block;
-      width: 1136px;
+      width: 1080px;
     }
 
     .modalClickArea{
@@ -376,8 +377,8 @@
       position:absolute;
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
-      width: 142px;
-      height: 142px;
+      width: 135px;
+      height: 135px;
       pointer-events:auto;
     }
 
@@ -409,7 +410,7 @@
 
     #flashImage{
       display:block;
-      width:1136px;
+      width:1080px;
     }
 
     /* Language Icon & Dropdown */
@@ -531,8 +532,14 @@
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
           <div class="wallTrack">
-            <div class="wallSlide"><img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers"></div>
-            <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"></div>
+            <div class="wallSlide">
+              <img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers">
+              <div class="wallButton wallButtonSpielen" data-theme-button="numbers">SPIELEN</div>
+            </div>
+            <div class="wallSlide">
+              <img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons">
+              <div class="wallButton wallButtonSpielenBraun" data-theme-button="icons">SPIELEN</div>
+            </div>
             <div class="wallSlide"><img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys"></div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
@@ -645,12 +652,12 @@
 
     function setScaleToFitWidth(){
       const cols = numVar("--cols") || 8;
-      const cell = numVar("--cell") || 142;
+      const cell = numVar("--cell") || 135;
 
       const gridW = cols * cell;
       const vw = window.innerWidth;
 
-      const targetW = vw * 0.94;
+      const targetW = vw;
       const scale = Math.min(1, targetW / gridW);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
@@ -667,7 +674,7 @@
     }
 
     function positionUI(){
-      const cellPx = numVar("--cell") || 142;
+      const cellPx = numVar("--cell") || 135;
 
       const clickColor = document.getElementById("clickColor");
       const clickCard  = document.getElementById("clickCard");
@@ -724,7 +731,7 @@
 
       // Icon-Klickbereiche in Zeile 0_2
       const iconRow = cellPx; // Zeile 0_2 = 1 Zelle tiefer
-      const iconSize = cellPx; // 142x142px
+      const iconSize = cellPx; // 135x135px
 
       // Close Button: zwischen Spalten A und B = Spalte 0.5
       const closeBtn = document.getElementById("closeBtn");
@@ -790,7 +797,8 @@
         const car = document.getElementById('wallCarousel');
         if (!car) return;
         // Eine Wall-Breite minus Ueberlappung = effektive Schrittweite
-        const step = 360 - 135; // 225px sichtbare Wall-Breite
+        const cell = numVar("--cell") || 135;
+        const step = (8 * cell) - 135; // eine Wall-Breite minus 1 Zelle Überlappung
         car.scrollBy({ left: direction * step, behavior: 'smooth' });
       }
       window.addEventListener('load', () => {
@@ -886,6 +894,26 @@
       }
     }
     updateLevelLinks();
+
+    // SPIELEN-Texte sind in den ersten beiden Wall-Dateien verankert und scrollen mit.
+    document.querySelectorAll('[data-theme-button="numbers"]').forEach(el => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        selectedSkin = 'numbers';
+        updateLevelLinks();
+        updateLevelBests();
+        document.getElementById("levelOverlay").classList.add("show");
+      };
+    });
+    document.querySelectorAll('[data-theme-button="icons"]').forEach(el => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        selectedSkin = 'icons';
+        updateLevelLinks();
+        updateLevelBests();
+        document.getElementById("levelOverlay").classList.add("show");
+      };
+    });
 
     // === Bestleistungen pro Level aus localStorage anzeigen ===
     function updateLevelBests() {
