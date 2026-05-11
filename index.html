@@ -42,6 +42,7 @@
 
       --bg-off-x: 0px;
       --bg-off-y: 0px;
+      --screen31: 31px;
     }
 
     html, body{
@@ -216,7 +217,7 @@
     #globalSpielenText {
       position: absolute;
       left: 0;
-      top: calc((10 * var(--cell)) + 43px);
+      top: calc((10 * var(--cell)) + 12px + var(--screen31));
       width: var(--gridW);
       height: var(--cell);
       line-height: var(--cell);
@@ -259,7 +260,7 @@
     }
     /* SPIELEN-Button auf numberwall (silberne Pille bei ~y=780 im 1232px Wall-Asset) */
     .wallButtonSpielen {
-      top: 108px;
+      top: calc(77px + var(--screen31));
       color: #ffffff;
       background: transparent;
       border: none;
@@ -281,7 +282,7 @@
     
     /* SPIELEN-Button braun auf Holzleiste der kidskippwall */
     .wallButtonSpielenBraun {
-      top: 108px;
+      top: calc(77px + var(--screen31));
       color: #3a2410;
       background: transparent;
       border: none;
@@ -657,6 +658,10 @@
 
       const uiscale = 1 / (scale || 1);
       document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
+
+      // Sichtbare Pixel in interne Layout-Pixel umrechnen,
+      // weil .layout per transform: scale(...) verkleinert wird.
+      document.documentElement.style.setProperty("--screen31", (31 / (scale || 1)).toFixed(2) + "px");
 
       return { cell, scale, gridW };
     }
