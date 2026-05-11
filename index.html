@@ -153,9 +153,17 @@
       margin: 0;
     }
     
-    /* Walls um 90px ueberlappen ab dem zweiten Slide */
+    /* Walls um 135px ueberlappen ab dem zweiten Slide */
     .wallSlide + .wallSlide {
-      margin-left: -90px;
+      margin-left: -135px;
+    }
+    
+    /* Erste Wall snappt links, letzte Wall snappt rechts — damit beide ganz sichtbar */
+    .wallSlide:first-child {
+      scroll-snap-align: start;
+    }
+    .wallSlide:last-child {
+      scroll-snap-align: end;
     }
 
     .wallSlide img {
