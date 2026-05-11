@@ -184,6 +184,36 @@
       box-sizing: border-box;
       padding: 0;
       margin: 0;
+      position: relative;
+    }
+    
+    /* Buttons auf den Walls: SPIELEN, Preise, Bundle */
+    .wallButton {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 50px;
+      line-height: 50px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 3px;
+      cursor: pointer;
+      z-index: 12;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    
+    .wallButtonSpielen {
+      top: calc(9 * 45px);
+      font-size: 26px;
+      color: #FFD700;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.6);
+      background: linear-gradient(180deg, rgba(60,40,10,0.85) 0%, rgba(30,20,5,0.85) 100%);
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(255,215,0,0.4);
     }
     
     /* Walls um 135px ueberlappen ab dem zweiten Slide */
@@ -205,6 +235,60 @@
       max-height: 100%;
       object-fit: contain;
       pointer-events: auto;
+    }
+
+    /* Buttons auf den Walls — relativ zur Wall positioniert */
+    .wallSlide {
+      position: relative;
+    }
+    .wallButton {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: calc(2 * 142px);
+      line-height: calc(2 * 142px);
+      text-align: center;
+      font-size: 67px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 6px;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    /* SPIELEN-Button: weiss, kein Rahmen, hellgrauer Outer-Glow, sanft pulsierend */
+    .wallButtonSpielen {
+      top: 50%;
+      color: #ffffff;
+      background: transparent;
+      border: none;
+      text-shadow:
+        0 0 12px rgba(220,220,220,0.95),
+        0 0 24px rgba(200,200,200,0.7),
+        0 0 40px rgba(180,180,180,0.5),
+        0 4px 8px rgba(0,0,0,0.8);
+      animation: spielenPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes spielenPulse {
+      0%, 100% {
+        text-shadow:
+          0 0 12px rgba(220,220,220,0.95),
+          0 0 24px rgba(200,200,200,0.7),
+          0 0 40px rgba(180,180,180,0.5),
+          0 4px 8px rgba(0,0,0,0.8);
+        transform: translateX(-50%) scale(1);
+      }
+      50% {
+        text-shadow:
+          0 0 20px rgba(255,255,255,1),
+          0 0 40px rgba(220,220,220,0.9),
+          0 0 60px rgba(200,200,200,0.7),
+          0 4px 8px rgba(0,0,0,0.8);
+        transform: translateX(-50%) scale(1.06);
+      }
     }
 
     .dimOverlay {
@@ -440,7 +524,10 @@
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
           <div class="wallTrack">
-            <div class="wallSlide"><img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers"></div>
+            <div class="wallSlide">
+              <img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers">
+              <div class="wallButton wallButtonSpielen" data-theme="numbers">SPIELEN</div>
+            </div>
             <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"></div>
             <div class="wallSlide"><img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys"></div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
