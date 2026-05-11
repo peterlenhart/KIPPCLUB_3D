@@ -216,31 +216,31 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      width: calc(180px * var(--uiscale));
-      height: calc(40px * var(--uiscale));
-      line-height: calc(40px * var(--uiscale));
+      width: 600px;
+      height: 130px;
+      line-height: 130px;
       text-align: center;
-      font-size: calc(20px * var(--uiscale));
+      font-size: 62px;
       font-family: Arial, sans-serif;
       font-weight: bold;
-      letter-spacing: calc(3px * var(--uiscale));
+      letter-spacing: 8px;
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       box-sizing: border-box;
     }
-    /* SPIELEN-Button: weiss, Pille auf numberwall */
+    /* SPIELEN-Button auf numberwall (silberne Pille bei ~y=780 im 1232px Wall-Asset) */
     .wallButtonSpielen {
-      top: calc(316.5px * var(--uiscale));
+      top: 750px;
       color: #ffffff;
       background: transparent;
       border: none;
       text-shadow:
-        0 0 calc(8px * var(--uiscale)) rgba(220,220,220,0.95),
-        0 0 calc(16px * var(--uiscale)) rgba(200,200,200,0.7),
-        0 0 calc(28px * var(--uiscale)) rgba(180,180,180,0.5),
-        0 calc(2px * var(--uiscale)) calc(4px * var(--uiscale)) rgba(0,0,0,0.8);
+        0 0 24px rgba(220,220,220,0.95),
+        0 0 48px rgba(200,200,200,0.7),
+        0 0 80px rgba(180,180,180,0.5),
+        0 8px 16px rgba(0,0,0,0.8);
       animation: spielenPulse 1.8s ease-in-out infinite;
     }
     @keyframes spielenPulse {
@@ -248,18 +248,18 @@
       50%      { transform: translateX(-50%) scale(1.06); }
     }
     
-    /* SPIELEN-Button braun auf Holzleiste der kidskippwall — selbe Hoehe wie numberwall */
+    /* SPIELEN-Button braun auf Holzleiste der kidskippwall */
     .wallButtonSpielenBraun {
-      top: calc(316.5px * var(--uiscale));
+      top: 750px;
       color: #3a2410;
       background: transparent;
       border: none;
-      -webkit-text-stroke: calc(1px * var(--uiscale)) #3a2410;
+      -webkit-text-stroke: 2px #3a2410;
       text-shadow:
-        0 0 calc(8px * var(--uiscale)) rgba(232,220,192,0.95),
-        0 0 calc(16px * var(--uiscale)) rgba(210,195,160,0.75),
-        0 0 calc(28px * var(--uiscale)) rgba(190,170,130,0.55),
-        0 calc(2px * var(--uiscale)) calc(4px * var(--uiscale)) rgba(255,245,220,0.6);
+        0 0 24px rgba(232,220,192,0.95),
+        0 0 48px rgba(210,195,160,0.75),
+        0 0 80px rgba(190,170,130,0.55),
+        0 8px 16px rgba(255,245,220,0.6);
       animation: spielenPulse 1.8s ease-in-out infinite;
     }
 
