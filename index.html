@@ -212,6 +212,33 @@
     .wallSlide {
       position: relative;
     }
+    /* Globaler SPIELEN-Text — auf Raster-Position Zeile 10, im uiLayer (Wall-unabhaengig) */
+    #globalSpielenText {
+      position: absolute;
+      left: 0;
+      top: calc(9 * var(--cell));
+      width: var(--gridW);
+      height: var(--cell);
+      line-height: var(--cell);
+      text-align: center;
+      font-size: 67px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 8px;
+      color: #ffffff;
+      text-shadow:
+        0 0 24px rgba(220,220,220,0.95),
+        0 0 48px rgba(200,200,200,0.7),
+        0 0 80px rgba(180,180,180,0.5),
+        0 8px 16px rgba(0,0,0,0.85);
+      z-index: 100;
+      pointer-events: auto;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      animation: spielenPulseGlobal 1.8s ease-in-out infinite;
+    }
+    
     .wallButton {
       position: absolute;
       left: 50%;
@@ -232,7 +259,7 @@
     }
     /* SPIELEN-Button auf numberwall (silberne Pille bei ~y=780 im 1232px Wall-Asset) */
     .wallButtonSpielen {
-      top: 876px;
+      top: 77px;
       color: #ffffff;
       background: transparent;
       border: none;
@@ -247,10 +274,14 @@
       0%, 100% { transform: translateX(-50%) scale(1); }
       50%      { transform: translateX(-50%) scale(1.06); }
     }
+    @keyframes spielenPulseGlobal {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
     
     /* SPIELEN-Button braun auf Holzleiste der kidskippwall */
     .wallButtonSpielenBraun {
-      top: 876px;
+      top: 77px;
       color: #3a2410;
       background: transparent;
       border: none;
@@ -489,6 +520,9 @@
         <!-- Slogan in der Zeile oberhalb der Walls -->
         <div id="kippClubSubtitle">Merken, Logik, Kopfzerbrechen.</div>
 
+        <!-- SPIELEN-Text direkt im uiLayer, NICHT in den Walls — Wall-unabhaengig auf Raster-Position -->
+        <div id="globalSpielenText">SPIELEN</div>
+
         <!-- Scroll-Pfeile links und rechts -->
         <div id="wallArrowLeft" class="wallArrow">&#10094;</div>
         <div id="wallArrowRight" class="wallArrow">&#10095;</div>
@@ -496,11 +530,8 @@
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
           <div class="wallTrack">
-            <div class="wallSlide">
-              <img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers">
-              <div class="wallButton wallButtonSpielen" data-theme="numbers">SPIELEN</div>
-            </div>
-            <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"><div class="wallButton wallButtonSpielenBraun" data-theme="icons">SPIELEN</div></div>
+            <div class="wallSlide"><img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers"></div>
+            <div class="wallSlide"><img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons"></div>
             <div class="wallSlide"><img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys"></div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
