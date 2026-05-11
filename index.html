@@ -296,6 +296,49 @@
       animation: spielenPulse 1.8s ease-in-out infinite;
     }
 
+    .wallPaywallText {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+      width: var(--gridW);
+      height: var(--cell);
+      line-height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 83px;
+      font-size: 67px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 2px;
+      z-index: 100;
+      pointer-events: auto;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      animation: spielenPulse 1.8s ease-in-out infinite;
+    }
+
+    .wallPaywallSingle {
+      color: #ffffff;
+      text-shadow:
+        0 0 24px rgba(220,220,220,0.95),
+        0 0 48px rgba(200,200,200,0.7),
+        0 0 80px rgba(180,180,180,0.5),
+        0 8px 16px rgba(0,0,0,0.85);
+    }
+
+    .wallPaywallBundle {
+      color: #3a2410;
+      -webkit-text-stroke: 2px #3a2410;
+      text-shadow:
+        0 0 24px rgba(232,220,192,0.95),
+        0 0 48px rgba(210,195,160,0.75),
+        0 0 80px rgba(190,170,130,0.55),
+        0 8px 16px rgba(255,245,220,0.6);
+    }
+
     .dimOverlay {
       position: absolute;
       left: 0; top: 0;
@@ -540,7 +583,13 @@
               <img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons">
               <div class="wallButton wallButtonSpielenBraun" data-theme-button="icons">SPIELEN</div>
             </div>
-            <div class="wallSlide"><img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys"></div>
+            <div class="wallSlide">
+              <img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys">
+              <div class="wallPaywallText" data-theme-button="smileys">
+                <span class="wallPaywallSingle">€ 0,99</span>
+                <span class="wallPaywallBundle">ALLES € 4,99</span>
+              </div>
+            </div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
             <div class="wallSlide"><img src="kingpaywall.webp" alt="KIPP KING" data-theme="king"></div>
@@ -922,6 +971,13 @@
         updateLevelLinks();
         updateLevelBests();
         document.getElementById("levelOverlay").classList.add("show");
+      };
+    });
+    document.querySelectorAll('[data-theme-button="smileys"]').forEach(el => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        // Paywall-Platzhalter: Hier kommt später Kauf-/Bundle-Logik hinein.
+        console.log("Smiley Paywall: Einzelpreis €0,99 / Bundle €4,99");
       };
     });
 
