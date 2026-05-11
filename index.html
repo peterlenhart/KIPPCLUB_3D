@@ -125,15 +125,19 @@
       font-size: 90px;
       color: #FFD700;
       text-shadow: 0 4px 12px rgba(0,0,0,0.95), 0 0 20px rgba(0,0,0,0.6);
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: pointer;
       z-index: 11;
       opacity: 0.85;
       transition: opacity 0.3s ease;
       font-family: Arial, sans-serif;
       font-weight: bold;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
     .wallArrow.hidden {
       opacity: 0;
+      pointer-events: none;
     }
     #wallArrowLeft {
       left: 0;
@@ -675,6 +679,7 @@
     window.addEventListener("resize", rebuild);
     
     // Scroll-Pfeile dynamisch ein-/ausblenden je nach Karussell-Position
+    // und Klick-Handler fuer Pfeil-Navigation
     (function setupWallArrows() {
       function updateArrows() {
         const car = document.getElementById('wallCarousel');
@@ -686,77 +691,31 @@
         if (atStart) arrL.classList.add('hidden'); else arrL.classList.remove('hidden');
         if (atEnd) arrR.classList.add('hidden'); else arrR.classList.remove('hidden');
       }
+      function scrollByOne(direction) {
+        const car = document.getElementById('wallCarousel');
+        if (!car) return;
+        // Eine Wall-Breite minus Ueberlappung = effektive Schrittweite
+        const step = 360 - 135; // 225px sichtbare Wall-Breite
+        car.scrollBy({ left: direction * step, behavior: 'smooth' });
+      }
       window.addEventListener('load', () => {
         const car = document.getElementById('wallCarousel');
+        const arrL = document.getElementById('wallArrowLeft');
+        const arrR = document.getElementById('wallArrowRight');
         if (car) {
           car.addEventListener('scroll', updateArrows);
           setTimeout(updateArrows, 100);
         }
-      });
-    })();
-    
-    // Tutorial-Hand: zeigt beim ersten Laden den Wisch nach links und zurueck
-    (function setupWallTutHand() {
-      function showTutHand() {
-        const car = document.getElementById('wallCarousel');
-        if (!car) return;
-        if (car.scrollWidth <= car.clientWidth + 5) return; // nichts zu scrollen
-        
-        // Hand erstellen — im body, ueber allem
-        let hand = document.getElementById('_wallTutHand');
-        if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
-        hand = document.createElement('img');
-        hand.id = '_wallTutHand';
-        hand.src = 'tutorhand_smiley.webp';
-        hand.style.cssText = 'position:fixed;width:90px;height:90px;z-index:99999;' +
-          'pointer-events:none;left:0;top:0;will-change:transform;' +
-          'transition:transform 0.6s cubic-bezier(0.4,0,0.2,1);';
-        document.body.appendChild(hand);
-        
-        const carRect = car.getBoundingClientRect();
-        const handTopOnBand = carRect.top + carRect.height / 2 - 8;
-        const xRight = window.innerWidth - 90 - 30;
-        const xLeft = 30;
-        const ySouth = window.innerHeight + 60;
-        
-        // Initial: Suedlich unter Display, an x=xRight
-        hand.style.transform = 'translate(' + xRight + 'px,' + ySouth + 'px)';
-        hand.style.transition = 'none';
-        void hand.offsetWidth;
-        
-        // Phase 1: Hand faehrt von Sueden hoch
-        requestAnimationFrame(() => {
-          hand.style.transition = 'transform 0.6s cubic-bezier(0.4,0,0.2,1)';
-          hand.style.transform = 'translate(' + xRight + 'px,' + handTopOnBand + 'px)';
-        });
-        
-        // Phase 2: Wisch nach links mit Schwung — Band scrollt synchron zum Ende
-        const maxScroll = car.scrollWidth - car.clientWidth;
-        setTimeout(() => {
-          hand.style.transition = 'transform 1.0s cubic-bezier(0.4,0,0.2,1)';
-          hand.style.transform = 'translate(' + xLeft + 'px,' + handTopOnBand + 'px)';
-          car.scrollTo({ left: maxScroll, behavior: 'smooth' });
-        }, 700);
-        
-        // Phase 3: Hand wischt zurueck nach rechts, Band zurueck zum Anfang
-        setTimeout(() => {
-          hand.style.transform = 'translate(' + xRight + 'px,' + handTopOnBand + 'px)';
-          car.scrollTo({ left: 0, behavior: 'smooth' });
-        }, 1900);
-        
-        // Phase 4: Hand faehrt nach Sueden raus
-        setTimeout(() => {
-          hand.style.transition = 'transform 0.6s cubic-bezier(0.4,0,0.2,1)';
-          hand.style.transform = 'translate(' + xRight + 'px,' + ySouth + 'px)';
-        }, 3000);
-        
-        // Aufraeumen
-        setTimeout(() => {
-          if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
-        }, 3700);
-      }
-      window.addEventListener('load', () => {
-        setTimeout(showTutHand, 400);
+        if (arrL) {
+          arrL.style.pointerEvents = 'auto';
+          arrL.style.cursor = 'pointer';
+          arrL.addEventListener('click', () => scrollByOne(-1));
+        }
+        if (arrR) {
+          arrR.style.pointerEvents = 'auto';
+          arrR.style.cursor = 'pointer';
+          arrR.addEventListener('click', () => scrollByOne(1));
+        }
       });
     })();
 
