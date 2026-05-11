@@ -93,13 +93,33 @@
       z-index:0;
     }
 
-    /* Wall-Karussell: 6 Walls aneinander, je 360px */
+    /* Untertitel "Merken, Logik, Kopfzerbrechen." in der Zeile oberhalb der Walls
+       Hinweis: Wert in skalierter Schicht — wird durch transform:scale(var(--scale)) runterskaliert */
+    #kippClubSubtitle {
+      position: absolute;
+      left: 0;
+      top: calc(22% - 142px);
+      width: var(--gridW);
+      height: 142px;
+      line-height: 142px;
+      text-align: center;
+      font-size: 45px;
+      color: #e8dcc0;
+      letter-spacing: 4px;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.85), 0 0 16px rgba(0,0,0,0.4);
+      pointer-events: none;
+      z-index: 9;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+
+    /* Wall-Karussell: 6 Walls aneinander, je 360px, 1 cell suedlicher als zuvor */
     #wallCarousel {
       position: absolute;
       left: 0;
-      top: 22%;
+      top: calc(22% + 142px);
       width: var(--gridW);
-      height: 70%;
+      height: calc(70% - 142px);
       overflow-x: auto;
       overflow-y: hidden;
       scroll-snap-type: x mandatory;
@@ -368,6 +388,9 @@
       <div class="dimOverlay" id="dimOverlay"></div>
 
       <div class="uiLayer">
+
+        <!-- Slogan in der Zeile oberhalb der Walls -->
+        <div id="kippClubSubtitle">Merken, Logik, Kopfzerbrechen.</div>
 
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
