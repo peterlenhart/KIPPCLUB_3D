@@ -586,7 +586,7 @@
             <div class="wallSlide">
               <img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys">
               <div class="wallPaywallText" data-theme-button="smileys">
-                <span class="wallPaywallSingle">€ 0,99</span>
+                <span class="wallPaywallSingle" style="position:relative; left:15px;">€ 0,99</span>
                 <span class="wallPaywallBundle">ALLES € 4,99</span>
               </div>
             </div>
@@ -976,8 +976,7 @@
     document.querySelectorAll('[data-theme-button="smileys"]').forEach(el => {
       el.onclick = (e) => {
         e.stopPropagation();
-        // Paywall-Platzhalter: Hier kommt später Kauf-/Bundle-Logik hinein.
-        console.log("Smiley Paywall: Einzelpreis €0,99 / Bundle €4,99");
+        location.href = 'smiley.html';
       };
     });
 
