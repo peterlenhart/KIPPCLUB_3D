@@ -9988,7 +9988,13 @@
       el.style.top = '497px';
       el.style.display = '';
       el.classList.remove('hidden');
-      // KIPP-Zahl-Hinweis erst jetzt einblenden (Scrollband ist sichtbar)
+      // KIPP-Zahl-Hinweis nur EINMAL pro Spiel-Session (vor dem ersten Kippzug)
+      if (window._smileyKippHintShown) {
+        // Schon gezeigt — kein Hint mehr, nur Tutorial-Hand falls noch nicht durch
+        _smileyShowScrollTutorialHand();
+        return;
+      }
+      window._smileyKippHintShown = true;
       let kzHint = document.getElementById('_smileyKippZahlHint');
       if (!kzHint) {
         kzHint = document.createElement('div');
@@ -9996,7 +10002,6 @@
         document.getElementById('container').appendChild(kzHint);
       }
       // Position vertikal an derselben Stelle wie der sG1-Text vor LOS GEHT'S
-      // (3D-projiziert auf Würfel-Zeile 11.5, dieselbe Höhe wie "Pass gut auf...")
       const _kzPt = new THREE.Vector3(0, 0.001 + 3 * 0.15625, 0.890625);
       _kzPt.project(camera);
       const _kzSy = Math.round((-_kzPt.y * 0.5 + 0.5) * 720) - 42;
