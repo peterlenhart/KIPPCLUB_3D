@@ -608,6 +608,22 @@
     #levelClose { position:absolute; top:12px; left:16px; width:48px; height:48px; cursor:pointer; background:none; border:none; padding:0; -webkit-tap-highlight-color:transparent; pointer-events:auto; }
     #levelClose img { width:100%; height:100%; object-fit:contain; }
   </style>
+  <script>
+    // Frühestmögliche Skalierung, damit Flashscreen und Layout nicht erst
+    // nach dem späteren rebuild() von 0.333333 auf den echten Gerätewert springen.
+    (function(){
+      var cols = 8;
+      var cell = 135;
+      var gridW = cols * cell; // 1080 Retina-Pixel
+      var vw = window.innerWidth || document.documentElement.clientWidth || 360;
+      var scale = Math.min(1, vw / gridW);
+      var root = document.documentElement;
+      root.style.setProperty("--scale", scale.toFixed(4));
+      root.style.setProperty("--gridW", gridW + "px");
+      root.style.setProperty("--uiscale", (1 / (scale || 1)).toFixed(4));
+      root.style.setProperty("--screen31", (31 / (scale || 1)).toFixed(2) + "px");
+    })();
+  </script>
 </head>
 
 <body>
@@ -896,7 +912,7 @@
         if (singlePrice && slide) {
           const priceRect = singlePrice.getBoundingClientRect();
           const slideRect = slide.getBoundingClientRect();
-          el.style.left = (((priceRect.left - slideRect.left) / scale) - (8 / scale)) + "px";
+          el.style.left = (((priceRect.left - slideRect.left) / scale) - (16 / scale)) + "px";
         }
 
         el.style.top = ((spielenRow11Y - wallTopY) + 215) + "px";
@@ -926,6 +942,7 @@
 
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
+    requestAnimationFrame(rebuild);
     
     // Scroll-Pfeile dynamisch ein-/ausblenden je nach Karussell-Position
     // und Klick-Handler fuer Pfeil-Navigation
