@@ -885,12 +885,20 @@
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
-      // Silberner Subtext unter €0,99
+      // Silberner Subtext unter €0,99:
+      // Vertikale Position bleibt unverändert.
+      // Horizontal wird die echte linke Kante des €0,99-Textes gemessen.
       document.querySelectorAll('.wallPaywallSingleSub').forEach(el => {
-        // exakt unter €0,99:
-        // gleiche Basis wie €0,99, dann 8 sichtbare px westlicher
-        // und 45 sichtbare px südlicher
-        el.style.left = "calc(50% + 20px)";
+        const singlePrice = document.querySelector('.wallPaywallSingle');
+        const slide = singlePrice ? singlePrice.closest('.wallSlide') : null;
+        const scale = numVar("--scale") || 1;
+
+        if (singlePrice && slide) {
+          const priceRect = singlePrice.getBoundingClientRect();
+          const slideRect = slide.getBoundingClientRect();
+          el.style.left = ((priceRect.left - slideRect.left) / scale) + "px";
+        }
+
         el.style.top = ((spielenRow11Y - wallTopY) + 215) + "px";
       });
 
