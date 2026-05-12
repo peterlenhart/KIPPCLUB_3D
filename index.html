@@ -346,11 +346,10 @@
 
 
     .wallPaywallBundleSub {
+      position: absolute;
+      left: 0;
+      top: 0;
       color: #f2ead8;
-      display: inline-block;
-      position: relative;
-      left: 45px;
-      top: 32px;
       font-size: 45px;
       line-height: 49px;
       font-family: Arial, sans-serif;
@@ -361,6 +360,7 @@
       -webkit-text-stroke: 0;
       white-space: nowrap;
       pointer-events: none;
+      z-index: 101;
     }
 
     @keyframes paywallSinglePulse {
@@ -622,8 +622,8 @@
               <div class="wallPaywallText" data-theme-button="smileys">
                 <span class="wallPaywallSingle" style="position:relative; left:44px;">€ 0,99</span>
                 <span class="wallPaywallBundle" style="position:relative; left:-24px; top:-156px;">ALLES € 4,99</span>
-                <span class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</span>
               </div>
+              <div class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
             </div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
@@ -847,6 +847,14 @@
       const wallTopY = wallCarousel ? wallCarousel.offsetTop : 0;
       document.querySelectorAll('[data-theme-button]').forEach(el => {
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+      });
+
+      // Statischer Untertext unter ALLES € 4,99.
+      // Ausgehend von ALLES: 45px linker Einzug sichtbar = 135px intern,
+      // 32px südlich sichtbar = 96px intern.
+      document.querySelectorAll('.wallPaywallBundleSub').forEach(el => {
+        el.style.left = "calc(50% + 111px)";
+        el.style.top = ((spielenRow11Y - wallTopY) + 20) + "px";
       });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
