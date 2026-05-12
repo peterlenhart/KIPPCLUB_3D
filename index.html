@@ -354,6 +354,47 @@
       50%      { transform: scale(1.06); }
     }
 
+
+    .wallCardPaywallText {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+      width: var(--gridW);
+      height: var(--cell);
+      line-height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 83px;
+      font-size: 67px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 2px;
+      z-index: 100;
+      pointer-events: auto;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .wallCardPaywallYellow {
+      color: #ffd928;
+      display: inline-block;
+      transform-origin: center center;
+      animation: paywallCardPulse 1.8s ease-in-out infinite;
+      text-shadow:
+        0 0 18px rgba(255,255,255,0.95),
+        0 0 36px rgba(255,255,255,0.75),
+        0 0 60px rgba(255,255,255,0.55),
+        0 6px 14px rgba(0,0,0,0.85);
+    }
+
+    @keyframes paywallCardPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+
     .dimOverlay {
       position: absolute;
       left: 0; top: 0;
@@ -605,7 +646,15 @@
                 <span class="wallPaywallBundle" style="position:relative; left:8px;">ALLES € 4,99</span>
               </div>
             </div>
-            <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
+            <div class="wallSlide">
+              <img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card">
+              <div class="wallCardPaywallText cardSinglePrice" data-theme-button="card">
+                <span class="wallCardPaywallYellow">€ 1,99</span>
+              </div>
+              <div class="wallCardPaywallText cardBundlePrice" data-theme-button="card">
+                <span class="wallCardPaywallYellow">ALLES € 4,99</span>
+              </div>
+            </div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
             <div class="wallSlide"><img src="kingpaywall.webp" alt="KIPP KING" data-theme="king"></div>
           </div>
@@ -827,6 +876,14 @@
       const wallTopY = wallCarousel ? wallCarousel.offsetTop : 0;
       document.querySelectorAll('[data-theme-button]').forEach(el => {
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+      });
+
+      // Card-Paywall: eigene vertikale Positionen relativ zur Smiley-Preiszeile.
+      document.querySelectorAll('.cardSinglePrice').forEach(el => {
+        el.style.top = ((spielenRow11Y - wallTopY) + 13) + "px";
+      });
+      document.querySelectorAll('.cardBundlePrice').forEach(el => {
+        el.style.top = ((spielenRow11Y - wallTopY) - 32) + "px";
       });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
