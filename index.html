@@ -880,10 +880,12 @@
 
       // Card-Paywall: eigene vertikale Positionen relativ zur Smiley-Preiszeile.
       document.querySelectorAll('.cardSinglePrice').forEach(el => {
-        el.style.top = ((spielenRow11Y - wallTopY) + 13) + "px";
+        el.style.top = ((spielenRow11Y - wallTopY) - 37) + "px";
+        el.style.left = "calc(50% - 60px)";
       });
       document.querySelectorAll('.cardBundlePrice').forEach(el => {
-        el.style.top = ((spielenRow11Y - wallTopY) - 32) + "px";
+        el.style.top = ((spielenRow11Y - wallTopY) - 55) + "px";
+        el.style.left = "calc(50% + 60px)";
       });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
