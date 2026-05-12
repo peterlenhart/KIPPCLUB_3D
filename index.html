@@ -30,8 +30,8 @@
       --cols: 8;
       --cell: 135px;
 
-      --scale: 1;
-      --uiscale: 1;
+      --scale: 0.333333;
+      --uiscale: 3;
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;
 
@@ -849,12 +849,10 @@
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
-      // Statischer Untertext unter ALLES € 4,99.
-      // Ausgehend von ALLES: 45px linker Einzug sichtbar = 135px intern,
-      // 32px südlich sichtbar = 96px intern.
+      // Untertext als eigenes Element, ohne Einfluss auf € 0,99 und ALLES € 4,99.
       document.querySelectorAll('.wallPaywallBundleSub').forEach(el => {
-        el.style.left = "calc(50% + 111px)";
-        el.style.top = ((spielenRow11Y - wallTopY) + 20) + "px";
+        el.style.left = "calc(50% + 21px)";
+        el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
