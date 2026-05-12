@@ -345,6 +345,30 @@
     }
 
 
+    
+    .wallPaywallSingleSub {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #ffffff;
+      font-size: 45px;
+      line-height: 49px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 101;
+      display: inline-block;
+      transform-origin: center center;
+      animation: none !important;
+      text-shadow:
+        0 0 24px rgba(220,220,220,0.95),
+        0 0 48px rgba(200,200,200,0.7),
+        0 0 80px rgba(180,180,180,0.5),
+        0 8px 16px rgba(0,0,0,0.85);
+    }
+
     .wallPaywallBundleSub {
       position: absolute;
       left: 0;
@@ -629,6 +653,7 @@
                 <span class="wallPaywallBundle" style="position:relative; left:-24px; top:-156px;">CLUB € 4,99</span>
               </div>
               <div class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
+              <div class="wallPaywallSingleSub">Nur SMILEY</div>
             </div>
             <div class="wallSlide"><img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card"></div>
             <div class="wallSlide"><img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen"></div>
@@ -857,6 +882,13 @@
       // Untertext als eigenes Element, ohne Einfluss auf € 0,99 und CLUB € 4,99.
       document.querySelectorAll('.wallPaywallBundleSub').forEach(el => {
         el.style.left = "calc(50% - 27px)";
+        el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+      });
+
+      // Silberner Subtext unter €0,99
+      document.querySelectorAll('.wallPaywallSingleSub').forEach(el => {
+        // 8 sichtbare px westlicher = 24 interne px
+        el.style.left = "calc(50% - 184px)";
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
