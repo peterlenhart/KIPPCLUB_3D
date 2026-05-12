@@ -349,7 +349,7 @@
       position: absolute;
       left: 0;
       top: 0;
-      color: #f2ead8;
+      color: #3a2410;
       font-size: 45px;
       line-height: 49px;
       font-family: Arial, sans-serif;
@@ -621,7 +621,7 @@
               <img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys">
               <div class="wallPaywallText" data-theme-button="smileys">
                 <span class="wallPaywallSingle" style="position:relative; left:44px;">€ 0,99</span>
-                <span class="wallPaywallBundle" style="position:relative; left:-24px; top:-156px;">ALLES € 4,99</span>
+                <span class="wallPaywallBundle" style="position:relative; left:-24px; top:-156px;">CLUB € 4,99</span>
               </div>
               <div class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
             </div>
@@ -851,7 +851,7 @@
 
       // Untertext als eigenes Element, ohne Einfluss auf € 0,99 und ALLES € 4,99.
       document.querySelectorAll('.wallPaywallBundleSub').forEach(el => {
-        el.style.left = "calc(50% + 21px)";
+        el.style.left = "calc(50% - 3px)";
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
