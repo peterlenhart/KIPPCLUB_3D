@@ -887,9 +887,11 @@
 
       // Silberner Subtext unter €0,99
       document.querySelectorAll('.wallPaywallSingleSub').forEach(el => {
-        // 8 sichtbare px westlicher = 24 interne px
-        el.style.left = "calc(50% - 184px)";
-        el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+        // exakt unter €0,99:
+        // gleiche Basis wie €0,99, dann 8 sichtbare px westlicher
+        // und 45 sichtbare px südlicher
+        el.style.left = "calc(50% - 4px)";
+        el.style.top = ((spielenRow11Y - wallTopY) + 215) + "px";
       });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
