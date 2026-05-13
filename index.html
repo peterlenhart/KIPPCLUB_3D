@@ -1160,32 +1160,6 @@
           });
         }, 50);
         
-        // ===================================================================
-        // ===== DEBUG / TEST — VOR RELEASE ENTFERNEN =====
-        // Versteckter Demo-Toggle: 3 schnelle Taps oben links schalten alle Walls frei (Bundle)
-        // Nochmal 3 Taps -> zurueck auf Verkaufsmodus
-        const demoZone = document.createElement('div');
-        demoZone.style.cssText = 'position:fixed;left:0;top:0;width:60px;height:60px;z-index:999999;background:transparent;cursor:pointer;';
-        document.body.appendChild(demoZone);
-        let tapCount = 0;
-        let tapTimer = null;
-        demoZone.addEventListener('click', () => {
-          tapCount++;
-          if (tapTimer) clearTimeout(tapTimer);
-          tapTimer = setTimeout(() => { tapCount = 0; }, 800);
-          if (tapCount >= 3) {
-            tapCount = 0;
-            const isOn = localStorage.getItem('kippclub_bundle_unlocked') === '1';
-            if (isOn) {
-              localStorage.removeItem('kippclub_bundle_unlocked');
-            } else {
-              localStorage.setItem('kippclub_bundle_unlocked', '1');
-            }
-            location.reload();
-          }
-        });
-        // ===== ENDE DEBUG / TEST =====
-        // ===================================================================
       });
     })();
 
