@@ -1286,9 +1286,11 @@
         // Kleiner Button (Einzelpreis) wird zum Schloss-Symbol
         const single = slide.querySelector('.wallPaywallSingle');
         centerReplace(single, KIPPCLUB_LOCK_SVG);
-        // Langer Button (Bundle "CLUB € 4,99") wird zu "SPIELEN" — zentriert + 42 Pre-Scale-Pixel (= 14 Display-Pixel) oestlich
+        // Langer Button (Bundle "CLUB € 4,99") wird zu uebersetztem SPIELEN-Wort
+        const _lvT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
+        const _playWord = _lvT && _lvT.play ? _lvT.play : 'SPIELEN';
         const bundle = slide.querySelector('.wallCardPaywallBundle, .wallPaywallBundle');
-        centerReplace(bundle, '<span style="position:relative;left:42px;display:inline-block;">SPIELEN</span>');
+        centerReplace(bundle, '<span style="position:relative;left:42px;display:inline-block;">' + _playWord + '</span>');
         
         // Subtexte ausblenden
         const sub1 = slide.querySelector('.wallCardPaywallBundleSub, .wallPaywallBundleSub');
@@ -1518,7 +1520,7 @@
       const text = t.share;
 
       if(navigator.share){
-        navigator.share({ title:"DigiKipp", text, url }).catch(()=>{});
+        navigator.share({ title:"KIPP CLUB", text, url }).catch(()=>{});
       } else {
         window.open("https://wa.me/?text=" + encodeURIComponent(text + " " + url), "_blank");
       }
@@ -1589,12 +1591,12 @@
     };
 
 const LVL_T = {
-      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "DigiKipp \u2013 schau mal vorbei!", mT: "Spiel beenden?", mS: "Möchtest du das Spiel<br>wirklich beenden?", mA: "Abbrechen", mB: "Beenden" },
-      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "DigiKipp \u2013 check it out!", mT: "Quit game?", mS: "Do you really want<br>to quit the game?", mA: "Cancel", mB: "Quit" },
-      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "DigiKipp \u2013 \u00a1echa un vistazo!", mT: "\u00bfSalir del juego?", mS: "\u00bfRealmente quieres<br>salir del juego?", mA: "Cancelar", mB: "Salir" },
-      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "DigiKipp \u2013 viens voir !", mT: "Quitter le jeu ?", mS: "Veux-tu vraiment<br>quitter le jeu ?", mA: "Annuler", mB: "Quitter" },
-      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO KIPP", s3: "per Super Rompicapi", share: "DigiKipp \u2013 dai un\u2019occhiata!", mT: "Uscire dal gioco?", mS: "Vuoi davvero<br>uscire dal gioco?", mA: "Annulla", mB: "Esci" },
-      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "DigiKipp \u2013 bir g\u00f6z at!", mT: "Oyundan \u00e7ık?", mS: "Oyundan ger\u00e7ekten<br>\u00e7ıkmak istiyor musun?", mA: "\u0130ptal", mB: "\u00c7ık" }
+      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "KIPP CLUB \u2013 schau mal vorbei!", mT: "Spiel beenden?", mS: "Möchtest du das Spiel<br>wirklich beenden?", mA: "Abbrechen", mB: "Beenden", play: "SPIELEN", nur: "Nur" },
+      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "KIPP CLUB \u2013 check it out!", mT: "Quit game?", mS: "Do you really want<br>to quit the game?", mA: "Cancel", mB: "Quit", play: "PLAY", nur: "Only" },
+      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "KIPP CLUB \u2013 \u00a1echa un vistazo!", mT: "\u00bfSalir del juego?", mS: "\u00bfRealmente quieres<br>salir del juego?", mA: "Cancelar", mB: "Salir", play: "JUGAR", nur: "Solo" },
+      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "KIPP CLUB \u2013 viens voir !", mT: "Quitter le jeu ?", mS: "Veux-tu vraiment<br>quitter le jeu ?", mA: "Annuler", mB: "Quitter", play: "JOUER", nur: "Seulement" },
+      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO KIPP", s3: "per Super Rompicapi", share: "KIPP CLUB \u2013 dai un\u2019occhiata!", mT: "Uscire dal gioco?", mS: "Vuoi davvero<br>uscire dal gioco?", mA: "Annulla", mB: "Esci", play: "GIOCA", nur: "Solo" },
+      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "KIPP CLUB \u2013 bir g\u00f6z at!", mT: "Oyundan \u00e7ık?", mS: "Oyundan ger\u00e7ekten<br>\u00e7ıkmak istiyor musun?", mA: "\u0130ptal", mB: "\u00c7ık", play: "OYNA", nur: "Sadece" }
     };
 
     function applyLevelLang() {
@@ -1605,6 +1607,25 @@ const LVL_T = {
       document.getElementById('modalSub').innerHTML = t.mS;
       document.getElementById('modalAbbrechen').textContent = t.mA;
       document.getElementById('modalBeenden').textContent = t.mB;
+      // SPIELEN-Buttons auf numberwall und kidskippwall
+      document.querySelectorAll('.wallButtonSpielen, .wallButtonSpielenBraun').forEach(el => {
+        el.textContent = t.play;
+      });
+      // Globaler SPIELEN-Text (im uiLayer)
+      const gSp = document.getElementById('globalSpielenText');
+      if (gSp) gSp.textContent = t.play;
+      // "Nur SMILEY/CARD/QUEEN/KING" Subtexte — Spielname behalten, nur Praefix uebersetzen
+      const gameNames = { smileys: 'SMILEY', card: 'CARD', queen: 'QUEEN', king: 'KING' };
+      document.querySelectorAll('.wallSlide').forEach(slide => {
+        let g = null;
+        if (slide.classList.contains('cardWallSlide'))  g = 'card';
+        else if (slide.classList.contains('queenWallSlide')) g = 'queen';
+        else if (slide.classList.contains('kingWallSlide'))  g = 'king';
+        else if (slide.classList.contains('smileyWallSlide')) g = 'smileys';
+        if (!g) return;
+        const sub = slide.querySelector('.wallCardPaywallSingleSub, .wallPaywallSingleSub');
+        if (sub) sub.textContent = t.nur + ' ' + gameNames[g];
+      });
     }
     applyLevelLang();
 
