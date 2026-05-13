@@ -2710,7 +2710,7 @@
       } catch(e) {}
     }
 
-    const SCORE_LEVEL_NAMES = { 1: 'BUMBLEBR.', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBRAIN' };
+    const SCORE_LEVEL_NAMES = { 1: 'BUMBLEBR.', 2: 'BRAINY', 3: 'BRAIN' };
 
     function saveBestScore(level, hits, fails) {
       try {
@@ -10950,7 +10950,7 @@
       }
     }
     
-    function showIconEndScreen() {
+    function showIconEndScreen(isTutorial) {
       iconHideLives();
       const row = document.getElementById('iconKippzielRow');
       if (row) row.classList.add('hidden');
@@ -10961,12 +10961,12 @@
       var total = hits + fails;
       var pct = total > 0 ? Math.round(hits / total * 100) : 0;
       var grid = window._hitMissSeq.map(function(r) { return r === 'hit' ? '\u{1F7E9}' : '\u{1F7E5}'; }).join('');
-      return 'KIPP KIDS \u2014 ' + levelName + '\n' +
+      return "KID'S KIPP \u2014 " + levelName + '\n' +
         pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
         grid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         'https://peterlenhart.github.io/KIPPCLUB_3D/' + '\n' +
-        '#KippClub #KippKids';
+        "#KippClub #KidsKipp";
     }
 
       saveBestScore(currentLevel, iconHits, iconMisses);
@@ -11006,25 +11006,30 @@
       btnD.style.opacity = '1';
       btnS.style.display = 'block';
       
-      // TEILEN Button
+      // TEILEN Button — im Tutorial NICHT anzeigen (Tutorial-Ergebnis ist immer 100% und nicht teilenswert)
       var btnT = document.getElementById('btnTeilen');
       var _lvNames = { 1: 'BUMBLEBRAIN', 2: 'BRAINY', 3: 'BRAIN' };
       var _lvName = _lvNames[currentLevel] || 'BUMBLEBRAIN';
-      btnT.textContent = T.cTeilen || 'TEILEN';
-      btnT.disabled = false;
-      btnT.style.opacity = '1';
-      btnT.style.display = 'block';
-      btnT.onclick = function() {
-        var shareText = buildIconShareText(_lvName, iconHits, iconMisses);
-        if (navigator.share) {
-          navigator.share({ text: shareText }).catch(function(){});
-        } else {
-          navigator.clipboard.writeText(shareText).then(function() {
-            btnT.textContent = T.cKopiert || 'KOPIERT!';
-            setTimeout(function() { btnT.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-          }).catch(function(){});
-        }
-      };
+      if (isTutorial) {
+        btnT.style.display = 'none';
+        btnT.disabled = true;
+      } else {
+        btnT.textContent = T.cTeilen || 'TEILEN';
+        btnT.disabled = false;
+        btnT.style.opacity = '1';
+        btnT.style.display = 'block';
+        btnT.onclick = function() {
+          var shareText = buildIconShareText(_lvName, iconHits, iconMisses);
+          if (navigator.share) {
+            navigator.share({ text: shareText }).catch(function(){});
+          } else {
+            navigator.clipboard.writeText(shareText).then(function() {
+              btnT.textContent = T.cKopiert || 'KOPIERT!';
+              setTimeout(function() { btnT.textContent = T.cTeilen || 'TEILEN'; }, 2000);
+            }).catch(function(){});
+          }
+        };
+      }
       
       if (currentLevel >= 3) {
         btnD.style.display = 'none';
@@ -11634,7 +11639,15 @@
       injectTutorialFantasyScores();
 
       // SCHRITT 15-16: Spielende-Ansicht + Score "100% (4 | 0)"
-      showIconEndScreen();
+      showIconEndScreen(true);
+
+      // SICHER: Teilen-Button im Tutorial verstecken (falls irgendwo wieder sichtbar gemacht)
+      var _btnTtut = document.getElementById('btnTeilen');
+      if (_btnTtut) {
+        _btnTtut.style.display = 'none';
+        _btnTtut.style.opacity = '0';
+        _btnTtut.disabled = true;
+      }
 
       // saveBestScore() in showIconEndScreen hat einen zweiten 100%-Eintrag erzeugt → nochmals überschreiben
       injectTutorialFantasyScores();
