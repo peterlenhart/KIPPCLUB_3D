@@ -1241,9 +1241,18 @@
         // Kleiner Button (Einzelpreis) wird zum Schloss-Symbol
         const single = slide.querySelector('.wallPaywallSingle');
         centerReplace(single, KIPPCLUB_LOCK_SVG);
-        // Langer Button (Bundle "CLUB € 4,99") wird zu "SPIELEN"
+        // Langer Button (Bundle "CLUB € 4,99") wird zu "SPIELEN" — zentriert + 54 Pre-Scale-Pixel (= 18 Display-Pixel) oestlich
         const bundle = slide.querySelector('.wallCardPaywallBundle, .wallPaywallBundle');
         centerReplace(bundle, 'SPIELEN');
+        // Nach Auto-Zentrierung (zwei rAF abwarten) zusaetzlich 54px nach Osten
+        if (bundle) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const currentLeft = parseFloat(bundle.style.left) || 0;
+              bundle.style.left = (currentLeft + 54) + 'px';
+            });
+          });
+        }
         
         // Subtexte ausblenden
         const sub1 = slide.querySelector('.wallCardPaywallBundleSub, .wallPaywallBundleSub');
