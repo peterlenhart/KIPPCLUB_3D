@@ -1190,6 +1190,30 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
+    // ============= KIPP CLUB Paywall-Check =============
+    (function paywallCheck() {
+      function hasToken(key) {
+        try { return localStorage.getItem(key) === '1'; } catch(e) { return false; }
+      }
+      function setToken(key) {
+        try { localStorage.setItem(key, '1'); } catch(e) {}
+      }
+      const GAME_KEY = 'queen'; // wird pro Datei ersetzt
+      // Bundle gekauft → alles frei
+      if (hasToken('kippclub_bundle_unlocked')) return;
+      // Spezifisches Spiel einzeln gekauft → frei
+      if (hasToken('kippclub_' + GAME_KEY + '_unlocked')) return;
+      // Sharelink-Aufruf erkennen — URL hat irgendeinen Level/Play-Parameter
+      const params = new URLSearchParams(window.location.search);
+      const isSharelinkCall = params.has('level') || params.has('play') || params.has('c') || params.has('mode');
+      // Sharelink + Test noch nicht verbraucht → 1 Testrunde
+      if (isSharelinkCall && !hasToken('kippclub_test_used')) {
+        setToken('kippclub_test_used');
+        return; // normaler Spielablauf
+      }
+      // Sonst: zurück zur Index, wo die Paywall sichtbar ist
+      window.location.href = 'index.html';
+    })();
     // === GLOBAL ERROR HANDLER (VISUAL for debugging) ===
 
 
