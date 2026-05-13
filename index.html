@@ -1614,6 +1614,15 @@ const LVL_T = {
       // Globaler SPIELEN-Text (im uiLayer)
       const gSp = document.getElementById('globalSpielenText');
       if (gSp) gSp.textContent = t.play;
+      // SPIELEN-Wort in freigeschalteten Walls (Smiley/Card/Queen/King) — sitzt in span im Bundle-Element
+      document.querySelectorAll('.wallCardPaywallBundle span, .wallPaywallBundle span').forEach(sp => {
+        // Nur ueberschreiben wenn der span SPIELEN/PLAY/etc enthaelt (also Bundle freigeschaltet ist), nicht die € 4,99 spans
+        const txt = (sp.textContent || '').trim();
+        const playWords = ['SPIELEN','PLAY','JUGAR','JOUER','GIOCA','OYNA'];
+        if (playWords.indexOf(txt) >= 0) {
+          sp.textContent = t.play;
+        }
+      });
       // "Nur SMILEY/CARD/QUEEN/KING" Subtexte — Spielname behalten, nur Praefix uebersetzen
       const gameNames = { smileys: 'SMILEY', card: 'CARD', queen: 'QUEEN', king: 'KING' };
       document.querySelectorAll('.wallSlide').forEach(slide => {
