@@ -1116,7 +1116,7 @@
     })();
 
     // Klick-Handler auf alle Preis-Texte auf den Walls (Card/Queen/King)
-    // Vorerst: Klick fuehrt direkt ins Spiel. Spaeter: zu Capacitor In-App-Purchase
+    // Klick startet Capacitor-In-App-Purchase. Nach erfolgreichem Kauf: Token setzen + ins Spiel
     (function setupPaywallClicks() {
       const GAME_TARGETS = {
         smileys: 'smiley.html',
@@ -1124,7 +1124,25 @@
         queen:   'kipp_queen.html?level=masterbrain',
         king:    'kipp_king.html?level=masterbrain'
       };
-      // Mappt eine Wall-Klasse auf das zugehoerige Spiel
+      // Capacitor-Produkt-IDs (im Play Store Console anlegen!)
+      const PRODUCT_IDS = {
+        smileys: 'kippclub_smileys',
+        card:    'kippclub_card',
+        queen:   'kippclub_queen',
+        king:    'kippclub_king',
+        bundle:  'kippclub_bundle_all'
+      };
+      // Welcher Token wird bei welchem Kauf gesetzt
+      const PURCHASE_TOKEN = {
+        kippclub_smileys:     'kippclub_smileys_unlocked',
+        kippclub_card:        'kippclub_card_unlocked',
+        kippclub_queen:       'kippclub_queen_unlocked',
+        kippclub_king:        'kippclub_king_unlocked',
+        kippclub_bundle_all:  'kippclub_bundle_unlocked'
+      };
+      function setToken(key) {
+        try { localStorage.setItem(key, '1'); } catch(e) {}
+      }
       function getWallGame(slide) {
         if (!slide) return null;
         if (slide.classList.contains('cardWallSlide'))  return 'card';
@@ -1134,6 +1152,28 @@
         if (img && img.src && img.src.indexOf('smileypaywall') >= 0) return 'smileys';
         return null;
       }
+      function triggerPurchase(productId, gameOnSuccess) {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
+          window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
+            .then(result => {
+              if (result && result.success) {
+                const tokenKey = PURCHASE_TOKEN[productId];
+                if (tokenKey) setToken(tokenKey);
+                const target = GAME_TARGETS[gameOnSuccess];
+                if (target) location.href = target;
+              }
+            })
+            .catch(() => {});
+        } else {
+          // Browser-Test-Modus (kein Capacitor): simulierter Kauf-Dialog
+          if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\nPreis: laut Store\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase ueber App Store / Play Store)')) {
+            const tokenKey = PURCHASE_TOKEN[productId];
+            if (tokenKey) setToken(tokenKey);
+            const target = GAME_TARGETS[gameOnSuccess];
+            if (target) location.href = target;
+          }
+        }
+      }
       function attachClick(el) {
         if (!el) return;
         el.style.cursor = 'pointer';
@@ -1141,12 +1181,16 @@
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           let game = el.dataset.game;
+          // Bundle-Klick: Wall-Spiel ermitteln (fuer den Weiterleitungs-Pfad)
+          let wallGame = game;
           if (game === 'bundle') {
             const slide = el.closest('.wallSlide');
-            game = getWallGame(slide);
+            wallGame = getWallGame(slide);
           }
-          const target = GAME_TARGETS[game];
-          if (target) location.href = target;
+          const productId = (game === 'bundle') ? PRODUCT_IDS.bundle : PRODUCT_IDS[game];
+          if (productId) {
+            triggerPurchase(productId, wallGame);
+          }
         });
       }
       window.addEventListener('load', () => {
@@ -1159,7 +1203,6 @@
             applyUnlockState();
           });
         }, 50);
-        
       });
     })();
 
@@ -1259,6 +1302,27 @@
         const sub2 = slide.querySelector('.wallCardPaywallSingleSub, .wallPaywallSingleSub');
         if (sub1) sub1.style.display = 'none';
         if (sub2) sub2.style.display = 'none';
+        
+        // Klick-Verhalten umstellen: nicht mehr kaufen, sondern direkt ins Spiel
+        const GAME_TARGETS_UNLOCK = {
+          smileys: 'smiley.html',
+          card:    'card.html',
+          queen:   'kipp_queen.html?level=masterbrain',
+          king:    'kipp_king.html?level=masterbrain'
+        };
+        [single, bundle].forEach(btn => {
+          if (!btn) return;
+          // Alle bisherigen Click-Listener via cloneNode entfernen
+          const clone = btn.cloneNode(true);
+          btn.parentNode.replaceChild(clone, btn);
+          clone.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const target = GAME_TARGETS_UNLOCK[game];
+            if (target) location.href = target;
+          });
+          clone.style.cursor = 'pointer';
+          clone.style.pointerEvents = 'auto';
+        });
       });
     }
 
