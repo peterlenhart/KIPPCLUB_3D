@@ -1153,12 +1153,17 @@
         document.querySelectorAll('[data-game]').forEach(el => {
           attachClick(el);
         });
-        // Nach Click-Setup: Freigabe-Status pruefen und Preise ggf. durch SPIELEN+Schloss ersetzen
-        applyUnlockState();
+        // Nach Click-Setup und nach Layout-rebuild: Freigabe-Status pruefen
+        // setTimeout sorgt dafuer dass rebuild() davor laeuft, dann ist Layout fertig
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            applyUnlockState();
+          });
+        }, 50);
       });
     })();
 
-    // Premium-Gold-Schloss als SVG (doppelt so gross, ohne eigenen Position-Offset — sitzt zentriert im Single-Container)
+    // Premium-Gold-Schloss als SVG (doppelt so gross, ohne eigene Verschiebung — wird per JS zentriert)
     const KIPPCLUB_LOCK_SVG = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;height:2.2em;width:auto;">'
       + '<defs>'
       + '<linearGradient id="kclg" x1="0%" y1="0%" x2="0%" y2="100%">'
@@ -1208,34 +1213,39 @@
         const isUnlocked = unlocks[game];
         if (!isUnlocked) return;
         
-        // Helper: Mittenposition des alten Textes ermitteln, neuen Inhalt zentriert dort platzieren
+        // Helper: erst Mitte messen, dann ersetzen, dann nach rAF erneut messen und korrigieren
         function centerReplace(el, newInnerHtml) {
           if (!el) return;
+          // Schritt 1: alte Mitte merken
           const oldRect = el.getBoundingClientRect();
           const oldCenterX = oldRect.left + oldRect.width / 2;
+          // Schritt 2: Inhalt ersetzen
           el.innerHTML = newInnerHtml;
-          // Neue Breite messen
-          const newRect = el.getBoundingClientRect();
-          const newCenterX = newRect.left + newRect.width / 2;
-          // Differenz korrigieren ueber left-Verschiebung im inline-style
-          // Aktueller left-Wert aus inline-style parsen
-          const currentLeft = parseFloat(el.style.left) || 0;
-          const shift = (oldCenterX - newCenterX);
-          // Da der Container im skalierten Layer sitzt, muessen wir den Shift NICHT umrechnen —
-          // getBoundingClientRect liefert Display-Pixel, left/top im inline-style sind Pre-Scale-Pixel.
-          // Skalierungsfaktor aus var(--scale) holen
-          const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 1;
-          el.style.left = (currentLeft + shift / scale) + 'px';
+          // Schritt 3: Im naechsten Frame neue Mitte messen und korrigieren
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const newRect = el.getBoundingClientRect();
+              if (newRect.width === 0) return; // SVG noch nicht gerendert
+              const newCenterX = newRect.left + newRect.width / 2;
+              const displayShift = oldCenterX - newCenterX;
+              // Scale-Faktor korrekt holen — :root-Variable
+              let scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale'));
+              if (!scale || isNaN(scale)) scale = 0.333333;
+              const preScaleShift = displayShift / scale;
+              const currentLeft = parseFloat(el.style.left) || 0;
+              el.style.left = (currentLeft + preScaleShift) + 'px';
+            });
+          });
         }
         
-        // Kleiner Button (Einzelpreis) wird zum Schloss-Symbol allein
+        // Kleiner Button (Einzelpreis) wird zum Schloss-Symbol
         const single = slide.querySelector('.wallPaywallSingle');
         centerReplace(single, KIPPCLUB_LOCK_SVG);
         // Langer Button (Bundle "CLUB € 4,99") wird zu "SPIELEN"
         const bundle = slide.querySelector('.wallCardPaywallBundle, .wallPaywallBundle');
         centerReplace(bundle, 'SPIELEN');
         
-        // Subtexte ausblenden (sie bezogen sich auf Preisangaben)
+        // Subtexte ausblenden
         const sub1 = slide.querySelector('.wallCardPaywallBundleSub, .wallPaywallBundleSub');
         const sub2 = slide.querySelector('.wallCardPaywallSingleSub, .wallPaywallSingleSub');
         if (sub1) sub1.style.display = 'none';
