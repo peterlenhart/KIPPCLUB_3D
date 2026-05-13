@@ -1120,7 +1120,7 @@
     (function setupPaywallClicks() {
       const GAME_TARGETS = {
         smileys: 'smiley.html',
-        card:    'kipp-card.html',
+        card:    'card.html',
         queen:   'kipp_queen.html?level=masterbrain',
         king:    'kipp_king.html?level=masterbrain'
       };
@@ -1160,6 +1160,8 @@
           });
         }, 50);
         
+        // ===================================================================
+        // ===== DEBUG / TEST — VOR RELEASE ENTFERNEN =====
         // Versteckter Demo-Toggle: 3 schnelle Taps oben links schalten alle Walls frei (Bundle)
         // Nochmal 3 Taps -> zurueck auf Verkaufsmodus
         const demoZone = document.createElement('div');
@@ -1182,6 +1184,8 @@
             location.reload();
           }
         });
+        // ===== ENDE DEBUG / TEST =====
+        // ===================================================================
       });
     })();
 
