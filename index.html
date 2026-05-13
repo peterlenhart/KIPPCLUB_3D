@@ -394,15 +394,15 @@
 
 
     .wallCardPaywallBundle {
-      color: #ffffff;
+      color: #FFD700;
       display: inline-block;
       transform-origin: center center;
       animation: paywallBundlePulse 1.8s ease-in-out infinite;
       -webkit-text-stroke: 0;
       text-shadow:
-        0 0 24px rgba(220,220,220,0.95),
-        0 0 48px rgba(200,200,200,0.7),
-        0 0 80px rgba(180,180,180,0.5),
+        0 0 24px rgba(255,255,255,0.95),
+        0 0 48px rgba(255,255,255,0.7),
+        0 0 80px rgba(255,255,255,0.5),
         0 8px 16px rgba(0,0,0,0.85);
     }
 
@@ -410,7 +410,7 @@
       position: absolute;
       left: 0;
       top: 0;
-      color: #ffffff;
+      color: #FFD700;
       font-size: 45px;
       line-height: 49px;
       font-family: Arial, sans-serif;
@@ -423,9 +423,9 @@
       transform-origin: center center;
       animation: paywallBundlePulse 1.8s ease-in-out infinite;
       text-shadow:
-        0 0 24px rgba(220,220,220,0.95),
-        0 0 48px rgba(200,200,200,0.7),
-        0 0 80px rgba(180,180,180,0.5),
+        0 0 24px rgba(255,255,255,0.95),
+        0 0 48px rgba(255,255,255,0.7),
+        0 0 80px rgba(255,255,255,0.5),
         0 8px 16px rgba(0,0,0,0.85);
     }
 
@@ -433,7 +433,7 @@
       position: absolute;
       left: 0;
       top: 0;
-      color: #ffffff;
+      color: #FFD700;
       font-size: 45px;
       line-height: 49px;
       font-family: Arial, sans-serif;
@@ -446,10 +446,27 @@
       transform-origin: center center;
       animation: none !important;
       text-shadow:
-        0 0 24px rgba(220,220,220,0.95),
-        0 0 48px rgba(200,200,200,0.7),
-        0 0 80px rgba(180,180,180,0.5),
+        0 0 24px rgba(255,255,255,0.95),
+        0 0 48px rgba(255,255,255,0.7),
+        0 0 80px rgba(255,255,255,0.5),
         0 8px 16px rgba(0,0,0,0.85);
+    }
+
+    /* Cardpaywall: alle Texte 36 Pre-Scale-Pixel (= 12 Display-Pixel) suedlicher */
+    .cardWallSlide .wallPaywallSingle,
+    .cardWallSlide .wallCardPaywallBundle {
+      top: 36px !important;
+    }
+    .cardWallSlide .wallCardPaywallBundle {
+      top: -120px !important; /* war -156px, jetzt -156+36 = -120 */
+    }
+    .cardWallSlide .wallPaywallSingle {
+      color: #FFD700 !important;
+      text-shadow:
+        0 0 24px rgba(255,255,255,0.95),
+        0 0 48px rgba(255,255,255,0.7),
+        0 0 80px rgba(255,255,255,0.5),
+        0 8px 16px rgba(0,0,0,0.85) !important;
     }
 
     @keyframes paywallSinglePulse {
@@ -731,7 +748,7 @@
               <div class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
               <div class="wallPaywallSingleSub">Nur SMILEY</div>
             </div>
-            <div class="wallSlide">
+            <div class="wallSlide cardWallSlide">
               <img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card">
               <div class="wallPaywallText" data-theme-button="card">
                 <span class="wallPaywallSingle" style="position:relative; left:20px;">€ 0,99</span>
@@ -969,10 +986,10 @@
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
-      // Card-Paywall: exakt dieselbe Positionierung wie Smiley-Paywall.
+      // Card-Paywall: exakt dieselbe Positionierung wie Smiley-Paywall, aber 36 Pre-Scale-Pixel suedlicher (= 12 Display-Pixel)
       document.querySelectorAll('.wallCardPaywallBundleSub').forEach(el => {
         el.style.left = "calc(50% - 27px)";
-        el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+        el.style.top = ((spielenRow11Y - wallTopY) + 80 + 36) + "px";
       });
 
       // Silberner Subtext unter €0,99:
@@ -1003,7 +1020,7 @@
           el.style.left = (((priceRect.left - slideRect.left) / scale) - (8 / scale)) + "px";
         }
 
-        el.style.top = ((spielenRow11Y - wallTopY) + 215) + "px";
+        el.style.top = ((spielenRow11Y - wallTopY) + 215 + 36) + "px";
       });
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
