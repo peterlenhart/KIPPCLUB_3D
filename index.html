@@ -1228,6 +1228,30 @@
       + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
       + '</svg>';
 
+    // Schloss mit STABILER absoluter Anker-Positionierung — unabhaengig von Layout-Aenderungen
+    // Container wird relative, SVG sitzt absolut mittig im Container minus 42px (14 Display-Pixel westlich)
+    const KIPPCLUB_LOCK_SVG_ANCHORED = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" '
+      + 'style="position:absolute;top:50%;left:50%;transform:translate(calc(-50% - 42px), -50%);'
+      + 'height:2.2em;width:auto;pointer-events:none;">'
+      + '<defs>'
+      + '<linearGradient id="kclg2" x1="0%" y1="0%" x2="0%" y2="100%">'
+      + '<stop offset="0%" stop-color="#FFF4B0"/>'
+      + '<stop offset="40%" stop-color="#FFD700"/>'
+      + '<stop offset="100%" stop-color="#a07020"/>'
+      + '</linearGradient>'
+      + '<linearGradient id="kclb2" x1="0%" y1="0%" x2="0%" y2="100%">'
+      + '<stop offset="0%" stop-color="#FFE680"/>'
+      + '<stop offset="100%" stop-color="#c09030"/>'
+      + '</linearGradient>'
+      + '<filter id="kclf2"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>'
+      + '</defs>'
+      + '<path d="M 22 42 L 22 26 Q 22 10 36 10 Q 50 10 50 26 L 50 32" stroke="url(#kclb2)" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#kclf2)"/>'
+      + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#kclg2)" stroke="#7a5010" stroke-width="2" filter="url(#kclf2)"/>'
+      + '<rect x="20" y="46" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
+      + '<circle cx="40" cy="60" r="5" fill="#3a2010"/>'
+      + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
+      + '</svg>';
+
     // Pruefe Freigabe-Status und ersetze Preis-Texte durch SPIELEN + Schloss
     function applyUnlockState() {
       function hasToken(key) {
@@ -1284,8 +1308,13 @@
         }
         
         // Kleiner Button (Einzelpreis) wird zum Schloss-Symbol
+        // Stabile Anker-Positionierung: Container bleibt wo er ist, Schloss sitzt
+        // mittig im Container per absolute + transform — kein Layout-abhaengiger Pixel-Wert
         const single = slide.querySelector('.wallPaywallSingle');
-        centerReplace(single, KIPPCLUB_LOCK_SVG);
+        if (single) {
+          single.innerHTML = KIPPCLUB_LOCK_SVG_ANCHORED;
+          single.style.position = 'relative';
+        }
         // Langer Button (Bundle "CLUB € 4,99") wird zu uebersetztem SPIELEN-Wort
         const _lvT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
         const _playWord = _lvT && _lvT.play ? _lvT.play : 'SPIELEN';
