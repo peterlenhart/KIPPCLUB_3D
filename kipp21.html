@@ -3408,11 +3408,26 @@
       await animateHandTo(cwStart.x, cwStart.y, 1000, cwAnker);
 
       const rand45to65 = () => 45 + Math.random() * 20;
+      const _w = new THREE.Vector3();
+      function screenFromLocal(localPt) {
+        _w.copy(localPt).applyMatrix4(cube.matrixWorld).project(camera);
+        return {
+          x: Math.round((_w.x * 0.5 + 0.5) * 360),
+          y: Math.round((-_w.y * 0.5 + 0.5) * 720)
+        };
+      }
 
-      // CW Peek
+      // CW Peek — lokalen Cube-Punkt speichern, klebt am rotierenden Wuerfel
+      const cwOff = offsetFor(cwDir);
+      const cwWorldPt = new THREE.Vector3();
+      cube.updateMatrixWorld();
+      cube.getWorldPosition(cwWorldPt);
+      cwWorldPt.x += cwOff[0]; cwWorldPt.y += s/2; cwWorldPt.z += cwOff[2];
+      const cwLocalPt = cube.worldToLocal(cwWorldPt.clone());
+
       const cwDeg = rand45to65();
       await performHalbKipp(cwDir, cwDeg, 2000, 1350, () => {
-        const p = handPosFor(cwDir);
+        const p = screenFromLocal(cwLocalPt);
         setHandPos(p.x, p.y, cwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
@@ -3425,9 +3440,17 @@
       await sleep(150);
 
       // CCW Peek
+      // CCW Peek — lokalen Cube-Punkt fuer rotierenden Wuerfel
+      const ccwOff = offsetFor(ccwDir);
+      const ccwWorldPt = new THREE.Vector3();
+      cube.updateMatrixWorld();
+      cube.getWorldPosition(ccwWorldPt);
+      ccwWorldPt.x += ccwOff[0]; ccwWorldPt.y += s/2; ccwWorldPt.z += ccwOff[2];
+      const ccwLocalPt = cube.worldToLocal(ccwWorldPt.clone());
+
       const ccwDeg = rand45to65();
       await performHalbKipp(ccwDir, ccwDeg, 2000, 1350, () => {
-        const p = handPosFor(ccwDir);
+        const p = screenFromLocal(ccwLocalPt);
         setHandPos(p.x, p.y, ccwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
