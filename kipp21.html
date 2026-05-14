@@ -3366,21 +3366,13 @@
     // === Spaehblick-Sequenz: random 45-65°, Fingerspitze 1/2 face entgegen Kipprichtung ===
     async function handPeekSequence() {
       if (!replayActive) return;
-      const c = cubeScreenXY();
       const SY = 740;
-
-      // Hand von Sueden zum Wuerfel
-      setHandPos(c.x, SY, 'ns');
-      handEl.style.opacity = '1';
-      updateHandShadow(c.x, SY, true);
-      await moveHandSmooth(c.x, c.y, 1000);
 
       const Q = currentQuadrant;
       const cwDir  = CW_KIPP[Q];
       const ccwDir = CCW_KIPP[Q];
 
       // Welt-Versatz von topface-Mitte: halbe face entgegen Kipp-Richtung
-      // east → -x (west) | west → +x (east) | north → +z (sued) | south → -z (nord)
       const s = 0.46875;
       function offsetFor(dir) {
         if (dir.includes('east'))      return [-s/2, 0,  0   ];
@@ -3406,35 +3398,55 @@
         return 'we';
       }
 
-      const rand45to65 = () => 45 + Math.random() * 20;
-
-      // CW Peek
+      // Hand kommt direkt zur ersten Peek-Position (nicht erst zur Wuerfelmitte)
       const cwAnker = ankerFor(cwDir);
       const cwStart = handPosFor(cwDir);
-      await moveHandSmooth(cwStart.x, cwStart.y, 350);
-      setHandPos(cwStart.x, cwStart.y, cwAnker);
-      await sleep(150);
+      setHandPos(cwStart.x, SY, cwAnker);
+      handEl.style.opacity = '1';
+      updateHandShadow(cwStart.x, SY, true);
+      // moveHandSmooth nutzt eigenes setHandPos ohne anker — eigene Animation mit korrektem Anker:
+      await animateHandTo(cwStart.x, cwStart.y, 1000, cwAnker);
+
+      // CW Peek
       const cwDeg = rand45to65();
-      await performHalbKipp(cwDir, cwDeg, 2000, 350, () => {
+      await performHalbKipp(cwDir, cwDeg, 2000, 1350, () => {
         const p = handPosFor(cwDir);
         setHandPos(p.x, p.y, cwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
       await sleep(400);
 
-      // CCW Peek
+      // Hand direkt zur CCW-Start-Position (kein Umweg ueber Mitte)
       const ccwAnker = ankerFor(ccwDir);
       const ccwStart = handPosFor(ccwDir);
-      await moveHandSmooth(ccwStart.x, ccwStart.y, 350);
-      setHandPos(ccwStart.x, ccwStart.y, ccwAnker);
+      await animateHandTo(ccwStart.x, ccwStart.y, 500, ccwAnker);
       await sleep(150);
+
+      // CCW Peek
       const ccwDeg = rand45to65();
-      await performHalbKipp(ccwDir, ccwDeg, 2000, 350, () => {
+      await performHalbKipp(ccwDir, ccwDeg, 2000, 1350, () => {
         const p = handPosFor(ccwDir);
         setHandPos(p.x, p.y, ccwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
       await sleep(300);
+    }
+
+    // Hand-Animation mit definierbarem Anker (ns/we) — wie moveHandSmooth, aber mit anchor
+    function animateHandTo(toX, toY, durMs, anchor) {
+      return new Promise(resolve => {
+        const sx = _handX, sy = _handY;
+        const startT = performance.now();
+        function tick() {
+          if (!replayActive) { setHandPos(toX, toY, anchor); resolve(); return; }
+          const t = Math.min((performance.now() - startT) / durMs, 1);
+          const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+          setHandPos(sx + (toX - sx) * e, sy + (toY - sy) * e, anchor);
+          if (t < 1) requestAnimationFrame(tick);
+          else { setHandPos(toX, toY, anchor); resolve(); }
+        }
+        requestAnimationFrame(tick);
+      });
     }
 
     // --- Kippen für offene Karte ---
