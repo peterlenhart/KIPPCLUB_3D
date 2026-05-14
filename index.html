@@ -1231,7 +1231,7 @@
     // Schloss mit STABILER absoluter Anker-Positionierung — unabhaengig von Layout-Aenderungen
     // Container wird relative, SVG sitzt absolut mittig im Container minus 42px (14 Display-Pixel westlich)
     const KIPPCLUB_LOCK_SVG_ANCHORED = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" '
-      + 'style="position:absolute;top:50%;left:50%;transform:translate(calc(-50% - 42px), -50%);'
+      + 'style="position:absolute;top:50%;left:50%;transform:translate(calc(-50% - 84px), -50%);'
       + 'height:2.2em;width:auto;pointer-events:none;">'
       + '<defs>'
       + '<linearGradient id="kclg2" x1="0%" y1="0%" x2="0%" y2="100%">'
@@ -1337,7 +1337,7 @@
           bundle.style.textAlign = 'center';
           bundle.dataset.bundleWidthSet = '1';
         }
-        centerReplace(bundle, '<span style="position:relative;left:54px;display:inline-block;">' + _playWord + '</span>');
+        centerReplace(bundle, '<span style="position:relative;left:12px;display:inline-block;">' + _playWord + '</span>');
         
         // Subtexte ausblenden
         const sub1 = slide.querySelector('.wallCardPaywallBundleSub, .wallPaywallBundleSub');
