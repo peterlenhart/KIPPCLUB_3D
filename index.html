@@ -1311,15 +1311,23 @@
         // Stabile Anker-Positionierung: Container bleibt wo er ist, Schloss sitzt
         // mittig im Container per absolute + transform — kein Layout-abhaengiger Pixel-Wert
         const single = slide.querySelector('.wallPaywallSingle');
-        if (single) {
-          single.innerHTML = KIPPCLUB_LOCK_SVG_ANCHORED;
+        if (single && !single.dataset.lockSet) {
+          // Originalbreite des Containers MIT Preistext festhalten — sonst schrumpft Container auf Schloss-Breite
+          const origRect = single.getBoundingClientRect();
+          let scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale'));
+          if (!scale || isNaN(scale)) scale = 0.333333;
+          const origWidth = origRect.width / scale;
+          single.style.width = origWidth + 'px';
+          single.style.display = 'inline-block';
           single.style.position = 'relative';
+          single.innerHTML = KIPPCLUB_LOCK_SVG_ANCHORED;
+          single.dataset.lockSet = '1';
         }
         // Langer Button (Bundle "CLUB € 4,99") wird zu uebersetztem SPIELEN-Wort
         const _lvT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
         const _playWord = _lvT && _lvT.play ? _lvT.play : 'SPIELEN';
         const bundle = slide.querySelector('.wallCardPaywallBundle, .wallPaywallBundle');
-        centerReplace(bundle, '<span style="position:relative;left:42px;display:inline-block;">' + _playWord + '</span>');
+        centerReplace(bundle, '<span style="position:relative;left:66px;display:inline-block;">' + _playWord + '</span>');
         
         // Subtexte ausblenden
         const sub1 = slide.querySelector('.wallCardPaywallBundleSub, .wallPaywallBundleSub');
