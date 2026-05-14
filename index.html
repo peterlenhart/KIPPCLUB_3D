@@ -773,7 +773,7 @@
 </head>
 
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 21</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 22</div>
   <!-- Flashscreen Overlay -->
   <div id="flashOverlay">
     <div id="flashContainer">
@@ -1145,6 +1145,11 @@
         kipp21Button.style.height = btnD + "px";
         kipp21Button.style.left = btnLeft + "px";
         kipp21Button.style.top  = btnTop + "px";
+        // Click-Handler nur einmal binden
+        if (!kipp21Button.dataset.clickBound) {
+          kipp21Button.addEventListener('click', () => { location.href = 'kipp21.html'; });
+          kipp21Button.dataset.clickBound = '1';
+        }
       }
 
       // KIPP 21 Trailer-Auge: ueber dem Button, 120% skaliert (banner-relativ, 1092 Original → 1080 Layout)
