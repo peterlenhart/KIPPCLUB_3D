@@ -1327,7 +1327,17 @@
         const _lvT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
         const _playWord = _lvT && _lvT.play ? _lvT.play : 'SPIELEN';
         const bundle = slide.querySelector('.wallCardPaywallBundle, .wallPaywallBundle');
-        centerReplace(bundle, '<span style="position:relative;left:66px;display:inline-block;">' + _playWord + '</span>');
+        if (bundle && !bundle.dataset.bundleWidthSet) {
+          // Original-Bundle-Breite fixieren — sonst aendert sich Schloss-Position bei Sprachwechsel im Flex-Layout
+          const bRect = bundle.getBoundingClientRect();
+          let bScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale'));
+          if (!bScale || isNaN(bScale)) bScale = 0.333333;
+          bundle.style.width = (bRect.width / bScale) + 'px';
+          bundle.style.display = 'inline-block';
+          bundle.style.textAlign = 'center';
+          bundle.dataset.bundleWidthSet = '1';
+        }
+        centerReplace(bundle, '<span style="position:relative;left:54px;display:inline-block;">' + _playWord + '</span>');
         
         // Subtexte ausblenden
         const sub1 = slide.querySelector('.wallCardPaywallBundleSub, .wallPaywallBundleSub');
