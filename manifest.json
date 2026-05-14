@@ -1,7 +1,7 @@
 {
-  "name": "DIGIKIPP - Schauen & Merken",
-  "short_name": "DIGIKIPP",
-  "description": "Würfelspiel - Schauen & Merken",
+  "name": "KIPP CLUB",
+  "short_name": "KIPP CLUB",
+  "description": "3D KIPP SPIELE – Merken, Logik, Kopfzerbrechen.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
