@@ -2954,9 +2954,12 @@
       initHandShadow();
     }
     
-    function setHandPos(x, y) {
+    function setHandPos(x, y, anchor) {
       if (!handEl) return;
-      handEl.style.transform = 'translate(' + Math.round(x - 23) + 'px,' + Math.round(y) + 'px)';
+      // anchor: 'we' (default, west/ost) -> Fingerspitze bei x=23px im Bild
+      //         'ns' (nord/sued)         -> Fingerspitze bei x=45px (Mitte)
+      const dx = (anchor === 'ns') ? 45 : 23;
+      handEl.style.transform = 'translate(' + Math.round(x - dx) + 'px,' + Math.round(y) + 'px)';
       _handX = x; _handY = y;
       updateHandShadow(x, y, parseFloat(handEl.style.opacity) > 0);
     }
@@ -3165,31 +3168,12 @@
       if (!replayActive || replayGeneration !== kipp21Generation) return;
       const nextV = kipp21NextVerdeckt();
       if (nextV < 0) return;
-      dbgLog('Karte ' + nextV + ' aufdecken');
-      
-      const hasIcon = CARD_BLICK_MAP[nextV] !== null;
-      const tx = cardScreenX(nextV);
-      const ty = cardScreenY(nextV) + 15;
-      const SY = 740;
-      
-      if (!hasIcon) {
-        // Kein Blick-Icon → Hand hinfliegen, sofort beim Kontakt pulsen+öffnen
-        setHandPos(tx, SY);
-        handEl.style.opacity = '1';
-        updateHandShadow(tx, SY, true);
-        await moveHandSmooth(tx, ty, 900);
-        // Sofort bei Kontakt: Pulse + Open
-        pulseCard(nextV);
-        kipp21OnCardTap(nextV, true);
-        await sleep(350);
-        // Hand zurück
-        await moveHandSmooth(tx, SY, 500);
-        handEl.style.opacity = '0';
-        updateHandShadow(0, 0, false);
-        await sleep(100);
-        return;
-      }
-      
+      dbgLog('Karte ' + nextV + ' automatisch aufdecken');
+      // Automatisch aufdecken — keine Hand-Animation
+      pulseCard(nextV);
+      kipp21OnCardTap(nextV, true);
+      await sleep(450);
+      return;
       // MIT Blick-Icon: volle Hand-Tap-Animation, dann Kniff
       await handTapFromSouth(tx, ty, 600);
       pulseCard(nextV);
@@ -3381,55 +3365,74 @@
       isAnimating = false;
     }
 
-    // === Spaehblick-Sequenz: random 45-65°, Hand-Spitze folgt Wuerfel-Topface-Mitte ===
+    // === Spaehblick-Sequenz: random 45-65°, Hand-Spitze an Wuerfel-Oberkante ===
     async function handPeekSequence() {
       if (!replayActive) return;
       const c = cubeScreenXY();
       const SY = 740;
 
-      // Hand von Sueden zum Wuerfel
-      setHandPos(c.x, SY);
+      // Hand von Sueden zum Wuerfel (NS-Anker, da Hand hochkommt)
+      setHandPos(c.x, SY, 'ns');
       handEl.style.opacity = '1';
       updateHandShadow(c.x, SY, true);
+      // moveHandSmooth nutzt setHandPos ohne Anker → 'we'. Wir setzen es nach Bewegung selbst.
       await moveHandSmooth(c.x, c.y, 1000);
 
       const Q = currentQuadrant;
       const cwDir  = CW_KIPP[Q];
       const ccwDir = CCW_KIPP[Q];
 
-      // Projiziert Wuerfel-Topface-Mitte auf Bildschirm (folgt Kipp-Animation)
+      // Berechnet die Wuerfel-Oberkante in Welt → Screen, je nach Kipp-Richtung.
+      // Bei N-Kipp drueckt die Hand auf die top-south Kante (lokal (0, +s/2, +s/2)) etc.
       const _v = new THREE.Vector3();
-      function topfaceScreenXY() {
+      const s = 0.46875;
+      function edgeLocal(dir) {
+        if (dir.includes('north'))      return [0,   s/2,  s/2];   // top-south edge
+        else if (dir.includes('south')) return [0,   s/2, -s/2];   // top-north edge
+        else if (dir.includes('east'))  return [-s/2, s/2, 0];     // top-west edge
+        else if (dir.includes('west'))  return [ s/2, s/2, 0];     // top-east edge
+        return [0, s/2, 0];
+      }
+      function edgeScreenXY(dir) {
         cube.updateMatrixWorld();
-        // Topface-Mitte in lokalen Cube-Koords: (0, +cubeSize/2, 0)
-        _v.set(0, 0.46875 / 2, 0).applyMatrix4(cube.matrixWorld).project(camera);
+        const e = edgeLocal(dir);
+        _v.set(e[0], e[1], e[2]).applyMatrix4(cube.matrixWorld).project(camera);
         return {
           x: Math.round((_v.x * 0.5 + 0.5) * 360),
           y: Math.round((-_v.y * 0.5 + 0.5) * 720)
         };
       }
+      // Anker je nach Richtung: N/S → 'ns', E/W → 'we'
+      function ankerFor(dir) {
+        if (dir.includes('north') || dir.includes('south')) return 'ns';
+        return 'we';
+      }
 
-      // Random Winkel 45-65° pro Peek
       const rand45to65 = () => 45 + Math.random() * 20;
 
       // CW Peek
+      const cwAnker = ankerFor(cwDir);
+      setHandPos(c.x, c.y, cwAnker);
+      await sleep(150);
       const cwDeg = rand45to65();
       await performHalbKipp(cwDir, cwDeg, 2000, 350, () => {
-        const p = topfaceScreenXY();
-        setHandPos(p.x, p.y);
+        const p = edgeScreenXY(cwDir);
+        setHandPos(p.x, p.y, cwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
       await sleep(400);
 
       // CCW Peek
+      const ccwAnker = ankerFor(ccwDir);
+      setHandPos(c.x, c.y, ccwAnker);
+      await sleep(150);
       const ccwDeg = rand45to65();
       await performHalbKipp(ccwDir, ccwDeg, 2000, 350, () => {
-        const p = topfaceScreenXY();
-        setHandPos(p.x, p.y);
+        const p = edgeScreenXY(ccwDir);
+        setHandPos(p.x, p.y, ccwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
       await sleep(300);
-      // Hand bleibt sichtbar am Wuerfel — naechster Schritt uebernimmt
     }
 
     // --- Kippen für offene Karte ---
