@@ -6358,44 +6358,51 @@
     }, { passive: false });
 
     // ============================================================
-    // AUTO-TUTORIAL: ?autotutorial=1 -> Trailer-Overlay als 3D-Plane
-    // knapp ueber dem Spieltisch, 2.5s 100% deckend, dann 1.5s sanftes
-    // Ausfaden (ease-in-out), danach Tutorial automatisch starten.
+    // INTRO: Trailer-Overlay als 3D-Plane exakt ueber Spieltisch.
+    // Waehrend Intro: Wuerfel unsichtbar (sonst sticht er durch).
+    // 2.5s 100% deckend, 1.5s ease-in-out Fade.
     // ============================================================
     (function(){
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('autotutorial') !== '1') return;
+      const HOLD_MS = 2500;
+      const FADE_MS = 1500;
 
-      const HOLD_MS = 2500;  // 100% deckend
-      const FADE_MS = 1500;  // gemaechlicher Fade
+      const startOv = document.getElementById('startOverlay');
+      if (startOv) startOv.style.visibility = 'hidden';
+
+      // Wuerfel waehrend Intro verstecken
+      let cubeWasVisible = true;
+      const hideCube = () => {
+        if (typeof cube !== 'undefined' && cube) {
+          cubeWasVisible = cube.visible;
+          cube.visible = false;
+        } else {
+          setTimeout(hideCube, 50);
+        }
+      };
+      hideCube();
 
       let trailerMesh = null;
       let trailerMat  = null;
 
       function createTrailer3D(){
         new THREE.TextureLoader().load('Kipp21TrailerOverlay.webp', (tex) => {
-          const aspect = tex.image.height / tex.image.width; // 1568/644 ≈ 2.435
-          const w = 8 * 0.15625;          // = SPIEL_WIDTH (Spieltisch-Breite)
+          const aspect = tex.image.height / tex.image.width;
+          const w = 8 * 0.15625;
           const h = w * aspect;
           const geo = new THREE.PlaneGeometry(w, h);
           trailerMat = new THREE.MeshBasicMaterial({
-            map: tex,
-            transparent: true,
-            opacity: 1.0,
-            depthWrite: false,
-            depthTest: false
+            map: tex, transparent: true, opacity: 1.0,
+            depthWrite: false, depthTest: false
           });
           trailerMesh = new THREE.Mesh(geo, trailerMat);
           trailerMesh.rotation.x = -Math.PI / 2;
-          const xC = spieltisch ? spieltisch.position.x : (-0.625 + w/2);
-          const zC = spieltisch ? spieltisch.position.z : (-0.828125 + h/2);
-          trailerMesh.position.set(xC, 0.47075, zC); // 1mm ueber Spieltisch
+          // Exakt gleiche X/Z wie Spieltisch, minimaler Y-Offset
+          trailerMesh.position.set(spieltisch.position.x, spieltisch.position.y + 0.001, spieltisch.position.z);
           trailerMesh.renderOrder = 9999;
           scene.add(trailerMesh);
         });
       }
 
-      // ease-in-out (sanfte Beschleunigung, sanftes Auslaufen)
       const easeInOut = (t) => (t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2);
 
       const startTime = Date.now();
@@ -6416,7 +6423,9 @@
             } else {
               if (trailerMesh) scene.remove(trailerMesh);
               if (trailerMat) trailerMat.dispose();
-              handleStart(true);
+              // Wuerfel + Start-Overlay freigeben
+              if (typeof cube !== 'undefined' && cube) cube.visible = cubeWasVisible;
+              if (startOv) startOv.style.visibility = 'visible';
             }
           };
           requestAnimationFrame(fade);
