@@ -3303,8 +3303,9 @@
     }
     
     // === Halbkipp ohne Zustandsaenderung (Spaehblick / Peek) ===
-    // Kippt auf angleDeg, dann wieder auf 0. Kein advanceTopFace, kein currentQuadrant-Wechsel.
-    async function performHalbKipp(direction, angleDeg, duration) {
+    // Kippt auf angleDeg, haelt holdMs, zurueck auf 0. Kein advanceTopFace.
+    // onProgress(p): p = 0 in Ruhe, p = 1 am Maximum (44°). Wird in jedem Frame aufgerufen.
+    async function performHalbKipp(direction, angleDeg, duration, holdMs, onProgress) {
       if (isAnimating) return;
       isAnimating = true;
 
@@ -3340,30 +3341,37 @@
       const halfDur = duration / 2;
       const easeIO = (t) => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
 
-      // Hin auf angleRad
+      // Hin auf angleRad (langsam, gemaechlich)
       await new Promise(resolve => {
         const start = Date.now();
         function step() {
           const t = Math.min(1, (Date.now() - start) / halfDur);
-          pivotGroup.rotation[axis] = easeIO(t) * angleRad;
-          if (t < 1) requestAnimationFrame(step);
-          else resolve();
-        }
-        step();
-      });
-      // Zurueck auf 0
-      await new Promise(resolve => {
-        const start = Date.now();
-        function step() {
-          const t = Math.min(1, (Date.now() - start) / halfDur);
-          pivotGroup.rotation[axis] = angleRad * (1 - easeIO(t));
+          const e = easeIO(t);
+          pivotGroup.rotation[axis] = e * angleRad;
+          if (onProgress) onProgress(e);
           if (t < 1) requestAnimationFrame(step);
           else resolve();
         }
         step();
       });
 
-      // Cube exakt in Ausgangslage zurueck
+      // Halten am Maximum (Schauen & Merken)
+      if (holdMs > 0) await sleep(holdMs);
+
+      // Zurueck auf 0
+      await new Promise(resolve => {
+        const start = Date.now();
+        function step() {
+          const t = Math.min(1, (Date.now() - start) / halfDur);
+          const e = easeIO(t);
+          pivotGroup.rotation[axis] = angleRad * (1 - e);
+          if (onProgress) onProgress(1 - e);
+          if (t < 1) requestAnimationFrame(step);
+          else resolve();
+        }
+        step();
+      });
+
       pivotGroup.remove(cube);
       kipGroup.remove(pivotGroup);
       cube.position.copy(savedPos);
@@ -3373,30 +3381,43 @@
       isAnimating = false;
     }
 
-    // === Spaehblick-Sequenz: Hand + 44° CW peek + 44° CCW peek ===
+    // === Spaehblick-Sequenz: Hand kommt langsam von Sueden, CW + CCW peek mit Hand-Sync ===
     async function handPeekSequence() {
       if (!replayActive) return;
       const c = cubeScreenXY();
-      setHandPos(c.x, c.y);
+      const SY = 740; // Sued-Rand wie in handTapFromSouth
+
+      // Hand von Sueden zum Wuerfel (langsam, gemaechlich)
+      setHandPos(c.x, SY);
       handEl.style.opacity = '1';
-      updateHandShadow(c.x, c.y, true);
-      await sleep(300);
+      updateHandShadow(c.x, SY, true);
+      await moveHandSmooth(c.x, c.y, 1000);
 
       const Q = currentQuadrant;
       const cwDir  = CW_KIPP[Q];
       const ccwDir = CCW_KIPP[Q];
+      const cwOff  = kippPixelDir(cwDir);
+      const ccwOff = kippPixelDir(ccwDir);
 
-      // CW Peek
-      await performHalbKipp(cwDir, 44, 700);
-      await sleep(120);
+      // 44° entspricht 44/90 der vollen Kipp-Pixel-Distanz
+      const HAND_44 = 44 / 90;
+
+      // CW Peek mit Hand-Sync
+      await performHalbKipp(cwDir, 44, 2000, 400, (p) => {
+        const f = p * HAND_44;
+        setHandPos(c.x + cwOff.dx * f, c.y + cwOff.dy * f);
+      });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
-      // CCW Peek
-      await performHalbKipp(ccwDir, 44, 700);
-      await sleep(150);
+      await sleep(400);
 
-      handEl.style.opacity = '0';
-      updateHandShadow(0, 0, false);
-      await sleep(60);
+      // CCW Peek mit Hand-Sync
+      await performHalbKipp(ccwDir, 44, 2000, 400, (p) => {
+        const f = p * HAND_44;
+        setHandPos(c.x + ccwOff.dx * f, c.y + ccwOff.dy * f);
+      });
+      if (!replayActive) { handEl.style.opacity = '0'; return; }
+      await sleep(300);
+      // Hand bleibt sichtbar am Wuerfel — handKippAnim uebernimmt direkt
     }
 
     // --- Kippen für offene Karte ---
@@ -3404,10 +3425,6 @@
       if (!replayActive) return;
       const dist = kipp21CardDistances[ci];
       if (!dist || dist <= 0) return;
-
-      // Spaehblick einmal pro Kippziel BEVOR die Kipps starten
-      await handPeekSequence();
-      if (!replayActive) return;
 
       const dir = findHitDirection(ci);
       dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' Q' + currentQuadrant + ' ' + topFace);
@@ -3504,16 +3521,15 @@
         
         // Tutorial-Text vor Aktion
         await sleep(600);
-        
-        if (ci === 0) {
-          // Erste Runde: Hand sucht Kartenreihe, klickt 3. Kippziel (idx 2)
-          console.log('[REPLAY] R0: Suche + Klick auf Karte 2');
-          await replayKniff(null, 2);
-        } else {
-          // Folgerunden: direkt nächste verdeckte Karte
-          console.log('[REPLAY] R'+ci+': OpenCard');
-          await replayOpenCard(ci);
-        }
+
+        // 1) Spähblick am Würfel (CW + CCW peek)
+        console.log('[REPLAY] R'+ci+': Spähblick');
+        await handPeekSequence();
+        if (!replayActive || myGen !== kipp21Generation) break;
+
+        // 2) Kippziel aufdecken (links nach rechts: 0, 1, 2, 3, 4, 5)
+        console.log('[REPLAY] R'+ci+': OpenCard');
+        await replayOpenCard(ci);
         console.log('[REPLAY] R'+ci+': Aufdecken fertig');
         if (!replayActive || myGen !== kipp21Generation) break;
         
