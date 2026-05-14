@@ -2427,14 +2427,14 @@
     }
     
     // === AUDIO ENGINE ===
-    const bgMusic = new Audio('colorloop.mp3');
+    const bgMusic = new Audio('kippclub.oga');
     bgMusic.preload = 'auto';
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
     let bgMusicUnlocked = false;
     
     bgMusic.addEventListener('error', () => {
-      console.warn('[AUDIO] colorloop.mp3 konnte nicht geladen werden!');
+      console.warn('[AUDIO] kippclub.oga konnte nicht geladen werden!');
     });
     
     // Sofort versuchen — klappt oft weil User per Tap von index.html kam
@@ -6358,34 +6358,68 @@
     }, { passive: false });
 
     // ============================================================
-    // AUTO-TUTORIAL: Wenn ?autotutorial=1 in URL, dann Trailer-Overlay
-    // 3.5s einblenden und danach Tutorial automatisch starten.
+    // AUTO-TUTORIAL: ?autotutorial=1 -> Trailer-Overlay als 3D-Plane
+    // knapp ueber dem Spieltisch, 2.5s 100% deckend, dann 1.5s sanftes
+    // Ausfaden (ease-in-out), danach Tutorial automatisch starten.
     // ============================================================
     (function(){
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autotutorial') !== '1') return;
 
-      // Trailer-Overlay erstellen (deckt komplettes Display)
-      const overlay = document.createElement('img');
-      overlay.src = 'Kipp21TrailerOverlay.webp';
-      overlay.alt = '';
-      overlay.style.cssText =
-        'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
-        'object-fit:contain;background:#000;z-index:99999;' +
-        'transition:opacity 0.8s ease-out;pointer-events:auto;opacity:1;';
-      document.body.appendChild(overlay);
+      const HOLD_MS = 2500;  // 100% deckend
+      const FADE_MS = 1500;  // gemaechlicher Fade
 
-      // Sobald Texturen bereit UND mindestens 3.5s Overlay sichtbar:
-      // Overlay ausblenden, dann Tutorial starten
+      let trailerMesh = null;
+      let trailerMat  = null;
+
+      function createTrailer3D(){
+        new THREE.TextureLoader().load('Kipp21TrailerOverlay.webp', (tex) => {
+          const aspect = tex.image.height / tex.image.width; // 1568/644 ≈ 2.435
+          const w = 8 * 0.15625;          // = SPIEL_WIDTH (Spieltisch-Breite)
+          const h = w * aspect;
+          const geo = new THREE.PlaneGeometry(w, h);
+          trailerMat = new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            opacity: 1.0,
+            depthWrite: false,
+            depthTest: false
+          });
+          trailerMesh = new THREE.Mesh(geo, trailerMat);
+          trailerMesh.rotation.x = -Math.PI / 2;
+          const xC = spieltisch ? spieltisch.position.x : (-0.625 + w/2);
+          const zC = spieltisch ? spieltisch.position.z : (-0.828125 + h/2);
+          trailerMesh.position.set(xC, 0.47075, zC); // 1mm ueber Spieltisch
+          trailerMesh.renderOrder = 9999;
+          scene.add(trailerMesh);
+        });
+      }
+
+      // ease-in-out (sanfte Beschleunigung, sanftes Auslaufen)
+      const easeInOut = (t) => (t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2);
+
       const startTime = Date.now();
+      let trailerCreated = false;
       const tryStart = () => {
+        if (!trailerCreated && typeof spieltisch !== 'undefined' && spieltisch) {
+          createTrailer3D();
+          trailerCreated = true;
+        }
         const elapsed = Date.now() - startTime;
-        if (texturesReady && elapsed >= 3500) {
-          overlay.style.opacity = '0';
-          setTimeout(() => {
-            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-            handleStart(true);
-          }, 800);
+        if (texturesReady && trailerCreated && trailerMat && elapsed >= HOLD_MS) {
+          const fadeStart = Date.now();
+          const fade = () => {
+            const t = Math.min(1, (Date.now() - fadeStart) / FADE_MS);
+            if (trailerMat) trailerMat.opacity = 1 - easeInOut(t);
+            if (t < 1) {
+              requestAnimationFrame(fade);
+            } else {
+              if (trailerMesh) scene.remove(trailerMesh);
+              if (trailerMat) trailerMat.dispose();
+              handleStart(true);
+            }
+          };
+          requestAnimationFrame(fade);
         } else {
           setTimeout(tryStart, 100);
         }
