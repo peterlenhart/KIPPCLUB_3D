@@ -3407,6 +3407,8 @@
       // moveHandSmooth nutzt eigenes setHandPos ohne anker — eigene Animation mit korrektem Anker:
       await animateHandTo(cwStart.x, cwStart.y, 1000, cwAnker);
 
+      const rand45to65 = () => 45 + Math.random() * 20;
+
       // CW Peek
       const cwDeg = rand45to65();
       await performHalbKipp(cwDir, cwDeg, 2000, 1350, () => {
