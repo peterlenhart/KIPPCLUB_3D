@@ -1516,7 +1516,7 @@
     
     // === Blick-Icons auf verdeckten Kippzielen ===
     // Außen links/rechts = Eckblick, mittlere 2 = Kippblick, Rest = kein Icon
-    const CARD_BLICK_MAP = { 0: 'joker3.webp', 1: null, 2: 'joker2.webp', 3: 'joker2.webp', 4: null, 5: 'joker3.webp' };
+    const CARD_BLICK_MAP = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null };
     const blickIconMeshes = [];
     const blickIconSize = cardWidth; // exakt gleiche Breite wie Kippziel = 45px
     const blickIconGeo = new THREE.PlaneGeometry(blickIconSize, blickIconSize);
@@ -3302,12 +3302,113 @@
       await sleep(400);
     }
     
+    // === Halbkipp ohne Zustandsaenderung (Spaehblick / Peek) ===
+    // Kippt auf angleDeg, dann wieder auf 0. Kein advanceTopFace, kein currentQuadrant-Wechsel.
+    async function performHalbKipp(direction, angleDeg, duration) {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      let pivotPoint, axis, sign;
+      if (direction === 'north') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; sign = -1; }
+      else if (direction === 'south') { pivotPoint = new THREE.Vector3(-0.234375, 0, 0.109375); axis = 'x'; sign = 1; }
+      else if (direction === 'east') { pivotPoint = new THREE.Vector3(0, 0, 0.109375 + 0.234375); axis = 'z'; sign = -1; }
+      else if (direction === 'west') { pivotPoint = new THREE.Vector3(0, 0, 0.109375 + 0.234375); axis = 'z'; sign = 1; }
+      else if (direction === 'south_from_q1') { pivotPoint = new THREE.Vector3(0.234375, 0, 0.109375); axis = 'x'; sign = 1; }
+      else if (direction === 'north_from_q2') { pivotPoint = new THREE.Vector3(0.234375, 0, 0.109375); axis = 'x'; sign = -1; }
+      else if (direction === 'west_from_q2') { pivotPoint = new THREE.Vector3(0, 0, 0.109375 + 0.234375); axis = 'z'; sign = 1; }
+      else if (direction === 'east_from_q3') { pivotPoint = new THREE.Vector3(0, 0, 0.109375 + 0.234375); axis = 'z'; sign = -1; }
+      else { isAnimating = false; return; }
+
+      const angleRad = (angleDeg * Math.PI / 180) * sign;
+
+      const pivotGroup = new THREE.Group();
+      pivotGroup.position.copy(pivotPoint);
+      kipGroup.add(pivotGroup);
+
+      const oldParent = cube.parent;
+      const savedPos = cube.position.clone();
+      const savedQuat = cube.quaternion.clone();
+
+      cube.updateMatrixWorld();
+      const cubeWorldPos = new THREE.Vector3();
+      cube.getWorldPosition(cubeWorldPos);
+      oldParent.remove(cube);
+      const relativePos = cubeWorldPos.clone().sub(pivotPoint);
+      cube.position.copy(relativePos);
+      pivotGroup.add(cube);
+
+      const halfDur = duration / 2;
+      const easeIO = (t) => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+
+      // Hin auf angleRad
+      await new Promise(resolve => {
+        const start = Date.now();
+        function step() {
+          const t = Math.min(1, (Date.now() - start) / halfDur);
+          pivotGroup.rotation[axis] = easeIO(t) * angleRad;
+          if (t < 1) requestAnimationFrame(step);
+          else resolve();
+        }
+        step();
+      });
+      // Zurueck auf 0
+      await new Promise(resolve => {
+        const start = Date.now();
+        function step() {
+          const t = Math.min(1, (Date.now() - start) / halfDur);
+          pivotGroup.rotation[axis] = angleRad * (1 - easeIO(t));
+          if (t < 1) requestAnimationFrame(step);
+          else resolve();
+        }
+        step();
+      });
+
+      // Cube exakt in Ausgangslage zurueck
+      pivotGroup.remove(cube);
+      kipGroup.remove(pivotGroup);
+      cube.position.copy(savedPos);
+      cube.quaternion.copy(savedQuat);
+      oldParent.add(cube);
+
+      isAnimating = false;
+    }
+
+    // === Spaehblick-Sequenz: Hand + 44° CW peek + 44° CCW peek ===
+    async function handPeekSequence() {
+      if (!replayActive) return;
+      const c = cubeScreenXY();
+      setHandPos(c.x, c.y);
+      handEl.style.opacity = '1';
+      updateHandShadow(c.x, c.y, true);
+      await sleep(300);
+
+      const Q = currentQuadrant;
+      const cwDir  = CW_KIPP[Q];
+      const ccwDir = CCW_KIPP[Q];
+
+      // CW Peek
+      await performHalbKipp(cwDir, 44, 700);
+      await sleep(120);
+      if (!replayActive) { handEl.style.opacity = '0'; return; }
+      // CCW Peek
+      await performHalbKipp(ccwDir, 44, 700);
+      await sleep(150);
+
+      handEl.style.opacity = '0';
+      updateHandShadow(0, 0, false);
+      await sleep(60);
+    }
+
     // --- Kippen für offene Karte ---
     async function replayKippSequence(ci, kippDur) {
       if (!replayActive) return;
       const dist = kipp21CardDistances[ci];
       if (!dist || dist <= 0) return;
-      
+
+      // Spaehblick einmal pro Kippziel BEVOR die Kipps starten
+      await handPeekSequence();
+      if (!replayActive) return;
+
       const dir = findHitDirection(ci);
       dbgLog('Karte ' + ci + ': ' + dist + 'x ' + dir + ' Q' + currentQuadrant + ' ' + topFace);
       
