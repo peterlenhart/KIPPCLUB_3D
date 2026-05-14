@@ -902,8 +902,8 @@
   <!-- START-OVERLAY -->
   <div id="startOverlay">
     <div id="startChallengeText">
-      <div class="sctLine sctHead" id="sctHead">SPIELZIEL</div>
-      <div class="sctLine sctSub" id="sctSub">21 KIPPS</div>
+      <div class="sctLine sctHead" id="sctHead"></div>
+      <div class="sctLine sctSub" id="sctSub"></div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
@@ -981,8 +981,8 @@
     
     <!-- KIPP-TIPP Overlay -->
     <div id="perfektGameText">
-      <div class="pgtLine pgtHead" id="pgtHead">SPIELZIEL</div>
-      <div class="pgtLine pgtSub" id="pgtSub">21 KIPPS</div>
+      <div class="pgtLine pgtHead" id="pgtHead"></div>
+      <div class="pgtLine pgtSub" id="pgtSub"></div>
     </div>
     <div id="gameEndText"></div>
     <!-- End-Buttons werden dynamisch erzeugt (button_lang.webp) -->
@@ -1262,9 +1262,9 @@
       hideKippPrinzip();
     });
     document.getElementById("sctHead").textContent = T.s1;
-    document.getElementById("sctSub").innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ','');
+    document.getElementById("sctSub").innerHTML = '';
     document.getElementById("pgtHead").textContent = T.s1;
-    document.getElementById("pgtSub").innerHTML = '<span style="display:inline-block;margin-top:20px;font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ','');
+    document.getElementById("pgtSub").innerHTML = '';
 
     // =========================
     // Scene Setup
@@ -3907,7 +3907,7 @@
         pgt.appendChild(pgtH);
         pgt.appendChild(pgtS);
       }
-      pgtH.innerHTML = T.s1 + '  <span style="font-size:1.4em;font-weight:bold">21</span> ' + T.ch1.replace('21 ','');
+      pgtH.innerHTML = '';
       pgtS.style.display = 'none';
       // Einzeilig im Sub-Stil
       pgtH.style.fontSize = '21px';
@@ -6363,7 +6363,7 @@
     // 2.5s 100% deckend, 1.5s ease-in-out Fade.
     // ============================================================
     (function(){
-      const HOLD_MS = 2500;
+      const HOLD_MS = 3500;
       const FADE_MS = 1500;
 
       const startOv = document.getElementById('startOverlay');
