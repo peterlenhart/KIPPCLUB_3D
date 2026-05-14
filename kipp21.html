@@ -3381,13 +3381,13 @@
       isAnimating = false;
     }
 
-    // === Spaehblick-Sequenz: Hand kommt langsam von Sueden, CW + CCW peek mit Hand-Sync ===
+    // === Spaehblick-Sequenz: random 45-65°, Hand-Spitze folgt Wuerfel-Topface-Mitte ===
     async function handPeekSequence() {
       if (!replayActive) return;
       const c = cubeScreenXY();
-      const SY = 740; // Sued-Rand wie in handTapFromSouth
+      const SY = 740;
 
-      // Hand von Sueden zum Wuerfel (langsam, gemaechlich)
+      // Hand von Sueden zum Wuerfel
       setHandPos(c.x, SY);
       handEl.style.opacity = '1';
       updateHandShadow(c.x, SY, true);
@@ -3396,28 +3396,40 @@
       const Q = currentQuadrant;
       const cwDir  = CW_KIPP[Q];
       const ccwDir = CCW_KIPP[Q];
-      const cwOff  = kippPixelDir(cwDir);
-      const ccwOff = kippPixelDir(ccwDir);
 
-      // 44° entspricht 44/90 der vollen Kipp-Pixel-Distanz
-      const HAND_44 = 44 / 90;
+      // Projiziert Wuerfel-Topface-Mitte auf Bildschirm (folgt Kipp-Animation)
+      const _v = new THREE.Vector3();
+      function topfaceScreenXY() {
+        cube.updateMatrixWorld();
+        // Topface-Mitte in lokalen Cube-Koords: (0, +cubeSize/2, 0)
+        _v.set(0, 0.46875 / 2, 0).applyMatrix4(cube.matrixWorld).project(camera);
+        return {
+          x: Math.round((_v.x * 0.5 + 0.5) * 360),
+          y: Math.round((-_v.y * 0.5 + 0.5) * 720)
+        };
+      }
 
-      // CW Peek mit Hand-Sync
-      await performHalbKipp(cwDir, 44, 2000, 400, (p) => {
-        const f = p * HAND_44;
-        setHandPos(c.x + cwOff.dx * f, c.y + cwOff.dy * f);
+      // Random Winkel 45-65° pro Peek
+      const rand45to65 = () => 45 + Math.random() * 20;
+
+      // CW Peek
+      const cwDeg = rand45to65();
+      await performHalbKipp(cwDir, cwDeg, 2000, 350, () => {
+        const p = topfaceScreenXY();
+        setHandPos(p.x, p.y);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
       await sleep(400);
 
-      // CCW Peek mit Hand-Sync
-      await performHalbKipp(ccwDir, 44, 2000, 400, (p) => {
-        const f = p * HAND_44;
-        setHandPos(c.x + ccwOff.dx * f, c.y + ccwOff.dy * f);
+      // CCW Peek
+      const ccwDeg = rand45to65();
+      await performHalbKipp(ccwDir, ccwDeg, 2000, 350, () => {
+        const p = topfaceScreenXY();
+        setHandPos(p.x, p.y);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
       await sleep(300);
-      // Hand bleibt sichtbar am Wuerfel — handKippAnim uebernimmt direkt
+      // Hand bleibt sichtbar am Wuerfel — naechster Schritt uebernimmt
     }
 
     // --- Kippen für offene Karte ---
@@ -3522,15 +3534,16 @@
         // Tutorial-Text vor Aktion
         await sleep(600);
 
-        // 1) Spähblick am Würfel (CW + CCW peek)
-        console.log('[REPLAY] R'+ci+': Spähblick');
-        await handPeekSequence();
-        if (!replayActive || myGen !== kipp21Generation) break;
-
-        // 2) Kippziel aufdecken (links nach rechts: 0, 1, 2, 3, 4, 5)
+        // 1) Kippziel aufdecken (links nach rechts: 0, 1, 2, 3, 4, 5)
         console.log('[REPLAY] R'+ci+': OpenCard');
         await replayOpenCard(ci);
         console.log('[REPLAY] R'+ci+': Aufdecken fertig');
+        if (!replayActive || myGen !== kipp21Generation) break;
+
+        // 2) Spähblick am Würfel (CW + CCW peek) — Spieler sieht erst das Ziel, dann peekt er gezielt
+        await sleep(400);
+        console.log('[REPLAY] R'+ci+': Spähblick');
+        await handPeekSequence();
         if (!replayActive || myGen !== kipp21Generation) break;
         
         // Prüfen ob eine Karte offen ist
