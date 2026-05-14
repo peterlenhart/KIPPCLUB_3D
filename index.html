@@ -379,38 +379,55 @@
       pointer-events: auto;
       z-index: 200;
       cursor: pointer;
-      transform-origin: center center;
-      animation: kipp21Wiggle 5s ease-in-out infinite;
     }
 
-    /* KIPP 21 Trailer-Button: kreisrund, ueber dem Banner-Goldkreis, schwankt mit */
+    /* KIPP 21 Trailer-Button: kreisrund, ueber dem Banner-Goldkreis, statisch */
     .kipp21Button {
       position: absolute;
-      left: 0; top: 0; /* per JS gesetzt */
-      width: 0; height: 0; /* per JS gesetzt (120% des Banner-Goldkreis-Durchmessers) */
+      left: 0; top: 0;
+      width: 0; height: 0;
       pointer-events: auto;
       z-index: 201;
       cursor: pointer;
-      transform-origin: 0 0; /* per JS gesetzt: Banner-Mitte relativ zum Button */
-      animation: kipp21Wiggle 5s ease-in-out infinite;
     }
-    /* KIPP 21 Trailer-Auge: ueber dem Trailer-Button, schwankt mit (kein Pulse mehr) */
+    /* Cyan-blauer Lichtkern HINTER dem Auge (zwischen Button und Auge) */
+    .kipp21Glow {
+      position: absolute;
+      left: 0; top: 0;
+      width: 0; height: 0;
+      pointer-events: none;
+      z-index: 201; /* unter Auge (202), ueber Button (201 -> stacking-order durch DOM-Reihenfolge) */
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(120,220,255,0.55) 0%, rgba(80,180,255,0.35) 35%, rgba(40,120,200,0.0) 70%);
+      filter: blur(8px);
+      animation: kipp21Glow 2.4s ease-in-out infinite;
+    }
+    @keyframes kipp21Glow {
+      0%, 100% { opacity: 0.5; transform: scale(0.92); }
+      50%      { opacity: 1.0; transform: scale(1.08); }
+    }
+    /* KIPP 21 Trailer-Auge: ueber Button und Glow, statisch */
     .kipp21Auge {
       position: absolute;
-      left: 0; top: 0; /* per JS gesetzt */
-      width: 0; height: 0; /* per JS gesetzt (120% der Original-Augengroesse, banner-relativ) */
+      left: 0; top: 0;
+      width: 0; height: 0;
       pointer-events: none;
       z-index: 202;
-      transform-origin: 0 0; /* per JS gesetzt: Banner-Mitte relativ zum Auge */
-      animation: kipp21Wiggle 5s ease-in-out infinite;
     }
-    /* Dezente Schwankung: 87% Ruhe, dann kurzer 3-fach-Wackler */
-    @keyframes kipp21Wiggle {
-      0%, 87% { transform: rotate(0deg); }
-      90%     { transform: rotate(-5deg); }
-      93%     { transform: rotate(5deg); }
-      96%     { transform: rotate(-3deg); }
-      100%    { transform: rotate(0deg); }
+    /* Silberne Tutorial-Hand: zeigt direkt aufs Auge, taucht von rechts in den Banner */
+    .kipp21Hand {
+      position: absolute;
+      left: 0; top: 0; /* per JS gesetzt */
+      width: 0; height: 0;
+      pointer-events: none;
+      z-index: 203;
+      transform-origin: 30% 20%; /* in der Naehe der Fingerspitze */
+      animation: kipp21HandTap 2.4s ease-in-out infinite;
+    }
+    /* Sanftes Tipp-Pulsieren: Hand bewegt sich Richtung Auge und zurueck */
+    @keyframes kipp21HandTap {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(-6px, -4px) scale(1.04); }
     }
 
     .wallPaywallBundleSub {
@@ -756,7 +773,7 @@
 </head>
 
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 19</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 21</div>
   <!-- Flashscreen Overlay -->
   <div id="flashOverlay">
     <div id="flashContainer">
@@ -835,8 +852,12 @@
         <img id="kipp21Banner" class="kipp21Banner" src="Kipp21Banner.webp" alt="KIPP 21 Trailer">
         <!-- KIPP 21 Trailer-Button: liegt ueber dem Banner-Goldkreis, statisch -->
         <img id="kipp21Button" class="kipp21Button" src="Kipp21TrailerButton.webp" alt="KIPP 21 Trailer Button">
-        <!-- KIPP 21 Trailer-Auge: liegt ueber dem Trailer-Button, pulsiert mit -->
+        <!-- Cyan-Glow hinter dem Auge -->
+        <div id="kipp21Glow" class="kipp21Glow"></div>
+        <!-- KIPP 21 Trailer-Auge: ueber Button und Glow, statisch -->
         <img id="kipp21Auge" class="kipp21Auge" src="AugeTrailer.webp" alt="KIPP 21 Trailer Auge">
+        <!-- Silberne Tutorial-Hand: zeigt aufs Auge, taucht von rechts in den Banner -->
+        <img id="kipp21Hand" class="kipp21Hand" src="handsilber.webp" alt="">
 
         <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild (DEAKTIVIERT — kommen später ueber den Walls)
         <div id="clickColor" class="gameClickArea"></div>
@@ -1124,25 +1145,50 @@
         kipp21Button.style.height = btnD + "px";
         kipp21Button.style.left = btnLeft + "px";
         kipp21Button.style.top  = btnTop + "px";
-        // transform-origin: Banner-Mitte umgerechnet auf Button-lokale Koordinaten
-        kipp21Button.style.transformOrigin = (bannerCx - btnLeft) + "px " + ((bannerTop + bannerCy) - btnTop) + "px";
       }
 
       // KIPP 21 Trailer-Auge: ueber dem Button, 120% skaliert (banner-relativ, 1092 Original → 1080 Layout)
       // Auge-Originalgroesse 140 x 84 px im Banner-Originalbild (1092 breit)
       const kipp21Auge = document.getElementById("kipp21Auge");
+      const bannerScale = 1080 / 1092;
+      const augeW = 140 * bannerScale * 1.2; // 120%
+      const augeH =  84 * bannerScale * 1.2;
+      const augeLeft = ringCx - augeW/2;
+      const augeTop  = bannerTop + ringCy - augeH/2;
       if (kipp21Auge) {
-        const bannerScale = 1080 / 1092;
-        const augeW = 140 * bannerScale * 1.2; // 120%
-        const augeH =  84 * bannerScale * 1.2;
-        const augeLeft = ringCx - augeW/2;
-        const augeTop  = bannerTop + ringCy - augeH/2;
         kipp21Auge.style.width  = augeW + "px";
         kipp21Auge.style.height = augeH + "px";
         kipp21Auge.style.left = augeLeft + "px";
         kipp21Auge.style.top  = augeTop + "px";
-        // transform-origin: Banner-Mitte umgerechnet auf Auge-lokale Koordinaten
-        kipp21Auge.style.transformOrigin = (bannerCx - augeLeft) + "px " + ((bannerTop + bannerCy) - augeTop) + "px";
+      }
+
+      // Cyan-Glow hinter dem Auge: ca. 1.6x Auge-Hoehe als Durchmesser, mittig auf Auge zentriert
+      const kipp21Glow = document.getElementById("kipp21Glow");
+      if (kipp21Glow) {
+        const glowD = augeH * 1.6;
+        kipp21Glow.style.width  = glowD + "px";
+        kipp21Glow.style.height = glowD + "px";
+        kipp21Glow.style.left = (ringCx - glowD/2) + "px";
+        kipp21Glow.style.top  = (bannerTop + ringCy - glowD/2) + "px";
+      }
+
+      // Silberne Tutorial-Hand: rechts vom Auge, Finger zeigt nach oben-links aufs Auge
+      // Hand-Original 308 x 448 -> Aspect 0.6875. Hoehe 240 Layout-Px, Breite 165 Layout-Px.
+      // Hand ragt leicht ueber rechten Banner-Rand hinaus (clipping durch overflow:hidden des layouts? eher nicht – sieht eher abgeschnitten aus)
+      const kipp21Hand = document.getElementById("kipp21Hand");
+      if (kipp21Hand) {
+        const handH = 240;
+        const handW = handH * (308 / 448);
+        // Fingerspitze liegt im Bild bei (73, 0) von (308, 448) -> 23.7% / 0%
+        // Wir wollen die Fingerspitze ca. (ringCx + 20, bannerTop + ringCy + 35) -> knapp rechts/unter Auge-Mitte
+        const tipTargetX = ringCx + 20;
+        const tipTargetY = bannerTop + ringCy + 35;
+        const handLeft = tipTargetX - handW * 0.237;
+        const handTop  = tipTargetY - handH * 0.0;
+        kipp21Hand.style.width  = handW + "px";
+        kipp21Hand.style.height = handH + "px";
+        kipp21Hand.style.left = handLeft + "px";
+        kipp21Hand.style.top  = handTop + "px";
       }
 
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
