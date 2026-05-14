@@ -902,8 +902,8 @@
   <!-- START-OVERLAY -->
   <div id="startOverlay">
     <div id="startChallengeText">
-      <div class="sctLine sctHead" id="sctHead">SPIEL ZIEL</div>
-      <div class="sctLine sctSub" id="sctSub">21 SEKUNDEN</div>
+      <div class="sctLine sctHead" id="sctHead">SPIELZIEL</div>
+      <div class="sctLine sctSub" id="sctSub">21 KIPPS</div>
       <div class="sctLine sctSub" id="sctBest" style="font-size:18px;color:#d4a843;"></div>
     </div>
     <button class="startClickZone" id="btnSpielen" disabled style="opacity:0">SPIELEN</button>
@@ -981,8 +981,8 @@
     
     <!-- KIPP-TIPP Overlay -->
     <div id="perfektGameText">
-      <div class="pgtLine pgtHead" id="pgtHead">SPIEL ZIEL</div>
-      <div class="pgtLine pgtSub" id="pgtSub">21 SEKUNDEN</div>
+      <div class="pgtLine pgtHead" id="pgtHead">SPIELZIEL</div>
+      <div class="pgtLine pgtSub" id="pgtSub">21 KIPPS</div>
     </div>
     <div id="gameEndText"></div>
     <!-- End-Buttons werden dynamisch erzeugt (button_lang.webp) -->
@@ -1023,14 +1023,14 @@
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     var T = {
       "de": {
-        s1:"SPIEL ZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>",
+        s1:"SPIELZIEL", s2:"\u2022 Finde m\u00f6glichst oft die richtige Kipp-Anzahl und -Richtung heraus, damit der W\u00fcrfel das Kippziel trifft. Hier z.B. <b>{zahl}</b> an <b>{farbe}</b>.<br>Es sind nie mehr als <b>6</b> Kipps, wenn die Richtung stimmt.<br>",
         w:"weiter", n:"Neues Spiel",
         e1:"IMMER 2 OPTIONEN", e2:"Zuerst auf Augen-Icon \u2013 W\u00fcrfelschauen (empfohlen)", e3:"Gleich auf Kippziel \u2013 Kippzug machen",
         k1:"SCHAUEN & MERKEN", k2:"Kippe den W\u00fcrfel in der Box in beliebige Richtung von Ecke zu Ecke. Merke dir m\u00f6glichst viele Zahlenpositionen in m\u00f6glichst kurzer Zeit.<br>Nach dem SCHAUEN deckst du hier links dein erstes von sechs Kippzielen auf.",
         p1:"TIPPEN & SCHUBSEN", p2:"Das Kippziel links zeigt: <b>{zahl}</b> muss zu <b>{farbe}</b> gekippt werden.<br><b>TIPPE</b> ein- bis sechsmal auf den W\u00fcrfel.<br><b>SCHUBSE</b> ihn anschlie\u00dfend in die gew\u00fcnschte Richtung, um den Kippzug auszul\u00f6sen.",
         ma:"SPIEL MIT ANLEITUNG", sp:"SPIELEN", dm:"TUTORIAL",
         wh:"WIEDERHOLEN", nm:"NEUES SPIEL", bs:"HIGHSCORES",
-        ch1:"21 SEKUNDEN", ch2:"21 SEKUNDEN",
+        ch1:"21 KIPPS", ch2:"21 KIPPS",
         jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",
         erg:"Ergebnis: {k} KIPPS | {z}", best21:"BEST: 21 KIPPS unter 21 Sek.",
         d1:["Nach Klick aufs Auge<br>l\u00e4sst sich der W\u00fcrfel","mit dem Finger<br>durch die Box kippen."],
@@ -1138,7 +1138,7 @@
       }
     }[_digikippLang];
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
-        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",nml:"NOCHMAL",bs:"HIGHSCORES",cTeilen:"TEILEN",cSchaffst:"Schaffst du das auch?",cKopiert:"KOPIERT!",ch1:"21 SEKUNDEN",ch2:"21 SEKUNDEN",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
+        ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",nml:"NOCHMAL",bs:"HIGHSCORES",cTeilen:"TEILEN",cSchaffst:"Schaffst du das auch?",cKopiert:"KOPIERT!",ch1:"21 KIPPS",ch2:"21 KIPPS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
@@ -4097,7 +4097,7 @@
       const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
       cardSouth3D.project(camera);
       const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 22;
-      kLabel.innerHTML = '<span style="font-size:36px;line-height:36px">21</span>';
+      kLabel.innerHTML = '<span style="font-size:36px;line-height:36px">0</span>';
       kLabel.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%); top:' + labelY + 'px; font-family:Arial,sans-serif; font-weight:bold; color:#d4b48c; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(212,180,140,0.5); pointer-events:none; z-index:13; white-space:nowrap;';
       kLabel.style.display = 'block';
       kLabel.dataset.sekterm = _sekTerm;
@@ -6356,8 +6356,42 @@
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault(); handleStart(true);
     }, { passive: false });
-    
-    
+
+    // ============================================================
+    // AUTO-TUTORIAL: Wenn ?autotutorial=1 in URL, dann Trailer-Overlay
+    // 3.5s einblenden und danach Tutorial automatisch starten.
+    // ============================================================
+    (function(){
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('autotutorial') !== '1') return;
+
+      // Trailer-Overlay erstellen (deckt komplettes Display)
+      const overlay = document.createElement('img');
+      overlay.src = 'Kipp21TrailerOverlay.webp';
+      overlay.alt = '';
+      overlay.style.cssText =
+        'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
+        'object-fit:contain;background:#000;z-index:99999;' +
+        'transition:opacity 0.8s ease-out;pointer-events:auto;opacity:1;';
+      document.body.appendChild(overlay);
+
+      // Sobald Texturen bereit UND mindestens 3.5s Overlay sichtbar:
+      // Overlay ausblenden, dann Tutorial starten
+      const startTime = Date.now();
+      const tryStart = () => {
+        const elapsed = Date.now() - startTime;
+        if (texturesReady && elapsed >= 3500) {
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            handleStart(true);
+          }, 800);
+        } else {
+          setTimeout(tryStart, 100);
+        }
+      };
+      tryStart();
+    })();
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
       // KIPP-TIPP Overlay schließen falls offen
