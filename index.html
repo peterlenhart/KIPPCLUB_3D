@@ -1252,6 +1252,26 @@
       + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
       + '</svg>';
 
+    const KIPPCLUB_LOCK_SVG_CENTERED = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;height:2.2em;width:auto;pointer-events:none;">'
+      + '<defs>'
+      + '<linearGradient id="kclg3" x1="0%" y1="0%" x2="0%" y2="100%">'
+      + '<stop offset="0%" stop-color="#FFF4B0"/>'
+      + '<stop offset="40%" stop-color="#FFD700"/>'
+      + '<stop offset="100%" stop-color="#a07020"/>'
+      + '</linearGradient>'
+      + '<linearGradient id="kclb3" x1="0%" y1="0%" x2="0%" y2="100%">'
+      + '<stop offset="0%" stop-color="#FFE680"/>'
+      + '<stop offset="100%" stop-color="#c09030"/>'
+      + '</linearGradient>'
+      + '<filter id="kclf3"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>'
+      + '</defs>'
+      + '<path d="M 22 42 L 22 26 Q 22 10 36 10 Q 50 10 50 26 L 50 32" stroke="url(#kclb3)" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#kclf3)"/>'
+      + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#kclg3)" stroke="#7a5010" stroke-width="2" filter="url(#kclf3)"/>'
+      + '<rect x="20" y="46" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
+      + '<circle cx="40" cy="60" r="5" fill="#3a2010"/>'
+      + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
+      + '</svg>';
+
     // Pruefe Freigabe-Status und ersetze Preis-Texte durch SPIELEN + Schloss
     function applyUnlockState() {
       function hasToken(key) {
@@ -1308,12 +1328,20 @@
         }
         
         // Kleiner Button (Einzelpreis) wird zum Schloss-Symbol
-        // Stabile Anker-Positionierung: Container bleibt wo er ist, Schloss sitzt
-        // mittig im Container per absolute + transform — kein Layout-abhaengiger Pixel-Wert
+        // Stabile Anker-Positionierung: Container behaelt seine Original-Breite (vor Ersetzung gemessen)
         const single = slide.querySelector('.wallPaywallSingle');
         if (single) {
-          single.innerHTML = KIPPCLUB_LOCK_SVG_ANCHORED;
-          single.style.position = 'relative';
+          // Original-Breite des Preis-Texts merken BEVOR der Inhalt ersetzt wird
+          const origRect = single.getBoundingClientRect();
+          // Scale-Faktor um Display-Breite in Pre-Scale-Breite umzurechnen
+          let scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale'));
+          if (!scale || isNaN(scale)) scale = 0.333333;
+          const origWidth = origRect.width / scale;
+          // Container auf feste Breite fixieren, Inhalt einsetzen, mittig per text-align
+          single.style.width = origWidth + 'px';
+          single.style.textAlign = 'center';
+          single.style.display = 'inline-block';
+          single.innerHTML = KIPPCLUB_LOCK_SVG_CENTERED;
         }
         // Langer Button (Bundle "CLUB € 4,99") wird zu uebersetztem SPIELEN-Wort
         const _lvT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
