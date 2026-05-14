@@ -33,8 +33,7 @@
       --scale: 0.333333;
       --uiscale: 3;
       --gridW: calc(var(--cols) * var(--cell));
-      /* gridH FEST 16 Reihen * 135px = 2160 Retina-Pixel = 720 Display-Pixel bei scale=1/3 */
-      --gridH: calc(16 * var(--cell));
+      --gridH: 100vh;
 
       --ui-panel-bg: #4a2418;
       --ui-text: #ead7be;
@@ -58,7 +57,7 @@
     body{
       display:flex;
       justify-content:center;
-      align-items:center;
+      align-items:flex-start;
     }
 
     .stage{
@@ -71,11 +70,11 @@
     .layout{
       position: absolute;
       left: 50%;
-      top: 50%;
+      top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      transform-origin: center center;
-      transform: translate(-50%, -50%) scale(var(--scale));
+      transform-origin: top center;
+      transform: translateX(-50%) scale(var(--scale));
     }
 
     /* Hintergrund – Startscreen PNG */
@@ -368,6 +367,18 @@
         0 0 48px rgba(200,200,200,0.7),
         0 0 80px rgba(180,180,180,0.5),
         0 8px 16px rgba(0,0,0,0.85);
+    }
+
+    /* KIPP 21 Banner unter den Wall-Hinweistexten, ueber den Walls (z-Index) */
+    .kipp21Banner {
+      position: absolute;
+      left: 0;
+      top: 0; /* wird in positionUI() per JS gesetzt */
+      width: calc(8 * var(--cell)); /* 1080 Retina-Pixel = volle Display-Breite */
+      height: auto;
+      pointer-events: auto;
+      z-index: 200;
+      cursor: pointer;
     }
 
     .wallPaywallBundleSub {
@@ -700,17 +711,12 @@
     (function(){
       var cols = 8;
       var cell = 135;
-      var rows = 16; // FEST: 16 Reihen = 2160 Retina-Pixel Hoehe (= 720 Display-Pixel)
       var gridW = cols * cell; // 1080 Retina-Pixel
-      var gridH = rows * cell; // 2160 Retina-Pixel
       var vw = window.innerWidth || document.documentElement.clientWidth || 360;
-      var vh = window.innerHeight || document.documentElement.clientHeight || 720;
-      // fit-contain: kleinerer der beiden Skalen, damit beide Dimensionen passen
-      var scale = Math.min(vw / gridW, vh / gridH);
+      var scale = Math.min(1, vw / gridW);
       var root = document.documentElement;
       root.style.setProperty("--scale", scale.toFixed(4));
       root.style.setProperty("--gridW", gridW + "px");
-      root.style.setProperty("--gridH", gridH + "px");
       root.style.setProperty("--uiscale", (1 / (scale || 1)).toFixed(4));
       root.style.setProperty("--screen31", (31 / (scale || 1)).toFixed(2) + "px");
     })();
@@ -718,7 +724,7 @@
 </head>
 
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 12</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 14</div>
   <!-- Flashscreen Overlay -->
   <div id="flashOverlay">
     <div id="flashContainer">
@@ -792,6 +798,9 @@
             </div>
           </div>
         </div>
+
+        <!-- KIPP 21 Banner: sitzt suedlich der Wall-Hinweistexte, ueber Walls -->
+        <img id="kipp21Banner" class="kipp21Banner" src="Kipp21Banner.webp" alt="KIPP 21 Trailer">
 
         <!-- Unsichtbare Klickbereiche für Buttons auf dem Bild (DEAKTIVIERT — kommen später ueber den Walls)
         <div id="clickColor" class="gameClickArea"></div>
@@ -899,19 +908,15 @@
     function setScaleToFitWidth(){
       const cols = numVar("--cols") || 8;
       const cell = numVar("--cell") || 135;
-      const rows = 16; // FEST: 16 Reihen
 
       const gridW = cols * cell;
-      const gridH = rows * cell;
       const vw = window.innerWidth;
-      const vh = window.innerHeight;
 
-      // fit-contain: kleinerer Skalierungsfaktor, damit BEIDE Dimensionen passen
-      const scale = Math.min(vw / gridW, vh / gridH);
+      const targetW = vw;
+      const scale = Math.min(1, targetW / gridW);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
-      document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       const uiscale = 1 / (scale || 1);
       document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
@@ -920,7 +925,7 @@
       // weil .layout per transform: scale(...) verkleinert wird.
       document.documentElement.style.setProperty("--screen31", (31 / (scale || 1)).toFixed(2) + "px");
 
-      return { cell, scale, gridW, gridH };
+      return { cell, scale, gridW };
     }
 
     function positionUI(){
@@ -1058,6 +1063,13 @@
         el.style.top = ((spielenRow11Y - wallTopY) + 215 + 12) + "px";
       });
 
+      // KIPP 21 Banner: 10px unter dem unteren Rand des suedlichsten Hinweistexts
+      // Hinweistext top (Card-Variante): spielenRow11Y + 227, line-height 49 -> unterer Rand + 49 -> + 10 Gap
+      const kipp21Banner = document.getElementById("kipp21Banner");
+      if (kipp21Banner) {
+        kipp21Banner.style.top = (spielenRow11Y + 227 + 49 + 10) + "px";
+      }
+
       // Language Dropdown: 6 Zellen breit (1.5x), Höhe proportional (Bild 700×935)
       const langDD = document.getElementById("langDropdown");
       const ddWidth = cellPx * 6;
@@ -1071,9 +1083,12 @@
     }
 
     function rebuild(){
-      const { cell, scale, gridH } = setScaleToFitWidth();
-      // gridH ist jetzt FEST (16 Reihen) und wird bereits in setScaleToFitWidth gesetzt.
-      // Kein dynamisches Ueberschreiben mehr basierend auf vh.
+      const { cell, scale } = setScaleToFitWidth();
+      const vh = window.innerHeight;
+      const effective = vh / (scale || 1);
+      const rows = Math.ceil(effective / cell) + 1;
+      const gridH = rows * cell;
+      document.documentElement.style.setProperty("--gridH", gridH + "px");
       positionUI();
     }
 
