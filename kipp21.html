@@ -961,6 +961,16 @@
   </div>
   
   <div id="uiOverlay">
+    <div id="tutorialControls" style="display:none;position:absolute;left:0;right:0;bottom:14px;justify-content:center;align-items:center;gap:10px;z-index:60;pointer-events:auto;flex-direction:column;">
+      <div style="display:flex;justify-content:center;align-items:center;gap:8px;">
+        <img id="tcRestart" src="skipend_rw.webp" style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+        <img id="tcSlower"  src="frw.webp"       style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+        <img id="tcPlayPause" src="pause.webp"   style="width:54px;height:54px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+        <img id="tcFaster"  src="ffw.webp"       style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+        <img id="tcSkip"    src="skipend_fw.webp" style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+      </div>
+      <div id="tcSpeedLabel" style="color:#fff;font:bold 13px Arial;text-shadow:0 1px 2px rgba(0,0,0,0.8);letter-spacing:1px;margin-top:-2px;">1×</div>
+    </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
@@ -3305,6 +3315,81 @@
     // Pivot dynamisch auf die wahre Wuerfel-Bodenkante → kein Durchstossen der π1.
     // KIPP 27: Tutorial-Tempobeschleunigung (1.0 = normal, 0.1 = 10x schneller)
     let replayTimeFactor = 1.0;
+    // Tutorial-Controls
+    let replayPaused = false;
+    let pauseWaiters = [];
+    let replaySkipFlag = false;
+    let replayRestartFlag = false;
+    let manualSpeedIdx = -1; // -1 = auto (per Runde), sonst Index in SPEED_STEPS
+    const SPEED_STEPS = [1, 2, 5, 10]; // x-fach Tempo
+
+    async function pauseCheck() {
+      while (replayPaused) {
+        await new Promise(r => { pauseWaiters.push(r); });
+      }
+    }
+
+    function setReplaySpeedFromManual() {
+      if (manualSpeedIdx >= 0) {
+        replayTimeFactor = 1 / SPEED_STEPS[manualSpeedIdx];
+      }
+      const lbl = document.getElementById('tcSpeedLabel');
+      if (lbl) {
+        if (manualSpeedIdx >= 0) lbl.textContent = SPEED_STEPS[manualSpeedIdx] + '×';
+        else lbl.textContent = 'AUTO';
+      }
+    }
+
+    function initTutorialControls() {
+      const tc = document.getElementById('tutorialControls');
+      if (!tc || tc._initialized) return;
+      tc._initialized = true;
+
+      document.getElementById('tcRestart').addEventListener('click', () => {
+        replayPaused = false;
+        pauseWaiters.forEach(r => r()); pauseWaiters = [];
+        replayRestartFlag = true;
+        replaySkipFlag = true;
+        replayActive = false; // Loop bricht, replayCleanup kuemmert sich um Restart
+      });
+      document.getElementById('tcSlower').addEventListener('click', () => {
+        if (manualSpeedIdx < 0) manualSpeedIdx = SPEED_STEPS.length - 1; // erst manuell aktivieren
+        manualSpeedIdx = Math.max(0, manualSpeedIdx - 1);
+        setReplaySpeedFromManual();
+      });
+      document.getElementById('tcFaster').addEventListener('click', () => {
+        if (manualSpeedIdx < 0) manualSpeedIdx = 0;
+        manualSpeedIdx = Math.min(SPEED_STEPS.length - 1, manualSpeedIdx + 1);
+        setReplaySpeedFromManual();
+      });
+      document.getElementById('tcPlayPause').addEventListener('click', () => {
+        replayPaused = !replayPaused;
+        document.getElementById('tcPlayPause').src = replayPaused ? 'fw.webp' : 'pause.webp';
+        if (!replayPaused) {
+          pauseWaiters.forEach(r => r()); pauseWaiters = [];
+        }
+      });
+      document.getElementById('tcSkip').addEventListener('click', () => {
+        replaySkipFlag = true;
+        replayPaused = false;
+        pauseWaiters.forEach(r => r()); pauseWaiters = [];
+      });
+    }
+
+    function showTutorialControls() {
+      initTutorialControls();
+      manualSpeedIdx = -1; // auto-Modus
+      replayPaused = false;
+      const tc = document.getElementById('tutorialControls');
+      if (tc) tc.style.display = 'flex';
+      const pp = document.getElementById('tcPlayPause');
+      if (pp) pp.src = 'pause.webp';
+      setReplaySpeedFromManual();
+    }
+    function hideTutorialControls() {
+      const tc = document.getElementById('tutorialControls');
+      if (tc) tc.style.display = 'none';
+    }
 
     async function performHalbKipp(direction, angleDeg, duration, holdMs, onProgress) {
       duration = duration * replayTimeFactor;
@@ -3580,6 +3665,7 @@
       replayActive = true;
       enableReplayBlocker();
       renderer.domElement.style.pointerEvents = 'none'; // Canvas komplett blocken
+      showTutorialControls();
       
       if (!replayDbg) {
         replayDbg = document.createElement('div');
@@ -3605,14 +3691,16 @@
       
       for (let ci = 0; ci < 7; ci++) {
         if (!replayActive || myGen !== kipp21Generation) break;
-        // KIPP 27: Tempo pro Runde
-        // ci=0: 1.0x (normal) – Spieler lernt
-        // ci=1..5: 2x → 10x Zeitraffer (factor 0.5 → 0.1)
-        // ci=6: 1.0x (normal) – letztes Kippziel
-        if (ci === 0)        replayTimeFactor = 1.0;
-        else if (ci <= 5)    replayTimeFactor = 1.0 / (2 + 2 * (ci - 1)); // 2,4,6,8,10x
-        else                 replayTimeFactor = 1.0;
-        console.log('[REPLAY] ci=' + ci + ' replayTimeFactor=' + replayTimeFactor.toFixed(3));
+        replaySkipFlag = false;
+        await pauseCheck();
+        if (!replayActive || myGen !== kipp21Generation) break;
+        // KIPP 27: Auto-Tempo nur wenn kein manueller Override
+        if (manualSpeedIdx < 0) {
+          if (ci === 0)        replayTimeFactor = 1.0;
+          else if (ci <= 5)    replayTimeFactor = 1.0 / (2 + 2 * (ci - 1)); // 2,4,6,8,10x
+          else                 replayTimeFactor = 1.0;
+        }
+        console.log('[REPLAY] ci=' + ci + ' replayTimeFactor=' + replayTimeFactor.toFixed(3) + ' manual=' + manualSpeedIdx);
         dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
         console.log('[REPLAY] === RUNDE', ci, '===');
         console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
@@ -3621,11 +3709,10 @@
         // KIPP 27: Vor der 7. Runde Letztes-Kippziel-Sequenz (NORMAL-Tempo, nicht skalieren)
         if (ci === 6) {
           const savedFactor = replayTimeFactor;
-          replayTimeFactor = 1.0;
+          if (manualSpeedIdx < 0) replayTimeFactor = 1.0;
           await showLetztesKippzielSequence();
-          replayTimeFactor = savedFactor;
+          if (manualSpeedIdx < 0) replayTimeFactor = savedFactor;
           if (!replayActive || myGen !== kipp21Generation) break;
-          // kipp21GenerateTarget hat Karte 6 bereits 'offen' gesetzt → kein replayOpenCard noetig
         }
         
         // === KARTE AUFDECKEN ===
@@ -3637,20 +3724,28 @@
         
         // Tutorial-Text vor Aktion
         await sleep(600 * replayTimeFactor);
+        await pauseCheck();
+        if (replaySkipFlag || !replayActive || myGen !== kipp21Generation) continue;
 
         // 1) Kippziel aufdecken (links nach rechts: 0, 1, 2, 3, 4, 5)
         console.log('[REPLAY] R'+ci+': OpenCard');
-        await replayOpenCard(ci);
+        if (ci < 6) await replayOpenCard(ci);
         console.log('[REPLAY] R'+ci+': Aufdecken fertig');
         if (!replayActive || myGen !== kipp21Generation) break;
+        await pauseCheck();
+        if (replaySkipFlag) continue;
 
         // 2) Spähblick am Würfel (CW + CCW peek) — Spieler sieht erst das Ziel, dann peekt er gezielt
         await sleep(400 * replayTimeFactor);
+        await pauseCheck();
+        if (replaySkipFlag) continue;
         const peekCi = kipp21CardStates.indexOf('offen');
         console.log('[REPLAY] R'+ci+': Spähblick (peekCi='+peekCi+')');
         await handPeekSequence(peekCi);
         if (!replayActive || myGen !== kipp21Generation) break;
-        
+        await pauseCheck();
+        if (replaySkipFlag) continue;
+
         // Prüfen ob eine Karte offen ist
         const openCheck = kipp21CardStates.indexOf('offen');
         if (openCheck < 0) {
@@ -3662,6 +3757,8 @@
         
         // Denkpause nach Aufdecken
         await sleep(2200 * replayTimeFactor);
+        await pauseCheck();
+        if (replaySkipFlag) continue;
         
         // === KIPPEN ===
         console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
@@ -3670,9 +3767,12 @@
         await replayKippSequence(actualOpen >= 0 ? actualOpen : ci, KIPP_DUR);
         console.log('[REPLAY] R'+ci+': Kippen fertig');
         if (!replayActive || myGen !== kipp21Generation) break;
+        await pauseCheck();
+        if (replaySkipFlag) continue;
         
         // === BESTÄTIGEN ===
         await sleep(800 * replayTimeFactor);
+        await pauseCheck();
         // Wenn checkOnTargetAfterKipp bereits auto-confirmed hat → überspringen
         if (kipp21CardStates[ci] === 'erledigt' || !kipp21CardStates.includes('offen')) {
           console.log('[REPLAY] R'+ci+': Auto-confirmed by checkOnTarget, skip hand confirm');
@@ -3766,7 +3866,16 @@
     // --- Aufräumen ---
     function replayCleanup(jr) {
       replayActive = false;
+      replayPaused = false;
+      pauseWaiters.forEach(r => r()); pauseWaiters = [];
+      hideTutorialControls();
       disableReplayBlocker();
+      const wasRestart = replayRestartFlag;
+      replayRestartFlag = false;
+      if (wasRestart) {
+        // Tutorial neu starten
+        setTimeout(() => { try { startKipp21(true); } catch(e) { console.error(e); } }, 200);
+      }
       renderer.domElement.style.pointerEvents = 'auto';
       if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
       if (jr) jr.style.pointerEvents = 'auto';
