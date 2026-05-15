@@ -2373,11 +2373,11 @@
           const s = scores[i];
           const isTut = s.tutorial || (tutData && s.kipps === tutData.kipps && s.secs === tutData.secs);
           const prefix = isTut ? 'TUTORIAL  |  ' : '';
-          if (s.kipps <= 21) {
+          if (s.kipps <= 27) {
             el.innerHTML = prefix + '<span style="color:#5cb85c;font-size:17px">' + s.kipps + ' ' + kT + '</span>';
           } else {
-            const over = s.kipps - 21;
-            el.innerHTML = prefix + '<span style="font-size:17px">21 ' + kT + '</span> <span style="color:#c85a5a;font-size:19px">+ ' + over + '</span>';
+            const over = s.kipps - 27;
+            el.innerHTML = prefix + '<span style="font-size:17px">27 ' + kT + '</span> <span style="color:#c85a5a;font-size:19px">+ ' + over + '</span>';
           }
         } else {
           el.textContent = '';
@@ -2983,6 +2983,7 @@
     
     // --- Smooth easeInOut Bewegung ---
     function moveHandSmooth(toX, toY, durMs) {
+      durMs = durMs * replayTimeFactor;
       return new Promise(resolve => {
         const sx = _handX;
         const sy = _handY;
@@ -3044,7 +3045,7 @@
       setHandPos(c.x, c.y);
       handEl.style.opacity = '1';
       updateHandShadow(c.x, c.y, true);
-      await sleep(350);
+      await sleep(350 * replayTimeFactor);
       
       // Timer GO
       if (kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
@@ -3054,14 +3055,15 @@
       // Sicherstellen dass performKipp nicht blockiert wird
       isAnimating = false;
       
+      // moveHandSmooth skaliert intern, performKipp manuell skalieren
       const moveP = moveHandSmooth(c.x + off.dx, c.y + off.dy, kippDur);
-      await performKipp(kippDir, kippDur);
+      await performKipp(kippDir, kippDur * replayTimeFactor);
       advanceTopFace();
       await moveP;
       
       handEl.style.opacity = '0';
       updateHandShadow(0, 0, false);
-      await sleep(60);
+      await sleep(60 * replayTimeFactor);
     }
     
     // --- Karten-Screen-Position ---
@@ -3301,7 +3303,12 @@
     // === Halbkipp ohne Zustandsaenderung (Spaehblick / Peek) ===
     // Kippt auf angleDeg, haelt holdMs, zurueck auf 0. Kein advanceTopFace.
     // Pivot dynamisch auf die wahre Wuerfel-Bodenkante → kein Durchstossen der π1.
+    // KIPP 27: Tutorial-Tempobeschleunigung (1.0 = normal, 0.1 = 10x schneller)
+    let replayTimeFactor = 1.0;
+
     async function performHalbKipp(direction, angleDeg, duration, holdMs, onProgress) {
+      duration = duration * replayTimeFactor;
+      holdMs   = holdMs   * replayTimeFactor;
       if (isAnimating) return;
       isAnimating = true;
 
@@ -3464,16 +3471,16 @@
       // Zielzahl auf cw-incoming face sichtbar → CCW Peek entfaellt
       if (faceHasZahl(cwFmap[topFace], targetZahl)) {
         dbgLog('CCW skip: Zahl ' + targetZahl + ' auf cw-incoming ' + cwFmap[topFace]);
-        await sleep(300);
+        await sleep(300 * replayTimeFactor);
         return;
       }
-      await sleep(400);
+      await sleep(400 * replayTimeFactor);
 
       // Hand direkt zur CCW-Start-Position (kein Umweg ueber Mitte)
       const ccwAnker = ankerFor(ccwDir);
       const ccwStart = handPosFor(ccwDir);
       await animateHandTo(ccwStart.x, ccwStart.y, 500, ccwAnker);
-      await sleep(150);
+      await sleep(150 * replayTimeFactor);
 
       // CCW Peek
       // CCW Peek — lokalen Cube-Punkt fuer rotierenden Wuerfel
@@ -3490,11 +3497,12 @@
         setHandPos(p.x, p.y, ccwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
-      await sleep(300);
+      await sleep(300 * replayTimeFactor);
     }
 
     // Hand-Animation mit definierbarem Anker (ns/we) — wie moveHandSmooth, aber mit anchor
     function animateHandTo(toX, toY, durMs, anchor) {
+      durMs = durMs * replayTimeFactor;
       return new Promise(resolve => {
         const sx = _handX, sy = _handY;
         const startT = performance.now();
@@ -3528,7 +3536,7 @@
         await handKippAnim(kDir, kippDur);
         replayUpdateKippCount();
         
-        if (k < dist - 1) await sleep(40);
+        if (k < dist - 1) await sleep(40 * replayTimeFactor);
       }
       // Nach letztem Kipp: Auto-Confirm wenn HIT (Kippziel fliegt selbstständig)
       checkOnTargetAfterKipp();
@@ -3551,7 +3559,7 @@
       
       // DANN erst Karte verarbeiten (Treffer-Check etc.)
       kipp21OnCardTap(openIdx, true);
-      await sleep(300);
+      await sleep(300 * replayTimeFactor);
     }
     
     // ============================================================
@@ -3597,14 +3605,25 @@
       
       for (let ci = 0; ci < 7; ci++) {
         if (!replayActive || myGen !== kipp21Generation) break;
+        // KIPP 27: Tempo pro Runde
+        // ci=0: 1.0x (normal) – Spieler lernt
+        // ci=1..5: 2x → 10x Zeitraffer (factor 0.5 → 0.1)
+        // ci=6: 1.0x (normal) – letztes Kippziel
+        if (ci === 0)        replayTimeFactor = 1.0;
+        else if (ci <= 5)    replayTimeFactor = 1.0 / (2 + 2 * (ci - 1)); // 2,4,6,8,10x
+        else                 replayTimeFactor = 1.0;
+        console.log('[REPLAY] ci=' + ci + ' replayTimeFactor=' + replayTimeFactor.toFixed(3));
         dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
         console.log('[REPLAY] === RUNDE', ci, '===');
         console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
         console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
 
-        // KIPP 27: Vor der 7. Runde Letztes-Kippziel-Sequenz
+        // KIPP 27: Vor der 7. Runde Letztes-Kippziel-Sequenz (NORMAL-Tempo, nicht skalieren)
         if (ci === 6) {
+          const savedFactor = replayTimeFactor;
+          replayTimeFactor = 1.0;
           await showLetztesKippzielSequence();
+          replayTimeFactor = savedFactor;
           if (!replayActive || myGen !== kipp21Generation) break;
           // kipp21GenerateTarget hat Karte 6 bereits 'offen' gesetzt → kein replayOpenCard noetig
         }
@@ -3617,7 +3636,7 @@
         if (useKniff === 'wobble' && kipp21WobbleUsed >= KNIFF_MAX_USES) useKniff = null;
         
         // Tutorial-Text vor Aktion
-        await sleep(600);
+        await sleep(600 * replayTimeFactor);
 
         // 1) Kippziel aufdecken (links nach rechts: 0, 1, 2, 3, 4, 5)
         console.log('[REPLAY] R'+ci+': OpenCard');
@@ -3626,7 +3645,7 @@
         if (!replayActive || myGen !== kipp21Generation) break;
 
         // 2) Spähblick am Würfel (CW + CCW peek) — Spieler sieht erst das Ziel, dann peekt er gezielt
-        await sleep(400);
+        await sleep(400 * replayTimeFactor);
         const peekCi = kipp21CardStates.indexOf('offen');
         console.log('[REPLAY] R'+ci+': Spähblick (peekCi='+peekCi+')');
         await handPeekSequence(peekCi);
@@ -3642,7 +3661,7 @@
         dbgLog('R' + ci + ': Karte ' + openCheck + ' offen, dist=' + kipp21CardDistances[openCheck]);
         
         // Denkpause nach Aufdecken
-        await sleep(2200);
+        await sleep(2200 * replayTimeFactor);
         
         // === KIPPEN ===
         console.log('[REPLAY] R'+ci+': Kippen start, isAnim='+isAnimating);
@@ -3653,7 +3672,7 @@
         if (!replayActive || myGen !== kipp21Generation) break;
         
         // === BESTÄTIGEN ===
-        await sleep(800);
+        await sleep(800 * replayTimeFactor);
         // Wenn checkOnTargetAfterKipp bereits auto-confirmed hat → überspringen
         if (kipp21CardStates[ci] === 'erledigt' || !kipp21CardStates.includes('offen')) {
           console.log('[REPLAY] R'+ci+': Auto-confirmed by checkOnTarget, skip hand confirm');
@@ -3663,7 +3682,7 @@
         }
         console.log('[REPLAY] R'+ci+': Confirm fertig, states:', JSON.stringify(kipp21CardStates));
         
-        await sleep(800); // Zwischen-Runden Pause
+        await sleep(800 * replayTimeFactor); // Zwischen-Runden Pause
       }
       
       // === ERGEBNIS ===
@@ -4172,14 +4191,16 @@
       
       function fadeInUIs() {
         return new Promise(resolve => {
-          // Alles auf opacity 0 vorbereiten
-          for (let i = 0; i < 7; i++) {
+          // Alles auf opacity 0 vorbereiten — Karte 6 bleibt unsichtbar bis nach 6. Hit
+          for (let i = 0; i < 6; i++) {
             const m = gameCards[i].mesh;
             m.visible = true;
             m.material.transparent = true;
             m.material.opacity = 0;
             m.material.needsUpdate = true;
           }
+          // Karte 6 explizit unsichtbar
+          if (gameCards[6]) gameCards[6].mesh.visible = false;
           // Blick-Icons auf Kippzielen (statt jokerIconsRow)
           showBlickIcons();
           for (let i = 0; i < 7; i++) {
@@ -4209,7 +4230,7 @@
           function tick(now) {
             const t = Math.min((now - start) / dur, 1);
             const e = t * t * (3 - 2 * t);
-            for (let i = 0; i < 7; i++) {
+            for (let i = 0; i < 6; i++) {
               gameCards[i].mesh.material.opacity = e;
               gameCards[i].mesh.material.needsUpdate = true;
             }
@@ -4227,7 +4248,7 @@
             if (t < 1) {
               requestAnimationFrame(tick);
             } else {
-              for (let i = 0; i < 7; i++) {
+              for (let i = 0; i < 6; i++) {
                 gameCards[i].mesh.material.opacity = 1;
                 gameCards[i].mesh.material.transparent = false;
                 gameCards[i].mesh.material.needsUpdate = true;
