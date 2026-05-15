@@ -2816,6 +2816,10 @@
     // "HIT"-Text an Karten-Position anzeigen (HTML-Overlay, von Osten lesbar)
     const hitTextEls = [];
     function showHitText(cardIdx) {
+      // HIT-Text deaktiviert — Kippziel verschwindet einfach
+      return;
+    }
+    function showHitText_disabled_original(cardIdx) {
       const cx = cardXForIdx(cardIdx);
       // 3D→Screen Projektion der Kartenmitte
       const pos3D = new THREE.Vector3(cx, cardY, cardZ);
@@ -3597,6 +3601,13 @@
         console.log('[REPLAY] === RUNDE', ci, '===');
         console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
         console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
+
+        // KIPP 27: Vor der 7. Runde Letztes-Kippziel-Sequenz
+        if (ci === 6) {
+          await showLetztesKippzielSequence();
+          if (!replayActive || myGen !== kipp21Generation) break;
+          // kipp21GenerateTarget hat Karte 6 bereits 'offen' gesetzt → kein replayOpenCard noetig
+        }
         
         // === KARTE AUFDECKEN ===
         dbgLog('R' + ci + ': Aufdecken...');
@@ -4272,7 +4283,7 @@
           card.ctx.drawImage(leerImage, 0, 0, 85, 170);
         }
         card.texture.needsUpdate = true;
-        card.mesh.visible = true;
+        card.mesh.visible = (i < 6); // Karte 6 erst nach 6 Hits sichtbar
         card.mesh.material.transparent = false;
         card.mesh.material.opacity = 1;
         card.mesh.material.needsUpdate = true;
@@ -5020,6 +5031,10 @@
           const isLastHit = (kipp21Done >= 7);
           const flyPromise = animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             showHitText(cardIdx);
+            // Nach 6. Hit: Letztes-Kippziel-Overlay starten (im Tutorial macht es der Replay)
+            if (kipp21Done === 6 && !kipp21WithTutorial) {
+              showLetztesKippzielSequence();
+            }
           });
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
@@ -5959,6 +5974,50 @@
         if (sQ === targetQ && sF === targetFace) return { steps: s, dir: 'ccw' };
       }
       return null;
+    }
+
+    // KIPP 27: Overlay-Sequenz nach 6. Hit — pulsierender Text + 7. Karte einblenden + Kippziel
+    async function showLetztesKippzielSequence() {
+      // Screen-Position der Karten-Mitte (cardY, cardZ)
+      const pos3D = new THREE.Vector3(0, cardY, cardZ);
+      pos3D.project(camera);
+      const sx = Math.round((pos3D.x * 0.5 + 0.5) * 360);
+      const sy = Math.round((-pos3D.y * 0.5 + 0.5) * 720);
+
+      const el = document.createElement('div');
+      const txt = (typeof T !== 'undefined' && T.letztesKippziel) ? T.letztesKippziel : 'LETZTES KIPPZIEL';
+      el.textContent = txt;
+      el.style.cssText =
+        'position:absolute;' +
+        'left:' + sx + 'px; top:' + sy + 'px;' +
+        'transform:translate(-50%,-50%);' +
+        'font:bold 32px Arial;' +
+        'background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 35%,#c8c8c8 60%,#888888 100%);' +
+        '-webkit-background-clip:text;background-clip:text;' +
+        '-webkit-text-fill-color:transparent;' +
+        'filter:drop-shadow(0 2px 4px rgba(0,0,0,0.7)) drop-shadow(0 1px 2px rgba(255,255,255,0.4));' +
+        'pointer-events:none;z-index:50;opacity:0;' +
+        'letter-spacing:2px;text-align:center;white-space:nowrap;' +
+        'transition:opacity 0.25s ease-in-out;';
+      document.getElementById('uiOverlay').appendChild(el);
+
+      // 3x blinken
+      for (let i = 0; i < 3; i++) {
+        el.style.opacity = '1';
+        await sleep(420);
+        el.style.opacity = '0';
+        await sleep(280);
+      }
+      el.remove();
+
+      // 7. Karte einblenden (leernohit ist bereits in Canvas)
+      if (gameCards[6]) {
+        gameCards[6].mesh.visible = true;
+      }
+      await sleep(1000);
+
+      // Kippziel auf 7. Karte generieren
+      kipp21GenerateTarget(6);
     }
 
     // KIPP 27: Umgekehrter Solver — gibt alle Zahl+Farbe-Kombinationen zurueck,
