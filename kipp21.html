@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v15</div>
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v17</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -3132,7 +3132,11 @@
     function formatKipps(n) {
       const kl = document.getElementById('kipps21Label');
       const term = (kl && kl.dataset.kippsterm) ? kl.dataset.kippsterm : 'KIPPS';
-      return '<span style="white-space:nowrap;line-height:1"><span style="font-size:38px">' + n + '</span> <span style="font-size:22px;letter-spacing:1px">' + term + '</span></span>';
+      const isOver = n > 27;
+      const numColor = isOver ? '#ff4040' : 'inherit';
+      const wordColor = isOver ? '#ff4040' : 'inherit';
+      const textShadow = isOver ? 'text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,64,64,0.6);' : '';
+      return '<span style="white-space:nowrap;line-height:1;' + textShadow + '"><span style="font-size:38px;color:' + numColor + '">' + n + '</span> <span style="font-size:22px;letter-spacing:1px;color:' + wordColor + '">' + term + '</span></span>';
     }
     
     function formatTimer(totalMs) {
@@ -5267,7 +5271,7 @@
               // Finalen Timer-Wert anzeigen
               countdown.innerHTML = formatTimer(kipp21TotalTime);
               const kl = document.getElementById('kipps21Label');
-              if (kl) kl.innerHTML = formatCountdownLabel(kipp21TotalTime);
+              if (kl) kl.innerHTML = formatKipps(kipp21KippCount);
               // Joker-Reihe ausblenden
               hideKniffIcons();
             } catch(e) {
