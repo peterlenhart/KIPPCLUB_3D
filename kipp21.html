@@ -1459,7 +1459,7 @@
       checkEnableButtons();
     });
     
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const canvas = document.createElement('canvas');
       canvas.width = 85;
       canvas.height = 170;
@@ -1474,7 +1474,9 @@
       });
       const plane = new THREE.Mesh(geo, mat);
       plane.rotation.x = -Math.PI / 2;
-      plane.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
+      // Karten 0-5: Reihe, Karte 6: mittig (x=0)
+      const px = (i < 6) ? (cardStartX + i * (cardWidth + cardGap)) : 0;
+      plane.position.set(px, cardY, cardZ);
       plane.castShadow = true;
       plane.receiveShadow = true;
       scene.add(plane);
@@ -1516,17 +1518,17 @@
     
     // === Blick-Icons auf verdeckten Kippzielen ===
     // Außen links/rechts = Eckblick, mittlere 2 = Kippblick, Rest = kein Icon
-    const CARD_BLICK_MAP = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null };
+    const CARD_BLICK_MAP = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null };
     const blickIconMeshes = [];
     const blickIconSize = cardWidth; // exakt gleiche Breite wie Kippziel = 45px
     const blickIconGeo = new THREE.PlaneGeometry(blickIconSize, blickIconSize);
     
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const iconSrc = CARD_BLICK_MAP[i];
       const iconMat = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
       const iconMesh = new THREE.Mesh(blickIconGeo, iconMat);
       iconMesh.rotation.x = -Math.PI / 2;
-      const cx = cardStartX + i * (cardWidth + cardGap);
+      const cx = (i < 6) ? (cardStartX + i * (cardWidth + cardGap)) : 0;
       iconMesh.position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
       iconMesh.visible = false;
       scene.add(iconMesh);
@@ -1549,14 +1551,14 @@
     
     // Blick-Icons anzeigen/verstecken (nur Karten MIT Icon)
     function showBlickIcons() {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 7; i++) {
         blickIconMeshes[i].visible = (CARD_BLICK_MAP[i] !== null && kipp21CardStates[i] === 'verdeckt');
-        const cx = cardStartX + i * (cardWidth + cardGap);
+        const cx = (i < 6) ? (cardStartX + i * (cardWidth + cardGap)) : 0;
         blickIconMeshes[i].position.set(cx, cardY + 0.002, cardZ - cardHeight / 4);
       }
     }
     function hideBlickIcon(idx) {
-      if (idx >= 0 && idx < 6) blickIconMeshes[idx].visible = false;
+      if (idx >= 0 && idx < 7) blickIconMeshes[idx].visible = false;
     }
     
     // Gespeichertes erstes Kippziel
@@ -2896,6 +2898,7 @@
     let kipp21TotalTime = 0;
     let kipp21Done = 0;
     let kipp21UsedDistances = [];
+    let kipp27Distances = []; // KIPP 27: 7 Distanzen aus einer der 11 Varianten
     let kipp21CardStates = [];
     let kipp21CardDistances = [];
     let kipp21TimerRunning = false;
@@ -3583,7 +3586,7 @@
       // Sichtbarer Schritt-Zähler oben im Bild
       if (replayDbg) replayDbg.style.cssText = 'position:absolute;top:2px;left:2px;font:bold 14px monospace;color:transparent;background:transparent;padding:4px 8px;z-index:30;pointer-events:none;white-space:pre;max-width:356px;';
       
-      for (let ci = 0; ci < 6; ci++) {
+      for (let ci = 0; ci < 7; ci++) {
         if (!replayActive || myGen !== kipp21Generation) break;
         dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
         console.log('[REPLAY] === RUNDE', ci, '===');
@@ -3657,7 +3660,7 @@
       hideKniffIcons();
       countdown.style.display = 'none';
       hintText.style.display = 'none';
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 7; i++) {
         if (gameCards[i].mesh.visible) gameCards[i].mesh.visible = false;
       }
       
@@ -4154,7 +4157,7 @@
       function fadeInUIs() {
         return new Promise(resolve => {
           // Alles auf opacity 0 vorbereiten
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 7; i++) {
             const m = gameCards[i].mesh;
             m.visible = true;
             m.material.transparent = true;
@@ -4163,7 +4166,7 @@
           }
           // Blick-Icons auf Kippzielen (statt jokerIconsRow)
           showBlickIcons();
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 7; i++) {
             if (blickIconMeshes[i].visible) {
               blickIconMeshes[i].material.transparent = true;
               blickIconMeshes[i].material.opacity = 0;
@@ -4190,12 +4193,12 @@
           function tick(now) {
             const t = Math.min((now - start) / dur, 1);
             const e = t * t * (3 - 2 * t);
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 7; i++) {
               gameCards[i].mesh.material.opacity = e;
               gameCards[i].mesh.material.needsUpdate = true;
             }
             jr2.style.display = 'none';
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 7; i++) {
               if (blickIconMeshes[i].visible) {
                 blickIconMeshes[i].material.opacity = e;
                 blickIconMeshes[i].material.needsUpdate = true;
@@ -4208,7 +4211,7 @@
             if (t < 1) {
               requestAnimationFrame(tick);
             } else {
-              for (let i = 0; i < 6; i++) {
+              for (let i = 0; i < 7; i++) {
                 gameCards[i].mesh.material.opacity = 1;
                 gameCards[i].mesh.material.transparent = false;
                 gameCards[i].mesh.material.needsUpdate = true;
@@ -4252,12 +4255,12 @@
       jr.style.opacity = '0';
       document.getElementById('zumSpielBtn').style.display = 'none';
       document.getElementById('zumSpielBtn').style.opacity = '0';
-      for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = false;
+      for (let i = 0; i < 7; i++) gameCards[i].mesh.visible = false;
       
       verdecktesMesh.visible = false;
       
       // Show 6 verdeckte cards
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 7; i++) {
         const card = gameCards[i];
         card.ctx.clearRect(0, 0, 85, 170);
         if (leerImage) {
@@ -4319,8 +4322,10 @@
       kipp21TotalTime = 0;
       kipp21Done = 0;
       kipp21UsedDistances = [];
-      kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt'];
-      kipp21CardDistances = [0,0,0,0,0,0];
+      kipp21CardStates = ['verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt','verdeckt'];
+      kipp21CardDistances = [0,0,0,0,0,0,0];
+      kipp27Distances = generateKipp27Distances();
+      console.log('[KIPP27] Variante:', kipp27Distances, 'Summe:', kipp27Distances.reduce((a,b)=>a+b,0));
       kipp21TimerRunning = false;
       kipp21WobbleUsed = 0;
       kipp21EckblickUsed = 0;
@@ -4359,7 +4364,7 @@
       hintText.innerHTML = formatKipps(0);
       
       // Karten nach Setup wieder verstecken (werden nach Challenge-Text gezeigt)
-      for (let i = 0; i < 6; i++) gameCards[i].mesh.visible = false;
+      for (let i = 0; i < 7; i++) gameCards[i].mesh.visible = false;
       countdown.style.display = 'none';
       hintText.style.display = 'none';
       
@@ -4427,7 +4432,7 @@
     }
     
     function kipp21NextVerdeckt() {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 7; i++) {
         if (kipp21CardStates[i] === 'verdeckt') return i;
       }
       return -1;
@@ -4740,66 +4745,60 @@
     let kipp21ReplayTargetIdx = 0;
     
     function kipp21GenerateTarget(cardIdx) {
-      console.log('[GENTARGET] cardIdx='+cardIdx, 'usedDists:', kipp21UsedDistances);
-      
-      const available = [];
-      for (let d = 1; d <= 6; d++) {
-        if (!kipp21UsedDistances.includes(d)) available.push(d);
+      console.log('[GENTARGET] cardIdx='+cardIdx, 'kipp27Distances:', kipp27Distances);
+
+      // KIPP 27: feste Distanz pro Kartenposition aus der gewaehlten Variante
+      const dist = kipp27Distances[cardIdx];
+      if (!dist || dist < 1 || dist > 6) {
+        console.warn('[GENTARGET] Ungueltige Distanz fuer cardIdx='+cardIdx);
+        return false;
       }
-      if (available.length === 0) return false;
-      
-      // Shuffle available distances for randomness
-      for (let i = available.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [available[i], available[j]] = [available[j], available[i]];
-      }
-      
+
       const faceOff = { f0: 0, f1: 4, f2: 8 };
       const slots = ['S1', 'S2', 'S3', 'S4'];
       const currentFulfilled = getCurrentErfuellteKombis();
-      
-      // Try each available distance
-      for (const dist of available) {
-        const fromIdx = stateIndex(currentQuadrant, topFace);
-        const cwIdx = (fromIdx + dist) % 12;
-        const ccwIdx = (fromIdx - dist + 12) % 12;
-        const targetStates = [CW_CYCLE[cwIdx]];
-        if (cwIdx !== ccwIdx) targetStates.push(CW_CYCLE[ccwIdx]);
-        
-        const validCombos = [];
-        for (const [tQ, tF] of targetStates) {
-          const off = faceOff[tF];
-          slots.forEach((slot, i) => {
-            const zahl = deck[off + i];
-            const farbe = SLOT_NEIGHBOR_COLORS[tQ][slot];
-            const key = zahl + '_' + farbe;
-            if (!bereitsAusgegeben.has(key) && !currentFulfilled.has(key)) {
-              const colorObj = GAME_COLORS.find(c => c.name === farbe);
-              if (colorObj) validCombos.push({ zahl, color: colorObj, key });
-            }
-          });
-        }
-        
-        if (validCombos.length > 0) {
-          const pick = validCombos[Math.floor(Math.random() * validCombos.length)];
-          console.log('[GENTARGET] FOUND: zahl='+pick.zahl, 'color='+pick.color.name, 'dist='+dist, 'key='+pick.key);
-          fillCardWithKombi(cardIdx, pick.zahl, pick.color);
-          bereitsAusgegeben.add(pick.key);
-          kipp21UsedDistances.push(dist);
-          kipp21CardDistances[cardIdx] = dist;
-          kipp21CardStates[cardIdx] = 'offen';
-          activeCardIdx = cardIdx;
-          updateProgressDots(kipp21Done, cardIdx);
-          kipp21RoundKipps = 0;
-          kipp21HitLock = false;
-          kipp21RoundTimerStart = null;
-          kipp21TimerRunning = false;
-          return true;
-        }
+
+      // Alle erreichbaren Endzustaende fuer diese Distanz
+      const fromIdx = stateIndex(currentQuadrant, topFace);
+      const cwIdx = (fromIdx + dist) % 12;
+      const ccwIdx = (fromIdx - dist + 12) % 12;
+      const targetStates = [CW_CYCLE[cwIdx]];
+      if (cwIdx !== ccwIdx) targetStates.push(CW_CYCLE[ccwIdx]);
+
+      // Alle Zahl+Farbe-Kombis sammeln, bereits ausgegebene/erfuellte raus
+      const validCombos = [];
+      for (const [tQ, tF] of targetStates) {
+        const off = faceOff[tF];
+        slots.forEach((slot, i) => {
+          const zahl = deck[off + i];
+          const farbe = SLOT_NEIGHBOR_COLORS[tQ][slot];
+          const key = zahl + '_' + farbe;
+          if (!bereitsAusgegeben.has(key) && !currentFulfilled.has(key)) {
+            const colorObj = GAME_COLORS.find(c => c.name === farbe);
+            if (colorObj) validCombos.push({ zahl, color: colorObj, key });
+          }
+        });
       }
-      
-      console.warn('KIPP21: No valid target found!');
-      return false;
+
+      if (validCombos.length === 0) {
+        console.warn('[GENTARGET] Kein freies Kippziel fuer dist=' + dist + ' (cardIdx=' + cardIdx + ')');
+        return false;
+      }
+
+      const pick = validCombos[Math.floor(Math.random() * validCombos.length)];
+      console.log('[GENTARGET] FOUND: zahl='+pick.zahl, 'color='+pick.color.name, 'dist='+dist, 'key='+pick.key);
+      fillCardWithKombi(cardIdx, pick.zahl, pick.color);
+      bereitsAusgegeben.add(pick.key);
+      kipp21UsedDistances.push(dist);
+      kipp21CardDistances[cardIdx] = dist;
+      kipp21CardStates[cardIdx] = 'offen';
+      activeCardIdx = cardIdx;
+      updateProgressDots(kipp21Done, cardIdx);
+      kipp21RoundKipps = 0;
+      kipp21HitLock = false;
+      kipp21RoundTimerStart = null;
+      kipp21TimerRunning = false;
+      return true;
     }
     
     function kipp21StartRoundTimer() {
@@ -4858,7 +4857,7 @@
       // Nach Fly-in: Kippziele ausblenden, Text + Button zeigen
       setTimeout(() => {
         // Alle nicht-erledigten Kippziele ausblenden
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 7; i++) {
           if (kipp21CardStates[i] !== 'erledigt') {
             const m = gameCards[i].mesh;
             m.material.transparent = true;
@@ -4947,7 +4946,7 @@
       // Alte Replay-Generation: ignorieren (nur wenn Replay tatsächlich läuft)
       if (_fromReplay && replayActive && replayGeneration !== kipp21Generation) return;
       if (!kipp21Active) return;
-      if (cardIdx < 0 || cardIdx >= 6) return;
+      if (cardIdx < 0 || cardIdx >= 7) return;
       
       // Wobble-KNIFF abbrechen wenn aktiv — Tap wird nach Fall verarbeitet
       if (kipp21KniffActive) {
@@ -5013,17 +5012,17 @@
           
           // Card fliegt zum Treffer-Slot
           const card = gameCards[cardIdx];
-          const isLastHit = (kipp21Done >= 6);
+          const isLastHit = (kipp21Done >= 7);
           const flyPromise = animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             showHitText(cardIdx);
           });
           
           hintText.innerHTML = formatKipps(kipp21KippCount);
           
-          if (kipp21Done >= 6) {
+          if (kipp21Done >= 7) {
             // Bei Tutorial: der Replay-Code handelt das Ende selbst
             if (kipp21WithTutorial) {
-              console.log('[END] Tutorial done=6, skip game-end (replay handles it)');
+              console.log('[END] Tutorial done=7, skip game-end (replay handles it)');
               return;
             }
             console.log('[END] kipp21Done='+kipp21Done+', calling showEndButtons');
@@ -5956,6 +5955,92 @@
       }
       return null;
     }
+
+    // KIPP 27: Umgekehrter Solver — gibt alle Zahl+Farbe-Kombinationen zurueck,
+    // die von (fromQ, fromFace) aus mit exakt `distance` Kipps erreichbar sind.
+    // Beruecksichtigt CW und CCW Endzustaende.
+    function findAllKippzielePerDistance(distance, fromQ, fromFace) {
+      const cwF  = { f2: 'f0', f0: 'f1', f1: 'f2' };
+      const ccwF = { f2: 'f1', f1: 'f0', f0: 'f2' };
+      const cwQ  = { 3: 0, 0: 1, 1: 2, 2: 3 };
+      const ccwQ = { 3: 2, 2: 1, 1: 0, 0: 3 };
+
+      // CW Endzustand nach `distance` Kipps
+      const targetStates = [];
+      let sQ = fromQ, sF = fromFace;
+      for (let s = 1; s <= distance; s++) { sQ = cwQ[sQ]; sF = cwF[sF]; }
+      targetStates.push({ q: sQ, f: sF, dir: 'cw' });
+
+      // CCW Endzustand
+      sQ = fromQ; sF = fromFace;
+      for (let s = 1; s <= distance; s++) { sQ = ccwQ[sQ]; sF = ccwF[sF]; }
+      // Bei dist=6 sind CW und CCW identisch — nicht doppelt aufnehmen
+      if (!targetStates.some(t => t.q === sQ && t.f === sF)) {
+        targetStates.push({ q: sQ, f: sF, dir: 'ccw' });
+      }
+
+      // Pro Endzustand alle 4 Slots als Kippziele sammeln
+      const faceOff = { f0: 0, f1: 4, f2: 8 };
+      const slots = ['S1', 'S2', 'S3', 'S4'];
+      const result = [];
+      for (const ts of targetStates) {
+        const off = faceOff[ts.f];
+        for (let i = 0; i < 4; i++) {
+          const zahl  = deck[off + i];
+          const color = SLOT_NEIGHBOR_COLORS[ts.q][slots[i]];
+          if (zahl != null && color != null) {
+            result.push({ zahl, color, targetQ: ts.q, targetFace: ts.f, dir: ts.dir });
+          }
+        }
+      }
+      return result;
+    }
+
+    // Debug-Helfer: in Konsole testbar via z.B. testKipp27Solver()
+    window.testKipp27Solver = function() {
+      console.log('=== KIPP 27 Solver Test ===');
+      console.log('Aktueller Zustand: Q=' + currentQuadrant + ' F=' + topFace);
+      for (let d = 1; d <= 6; d++) {
+        const list = findAllKippzielePerDistance(d, currentQuadrant, topFace);
+        console.log('dist=' + d + ': ' + list.length + ' Kippziele',
+          list.map(k => k.zahl + '@' + k.color + '(' + k.dir + ')').join(', '));
+      }
+    };
+
+    // KIPP 27: Die 11 mathematisch gueltigen Distanz-Varianten.
+    // Bedingungen: 7 Summanden, Summe 27, Werte 1-6, Haeufigkeiten 1×{1,2} 2×{3,6} 3×{4,5}
+    const KIPP27_VARIANTS = [
+      [1,2,3,4,5,6,6],
+      [1,2,3,5,5,5,6],
+      [1,2,4,4,4,6,6],
+      [1,2,4,4,5,5,6],
+      [1,3,3,4,4,6,6],
+      [1,3,3,4,5,5,6],
+      [1,3,4,4,4,5,6],
+      [1,3,4,4,5,5,5],
+      [2,3,3,4,4,5,6],
+      [2,3,3,4,5,5,5],
+      [2,3,4,4,4,5,5]
+    ];
+
+    // Liefert ein Array von 7 Distanzen: random Variante + Fisher-Yates-Shuffle
+    function generateKipp27Distances() {
+      const variant = KIPP27_VARIANTS[Math.floor(Math.random() * KIPP27_VARIANTS.length)];
+      const arr = variant.slice();
+      // Fisher-Yates
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Debug-Helfer
+    window.testKipp27Distances = function() {
+      const d = generateKipp27Distances();
+      const sum = d.reduce((a,b) => a+b, 0);
+      console.log('Distances:', d, 'Summe:', sum);
+    };
 
     // Draw kippziel on verdecktes mesh without side effects
     function autoRevealKippziel(zahl, colorObj) {
@@ -7104,7 +7189,7 @@
         vkMouse.y = -((lastTouchPos.y - rect2.top) / rect2.height) * 2 + 1;
         vkRaycaster.setFromCamera(vkMouse, camera);
         
-        for (let ci = 0; ci < 6; ci++) {
+        for (let ci = 0; ci < 7; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
           // Blick-Icon oder Karte treffen
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
@@ -7157,7 +7242,7 @@
         // Pause-Button prüfen
 
         
-        for (let ci = 0; ci < 6; ci++) {
+        for (let ci = 0; ci < 7; ci++) {
           if (kipp21CardStates[ci] === 'erledigt') continue;
           if ((blickIconMeshes[ci].visible && vkRaycaster.intersectObject(blickIconMeshes[ci]).length > 0) ||
               vkRaycaster.intersectObject(gameCards[ci].mesh).length > 0) {
