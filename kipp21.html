@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v11</div>
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v13</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -3397,16 +3397,12 @@
         updateFfVisual();
       });
 
-      // SKIP TO END — gesamtes Tutorial-Ende anspringen + Kipp-Count auf 27
+      // SKIP TO END — gesamtes Tutorial-Ende anspringen
       document.getElementById('tcSkip').addEventListener('click', () => {
         replayPaused = false;
         pauseWaiters.forEach(r => r()); pauseWaiters = [];
         replaySkipToEndFlag = true;
         replayTimeFactor = 0.005;
-        kipp21KippCount = 27; // Tutorial-Ende = immer 27 KIPPS
-        // Label sofort updaten
-        const _kl = document.getElementById('kipps21Label');
-        if (_kl) _kl.innerHTML = formatKipps(27);
       });
     }
 
@@ -3837,6 +3833,14 @@
         await sleep(800 * replayTimeFactor); // Zwischen-Runden Pause
       }
       
+      // KIPP 27: Tutorial ist immer "perfekt" → erzwinge 27 KIPPS am Ende (auch nach Skip)
+      kipp21KippCount = 27;
+      const _klFinal = document.getElementById('kipps21Label');
+      if (_klFinal) _klFinal.innerHTML = formatKipps(27);
+      // Fortschrittsbalken voll fuellen
+      const _fillFinal = document.getElementById('tcProgressFill');
+      if (_fillFinal) _fillFinal.style.width = '100%';
+
       // === ERGEBNIS ===
       // Abbruch? Dann kein End-UI zeigen
       if (!replayActive || gamePhase === 'start' || myGen !== kipp21Generation) {
