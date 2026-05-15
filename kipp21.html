@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v33</div>
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v36</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -1118,22 +1118,22 @@
         fV:"Violet", fB:"Bleu", fG:"Vert", fO:"Orange"
       },
       "it": {
-        s1:"OBIETTIVO", s2:"\u2022 Trova il numero giusto di ribaltamenti e la direzione corretta affinch\u00e9 il cubo raggiunga il bersaglio. Es. <b>{zahl}</b> a <b>{farbe}</b>.<br>Non sono mai pi\u00f9 di <b>6</b> ribaltamenti se la direzione \u00e8 giusta.<br>\u2022 Usa i secondi di <b>GUARDA</b> in modo efficiente.",
+        s1:"OBIETTIVO", s2:"\u2022 Trova il numero giusto di mosse e la direzione corretta affinch\u00e9 il cubo raggiunga il bersaglio. Es. <b>{zahl}</b> a <b>{farbe}</b>.<br>Non sono mai pi\u00f9 di <b>6</b> mosse se la direzione \u00e8 giusta.<br>\u2022 Usa i secondi di <b>GUARDA</b> in modo efficiente.",
         w:"avanti", n:"Nuova Partita",
         e1:"SEMPRE 2 OPZIONI", e2:"Prima tocca l\u2019icona occhio \u2013 guardare il cubo (consigliato)", e3:"Diretto al bersaglio \u2013 fare la tua mossa",
         k1:"GUARDA & RICORDA", k2:"Ribalta il cubo nella scatola in qualsiasi direzione da angolo ad angolo. Memorizza quante pi\u00f9 posizioni di numeri possibile nel minor tempo (Usa i secondi di GUARDA in modo efficiente).<br>Dopo aver GUARDATO, scopri qui a sinistra il tuo primo bersaglio su sei.",
-        p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare il ribaltamento.",
+        p1:"TOCCA & SPINGI", p2:"Il bersaglio a sinistra mostra: <b>{zahl}</b> deve raggiungere <b>{farbe}</b>.<br><b>TOCCA</b> il cubo da una a sei volte.<br><b>SPINGI</b> nella direzione desiderata per attivare la mossa.",
         ma:"GIOCA CON GUIDA", sp:"GIOCARE", dm:"TUTORIAL",
         wh:"RIPETERE", nm:"NUOVO GIOCO", nml:"ANCORA", bs:"HIGHSCORES", cTeilen:"CONDIVIDI", cSchaffst:"Ce la fai TU con 27?", cKopiert:"COPIATO!",
         ch1:"21 SECONDI", ch2:"21 SECONDI",
         jw:"Vista del cubo<br>scegli",kp:"Ribalta!",kb:"VISTA KIPP",eb:"VISTA ANGOLO",
-        erg:"Risultato: {k} RIBALTAMENTI | {z}", best21:"MIGLIORE: 21 RIBALTAMENTI sotto 21 sec.",
+        erg:"Risultato: {k} MOSSE | {z}", best21:"MIGLIORE: 21 MOSSE sotto 21 sec.",
         d1:["Dopo il clic sull\u2019occhio<br>puoi ribaltare il cubo","con il dito<br>nella scatola."],
         d1b:["Inclinare sul bordo,<br>memorizza le posizioni.","Inclinare sul bordo,<br>memorizza le posizioni.","Hai 30 secondi.<br>(Vedi contatore sotto)","Terminare prima?<br>Tocca il cubo."],
         d2:"Clicca per rivelare il BERSAGLIO.",
         d3:["Il bersaglio mostra:<br>{z} deve raggiungere {f}.","TOCCA il cubo<br>da 1 a 6 volte.","Poi SPINGI<br>in qualsiasi direzione."],
         d4h:"COLPITO!", d4m:"QUASI PRESO!",
-        d5a:"Ripetere il tutorial?<br>O scoprire i sei", d5b:"JOKER DI<br>TRUCCO DI RIBALTAMENTO?", d5c:"Clicca sul pulsante Inizio,<br>in basso a sinistra.",
+        d5a:"Ripetere il tutorial?<br>O scoprire i sei", d5b:"JOKER DI<br>TRUCCO DI MOSSA?", d5c:"Clicca sul pulsante Inizio,<br>in basso a sinistra.",
         fV:"Viola", fB:"Blu", fG:"Verde", fO:"Arancione"
       },
       "tr": {
@@ -1217,10 +1217,10 @@
         title: "IL PRINCIPIO KIPP",
         subtitle: "Per Super Rompicapi",
         sections: [
-          { t: "Perch\u00e9 27 Ribaltamenti?", p: "L\u2019algoritmo genera sette bersagli. Ognuno \u00e8 raggiungibile con 1 a 6 ribaltamenti se scegli la direzione giusta. Se ribalti sempre correttamente, finirai con 27 ribaltamenti.<br><br><b>Sempre risolvibile con la logica,<br>con la fortuna: 50:50.</b>" },
-          { t: "48 Combinazioni. Massimo 6 Ribaltamenti.", p: "Esistono esattamente <b>48 combinazioni diverse</b> di campo del cubo e campo del bordo. Ognuna \u00e8 raggiungibile con <b>massimo 6 ribaltamenti</b>. Sempre. L\u2019unica domanda: <b>Orario o antiorario?</b><br><br>Chi sceglie/sa la direzione giusta non ha mai bisogno di pi\u00f9 di 6 ribaltamenti. 50:50 con fortuna, 100% di successo con memoria, logica, rompicapo." },
-          { t: "Il Ribaltamento Logico", p: "Il tuo obiettivo \u00e8 ad es. <b>5 al Blu</b> \u2013 e il 5 \u00e8 gi\u00e0 visibile sul cubo? Allora ti servono esattamente <b>3 o 6 ribaltamenti</b>. Chi capisce perch\u00e9 ha un vantaggio decisivo. Nessun altro indizio." },
-          { t: "Il Confronto con l\u2019Orologio", p: "Immagina un orologio. Puoi spostare la lancetta avanti di <b>11 ore</b> \u2013 o indietro di <b>1 ora</b>. Stessa posizione.<br><br>Il cubo funziona esattamente cos\u00ec:<br>\u2022 <b>11 ribaltamenti</b> orario = <b>1</b> antiorario<br>\u2022 <b>8 ribaltamenti</b> in una direzione = <b>4</b> nell\u2019altra<br>\u2022 <b>6 ribaltamenti</b> orario = <b>6</b> antiorario \u2013 indifferente<br>\u2022 <b>12 ribaltamenti</b>: Ritorno al via" },
+          { t: "Perch\u00e9 27 Mosse?", p: "L\u2019algoritmo genera sette bersagli. Ognuno \u00e8 raggiungibile con 1 a 6 mosse se scegli la direzione giusta. Se ribalti sempre correttamente, finirai con 27 mosse.<br><br><b>Sempre risolvibile con la logica,<br>con la fortuna: 50:50.</b>" },
+          { t: "48 Combinazioni. Massimo 6 Mosse.", p: "Esistono esattamente <b>48 combinazioni diverse</b> di campo del cubo e campo del bordo. Ognuna \u00e8 raggiungibile con <b>massimo 6 mosse</b>. Sempre. L\u2019unica domanda: <b>Orario o antiorario?</b><br><br>Chi sceglie/sa la direzione giusta non ha mai bisogno di pi\u00f9 di 6 mosse. 50:50 con fortuna, 100% di successo con memoria, logica, rompicapo." },
+          { t: "La Mossa Logica", p: "Il tuo obiettivo \u00e8 ad es. <b>5 al Blu</b> \u2013 e il 5 \u00e8 gi\u00e0 visibile sul cubo? Allora ti servono esattamente <b>3 o 6 mosse</b>. Chi capisce perch\u00e9 ha un vantaggio decisivo. Nessun altro indizio." },
+          { t: "Il Confronto con l\u2019Orologio", p: "Immagina un orologio. Puoi spostare la lancetta avanti di <b>11 ore</b> \u2013 o indietro di <b>1 ora</b>. Stessa posizione.<br><br>Il cubo funziona esattamente cos\u00ec:<br>\u2022 <b>11 mosse</b> orario = <b>1</b> antiorario<br>\u2022 <b>8 mosse</b> in una direzione = <b>4</b> nell\u2019altra<br>\u2022 <b>6 mosse</b> orario = <b>6</b> antiorario \u2013 indifferente<br>\u2022 <b>12 mosse</b>: Ritorno al via" },
         ],
         footer: "Tanta suspense, divertimento e rompicapi\ncon il cubo nella scatola."
       },
@@ -2273,7 +2273,7 @@
     function renderBestScores() {
       const titleEl = document.getElementById('bsTitleText');
       if (titleEl) titleEl.textContent = T.bs || 'HIGHSCORES';
-      const KIPPST = { de:'KIPPS', en:'TILTS', es:'VOLCADOS', fr:'BASCULES', it:'RIBALTAMENTI', tr:'DEVİRME' };
+      const KIPPST = { de:'KIPPS', en:'TILTS', es:'VOLCADOS', fr:'BASCULES', it:'MOSSE', tr:'DEVİRME' };
       const kT = KIPPST[_digikippLang] || KIPPST.de;
       const scores = loadBestScores();
       // Cross-check: markiere Tutorial-Eintrag anhand gespeicherter Werte
@@ -4388,7 +4388,7 @@
       
       // Countdown-Timer unter den Kippzielen (ersetzt alten Kipp-Counter + Timer)
       const SEK_TERM = { de:'Sek.', en:'sec.', es:'seg.', fr:'sec.', it:'sec.', tr:'sn.' };
-      const KIPPST_TERM = { de:'KIPPS', en:'TILTS', es:'VOLCADOS', fr:'BASCULES', it:'RIBALTAMENTI', tr:'DEVİRME' };
+      const KIPPST_TERM = { de:'KIPPS', en:'TILTS', es:'VOLCADOS', fr:'BASCULES', it:'MOSSE', tr:'DEVİRME' };
       const _sekTerm = SEK_TERM[_digikippLang] || SEK_TERM.de;
       const _kippsTerm = KIPPST_TERM[_digikippLang] || KIPPST_TERM.de;
       let kLabel = document.getElementById('kipps21Label');
@@ -6086,13 +6086,14 @@
 
     // KIPP 27: Overlay-Sequenz nach 6. Hit — pulsierender Text + 7. Karte einblenden + Kippziel
     // KIPP 27: Spielbeginn-Overlay "WER SCHAFFT'S MIT 27 KIPPS?"
+    // 4 Zeilen: [Frage-Anfang], [Verbindung], "27" (gross/gold), [Frage-Ende]
     const WER_SCHAFFTS_LINES = {
-      de: ["WER SCHAFFT'S", "MIT 27 KIPPS?"],
-      en: ["WHO CAN DO IT", "WITH 27 TILTS?"],
-      es: ["\u00bfQUI\u00c9N LO LOGRA", "CON 27 VOLCADOS?"],
-      fr: ["QUI Y ARRIVE", "AVEC 27 BASCULES ?"],
-      it: ["CHI CI RIESCE", "CON 27", "RIBALTAMENTI?"],
-      tr: ["K\u0130M 27 DEV\u0130RMEDE", "BA\u015eARIR?"]
+      de: ["WER SCHAFFT'S", "MIT", "27", "KIPPS?"],
+      en: ["WHO CAN DO", "IT IN", "27", "TILTS?"],
+      es: ["\u00bfQUI\u00c9N LO", "LOGRA EN", "27", "VOLCADOS?"],
+      fr: ["QUI Y", "ARRIVE EN", "27", "BASCULES ?"],
+      it: ["CHI CI", "RIESCE IN", "27", "MOSSE?"],
+      tr: ["K\u0130M 27", "DEV\u0130RME", "\u0130LE", "BA\u015eARIR?"]
     };
 
     async function showWerSchafftsOverlay() {
@@ -6102,31 +6103,46 @@
       // Halbtransparentes schwarzes Overlay ueber die ganze Spielflaeche
       const bg = document.createElement('div');
       bg.id = 'werSchafftsBg';
-      bg.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:9998;opacity:0;transition:opacity 0.4s ease-in-out;pointer-events:none;';
+      bg.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.78);z-index:9998;opacity:0;transition:opacity 0.4s ease-in-out;pointer-events:none;';
       document.body.appendChild(bg);
 
-      // Text-Container, silberner Schriftstil wie LETZTES KIPPZIEL — mittig auf Screen
+      // Text-Container mittig
       const wrap = document.createElement('div');
       wrap.id = 'werSchafftsText';
-      const fontSize = lines.length >= 3 ? 26 : 30;
       wrap.style.cssText =
-        'position:fixed;' +
-        'left:50%; top:50%;' +
-        'transform:translate(-50%,-50%);' +
-        'z-index:9999;opacity:0;' +
-        'pointer-events:none;text-align:center;white-space:nowrap;' +
-        'transition:opacity 0.4s ease-in-out;';
-      lines.forEach((line, i) => {
+        'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'z-index:9999;opacity:0;pointer-events:none;text-align:center;' +
+        'transition:opacity 0.4s ease-in-out;font-family:"Arial Black","Helvetica Inserat",Impact,sans-serif;';
+
+      // Stil-Konstanten
+      const SILVER_GRAD = 'linear-gradient(180deg,#ffffff 0%,#e8e8e8 18%,#b8b8b8 48%,#8a8a8a 78%,#cdcdcd 100%)';
+      const GOLD_GRAD   = 'linear-gradient(180deg,#fff4b3 0%,#ffd84a 18%,#b88400 55%,#7a5400 78%,#d8a020 100%)';
+      const SILVER_SHADOW = 'drop-shadow(0 3px 4px rgba(0,0,0,0.85)) drop-shadow(0 1px 0 #ffffff)';
+      const GOLD_SHADOW   = 'drop-shadow(0 0 18px rgba(255,200,50,0.55)) drop-shadow(0 4px 6px rgba(0,0,0,0.85)) drop-shadow(0 1px 0 #fff4b3)';
+
+      lines.forEach((line) => {
+        const isBigGold = line.trim() === '27';
+        const isConnector = !isBigGold && line.trim().length <= 5;
+        const fontSize = isBigGold ? 96 : (isConnector ? 30 : 42);
+        const letterSp = isBigGold ? '4px' : '2px';
+        const mTop     = isBigGold ? 0 : 4;
+        const mBot     = isBigGold ? 0 : 4;
+        const grad     = isBigGold ? GOLD_GRAD : SILVER_GRAD;
+        const shadow   = isBigGold ? GOLD_SHADOW : SILVER_SHADOW;
+
         const ln = document.createElement('div');
         ln.textContent = line;
         ln.style.cssText =
-          'font:bold ' + fontSize + 'px Arial;' +
-          'background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 35%,#c8c8c8 60%,#888888 100%);' +
+          'font-weight:900;' +
+          'font-size:' + fontSize + 'px;' +
+          'line-height:1;' +
+          'letter-spacing:' + letterSp + ';' +
+          'background:' + grad + ';' +
           '-webkit-background-clip:text;background-clip:text;' +
           '-webkit-text-fill-color:transparent;' +
-          'filter:drop-shadow(0 2px 4px rgba(0,0,0,0.7)) drop-shadow(0 1px 2px rgba(255,255,255,0.4));' +
-          'letter-spacing:2px;line-height:1.25;' +
-          (i > 0 ? 'margin-top:6px;' : '');
+          'filter:' + shadow + ';' +
+          'margin:' + mTop + 'px 0 ' + mBot + 'px;' +
+          'white-space:nowrap;';
         wrap.appendChild(ln);
       });
       document.body.appendChild(wrap);
@@ -6136,7 +6152,7 @@
       bg.style.opacity = '1';
       wrap.style.opacity = '1';
 
-      // KIPP 27: Solange anzeigen, bis die Loading-Kipp-Animation fertig ist (mit Min/Max-Limits)
+      // Halten bis Loading-Animation fertig
       const minHold = 1500;
       const maxWait = 15000;
       const startT = performance.now();
@@ -6146,7 +6162,6 @@
         if (animDone && elapsed >= minHold) break;
         await new Promise(r => setTimeout(r, 100));
       }
-      // Kleiner Buffer nach Animationsende
       await new Promise(r => setTimeout(r, 300));
 
       // Fade-Out
