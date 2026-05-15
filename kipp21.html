@@ -3364,9 +3364,26 @@
     }
 
     // === Spaehblick-Sequenz: random 45-65°, Fingerspitze 1/2 face entgegen Kipprichtung ===
-    async function handPeekSequence() {
+    // Skip-Logik: Zielzahl auf topFace sichtbar → kein Peek. Auf cw-incoming sichtbar → nur CW. Sonst beide.
+    async function handPeekSequence(ci) {
       if (!replayActive) return;
       const SY = 740;
+
+      // Zielzahl der aktuell offenen Karte
+      const targetZahl = (ci != null && gameCards[ci]) ? gameCards[ci].zahl : null;
+      function faceHasZahl(face, zahl) {
+        if (zahl == null || !faceSlots[face] || !faceSlots[face].slotMap) return false;
+        const sm = faceSlots[face].slotMap;
+        for (const k in sm) { if (sm[k] && sm[k].val === zahl) return true; }
+        return false;
+      }
+      const cwFmap  = { f2: 'f0', f0: 'f1', f1: 'f2' };
+
+      // Bereits auf topFace sichtbar → kein Peek
+      if (faceHasZahl(topFace, targetZahl)) {
+        dbgLog('Peek skip: Zahl ' + targetZahl + ' auf topFace ' + topFace);
+        return;
+      }
 
       const Q = currentQuadrant;
       const cwDir  = CW_KIPP[Q];
@@ -3431,6 +3448,13 @@
         setHandPos(p.x, p.y, cwAnker);
       });
       if (!replayActive) { handEl.style.opacity = '0'; return; }
+
+      // Zielzahl auf cw-incoming face sichtbar → CCW Peek entfaellt
+      if (faceHasZahl(cwFmap[topFace], targetZahl)) {
+        dbgLog('CCW skip: Zahl ' + targetZahl + ' auf cw-incoming ' + cwFmap[topFace]);
+        await sleep(300);
+        return;
+      }
       await sleep(400);
 
       // Hand direkt zur CCW-Start-Position (kein Umweg ueber Mitte)
@@ -3584,8 +3608,9 @@
 
         // 2) Spähblick am Würfel (CW + CCW peek) — Spieler sieht erst das Ziel, dann peekt er gezielt
         await sleep(400);
-        console.log('[REPLAY] R'+ci+': Spähblick');
-        await handPeekSequence();
+        const peekCi = kipp21CardStates.indexOf('offen');
+        console.log('[REPLAY] R'+ci+': Spähblick (peekCi='+peekCi+')');
+        await handPeekSequence(peekCi);
         if (!replayActive || myGen !== kipp21Generation) break;
         
         // Prüfen ob eine Karte offen ist
