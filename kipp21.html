@@ -961,6 +961,7 @@
   </div>
   
   <div id="uiOverlay">
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 11px Arial;color:#888;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.7);">v03</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);">
@@ -2971,7 +2972,7 @@
       if (handEl) return;
       handEl = document.createElement('img');
       handEl.src = 'handsilber.webp';
-      handEl.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:20;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
+      handEl.style.cssText = 'position:absolute;left:0;top:0;width:90px;height:auto;pointer-events:none;z-index:80;opacity:0;transition:opacity 0.25s ease;will-change:transform;';
       document.getElementById('uiOverlay').appendChild(handEl);
       initHandShadow();
     }
@@ -3118,7 +3119,7 @@
     function formatKipps(n) {
       const kl = document.getElementById('kipps21Label');
       const term = (kl && kl.dataset.kippsterm) ? kl.dataset.kippsterm : 'KIPPS';
-      return '<span style="white-space:nowrap"><span style="font-size:38px;line-height:38px">' + n + '</span> <span style="font-size:22px;line-height:38px;letter-spacing:1px;vertical-align:middle">' + term + '</span></span>';
+      return '<span style="white-space:nowrap;line-height:1"><span style="font-size:38px">' + n + '</span> <span style="font-size:22px;letter-spacing:1px">' + term + '</span></span>';
     }
     
     function formatTimer(totalMs) {
@@ -3929,7 +3930,7 @@
       if (!replayBlocker) {
         replayBlocker = document.createElement('div');
         replayBlocker.id = 'replayBlocker';
-        replayBlocker.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:30;background:transparent;pointer-events:auto;touch-action:none;';
+        replayBlocker.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;background:transparent;pointer-events:auto;touch-action:none;';
         // Jeden Event schlucken
         ['touchstart','touchmove','touchend','click','mousedown','mouseup','pointerdown','pointerup'].forEach(evt => {
           replayBlocker.addEventListener(evt, (e) => { e.stopPropagation(); e.preventDefault(); }, { capture: true, passive: false });
@@ -4450,7 +4451,7 @@
       }
       // KIPP 27: KippAnzahl nach oben mittig zwischen Sound-Toggle (links) und Pokal (rechts)
       const labelY = 33; // Mitte der ~45px hohen Header-Buttons
-      kLabel.innerHTML = '<span style="font-size:38px;line-height:38px">0</span> <span style="font-size:22px;line-height:38px;letter-spacing:1px;vertical-align:middle">' + _kippsTerm + '</span>';
+      kLabel.innerHTML = '<span style="white-space:nowrap;line-height:1"><span style="font-size:38px">0</span> <span style="font-size:22px;letter-spacing:1px">' + _kippsTerm + '</span></span>';
       kLabel.style.cssText = 'position:absolute; left:50%; transform:translate(-50%,-50%); top:' + labelY + 'px; font-family:Arial,sans-serif; font-weight:bold; color:#d4b48c; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(212,180,140,0.5); pointer-events:none; z-index:13; white-space:nowrap;';
       kLabel.style.display = 'block';
       kLabel.dataset.sekterm = _sekTerm;
