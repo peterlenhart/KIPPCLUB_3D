@@ -967,12 +967,11 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v10</div>
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v11</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-      <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);">
+      <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
         <div id="tcProgressFill" style="position:absolute;left:2px;top:2px;bottom:2px;width:0%;background:linear-gradient(180deg,#ffd84a,#c89000);border-radius:5px;transition:width 0.3s ease;"></div>
-        <div id="tcProgressKnob" style="position:absolute;left:0;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:4px;background:radial-gradient(circle at 35% 35%,#fff8d0,#c89000);box-shadow:0 1px 3px rgba(0,0,0,0.7);transition:left 0.3s ease,box-shadow 0.1s;cursor:grab;touch-action:none;"></div>
       </div>
       <div style="position:relative;flex:0 0 auto;margin-right:6px;">
         <img id="tcFaster"  src="ffw.webp" style="width:36px;height:36px;cursor:pointer;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;" draggable="false" oncontextmenu="return false;">
@@ -3398,81 +3397,17 @@
         updateFfVisual();
       });
 
-      // SKIP TO END — gesamtes Tutorial-Ende anspringen
+      // SKIP TO END — gesamtes Tutorial-Ende anspringen + Kipp-Count auf 27
       document.getElementById('tcSkip').addEventListener('click', () => {
         replayPaused = false;
         pauseWaiters.forEach(r => r()); pauseWaiters = [];
         replaySkipToEndFlag = true;
         replayTimeFactor = 0.005;
+        kipp21KippCount = 27; // Tutorial-Ende = immer 27 KIPPS
+        // Label sofort updaten
+        const _kl = document.getElementById('kipps21Label');
+        if (_kl) _kl.innerHTML = formatKipps(27);
       });
-
-      // SLIDER-KNOB: drag rechts → beschleunigt + Knob folgt, drag links → rot pulsen + Restart-Hint
-      const knob = document.getElementById('tcProgressKnob');
-      const fill = document.getElementById('tcProgressFill');
-      const progressBar = document.getElementById('tcProgress');
-      const restartBtn = document.getElementById('tcRestart');
-      let dragActive_knob = false;
-      let dragStartX = 0;
-      let knobOrigLeft = '0%'; // urspruengliche left-Position fuer Snap-Back
-      const knobDown = (e) => {
-        e.preventDefault();
-        dragActive_knob = true;
-        dragStartX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-        knobOrigLeft = knob.style.left || '0%';
-        // Transition aus waehrend Drag, damit Knob direkt folgt
-        knob.style.transition = 'none';
-        try { knob.setPointerCapture(e.pointerId); } catch(_) {}
-      };
-      const knobMove = (e) => {
-        if (!dragActive_knob) return;
-        e.preventDefault();
-        const x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-        const delta = x - dragStartX;
-        const barRect = progressBar.getBoundingClientRect();
-        if (delta > 0) {
-          // Rechts: Knob folgt (in Pixeln, max bis Slider-Ende)
-          const origLeftPx = (parseFloat(knobOrigLeft) / 100) * barRect.width;
-          const newLeftPx = Math.min(barRect.width, origLeftPx + delta);
-          knob.style.left = newLeftPx + 'px';
-          // Tempo basierend auf Drag-Distanz
-          let speed = 1;
-          if (delta >= 80)      speed = 8;
-          else if (delta >= 45) speed = 4;
-          else if (delta >= 15) speed = 2;
-          replayTimeFactor = 1 / speed;
-          fill.style.background = 'linear-gradient(180deg,#ffd84a,#c89000)';
-          const glow = Math.min(16, delta / 8);
-          knob.style.boxShadow = '0 0 ' + glow + 'px #ffd84a, 0 1px 3px rgba(0,0,0,0.7)';
-        } else {
-          // Links: nicht moeglich → Knob+Bar rot, Restart pulsiert goldgelb (= "hier zurueck!")
-          replayTimeFactor = 1.0;
-          fill.style.background = 'linear-gradient(180deg,#ff4040,#900000)';
-          knob.style.background = 'radial-gradient(circle at 35% 35%,#ffb0b0,#900000)';
-          restartBtn.classList.add('restart-pulsing');
-        }
-      };
-      const knobUp = (e) => {
-        if (!dragActive_knob) return;
-        dragActive_knob = false;
-        replayTimeFactor = 1.0;
-        // Snap-Back mit Transition
-        knob.style.transition = 'left 0.3s ease, box-shadow 0.1s';
-        knob.style.left = knobOrigLeft;
-        // Visuals zuruecksetzen
-        fill.style.background = 'linear-gradient(180deg,#ffd84a,#c89000)';
-        knob.style.background = 'radial-gradient(circle at 35% 35%,#fff8d0,#c89000)';
-        knob.style.boxShadow = '0 1px 3px rgba(0,0,0,0.7)';
-        restartBtn.classList.remove('restart-pulsing');
-        restartBtn.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))';
-        // FFW-Badge synchronisieren
-        ffIdx = 0;
-        updateFfVisual();
-      };
-      knob.addEventListener('pointerdown', knobDown);
-      window.addEventListener('pointermove', knobMove);
-      window.addEventListener('pointerup', knobUp);
-      window.addEventListener('pointercancel', knobUp);
-      progressBar.addEventListener('pointerdown', knobDown);
     }
 
     function showTutorialControls() {
@@ -3815,9 +3750,7 @@
         // Progress-Slider updaten
         const pct = Math.round((ci / 7) * 100);
         const fill = document.getElementById('tcProgressFill');
-        const knob = document.getElementById('tcProgressKnob');
         if (fill) fill.style.width = pct + '%';
-        if (knob) knob.style.left = pct + '%';
         await pauseCheck();
         if (!replayActive || myGen !== kipp21Generation) break;
         if (replaySkipToEndFlag) break;
