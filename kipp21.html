@@ -961,15 +961,15 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="tutorialControls" style="display:none;position:absolute;left:0;right:0;bottom:14px;justify-content:center;align-items:center;gap:10px;z-index:60;pointer-events:auto;flex-direction:column;">
-      <div style="display:flex;justify-content:center;align-items:center;gap:8px;">
-        <img id="tcRestart" src="skipend_rw.webp" style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-        <img id="tcSlower"  src="frw.webp"       style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-        <img id="tcPlayPause" src="pause.webp"   style="width:54px;height:54px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-        <img id="tcFaster"  src="ffw.webp"       style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-        <img id="tcSkip"    src="skipend_fw.webp" style="width:48px;height:48px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+    <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
+      <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+      <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);">
+        <div id="tcProgressFill" style="position:absolute;left:2px;top:2px;bottom:2px;width:0%;background:linear-gradient(180deg,#ffd84a,#c89000);border-radius:5px;transition:width 0.3s ease;"></div>
+        <div id="tcProgressKnob" style="position:absolute;left:0;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff8d0,#c89000);box-shadow:0 1px 3px rgba(0,0,0,0.7);transition:left 0.3s ease;"></div>
       </div>
-      <div id="tcSpeedLabel" style="color:#fff;font:bold 13px Arial;text-shadow:0 1px 2px rgba(0,0,0,0.8);letter-spacing:1px;margin-top:-2px;">1×</div>
+      <img id="tcFaster"    src="ffw.webp"        style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;margin-right:6px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));touch-action:none;-webkit-user-select:none;user-select:none;">
+      <img id="tcPlayPause" src="pause.webp"     style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;margin-right:6px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+      <img id="tcSkip"      src="skipend_fw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
     </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
@@ -3116,7 +3116,9 @@
     
     // --- Kipp-Zähler aktualisieren ---
     function formatKipps(n) {
-      return '<span style="white-space:nowrap"><span style="font-size:28px;line-height:28px">' + n + '</span><span style="font-size:18px"> K</span></span>';
+      const kl = document.getElementById('kipps21Label');
+      const term = (kl && kl.dataset.kippsterm) ? kl.dataset.kippsterm : 'KIPPS';
+      return '<span style="white-space:nowrap"><span style="font-size:38px;line-height:38px">' + n + '</span> <span style="font-size:22px;line-height:38px;letter-spacing:1px;vertical-align:middle">' + term + '</span></span>';
     }
     
     function formatTimer(totalMs) {
@@ -3318,25 +3320,14 @@
     // Tutorial-Controls
     let replayPaused = false;
     let pauseWaiters = [];
-    let replaySkipFlag = false;
+    let replaySkipFlag = false;       // einzelnen Step ueberspringen (nicht mehr genutzt, bleibt fuer Notfall)
+    let replaySkipToEndFlag = false;  // gesamtes Tutorial-Ende anspringen
     let replayRestartFlag = false;
-    let manualSpeedIdx = -1; // -1 = auto (per Runde), sonst Index in SPEED_STEPS
-    const SPEED_STEPS = [1, 2, 5, 10]; // x-fach Tempo
+    let fastForwardActive = false;
 
     async function pauseCheck() {
       while (replayPaused) {
         await new Promise(r => { pauseWaiters.push(r); });
-      }
-    }
-
-    function setReplaySpeedFromManual() {
-      if (manualSpeedIdx >= 0) {
-        replayTimeFactor = 1 / SPEED_STEPS[manualSpeedIdx];
-      }
-      const lbl = document.getElementById('tcSpeedLabel');
-      if (lbl) {
-        if (manualSpeedIdx >= 0) lbl.textContent = SPEED_STEPS[manualSpeedIdx] + '×';
-        else lbl.textContent = 'AUTO';
       }
     }
 
@@ -3345,23 +3336,15 @@
       if (!tc || tc._initialized) return;
       tc._initialized = true;
 
+      // RESTART — Tutorial neu starten
       document.getElementById('tcRestart').addEventListener('click', () => {
         replayPaused = false;
         pauseWaiters.forEach(r => r()); pauseWaiters = [];
         replayRestartFlag = true;
-        replaySkipFlag = true;
-        replayActive = false; // Loop bricht, replayCleanup kuemmert sich um Restart
+        replayActive = false;
       });
-      document.getElementById('tcSlower').addEventListener('click', () => {
-        if (manualSpeedIdx < 0) manualSpeedIdx = SPEED_STEPS.length - 1; // erst manuell aktivieren
-        manualSpeedIdx = Math.max(0, manualSpeedIdx - 1);
-        setReplaySpeedFromManual();
-      });
-      document.getElementById('tcFaster').addEventListener('click', () => {
-        if (manualSpeedIdx < 0) manualSpeedIdx = 0;
-        manualSpeedIdx = Math.min(SPEED_STEPS.length - 1, manualSpeedIdx + 1);
-        setReplaySpeedFromManual();
-      });
+
+      // PAUSE/PLAY
       document.getElementById('tcPlayPause').addEventListener('click', () => {
         replayPaused = !replayPaused;
         document.getElementById('tcPlayPause').src = replayPaused ? 'fw.webp' : 'pause.webp';
@@ -3369,22 +3352,45 @@
           pauseWaiters.forEach(r => r()); pauseWaiters = [];
         }
       });
+
+      // FAST FORWARD — Hold-to-accelerate (Press = 10x, Release = 1x)
+      const ffBtn = document.getElementById('tcFaster');
+      const ffStart = (e) => {
+        if (e) e.preventDefault();
+        fastForwardActive = true;
+        replayTimeFactor = 0.1; // 10x
+        ffBtn.style.filter = 'drop-shadow(0 0 8px #ffd84a) drop-shadow(0 2px 4px rgba(0,0,0,0.6))';
+      };
+      const ffEnd = (e) => {
+        if (e) e.preventDefault();
+        if (!fastForwardActive) return;
+        fastForwardActive = false;
+        replayTimeFactor = 1.0;
+        ffBtn.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))';
+      };
+      ffBtn.addEventListener('pointerdown', ffStart);
+      ffBtn.addEventListener('pointerup', ffEnd);
+      ffBtn.addEventListener('pointerleave', ffEnd);
+      ffBtn.addEventListener('pointercancel', ffEnd);
+
+      // SKIP TO END — gesamtes Tutorial-Ende anspringen
       document.getElementById('tcSkip').addEventListener('click', () => {
-        replaySkipFlag = true;
         replayPaused = false;
         pauseWaiters.forEach(r => r()); pauseWaiters = [];
+        replaySkipToEndFlag = true;
       });
     }
 
     function showTutorialControls() {
       initTutorialControls();
-      manualSpeedIdx = -1; // auto-Modus
       replayPaused = false;
+      replaySkipToEndFlag = false;
+      fastForwardActive = false;
+      replayTimeFactor = 1.0;
       const tc = document.getElementById('tutorialControls');
       if (tc) tc.style.display = 'flex';
       const pp = document.getElementById('tcPlayPause');
       if (pp) pp.src = 'pause.webp';
-      setReplaySpeedFromManual();
     }
     function hideTutorialControls() {
       const tc = document.getElementById('tutorialControls');
@@ -3691,28 +3697,28 @@
       
       for (let ci = 0; ci < 7; ci++) {
         if (!replayActive || myGen !== kipp21Generation) break;
+        if (replaySkipToEndFlag) break;
         replaySkipFlag = false;
+        // Progress-Slider updaten
+        const pct = Math.round((ci / 7) * 100);
+        const fill = document.getElementById('tcProgressFill');
+        const knob = document.getElementById('tcProgressKnob');
+        if (fill) fill.style.width = pct + '%';
+        if (knob) knob.style.left = pct + '%';
         await pauseCheck();
         if (!replayActive || myGen !== kipp21Generation) break;
-        // KIPP 27: Auto-Tempo nur wenn kein manueller Override
-        if (manualSpeedIdx < 0) {
-          if (ci === 0)        replayTimeFactor = 1.0;
-          else if (ci <= 5)    replayTimeFactor = 1.0 / (2 + 2 * (ci - 1)); // 2,4,6,8,10x
-          else                 replayTimeFactor = 1.0;
-        }
-        console.log('[REPLAY] ci=' + ci + ' replayTimeFactor=' + replayTimeFactor.toFixed(3) + ' manual=' + manualSpeedIdx);
+        if (replaySkipToEndFlag) break;
+        console.log('[REPLAY] ci=' + ci + ' replayTimeFactor=' + replayTimeFactor.toFixed(3));
         dbgLog('Runde ' + ci + ' Q' + currentQuadrant + ' ' + topFace + ' anim=' + isAnimating);
         console.log('[REPLAY] === RUNDE', ci, '===');
         console.log('[REPLAY] states:', JSON.stringify(kipp21CardStates));
         console.log('[REPLAY] dists:', JSON.stringify(kipp21CardDistances));
 
-        // KIPP 27: Vor der 7. Runde Letztes-Kippziel-Sequenz (NORMAL-Tempo, nicht skalieren)
+        // KIPP 27: Vor der 7. Runde Letztes-Kippziel-Sequenz
         if (ci === 6) {
-          const savedFactor = replayTimeFactor;
-          if (manualSpeedIdx < 0) replayTimeFactor = 1.0;
           await showLetztesKippzielSequence();
-          if (manualSpeedIdx < 0) replayTimeFactor = savedFactor;
           if (!replayActive || myGen !== kipp21Generation) break;
+          if (replaySkipToEndFlag) break;
         }
         
         // === KARTE AUFDECKEN ===
@@ -4433,21 +4439,32 @@
       
       // Countdown-Timer unter den Kippzielen (ersetzt alten Kipp-Counter + Timer)
       const SEK_TERM = { de:'Sek.', en:'sec.', es:'seg.', fr:'sec.', it:'sec.', tr:'sn.' };
+      const KIPPST_TERM = { de:'KIPPS', en:'TILTS', es:'VOLCADOS', fr:'BASCULES', it:'RIBALTAMENTI', tr:'DEVİRME' };
       const _sekTerm = SEK_TERM[_digikippLang] || SEK_TERM.de;
+      const _kippsTerm = KIPPST_TERM[_digikippLang] || KIPPST_TERM.de;
       let kLabel = document.getElementById('kipps21Label');
       if (!kLabel) {
         kLabel = document.createElement('div');
         kLabel.id = 'kipps21Label';
         document.getElementById('uiOverlay').appendChild(kLabel);
       }
-      const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
-      cardSouth3D.project(camera);
-      const labelY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 22;
-      kLabel.innerHTML = '<span style="font-size:36px;line-height:36px">0</span>';
-      kLabel.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%); top:' + labelY + 'px; font-family:Arial,sans-serif; font-weight:bold; color:#d4b48c; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(212,180,140,0.5); pointer-events:none; z-index:13; white-space:nowrap;';
+      // KIPP 27: KippAnzahl nach oben mittig zwischen Sound-Toggle (links) und Pokal (rechts)
+      const labelY = 33; // Mitte der ~45px hohen Header-Buttons
+      kLabel.innerHTML = '<span style="font-size:38px;line-height:38px">0</span> <span style="font-size:22px;line-height:38px;letter-spacing:1px;vertical-align:middle">' + _kippsTerm + '</span>';
+      kLabel.style.cssText = 'position:absolute; left:50%; transform:translate(-50%,-50%); top:' + labelY + 'px; font-family:Arial,sans-serif; font-weight:bold; color:#d4b48c; text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(212,180,140,0.5); pointer-events:none; z-index:13; white-space:nowrap;';
       kLabel.style.display = 'block';
       kLabel.dataset.sekterm = _sekTerm;
+      kLabel.dataset.kippsterm = _kippsTerm;
       kLabel.dataset.labely = labelY;
+
+      // Tutorial-Controls eine halbe Rasterzelle unter den Kippzielen positionieren
+      const cardSouth3D = new THREE.Vector3(0, cardY, cardZ + cardHeight / 2 + 0.02);
+      cardSouth3D.project(camera);
+      const controlsY = Math.round((-cardSouth3D.y * 0.5 + 0.5) * 720) + 22;
+      const tcEl = document.getElementById('tutorialControls');
+      if (tcEl) {
+        tcEl.style.top = (controlsY - 20) + 'px'; // Element ist ~40px hoch, vertikal zentrieren
+      }
       
       // Blick-Icons auf Kippzielen anzeigen
       showBlickIcons();
