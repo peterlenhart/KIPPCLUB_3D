@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v17</div>
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v20</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -2351,6 +2351,7 @@
     function saveTutorialScore(kipps, secs) {
       try {
         localStorage.setItem('digikipp_tutorialscore', JSON.stringify({ kipps: kipps, secs: secs }));
+        localStorage.setItem('digikipp_lastscore', JSON.stringify({ kipps: kipps, secs: secs, tutorial: true }));
         // Alten Tutorial-Eintrag aus Ranking entfernen, neuen einfügen
         const scores = loadBestScores().filter(s => !s.tutorial);
         scores.push({ kipps: kipps, secs: secs, tutorial: true });
@@ -2362,6 +2363,7 @@
     function saveBestScore(kipps, secs) {
       try {
         const scores = loadBestScores();
+        localStorage.setItem('digikipp_lastscore', JSON.stringify({ kipps: kipps, secs: secs, tutorial: false }));
         // Kein Duplikat einfügen
         const exists = scores.some(s => s.kipps === kipps && s.secs === secs && !s.tutorial);
         if (!exists) {
@@ -2385,6 +2387,10 @@
       // Cross-check: markiere Tutorial-Eintrag anhand gespeicherter Werte
       let tutData = null;
       try { const raw = localStorage.getItem('digikipp_tutorialscore'); if (raw) tutData = JSON.parse(raw); } catch(e) {}
+      // Letzten gespielten Score laden, um den entsprechenden Eintrag zu unterstreichen
+      let lastData = null;
+      try { const raw = localStorage.getItem('digikipp_lastscore'); if (raw) lastData = JSON.parse(raw); } catch(e) {}
+      let lastMarked = false;
       for (let i = 0; i < 11; i++) {
         const el = document.getElementById('bsRow' + (i + 1));
         if (!el) continue;
@@ -2392,12 +2398,18 @@
           const s = scores[i];
           const isTut = s.tutorial || (tutData && s.kipps === tutData.kipps && s.secs === tutData.secs);
           const prefix = isTut ? 'TUTORIAL  |  ' : '';
+          const isLast = !lastMarked && lastData && s.kipps === lastData.kipps && s.secs === lastData.secs && !!s.tutorial === !!lastData.tutorial;
+          const wrapStart = isLast ? '<span style="text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:#ffd84a">' : '';
+          const wrapEnd   = isLast ? '</span>' : '';
+          if (isLast) lastMarked = true;
+          let inner;
           if (s.kipps <= 27) {
-            el.innerHTML = prefix + '<span style="color:#5cb85c;font-size:17px">' + s.kipps + ' ' + kT + '</span>';
+            inner = prefix + '<span style="color:#5cb85c;font-size:17px">' + s.kipps + ' ' + kT + '</span>';
           } else {
             const over = s.kipps - 27;
-            el.innerHTML = prefix + '<span style="font-size:17px">27 ' + kT + '</span> <span style="color:#c85a5a;font-size:19px">+ ' + over + '</span>';
+            inner = prefix + '<span style="font-size:17px">27 ' + kT + '</span> <span style="color:#c85a5a;font-size:19px">+ ' + over + '</span>';
           }
+          el.innerHTML = wrapStart + inner + wrapEnd;
         } else {
           el.textContent = '';
         }
