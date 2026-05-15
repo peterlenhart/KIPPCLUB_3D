@@ -1388,6 +1388,11 @@
     const totalCardsWidth = 6 * cardWidth + 5 * cardGap; // Tatsächliche Breite aller Kärtchen + Gaps
     const cardStartX = -totalCardsWidth / 2 + cardWidth / 2;
 
+    // KIPP 27: x-Position pro Karten-Index (Karten 0-5 in Reihe, Karte 6 mittig)
+    function cardXForIdx(idx) {
+      return (idx < 6) ? (cardStartX + idx * (cardWidth + cardGap)) : 0;
+    }
+
     const gameCards = [];
     
     // Farb-Ziel-Texturen als HTML Images laden
@@ -2811,7 +2816,7 @@
     // "HIT"-Text an Karten-Position anzeigen (HTML-Overlay, von Osten lesbar)
     const hitTextEls = [];
     function showHitText(cardIdx) {
-      const cx = cardStartX + cardIdx * (cardWidth + cardGap);
+      const cx = cardXForIdx(cardIdx);
       // 3D→Screen Projektion der Kartenmitte
       const pos3D = new THREE.Vector3(cx, cardY, cardZ);
       pos3D.project(camera);
@@ -4273,7 +4278,7 @@
         card.mesh.material.needsUpdate = true;
         card.mesh.scale.set(1, 1, 1);
         // Position + Rotation zurücksetzen (nach Fluganimation)
-        card.mesh.position.set(cardStartX + i * (cardWidth + cardGap), cardY, cardZ);
+        card.mesh.position.set(cardXForIdx(i), cardY, cardZ);
         card.mesh.rotation.set(-Math.PI / 2, 0, 0);
         card.zahl = null;
         card.color = null;
@@ -6479,7 +6484,7 @@
       // ==========================================
       // 4) SHOW VERDECKTES KIPPZIEL (pulsing) + subtitle
       // ==========================================
-      const posX = cardStartX + roundIdx * (cardWidth + cardGap);
+      const posX = cardXForIdx(roundIdx);
       verdecktesMesh.position.set(posX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
       verdecktesMesh.visible = true;
@@ -7447,7 +7452,7 @@
       currentDragDir = null;
       
       // verdecktesMesh an nächste Kärtchen-Position verschieben
-      const nextX = cardStartX + activeCardIdx * (cardWidth + cardGap);
+      const nextX = cardXForIdx(activeCardIdx);
       verdecktesMesh.position.set(nextX, cardY + 0.001, cardZ);
       verdecktesMesh.userData.revealed = false;
       drawLeernohitOnVerdecktes();
@@ -7557,7 +7562,7 @@
         gamePhase = 'kippen';
         // Kein Timer - stattdessen verdecktes Kippziel pulsierend anzeigen
         countdown.style.display = 'none';
-        const posX = cardStartX + activeCardIdx * (cardWidth + cardGap);
+        const posX = cardXForIdx(activeCardIdx);
         verdecktesMesh.position.set(posX, cardY + 0.001, cardZ);
         verdecktesMesh.userData.revealed = false;
         drawLeernohitOnVerdecktes();
