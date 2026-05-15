@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v27</div>
+    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v30</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -4427,7 +4427,7 @@
       // Prüft gamePhase — Reset setzt 'start' und bricht die Sequenz ab
       (async () => {
         if (gamePhase !== 'kipp21') return;
-        await pgtInflate(pgtH, pgtS);    // "SPIEL ZIEL 21 SEKUNDEN" erscheint
+        await pgtInflate(pgtH, pgtS);
         if (gamePhase !== 'kipp21') return;
         await wait(0);                    // KIPP 27: 1s frueher (war 1000)
         if (gamePhase !== 'kipp21') return;
@@ -6187,6 +6187,72 @@
     }
 
     // KIPP 27: Overlay-Sequenz nach 6. Hit — pulsierender Text + 7. Karte einblenden + Kippziel
+    // KIPP 27: Spielbeginn-Overlay "WER SCHAFFT'S MIT 27 KIPPS?"
+    const WER_SCHAFFTS_LINES = {
+      de: ["WER SCHAFFT'S", "MIT 27 KIPPS?"],
+      en: ["WHO CAN DO IT", "WITH 27 TILTS?"],
+      es: ["\u00bfQUI\u00c9N LO LOGRA", "CON 27 VOLCADOS?"],
+      fr: ["QUI Y ARRIVE", "AVEC 27 BASCULES ?"],
+      it: ["CHI CI RIESCE", "CON 27", "RIBALTAMENTI?"],
+      tr: ["K\u0130M 27 DEV\u0130RMEDE", "BA\u015eARIR?"]
+    };
+
+    async function showWerSchafftsOverlay() {
+      const lang = _digikippLang || 'de';
+      const lines = WER_SCHAFFTS_LINES[lang] || WER_SCHAFFTS_LINES.de;
+
+      // 3D-Position der Boxmitte (cube center) auf Screen projizieren
+      const pos3D = new THREE.Vector3(0, 0.23, 0.1105); // Mitte der Box vertikal/horizontal
+      pos3D.project(camera);
+      const sx = Math.round((pos3D.x * 0.5 + 0.5) * 360);
+      const sy = Math.round((-pos3D.y * 0.5 + 0.5) * 720);
+
+      // Halbtransparentes schwarzes Overlay ueber die ganze Spielflaeche
+      const bg = document.createElement('div');
+      bg.id = 'werSchafftsBg';
+      bg.style.cssText = 'position:absolute;left:0;top:0;width:360px;height:720px;background:rgba(0,0,0,0.55);z-index:48;opacity:0;transition:opacity 0.4s ease-in-out;pointer-events:none;';
+      document.getElementById('uiOverlay').appendChild(bg);
+
+      // Text-Container, silberner Schriftstil wie LETZTES KIPPZIEL
+      const wrap = document.createElement('div');
+      wrap.id = 'werSchafftsText';
+      const fontSize = lines.length >= 3 ? 26 : 30;
+      wrap.style.cssText =
+        'position:absolute;' +
+        'left:' + sx + 'px; top:' + sy + 'px;' +
+        'transform:translate(-50%,-50%);' +
+        'z-index:49;opacity:0;' +
+        'pointer-events:none;text-align:center;white-space:nowrap;' +
+        'transition:opacity 0.4s ease-in-out;';
+      lines.forEach((line, i) => {
+        const ln = document.createElement('div');
+        ln.textContent = line;
+        ln.style.cssText =
+          'font:bold ' + fontSize + 'px Arial;' +
+          'background:linear-gradient(180deg,#ffffff 0%,#f0f0f0 35%,#c8c8c8 60%,#888888 100%);' +
+          '-webkit-background-clip:text;background-clip:text;' +
+          '-webkit-text-fill-color:transparent;' +
+          'filter:drop-shadow(0 2px 4px rgba(0,0,0,0.7)) drop-shadow(0 1px 2px rgba(255,255,255,0.4));' +
+          'letter-spacing:2px;line-height:1.25;' +
+          (i > 0 ? 'margin-top:6px;' : '');
+        wrap.appendChild(ln);
+      });
+      document.getElementById('uiOverlay').appendChild(wrap);
+
+      // Fade-In
+      await new Promise(r => requestAnimationFrame(r));
+      bg.style.opacity = '1';
+      wrap.style.opacity = '1';
+      await new Promise(r => setTimeout(r, 1800)); // Hold
+
+      // Fade-Out
+      bg.style.opacity = '0';
+      wrap.style.opacity = '0';
+      await new Promise(r => setTimeout(r, 450));
+      bg.remove();
+      wrap.remove();
+    }
+
     async function showLetztesKippzielSequence() {
       // Screen-Position der Karten-Mitte (cardY, cardZ)
       const pos3D = new THREE.Vector3(0, cardY, cardZ);
@@ -6914,83 +6980,25 @@
     }, { passive: false });
 
     // ============================================================
-    // INTRO: Trailer-Overlay als 3D-Plane exakt ueber Spieltisch.
-    // Waehrend Intro: Wuerfel unsichtbar (sonst sticht er durch).
-    // 2.5s 100% deckend, 1.5s ease-in-out Fade.
+    // INTRO: "WER SCHAFFT'S MIT 27 KIPPS?" Overlay beim Page Load
+    // Ersetzt den frueheren Kipp21TrailerOverlay
     // ============================================================
     (function(){
-      const HOLD_MS = 4500;
-      const FADE_MS = 1500;
-
       const startOv = document.getElementById('startOverlay');
       if (startOv) startOv.style.visibility = 'hidden';
-
-      // Wuerfel waehrend Intro verstecken
-      let cubeWasVisible = true;
-      const hideCube = () => {
-        if (typeof cube !== 'undefined' && cube) {
-          cubeWasVisible = cube.visible;
-          cube.visible = false;
-        } else {
-          setTimeout(hideCube, 50);
-        }
-      };
-      hideCube();
-
-      let trailerMesh = null;
-      let trailerMat  = null;
-
-      function createTrailer3D(){
-        new THREE.TextureLoader().load('Kipp21TrailerOverlay.webp', (tex) => {
-          const aspect = tex.image.height / tex.image.width;
-          const w = 8 * 0.15625;
-          const h = w * aspect;
-          const geo = new THREE.PlaneGeometry(w, h);
-          trailerMat = new THREE.MeshBasicMaterial({
-            map: tex, transparent: true, opacity: 1.0,
-            depthWrite: false, depthTest: false
+      // Sobald Overlay-Funktion verfuegbar: zeigen und danach startOverlay freigeben
+      const tryShow = () => {
+        if (typeof showWerSchafftsOverlay === 'function') {
+          showWerSchafftsOverlay().then(() => {
+            if (startOv) startOv.style.visibility = 'visible';
           });
-          trailerMesh = new THREE.Mesh(geo, trailerMat);
-          trailerMesh.rotation.x = -Math.PI / 2;
-          // Exakt gleiche X/Z wie Spieltisch, minimaler Y-Offset
-          trailerMesh.position.set(spieltisch.position.x, spieltisch.position.y + 0.001, spieltisch.position.z);
-          trailerMesh.renderOrder = 9999;
-          scene.add(trailerMesh);
-        });
-      }
-
-      const easeInOut = (t) => (t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2);
-
-      const startTime = Date.now();
-      let trailerCreated = false;
-      const tryStart = () => {
-        if (!trailerCreated && typeof spieltisch !== 'undefined' && spieltisch) {
-          createTrailer3D();
-          trailerCreated = true;
-        }
-        const elapsed = Date.now() - startTime;
-        if (texturesReady && trailerCreated && trailerMat && elapsed >= HOLD_MS) {
-          const fadeStart = Date.now();
-          const fade = () => {
-            const t = Math.min(1, (Date.now() - fadeStart) / FADE_MS);
-            if (trailerMat) trailerMat.opacity = 1 - easeInOut(t);
-            if (t < 1) {
-              requestAnimationFrame(fade);
-            } else {
-              if (trailerMesh) scene.remove(trailerMesh);
-              if (trailerMat) trailerMat.dispose();
-              // Wuerfel + Start-Overlay freigeben
-              if (typeof cube !== 'undefined' && cube) cube.visible = cubeWasVisible;
-              if (startOv) startOv.style.visibility = 'visible';
-            }
-          };
-          requestAnimationFrame(fade);
         } else {
-          setTimeout(tryStart, 100);
+          setTimeout(tryShow, 50);
         }
       };
-      tryStart();
+      tryShow();
     })();
+
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
       // KIPP-TIPP Overlay schließen falls offen
