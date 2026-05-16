@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v54</div>
+    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v55</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -7924,10 +7924,24 @@
     let resetting = false;
     resetButton.addEventListener('click', () => {
       if (resetting) return;
-      // KIPP 27: Reset-Button springt IMMER auf index.html — egal in welcher Phase
-      // (Start-Screen, mitten im Spiel, nach Spielende)
-      window.location.href = 'index.html';
-      return;
+      // KIPP 27 Reset-Logik:
+      // - Wenn freigeschaltet (bezahlt): zurueck zum Start-Overlay (egal wo man ist)
+      // - Wenn NICHT freigeschaltet: immer raus auf index.html
+      let isUnlocked = false;
+      try { isUnlocked = (localStorage.getItem('kippclub_kipp27_unlocked') === '1'); } catch(e) {}
+      const _startOv = document.getElementById('startOverlay');
+      const isOnStartScreen = (gamePhase === 'start') && _startOv && _startOv.style.display !== 'none';
+      if (!isUnlocked) {
+        // Nicht freigeschaltet: immer auf index
+        window.location.href = 'index.html';
+        return;
+      }
+      // Freigeschaltet:
+      if (isOnStartScreen) {
+        // Schon auf Startseite -> zurueck zur index (Wahl-Hub)
+        window.location.href = 'index.html';
+        return;
+      }
       resetting = true;
       setTimeout(() => { resetting = false; }, 1200);
       
