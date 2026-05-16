@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v53</div>
+    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v54</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -4034,13 +4034,29 @@
         };
         const _eL = END_LABELS[_digikippLang] || END_LABELS.de;
 
-        // Button 1: NOCHMAL (421px)
+        // Button 1: FREISCHALTEN € 1,99 (421px) — selbe Kauf-Logik wie Klick auf €1,99 auf index.html
         abtn.textContent = _eL.b1;
         abtn.style.cssText = btnCSS(0, 18, 2);
         abtn.onclick = () => {
-          hideAllEndBtns();
-          if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
-          startKipp21(false);
+          const productId = 'kippclub_kipp27';
+          const tokenKey = 'kippclub_kipp27_unlocked';
+          const target = 'kipp21.html';
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
+            window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
+              .then(result => {
+                if (result && result.success) {
+                  try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
+                  location.href = target;
+                }
+              })
+              .catch(() => {});
+          } else {
+            // Browser-Test-Modus (kein Capacitor): simulierter Kauf-Dialog — identisch zu index.html
+            if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\nPreis: laut Store\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase ueber App Store / Play Store)')) {
+              try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
+              location.href = target;
+            }
+          }
         };
 
         // Button 2: TEILEN (493px)
