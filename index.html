@@ -803,7 +803,7 @@
 </head>
 
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 33</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 34</div>
   <!-- Flashscreen Overlay -->
   <div id="flashOverlay">
     <div id="flashContainer">
@@ -1168,7 +1168,8 @@
       const ringCy = 75.2;
       const ringD  = 130.5;
       // Offsets fuer banner_kipp27 — Werte in Layout-Pixeln (1 Screen-Px ≈ 3 Layout-Px bei scale 0.333)
-      const EYE_OFFSET_X = 24;  // = 8 Screen-Px östlich (Auge/Glow/Hand)
+      const EYE_OFFSET_X = 36;  // = 12 Screen-Px östlich (8 vorher + 4 Feinkorrektur)
+      const EYE_OFFSET_Y = 12;  // = 4 Screen-Px südlich (Auge/Glow/Hand)
       const BTN_OFFSET_X = 45;  // = 15 Screen-Px östlich (12 wie v31 + 3 Feinkorrektur)
       const BTN_OFFSET_Y = 9;   // = 3 Screen-Px südlich
       // Banner-Mitte als Drehpunkt (Layout-Koordinaten, relativ zur Banner-Oberkante-Linke)
@@ -1196,7 +1197,7 @@
       const augeW = 140 * bannerScale * 1.2; // 120%
       const augeH =  84 * bannerScale * 1.2;
       const augeLeft = ringCx - augeW/2 + EYE_OFFSET_X;
-      const augeTop  = bannerTop + ringCy - augeH/2;
+      const augeTop  = bannerTop + ringCy - augeH/2 + EYE_OFFSET_Y;
       if (kipp21Auge) {
         kipp21Auge.style.width  = augeW + "px";
         kipp21Auge.style.height = augeH + "px";
@@ -1211,7 +1212,7 @@
         kipp21Glow.style.width  = glowD + "px";
         kipp21Glow.style.height = glowD + "px";
         kipp21Glow.style.left = (ringCx - glowD/2 + EYE_OFFSET_X) + "px";
-        kipp21Glow.style.top  = (bannerTop + ringCy - glowD/2) + "px";
+        kipp21Glow.style.top  = (bannerTop + ringCy - glowD/2 + EYE_OFFSET_Y) + "px";
       }
 
       // Expandierende Klick-Ringe: zentriert auf Button-Mitte, doppelt mit Phasenversatz
@@ -1238,7 +1239,7 @@
         // Fingerspitze liegt im Bild bei (73, 0) von (308, 448) -> 23.7% / 0%
         // Wir wollen die Fingerspitze ca. (ringCx + 20, bannerTop + ringCy + 35) -> knapp rechts/unter Auge-Mitte
         const tipTargetX = ringCx + 20 + EYE_OFFSET_X;
-        const tipTargetY = bannerTop + ringCy + 35;
+        const tipTargetY = bannerTop + ringCy + 35 + EYE_OFFSET_Y;
         const handLeft = tipTargetX - handW * 0.237;
         const handTop  = tipTargetY - handH * 0.0;
         kipp21Hand.style.width  = handW + "px";
