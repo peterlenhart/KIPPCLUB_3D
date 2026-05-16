@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v55</div>
+    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v57</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -3940,41 +3940,34 @@
       }
       
       if (isTutorial) {
-        // Tutorial-Ende: WIEDERHOLEN + SPIELEN + HIGHSCORES (Intro-Abstände: 421, 480, 539)
-        abtn.textContent = T.wh;
-        abtn.style.cssText = btnCSS(0, 16, 2);
-        abtn.onclick = () => {
-          abtn.style.display = 'none';
-          const esb = document.getElementById('endSpielenBtn');
-          if (esb) esb.style.display = 'none';
-          document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
-          countdown.style.display = 'none';
-          hintText.style.display = 'none';
-          counterOrigPos = null;
-          if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
-          startKipp21(true);
-        };
-        
-        let spielenBtn = document.getElementById('endSpielenBtn');
-        if (!spielenBtn) {
-          spielenBtn = document.createElement('button');
-          spielenBtn.id = 'endSpielenBtn';
-          spielenBtn.className = 'end-btn-dynamic';
-          document.getElementById('uiOverlay').appendChild(spielenBtn);
-        }
-        spielenBtn.textContent = T.sp;
-        spielenBtn.style.cssText = btnCSS(1, 18, 2);
-        spielenBtn.onclick = () => {
-          spielenBtn.style.display = 'none';
-          abtn.style.display = 'none';
-          document.getElementById('perfektGameText').style.display = 'none'; document.getElementById('gameEndText').style.display = 'none';
-          countdown.style.display = 'none';
-          hintText.style.display = 'none';
-          // Counter zurück an Originalposition falls noch in Mitte
-          counterOrigPos = null;
-          if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
-          startKipp21(false);
-        };
+        // Tutorial-Ende: direkt zurueck zum Start-Overlay (3 Buttons), keine 2-Button-Auswertung
+        // Erst dynamische Buttons + Hits + Texte aufraeumen
+        document.querySelectorAll('.end-btn-dynamic, .hit-text-el').forEach(el => el.remove());
+        hitTextEls.length = 0;
+        ['auswertungBtn','endSpielenBtn','endTeilenBtn','endKippPrinzipBtn','endMotivText','endScoreBtn','kipps21Label','timeoutNeuesSpielBtn'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.remove();
+        });
+        ['perfektGameText','gameEndText','tutorialText','instructionText','spielZielText','skipEndBtn','kippTarget','demoSubtitle'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        countdown.style.display = 'none';
+        hintText.style.display = 'none';
+        counterOrigPos = null;
+        if (handEl) { handEl.style.opacity = '0'; updateHandShadow(0,0,false); }
+        // Sicherheitshalber Replay/Demo/Async stoppen
+        kipp21Generation++;
+        autoDemoActive = false;
+        replayActive = false;
+        kipp21KniffActive = false;
+        kipp21KniffAbort = true;
+        disableReplayBlocker();
+        renderer.domElement.style.pointerEvents = 'auto';
+        // Sound bei Bedarf wieder an
+        if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
+        // Zurueck zum Start-Overlay
+        backToStartScreen();
         
       } else {
         // Spiel-Ende: gameEndText + BEST SCORES + KIPP PRINZIP + NEUES SPIEL
@@ -4023,8 +4016,11 @@
         const _klEnd = document.getElementById('kipps21Label');
         if (_klEnd) _klEnd.style.display = 'none';
 
-        // KIPP 27: End-Screen-Button-Beschriftungen (nach Spielende)
-        const END_LABELS = {
+        // KIPP 27: End-Screen-Button-Beschriftungen — abhaengig vom Freischaltungs-Status
+        let isUnlocked27 = false;
+        try { isUnlocked27 = (localStorage.getItem('kippclub_kipp27_unlocked') === '1'); } catch(e) {}
+
+        const END_LABELS_LOCKED = {
           de: { b1: 'FREISCHALTEN \u20AC 1,99', b2: 'ERGEBNIS TEILEN', b3: 'TUTORIAL' },
           en: { b1: 'UNLOCK \u20AC 1,99',       b2: 'SHARE RESULT',    b3: 'TUTORIAL' },
           es: { b1: 'DESBLOQUEAR \u20AC 1,99',  b2: 'COMPARTIR',       b3: 'TUTORIAL' },
@@ -4032,32 +4028,49 @@
           it: { b1: 'SBLOCCA \u20AC 1,99',      b2: 'CONDIVIDI',       b3: 'TUTORIAL' },
           tr: { b1: 'KIL\u0130D\u0130 A\u00C7 \u20AC 1,99', b2: 'PAYLA\u015E', b3: 'TUTORIAL' }
         };
-        const _eL = END_LABELS[_digikippLang] || END_LABELS.de;
+        const END_LABELS_UNLOCKED = {
+          de: { b1: 'NEUES SPIEL',  b2: 'ERGEBNIS TEILEN', b3: 'KIPP PRINZIP' },
+          en: { b1: 'NEW GAME',     b2: 'SHARE RESULT',    b3: 'TILT PRINCIPLE' },
+          es: { b1: 'NUEVO JUEGO',  b2: 'COMPARTIR',       b3: 'PRINCIPIO VOLCADO' },
+          fr: { b1: 'NOUVELLE PARTIE', b2: 'PARTAGER',     b3: 'PRINCIPE BASCULE' },
+          it: { b1: 'NUOVA PARTITA', b2: 'CONDIVIDI',      b3: 'PRINCIPIO KIPP' },
+          tr: { b1: 'YEN\u0130 OYUN', b2: 'PAYLA\u015E',   b3: 'DEV\u0130RME PRENS\u0130B\u0130' }
+        };
+        const _eLmap = isUnlocked27 ? END_LABELS_UNLOCKED : END_LABELS_LOCKED;
+        const _eL = _eLmap[_digikippLang] || _eLmap.de;
 
-        // Button 1: FREISCHALTEN € 1,99 (421px) — selbe Kauf-Logik wie Klick auf €1,99 auf index.html
+        // Button 1: NEUES SPIEL (unlocked) ODER FREISCHALTEN € 1,99 (locked)
         abtn.textContent = _eL.b1;
         abtn.style.cssText = btnCSS(0, 18, 2);
-        abtn.onclick = () => {
-          const productId = 'kippclub_kipp27';
-          const tokenKey = 'kippclub_kipp27_unlocked';
-          const target = 'kipp21.html';
-          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
-            window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
-              .then(result => {
-                if (result && result.success) {
-                  try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
-                  location.href = target;
-                }
-              })
-              .catch(() => {});
-          } else {
-            // Browser-Test-Modus (kein Capacitor): simulierter Kauf-Dialog — identisch zu index.html
-            if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\nPreis: laut Store\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase ueber App Store / Play Store)')) {
-              try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
-              location.href = target;
+        if (isUnlocked27) {
+          abtn.onclick = () => {
+            hideAllEndBtns();
+            if (soundEnabled && bgMusic.paused) { bgMusic.play().catch(() => {}); }
+            startKipp21(false);
+          };
+        } else {
+          abtn.onclick = () => {
+            const productId = 'kippclub_kipp27';
+            const tokenKey = 'kippclub_kipp27_unlocked';
+            const target = 'kipp21.html';
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
+              window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
+                .then(result => {
+                  if (result && result.success) {
+                    try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
+                    location.href = target;
+                  }
+                })
+                .catch(() => {});
+            } else {
+              // Browser-Test-Modus (kein Capacitor): simulierter Kauf-Dialog — identisch zu index.html
+              if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\nPreis: laut Store\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase ueber App Store / Play Store)')) {
+                try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
+                location.href = target;
+              }
             }
-          }
-        };
+          };
+        }
 
         // Button 2: TEILEN (493px)
         let teilenBtn = document.getElementById('endTeilenBtn');
