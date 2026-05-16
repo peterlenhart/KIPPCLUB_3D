@@ -810,7 +810,7 @@
 </head>
 
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 42</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 44</div>
   <!-- Flashscreen Overlay -->
   <div id="flashOverlay">
     <div id="flashContainer">
@@ -1221,6 +1221,8 @@
         priceLbl.style.top  = augeTop + 'px';
         priceLbl.style.width  = augeW + 'px';
         priceLbl.style.height = augeH + 'px';
+        priceLbl.style.transform = 'rotate(-30deg)';
+        priceLbl.style.transformOrigin = 'center center';
       }
       const checkEl = document.getElementById('kipp27Check');
       if (checkEl && checkEl.style.display !== 'none') {
@@ -1229,7 +1231,8 @@
         const augeCy = augeTop + augeH/2;
         checkEl.style.width  = checkSize + 'px';
         checkEl.style.height = checkSize + 'px';
-        checkEl.style.left = (augeCx - 135 - checkSize/2) + 'px';
+        // 45 + 15 Screen-Px westlich = 135 + 45 = 180 Layout-Px westlich
+        checkEl.style.left = (augeCx - 180 - checkSize/2) + 'px';
         checkEl.style.top  = (augeCy + 45 - checkSize/2) + 'px';
       }
 
@@ -1302,6 +1305,35 @@
     window.addEventListener("resize", rebuild);
     requestAnimationFrame(rebuild);
 
+    // KIPP 27: Slogan komplett aus .layout/.uiLayer raus, direkt an body — keine Scale-/Transform-Vererbung mehr
+    (function isolateSlogan() {
+      const orig = document.getElementById('kippClubSubtitle');
+      if (!orig) return;
+      // Original ausblenden (Platzhalter bleibt im Layout)
+      orig.style.visibility = 'hidden';
+      orig.style.pointerEvents = 'none';
+      // Klon erzeugen
+      const clone = orig.cloneNode(true);
+      clone.id = 'kippClubSubtitleFixed';
+      clone.style.cssText =
+        'position:fixed;left:50%;transform:translateX(-50%);' +
+        'top:22%;width:100%;max-width:1080px;' +
+        'height:135px;line-height:135px;text-align:center;' +
+        'font-size:47px;color:#e8dcc0;letter-spacing:4px;' +
+        'text-shadow:0 4px 12px rgba(0,0,0,0.85),0 0 16px rgba(0,0,0,0.4);' +
+        'pointer-events:none;z-index:50;' +
+        'font-family:Arial,sans-serif;font-weight:900;' +
+        'animation:none;transition:none;opacity:1;' +
+        'contain:layout style paint;';
+      // Auf Bildschirm: 22% von viewport-Höhe, daher * window.innerHeight nötig?
+      // Nein, top:22% bei position:fixed = 22% von viewport. Passt.
+      document.body.appendChild(clone);
+      // Bei Sprachwechsel auch im Klon updaten
+      const updateClone = () => { clone.textContent = orig.textContent; };
+      // Überwache Text-Änderungen des Originals
+      new MutationObserver(updateClone).observe(orig, { childList: true, characterData: true, subtree: true });
+    })();
+
     // KIPP 27: Einmaliges Setup — Preis-Label + Haken bei gesetztem Flag erzeugen
     (function setupKipp27Played() {
       let played = false;
@@ -1312,6 +1344,9 @@
         if (!auge || !auge.parentNode) { setTimeout(ready, 50); return; }
         // Auge ausblenden
         auge.style.display = 'none';
+        // Hand ausblenden
+        const hand = document.getElementById('kipp21Hand');
+        if (hand) hand.style.display = 'none';
         // Preis-Label
         if (!document.getElementById('kipp27PriceLabel')) {
           const p = document.createElement('div');
