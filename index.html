@@ -1131,8 +1131,8 @@
       // KIPP 21 Trailer-Button: ueber dem Goldkreis im Banner, 120% skaliert
       // Goldkreis im Layout (Banner 1080 breit): Mitte (846.6, 75.2), Durchmesser 130.5
       const kipp21Button = document.getElementById("kipp21Button");
-      const ringCx = 846.6;     // Goldring-Mitte X (Layout-Px, relativ zur Banner-Oberkante-Linke)
-      const ringCy = 75.2;      // Goldring-Mitte Y (Layout-Px, relativ zur Banner-Oberkante)
+      const ringCx = 846.6 + 12;     // Goldring-Mitte X (Layout-Px) — +12 für banner_kipp27
+      const ringCy = 75.2 + 3;       // Goldring-Mitte Y (Layout-Px) — +3 für banner_kipp27
       const ringD  = 130.5;     // Goldring-Durchmesser (Layout-Px)
       // Banner-Mitte als Drehpunkt (Layout-Koordinaten, relativ zur Banner-Oberkante-Linke)
       const bannerCx = 540;        // Banner ist 1080 breit -> Mitte bei 540
