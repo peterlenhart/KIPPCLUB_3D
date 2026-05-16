@@ -112,6 +112,12 @@
       z-index: 9;
       font-family: Arial, sans-serif;
       font-weight: 900;
+      animation: none !important;
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      contain: layout style paint;
+      will-change: auto;
     }
 
     /* Scroll-Pfeile links und rechts */
@@ -130,7 +136,8 @@
       cursor: pointer;
       z-index: 11;
       opacity: 0.85;
-      transition: opacity 0.3s ease;
+      transition: none !important;
+      animation: none !important;
       font-family: Arial, sans-serif;
       font-weight: bold;
       -webkit-tap-highlight-color: transparent;
@@ -803,7 +810,7 @@
 </head>
 
 <body>
-<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 34</div>
+<div id="_versDisplay" style="position:fixed;top:3px;left:3px;z-index:99999;background:rgba(0,0,0,0.7);color:#0f0;font:10px monospace;padding:2px 5px;pointer-events:none;border-radius:3px;">Vers. 42</div>
   <!-- Flashscreen Overlay -->
   <div id="flashOverlay">
     <div id="flashContainer">
@@ -1168,7 +1175,7 @@
       const ringCy = 75.2;
       const ringD  = 130.5;
       // Offsets fuer banner_kipp27 — Werte in Layout-Pixeln (1 Screen-Px ≈ 3 Layout-Px bei scale 0.333)
-      const EYE_OFFSET_X = 36;  // = 12 Screen-Px östlich (8 vorher + 4 Feinkorrektur)
+      const EYE_OFFSET_X = 48;  // = 16 Screen-Px östlich (12 vorher + 4 Feinkorrektur)
       const EYE_OFFSET_Y = 12;  // = 4 Screen-Px südlich (Auge/Glow/Hand)
       const BTN_OFFSET_X = 45;  // = 15 Screen-Px östlich (12 wie v31 + 3 Feinkorrektur)
       const BTN_OFFSET_Y = 9;   // = 3 Screen-Px südlich
@@ -1203,6 +1210,27 @@
         kipp21Auge.style.height = augeH + "px";
         kipp21Auge.style.left = augeLeft + "px";
         kipp21Auge.style.top  = augeTop + "px";
+      }
+
+      // KIPP 27: Free-Game-Position-Updates fuer Preis-Label + Haken (Erzeugung passiert einmalig im IIFE unten)
+      const priceLbl = document.getElementById('kipp27PriceLabel');
+      if (priceLbl && priceLbl.style.display !== 'none') {
+        priceLbl.style.fontSize = (augeH * 0.85) + 'px';
+        priceLbl.style.lineHeight = augeH + 'px';
+        priceLbl.style.left = augeLeft + 'px';
+        priceLbl.style.top  = augeTop + 'px';
+        priceLbl.style.width  = augeW + 'px';
+        priceLbl.style.height = augeH + 'px';
+      }
+      const checkEl = document.getElementById('kipp27Check');
+      if (checkEl && checkEl.style.display !== 'none') {
+        const checkSize = augeH * 1.1;
+        const augeCx = augeLeft + augeW/2;
+        const augeCy = augeTop + augeH/2;
+        checkEl.style.width  = checkSize + 'px';
+        checkEl.style.height = checkSize + 'px';
+        checkEl.style.left = (augeCx - 135 - checkSize/2) + 'px';
+        checkEl.style.top  = (augeCy + 45 - checkSize/2) + 'px';
       }
 
       // Cyan-Glow hinter dem Auge: ca. 1.6x Auge-Hoehe als Durchmesser, mittig auf Auge zentriert
@@ -1273,6 +1301,38 @@
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     requestAnimationFrame(rebuild);
+
+    // KIPP 27: Einmaliges Setup — Preis-Label + Haken bei gesetztem Flag erzeugen
+    (function setupKipp27Played() {
+      let played = false;
+      try { played = (localStorage.getItem('digikipp_kipp27_played') === '1'); } catch(e) {}
+      if (!played) return;
+      const ready = () => {
+        const auge = document.getElementById('kipp21Auge');
+        if (!auge || !auge.parentNode) { setTimeout(ready, 50); return; }
+        // Auge ausblenden
+        auge.style.display = 'none';
+        // Preis-Label
+        if (!document.getElementById('kipp27PriceLabel')) {
+          const p = document.createElement('div');
+          p.id = 'kipp27PriceLabel';
+          p.textContent = '\u20AC 1,99';
+          p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:none;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;';
+          auge.parentNode.appendChild(p);
+        }
+        // Haken
+        if (!document.getElementById('kipp27Check')) {
+          const c = document.createElement('div');
+          c.id = 'kipp27Check';
+          c.innerHTML = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M5 17 L13 25 L28 7" stroke="#78ecff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+          c.style.cssText = 'position:absolute;pointer-events:none;z-index:204;filter:drop-shadow(0 0 8px rgba(120,230,255,0.7));display:block;';
+          auge.parentNode.appendChild(c);
+        }
+        // Positionen werden in positionUI gesetzt -> einmal anschubsen
+        if (typeof positionUI === 'function') positionUI();
+      };
+      ready();
+    })();
     
     // Scroll-Pfeile dynamisch ein-/ausblenden je nach Karussell-Position
     // und Klick-Handler fuer Pfeil-Navigation
