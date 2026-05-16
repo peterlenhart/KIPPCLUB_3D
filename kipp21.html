@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v49</div>
+    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v53</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -3885,6 +3885,10 @@
     async function showEndButtons(isTutorial, isNewRecord) {
       // Guard: Reset wurde gedrückt, wir sind schon am Start-Screen
       if (gamePhase === 'start') return;
+      // KIPP 27: Free-Game-Flag setzen (Tutorial zählt nicht)
+      if (!isTutorial) {
+        try { localStorage.setItem('digikipp_kipp27_played', '1'); } catch(e) {}
+      }
       // DEBUG
       let dbg = document.getElementById('endDebug');
       if (dbg) dbg.textContent += ' | sEB(tut='+isTutorial+',rec='+isNewRecord+')';
@@ -4019,8 +4023,19 @@
         const _klEnd = document.getElementById('kipps21Label');
         if (_klEnd) _klEnd.style.display = 'none';
 
+        // KIPP 27: End-Screen-Button-Beschriftungen (nach Spielende)
+        const END_LABELS = {
+          de: { b1: 'FREISCHALTEN \u20AC 1,99', b2: 'ERGEBNIS TEILEN', b3: 'TUTORIAL' },
+          en: { b1: 'UNLOCK \u20AC 1,99',       b2: 'SHARE RESULT',    b3: 'TUTORIAL' },
+          es: { b1: 'DESBLOQUEAR \u20AC 1,99',  b2: 'COMPARTIR',       b3: 'TUTORIAL' },
+          fr: { b1: 'D\u00C9BLOQUER \u20AC 1,99', b2: 'PARTAGER',     b3: 'TUTORIEL' },
+          it: { b1: 'SBLOCCA \u20AC 1,99',      b2: 'CONDIVIDI',       b3: 'TUTORIAL' },
+          tr: { b1: 'KIL\u0130D\u0130 A\u00C7 \u20AC 1,99', b2: 'PAYLA\u015E', b3: 'TUTORIAL' }
+        };
+        const _eL = END_LABELS[_digikippLang] || END_LABELS.de;
+
         // Button 1: NOCHMAL (421px)
-        abtn.textContent = T.nml || T.nm || 'NOCHMAL';
+        abtn.textContent = _eL.b1;
         abtn.style.cssText = btnCSS(0, 18, 2);
         abtn.onclick = () => {
           hideAllEndBtns();
@@ -4036,7 +4051,7 @@
           teilenBtn.className = 'end-btn-dynamic';
           document.getElementById('uiOverlay').appendChild(teilenBtn);
         }
-        teilenBtn.textContent = T.cTeilen || 'TEILEN';
+        teilenBtn.textContent = _eL.b2;
         teilenBtn.style.cssText = btnCSS(1, 18, 2);
         teilenBtn.style.display = 'block';
         teilenBtn.onclick = () => {
@@ -4062,7 +4077,7 @@
           kpBtn.className = 'end-btn-dynamic';
           document.getElementById('uiOverlay').appendChild(kpBtn);
         }
-        kpBtn.textContent = (KIPP_PRINZIP[_digikippLang] || KIPP_PRINZIP['de']).btn;
+        kpBtn.textContent = _eL.b3;
         kpBtn.style.cssText = btnCSS(2, 16, 2);
         kpBtn.style.display = 'block';
         kpBtn.onclick = () => { showKippPrinzip(); };
@@ -7893,15 +7908,10 @@
     let resetting = false;
     resetButton.addEventListener('click', () => {
       if (resetting) return;
-      // BOMBENSICHER: nur raus wenn wir wirklich auf dem Start-Screen sind
-      // (gamePhase==='start' UND startOverlay sichtbar)
-      const _startOv = document.getElementById('startOverlay');
-      const isOnStartScreen = (gamePhase === 'start') && _startOv && _startOv.style.display !== 'none';
-      console.log('[RESET] click — gamePhase=' + gamePhase + ' startOverlay.display=' + (_startOv ? _startOv.style.display : 'null') + ' → ' + (isOnStartScreen ? 'EXIT' : 'BACK_TO_START'));
-      if (isOnStartScreen) {
-        window.location.href = 'index.html';
-        return;
-      }
+      // KIPP 27: Reset-Button springt IMMER auf index.html — egal in welcher Phase
+      // (Start-Screen, mitten im Spiel, nach Spielende)
+      window.location.href = 'index.html';
+      return;
       resetting = true;
       setTimeout(() => { resetting = false; }, 1200);
       
