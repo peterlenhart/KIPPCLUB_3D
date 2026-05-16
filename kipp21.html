@@ -967,7 +967,7 @@
   </div>
   
   <div id="uiOverlay">
-    <div id="versionLabel" style="position:absolute;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:100;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v40-debug</div>
+    <div id="versionLabel" style="position:fixed;top:4px;left:4px;font:bold 13px Arial;color:#00ff00;letter-spacing:1px;z-index:2147483647;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,255,0,0.6);">v46</div>
     <div id="tutorialControls" style="display:none;position:absolute;left:8px;right:8px;justify-content:space-between;align-items:center;z-index:60;pointer-events:auto;">
       <img id="tcRestart"   src="skipend_rw.webp" style="width:36px;height:36px;cursor:pointer;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
       <div id="tcProgress" style="flex:1 1 auto;height:14px;margin:0 8px;background:linear-gradient(180deg,#1a1a1a,#0a0a0a);border:1px solid #444;border-radius:7px;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,0.7);overflow:hidden;">
@@ -6115,7 +6115,10 @@
       }
       try {
         if (typeof camera !== 'undefined' && camera && typeof THREE !== 'undefined') {
-          // Boxmitte: X=0 (mittig), Y=halbe Boxhoehe (zwischen Boxboden 0.001 und Spieltisch 0.46875), Z=Boxboden-Mitte 0.109375
+          // Camera-Matrix aktualisieren — vor dem ersten Render-Frame sonst stale
+          camera.updateMatrixWorld(true);
+          camera.updateProjectionMatrix();
+          // Boxmitte: X=0, Y=halbe Boxhoehe, Z=Boxboden-Mitte 0.109375
           const pos3D = new THREE.Vector3(0, 0.234375, 0.109375);
           pos3D.project(camera);
           sx = Math.round((pos3D.x * 0.5 + 0.5) * 360);
@@ -6126,7 +6129,7 @@
         }
       } catch(e) { /* Fallback (180,360) bleibt */ }
 
-      // Text-Container in uiOverlay (das selbst schon 360px breit, zentriert ist) — Pixel sind Canvas-relativ
+      // Text-Container in uiOverlay (selbst schon 360px breit, zentriert) — Pixel sind Canvas-relativ
       const wrap = document.createElement('div');
       wrap.id = 'werSchafftsText';
       wrap.style.cssText =
@@ -6134,23 +6137,32 @@
         'transform:translate(-50%,-50%);' +
         'z-index:9999;opacity:0;pointer-events:none;text-align:center;' +
         'transition:opacity 0.4s ease-in-out;' +
-        'font-family:Impact,"Arial Black","Helvetica Inserat",sans-serif;';
-
-      // Stil-Konstanten
-      const SILVER_GRAD = 'linear-gradient(180deg,#ffffff 0%,#e8e8e8 18%,#b8b8b8 48%,#8a8a8a 78%,#cdcdcd 100%)';
-      const GOLD_GRAD   = 'linear-gradient(180deg,#fff4b3 0%,#ffd84a 18%,#b88400 55%,#7a5400 78%,#d8a020 100%)';
-      const SILVER_SHADOW = 'drop-shadow(0 3px 4px rgba(0,0,0,0.85)) drop-shadow(0 1px 0 #ffffff)';
-      const GOLD_SHADOW   = 'drop-shadow(0 0 18px rgba(255,200,50,0.55)) drop-shadow(0 4px 6px rgba(0,0,0,0.85)) drop-shadow(0 1px 0 #fff4b3)';
+        'font-family:Impact,"Arial Black",sans-serif;';
 
       lines.forEach((line) => {
         const isBigGold = line.trim() === '27';
         const isConnector = !isBigGold && line.trim().length <= 5;
         const fontSize = isBigGold ? 78 : (isConnector ? 22 : 30);
         const letterSp = isBigGold ? '2px' : '1px';
-        const mTop     = isBigGold ? 0 : 3;
-        const mBot     = isBigGold ? 0 : 3;
-        const grad     = isBigGold ? GOLD_GRAD : SILVER_GRAD;
-        const shadow   = isBigGold ? GOLD_SHADOW : SILVER_SHADOW;
+        const mTop = isBigGold ? 0 : 3;
+        const mBot = isBigGold ? 0 : 3;
+        const color = isBigGold ? '#ffd84a' : '#ffffff';
+
+        // Glanz (top highlight) + Bevel (Mehrlagen-Extrusion) + Schlagschatten (soft drop)
+        const shadow = isBigGold
+          ? '0 -1px 0 #fff4b3,' +                  // Glanz oben
+            '0 1px 0 #c89000,' +                   // Bevel oberer Rand
+            '0 2px 0 #8a5d00,' +                   // Bevel
+            '0 3px 0 #5c3e00,' +                   // Bevel
+            '0 4px 0 #3d2900,' +                   // Bevel (Tiefe)
+            '0 6px 10px rgba(0,0,0,0.9),' +        // Schlagschatten
+            '0 0 22px rgba(255,200,50,0.55)'       // warmer Goldglow
+          : '0 -1px 0 #ffffff,' +                  // Glanz oben (heller Highlight)
+            '0 1px 0 #c8c8c8,' +                   // Bevel oberer Rand
+            '0 2px 0 #888888,' +                   // Bevel
+            '0 3px 0 #555555,' +                   // Bevel
+            '0 4px 0 #2a2a2a,' +                   // Bevel (Tiefe)
+            '0 6px 10px rgba(0,0,0,0.9)';          // Schlagschatten
 
         const ln = document.createElement('div');
         ln.textContent = line;
@@ -6159,28 +6171,31 @@
           'font-size:' + fontSize + 'px;' +
           'line-height:1;' +
           'letter-spacing:' + letterSp + ';' +
-          'background:' + grad + ';' +
-          '-webkit-background-clip:text;background-clip:text;' +
-          '-webkit-text-fill-color:transparent;' +
-          'filter:' + shadow + ';' +
+          'color:' + color + ' !important;' +
+          'background:transparent;' +
+          'text-shadow:' + shadow + ';' +
           'margin:' + mTop + 'px 0 ' + mBot + 'px;' +
-          'white-space:nowrap;';
+          'white-space:nowrap;' +
+          'opacity:1;';
+        ln.style.setProperty('-webkit-text-fill-color', color, 'important');
+        ln.style.setProperty('-webkit-background-clip', 'border-box', 'important');
+        ln.style.setProperty('background-clip', 'border-box', 'important');
         wrap.appendChild(ln);
       });
       const uiOv = document.getElementById('uiOverlay');
-      if (uiOv) uiOv.appendChild(wrap); else document.body.appendChild(wrap);
-
-      // DEBUG: roter Punkt an der berechneten Boxmitte
-      const dbgDot = document.createElement('div');
-      dbgDot.style.cssText = 'position:absolute;left:' + sx + 'px;top:' + sy + 'px;width:12px;height:12px;margin-left:-6px;margin-top:-6px;background:red;border:2px solid white;border-radius:50%;z-index:10000;pointer-events:none;box-shadow:0 0 8px rgba(255,0,0,0.8);';
-      dbgDot.id = 'werSchafftsDebugDot';
-      if (uiOv) uiOv.appendChild(dbgDot); else document.body.appendChild(dbgDot);
-      // Auch in Text-Form anzeigen
-      const dbgLbl = document.createElement('div');
-      dbgLbl.style.cssText = 'position:absolute;left:4px;top:24px;font:bold 12px Arial;color:#ff8080;background:rgba(0,0,0,0.8);padding:2px 6px;z-index:10000;pointer-events:none;';
-      dbgLbl.textContent = 'sx=' + sx + ' sy=' + sy;
-      dbgLbl.id = 'werSchafftsDebugLbl';
-      if (uiOv) uiOv.appendChild(dbgLbl); else document.body.appendChild(dbgLbl);
+      // WICHTIG: wrap muss im gleichen Stacking-Context wie bg sein (body) — sonst klemmt's unter dem uiOverlay-z-index
+      let containerLeft = 0, containerTop = 0;
+      const containerEl = document.getElementById('container');
+      if (containerEl) {
+        const r = containerEl.getBoundingClientRect();
+        containerLeft = r.left;
+        containerTop = r.top;
+      }
+      // Pixel von Canvas-relativ zu Viewport-relativ umrechnen
+      wrap.style.left = (containerLeft + sx) + 'px';
+      wrap.style.top = (containerTop + sy) + 'px';
+      wrap.style.position = 'fixed';
+      document.body.appendChild(wrap);
 
       // Fade-In
       await new Promise(r => requestAnimationFrame(r));
@@ -6205,8 +6220,6 @@
       await new Promise(r => setTimeout(r, 450));
       bg.remove();
       wrap.remove();
-      const _dbgDot = document.getElementById('werSchafftsDebugDot'); if (_dbgDot) _dbgDot.remove();
-      const _dbgLbl = document.getElementById('werSchafftsDebugLbl'); if (_dbgLbl) _dbgLbl.remove();
     }
 
     async function showLetztesKippzielSequence() {
