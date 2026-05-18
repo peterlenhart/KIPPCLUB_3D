@@ -3,6 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+  // === KIPP CLUB Paywall-Guard ===
+  (function() {
+    var GAME_KEY = 'king';
+    window._kippclubPaywall = {
+      gameKey: GAME_KEY,
+      playedKey: 'digikipp_' + GAME_KEY + '_played',
+      unlockKey: 'kippclub_' + GAME_KEY + '_unlocked',
+      isPlayed: function() { try { return localStorage.getItem(this.playedKey) === '1'; } catch(e) { return false; } },
+      isUnlocked: function() { try { return localStorage.getItem(this.unlockKey) === '1'; } catch(e) { return false; } },
+      markPlayed: function() { try { localStorage.setItem(this.playedKey, '1'); } catch(e) {} },
+      check: function() {
+        if (this.isPlayed() && !this.isUnlocked()) {
+          try { location.replace('index.html?wall=' + this.gameKey); }
+          catch(e) { location.href = 'index.html?wall=' + this.gameKey; }
+          return true;
+        }
+        return false;
+      }
+    };
+    window._kippclubPaywall.check();
+  })();
+  </script>
+
   <title>KIPP CLUB – KING</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -7208,6 +7232,8 @@
       } else {
         // Spiel-Ende: gameEndText + BEST SCORES + KIPP PRINZIP + NEUES SPIEL
         try {
+        // KIPP CLUB: Free-Spiel verbraucht → played-Flag setzen
+        if (window._kippclubPaywall) window._kippclubPaywall.markPlayed();
         console.log('[END] showEndButtons game-end, kipps='+kipp21KippCount);
         const esb = document.getElementById('endSpielenBtn');
         if (esb) esb.style.display = 'none';
@@ -7271,6 +7297,7 @@
           abtn.textContent = T.nxl || 'NEXT LEVEL';
           abtn.style.cssText = btnCSS(451, 18, 2.5);
           abtn.onclick = () => {
+            if (window._kippclubPaywall && window._kippclubPaywall.check()) return;
             hideAllEndBtns();
             try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
             window.location.href = 'index.html?noflash=1';
@@ -12708,10 +12735,12 @@
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
+      if (window._kippclubPaywall && window._kippclubPaywall.check()) return;
       handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
+      if (window._kippclubPaywall && window._kippclubPaywall.check()) return;
       handleStart(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));

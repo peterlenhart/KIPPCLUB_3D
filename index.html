@@ -1319,6 +1319,28 @@ Merken, Logik, Kopfzerbrechen.">
     window.addEventListener("resize", rebuild);
     requestAnimationFrame(rebuild);
 
+    // KIPP CLUB: ?wall=<key> Parameter → Karussell auf passende Wall scrollen
+    (function setupWallParam() {
+      const WALL_INDEX = { numbers:0, kids:1, icons:1, smileys:2, card:3, queen:4, king:5 };
+      const param = new URLSearchParams(location.search).get('wall');
+      if (!param) return;
+      const idx = WALL_INDEX[param];
+      if (idx == null) return;
+      const scrollWhenReady = (tries) => {
+        const car = document.getElementById('wallCarousel');
+        if (!car) { if (tries > 0) setTimeout(() => scrollWhenReady(tries-1), 50); return; }
+        const slides = car.querySelectorAll('.wallSlide');
+        if (!slides.length) { if (tries > 0) setTimeout(() => scrollWhenReady(tries-1), 50); return; }
+        const target = slides[idx];
+        if (!target) return;
+        // Bei scroll-snap genuegt scrollLeft auf die Slide-Position
+        car.scrollLeft = target.offsetLeft;
+      };
+      // Mehrfach versuchen, falls Layout noch nicht stabil ist
+      scrollWhenReady(20);
+      window.addEventListener('load', () => scrollWhenReady(5));
+    })();
+
     // KIPP 27: Einmaliges Setup — Preis-Label + Haken bei gesetztem Flag erzeugen
     (function setupKipp27Played() {
       let played = false;
