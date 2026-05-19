@@ -1,12 +1,14 @@
 {
   "name": "KIPP CLUB",
   "short_name": "KIPP CLUB",
-  "description": "3D KIPP SPIELE – Merken, Logik, Kopfzerbrechen.",
+  "description": "3D KIPP SPIELE — Merken, Logik, Kopfzerbrechen.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#000000",
   "theme_color": "#4a2418",
-  "orientation": "portrait",
+  "lang": "de",
   "icons": [
     {
       "src": "icon-192.png",
