@@ -36,7 +36,7 @@ Merken, Logik, Kopfzerbrechen.">
       --scale: 0.333333;
       --uiscale: 3;
       --gridW: calc(var(--cols) * var(--cell));
-      --gridH: 100vh;
+      --gridH: calc(var(--gridW) * 16 / 9);
 
       --ui-panel-bg: #4a2418;
       --ui-text: #ead7be;
@@ -161,9 +161,9 @@ Merken, Logik, Kopfzerbrechen.">
     #wallCarousel {
       position: absolute;
       left: 0;
-      top: calc(4 * var(--cell));
+      top: calc(22% + 112px);
       width: var(--gridW);
-      height: calc(9 * var(--cell));
+      height: calc(70% - 142px);
       overflow-x: auto;
       overflow-y: hidden;
       scroll-snap-type: x mandatory;
