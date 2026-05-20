@@ -36,7 +36,7 @@ Merken, Logik, Kopfzerbrechen.">
       --scale: 0.333333;
       --uiscale: 3;
       --gridW: calc(var(--cols) * var(--cell));
-      --gridH: calc(var(--gridW) * 16 / 9);
+      --gridH: 100vh;
 
       --ui-panel-bg: #4a2418;
       --ui-text: #ead7be;
@@ -1016,6 +1016,14 @@ Merken, Logik, Kopfzerbrechen.">
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
+
+      // KIPP CLUB Fix: --gridH unabhaengig vom Anzeigemodus (Browser vs PWA standalone).
+      // window.screen.height ist konstant auf einem Geraet, window.innerHeight aendert sich
+      // mit URL-Leiste / Standalone-Modus. Wir verwenden screen.height und rechnen
+      // auf Pre-Scale-Pixel um, damit die internen Prozent-Positionen konstant bleiben.
+      const physicalH = (window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+      const gridH = physicalH / scale;
+      document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       const uiscale = 1 / (scale || 1);
       document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
