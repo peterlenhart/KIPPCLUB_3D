@@ -102,7 +102,7 @@ Merken, Logik, Kopfzerbrechen.">
     #kippClubSubtitle {
       position: absolute;
       left: 0;
-      top: 22%;
+      top: calc(22% - 10px);
       width: var(--gridW);
       height: 135px;
       line-height: 135px;
@@ -161,7 +161,7 @@ Merken, Logik, Kopfzerbrechen.">
     #wallCarousel {
       position: absolute;
       left: 0;
-      top: calc(22% + 112px);
+      top: calc(22% + 92px);
       width: var(--gridW);
       height: calc(70% - 142px);
       overflow-x: auto;
@@ -1165,7 +1165,7 @@ Merken, Logik, Kopfzerbrechen.">
       // KIPP 21 Banner: 10px unter dem unteren Rand des suedlichsten Hinweistexts
       // Hinweistext top (Card-Variante): spielenRow11Y + 227, line-height 49 -> unterer Rand + 49 -> + 10 Gap
       const kipp21Banner = document.getElementById("kipp21Banner");
-      const bannerTop = spielenRow11Y + 227 + 49 + 10;
+      const bannerTop = spielenRow11Y + 227 + 49 + 10 - 20;
       if (kipp21Banner) {
         kipp21Banner.style.top = bannerTop + "px";
       }
