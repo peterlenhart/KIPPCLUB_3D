@@ -1165,7 +1165,7 @@ Merken, Logik, Kopfzerbrechen.">
       // KIPP 21 Banner: 10px unter dem unteren Rand des suedlichsten Hinweistexts
       // Hinweistext top (Card-Variante): spielenRow11Y + 227, line-height 49 -> unterer Rand + 49 -> + 10 Gap
       const kipp21Banner = document.getElementById("kipp21Banner");
-      const bannerTop = spielenRow11Y + 227 + 49 + 10 - 60;
+      const bannerTop = spielenRow11Y + 227 + 49 + 10 - 60 + 60;
       if (kipp21Banner) {
         kipp21Banner.style.top = bannerTop + "px";
       }
@@ -1309,10 +1309,12 @@ Merken, Logik, Kopfzerbrechen.">
 
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
-      // KIPP CLUB Fix: screen.height ist konstant zwischen Browser und PWA-Standalone-Modus.
-      // innerHeight aendert sich (URL-Leiste sichtbar oder nicht) und verschiebt damit alle
-      // vh-basierten CSS-Positionen.
-      const vh = (window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+      // KIPP CLUB Fix: Auf Touch-Geraeten (Handy/Tablet) verwenden wir screen.height,
+      // weil dieser Wert konstant zwischen Browser und PWA-Standalone-Modus ist.
+      // Auf Desktop verwenden wir innerHeight (Chrome-Fenstergroesse), weil dort
+      // screen.height der gesamte Monitor waere.
+      const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      const vh = (isTouch && window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
       const effective = vh / (scale || 1);
       const rows = Math.ceil(effective / cell) + 1;
       const gridH = rows * cell;
