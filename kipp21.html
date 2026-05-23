@@ -5165,6 +5165,10 @@
           drawGoldenBorder(gameCards[cardIdx]);
           gameCards[cardIdx].mesh.scale.set(1, 1, 1);
           kipp21Done++;
+          // Freispiel beim ersten Treffer verbrauchen
+          if (kipp21Done === 1) {
+            try { localStorage.setItem('digikipp_kipp27_played', '1'); } catch(e) {}
+          }
           updateProgressDots(kipp21Done, -1);
           
           // Card fliegt zum Treffer-Slot
