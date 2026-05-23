@@ -13358,12 +13358,12 @@
         'display:flex;align-items:center;justify-content:center;margin-top:35px;';
       backBtn.onclick = () => {
         ov.remove();
-        if (!fromGame && directMode) showBluffModeSelection();
+        if (directMode) showBluffModeSelection();
       };
       backBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         ov.remove();
-        if (!fromGame && directMode) showBluffModeSelection();
+        if (directMode) showBluffModeSelection();
       }, { passive: false });
       selectWrap.appendChild(backBtn);
 
@@ -13426,7 +13426,7 @@
           'display:flex;align-items:center;justify-content:center;';
         okBtn.onclick = () => {
           ov.remove();
-          if (directMode) {
+          if (!fromGame && directMode) {
             showBluffModeSelection();
           }
         };
