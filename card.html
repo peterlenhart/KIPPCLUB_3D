@@ -13300,7 +13300,7 @@
       })();
     }
 
-    function showCardAnleitung(directMode) {
+    function showCardAnleitung(directMode, fromGame) {
       const old = document.getElementById('_cardAnleitungOverlay');
       if (old) old.remove();
 
@@ -13358,12 +13358,12 @@
         'display:flex;align-items:center;justify-content:center;margin-top:35px;';
       backBtn.onclick = () => {
         ov.remove();
-        if (directMode) showBluffModeSelection();
+        if (!fromGame && directMode) showBluffModeSelection();
       };
       backBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         ov.remove();
-        if (directMode) showBluffModeSelection();
+        if (!fromGame && directMode) showBluffModeSelection();
       }, { passive: false });
       selectWrap.appendChild(backBtn);
 
@@ -14418,7 +14418,7 @@
         vkRaycaster.setFromCamera(vkMouse, camera);
         if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
             (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
-          showCardAnleitung(window._cardMode || 'offen');
+          showCardAnleitung(window._cardMode || 'offen', true);
           lastTouchPos = null;
           return;
         }
@@ -14776,7 +14776,7 @@
       if (window._anlBtnIconMesh && window._anlBtnIconMesh.visible) {
         if (vkRaycaster.intersectObject(window._anlBtnIconMesh).length > 0 ||
             (window._anlBtnTextMesh && vkRaycaster.intersectObject(window._anlBtnTextMesh).length > 0)) {
-          showCardAnleitung(window._cardMode || 'offen');
+          showCardAnleitung(window._cardMode || 'offen', true);
           return;
         }
       }
