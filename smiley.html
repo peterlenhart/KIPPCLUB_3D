@@ -7118,6 +7118,7 @@
       // SMILEY: Kärtchen + Hände einblenden, dann Post-Korrektur, dann Scrollband
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
       show3erPaket();
+      revealHandMeshes();
       await _smileyPostWobbleCorrection();
 
       // Anti-Sofort-Treffer: falls Ausgangslage schon erfüllt, 1 Kipp weg
@@ -7329,6 +7330,7 @@
 
       // Hände und Scrollband einblenden
       show3erPaket();
+      revealHandMeshes();
 
       // Anti-Sofort-Treffer nach Eckblick
       if (checkSmileyTreffer()) {
@@ -9428,6 +9430,7 @@
 
       // 3er-Paket (Hände) einblenden
       show3erPaket();
+      revealHandMeshes();
 
       // Kein Kärtchen — direkt starten
       startKipp21(false);
@@ -9550,7 +9553,8 @@
       });
       updateCubeMaterials();
 
-      // === 3er-Paket einblenden: Spieltisch + Hände + Rahmen — erst nach Wobble (via runKipp21WobbleKniff) ===
+      // === 3er-Paket: Hände unsichtbar aufbauen — revealHandMeshes() kommt nach Wobble ===
+      show3erPaket();
 
       // Kärtchen sofort einblenden — vor dem Wobble
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
@@ -9712,6 +9716,7 @@
             m.rotation.z = -pos3D[3] * Math.PI / 180;
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
+            m.visible = false; // Hände starten unsichtbar — revealHandMeshes() macht sie sichtbar
             scene.add(m);
             window._handMeshes3D.push(m);
           });
@@ -9720,6 +9725,10 @@
 
       // Rahmen sichtbar (spieltisch ist IMMER sichtbar)
       if (window._rahmenMesh) window._rahmenMesh.visible = true;
+    }
+
+    function revealHandMeshes() {
+      if (window._handMeshes3D) window._handMeshes3D.forEach(m => { m.visible = true; });
     }
 
     function hide3erPaket() {
