@@ -7117,7 +7117,7 @@
 
       // SMILEY: Kärtchen + Hände einblenden, dann Post-Korrektur, dann Scrollband
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
-      show3erPaket(() => { window._handMeshes3D.forEach(m => m.visible = true); });
+      show3erPaket();
       await _smileyPostWobbleCorrection();
 
       // Anti-Sofort-Treffer: falls Ausgangslage schon erfüllt, 1 Kipp weg
@@ -7328,7 +7328,7 @@
       window._smileyFaceForEckblick = null;
 
       // Hände und Scrollband einblenden
-      show3erPaket(() => { window._handMeshes3D.forEach(m => m.visible = true); });
+      show3erPaket();
 
       // Anti-Sofort-Treffer nach Eckblick
       if (checkSmileyTreffer()) {
@@ -9426,9 +9426,6 @@
       }
       updateCubeMaterials();
 
-      // 3er-Paket (Hände) einblenden
-      show3erPaket(() => { window._handMeshes3D.forEach(m => m.visible = true); });
-
       // Kein Kärtchen — direkt starten
       startKipp21(false);
       if (kipp21CardStates[0] !== undefined) kipp21CardStates[0] = 'offen';
@@ -9549,9 +9546,6 @@
         });
       });
       updateCubeMaterials();
-
-      // === 3er-Paket: Hände unsichtbar aufbauen — revealHandMeshes() kommt nach Wobble ===
-      show3erPaket();
 
       // Kärtchen sofort einblenden — vor dem Wobble
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
@@ -9895,6 +9889,8 @@
     }
 
     function showScrollband() {
+      // Hände zeitgleich mit Scrollband sichtbar machen
+      if (window._handMeshes3D) window._handMeshes3D.forEach(m => { m.visible = true; });
       const el = document.getElementById('numBtns');
       if (!el) return;
       el.style.top = '497px';
