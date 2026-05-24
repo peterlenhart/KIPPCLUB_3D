@@ -9426,6 +9426,9 @@
       }
       updateCubeMaterials();
 
+      // 3er-Paket (Hände) einblenden
+      show3erPaket();
+
       // Kein Kärtchen — direkt starten
       startKipp21(false);
       if (kipp21CardStates[0] !== undefined) kipp21CardStates[0] = 'offen';
@@ -9547,6 +9550,9 @@
       });
       updateCubeMaterials();
 
+      // === 3er-Paket einblenden: Spieltisch + Hände + Rahmen ===
+      show3erPaket();
+
       // Kärtchen sofort einblenden — vor dem Wobble
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
 
@@ -9664,7 +9670,7 @@
     // Globale Hand-Zuweisung (wird bei show3erPaket gesetzt)
     window._currentHandAssignment = null;
 
-    function show3erPaket(onReady) {
+    function show3erPaket() {
       if (!selectedSmileys || !selectedSmileys[0]) return;
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
@@ -9673,6 +9679,7 @@
       window._currentHandAssignment = assignment;
       const allColors = ['orange', 'gruen', 'blau', 'violett'];
 
+      // Alle 4 Hand-Texturen laden, dann platzieren
       const textures = {};
       let loaded = 0;
       allColors.forEach(color => {
@@ -9689,6 +9696,9 @@
           const positions = HAND_FIELD_POS[fieldColor];
           positions.forEach((pos3D, idx) => {
             const handColor = assignment[fieldColor][idx];
+            // Sichtbare Hände pro Level:
+            // MBr(orange)=alle, Brain(grün)=grün+blau+violett, Brainy(blau)=blau+violett, BBr(violett)=nur violett
+            // Nur Hände in Level-Farbe zeigen
             if (handColor !== levelColor) return;
             const geo = new THREE.PlaneGeometry(HAND_SIZE_3D, HAND_SIZE_3D);
             const m3 = new THREE.MeshBasicMaterial({
@@ -9703,27 +9713,19 @@
             m.rotation.z = -pos3D[3] * Math.PI / 180;
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
-            m.visible = false;
             scene.add(m);
             window._handMeshes3D.push(m);
           });
         });
-        if (onReady) onReady();
       }
 
       // Rahmen sichtbar (spieltisch ist IMMER sichtbar)
       if (window._rahmenMesh) window._rahmenMesh.visible = true;
     }
 
-    function revealHandMeshes() {
-      window._handsRevealed = true;
-      if (window._handMeshes3D) window._handMeshes3D.forEach(m => { m.visible = true; });
-    }
-
     function hide3erPaket() {
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
-      window._handsRevealed = false;
       if (window._rahmenMesh) window._rahmenMesh.visible = false;
     }
 
@@ -9889,8 +9891,6 @@
     }
 
     function showScrollband() {
-      // Hände zeitgleich mit Scrollband sichtbar machen
-      if (window._handMeshes3D) window._handMeshes3D.forEach(m => { m.visible = true; });
       const el = document.getElementById('numBtns');
       if (!el) return;
       el.style.top = '497px';
