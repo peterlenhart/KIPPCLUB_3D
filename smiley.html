@@ -9699,9 +9699,6 @@
           const positions = HAND_FIELD_POS[fieldColor];
           positions.forEach((pos3D, idx) => {
             const handColor = assignment[fieldColor][idx];
-            // Sichtbare Hände pro Level:
-            // MBr(orange)=alle, Brain(grün)=grün+blau+violett, Brainy(blau)=blau+violett, BBr(violett)=nur violett
-            // Nur Hände in Level-Farbe zeigen
             if (handColor !== levelColor) return;
             const geo = new THREE.PlaneGeometry(HAND_SIZE_3D, HAND_SIZE_3D);
             const m3 = new THREE.MeshBasicMaterial({
@@ -9716,7 +9713,8 @@
             m.rotation.z = -pos3D[3] * Math.PI / 180;
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
-            m.visible = false; // Hände starten unsichtbar — revealHandMeshes() macht sie sichtbar
+            // Hände starten unsichtbar — werden per Flag sichtbar nach Wobble
+            m.visible = window._handsRevealed === true;
             scene.add(m);
             window._handMeshes3D.push(m);
           });
@@ -9728,12 +9726,14 @@
     }
 
     function revealHandMeshes() {
+      window._handsRevealed = true;
       if (window._handMeshes3D) window._handMeshes3D.forEach(m => { m.visible = true; });
     }
 
     function hide3erPaket() {
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
+      window._handsRevealed = false;
       if (window._rahmenMesh) window._rahmenMesh.visible = false;
     }
 
