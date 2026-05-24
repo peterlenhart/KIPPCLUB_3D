@@ -9426,9 +9426,6 @@
       }
       updateCubeMaterials();
 
-      // 3er-Paket (Hände) einblenden
-      show3erPaket();
-
       // Kein Kärtchen — direkt starten
       startKipp21(false);
       if (kipp21CardStates[0] !== undefined) kipp21CardStates[0] = 'offen';
@@ -9549,9 +9546,6 @@
         });
       });
       updateCubeMaterials();
-
-      // === 3er-Paket einblenden: Spieltisch + Hände + Rahmen ===
-      show3erPaket();
 
       // Kärtchen sofort einblenden — vor dem Wobble
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
