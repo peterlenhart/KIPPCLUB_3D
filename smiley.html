@@ -7117,8 +7117,7 @@
 
       // SMILEY: Kärtchen + Hände einblenden, dann Post-Korrektur, dann Scrollband
       _showKaertchen(window._smileyTargetColor, window._smileyTargetSrc);
-      show3erPaket();
-      revealHandMeshes();
+      show3erPaket(() => { window._handMeshes3D.forEach(m => m.visible = true); });
       await _smileyPostWobbleCorrection();
 
       // Anti-Sofort-Treffer: falls Ausgangslage schon erfüllt, 1 Kipp weg
@@ -7329,8 +7328,7 @@
       window._smileyFaceForEckblick = null;
 
       // Hände und Scrollband einblenden
-      show3erPaket();
-      revealHandMeshes();
+      show3erPaket(() => { window._handMeshes3D.forEach(m => m.visible = true); });
 
       // Anti-Sofort-Treffer nach Eckblick
       if (checkSmileyTreffer()) {
@@ -9429,8 +9427,7 @@
       updateCubeMaterials();
 
       // 3er-Paket (Hände) einblenden
-      show3erPaket();
-      revealHandMeshes();
+      show3erPaket(() => { window._handMeshes3D.forEach(m => m.visible = true); });
 
       // Kein Kärtchen — direkt starten
       startKipp21(false);
@@ -9673,7 +9670,7 @@
     // Globale Hand-Zuweisung (wird bei show3erPaket gesetzt)
     window._currentHandAssignment = null;
 
-    function show3erPaket() {
+    function show3erPaket(onReady) {
       if (!selectedSmileys || !selectedSmileys[0]) return;
       window._handMeshes3D.forEach(m => { scene.remove(m); });
       window._handMeshes3D = [];
@@ -9682,7 +9679,6 @@
       window._currentHandAssignment = assignment;
       const allColors = ['orange', 'gruen', 'blau', 'violett'];
 
-      // Alle 4 Hand-Texturen laden, dann platzieren
       const textures = {};
       let loaded = 0;
       allColors.forEach(color => {
@@ -9713,12 +9709,12 @@
             m.rotation.z = -pos3D[3] * Math.PI / 180;
             m.position.set(pos3D[0], pos3D[1], pos3D[2]);
             m.renderOrder = 2;
-            // Hände starten unsichtbar — werden per Flag sichtbar nach Wobble
-            m.visible = window._handsRevealed === true;
+            m.visible = false;
             scene.add(m);
             window._handMeshes3D.push(m);
           });
         });
+        if (onReady) onReady();
       }
 
       // Rahmen sichtbar (spieltisch ist IMMER sichtbar)
