@@ -2385,8 +2385,9 @@ const LVL_T = {
 
           document.addEventListener("mousemove", function(e) {
             if (!mouseDragActive) return;
+            var scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 0.3333;
             var dx = e.clientX - mouseDragStartX;
-            car.scrollLeft = mouseDragScrollLeft - dx;
+            car.scrollLeft = mouseDragScrollLeft - dx / scale;
           });
 
           document.addEventListener("mouseup", function(e) {
