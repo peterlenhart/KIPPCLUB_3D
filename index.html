@@ -161,7 +161,7 @@ Merken, Logik, Kopfzerbrechen.">
     #wallCarousel {
       position: absolute;
       left: 0;
-      top: calc(22% + 52px);
+      top: calc(5 * var(--cell)); /* Fix: war calc(22% + 52px) */
       width: var(--gridW);
       height: calc(70% - 142px);
       overflow-x: auto;
