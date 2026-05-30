@@ -2114,7 +2114,6 @@
       const pokal = document.getElementById('btnBestScores');
       if (!pokal) return;
       const pRect = pokal.getBoundingClientRect();
-      // Container-Offset ermitteln, damit getBoundingClientRect (Viewport) zu Container-relativ wird
       const _ctnRect = _hostContainer.getBoundingClientRect();
       const _hpP = _queenHandPosForCenter(
         pRect.left + pRect.width / 2 - _ctnRect.left,
@@ -9092,7 +9091,8 @@
       if (!highheelsEl) return;
       // Bildschirm-Mitte des Highheels-Items berechnen
       const rect = highheelsEl.getBoundingClientRect();
-      const _hp = _queenHandPosForCenter(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      const _uiRect = (document.getElementById('uiOverlay') || document.getElementById('container')).getBoundingClientRect();
+      const _hp = _queenHandPosForCenter(rect.left + rect.width / 2 - _uiRect.left, rect.top + rect.height / 2 - _uiRect.top);
       const targetX = _hp.left;
       const targetY = _hp.top;
       
@@ -9120,7 +9120,8 @@
       const okBtn = document.getElementById('statusPreviewOK');
       if (okBtn) {
         const okRect = okBtn.getBoundingClientRect();
-        const _hp2 = _queenHandPosForCenter(okRect.left + okRect.width / 2, okRect.top + okRect.height / 2);
+        const _uiRect2 = (document.getElementById('uiOverlay') || document.getElementById('container')).getBoundingClientRect();
+        const _hp2 = _queenHandPosForCenter(okRect.left + okRect.width / 2 - _uiRect2.left, okRect.top + okRect.height / 2 - _uiRect2.top);
         const okX = _hp2.left - 6; // 6px westlicher
         const okY = _hp2.top;
         hand.style.transition = 'left 0.7s ease, top 0.7s ease';
@@ -9157,10 +9158,9 @@
     
     // Berechnet linke obere Ecke der Hand-Datei, sodass Fingerspitze exakt auf (centerX, centerY) liegt
     function _queenHandPosForCenter(centerX, centerY) {
-      const _cr = (document.getElementById('container') || document.getElementById('uiOverlay')).getBoundingClientRect();
       return {
-        left: centerX - _cr.left - _QUEEN_HAND_ANCHOR_X,
-        top:  centerY - _cr.top  - _QUEEN_HAND_ANCHOR_Y
+        left: centerX - _QUEEN_HAND_ANCHOR_X,
+        top:  centerY - _QUEEN_HAND_ANCHOR_Y
       };
     }
     
