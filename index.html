@@ -1309,15 +1309,29 @@ Merken, Logik, Kopfzerbrechen.">
 
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
-      // KIPP CLUB Fix: Auf Touch-Geraeten (Handy/Tablet) verwenden wir screen.height,
-      // weil dieser Wert konstant zwischen Browser und PWA-Standalone-Modus ist.
-      // Auf Desktop verwenden wir innerHeight (Chrome-Fenstergroesse), weil dort
-      // screen.height der gesamte Monitor waere.
-      const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-      const vh = (isTouch && window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
-      const effective = vh / (scale || 1);
-      const rows = Math.ceil(effective / cell) + 1;
-      const gridH = rows * cell;
+
+      // ZOOM-FIX:
+      // Handyansicht bleibt unverändert dynamisch.
+      // Erst ab Tablet/PC-Breite wird die interne Retina-Höhe fixiert.
+      // Dadurch beziehen sich Hintergrund, Slogan, Karussell, Pfeile,
+      // Preis-/Spielen-Texte und Banner beim Maus-Zoom auf dieselbe Fläche.
+      const isPhoneWidth = window.innerWidth <= 480;
+
+      let gridH;
+      if (isPhoneWidth) {
+        // Original-Logik für Handy: nicht angreifen.
+        const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        const vh = (isTouch && window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+        const effective = vh / (scale || 1);
+        const rows = Math.ceil(effective / cell) + 1;
+        gridH = rows * cell;
+      } else {
+        // Feste 17-Zeilen-Retina-Arbeitsfläche: 17 * 135 = 2295.
+        // Das entspricht der bisherigen Handy-Logik bei 720px sichtbarer Höhe
+        // und verhindert, dass Prozentpositionen beim Browser-Zoom driften.
+        gridH = 17 * cell;
+      }
+
       document.documentElement.style.setProperty("--gridH", gridH + "px");
       positionUI();
     }
