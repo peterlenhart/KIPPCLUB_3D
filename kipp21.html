@@ -9014,6 +9014,8 @@
             if (gamePhase === 'kipp21' && kipp21Active) {
               kipp21KippCount++; kipp21RoundKipps++;
               hintText.innerHTML = formatKipps(kipp21KippCount);
+              const _kl = document.getElementById('kipps21Label');
+              if (_kl) _kl.innerHTML = formatKipps(kipp21KippCount);
               checkOnTargetAfterKipp();
             }
           }
