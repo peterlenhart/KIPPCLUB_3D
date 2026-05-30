@@ -793,6 +793,21 @@ Merken, Logik, Kopfzerbrechen.">
     .lvl-sub-big { font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; }
     #levelClose { position:absolute; top:12px; left:16px; width:48px; height:48px; cursor:pointer; background:none; border:none; padding:0; -webkit-tap-highlight-color:transparent; pointer-events:auto; }
     #levelClose img { width:100%; height:100%; object-fit:contain; }
+
+    /* PC/TABLET-POSITIONSKORREKTUR:
+       Handy bleibt unverändert.
+       Ab 481px Breite werden Slogan + Karussell gemeinsam
+       45 sichtbare Pixel = 135 interne Retina-Pixel südlicher gesetzt. */
+    @media (min-width: 481px) {
+      #kippClubSubtitle {
+        top: calc(22% + 45px);
+      }
+
+      #wallCarousel {
+        top: calc(22% + 127px);
+      }
+    }
+
   </style>
   <script>
     // Frühestmögliche Skalierung, damit Flashscreen und Layout nicht erst
