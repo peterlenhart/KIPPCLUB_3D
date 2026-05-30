@@ -802,7 +802,7 @@ Merken, Logik, Kopfzerbrechen.">
       var cell = 135;
       var gridW = cols * cell; // 1080 Retina-Pixel
       var vw = window.innerWidth || document.documentElement.clientWidth || 360;
-      var scale = Math.min(1, vw / gridW);
+      var scale = Math.min(0.333333, vw / gridW);
       var root = document.documentElement;
       root.style.setProperty("--scale", scale.toFixed(4));
       root.style.setProperty("--gridW", gridW + "px");
@@ -1012,7 +1012,7 @@ Merken, Logik, Kopfzerbrechen.">
       const vw = window.innerWidth;
 
       const targetW = vw;
-      const scale = Math.min(1, targetW / gridW);
+      const scale = Math.min(0.333333, targetW / gridW);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
