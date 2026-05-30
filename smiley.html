@@ -9924,6 +9924,7 @@
     function _smileyShowScrollTutorialHand() {
       if (window._smileyScrollTutorialDone) return;
       window._smileyScrollTutorialDone = true;
+      window._smileyBandTutRunning = true;
       
       const sb = document.getElementById('numBtns');
       const strip = document.getElementById('scrollBandStrip');
@@ -10005,6 +10006,7 @@
       setTimeout(() => {
         if (hand && hand.parentNode) hand.parentNode.removeChild(hand);
         strip.style.transition = _origStripTransition || 'transform 0.25s ease';
+        window._smileyBandTutRunning = false;
       }, 4300);
     }
 
@@ -12141,7 +12143,7 @@
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
 
-    // === SCROLLBAND (1-11, Grundstellung 6) — exakt wie coloricon ===
+    // === SCROLLBAND (1-11, Grundstellung 6) ===
     (function() {
       const strip = document.getElementById('scrollBandStrip');
       const wrap = document.getElementById('scrollBandWrap');
@@ -12149,13 +12151,14 @@
       
       const CELL_W = 56;
       const TOTAL = 11;
-      let bandIdx = 5;
+      let bandIdx = 5; // 0-basiert, 5 = Zahl 6
       let currentNum = null;
       let touchStartX = 0;
       let touchStartIdx = 0;
       
       function updateBandPos(animate) {
         const wrapW = wrap.offsetWidth || 306;
+        // Alle Buttons haben fixe Breite CELL_W — Position ist immer exakt berechenbar
         const offset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
@@ -12166,6 +12169,7 @@
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
           const dist = Math.abs(i - bandIdx);
+          // Breite IMMER fix — nur font-size und opacity skalieren
           b.style.minWidth = CELL_W + 'px';
           b.style.maxWidth = CELL_W + 'px';
           b.classList.toggle('center', dist === 0);
@@ -12195,6 +12199,7 @@
         updateBandPos(true);
       }
       
+      // Touch: Swipe with momentum
       let touchMoved = false;
       let lastMoveX = 0;
       let lastMoveTime = 0;
@@ -12223,6 +12228,7 @@
         const x = e.touches[0].clientX;
         const dx = x - touchStartX;
         if (Math.abs(dx) > 4) touchMoved = true;
+        
         const dt = now - lastMoveTime;
         if (dt > 0 && dt < 60) {
           velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
@@ -12232,9 +12238,13 @@
         lastMoveX = x;
         lastMoveTime = now;
         pixelOffset = dx;
+
+        // Exakte Position: alle Zellen fix CELL_W breit
         const wrapW = wrap.offsetWidth || 306;
         const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
         strip.style.transform = 'translateX(' + tx + 'px)';
+
+        // Zentrierte Zahl direkt aus translateX
         bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
         updateBandStyle();
       }, { passive: false });
@@ -12245,6 +12255,7 @@
         setTimeout(() => { window._numBtnTouchActive = false; }, 100);
 
         if (!touchMoved) {
+          // Tap
           const touch = e.changedTouches[0];
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = touch.clientX - wrapRect.left;
@@ -12253,7 +12264,7 @@
           if (tappedIdx === bandIdx) {
             const n = bandIdx + 1;
             selectNum(n);
-            if (!isAnimating && !kipp21KniffActive) { // Gesperrt während Kipp-Blick
+            if (!isAnimating && !kipp21KniffActive) {
               (async () => {
                 for (let i = 0; i < n; i++) {
                   let dir;
@@ -12274,11 +12285,16 @@
             updateBandPos(true);
           }
         } else {
+          // Schwung: aktuelle translateX + velocity-Auslauf → Ziel-Index
           const wrapW = wrap.offsetWidth || 306;
           const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
           const txCoasted = tx + velocity * 150;
           bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
+
+          // Zielposition
           const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
+
+          // Gedämpfte Schwingung: Pendel-Einschnapp
           const startX = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
           const dist = snapOffset - startX;
           const t0 = performance.now();
@@ -12286,8 +12302,10 @@
           const A = 0.18;
           const omega = 1.8 * 2 * Math.PI;
           const damping = 5.5;
+
           strip.style.transition = 'none';
           updateBandStyle();
+
           function pendulumSnap() {
             const t = (performance.now() - t0) / dur;
             if (t >= 1) {
@@ -12305,12 +12323,11 @@
         }
       }, { passive: false });
 
-      // Mouse-Drag: Scrollband mit Maus ziehen
-      // dx durch --scale teilen → interne Pixel, identisch zur Touch-Logik
+      // Mouse-Drag: identisch zu coloricon
       let mouseBandActive = false;
       wrap.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
-        if (replayActive) return;
+        if (replayActive || window._smileyBandTutRunning) return;
         e.stopPropagation();
         mouseBandActive = true;
         touchStartX = e.clientX;
@@ -12326,8 +12343,6 @@
       });
       document.addEventListener('mousemove', (e) => {
         if (!mouseBandActive) return;
-        if (replayActive) { mouseBandActive = false; wrap.style.cursor = ''; return; }
-        const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 0.3333;
         const now = performance.now();
         const x = e.clientX;
         const dx = x - touchStartX;
@@ -12341,9 +12356,7 @@
         const wrapW = wrap.offsetWidth || 306;
         const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
         strip.style.transform = 'translateX(' + tx + 'px)';
-        // bandIdx mit scale-Korrektur: zeigt immer auf die visuell zentrierte Zahl
-        const dxLayout = dx / scale;
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round(touchStartIdx - dxLayout / CELL_W)));
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
         updateBandStyle();
       });
       document.addEventListener('mouseup', (e) => {
@@ -12351,6 +12364,7 @@
         mouseBandActive = false;
         wrap.style.cursor = '';
         if (!touchMoved) {
+          // Prüfen ob Klick auf die zentrierte Zahl oder eine Nebenzahl
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = e.clientX - wrapRect.left;
           const wrapW = wrapRect.width;
@@ -12358,6 +12372,7 @@
           const cellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
           const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
           if (tappedIdx !== bandIdx) {
+            // Nebenzahl angeklickt → Band dorthin schieben, kein Kipp
             bandIdx = tappedIdx;
             updateBandPos(true);
             return;
@@ -12405,16 +12420,27 @@
       });
       wrap.addEventListener('dragstart', (e) => e.preventDefault());
 
+      // Desktop click fallback — identisch zu coloricon
       wrap.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (replayActive || window._smileyBandTutRunning) return;
         const wrapRect = wrap.getBoundingClientRect();
         const tapX = e.clientX - wrapRect.left;
         const wrapW = wrapRect.width;
-        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round((tapX - wrapW / 2) / CELL_W)));
-        if (tappedIdx === bandIdx) {
+        const centerX = wrapW / 2;
+        const firstBtn = strip.querySelector('.numBtn');
+        const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+        const offsetFromCenter = tapX - centerX;
+        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
+        
+        if (tappedIdx !== bandIdx) {
+          // Nicht-mittige Zahl: Band dorthin schieben
+          bandIdx = tappedIdx;
+          updateBandPos(true);
+        } else {
           const n = bandIdx + 1;
           selectNum(n);
-          if (!isAnimating && !kipp21KniffActive) { // Gesperrt während Kipp-Blick
+          if (!isAnimating && !kipp21KniffActive) {
             (async () => {
               for (let i = 0; i < n; i++) {
                 let dir;
@@ -12430,9 +12456,6 @@
               if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
             })();
           }
-        } else {
-          bandIdx = tappedIdx;
-          updateBandPos(true);
         }
       });
       
