@@ -10646,6 +10646,19 @@
         mouseBandActive = false;
         wrap.style.cursor = '';
         if (!touchMoved) {
+          // Prüfen ob Klick auf die zentrierte Zahl oder eine Nebenzahl
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = e.clientX - wrapRect.left;
+          const wrapW = wrapRect.width;
+          const firstBtn = strip.querySelector('.numBtn');
+          const cellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
+          if (tappedIdx !== bandIdx) {
+            // Nebenzahl angeklickt → Band dorthin schieben, kein Kipp
+            bandIdx = tappedIdx;
+            updateBandPos(true);
+            return;
+          }
           const n = bandIdx + 1;
           selectNum(n);
           if (gamePhase === 'spielen' && !isAnimating) {
