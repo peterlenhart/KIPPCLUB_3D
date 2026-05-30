@@ -5203,15 +5203,6 @@
               return;
             }
             console.log('[END] kipp21Done='+kipp21Done+', calling showEndButtons');
-            // DEBUG: Sichtbarer Status am Spielende
-            let dbg = document.getElementById('endDebug');
-            if (!dbg) {
-              dbg = document.createElement('div');
-              dbg.id = 'endDebug';
-              dbg.style.cssText = 'position:absolute;bottom:4px;left:4px;font:bold 10px monospace;color:#0f0;background:rgba(0,0,0,0.85);padding:3px 6px;z-index:35;pointer-events:none;max-width:350px;word-wrap:break-word;';
-              document.getElementById('uiOverlay').appendChild(dbg);
-            }
-            dbg.textContent = 'END: done='+kipp21Done+' kipps='+kipp21KippCount+' phase='+gamePhase;
             let isNewRecord = false;
             try {
               kipp21Active = false;
