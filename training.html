@@ -12957,6 +12957,378 @@
 
     // DEBUG: If this text appears, the script reached the end without crash
 
+    // ============================================================
+    // MOUSE-ADAPTER: Desktop-Maussteueurng für Würfelkippen
+    // Simuliert touchstart/touchmove/touchend per mousedown/mousemove/mouseup.
+    // mousemove + mouseup auf document (damit Drag nicht abbricht wenn Maus
+    // den Canvas verlässt).
+    // ============================================================
+    (function setupMouseKippen() {
+      const el = renderer.domElement;
+      let mouseIsDown = false;
+
+      // Hilfsfunktion: einheitliche Koordinaten aus Mouse-Event
+      function pt(e) { return { clientX: e.clientX, clientY: e.clientY }; }
+
+      // ----------------------------------------------------------
+      // MOUSEDOWN → touchstart-Logik
+      // ----------------------------------------------------------
+      el.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        mouseIsDown = true;
+        if (replayActive) return;
+
+        const touch = pt(e);
+
+        // === BUMBLEBRAIN: Raycaster-Hit auf Würfel (Kipp-Start) ===
+        if (!kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating && window._kippTarget) {
+          const rectBD = el.getBoundingClientRect();
+          vkMouse.x = ((touch.clientX - rectBD.left) / rectBD.width) * 2 - 1;
+          vkMouse.y = -((touch.clientY - rectBD.top)  / rectBD.height) * 2 + 1;
+          vkRaycaster.setFromCamera(vkMouse, camera);
+          if (vkRaycaster.intersectObject(cube, true).length > 0) {
+            kippSwipeStartX = touch.clientX;
+            kippSwipeStartY = touch.clientY;
+            kippIsSwiping = true;
+          }
+        }
+
+        // BUMBLEBRAIN: Long-Click-Timer (simuliert Long-Tap)
+        if (window._kippSlotsHidden && window._kippTarget && !window._kippResultRunning) {
+          window._kippLongTapPos   = { x: touch.clientX, y: touch.clientY };
+          window._kippLongTapStart = Date.now();
+        }
+
+        // lastTouchPos für Tap-Erkennung (verdecktes Kippziel, KIPP21 Cards)
+        if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        }
+        if (gameCards[0] && gameCards[0].mesh.visible) {
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        }
+        if (gamePhase === 'kipp21' && kipp21Active) {
+          dismissKippenWarning();
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        }
+
+        // === Eckblick-Drag (pause phase) ===
+        if (gamePhase === 'pause' && pausePivotGroup) {
+          pauseDragStartX    = touch.clientX;
+          pauseDragStartY    = touch.clientY;
+          pauseDragStartAlpha = pauseAlpha;
+          pauseDragStartBeta  = pauseBeta;
+          pauseDragActive    = true;
+          return;
+        }
+
+        // === Würfel-Kippen (kippen / spielen / kipp21) ===
+        if (currentMode === 'kanten' &&
+            (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
+          if (isAnimating || kipp21KniffActive) return;
+          if (gamePhase === 'kipp21' && !kipp21Active) return;
+          if (cubeLocked && gamePhase !== 'kipp21') return;
+          if (gamePhase === 'kipp21' && kipp21HitLock) return;
+          if (gamePhase === 'kipp21' && !brainyActive && kipp21CardStates.indexOf('offen') < 0) return;
+
+          swipeStartX = touch.clientX;
+          swipeStartY = touch.clientY;
+          isSwiping   = true;
+          dragActive  = false;
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        }
+      });
+
+      // ----------------------------------------------------------
+      // MOUSEMOVE auf document → touchmove-Logik
+      // ----------------------------------------------------------
+      document.addEventListener('mousemove', (e) => {
+        if (!mouseIsDown) return;
+
+        const touch = pt(e);
+
+        // === BUMBLEBRAIN: Live-Rotation ===
+        if (kippIsSwiping) {
+          const deltaX = touch.clientX - kippSwipeStartX;
+          const deltaY = touch.clientY - kippSwipeStartY;
+
+          if (!kippDragActive) {
+            if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return;
+            const direction = getKippValidDirection(deltaX, deltaY);
+            if (!direction) { kippIsSwiping = false; return; }
+
+            kippCurrentDragDir  = direction;
+            const cfg           = getKippDirConfig(direction);
+            kippDragAxis        = cfg.axis;
+            kippDragTargetSign  = cfg.targetRotation > 0 ? 1 : -1;
+            kippDragToQ         = cfg.toQ;
+
+            kippDragPivotGroup = new THREE.Group();
+            kippDragPivotGroup.position.copy(cfg.pivotPoint);
+            kipGroup.add(kippDragPivotGroup);
+
+            cube.updateMatrixWorld();
+            const cwp1 = new THREE.Vector3();
+            cube.getWorldPosition(cwp1);
+            kipGroup.remove(cube);
+            cube.position.copy(cwp1.clone().sub(cfg.pivotPoint));
+            kippDragPivotGroup.add(cube);
+
+            kippDragActive       = true;
+            kippDragCurrentAngle = 0;
+          }
+
+          const rel1  = (kippDragAxis === 'x') ? deltaY : -deltaX;
+          let ang1    = (rel1 / KIPP_DRAG_SENSITIVITY) * (Math.PI / 2);
+          if (kippDragTargetSign > 0) ang1 = Math.max(0, Math.min(Math.PI / 2, ang1));
+          else                        ang1 = Math.min(0, Math.max(-Math.PI / 2, ang1));
+          kippDragCurrentAngle = ang1;
+          if (kippDragAxis === 'x') kippDragPivotGroup.rotation.x = ang1;
+          else                      kippDragPivotGroup.rotation.z = ang1;
+          return; // BUMBLEBRAIN-Block verarbeitet → kein Swipe-Block mehr
+        }
+
+        // === Eckblick-Drag (pause phase) ===
+        if (gamePhase === 'pause' && pauseDragActive && pausePivotGroup) {
+          const dx = touch.clientX - pauseDragStartX;
+          const dy = touch.clientY - pauseDragStartY;
+
+          let newBeta  = pauseDragStartBeta  + (dx / PAUSE_SENSITIVITY) * Math.PI;
+          let newAlpha = pauseDragStartAlpha + (dy / PAUSE_SENSITIVITY) * (Math.PI / 3);
+          newAlpha = Math.max(0, newAlpha);
+
+          const maxA = getMaxAlpha(newBeta);
+          newAlpha = Math.min(newAlpha, maxA);
+
+          if (!isPausePoseValid(newAlpha, newBeta)) {
+            const sign = newBeta >= 0 ? 1 : -1;
+            newBeta = sign * getMaxBeta(newAlpha, sign);
+          }
+
+          pauseAlpha = newAlpha;
+          pauseBeta  = newBeta;
+          pausePivotGroup.rotation.set(pauseAlpha, pauseBeta, 0, 'YXZ');
+          return;
+        }
+
+        // === Würfel-Kippen Swipe-Drag ===
+        if (!isSwiping || isAnimating ||
+            (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') ||
+            currentMode !== 'kanten') return;
+        if (gamePhase === 'kipp21') return;
+
+        const deltaX = touch.clientX - swipeStartX;
+        const deltaY = touch.clientY - swipeStartY;
+
+        if (!dragActive) {
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return;
+          if (kipp21HitLock) return;
+
+          const direction = getValidDirection(deltaX, deltaY);
+          if (!direction) { isSwiping = false; return; }
+
+          currentDragDir  = direction;
+          const config    = getKippConfig(direction);
+          dragAxis        = config.axis;
+          dragTargetSign  = config.targetRotation > 0 ? 1 : -1;
+          dragToQ         = config.toQ;
+
+          dragPivotGroup = new THREE.Group();
+          dragPivotGroup.position.copy(config.pivotPoint);
+          kipGroup.add(dragPivotGroup);
+
+          cube.updateMatrixWorld();
+          const cwp2 = new THREE.Vector3();
+          cube.getWorldPosition(cwp2);
+          kipGroup.remove(cube);
+          cube.position.copy(cwp2.clone().sub(config.pivotPoint));
+          dragPivotGroup.add(cube);
+
+          dragActive       = true;
+          dragCurrentAngle = 0;
+
+          if (gamePhase === 'kipp21' && kipp21Active &&
+              kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
+            kipp21StartRoundTimer();
+          }
+        }
+
+        const rel2  = (dragAxis === 'x') ? deltaY : -deltaX;
+        let ang2    = (rel2 / DRAG_SENSITIVITY) * (Math.PI / 2);
+        if (dragTargetSign > 0) ang2 = Math.max(0, Math.min(Math.PI / 2, ang2));
+        else                    ang2 = Math.min(0, Math.max(-Math.PI / 2, ang2));
+        dragCurrentAngle = ang2;
+        if (dragAxis === 'x') dragPivotGroup.rotation.x = ang2;
+        else                  dragPivotGroup.rotation.z = ang2;
+      });
+
+      // ----------------------------------------------------------
+      // MOUSEUP auf document → touchend-Logik
+      // ----------------------------------------------------------
+      document.addEventListener('mouseup', (e) => {
+        if (e.button !== 0 || !mouseIsDown) return;
+        mouseIsDown = false;
+        if (replayActive) return;
+
+        // === Eckblick-Drag Ende ===
+        if (gamePhase === 'pause') {
+          pauseDragActive = false;
+          return;
+        }
+
+        // === BUMBLEBRAIN: Snap zur Ziel- oder Ausgangsposition ===
+        if (kippDragActive) {
+          kippIsSwiping = false;
+          const absAng = Math.abs(kippDragCurrentAngle);
+          const tgtAng = absAng > Math.PI / 4 ? kippDragTargetSign * Math.PI / 2 : 0;
+          const finQ   = tgtAng !== 0 ? kippDragToQ : currentQuadrant;
+
+          isAnimating = true;
+          let klackFired1 = false;
+          const sa1 = kippDragCurrentAngle;
+          const ad1 = tgtAng - sa1;
+          const dur1 = Math.max(150, Math.abs(ad1) / (Math.PI / 2) * 420);
+          const t0_1 = Date.now();
+
+          (function fallM1() {
+            const prog = Math.min((Date.now() - t0_1) / dur1, 1);
+            const eas  = prog * prog;
+            const ang  = sa1 + ad1 * eas;
+            if (kippDragAxis === 'x') kippDragPivotGroup.rotation.x = ang;
+            else                      kippDragPivotGroup.rotation.z = ang;
+            if (!klackFired1 && eas > 0.68 && tgtAng !== 0) {
+              klackFired1 = true;
+              if (typeof playKlack === 'function') playKlack();
+            }
+            if (prog < 1) { requestAnimationFrame(fallM1); return; }
+
+            if (tgtAng === 0) {
+              cube.updateMatrixWorld();
+              const np = new THREE.Vector3(); cube.getWorldPosition(np);
+              const nq = new THREE.Quaternion(); cube.getWorldQuaternion(nq);
+              kippDragPivotGroup.remove(cube); kipGroup.remove(kippDragPivotGroup);
+              cube.position.copy(np); cube.quaternion.copy(nq); kipGroup.add(cube);
+            } else {
+              kippFinalizeKipp(finQ);
+              if (kippCurrentDragDir) {
+                kippDirection = KIPP_CW_DIRS.has(kippCurrentDragDir) ? 'cw' : 'ccw';
+                advanceTopFace();
+              }
+            }
+            kippDragActive = false; kippDragPivotGroup = null; isAnimating = false;
+          })();
+          return;
+        }
+        kippIsSwiping = false;
+
+        // BUMBLEBRAIN Long-Click (≥500ms gehaltene Maustaste)
+        if (window._kippSlotsHidden && window._kippTarget && !window._kippResultRunning &&
+            window._kippLongTapStart && (Date.now() - window._kippLongTapStart) >= 500 &&
+            window._kippLongTapPos) {
+          const rLT = el.getBoundingClientRect();
+          vkMouse.x = ((window._kippLongTapPos.x - rLT.left) / rLT.width) * 2 - 1;
+          vkMouse.y = -((window._kippLongTapPos.y - rLT.top)  / rLT.height) * 2 + 1;
+          vkRaycaster.setFromCamera(vkMouse, camera);
+          if (vkRaycaster.intersectObject(cube, true).length > 0) {
+            const tapped = findKippTappedSlot(window._kippLongTapPos.x, window._kippLongTapPos.y);
+            if (tapped && (!tapped.slotData || !tapped.slotData.val || tapped.slotData.val <= 0)) {
+              const face = faceSlots[tapped.faceKey];
+              if (face) {
+                const orig = face.slotMap[tapped.gridKey];
+                face.slotMap[tapped.gridKey] = { val: 0, rot: 0, vis: true, _flashRed: true };
+                rebuildFaceMat(tapped.faceKey, 1);
+                setTimeout(() => {
+                  if (orig === undefined) delete face.slotMap[tapped.gridKey];
+                  else face.slotMap[tapped.gridKey] = orig;
+                  rebuildFaceMat(tapped.faceKey, 1);
+                }, 500);
+              }
+              window._kippLongTapStart = 0; window._kippLongTapPos = null;
+              lastTouchPos = null; return;
+            }
+            window._kippResultRunning = true;
+            window._kippLongTapStart  = 0; window._kippLongTapPos = null;
+            if (tapped && tapped.faceKey && tapped.gridKey) {
+              const _f = faceSlots[tapped.faceKey];
+              if (_f && _f.slotMap[tapped.gridKey]) {
+                _f.slotMap[tapped.gridKey]._revealedNow = true;
+                rebuildFaceMat(tapped.faceKey, 1);
+              }
+            }
+            activeCardIdx = 0; kippCheckResult(0);
+            lastTouchPos = null; return;
+          }
+        }
+
+        // Eckblick: Mausklick auf Würfel beendet den Eckblick
+        if (kipp21KniffActive && eckblickPivot && lastTouchPos) {
+          const rC = el.getBoundingClientRect();
+          vkMouse.x = ((lastTouchPos.x - rC.left) / rC.width) * 2 - 1;
+          vkMouse.y = -((lastTouchPos.y - rC.top)  / rC.height) * 2 + 1;
+          vkRaycaster.setFromCamera(vkMouse, camera);
+          if (vkRaycaster.intersectObject(cube, true).length > 0) {
+            kipp21KniffAbort = true;
+            if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+            lastTouchPos = null; return;
+          }
+        }
+
+        // === Würfel-Kipp-Drag Ende: Snap-Animation ===
+        isSwiping = false;
+        if (!dragActive) { lastTouchPos = null; return; }
+
+        const absAng2 = Math.abs(dragCurrentAngle);
+        const tgtAng2 = absAng2 > Math.PI / 4 ? dragTargetSign * Math.PI / 2 : 0;
+        const finQ2   = tgtAng2 !== 0 ? dragToQ : currentQuadrant;
+
+        isAnimating = true;
+        let klackFired2 = false;
+        const sa2  = dragCurrentAngle;
+        const ad2  = tgtAng2 - sa2;
+        const dur2 = Math.max(150, Math.abs(ad2) / (Math.PI / 2) * 420);
+        const t0_2 = Date.now();
+
+        (function fallM2() {
+          const prog = Math.min((Date.now() - t0_2) / dur2, 1);
+          const eas  = prog * prog;
+          const ang  = sa2 + ad2 * eas;
+          if (dragAxis === 'x') dragPivotGroup.rotation.x = ang;
+          else                  dragPivotGroup.rotation.z = ang;
+          if (!klackFired2 && eas > 0.88 && tgtAng2 !== 0) {
+            klackFired2 = true;
+            playKlack();
+          }
+          if (prog < 1) { requestAnimationFrame(fallM2); return; }
+
+          if (tgtAng2 === 0) {
+            cube.updateMatrixWorld();
+            const np2 = new THREE.Vector3(); cube.getWorldPosition(np2);
+            const nq2 = new THREE.Quaternion(); cube.getWorldQuaternion(nq2);
+            dragPivotGroup.remove(cube); kipGroup.remove(dragPivotGroup);
+            cube.position.copy(np2); cube.quaternion.copy(nq2); kipGroup.add(cube);
+          } else {
+            finalizeKipp(finQ2, null);
+            if ((gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21') && currentDragDir) {
+              kippDirection = CW_DIRS.has(currentDragDir) ? 'cw' : 'ccw';
+              advanceTopFace();
+            }
+            if (gamePhase === 'spielen' && !kippzielChecked) {
+              kippCount++;
+              showEckeHaken();
+            }
+            if (gamePhase === 'kipp21' && kipp21Active) {
+              kipp21KippCount++;
+              kipp21RoundKipps++;
+              hintText.innerHTML = formatKipps(kipp21KippCount);
+              checkOnTargetAfterKipp();
+            }
+          }
+          dragActive = false; dragPivotGroup = null; isAnimating = false;
+        })();
+      });
+    })();
+    // ============================================================
+    // ENDE MOUSE-ADAPTER
+    // ============================================================
 
     renderLoop();
   </script>
