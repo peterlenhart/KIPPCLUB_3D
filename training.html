@@ -3594,7 +3594,16 @@
 
       // TRAINING: displayNum vergleichen (1-4), nicht interne Zahlen (1-12)
       const targetDisplay = displayNum(card.zahl);
-      for (const [slot, val] of Object.entries(visible)) {
+      
+      // Wenn der User einen spezifischen verdeckten Slot getippt hat (Brain-Modi),
+      // nur DIESEN Slot auswerten — falscher Slot = automatisch Miss.
+      const slotsToCheck = window._kippTappedSlot
+        ? [window._kippTappedSlot]
+        : Object.keys(visible);
+      
+      for (const slot of slotsToCheck) {
+        const val = visible[slot];
+        if (val === undefined) continue;
         if (displayNum(val) === targetDisplay) {
           const neighborColor = SLOT_NEIGHBOR_COLORS[currentQuadrant][slot];
           if (neighborColor === card.color.name) {
@@ -11369,10 +11378,20 @@
               console.log('[TRACK] LONGTAP face=' + tapped.faceKey + ' grid=' + tapped.gridKey);
               if (window._trackLog) window._trackLog.push('[TRACK] LONGTAP face=' + tapped.faceKey + ' grid=' + tapped.gridKey);
             }
+            // Getippten Slot als S1/S2/S3/S4 merken → checkTreffer wertet nur diesen aus
+            const _G2S = {
+              f0: { '2,0':'S1','1,0':'S2','0,1':'S3','0,2':'S4' },
+              f1: { '0,0':'S1','0,1':'S2','1,2':'S3','2,2':'S4' },
+              f2: { '2,2':'S1','2,1':'S2','1,0':'S3','0,0':'S4' }
+            };
+            window._kippTappedSlot = (_G2S[tapped.faceKey] || {})[tapped.gridKey] || null;
+          } else {
+            window._kippTappedSlot = null;
           }
           // Treffererkennung & Fluganimation
           activeCardIdx = 0;
           kippCheckResult(0);
+          window._kippTappedSlot = null;
           lastTouchPos = null;
           return;
         }
@@ -13253,8 +13272,18 @@
                 _f.slotMap[tapped.gridKey]._revealedNow = true;
                 rebuildFaceMat(tapped.faceKey, 1);
               }
+              // Getippten Slot als S1/S2/S3/S4 merken → checkTreffer wertet nur diesen aus
+              const _G2S = {
+                f0: { '2,0':'S1','1,0':'S2','0,1':'S3','0,2':'S4' },
+                f1: { '0,0':'S1','0,1':'S2','1,2':'S3','2,2':'S4' },
+                f2: { '2,2':'S1','2,1':'S2','1,0':'S3','0,0':'S4' }
+              };
+              window._kippTappedSlot = (_G2S[tapped.faceKey] || {})[tapped.gridKey] || null;
+            } else {
+              window._kippTappedSlot = null;
             }
             activeCardIdx = 0; kippCheckResult(0);
+            window._kippTappedSlot = null;
             lastTouchPos = null; return;
           }
         }
