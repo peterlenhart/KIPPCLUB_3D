@@ -808,6 +808,16 @@ Merken, Logik, Kopfzerbrechen.">
       }
     }
 
+
+    /* HANDY-KORREKTUR:
+       Nur die gelben Karussell-Pfeile am Handy höher setzen.
+       Keine Änderung an Slogan, Karussell, Banner, Skalierung oder PC/Tablet. */
+    @media (max-width: 480px) {
+      .wallArrow {
+        top: calc(50% - 300px) !important;
+      }
+    }
+
   </style>
   <script>
     // Frühestmögliche Skalierung, damit Flashscreen und Layout nicht erst
