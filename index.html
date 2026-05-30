@@ -1116,13 +1116,13 @@ Merken, Logik, Kopfzerbrechen.">
       const spielenRow11Y = 10 * cellPx;
       const wallTopY = wallCarousel ? wallCarousel.offsetTop : 0;
       document.querySelectorAll('[data-theme-button]').forEach(el => {
-        el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+        el.style.top = ((spielenRow11Y - wallTopY) + 146) + "px";
       });
 
       // Untertext als eigenes Element, ohne Einfluss auf € 0,99 und CLUB € 4,99.
       document.querySelectorAll('.wallPaywallBundleSub').forEach(el => {
         el.style.left = "calc(50% - 27px)";
-        el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+        el.style.top = ((spielenRow11Y - wallTopY) + 146) + "px";
       });
 
       // Card-Paywall: exakt dieselbe Positionierung wie Smiley-Paywall, aber 36 Pre-Scale-Pixel suedlicher (= 12 Display-Pixel)
