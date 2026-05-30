@@ -2363,6 +2363,47 @@ const LVL_T = {
               rafId = requestAnimationFrame(animate);
             }
           }, { passive: true });
+
+          // Mouse-Drag: Carousel mit Maus ziehen (wie Touch-Wischen)
+          var mouseDragActive = false;
+          var mouseDragStartX = 0;
+          var mouseDragScrollLeft = 0;
+
+          car.addEventListener("mousedown", function(e) {
+            if (e.button !== 0) return;
+            mouseDragActive = true;
+            mouseDragStartX = e.clientX;
+            mouseDragScrollLeft = car.scrollLeft;
+            car.style.cursor = "grabbing";
+            // Auto-Scroll pausieren (wie touchstart)
+            if (rafId !== null) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+              lastTime = null;
+            }
+          });
+
+          document.addEventListener("mousemove", function(e) {
+            if (!mouseDragActive) return;
+            var dx = e.clientX - mouseDragStartX;
+            car.scrollLeft = mouseDragScrollLeft - dx;
+          });
+
+          document.addEventListener("mouseup", function(e) {
+            if (e.button !== 0 || !mouseDragActive) return;
+            mouseDragActive = false;
+            car.style.cursor = "";
+            // Auto-Scroll wieder starten — nur wenn Pause-Button nicht aktiv
+            var pauseBtn = document.getElementById("wallArrowPause");
+            var manuellPausiert = pauseBtn && pauseBtn.classList.contains("paused");
+            if (rafId === null && !manuellPausiert) {
+              lastTime = null;
+              rafId = requestAnimationFrame(animate);
+            }
+          });
+
+          // Verhindert ungewolltes Text-Selektieren beim Drag
+          car.addEventListener("dragstart", function(e) { e.preventDefault(); });
         }
 
         // Pause-Button Klick-Handler
