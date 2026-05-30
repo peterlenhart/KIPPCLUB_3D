@@ -7621,6 +7621,7 @@
           e.preventDefault();
           doRestart();
         });
+        neuesBtn.addEventListener('click', () => doRestart());
       }, 800);
     }
     
@@ -12302,7 +12303,100 @@
           momentumAnim = requestAnimationFrame(pendulumSnap);
         }
       }, { passive: false });
-      
+
+      // Mouse-Drag: Scrollband mit Maus ziehen
+      // dx durch --scale teilen → interne Pixel, identisch zur Touch-Logik
+      let mouseBandActive = false;
+      wrap.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        mouseBandActive = true;
+        touchStartX = e.clientX;
+        touchStartIdx = bandIdx;
+        touchMoved = false;
+        lastMoveX = e.clientX;
+        lastMoveTime = performance.now();
+        velocity = 0;
+        if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
+        strip.style.transition = 'none';
+        pixelOffset = 0;
+        wrap.style.cursor = 'grabbing';
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!mouseBandActive) return;
+        const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 0.3333;
+        const now = performance.now();
+        const x = e.clientX;
+        const dxCSS = x - touchStartX;
+        const dx = dxCSS / scale;
+        if (Math.abs(dxCSS) > 4) touchMoved = true;
+        const dt = now - lastMoveTime;
+        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + (((x - lastMoveX) / scale) / dt) * 0.5;
+        else if (dt >= 60) velocity = 0;
+        lastMoveX = x;
+        lastMoveTime = now;
+        pixelOffset = dx;
+        const wrapW = wrap.offsetWidth || 306;
+        const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
+        strip.style.transform = 'translateX(' + tx + 'px)';
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
+        updateBandStyle();
+      });
+      document.addEventListener('mouseup', (e) => {
+        if (e.button !== 0 || !mouseBandActive) return;
+        mouseBandActive = false;
+        wrap.style.cursor = '';
+        if (!touchMoved) {
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = e.clientX - wrapRect.left;
+          const wrapW = wrapRect.width;
+          const firstBtn = strip.querySelector('.numBtn');
+          const cellWcss = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellWcss) + bandIdx));
+          if (tappedIdx !== bandIdx) { bandIdx = tappedIdx; updateBandPos(true); return; }
+          const n = bandIdx + 1;
+          selectNum(n);
+          if (!isAnimating && !kipp21KniffActive) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if      (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else                            dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+              if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
+            })();
+          }
+        } else {
+          const wrapW = wrap.offsetWidth || 306;
+          const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
+          const txCoasted = tx + velocity * 150;
+          bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
+          const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
+          const startX = tx;
+          const dist = snapOffset - startX;
+          const t0m = performance.now();
+          const durM = 700, AM = 0.18, omegaM = 1.8 * 2 * Math.PI, dampingM = 5.5;
+          strip.style.transition = 'none';
+          updateBandStyle();
+          function pendulumSnapM() {
+            const t = (performance.now() - t0m) / durM;
+            if (t >= 1) { strip.style.transform = 'translateX(' + snapOffset + 'px)'; momentumAnim = null; updateBandStyle(); return; }
+            const ease = 1 - Math.pow(1 - t, 3);
+            const swing = AM * Math.exp(-dampingM * t) * Math.sin(omegaM * t);
+            strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
+            momentumAnim = requestAnimationFrame(pendulumSnapM);
+          }
+          momentumAnim = requestAnimationFrame(pendulumSnapM);
+        }
+      });
+      wrap.addEventListener('dragstart', (e) => e.preventDefault());
+
       wrap.addEventListener('click', (e) => {
         e.stopPropagation();
         const wrapRect = wrap.getBoundingClientRect();
