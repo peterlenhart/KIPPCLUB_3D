@@ -12365,37 +12365,10 @@
         mouseBandActive = false;
         wrap.style.cursor = '';
         if (!touchMoved) {
-          // Prüfen ob Klick auf die zentrierte Zahl oder eine Nebenzahl
-          const wrapRect = wrap.getBoundingClientRect();
-          const tapX = e.clientX - wrapRect.left;
-          const wrapW = wrapRect.width;
-          const cellW = CELL_W;
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
-          if (tappedIdx !== bandIdx) {
-            // Nebenzahl angeklickt → Band dorthin schieben, kein Kipp
-            bandIdx = tappedIdx;
-            updateBandPos(true);
-            return;
-          }
-          const n = bandIdx + 1;
-          selectNum(n);
-          if (!isAnimating && !kipp21KniffActive) {
-            (async () => {
-              for (let i = 0; i < n; i++) {
-                let dir;
-                if      (currentQuadrant === 0) dir = 'east';
-                else if (currentQuadrant === 1) dir = 'south_from_q1';
-                else if (currentQuadrant === 2) dir = 'west_from_q2';
-                else                            dir = 'north';
-                await performKipp(dir, 600);
-                advanceTopFace();
-                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-              }
-              clearSelection();
-              if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
-            })();
-          }
-        } else {
+          // Tap: click-Handler übernimmt vollständig
+          return;
+        }
+        {
           const wrapW = wrap.offsetWidth || 306;
           const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
           const txCoasted = tx + velocity * 150;
@@ -12424,6 +12397,7 @@
       wrap.addEventListener('click', (e) => {
         e.stopPropagation();
         if (replayActive || window._smileyBandTutRunning) return;
+        if (touchMoved) return; // nach Drag nicht feuern
         const wrapRect = wrap.getBoundingClientRect();
         const tapX = e.clientX - wrapRect.left;
         const wrapW = wrapRect.width;
