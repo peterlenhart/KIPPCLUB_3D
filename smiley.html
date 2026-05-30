@@ -5618,7 +5618,7 @@
       function showAllTrainingUI() {
         if (window._dirCwMesh) window._dirCwMesh.visible = false;
         if (window._dirCcwMesh) window._dirCcwMesh.visible = false;
-        if (kippButtons && !window._smileyWaitingForLos) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
+        if (kippButtons && !window._smileyWaitingForLos && !kipp21KniffActive) { kippButtons.classList.remove('hidden'); kippButtons.style.display = ''; }
         if (window._updateDirBtnRotation) window._updateDirBtnRotation();
         resetTrainingInput();
       }
@@ -12162,7 +12162,8 @@
         const offset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
         strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         strip.style.transform = 'translateX(' + offset + 'px)';
-        updateBandStyle();
+        if (animate) setTimeout(updateBandStyle, 360);
+        else updateBandStyle();
       }
       
       function updateBandStyle() {
