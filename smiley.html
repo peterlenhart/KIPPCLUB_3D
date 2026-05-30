@@ -12347,28 +12347,8 @@
         mouseBandActive = false;
         wrap.style.cursor = '';
         if (!touchMoved) {
-          // Direkt den angeklickten Button identifizieren — keine fehleranfällige Koordinatenrechnung
-          const btn = e.target.closest ? e.target.closest('.numBtn') : null;
-          const tappedIdx = btn ? Math.max(0, Math.min(TOTAL - 1, parseInt(btn.dataset.num) - 1)) : bandIdx;
-          if (tappedIdx !== bandIdx) { bandIdx = tappedIdx; updateBandPos(true); return; }
-          const n = bandIdx + 1;
-          selectNum(n);
-          if (!isAnimating && !kipp21KniffActive) {
-            (async () => {
-              for (let i = 0; i < n; i++) {
-                let dir;
-                if      (currentQuadrant === 0) dir = 'east';
-                else if (currentQuadrant === 1) dir = 'south_from_q1';
-                else if (currentQuadrant === 2) dir = 'west_from_q2';
-                else                            dir = 'north';
-                await performKipp(dir, 600);
-                advanceTopFace();
-                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
-              }
-              clearSelection();
-              if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
-            })();
-          }
+          // Tap: click-Handler übernimmt — nichts tun
+          return;
         } else {
           const wrapW = wrap.offsetWidth || 306;
           const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
