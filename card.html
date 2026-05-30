@@ -17025,6 +17025,222 @@
 
     // DEBUG: If this text appears, the script reached the end without crash
 
+    // ============================================================
+    // MOUSE-ADAPTER: Würfelkippen + Eckblick-Drag per Maus
+    // ============================================================
+    (function setupMouseKippenCard() {
+      const el = renderer.domElement;
+      let mouseIsDown = false;
+
+      function pt(e) { return { clientX: e.clientX, clientY: e.clientY }; }
+
+      el.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        mouseIsDown = true;
+        if (replayActive) return;
+        if (gamePhase === 'start' || gamePhase === 'demo') return;
+
+        const touch = pt(e);
+
+        // lastTouchPos setzen
+        if ((gamePhase === 'kippen' || gamePhase === 'entscheidung') && verdecktesMesh.visible && !verdecktesMesh.userData.revealed) {
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        }
+        if (gamePhase === 'kipp21' && kipp21Active) {
+          dismissKippenWarning();
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+          if (window._cardTargetState && window._cardTargetState.currentTarget) {
+            _stichTouchStart = Date.now();
+          }
+        }
+        if (!lastTouchPos) lastTouchPos = { x: touch.clientX, y: touch.clientY };
+
+        // Eckblick-Drag (pause phase)
+        if (gamePhase === 'pause' && pausePivotGroup) {
+          pauseDragStartX    = touch.clientX;
+          pauseDragStartY    = touch.clientY;
+          pauseDragStartAlpha = pauseAlpha;
+          pauseDragStartBeta  = pauseBeta;
+          pauseDragActive    = true;
+          return;
+        }
+
+        // Würfelkippen
+        if (currentMode === 'kanten' && (gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21')) {
+          if (window._numBtnTouchActive) return;
+          if (isAnimating || kipp21KniffActive) return;
+          if (gamePhase === 'kipp21' && !kipp21Active) return;
+          if (cubeLocked && gamePhase !== 'kipp21') return;
+          if (gamePhase === 'kipp21' && kipp21HitLock) return;
+          const hasCardTarget = window._cardTargetState && window._cardTargetState.currentTarget;
+          if (gamePhase === 'kipp21' && !brainyActive && !hasCardTarget && kipp21CardStates.indexOf('offen') < 0) return;
+
+          // Raycaster: nur kippen wenn Maus auf dem Würfel
+          const _r = el.getBoundingClientRect();
+          const _nx = ((touch.clientX - _r.left) / _r.width) * 2 - 1;
+          const _ny = -((touch.clientY - _r.top) / _r.height) * 2 + 1;
+          const _rc = new THREE.Raycaster();
+          _rc.setFromCamera(new THREE.Vector2(_nx, _ny), camera);
+          if (_rc.intersectObject(cube).length === 0) return;
+
+          swipeStartX  = touch.clientX;
+          swipeStartY  = touch.clientY;
+          isSwiping    = true;
+          dragActive   = false;
+          lastTouchPos = { x: touch.clientX, y: touch.clientY };
+        }
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!mouseIsDown) return;
+        const touch = pt(e);
+
+        // Eckblick-Drag
+        if (gamePhase === 'pause' && pauseDragActive && pausePivotGroup) {
+          const dx = touch.clientX - pauseDragStartX;
+          const dy = touch.clientY - pauseDragStartY;
+          let newBeta  = pauseDragStartBeta  + (dx / PAUSE_SENSITIVITY) * Math.PI;
+          let newAlpha = pauseDragStartAlpha + (dy / PAUSE_SENSITIVITY) * (Math.PI / 3);
+          newAlpha = Math.max(0, newAlpha);
+          const maxA = getMaxAlpha(newBeta);
+          newAlpha = Math.min(newAlpha, maxA);
+          if (!isPausePoseValid(newAlpha, newBeta)) {
+            const sign = newBeta >= 0 ? 1 : -1;
+            newBeta = sign * getMaxBeta(newAlpha, sign);
+          }
+          pauseAlpha = newAlpha;
+          pauseBeta  = newBeta;
+          pausePivotGroup.rotation.set(pauseAlpha, pauseBeta, 0, 'YXZ');
+          return;
+        }
+
+        // Würfelkippen Swipe
+        if (!isSwiping || isAnimating ||
+            (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') ||
+            currentMode !== 'kanten') return;
+
+        const deltaX = touch.clientX - swipeStartX;
+        const deltaY = touch.clientY - swipeStartY;
+
+        if (!dragActive) {
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return;
+          if (kipp21HitLock) return;
+
+          const direction = getValidDirection(deltaX, deltaY);
+          if (!direction) { isSwiping = false; return; }
+
+          currentDragDir = direction;
+          const config   = getKippConfig(direction);
+          dragAxis       = config.axis;
+          dragTargetSign = config.targetRotation > 0 ? 1 : -1;
+          dragToQ        = config.toQ;
+
+          dragPivotGroup = new THREE.Group();
+          dragPivotGroup.position.copy(config.pivotPoint);
+          kipGroup.add(dragPivotGroup);
+
+          cube.updateMatrixWorld();
+          const cwp = new THREE.Vector3();
+          cube.getWorldPosition(cwp);
+          kipGroup.remove(cube);
+          cube.position.copy(cwp.clone().sub(config.pivotPoint));
+          dragPivotGroup.add(cube);
+
+          dragActive        = true;
+          _stichTouchStart  = 0;
+          dragCurrentAngle  = 0;
+
+          if (gamePhase === 'kipp21' && kipp21Active && kipp21CardStates.includes('offen') && !kipp21TimerRunning) {
+            kipp21StartRoundTimer();
+          }
+        }
+
+        const rel = (dragAxis === 'x') ? deltaY : -deltaX;
+        let ang = (rel / DRAG_SENSITIVITY) * (Math.PI / 2);
+        if (dragTargetSign > 0) ang = Math.max(0, Math.min(Math.PI / 2, ang));
+        else                    ang = Math.min(0, Math.max(-Math.PI / 2, ang));
+        dragCurrentAngle = ang;
+        if (dragAxis === 'x') dragPivotGroup.rotation.x = ang;
+        else                  dragPivotGroup.rotation.z = ang;
+      });
+
+      document.addEventListener('mouseup', (e) => {
+        if (e.button !== 0 || !mouseIsDown) return;
+        mouseIsDown = false;
+        if (replayActive) return;
+
+        // Eckblick-Drag Ende
+        if (gamePhase === 'pause') {
+          pauseDragActive = false;
+          return;
+        }
+
+        // Eckblick: Klick auf Würfel beendet Eckblick
+        if (kipp21KniffActive && eckblickPivot && lastTouchPos) {
+          const rC = el.getBoundingClientRect();
+          vkMouse.x = ((lastTouchPos.x - rC.left) / rC.width) * 2 - 1;
+          vkMouse.y = -((lastTouchPos.y - rC.top)  / rC.height) * 2 + 1;
+          vkRaycaster.setFromCamera(vkMouse, camera);
+          if (vkRaycaster.intersectObject(cube, true).length > 0) {
+            kipp21KniffAbort = true;
+            if (kipp21KniffTimeout) { clearTimeout(kipp21KniffTimeout); kipp21KniffTimeout = null; }
+            lastTouchPos = null; return;
+          }
+        }
+
+        isSwiping = false;
+        if (!dragActive) { lastTouchPos = null; return; }
+
+        // Snap-Animation — identisch zu touchend
+        const absAng = Math.abs(dragCurrentAngle);
+        const tgtAng = absAng > Math.PI / 4 ? dragTargetSign * Math.PI / 2 : 0;
+        const finQ   = tgtAng !== 0 ? dragToQ : currentQuadrant;
+
+        isAnimating = true;
+        let klackFired = false;
+        const sa  = dragCurrentAngle;
+        const ad  = tgtAng - sa;
+        const dur = Math.max(150, Math.abs(ad) / (Math.PI / 2) * 420);
+        const t0  = Date.now();
+
+        (function fallM() {
+          const prog = Math.min((Date.now() - t0) / dur, 1);
+          const eas  = prog * prog;
+          const ang  = sa + ad * eas;
+          if (dragAxis === 'x') dragPivotGroup.rotation.x = ang;
+          else                  dragPivotGroup.rotation.z = ang;
+          if (!klackFired && eas > 0.68 && tgtAng !== 0) { klackFired = true; playKlack(); }
+          if (prog < 1) { requestAnimationFrame(fallM); return; }
+
+          if (tgtAng === 0) {
+            cube.updateMatrixWorld();
+            const np = new THREE.Vector3(); cube.getWorldPosition(np);
+            const nq = new THREE.Quaternion(); cube.getWorldQuaternion(nq);
+            dragPivotGroup.remove(cube); kipGroup.remove(dragPivotGroup);
+            cube.position.copy(np); cube.quaternion.copy(nq); kipGroup.add(cube);
+          } else {
+            finalizeKipp(finQ, null);
+            if ((gamePhase === 'kippen' || gamePhase === 'spielen' || gamePhase === 'kipp21') && currentDragDir) {
+              kippDirection = CW_DIRS.has(currentDragDir) ? 'cw' : 'ccw';
+              advanceTopFace();
+            }
+            if (gamePhase === 'spielen' && !kippzielChecked) { kippCount++; showEckeHaken(); }
+            if (gamePhase === 'kipp21' && kipp21Active) {
+              kipp21KippCount++;
+              _cardKippCount++;
+              kipp21RoundKipps++;
+              hintText.innerHTML = formatKipps(kipp21KippCount);
+              checkOnTargetAfterKipp();
+            }
+          }
+          dragActive = false; dragPivotGroup = null; isAnimating = false;
+        })();
+      });
+    })();
+    // ============================================================
+    // ENDE MOUSE-ADAPTER
+    // ============================================================
+
 
     // Eingefrorenen Spielstand prüfen
     (function checkFrozenState() {
