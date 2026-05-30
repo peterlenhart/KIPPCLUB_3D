@@ -2085,5 +2085,149 @@ const LVL_T = {
     applyLevelLang();
 
   </script>
+
+  <script>
+    // KIPP CLUB: Endlos-Laufband für das Wall-Karussell
+    // NUR horizontale Scrollbewegung. Keine Änderungen an Position, Skalierung, Höhe oder Layout.
+    (function(){
+      const SPEED = 120; // interne Pixel pro Sekunde; ca. 40 sichtbare Pixel/Sekunde bei 3x Retina
+      let rafId = null;
+      let lastTime = null;
+      let loopWidth = 0;
+
+      function getCarousel(){
+        return document.getElementById("wallCarousel");
+      }
+
+      function getTrack(){
+        const car = getCarousel();
+        return car ? car.querySelector(".wallTrack") : null;
+      }
+
+      function setupLoopTrack(){
+        const car = getCarousel();
+        const track = getTrack();
+        if (!car || !track || track.dataset.kippLoopReady === "1") return;
+
+        const originalSlides = Array.from(track.children);
+        const originalCount = originalSlides.length;
+
+        originalSlides.forEach(function(slide){
+          const clone = slide.cloneNode(true);
+          clone.dataset.kippLoopClone = "1";
+          track.appendChild(clone);
+        });
+
+        track.dataset.kippLoopReady = "1";
+
+        // Automatik muss ohne Snap laufen, sonst ruckt es.
+        car.style.scrollSnapType = "none";
+        car.style.scrollBehavior = "auto";
+
+        function measure(){
+          const firstClone = track.children[originalCount];
+          loopWidth = firstClone ? firstClone.offsetLeft : (track.scrollWidth / 2);
+        }
+
+        measure();
+        window.addEventListener("resize", measure);
+      }
+
+      function setupCloneClickFallback(){
+        const track = getTrack();
+        if (!track || track.dataset.kippLoopClickReady === "1") return;
+        track.dataset.kippLoopClickReady = "1";
+
+        track.addEventListener("click", function(e){
+          const cloneSlide = e.target.closest(".wallSlide[data-kipp-loop-clone='1']");
+          if (!cloneSlide) return;
+
+          const gameEl = e.target.closest("[data-game]");
+          if (gameEl && typeof window._kippclubTriggerPurchase === "function") {
+            e.stopPropagation();
+            const game = gameEl.dataset.game;
+            const productMap = {
+              smileys: "kippclub_smileys",
+              card: "kippclub_card",
+              queen: "kippclub_queen",
+              king: "kippclub_king",
+              bundle: "kippclub_bundle_all"
+            };
+
+            let wallGame = game;
+            if (game === "bundle") {
+              if (cloneSlide.classList.contains("smileyWallSlide")) wallGame = "smileys";
+              else if (cloneSlide.classList.contains("cardWallSlide")) wallGame = "card";
+              else if (cloneSlide.classList.contains("queenWallSlide")) wallGame = "queen";
+              else if (cloneSlide.classList.contains("kingWallSlide")) wallGame = "king";
+            }
+
+            if (productMap[game]) {
+              window._kippclubTriggerPurchase(productMap[game], wallGame);
+            }
+            return;
+          }
+
+          const btn = e.target.closest("[data-theme-button]");
+          if (!btn) return;
+
+          const theme = btn.dataset.themeButton;
+          e.stopPropagation();
+
+          if (theme === "numbers") {
+            selectedSkin = "numbers";
+            updateLevelLinks();
+            updateLevelBests();
+            document.getElementById("levelOverlay").classList.add("show");
+          } else if (theme === "icons") {
+            selectedSkin = "icons";
+            updateLevelLinks();
+            updateLevelBests();
+            document.getElementById("levelOverlay").classList.add("show");
+          } else if (theme === "smileys") {
+            location.href = "smiley.html";
+          } else if (theme === "card") {
+            location.href = "card.html";
+          }
+        });
+      }
+
+      function animate(time){
+        const car = getCarousel();
+        if (!car || !loopWidth) return;
+
+        if (lastTime === null) lastTime = time;
+        const dt = Math.min(50, time - lastTime);
+        lastTime = time;
+
+        car.scrollLeft += SPEED * (dt / 1000);
+
+        // Unsichtbarer Loop: sobald die zweite identische Serie beginnt,
+        // wird exakt um eine Serienbreite zurückgesetzt.
+        if (car.scrollLeft >= loopWidth) {
+          car.scrollLeft -= loopWidth;
+        }
+
+        rafId = requestAnimationFrame(animate);
+      }
+
+      function start(){
+        const car = getCarousel();
+        const track = getTrack();
+        if (!car || !track) return;
+
+        setupLoopTrack();
+        setupCloneClickFallback();
+
+        setTimeout(function(){
+          lastTime = null;
+          rafId = requestAnimationFrame(animate);
+        }, 2600);
+      }
+
+      window.addEventListener("load", start);
+    })();
+  </script>
+
 </body>
 </html>
