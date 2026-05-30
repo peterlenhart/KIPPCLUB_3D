@@ -6791,7 +6791,12 @@
           const SY = 740;
           // Hand temporär aus uiOverlay raus, direkt an body — sonst stacking-context-Problem
           const _handOrigParent = handEl.parentNode;
+          const _contRect = renderer.domElement.getBoundingClientRect();
           document.body.appendChild(handEl);
+          // position:fixed + Container-Offset damit sx (0-360) korrekt auf Bildschirm mappt
+          handEl.style.position = 'fixed';
+          handEl.style.left = _contRect.left + 'px';
+          handEl.style.top = '0px';
           setHandPos(sx, SY);
           handEl.style.opacity = '1';
           handEl.style.zIndex = '101';
@@ -6824,6 +6829,9 @@
           await moveHandSmooth(sx, SY, 600);
           handEl.style.opacity = '0';
           handEl.style.zIndex = '20';
+          handEl.style.position = 'absolute';
+          handEl.style.left = '0px';
+          handEl.style.top = '0px';
           // Hand zurück in uiOverlay
           if (_handOrigParent) _handOrigParent.appendChild(handEl);
           updateHandShadow(0, 0, false);
@@ -14786,6 +14794,7 @@
           window._cardTargetState && window._cardTargetState.currentTarget) {
         const slotIdx = findTappedSlotByUV(e.clientX, e.clientY);
         if (slotIdx >= 0) {
+          const slotInfo = getSlotValueAndColor(slotIdx);
 
           // Duplikat-Check: gleiche Karte (Wert+Farbe) bereits gespielt?
           if (window._bluffMode && window._bluffCardSlots) {
