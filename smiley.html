@@ -12309,6 +12309,7 @@
       let mouseBandActive = false;
       wrap.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
+        if (replayActive) return;
         e.stopPropagation();
         mouseBandActive = true;
         touchStartX = e.clientX;
@@ -12323,15 +12324,13 @@
         wrap.style.cursor = 'grabbing';
       });
       document.addEventListener('mousemove', (e) => {
-        if (!mouseBandActive) return;
-        const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 0.3333;
+        if (!mouseBandActive || replayActive) return;
         const now = performance.now();
         const x = e.clientX;
-        const dxCSS = x - touchStartX;
-        const dx = dxCSS / scale;
-        if (Math.abs(dxCSS) > 4) touchMoved = true;
+        const dx = x - touchStartX;
+        if (Math.abs(dx) > 4) touchMoved = true;
         const dt = now - lastMoveTime;
-        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + (((x - lastMoveX) / scale) / dt) * 0.5;
+        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
         else if (dt >= 60) velocity = 0;
         lastMoveX = x;
         lastMoveTime = now;
@@ -12344,15 +12343,13 @@
       });
       document.addEventListener('mouseup', (e) => {
         if (e.button !== 0 || !mouseBandActive) return;
+        if (replayActive) { mouseBandActive = false; wrap.style.cursor = ''; return; }
         mouseBandActive = false;
         wrap.style.cursor = '';
         if (!touchMoved) {
-          const wrapRect = wrap.getBoundingClientRect();
-          const tapX = e.clientX - wrapRect.left;
-          const wrapW = wrapRect.width;
-          const firstBtn = strip.querySelector('.numBtn');
-          const cellWcss = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellWcss) + bandIdx));
+          // Direkt den angeklickten Button identifizieren — keine fehleranfällige Koordinatenrechnung
+          const btn = e.target.closest ? e.target.closest('.numBtn') : null;
+          const tappedIdx = btn ? Math.max(0, Math.min(TOTAL - 1, parseInt(btn.dataset.num) - 1)) : bandIdx;
           if (tappedIdx !== bandIdx) { bandIdx = tappedIdx; updateBandPos(true); return; }
           const n = bandIdx + 1;
           selectNum(n);
