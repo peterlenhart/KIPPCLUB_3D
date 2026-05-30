@@ -14789,9 +14789,11 @@
         }
       }
 
-      // STICH: Click auf Würfel → Karte ausspielen (Desktop)
+      // STICH: Click auf Würfel → Karte ausspielen (Desktop, nur bei Long-Click ≥500ms)
       if (gamePhase === 'kipp21' && !_stichLock && !kipp21KniffActive &&
-          window._cardTargetState && window._cardTargetState.currentTarget) {
+          window._cardTargetState && window._cardTargetState.currentTarget &&
+          window._mouseDownTime && (Date.now() - window._mouseDownTime) >= 500) {
+        window._mouseDownTime = 0;
         const slotIdx = findTappedSlotByUV(e.clientX, e.clientY);
         if (slotIdx >= 0) {
           const slotInfo = getSlotValueAndColor(slotIdx);
@@ -17060,6 +17062,7 @@
           lastTouchPos = { x: touch.clientX, y: touch.clientY };
           if (window._cardTargetState && window._cardTargetState.currentTarget) {
             _stichTouchStart = Date.now();
+            window._mouseDownTime = Date.now();
           }
         }
         if (!lastTouchPos) lastTouchPos = { x: touch.clientX, y: touch.clientY };
