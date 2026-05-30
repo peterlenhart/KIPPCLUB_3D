@@ -157,6 +157,58 @@ Merken, Logik, Kopfzerbrechen.">
       right: 0;
     }
 
+    /* Pause-Button: Kreis mit zwei senkrechten Balken, gleiches Gold-Design */
+    /* Zentrum liegt auf top — identisch mit .wallArrow (top + translateY(-50%) = Zentrum bei top) */
+    #wallArrowPause {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 135px;
+      height: 135px;
+      border-radius: 50%;
+      border: 12px solid #FFD700;
+      box-shadow:
+        0 4px 12px rgba(0,0,0,0.95),
+        0 0 20px rgba(0,0,0,0.6),
+        0 0 14px rgba(255,215,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 21px;
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 11;
+      opacity: 0.85;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    #wallArrowPause .pauseBar {
+      width: 18px;
+      height: 60px;
+      background: #FFD700;
+      border-radius: 4px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.95)) drop-shadow(0 0 12px rgba(0,0,0,0.6));
+    }
+    /* Play-Dreieck (sichtbar wenn paused) */
+    #wallArrowPause .playTriangle {
+      display: none;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 33px 0 33px 57px;
+      border-color: transparent transparent transparent #FFD700;
+      margin-left: 9px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.95));
+    }
+    #wallArrowPause.paused .pauseBar {
+      display: none;
+    }
+    #wallArrowPause.paused .playTriangle {
+      display: block;
+    }
+
     /* Wall-Karussell: 6 Walls aneinander, je 1080px Retina / 360px sichtbar, 1 cell suedlicher als zuvor */
     #wallCarousel {
       position: absolute;
@@ -816,6 +868,10 @@ Merken, Logik, Kopfzerbrechen.">
       .wallArrow {
         top: calc(50% - 300px) !important;
       }
+      /* Pause-Button: selbe vertikale Mitte wie die Pfeile */
+      #wallArrowPause {
+        top: calc(50% - 300px) !important;
+      }
     }
 
   </style>
@@ -861,6 +917,13 @@ Merken, Logik, Kopfzerbrechen.">
         <!-- Scroll-Pfeile links und rechts -->
         <div id="wallArrowLeft" class="wallArrow">&#10094;</div>
         <div id="wallArrowRight" class="wallArrow">&#10095;</div>
+
+        <!-- Pause-Button mittig: gleiche Gold-Ästhetik, Kreis + zwei Balken -->
+        <div id="wallArrowPause">
+          <div class="pauseBar"></div>
+          <div class="pauseBar"></div>
+          <div class="playTriangle"></div>
+        </div>
 
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
         <div id="wallCarousel">
@@ -2225,7 +2288,65 @@ const LVL_T = {
         }, 2600);
       }
 
-      window.addEventListener("load", start);
+      // Globale Pause/Resume-Steuerung für den Pause-Button
+      window._kippBandPause = function(){
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+          lastTime = null;
+        }
+      };
+      window._kippBandResume = function(){
+        if (rafId === null) {
+          lastTime = null;
+          rafId = requestAnimationFrame(animate);
+        }
+      };
+
+      window.addEventListener("load", function(){
+        start();
+
+        // Touch auf dem Carousel: Auto-Scroll pausiert solange Finger drauf ist
+        const car = getCarousel();
+        if (car) {
+          car.addEventListener("touchstart", function(){
+            if (rafId !== null) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+              lastTime = null;
+            }
+          }, { passive: true });
+
+          car.addEventListener("touchend", function(){
+            if (rafId === null) {
+              lastTime = null;
+              rafId = requestAnimationFrame(animate);
+            }
+          }, { passive: true });
+
+          car.addEventListener("touchcancel", function(){
+            if (rafId === null) {
+              lastTime = null;
+              rafId = requestAnimationFrame(animate);
+            }
+          }, { passive: true });
+        }
+
+        // Pause-Button Klick-Handler
+        const pauseBtn = document.getElementById("wallArrowPause");
+        if (pauseBtn) {
+          pauseBtn.addEventListener("click", function(){
+            const isPaused = pauseBtn.classList.contains("paused");
+            if (isPaused) {
+              window._kippBandResume();
+              pauseBtn.classList.remove("paused");
+            } else {
+              window._kippBandPause();
+              pauseBtn.classList.add("paused");
+            }
+          });
+        }
+      });
     })();
   </script>
 
