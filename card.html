@@ -17204,6 +17204,7 @@
         if (!dragActive) {
           // Kein Drag → touchend-Handler übernimmt Long-Press/Stich/Slot-Aufdecken
           el.dispatchEvent(new Event('touchend', { bubbles: false }));
+          window._mouseDownTime = 0; // click-Handler danach nicht nochmal auslösen
           lastTouchPos = null;
           return;
         }
