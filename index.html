@@ -102,7 +102,7 @@ Merken, Logik, Kopfzerbrechen.">
     #kippClubSubtitle {
       position: absolute;
       left: 0;
-      top: calc(22% - 30px);
+      top: calc(4 * var(--cell)); /* Fix: war calc(22% - 30px), jetzt geraeteunabhaengig */
       width: var(--gridW);
       height: 135px;
       line-height: 135px;
