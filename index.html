@@ -793,6 +793,21 @@ Merken, Logik, Kopfzerbrechen.">
     .lvl-sub-big { font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#a08060; margin-top:-10px; text-align:center; }
     #levelClose { position:absolute; top:12px; left:16px; width:48px; height:48px; cursor:pointer; background:none; border:none; padding:0; -webkit-tap-highlight-color:transparent; pointer-events:auto; }
     #levelClose img { width:100%; height:100%; object-fit:contain; }
+
+    /* PC/TABLET-POSITIONSKORREKTUR:
+       Handy bleibt unverändert.
+       Ab 481px Breite werden Slogan + Karussell gemeinsam
+       45 sichtbare Pixel = 135 interne Retina-Pixel südlicher gesetzt. */
+    @media (min-width: 481px) {
+      #kippClubSubtitle {
+        top: calc(22% + 27px);
+      }
+
+      #wallCarousel {
+        top: calc(22% + 109px);
+      }
+    }
+
   </style>
   <script>
     // Frühestmögliche Skalierung, damit Flashscreen und Layout nicht erst
@@ -1309,15 +1324,29 @@ Merken, Logik, Kopfzerbrechen.">
 
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
-      // KIPP CLUB Fix: Auf Touch-Geraeten (Handy/Tablet) verwenden wir screen.height,
-      // weil dieser Wert konstant zwischen Browser und PWA-Standalone-Modus ist.
-      // Auf Desktop verwenden wir innerHeight (Chrome-Fenstergroesse), weil dort
-      // screen.height der gesamte Monitor waere.
-      const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-      const vh = (isTouch && window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
-      const effective = vh / (scale || 1);
-      const rows = Math.ceil(effective / cell) + 1;
-      const gridH = rows * cell;
+
+      // ZOOM-FIX:
+      // Handyansicht bleibt unverändert dynamisch.
+      // Erst ab Tablet/PC-Breite wird die interne Retina-Höhe fixiert.
+      // Dadurch beziehen sich Hintergrund, Slogan, Karussell, Pfeile,
+      // Preis-/Spielen-Texte und Banner beim Maus-Zoom auf dieselbe Fläche.
+      const isPhoneWidth = window.innerWidth <= 480;
+
+      let gridH;
+      if (isPhoneWidth) {
+        // Original-Logik für Handy: nicht angreifen.
+        const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        const vh = (isTouch && window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+        const effective = vh / (scale || 1);
+        const rows = Math.ceil(effective / cell) + 1;
+        gridH = rows * cell;
+      } else {
+        // Feste 17-Zeilen-Retina-Arbeitsfläche: 17 * 135 = 2295.
+        // Das entspricht der bisherigen Handy-Logik bei 720px sichtbarer Höhe
+        // und verhindert, dass Prozentpositionen beim Browser-Zoom driften.
+        gridH = 17 * cell;
+      }
+
       document.documentElement.style.setProperty("--gridH", gridH + "px");
       positionUI();
     }
@@ -2046,48 +2075,5 @@ const LVL_T = {
     applyLevelLang();
 
   </script>
-<script>
-
-// KIPP CLUB: einmaliger Hinweis auf weitere Spiele
-(function(){
-  const seenKey = "kippclub_wall_hint_seen";
-
-  function startWallHint(){
-    const carousel = document.getElementById("wallCarousel");
-    if (!carousel) return;
-    if (localStorage.getItem(seenKey)) return;
-
-    let stopped = false;
-
-    const stop = () => {
-      if (stopped) return;
-      stopped = true;
-      localStorage.setItem(seenKey, "1");
-    };
-
-    ["pointerdown","touchstart","mousedown","wheel"].forEach(evt=>{
-      window.addEventListener(evt, stop, {once:true, passive:true});
-    });
-
-    setTimeout(() => {
-      if (stopped) return;
-
-      carousel.scrollTo({
-        left: Math.min(350, carousel.scrollWidth),
-        behavior: "smooth"
-      });
-
-      // Nach der Demo stehen bleiben, damit man die weiteren Spiele sieht.
-      setTimeout(() => {
-        localStorage.setItem(seenKey, "1");
-      }, 2200);
-
-    }, 1000);
-  }
-
-  window.addEventListener("load", startWallHint);
-})();
-
-</script>
 </body>
 </html>
