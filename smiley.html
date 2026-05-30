@@ -7111,7 +7111,6 @@
       }
 
       kippDirection = savedDir;
-      kipp21KniffActive = false;
       kipp21KniffsUsed++;
       kipp21WobbleUsed++;
 
@@ -7127,6 +7126,8 @@
         advanceTopFace();
       }
 
+      // kipp21KniffActive erst JETZT auf false — verhindert vorzeitigen Scrollband-Trigger
+      kipp21KniffActive = false;
       showScrollband();
       // Spielführungs-Text Phase 2: nur bei erster Runde
       const guideText = document.getElementById('_smileyGuideText');
@@ -12324,7 +12325,9 @@
         wrap.style.cursor = 'grabbing';
       });
       document.addEventListener('mousemove', (e) => {
-        if (!mouseBandActive || replayActive) return;
+        if (!mouseBandActive) return;
+        if (replayActive) { mouseBandActive = false; wrap.style.cursor = ''; return; }
+        const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale')) || 0.3333;
         const now = performance.now();
         const x = e.clientX;
         const dx = x - touchStartX;
@@ -12338,17 +12341,45 @@
         const wrapW = wrap.offsetWidth || 306;
         const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
         strip.style.transform = 'translateX(' + tx + 'px)';
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
+        // bandIdx mit scale-Korrektur: zeigt immer auf die visuell zentrierte Zahl
+        const dxLayout = dx / scale;
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round(touchStartIdx - dxLayout / CELL_W)));
         updateBandStyle();
       });
       document.addEventListener('mouseup', (e) => {
         if (e.button !== 0 || !mouseBandActive) return;
-        if (replayActive) { mouseBandActive = false; wrap.style.cursor = ''; return; }
         mouseBandActive = false;
         wrap.style.cursor = '';
         if (!touchMoved) {
-          // Tap: click-Handler übernimmt — nichts tun
-          return;
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = e.clientX - wrapRect.left;
+          const wrapW = wrapRect.width;
+          const firstBtn = strip.querySelector('.numBtn');
+          const cellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
+          if (tappedIdx !== bandIdx) {
+            bandIdx = tappedIdx;
+            updateBandPos(true);
+            return;
+          }
+          const n = bandIdx + 1;
+          selectNum(n);
+          if (!isAnimating && !kipp21KniffActive) {
+            (async () => {
+              for (let i = 0; i < n; i++) {
+                let dir;
+                if      (currentQuadrant === 0) dir = 'east';
+                else if (currentQuadrant === 1) dir = 'south_from_q1';
+                else if (currentQuadrant === 2) dir = 'west_from_q2';
+                else                            dir = 'north';
+                await performKipp(dir, 600);
+                advanceTopFace();
+                if (i < n - 1) await new Promise(r => setTimeout(r, 200));
+              }
+              clearSelection();
+              if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
+            })();
+          }
         } else {
           const wrapW = wrap.offsetWidth || 306;
           const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
