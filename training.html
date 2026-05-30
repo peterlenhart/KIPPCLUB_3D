@@ -3185,10 +3185,6 @@
       const oldFace = topFace;
       const oldQ = currentQuadrant;
       topFace = (kippDirection === 'cw') ? cw[topFace] : ccw[topFace];
-      // Log NACH Update (currentQuadrant ist bereits durch performKipp aktualisiert)
-      const _msg = '[TRACK] KIPP ' + kippDirection + ': Q ' + oldQ + '->' + currentQuadrant + ' face ' + oldFace + '->' + topFace;
-      console.log(_msg);
-      if (window._trackLog) window._trackLog.push(_msg);
       // Ab Level 2: nach erstem Spieler-Kipp Flag setzen → alle Slots verdeckt
       // ABER nur wenn kein Eckblick läuft (sonst würde Eckblick-Drehung schon zählen)
       if (typeof currentLevel !== 'undefined' && currentLevel >= 2 && window._kippSlotsHidden && !window._kippEckblickRunning) {
@@ -3199,27 +3195,7 @@
       }
     }
     
-    // Tracker-Log + Copy-Button
-    window._trackLog = [];
-    window.addEventListener('DOMContentLoaded', () => {
-      const btn = document.createElement('button');
-      btn.textContent = '📋 LOG';
-      btn.style.cssText = 'position:fixed;bottom:5px;right:5px;z-index:99999;' +
-        'background:#222;color:#0f0;font:11px monospace;padding:4px 8px;' +
-        'border:1px solid #0f0;border-radius:4px;cursor:pointer;';
-      btn.onclick = () => {
-        const txt = window._trackLog.join('\n');
-        const ta = document.createElement('textarea');
-        ta.value = txt;
-        ta.style.cssText = 'position:fixed;top:10%;left:5%;width:90%;height:80%;z-index:99998;' +
-          'background:#fff;color:#000;font:11px monospace;padding:8px;';
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); btn.textContent = '✓ KOPIERT'; } catch(e) {}
-        setTimeout(() => { ta.remove(); btn.textContent = '📋 LOG'; }, 8000);
-      };
-      document.body.appendChild(btn);
-    });
+
 
     // Welche Nachbarfarbe hat jeder Slot pro Quadrant
     const SLOT_NEIGHBOR_COLORS = {
