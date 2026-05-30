@@ -2075,5 +2075,50 @@ const LVL_T = {
     applyLevelLang();
 
   </script>
+
+  <script>
+    // KIPP CLUB: horizontaler Scroll-Hinweis für das Wall-Karussell
+    // Isoliert: verändert keine Layout-, Scale-, Höhen- oder Positionswerte.
+    (function(){
+      let stopped = false;
+      let started = false;
+
+      function stopHint(){
+        stopped = true;
+      }
+
+      function startWallScrollHint(){
+        if (started) return;
+        started = true;
+
+        const car = document.getElementById("wallCarousel");
+        if (!car) return;
+
+        // Sobald der Nutzer selbst eingreift, nichts mehr automatisch bewegen.
+        ["pointerdown", "touchstart", "mousedown", "wheel", "keydown"].forEach(function(evt){
+          window.addEventListener(evt, stopHint, { once: true, passive: true });
+        });
+
+        setTimeout(function(){
+          if (stopped) return;
+
+          const slides = car.querySelectorAll(".wallSlide");
+          const secondSlide = slides && slides.length > 1 ? slides[1] : null;
+
+          // Ziel: zweite Wall. Das ist eine echte Karussell-Position,
+          // kein freier Layoutwert. Bewegung optisch nach Westen/links.
+          const targetLeft = secondSlide ? secondSlide.offsetLeft : ((8 * 135) - 135);
+
+          car.scrollTo({
+            left: targetLeft,
+            behavior: "smooth"
+          });
+        }, 900);
+      }
+
+      window.addEventListener("load", startWallScrollHint);
+    })();
+  </script>
+
 </body>
 </html>
