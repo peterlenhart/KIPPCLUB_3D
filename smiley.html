@@ -12369,8 +12369,7 @@
           const wrapRect = wrap.getBoundingClientRect();
           const tapX = e.clientX - wrapRect.left;
           const wrapW = wrapRect.width;
-          const firstBtn = strip.querySelector('.numBtn');
-          const cellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+          const cellW = CELL_W;
           const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
           if (tappedIdx !== bandIdx) {
             // Nebenzahl angeklickt → Band dorthin schieben, kein Kipp
@@ -12429,10 +12428,9 @@
         const tapX = e.clientX - wrapRect.left;
         const wrapW = wrapRect.width;
         const centerX = wrapW / 2;
-        const firstBtn = strip.querySelector('.numBtn');
-        const actualCellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+        const wrapLayoutW = wrap.offsetWidth || 306;
         const offsetFromCenter = tapX - centerX;
-        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / actualCellW)));
+        const tappedIdx = Math.max(0, Math.min(TOTAL - 1, bandIdx + Math.round(offsetFromCenter / CELL_W)));
         
         if (tappedIdx !== bandIdx) {
           // Nicht-mittige Zahl: Band dorthin schieben
