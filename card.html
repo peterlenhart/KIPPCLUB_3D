@@ -17189,7 +17189,12 @@
         }
 
         isSwiping = false;
-        if (!dragActive) { lastTouchPos = null; return; }
+        if (!dragActive) {
+          // Kein Drag → touchend-Handler übernimmt Long-Press/Stich/Slot-Aufdecken
+          el.dispatchEvent(new Event('touchend', { bubbles: false }));
+          lastTouchPos = null;
+          return;
+        }
 
         // Snap-Animation — identisch zu touchend
         const absAng = Math.abs(dragCurrentAngle);
