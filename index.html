@@ -1537,13 +1537,42 @@ Merken, Logik, Kopfzerbrechen.">
         if (atStart) arrL.classList.add('hidden'); else arrL.classList.remove('hidden');
         if (atEnd) arrR.classList.add('hidden'); else arrR.classList.remove('hidden');
       }
-      function scrollByOne(direction) {
+      function scrollToNearest(direction) {
         const car = document.getElementById('wallCarousel');
         if (!car) return;
-        // Eine Wall-Breite minus Ueberlappung = effektive Schrittweite
-        const cell = numVar("--cell") || 135;
-        const step = (8 * cell) - 135; // eine Wall-Breite minus 1 Zelle Überlappung
-        car.scrollBy({ left: direction * step, behavior: 'smooth' });
+        const track = car.querySelector('.wallTrack');
+        if (!track) return;
+
+        // Alle Slides inkl. Clones — funktioniert auch im Loop
+        const slides = Array.from(track.querySelectorAll('.wallSlide'));
+        if (!slides.length) return;
+
+        const currentScroll = car.scrollLeft;
+
+        // Slide finden, dessen offsetLeft dem aktuellen scrollLeft am nächsten ist
+        let closestIdx = 0;
+        let closestDist = Infinity;
+        slides.forEach(function(slide, i) {
+          const dist = Math.abs(slide.offsetLeft - currentScroll);
+          if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+        });
+
+        // Einen Schritt in Richtung direction
+        const targetIdx = Math.max(0, Math.min(slides.length - 1, closestIdx + direction));
+        const targetScroll = slides[targetIdx].offsetLeft;
+
+        // Auto-Scroll während der Animation pausieren
+        if (typeof window._kippBandPause === 'function') window._kippBandPause();
+        car.scrollTo({ left: targetScroll, behavior: 'smooth' });
+
+        // Nach smooth-Scroll wieder starten — nur wenn Pause-Button nicht aktiv
+        setTimeout(function() {
+          const pauseBtn = document.getElementById('wallArrowPause');
+          const manuellPausiert = pauseBtn && pauseBtn.classList.contains('paused');
+          if (!manuellPausiert && typeof window._kippBandResume === 'function') {
+            window._kippBandResume();
+          }
+        }, 600);
       }
       window.addEventListener('load', () => {
         const car = document.getElementById('wallCarousel');
@@ -1556,12 +1585,12 @@ Merken, Logik, Kopfzerbrechen.">
         if (arrL) {
           arrL.style.pointerEvents = 'auto';
           arrL.style.cursor = 'pointer';
-          arrL.addEventListener('click', () => scrollByOne(-1));
+          arrL.addEventListener('click', () => scrollToNearest(-1));
         }
         if (arrR) {
           arrR.style.pointerEvents = 'auto';
           arrR.style.cursor = 'pointer';
-          arrR.addEventListener('click', () => scrollByOne(1));
+          arrR.addEventListener('click', () => scrollToNearest(1));
         }
       });
     })();
@@ -2318,14 +2347,18 @@ const LVL_T = {
           }, { passive: true });
 
           car.addEventListener("touchend", function(){
-            if (rafId === null) {
+            const pauseBtn = document.getElementById("wallArrowPause");
+            const manuellPausiert = pauseBtn && pauseBtn.classList.contains("paused");
+            if (rafId === null && !manuellPausiert) {
               lastTime = null;
               rafId = requestAnimationFrame(animate);
             }
           }, { passive: true });
 
           car.addEventListener("touchcancel", function(){
-            if (rafId === null) {
+            const pauseBtn = document.getElementById("wallArrowPause");
+            const manuellPausiert = pauseBtn && pauseBtn.classList.contains("paused");
+            if (rafId === null && !manuellPausiert) {
               lastTime = null;
               rafId = requestAnimationFrame(animate);
             }
