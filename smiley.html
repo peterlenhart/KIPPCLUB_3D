@@ -57,7 +57,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 2;
       touch-action: none;
       user-select: none;
     }
@@ -1571,7 +1570,7 @@
           { t: "48 Kombinationen. Maximal 6 Kipps.", p: "Es gibt genau <b>48 verschiedene Kombinationen</b> aus W\u00fcrfelfeld und Randfeld. Jede einzelne davon l\u00e4sst sich mit <b>h\u00f6chstens 6 Kipps</b> erreichen. Immer. Die entscheidende Frage ist nur: <b>Im oder gegen den Uhrzeigersinn?</b><br><br>Wer die richtige Richtung w\u00e4hlt, braucht nie mehr als 6 Kipps. 50:50 Chance \u2013 oder pures Wissen." },
           { t: "Der Logikkipp", p: "Dein Kippziel ist z.B. <b>5 an Blau</b> \u2013 und die 5 ist bereits sichtbar auf dem W\u00fcrfel? Dann brauchst du exakt <b>3 oder 6 Kipps</b>. Wer versteht warum, hat einen entscheidenden Vorteil. Mehr wird nicht verraten." },
           { t: "Der Uhrenvergleich", p: "Stell dir eine Uhr vor. Du kannst den Stundenzeiger <b>11 Stunden vorstellen</b> \u2013 oder <b>1 Stunde zur\u00fcck</b>. Du landest auf derselben Stunde.<br><br>Genau so funktioniert der W\u00fcrfel:<br>\u2022 <b>11 Kipps</b> im Uhrzeigersinn = <b>1 Kipp</b> gegen den Uhrzeigersinn<br>\u2022 <b>8 Kipps</b> in eine Richtung = <b>4 Kipps</b> in die Gegenrichtung<br>\u2022 <b>6 Kipps</b> im UZS = <b>6 Kipps</b> gegen UZS \u2013 Richtung egal<br>\u2022 <b>12 Kipps</b> in beliebige Richtung: Wieder wie am Anfang" },
-          { t: "W\u00fcrfel Einblick nutzen \u2013 Zahlenpaare merken", p: "Mit dem W\u00fcrfel Einblick erh\u00e4ltst du Einblick in die verdeckten W\u00fcrfelfl\u00e4chen. Nutze sie klug. Merke dir besonders die <b>Zahlenpaare, die sich an den Kanten gegen\u00fcberliegen</b>. Dieses Wissen verk\u00fcrzt deine Kippwege drastisch." }
+          { t: "Eckblick nutzen \u2013 Zahlenpaare merken", p: "Mit dem Eckblick erh\u00e4ltst du Einblick in die verdeckten W\u00fcrfelfl\u00e4chen. Nutze sie klug. Merke dir besonders die <b>Zahlenpaare, die sich an den Kanten gegen\u00fcberliegen</b>. Dieses Wissen verk\u00fcrzt deine Kippwege drastisch." }
         ],
         footer: "Viel Spannung, Spa\u00df und Kopfzerbrechen\nmit dem W\u00fcrfel in der Box."
       },
@@ -5756,7 +5755,7 @@
         // z-index UNTER dem Canvas (renderer.domElement) — so verdeckt
         // der Würfel (höchstes Objekt im Raum) diese Anzeige automatisch korrekt.
         row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
-          'display:flex;justify-content:center;gap:8px;z-index:1;pointer-events:none;';
+          'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
         row.innerHTML = '';
         _smileyResults.forEach(r => {
           const wrap = document.createElement('div');
@@ -7154,6 +7153,10 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
 
+      // Treffer-Anzeige ausblenden, solange Würfel höher steht (Eckblick)
+      const _resultRowHide = document.getElementById('_smileyResultRow');
+      if (_resultRowHide) _resultRowHide.style.visibility = 'hidden';
+
       // Position merken für Rückkehr
       const savedPos = cube.position.clone();
       const savedQuat = cube.quaternion.clone();
@@ -7325,6 +7328,9 @@
       currentQuadrant = savedQ;
       topFace = savedF;
       eckblickPivot = null;
+
+      const _resultRowShow = document.getElementById('_smileyResultRow');
+      if (_resultRowShow) _resultRowShow.style.visibility = 'visible';
 
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
