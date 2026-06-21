@@ -9474,7 +9474,7 @@
         const gt = document.getElementById('_smileyGuideText');
         if (gt) gt.style.display = 'none';
         window._smileyWaitingForLos = false;
-        runKipp21WobbleKniff(true);
+        runKipp21EckblickKniff(true);
       };
     });
 
@@ -9557,8 +9557,8 @@
       // Smiley-Modus: Karte sofort als "offen" markieren
       if (kipp21CardStates[0] !== undefined) kipp21CardStates[0] = 'offen';
 
-      // Wobble nach 800ms
-      setTimeout(() => { runKipp21WobbleKniff(true); }, 800);
+      // Eckblick nach 800ms
+      setTimeout(() => { runKipp21EckblickKniff(true); }, 800);
     });
 
     // Farbfeld-Positionen auf dem RAHMEN [X, Y, Z, rotDeg]
