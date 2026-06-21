@@ -5739,38 +5739,52 @@
       }
 
       // Ergebnis-Smileys zwischen Zeile 11-12 anzeigen
+      const _resultTexCache = {};
+      function getResultTexture(src, hit, color, points) {
+        const key = src + '|' + hit + '|' + points;
+        if (_resultTexCache[key]) return _resultTexCache[key];
+        const cnv = document.createElement('canvas');
+        cnv.width = 128; cnv.height = 160;
+        const ctx = cnv.getContext('2d');
+        const tex = new THREE.CanvasTexture(cnv);
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 8, 0, 112, 112);
+          if (!hit) ctx.globalAlpha = 0.7;
+          ctx.globalAlpha = 1;
+          ctx.font = 'bold 40px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = LEVEL_HEX[color] || '#fff';
+          ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
+          ctx.fillText(points, 64, 152);
+          tex.needsUpdate = true;
+        };
+        img.src = src;
+        _resultTexCache[key] = tex;
+        return tex;
+      }
+
+      let _smileyResultSprites = [];
+      function clearResultSprites() {
+        _smileyResultSprites.forEach(s => scene.remove(s));
+        _smileyResultSprites = [];
+      }
       function showResultSmileys() {
-        let row = document.getElementById('_smileyResultRow');
-        if (!row) {
-          row = document.createElement('div');
-          row.id = '_smileyResultRow';
-          document.getElementById('container').appendChild(row);
-        }
-        // Zeile 11,5 auf dem Spieltisch (3D-projiziert)
+        _smileyResultSprites.forEach(s => scene.remove(s));
+        _smileyResultSprites = [];
         const rowZ = 0.890625;
-        const spieltischY = 0.001 + 3 * 0.15625; // Y+3 Zellen = 0.46975
-        const pt = new THREE.Vector3(0, spieltischY, rowZ);
-        pt.project(camera);
-        const sy = Math.round((-pt.y * 0.5 + 0.5) * 720) - 42;
-        // z-index UNTER dem Canvas (renderer.domElement) — so verdeckt
-        // der Würfel (höchstes Objekt im Raum) diese Anzeige automatisch korrekt.
-        row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
-          'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
-        row.innerHTML = '';
-        _smileyResults.forEach(r => {
-          const wrap = document.createElement('div');
-          wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
-          const img = document.createElement('img');
-          img.src = r.src;
-          img.style.cssText = 'width:49px;height:49px;object-fit:contain;' +
-            (r.hit ? 'filter:drop-shadow(0 0 6px #FFD700);' : 'opacity:0.7;');
-          wrap.appendChild(img);
-          const txt = document.createElement('div');
-          txt.style.cssText = 'font:bold 28px Arial;margin-top:-2px;color:' + (LEVEL_HEX[r.color] || '#fff') + ';' +
-            'text-shadow:0 1px 3px rgba(0,0,0,0.8);';
-          txt.textContent = r.points;
-          wrap.appendChild(txt);
-          row.appendChild(wrap);
+        const spieltischY = 0.001 + 3 * 0.15625 + 0.002;
+        const n = _smileyResults.length;
+        const gap = 0.105;
+        const startX = -((n - 1) * gap) / 2;
+        _smileyResults.forEach((r, i) => {
+          const tex = getResultTexture(r.src, r.hit, r.color, r.points);
+          const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: true });
+          const sprite = new THREE.Sprite(mat);
+          sprite.scale.set(0.095, 0.119, 1);
+          sprite.position.set(startX + i * gap, spieltischY, rowZ);
+          scene.add(sprite);
+          _smileyResultSprites.push(sprite);
         });
       }
 
@@ -7153,10 +7167,6 @@
       kipp21KniffAbort = false;
       kipp21PendingCardTap = -1;
 
-      // Treffer-Anzeige ausblenden, solange Würfel höher steht (Eckblick)
-      const _resultRowHide = document.getElementById('_smileyResultRow');
-      if (_resultRowHide) _resultRowHide.style.visibility = 'hidden';
-
       // Position merken für Rückkehr
       const savedPos = cube.position.clone();
       const savedQuat = cube.quaternion.clone();
@@ -7328,9 +7338,6 @@
       currentQuadrant = savedQ;
       topFace = savedF;
       eckblickPivot = null;
-
-      const _resultRowShow = document.getElementById('_smileyResultRow');
-      if (_resultRowShow) _resultRowShow.style.visibility = 'visible';
 
       kipp21KniffActive = false;
       kipp21KniffsUsed++;
