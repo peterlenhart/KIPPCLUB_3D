@@ -57,6 +57,7 @@
       position: absolute;
       top: 0;
       left: 0;
+      z-index: 2;
       touch-action: none;
       user-select: none;
     }
@@ -1344,7 +1345,7 @@
         fV:"Violett", fB:"Blau", fG:"Gr\u00fcn", fO:"Orange",
         nml:"NOCHMAL", cTeilen:"TEILEN", cSchaffst:"Schaffst du das auch?", cKopiert:"KOPIERT!", cLeicht:"LEICHT", cMittel:"MITTEL", cSchwer:"SCHWER", cSehrleicht:"SEHR LEICHT", cSchwerLc:"schwer", cMittelLc:"mittel", cLeichtLc:"leicht", cSehrleichtLc:"sehr leicht", cChall1:"Tippe auf den", cChall2:"blinkenden Smiley,", cChall3:"und merke ihn dir", cPunkte:"Punkte", cVon:"von", cWasSchaffst:"Was schaffst DU?", cKombiTxt:"ICH mit dieser SMILEY-KOMBI:", cGesamt:"Gesamt", cBildTitel:"Mit dieser SMILEY-KOMBI", cAnspruch:"Anspruch", cVorgabe:"VORGABE", cNichtGeschafft:"nicht geschafft", cEingestellt:"eingestellt", cUebertroffen:"\u00fcbertroffen", cWiederholen:"WIEDERHOLEN", cEigeneKombi:"EIGENE KOMBI", cEndTitel:"Mit deiner SMILEY-KOMBI", nxl:"NEXT LEVEL", sek:"Sek.", tout:"60 Sek.<br>\u00fcberschritten", h4b:"Mit 4 HITS ins BRAINY Level", h4r:"Mit 4 HITS ins BRAIN Level",
         exQ:"Partie<br>wirklich beenden?", exC:"Zur\u00fcck", exE:"Beenden",
-        sw4:"WÄHLE EINEN SMILEY,", sw4b:"und merke ihn dir!", sNw:"NEU WÄHLEN", sLg:"LOS GEHT'S", sFe:"OK", sLm:"DEIN LEVEL-MIX:", sG1:"Pass gut auf!<br>Schau auf deinen ausgewählten Smiley!", sG2:"Wähle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.", sKZ:"KIPP-ZAHL wählen (1–11)<br>Dein Smiley muss zu einer der 4 Hände.",
+        sw4:"WÄHLE EINEN SMILEY,", sw4b:"und merke ihn dir!", sNw:"NEU WÄHLEN", sLg:"LOS GEHT'S", sFe:"OK", sLm:"DEIN LEVEL-MIX:", sG1:"Pass gut auf!<br>Suche deinen Smiley<br>und tippe dann auf ihn.", sG2:"Wähle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.", sKZ:"KIPP-ZAHL wählen (1–11)<br>Dein Smiley muss zu einer der 4 Hände.",
         anl:[
           "Wähle 1 Smiley aus einer der 4 Reihen. Jede Reihe hat einen anderen Schwierigkeitsgrad (25, 15, 10 oder 5 Punkte).",
           "Merke dir deinen ausgewählten Smiley.",
@@ -1508,7 +1509,7 @@
     if(!T) T = {s1:"SPIEL ZIEL",s2:"",w:"weiter",n:"Neues Spiel",e1:"IMMER 2 OPTIONEN",e2:"",e3:"",k1:"SCHAUEN & MERKEN",k2:"",p1:"TIPPEN & SCHUBSEN",p2:"",
         ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"ANLEITUNG",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange",
-        sw4:"WÄHLE EINEN SMILEY,",sw4b:"und merke ihn dir!",sNw:"NEU WÄHLEN",sLg:"LOS GEHT'S",sFe:"OK",sLm:"DEIN LEVEL-MIX:", sG1:"Pass gut auf!<br>Schau auf deinen ausgewählten Smiley!", sG2:"Wähle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.", sKZ:"KIPP-ZAHL wählen (1–11)<br>Dein Smiley muss zu einer der 4 Hände."};
+        sw4:"WÄHLE EINEN SMILEY,",sw4b:"und merke ihn dir!",sNw:"NEU WÄHLEN",sLg:"LOS GEHT'S",sFe:"OK",sLm:"DEIN LEVEL-MIX:", sG1:"Pass gut auf!<br>Suche deinen Smiley<br>und tippe dann auf ihn.", sG2:"Wähle 1-11 Kipps!<br>Dein Smiley muss zu deiner Hand.", sKZ:"KIPP-ZAHL wählen (1–11)<br>Dein Smiley muss zu einer der 4 Hände."};
     document.getElementById("btnSpielen").textContent = T.sp;
     document.getElementById("btnDemo").textContent = T.dm;
     // Exit overlay translations
@@ -5747,15 +5748,15 @@
           document.getElementById('container').appendChild(row);
         }
         // Zeile 11,5 auf dem Spieltisch (3D-projiziert)
-        // rowZ = wallInnerNorth + (row - 4) * cellSize + cellSize/2
-        // = -0.359375 + (11.5 - 4) * 0.15625 + 0.078125 = 0.890625
         const rowZ = 0.890625;
         const spieltischY = 0.001 + 3 * 0.15625; // Y+3 Zellen = 0.46975
         const pt = new THREE.Vector3(0, spieltischY, rowZ);
         pt.project(camera);
         const sy = Math.round((-pt.y * 0.5 + 0.5) * 720) - 42;
+        // z-index UNTER dem Canvas (renderer.domElement) — so verdeckt
+        // der Würfel (höchstes Objekt im Raum) diese Anzeige automatisch korrekt.
         row.style.cssText = 'position:absolute;left:0;width:360px;top:' + sy + 'px;' +
-          'display:flex;justify-content:center;gap:8px;z-index:20;pointer-events:none;';
+          'display:flex;justify-content:center;gap:8px;z-index:1;pointer-events:none;';
         row.innerHTML = '';
         _smileyResults.forEach(r => {
           const wrap = document.createElement('div');
@@ -6075,6 +6076,7 @@
         _smileyTotalPoints = 0;
         _smileyMaxPoints = 0;
         _smileyResults = [];
+        if (typeof clearResultSprites === 'function') clearResultSprites();
         window._capturedSmileys = [];
         window._selectedSequence = [];
         window._selectedSequence = [];
@@ -6085,8 +6087,7 @@
           const mark = el.querySelector('._playedMark');
           if (mark) mark.remove();
         });
-        const rr = document.getElementById('_smileyResultRow');
-        if (rr) rr.remove();
+        if (typeof clearResultSprites === 'function') clearResultSprites();
         hide3erPaket();
         showLeveltafel(false);
       }
@@ -7250,6 +7251,7 @@
 
       // 4. Halten
       if (!kipp21KniffAbort) {
+        window._eckblickTapAbortable = true;
         await new Promise(resolve => {
           kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
           const checkAbort = setInterval(() => {
@@ -7261,6 +7263,7 @@
             }
           }, 100);
         });
+        window._eckblickTapAbortable = false;
       }
 
       // 5. Tilt zurück
@@ -7348,7 +7351,17 @@
       kipp21KniffAbort = false;
       refreshKniffIcons();
     }
-    
+
+    // Tippen auf den Würfel während der Eckblick-Haltephase senkt ihn sofort
+    // (Spieler hat seinen Smiley gefunden, will nicht weiter warten)
+    window._eckblickTapAbortable = false;
+    renderer.domElement.addEventListener('touchstart', function() {
+      if (window._eckblickTapAbortable) kipp21KniffAbort = true;
+    }, { passive: true });
+    renderer.domElement.addEventListener('click', function() {
+      if (window._eckblickTapAbortable) kipp21KniffAbort = true;
+    });
+
     // Click-Handler für linken Joker wird unten nach Icon-Erstellung angehängt
     
     let kipp21ReplayMode = false;
@@ -9448,7 +9461,7 @@
         guideText.style.cssText = 'position:absolute;left:0;width:360px;top:' + (_guideSy + 6) + 'px;' +
           'text-align:center;z-index:20;pointer-events:none;' +
           'font:bold 21px Arial;color:#FFD700;text-shadow:0 2px 6px rgba(0,0,0,0.9);line-height:1.1;';
-        guideText.innerHTML = T.sG1 || 'Pass gut auf!<br>Schau auf deinen ausgewählten Smiley!';
+        guideText.innerHTML = T.sG1 || 'Pass gut auf!<br>Suche deinen Smiley<br>und tippe dann auf ihn.';
       }
 
       // Scrollband verstecken, LOS GEHT'S immer zeigen
@@ -9867,6 +9880,7 @@
         _smileyTotalPoints = 0;
         _smileyMaxPoints = 0;
         _smileyResults = [];
+        if (typeof clearResultSprites === 'function') clearResultSprites();
         window._capturedSmileys = [];
         window._selectedSequence = [];
         // Markierungen auf Leveltafel entfernen
@@ -9877,8 +9891,7 @@
           const mark = el.querySelector('._playedMark');
           if (mark) mark.remove();
         });
-        const rr = document.getElementById('_smileyResultRow');
-        if (rr) rr.remove();
+        if (typeof clearResultSprites === 'function') clearResultSprites();
         hide3erPaket();
         showLeveltafel(false);
       };
