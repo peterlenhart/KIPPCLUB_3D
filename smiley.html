@@ -9537,7 +9537,7 @@
         window._selectedSequence.push(_fn);
       } catch(e) {}
 
-      // 4 gewählte Smileys + 8 nicht-gewählte Smileys auf Würfel
+      // 1 gewählter Smiley + 11 nicht-gewählte auf Würfel
       const allSmileyElsG = Array.from(document.querySelectorAll('.leveltafelSmiley'));
       const selectedSrcsG = selectedSmileys.map(el => el.src);
       const nonSelectedG = allSmileyElsG.filter(el => !selectedSrcsG.includes(el.src));
@@ -9545,10 +9545,10 @@
         const j = Math.floor(Math.random() * (i + 1));
         [nonSelectedG[i], nonSelectedG[j]] = [nonSelectedG[j], nonSelectedG[i]];
       }
-      const fillImgsG = nonSelectedG.slice(0, 8).map(el => {
+      const fillImgsG = nonSelectedG.slice(0, 11).map(el => {
         const img = new Image(); img.src = el.src; return img;
       });
-      while (fillImgsG.length < 8) {
+      while (fillImgsG.length < 11) {
         const pick = nonSelectedG[Math.floor(Math.random() * nonSelectedG.length)];
         const img = new Image(); img.src = pick.src; fillImgsG.push(img);
       }
