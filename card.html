@@ -9911,11 +9911,16 @@
         fallQ = pick.q;
         fallFace = pick.face;
       } else {
-        // +1: Zurück zur gespeicherten Position
-        fallToPos = savedPos;
-        fallToQuat = savedQuat;
-        fallQ = savedQ;
-        fallFace = savedF;
+        // +1: Zufällige Position (nicht zurück zur Ausgangsposition)
+        // Ausgangs-cwSteps bestimmen um sie auszuschließen
+        const startState = BRAINY_CW_STATES.find(st => st.q === savedQ && st.face === savedF);
+        const startCwSteps = startState ? startState.cwSteps : -1;
+        const validPlus1 = BRAINY_CW_STATES.filter(st => st.cwSteps !== startCwSteps);
+        const pick = validPlus1[Math.floor(Math.random() * validPlus1.length)];
+        fallToPos = _bluffGetQuadPos(pick.q);
+        fallToQuat = _bluffGetStateQuat(pick.cwSteps);
+        fallQ = pick.q;
+        fallFace = pick.face;
       }
 
       // Fall-Animation (800ms)
