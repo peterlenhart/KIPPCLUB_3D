@@ -10881,13 +10881,20 @@
     }
     
     function generateIconKippziel() {
-      // Visible motifs directly from deck indices
+      // Sichtbare Motive aus visibleDeckIndices (die tatsächlich am Würfel sichtbaren)
+      // Pro Face max. 3 (Level 3), 2 (Level 2), 1 (Level 1) Motive sichtbar
+      const maxPerFace = currentLevel >= 3 ? 3 : (currentLevel >= 2 ? 2 : 1);
       const visibleVals = [];
-      if (currentLevel >= 3) {
-        visibleVals.push(deck[0], deck[1], deck[2], deck[4], deck[5], deck[6], deck[8], deck[9], deck[10]);
-      } else if (currentLevel >= 2) {
-        visibleVals.push(deck[0], deck[1], deck[4], deck[5], deck[8], deck[9]);
-      } else {
+      for (const idx of visibleDeckIndices) {
+        // Face bestimmen: 0-3=f0, 4-7=f1, 8-11=f2
+        const faceOff = Math.floor(idx / 4) * 4;
+        const posInFace = idx - faceOff;
+        if (posInFace < maxPerFace) {
+          visibleVals.push(deck[idx]);
+        }
+      }
+      // Fallback falls leer
+      if (visibleVals.length === 0) {
         visibleVals.push(deck[0], deck[4], deck[8]);
       }
       
