@@ -1322,32 +1322,30 @@ Merken, Logik, Kopfzerbrechen.">
         kipp21Auge.style.top  = augeTop + "px";
       }
 
-      // KIPP 27: Free-Game-Position-Updates fuer Text-Label LINKS im Banner
-      // Ring/Auge/Hand bleiben unberuehrt — Text sitzt auf der linken Bannerhaelfte
+      // KIPP 27: Free-Game-Position-Updates fuer Preis-Label + Haken (Erzeugung passiert einmalig im IIFE unten)
       const priceLbl = document.getElementById('kipp27PriceLabel');
       if (priceLbl && priceLbl.style.display !== 'none') {
         const _isUnlocked = (() => { try { return localStorage.getItem('kippclub_kipp27_unlocked') === '1'; } catch(e) { return false; } })();
         if (_isUnlocked) {
-          // Schloss: mittig links, auf Auge-Hoehe
+          // Schloss: nicht rotiert, an Auge-Position
           priceLbl.style.fontSize = augeH + 'px';
           priceLbl.style.lineHeight = augeH + 'px';
-          priceLbl.style.left = '30px';
-          priceLbl.style.top  = (bannerTop + ringCy - augeH/2 + EYE_OFFSET_Y) + 'px';
+          priceLbl.style.left = augeLeft + 'px';
+          priceLbl.style.top  = augeTop + 'px';
           priceLbl.style.width  = augeW + 'px';
           priceLbl.style.height = augeH + 'px';
           priceLbl.style.transform = 'none';
         } else {
-          // "1 Gratis-Partie" oder "€ 1,99": links im Banner, zentriert auf Banner-Hoehe
-          // Linke Haelfte = ca. 0 bis 500 Layout-Px, Text zentriert bei ~250
-          const lblFontSize = augeH * 0.75;
-          priceLbl.style.fontSize = lblFontSize + 'px';
-          priceLbl.style.lineHeight = (augeH * 1.1) + 'px';
-          priceLbl.style.left = '20px';
-          priceLbl.style.top  = (bannerTop + ringCy - augeH * 0.55) + 'px';
-          priceLbl.style.width  = '480px';
-          priceLbl.style.height = 'auto';
-          priceLbl.style.transform = 'none';
-          priceLbl.style.textAlign = 'center';
+          // €1,99: -30deg gedreht, 10 SP suedwestlicher entlang Schraege
+          priceLbl.style.fontSize = (augeH * 0.85) + 'px';
+          priceLbl.style.lineHeight = augeH + 'px';
+          // 10 Screen-Px = 30 Layout-Px in Richtung der -30°-Schraege nach SW
+          priceLbl.style.left = (augeLeft - 25.98) + 'px';
+          priceLbl.style.top  = (augeTop + 15) + 'px';
+          priceLbl.style.width  = augeW + 'px';
+          priceLbl.style.height = augeH + 'px';
+          priceLbl.style.transform = 'rotate(-30deg)';
+          priceLbl.style.transformOrigin = 'center center';
         }
       }
       const checkEl = document.getElementById('kipp27Check');
@@ -1472,17 +1470,14 @@ Merken, Logik, Kopfzerbrechen.">
       window.addEventListener('load', () => scrollWhenReady(5));
     })();
 
-    // KIPP 27: Einmaliges Setup — Label erzeugen
-    // Logik: vor erstem Spiel = "1 Gratis-Partie" (mehrsprachig)
-    //        nach erstem Spiel (noch nicht gekauft) = "€ 1,99"
-    //        gekauft = Gold-Schloss
+    // KIPP 27: Einmaliges Setup — Preis-Label + Haken bei gesetztem Flag erzeugen
     (function setupKipp27Played() {
       let played = false;
       let unlocked = false;
       try { played = (localStorage.getItem('digikipp_kipp27_played') === '1'); } catch(e) {}
       try { unlocked = (localStorage.getItem('kippclub_kipp27_unlocked') === '1'); } catch(e) {}
-
-      // Gold-Schloss SVG
+      if (!played && !unlocked) return;
+      // Gold-Schloss SVG (Inline, skaliert per font-size des Containers)
       const LOCK_SVG = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" style="height:100%;width:auto;display:inline-block;vertical-align:middle;">'
         + '<defs>'
         + '<linearGradient id="k27lg" x1="0%" y1="0%" x2="0%" y2="100%">'
@@ -1502,78 +1497,30 @@ Merken, Logik, Kopfzerbrechen.">
         + '<circle cx="40" cy="60" r="5" fill="#3a2010"/>'
         + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
         + '</svg>';
-
-      // Aktuellen Übersetzungstext holen
-      // WICHTIG: LVL_T ist erst spaeter im Code definiert (const = temporal dead zone)
-      // Daher: direkte Texttabelle hier, unabhaengig von LVL_T
-      const K27_FREE_TEXT = {
-        de: '1 Gratis-Partie',
-        en: '1 Free Game',
-        es: '1 Partida Gratis',
-        fr: '1 Partie Gratuite',
-        it: '1 Partita Gratis',
-        tr: '1 \u00dccretsiz Parti'
-      };
-      const K27_FREE_SUB = {
-        de: 'Schaffst du\u2019s?',
-        en: 'Can you beat it?',
-        es: '\u00bfPuedes lograrlo?',
-        fr: 'Tu peux le faire\u00a0?',
-        it: 'Riesci a farcela?',
-        tr: 'Ba\u015farabilir misin?'
-      };
-      const K27_PRICE_TEXT = {
-        de: '\u20AC 1,99', en: '\u20AC 1.99', es: '\u20AC 1,99',
-        fr: '\u20AC 1,99', it: '\u20AC 1,99', tr: '\u20AC 1,99'
-      };
-      const K27_PRICE_SUB = {
-        de: 'Schaffst du’s?',
-        en: 'Can you beat it?',
-        es: '¿Puedes lograrlo?',
-        fr: 'Tu peux le faire ?',
-        it: 'Riesci a farcela?',
-        tr: 'Başarabilir misin?'
-      };
-      function getK27Text() {
-        const lang = (() => { try { return localStorage.getItem('digikipp_lang') || 'de'; } catch(e) { return 'de'; } })();
-        if (unlocked) return null;
-        if (!played) return K27_FREE_TEXT[lang] || K27_FREE_TEXT.de;
-        return K27_PRICE_TEXT[lang] || K27_PRICE_TEXT.de;
-      }
-      function getK27Sub() {
-        const lang = (() => { try { return localStorage.getItem('digikipp_lang') || 'de'; } catch(e) { return 'de'; } })();
-        if (unlocked) return null;
-        if (!played) return K27_FREE_SUB[lang] || K27_FREE_SUB.de;
-        return K27_PRICE_SUB[lang] || K27_PRICE_SUB.de;
-      }
-
       const ready = () => {
         const auge = document.getElementById('kipp21Auge');
         if (!auge || !auge.parentNode) { setTimeout(ready, 50); return; }
-
-        // Auge und Hand bleiben sichtbar — Text sitzt links im Banner, nicht auf dem Auge
-
-        // Label erzeugen (einmalig)
+        // Auge ausblenden
+        auge.style.display = 'none';
+        // Hand ausblenden
+        const hand = document.getElementById('kipp21Hand');
+        if (hand) hand.style.display = 'none';
+        // Preis-Label / Schloss-Container
         if (!document.getElementById('kipp27PriceLabel')) {
           const p = document.createElement('div');
           p.id = 'kipp27PriceLabel';
-
           if (unlocked) {
-            // Gekauft: Gold-Schloss links im Banner
+            // Freigeschaltet: Gold-Schloss statt €1,99
             p.innerHTML = LOCK_SVG;
             p.style.cssText = 'position:absolute;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;white-space:nowrap;display:block;';
-            p.addEventListener('click', (e) => { e.stopPropagation(); location.href = 'kipp21.html'; });
-          } else if (!played) {
-            // Noch nie gespielt: "1 Gratis-Partie" + "Schaffst du’s?"
-            p.innerHTML = '<span style="display:block;">' + getK27Text() + '</span>'
-              + '<span style="display:block;font-size:0.7em;opacity:0.9;letter-spacing:1px;margin-top:-0.6em;">' + getK27Sub() + '</span>';
-            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;line-height:0.9;';
-            p.addEventListener('click', (e) => { e.stopPropagation(); location.href = 'kipp21.html'; });
+            p.addEventListener('click', (e) => {
+              e.stopPropagation();
+              location.href = 'kipp21.html';
+            });
           } else {
-            // Gespielt aber nicht gekauft: "€ 1,99" + "Schaffst du’s?"
-            p.innerHTML = '<span style="display:block;">' + getK27Text() + '</span>'
-              + '<span style="display:block;font-size:0.7em;opacity:0.9;letter-spacing:1px;margin-top:-0.6em;">' + getK27Sub() + '</span>';
-            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;line-height:0.9;';
+            // Noch nicht gekauft: €1,99
+            p.textContent = '\u20AC 1,99';
+            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;';
             p.addEventListener('click', (e) => {
               e.stopPropagation();
               if (window._kippclubTriggerPurchase) {
@@ -1583,30 +1530,18 @@ Merken, Logik, Kopfzerbrechen.">
           }
           auge.parentNode.appendChild(p);
         }
-
-        // Haken (nur wenn gespielt) — bleibt links neben dem Text
-        if (played && !document.getElementById('kipp27Check')) {
+        // Haken
+        if (!document.getElementById('kipp27Check')) {
           const c = document.createElement('div');
           c.id = 'kipp27Check';
           c.innerHTML = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M5 17 L13 25 L28 7" stroke="#78ecff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
           c.style.cssText = 'position:absolute;pointer-events:none;z-index:204;filter:drop-shadow(0 0 8px rgba(120,230,255,0.7));display:block;';
           auge.parentNode.appendChild(c);
         }
-
+        // Positionen werden in positionUI gesetzt -> einmal anschubsen
         if (typeof positionUI === 'function') positionUI();
       };
       ready();
-
-      // Sprach-Update: Label-Text neu setzen wenn Sprache wechselt
-      window._updateK27Label = function() {
-        const p = document.getElementById('kipp27PriceLabel');
-        if (!p || unlocked) return;
-        const spans = p.querySelectorAll('span');
-        if (spans.length >= 2) {
-          spans[0].textContent = getK27Text();
-          spans[1].textContent = getK27Sub();
-        }
-      };
     })();
     
     // Scroll-Pfeile dynamisch ein-/ausblenden je nach Karussell-Position
@@ -2224,12 +2159,12 @@ Merken, Logik, Kopfzerbrechen.">
     };
 
 const LVL_T = {
-      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "KIPP CLUB\n3D KIPP SPIELE\nMerken, Logik, Kopfzerbrechen.", mT: "Spiel beenden?", mS: "Möchtest du das Spiel<br>wirklich beenden?", mA: "Abbrechen", mB: "Beenden", play: "SPIELEN", nur: "Nur", slogan: "Merken, Logik, Kopfzerbrechen.", ogd: "3D KIPP SPIELE\nMerken, Logik, Kopfzerbrechen.", k27free: "1 Gratis-Partie", k27price: "\u20AC 1,99" },
-      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "KIPP CLUB\n3D TILT GAMES\nMemory, Logic, Mind-bending.", mT: "Quit game?", mS: "Do you really want<br>to quit the game?", mA: "Cancel", mB: "Quit", play: "PLAY", nur: "Only", slogan: "Memory, Logic, Mind-bending.", ogd: "3D TILT GAMES\nMemory, Logic, Mind-bending.", k27free: "1 Free Game", k27price: "\u20AC 1.99" },
-      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "KIPP CLUB\nJUEGOS DE VOLCADO 3D\nMemoria, L\u00f3gica, Rompecabezas.", mT: "\u00bfSalir del juego?", mS: "\u00bfRealmente quieres<br>salir del juego?", mA: "Cancelar", mB: "Salir", play: "JUGAR", nur: "Solo", slogan: "Memoria, L\u00f3gica, Rompecabezas.", ogd: "JUEGOS DE VOLCADO 3D\nMemoria, L\u00f3gica, Rompecabezas.", k27free: "1 Partida Gratis", k27price: "\u20AC 1,99" },
-      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "KIPP CLUB\nJEUX DE BASCULE 3D\nM\u00e9moire, Logique, Casse-t\u00eate.", mT: "Quitter le jeu ?", mS: "Veux-tu vraiment<br>quitter le jeu ?", mA: "Annuler", mB: "Quitter", play: "JOUER", nur: "Seulement", slogan: "M\u00e9moire, Logique, Casse-t\u00eate.", ogd: "JEUX DE BASCULE 3D\nM\u00e9moire, Logique, Casse-t\u00eate.", k27free: "1 Partie Gratuite", k27price: "\u20AC 1,99" },
-      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO KIPP", s3: "per Super Rompicapi", share: "KIPP CLUB\nGIOCHI DI RIBALTAMENTO 3D\nMemoria, Logica, Rompicapo.", mT: "Uscire dal gioco?", mS: "Vuoi davvero<br>uscire dal gioco?", mA: "Annulla", mB: "Esci", play: "GIOCA", nur: "Solo", slogan: "Memoria, Logica, Rompicapo.", ogd: "GIOCHI DI RIBALTAMENTO 3D\nMemoria, Logica, Rompicapo.", k27free: "1 Partita Gratis", k27price: "\u20AC 1,99" },
-      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "KIPP CLUB\n3D DEVİRME OYUNLARI\nHafıza, Mantık, Bulmaca.", mT: "Oyundan \u00e7ık?", mS: "Oyundan ger\u00e7ekten<br>\u00e7ıkmak istiyor musun?", mA: "\u0130ptal", mB: "\u00c7ık", play: "OYNA", nur: "Sadece", slogan: "Hafıza, Mantık, Bulmaca.", ogd: "3D KIPP OYUNLARI\nHafıza, Mantık, Bulmaca.", k27free: "1 Ücretsiz Parti", k27price: "\u20AC 1,99" }
+      de: { title: "WÄHLE DEIN LEVEL", s1: "mit TUTORIAL", s2: "ohne TUTORIAL", kp: "KIPP PRINZIP", s3: "für Supertüftler", share: "KIPP CLUB\n3D KIPP SPIELE\nMerken, Logik, Kopfzerbrechen.", mT: "Spiel beenden?", mS: "Möchtest du das Spiel<br>wirklich beenden?", mA: "Abbrechen", mB: "Beenden", play: "SPIELEN", nur: "Nur", slogan: "Merken, Logik, Kopfzerbrechen.", ogd: "3D KIPP SPIELE\nMerken, Logik, Kopfzerbrechen." },
+      en: { title: "CHOOSE YOUR LEVEL", s1: "with TUTORIAL", s2: "without TUTORIAL", kp: "TILT PRINCIPLE", s3: "for Super Puzzlers", share: "KIPP CLUB\n3D TILT GAMES\nMemory, Logic, Mind-bending.", mT: "Quit game?", mS: "Do you really want<br>to quit the game?", mA: "Cancel", mB: "Quit", play: "PLAY", nur: "Only", slogan: "Memory, Logic, Mind-bending.", ogd: "3D TILT GAMES\nMemory, Logic, Mind-bending." },
+      es: { title: "ELIGE TU NIVEL", s1: "con TUTORIAL", s2: "sin TUTORIAL", kp: "PRINCIPIO VOLCADO", s3: "para Super Enigmistas", share: "KIPP CLUB\nJUEGOS DE VOLCADO 3D\nMemoria, L\u00f3gica, Rompecabezas.", mT: "\u00bfSalir del juego?", mS: "\u00bfRealmente quieres<br>salir del juego?", mA: "Cancelar", mB: "Salir", play: "JUGAR", nur: "Solo", slogan: "Memoria, L\u00f3gica, Rompecabezas.", ogd: "JUEGOS DE VOLCADO 3D\nMemoria, L\u00f3gica, Rompecabezas." },
+      fr: { title: "CHOISIS TON NIVEAU", s1: "avec TUTORIEL", s2: "sans TUTORIEL", kp: "PRINCIPE BASCULE", s3: "pour Super Casse-t\u00eates", share: "KIPP CLUB\nJEUX DE BASCULE 3D\nM\u00e9moire, Logique, Casse-t\u00eate.", mT: "Quitter le jeu ?", mS: "Veux-tu vraiment<br>quitter le jeu ?", mA: "Annuler", mB: "Quitter", play: "JOUER", nur: "Seulement", slogan: "M\u00e9moire, Logique, Casse-t\u00eate.", ogd: "JEUX DE BASCULE 3D\nM\u00e9moire, Logique, Casse-t\u00eate." },
+      it: { title: "SCEGLI IL TUO LIVELLO", s1: "con TUTORIAL", s2: "senza TUTORIAL", kp: "PRINCIPIO KIPP", s3: "per Super Rompicapi", share: "KIPP CLUB\nGIOCHI DI RIBALTAMENTO 3D\nMemoria, Logica, Rompicapo.", mT: "Uscire dal gioco?", mS: "Vuoi davvero<br>uscire dal gioco?", mA: "Annulla", mB: "Esci", play: "GIOCA", nur: "Solo", slogan: "Memoria, Logica, Rompicapo.", ogd: "GIOCHI DI RIBALTAMENTO 3D\nMemoria, Logica, Rompicapo." },
+      tr: { title: "SEV\u0130YEN\u0130 SEÇ", s1: "TUTORIAL ile", s2: "TUTORIAL olmadan", kp: "DEV\u0130RME PRENS\u0130B\u0130", s3: "S\u00fcper Bulmacacılar i\u00e7in", share: "KIPP CLUB\n3D DEVİRME OYUNLARI\nHafıza, Mantık, Bulmaca.", mT: "Oyundan \u00e7ık?", mS: "Oyundan ger\u00e7ekten<br>\u00e7ıkmak istiyor musun?", mA: "\u0130ptal", mB: "\u00c7ık", play: "OYNA", nur: "Sadece", slogan: "Hafıza, Mantık, Bulmaca.", ogd: "3D KIPP OYUNLARI\nHafıza, Mantık, Bulmaca." }
     };
 
     function applyLevelLang() {
@@ -2274,8 +2209,6 @@ const LVL_T = {
         const sub = slide.querySelector('.wallCardPaywallSingleSub, .wallPaywallSingleSub');
         if (sub) sub.textContent = t.nur + ' ' + gameNames[g];
       });
-      // KIPP 27 Banner-Label Sprach-Update
-      if (typeof window._updateK27Label === 'function') window._updateK27Label();
     }
     applyLevelLang();
 
