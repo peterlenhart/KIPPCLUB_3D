@@ -944,33 +944,22 @@ Merken, Logik, Kopfzerbrechen.">
         </div>
 
         <!-- Wall-Karussell: 6 Wall-Bilder horizontal scrollbar -->
+        <!-- Reihenfolge: Number (free) → King → Queen → Card → Smiley → Kid's Kipp (free) -->
+        <!-- Strategie: Begehrenswertestes zuerst, Einstiegspreis am Ende -->
         <div id="wallCarousel">
           <div class="wallTrack">
             <div class="wallSlide">
               <img src="numberwall.webp" alt="KIPP NUMBERS" data-theme="numbers">
               <div class="wallButton wallButtonSpielen" data-theme-button="numbers">SPIELEN</div>
             </div>
-            <div class="wallSlide">
-              <img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons">
-              <div class="wallButton wallButtonSpielenBraun" data-theme-button="icons">SPIELEN</div>
-            </div>
-            <div class="wallSlide smileyWallSlide">
-              <img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys">
-              <div class="wallPaywallText" data-theme-button="smileys">
-                <span class="wallPaywallSingle" style="position:relative; left:20px;" data-game="smileys">€ 0,99</span>
-                <span class="wallPaywallBundle" style="position:relative; left:-24px; top:-156px;" data-game="bundle">CLUB<span style="display:inline-block; width:18px;"></span>€<span style="display:inline-block; width:7px;"></span>4,99</span>
-              </div>
-              <div class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
-              <div class="wallPaywallSingleSub">Nur SMILEY</div>
-            </div>
-            <div class="wallSlide cardWallSlide">
-              <img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card">
-              <div class="wallPaywallText" data-theme-button="card">
-                <span class="wallPaywallSingle" style="position:relative; left:20px;" data-game="card">€ 1,99</span>
+            <div class="wallSlide kingWallSlide">
+              <img src="kingpaywall.webp" alt="KIPP KING" data-theme="king">
+              <div class="wallPaywallText" data-theme-button="king">
+                <span class="wallPaywallSingle" style="position:relative; left:20px;" data-game="king">€ 2,45</span>
                 <span class="wallCardPaywallBundle" style="position:relative; left:-24px; top:-156px;" data-game="bundle">CLUB<span style="display:inline-block; width:18px;"></span>€<span style="display:inline-block; width:7px;"></span>4,99</span>
               </div>
               <div class="wallCardPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
-              <div class="wallCardPaywallSingleSub">Nur CARD</div>
+              <div class="wallCardPaywallSingleSub">Nur KING</div>
             </div>
             <div class="wallSlide queenWallSlide">
               <img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen">
@@ -981,14 +970,27 @@ Merken, Logik, Kopfzerbrechen.">
               <div class="wallCardPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
               <div class="wallCardPaywallSingleSub">Nur QUEEN</div>
             </div>
-            <div class="wallSlide kingWallSlide">
-              <img src="kingpaywall.webp" alt="KIPP KING" data-theme="king">
-              <div class="wallPaywallText" data-theme-button="king">
-                <span class="wallPaywallSingle" style="position:relative; left:20px;" data-game="king">€ 2,45</span>
+            <div class="wallSlide cardWallSlide">
+              <img src="cardpaywall.webp" alt="KIPP CARD" data-theme="card">
+              <div class="wallPaywallText" data-theme-button="card">
+                <span class="wallPaywallSingle" style="position:relative; left:20px;" data-game="card">€ 1,99</span>
                 <span class="wallCardPaywallBundle" style="position:relative; left:-24px; top:-156px;" data-game="bundle">CLUB<span style="display:inline-block; width:18px;"></span>€<span style="display:inline-block; width:7px;"></span>4,99</span>
               </div>
               <div class="wallCardPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
-              <div class="wallCardPaywallSingleSub">Nur KING</div>
+              <div class="wallCardPaywallSingleSub">Nur CARD</div>
+            </div>
+            <div class="wallSlide smileyWallSlide">
+              <img src="smileypaywall.webp" alt="KIPP SMILEYS" data-theme="smileys">
+              <div class="wallPaywallText" data-theme-button="smileys">
+                <span class="wallPaywallSingle" style="position:relative; left:20px;" data-game="smileys">€ 0,99</span>
+                <span class="wallPaywallBundle" style="position:relative; left:-24px; top:-156px;" data-game="bundle">CLUB<span style="display:inline-block; width:18px;"></span>€<span style="display:inline-block; width:7px;"></span>4,99</span>
+              </div>
+              <div class="wallPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
+              <div class="wallPaywallSingleSub">Nur SMILEY</div>
+            </div>
+            <div class="wallSlide">
+              <img src="kidskippwall.webp" alt="KIPP ICONS" data-theme="icons">
+              <div class="wallButton wallButtonSpielenBraun" data-theme-button="icons">SPIELEN</div>
             </div>
           </div>
         </div>
