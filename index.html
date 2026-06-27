@@ -1514,15 +1514,37 @@ Merken, Logik, Kopfzerbrechen.">
         it: '1 Partita Gratis',
         tr: '1 \u00dccretsiz Parti'
       };
+      const K27_FREE_SUB = {
+        de: 'Schaffst du\u2019s?',
+        en: 'Can you beat it?',
+        es: '\u00bfPuedes lograrlo?',
+        fr: 'Tu peux le faire\u00a0?',
+        it: 'Riesci a farcela?',
+        tr: 'Ba\u015farabilir misin?'
+      };
       const K27_PRICE_TEXT = {
         de: '\u20AC 1,99', en: '\u20AC 1.99', es: '\u20AC 1,99',
         fr: '\u20AC 1,99', it: '\u20AC 1,99', tr: '\u20AC 1,99'
+      };
+      const K27_PRICE_SUB = {
+        de: 'Schaffst du’s?',
+        en: 'Can you beat it?',
+        es: '¿Puedes lograrlo?',
+        fr: 'Tu peux le faire ?',
+        it: 'Riesci a farcela?',
+        tr: 'Başarabilir misin?'
       };
       function getK27Text() {
         const lang = (() => { try { return localStorage.getItem('digikipp_lang') || 'de'; } catch(e) { return 'de'; } })();
         if (unlocked) return null;
         if (!played) return K27_FREE_TEXT[lang] || K27_FREE_TEXT.de;
         return K27_PRICE_TEXT[lang] || K27_PRICE_TEXT.de;
+      }
+      function getK27Sub() {
+        const lang = (() => { try { return localStorage.getItem('digikipp_lang') || 'de'; } catch(e) { return 'de'; } })();
+        if (unlocked) return null;
+        if (!played) return K27_FREE_SUB[lang] || K27_FREE_SUB.de;
+        return K27_PRICE_SUB[lang] || K27_PRICE_SUB.de;
       }
 
       const ready = () => {
@@ -1542,14 +1564,16 @@ Merken, Logik, Kopfzerbrechen.">
             p.style.cssText = 'position:absolute;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;white-space:nowrap;display:block;';
             p.addEventListener('click', (e) => { e.stopPropagation(); location.href = 'kipp21.html'; });
           } else if (!played) {
-            // Noch nie gespielt: "1 Gratis-Partie" links im Banner — Auge/Ring/Hand bleiben sichtbar
-            p.textContent = getK27Text();
-            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;';
+            // Noch nie gespielt: "1 Gratis-Partie" + "Schaffst du’s?"
+            p.innerHTML = '<span style="display:block;">' + getK27Text() + '</span>'
+              + '<span style="display:block;font-size:0.7em;opacity:0.9;letter-spacing:1px;">' + getK27Sub() + '</span>';
+            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;line-height:1.2;';
             p.addEventListener('click', (e) => { e.stopPropagation(); location.href = 'kipp21.html'; });
           } else {
-            // Gespielt aber nicht gekauft: "€ 1,99" links im Banner
-            p.textContent = getK27Text();
-            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;';
+            // Gespielt aber nicht gekauft: "€ 1,99" + "Schaffst du’s?"
+            p.innerHTML = '<span style="display:block;">' + getK27Text() + '</span>'
+              + '<span style="display:block;font-size:0.7em;opacity:0.9;letter-spacing:1px;">' + getK27Sub() + '</span>';
+            p.style.cssText = 'position:absolute;color:#ffe273;font-family:"Arial Black",Impact,sans-serif;font-weight:900;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;text-shadow:0 1px 0 #b88400,0 2px 4px rgba(0,0,0,0.85),0 0 12px rgba(255,220,80,0.55);white-space:nowrap;display:block;line-height:1.2;';
             p.addEventListener('click', (e) => {
               e.stopPropagation();
               if (window._kippclubTriggerPurchase) {
@@ -1577,8 +1601,11 @@ Merken, Logik, Kopfzerbrechen.">
       window._updateK27Label = function() {
         const p = document.getElementById('kipp27PriceLabel');
         if (!p || unlocked) return;
-        const newText = getK27Text();
-        if (newText) p.textContent = newText;
+        const spans = p.querySelectorAll('span');
+        if (spans.length >= 2) {
+          spans[0].textContent = getK27Text();
+          spans[1].textContent = getK27Sub();
+        }
       };
     })();
     
