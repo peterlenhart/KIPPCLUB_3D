@@ -28,6 +28,24 @@ Merken, Logik, Kopfzerbrechen.">
   <!-- Theme Color -->
   <meta name="theme-color" content="#4a2418">
 
+  <!-- ============================================================
+       LENNOY / KIPP CLUB — Google Analytics 4
+       TODO: Ersetze "G-XXXXXXXXXX" mit deiner echten Measurement ID
+       aus: analytics.google.com → Verwaltung → Datenstrom → Mess-ID
+       ============================================================ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX', { page_title: 'KIPP CLUB – Hauptmenü', page_location: window.location.href });
+
+    // Hilfsfunktion: Event sicher senden
+    function kippTrack(eventName, params) {
+      try { gtag('event', eventName, params || {}); } catch(e) {}
+    }
+  </script>
+
   <style>
     :root{
       --cols: 8;
@@ -1637,24 +1655,33 @@ Merken, Logik, Kopfzerbrechen.">
         return null;
       }
       function triggerPurchase(productId, gameOnSuccess) {
+        // Analytics: Kaufabsicht tracken
+        kippTrack('purchase_click', { product_id: productId, game: gameOnSuccess, screen_name: 'hauptmenue' });
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
           window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
             .then(result => {
               if (result && result.success) {
+                // Analytics: Kauf erfolgreich
+                kippTrack('purchase_success', { product_id: productId, game: gameOnSuccess });
                 const tokenKey = PURCHASE_TOKEN[productId];
                 if (tokenKey) setToken(tokenKey);
                 const target = GAME_TARGETS[gameOnSuccess];
                 if (target) location.href = target;
               }
             })
-            .catch(() => {});
+            .catch(() => {
+              kippTrack('purchase_cancelled', { product_id: productId, game: gameOnSuccess });
+            });
         } else {
           // Browser-Test-Modus (kein Capacitor): simulierter Kauf-Dialog
           if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\nPreis: laut Store\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase ueber App Store / Play Store)')) {
+            kippTrack('purchase_success', { product_id: productId, game: gameOnSuccess });
             const tokenKey = PURCHASE_TOKEN[productId];
             if (tokenKey) setToken(tokenKey);
             const target = GAME_TARGETS[gameOnSuccess];
             if (target) location.href = target;
+          } else {
+            kippTrack('purchase_cancelled', { product_id: productId, game: gameOnSuccess });
           }
         }
       }
@@ -1856,12 +1883,14 @@ Merken, Logik, Kopfzerbrechen.">
     // Game navigation
     let selectedSkin = 'numbers';
     document.getElementById("clickColor").onclick = () => {
+      kippTrack('game_open', { game: 'kipp_number', screen_name: 'hauptmenue' });
       selectedSkin = 'numbers';
       updateLevelLinks();
       updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
     };
     document.getElementById("clickCard").onclick = () => {
+      kippTrack('game_open', { game: 'kids_kipp', screen_name: 'hauptmenue' });
       selectedSkin = 'icons';
       updateLevelLinks();
       updateLevelBests();
@@ -1869,10 +1898,12 @@ Merken, Logik, Kopfzerbrechen.">
     };
     // KIPP QUEEN: eigene HTML, Level MASTERBRAIN
     document.getElementById("clickQueen").onclick = () => {
+      kippTrack('game_open', { game: 'kipp_queen', screen_name: 'hauptmenue' });
       location.href = 'kipp_queen.html?level=masterbrain';
     };
     // KIPP KING: eigene HTML, Level MASTERBRAIN
     document.getElementById("clickKing").onclick = () => {
+      kippTrack('game_open', { game: 'kipp_king', screen_name: 'hauptmenue' });
       location.href = 'kipp_king.html?level=masterbrain';
     };
     function updateLevelLinks() {
@@ -2014,11 +2045,13 @@ Merken, Logik, Kopfzerbrechen.">
 
     // KIPP CARD
     document.getElementById("clickKippCard").onclick = () => {
+      kippTrack('game_open', { game: 'kipp_card', screen_name: 'hauptmenue' });
       location.href = 'card.html';
     };
 
     // KIPP SMILEY
     document.getElementById("clickSmiley").onclick = () => {
+      kippTrack('game_open', { game: 'kipp_smiley', screen_name: 'hauptmenue' });
       location.href = 'smiley.html';
     };
 
@@ -2051,6 +2084,7 @@ Merken, Logik, Kopfzerbrechen.">
       const t = LVL_T[currentLang] || LVL_T.de;
       const text = t.share;
 
+      kippTrack('share_click', { screen_name: 'hauptmenue', method: navigator.share ? 'native' : 'whatsapp' });
       if(navigator.share){
         navigator.share({ title:"KIPP CLUB", text, url }).catch(()=>{});
       } else {

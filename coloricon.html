@@ -4,6 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KIPP CLUB – ICONS</title>
+
+  <!-- ============================================================
+       LENNOY / KIPP CLUB — Google Analytics 4
+       TODO: Ersetze "G-XXXXXXXXXX" mit deiner echten Measurement ID
+       aus: analytics.google.com → Verwaltung → Datenstrom → Mess-ID
+       ============================================================ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX', { page_title: 'KID'S KIPP – Spiel', page_location: window.location.href });
+    function kippTrack(eventName, params) {
+      try { gtag('event', eventName, params || {}); } catch(e) {}
+    }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -8547,6 +8563,7 @@
       }
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
+      kippTrack('game_start', { game: 'kids_kipp', mode: 'play' });
       handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
@@ -11124,6 +11141,7 @@
         btnT.style.display = 'block';
         btnT.onclick = function() {
           var shareText = buildIconShareText(_lvName, iconHits, iconMisses);
+          kippTrack('share_click', { screen_name: 'kids_kipp' });
           if (navigator.share) {
             navigator.share({ text: shareText }).catch(function(){});
           } else {

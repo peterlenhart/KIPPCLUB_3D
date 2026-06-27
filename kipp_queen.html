@@ -28,6 +28,22 @@
   </script>
 
   <title>KIPP CLUB – QUEEN</title>
+
+  <!-- ============================================================
+       LENNOY / KIPP CLUB — Google Analytics 4
+       TODO: Ersetze "G-XXXXXXXXXX" mit deiner echten Measurement ID
+       aus: analytics.google.com → Verwaltung → Datenstrom → Mess-ID
+       ============================================================ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX', { page_title: 'KIPP QUEEN – Spiel', page_location: window.location.href });
+    function kippTrack(eventName, params) {
+      try { gtag('event', eventName, params || {}); } catch(e) {}
+    }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -2355,8 +2371,10 @@
           }
           
           if (navigator.share) {
+            kippTrack('share_click', { screen_name: 'kipp_queen', trophies: collected });
             navigator.share(_shareData).catch(() => {});
           } else if (navigator.clipboard) {
+            kippTrack('share_click', { screen_name: 'kipp_queen', method: 'clipboard', trophies: collected });
             navigator.clipboard.writeText(_txt).then(() => {
               shareBtn.textContent = (T.cKopiert || 'KOPIERT!');
               setTimeout(() => { shareBtn.textContent = (T.cTeilen || 'TEILEN'); }, 2000);
@@ -3916,6 +3934,7 @@
       const _tTutorial = (T && T.qTutorial) || 'TUTORIAL';
       
       const btnPlay = _mkBtn(_tSpielen, () => {
+        kippTrack('game_start', { game: 'kipp_queen', mode: 'play', target: window._codeStichZiel || 1 });
         window._queenSkipTutorial = true;
         window._queenAtStartChoice = false;
         KNIFF_SHOW_DURATION = 11500; // Normal-Spiel: volle Dauer

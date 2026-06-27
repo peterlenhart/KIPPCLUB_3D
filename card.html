@@ -28,6 +28,22 @@
   </script>
 
   <title>KIPP CLUB – CARD</title>
+
+  <!-- ============================================================
+       LENNOY / KIPP CLUB — Google Analytics 4
+       TODO: Ersetze "G-XXXXXXXXXX" mit deiner echten Measurement ID
+       aus: analytics.google.com → Verwaltung → Datenstrom → Mess-ID
+       ============================================================ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX', { page_title: 'KIPP CARD – Spiel', page_location: window.location.href });
+    function kippTrack(eventName, params) {
+      try { gtag('event', eventName, params || {}); } catch(e) {}
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@700;900&display=swap" rel="stylesheet">
@@ -11844,6 +11860,7 @@
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
     document.getElementById('btnSpielen').addEventListener('click', () => {
+      kippTrack('game_start', { game: 'kipp_card', mode: 'play' });
       handleStart(false);
     });
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
@@ -13598,7 +13615,8 @@
         'text-shadow:0 1px 3px rgba(0,0,0,0.6);';
       btnShare.onclick = () => {
         if (navigator.share) {
-          navigator.share({ text: shareText }).catch(() => {});
+          kippTrack('share_click', { screen_name: 'kipp_card' });
+            navigator.share({ text: shareText }).catch(() => {});
         } else {
           navigator.clipboard.writeText(shareText).then(() => {
             btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">' + (T.cKopiert || 'KOPIERT!') + '</span>';
