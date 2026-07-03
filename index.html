@@ -1659,23 +1659,26 @@ Merken, Logik, Kopfzerbrechen.">
       function triggerPurchase(productId, gameOnSuccess) {
         // Analytics: Kaufabsicht tracken
         kippTrack('purchase_click', { product_id: productId, game: gameOnSuccess, screen_name: 'hauptmenue' });
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
-          window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
-            .then(result => {
-              if (result && result.success) {
-                // Analytics: Kauf erfolgreich
-                kippTrack('purchase_success', { product_id: productId, game: gameOnSuccess });
-                const tokenKey = PURCHASE_TOKEN[productId];
-                if (tokenKey) setToken(tokenKey);
-                const target = GAME_TARGETS[gameOnSuccess];
-                if (target) location.href = target;
-              }
-            })
-            .catch(() => {
-              kippTrack('purchase_cancelled', { product_id: productId, game: gameOnSuccess });
-            });
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases) {
+          window.Capacitor.Plugins.NativePurchases.purchaseProduct({
+            productIdentifier: productId,
+            productType: 'inapp'
+          })
+          .then(result => {
+            if (result && result.transaction) {
+              // Analytics: Kauf erfolgreich
+              kippTrack('purchase_success', { product_id: productId, game: gameOnSuccess });
+              const tokenKey = PURCHASE_TOKEN[productId];
+              if (tokenKey) setToken(tokenKey);
+              const target = GAME_TARGETS[gameOnSuccess];
+              if (target) location.href = target;
+            }
+          })
+          .catch(err => {
+            kippTrack('purchase_cancelled', { product_id: productId, game: gameOnSuccess, error: err && err.message });
+          });
         } else {
-          // Kein In-App-Purchase verfügbar — kein Zugang gewähren
+          // Kein In-App-Purchase Plugin verfügbar — kein Zugang gewähren
           kippTrack('purchase_error', { product_id: productId, game: gameOnSuccess, reason: 'no_iap_plugin' });
         }
       }
