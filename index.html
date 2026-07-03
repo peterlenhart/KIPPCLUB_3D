@@ -1675,16 +1675,8 @@ Merken, Logik, Kopfzerbrechen.">
               kippTrack('purchase_cancelled', { product_id: productId, game: gameOnSuccess });
             });
         } else {
-          // Browser-Test-Modus (kein Capacitor): simulierter Kauf-Dialog
-          if (confirm('TEST-MODUS\n\nProdukt: ' + productId + '\nPreis: laut Store\n\nKauf simulieren?\n(Im Capacitor-Wrapper laeuft hier der echte In-App-Purchase ueber App Store / Play Store)')) {
-            kippTrack('purchase_success', { product_id: productId, game: gameOnSuccess });
-            const tokenKey = PURCHASE_TOKEN[productId];
-            if (tokenKey) setToken(tokenKey);
-            const target = GAME_TARGETS[gameOnSuccess];
-            if (target) location.href = target;
-          } else {
-            kippTrack('purchase_cancelled', { product_id: productId, game: gameOnSuccess });
-          }
+          // Kein In-App-Purchase verfügbar — kein Zugang gewähren
+          kippTrack('purchase_error', { product_id: productId, game: gameOnSuccess, reason: 'no_iap_plugin' });
         }
       }
       window._kippclubTriggerPurchase = triggerPurchase;
