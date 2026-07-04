@@ -2101,6 +2101,28 @@ Merken, Logik, Kopfzerbrechen.">
     const langIcon = document.getElementById("langIcon");
     const langRows = document.querySelectorAll(".langRow");
 
+
+    // === VERSTECKTER RESET: 5x auf Slogan tippen loescht alle Kauf-Tokens ===
+    (function setupHiddenReset() {
+      var tapCount = 0;
+      var tapTimer = null;
+      var subtitle = document.getElementById("kippClubSubtitle");
+      if (!subtitle) return;
+      subtitle.style.pointerEvents = "auto";
+      subtitle.style.cursor = "default";
+      subtitle.addEventListener("click", function() {
+        tapCount++;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(function() { tapCount = 0; }, 2000);
+        if (tapCount >= 5) {
+          tapCount = 0;
+          var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked","digikipp_kipp27_played"];
+          keys.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
+          alert("RESET OK: Alle Kauf-Tokens geloescht. App neu starten.");
+        }
+      });
+    })();
+
     // Aktive Sprache aus localStorage oder default DE
     let currentLang = localStorage.getItem("digikipp_lang") || "de";
 
