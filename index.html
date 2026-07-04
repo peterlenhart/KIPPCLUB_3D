@@ -1665,13 +1665,19 @@ Merken, Logik, Kopfzerbrechen.">
             productType: 'inapp'
           })
           .then(result => {
-            if (result && result.transaction) {
+            // FIX: purchaseProduct() liefert das Transaction-Objekt direkt zurueck,
+            // NICHT verschachtelt unter einer "transaction"-Eigenschaft.
+            // Offizielle @capgo/native-purchases Doku: result.transactionId ist das korrekte Erfolgs-Kriterium.
+            if (result && result.transactionId) {
               // Analytics: Kauf erfolgreich
               kippTrack('purchase_success', { product_id: productId, game: gameOnSuccess });
               const tokenKey = PURCHASE_TOKEN[productId];
               if (tokenKey) setToken(tokenKey);
               const target = GAME_TARGETS[gameOnSuccess];
               if (target) location.href = target;
+            } else {
+              // Sollte nicht vorkommen, aber sauber protokollieren falls doch
+              kippTrack('purchase_error', { product_id: productId, game: gameOnSuccess, reason: 'no_transaction_id' });
             }
           })
           .catch(err => {

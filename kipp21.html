@@ -4069,13 +4069,22 @@
             const tokenKey = 'kippclub_kipp27_unlocked';
             const target = 'kipp21.html';
             kippTrack('purchase_click', { product_id: productId, game: 'kipp27', screen_name: 'kipp27_end' });
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchase) {
-              window.Capacitor.Plugins.InAppPurchase.purchase({ productId: productId })
+            // FIX: Einziges tatsaechlich installiertes Plugin ist @capgo/native-purchases (siehe package.json),
+            // registriert als "NativePurchases". Das vorherige "InAppPurchase" existierte auf dem Geraet nie
+            // -> echte Kaeufe liefen nie ueber Google Play, sondern immer nur ueber den Test-Dialog im else-Zweig.
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases) {
+              window.Capacitor.Plugins.NativePurchases.purchaseProduct({
+                productIdentifier: productId,
+                productType: 'inapp'
+              })
                 .then(result => {
-                  if (result && result.success) {
+                  // result ist das Transaction-Objekt direkt (kein .success), Erfolg = result.transactionId vorhanden
+                  if (result && result.transactionId) {
                     kippTrack('purchase_success', { product_id: productId, game: 'kipp27' });
                     try { localStorage.setItem(tokenKey, '1'); } catch(e) {}
                     location.href = target;
+                  } else {
+                    kippTrack('purchase_error', { product_id: productId, game: 'kipp27', reason: 'no_transaction_id' });
                   }
                 })
                 .catch(() => {
