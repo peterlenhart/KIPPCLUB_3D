@@ -1646,6 +1646,40 @@ Merken, Logik, Kopfzerbrechen.">
       function setToken(key) {
         try { localStorage.setItem(key, '1'); } catch(e) {}
       }
+
+      // Kauf-Wiederherstellung ueber Google Play — laeuft NICHT blockierend im Hintergrund.
+      // WICHTIGE SICHERHEITSREGEL: Diese Funktion darf NIEMALS einen bereits vorhandenen
+      // lokalen Kauf-Token entfernen — nur fehlende ergaenzen. Bei jedem Fehler, jeder
+      // Zeitueberschreitung, jeder Unklarheit (z.B. offline): nichts anfassen, sofort abbrechen.
+      // Die Anzeige (applyUnlockState) wartet NICHT auf diese Funktion — sie zeigt immer
+      // zuerst den lokal gespeicherten Stand, damit das Spiel offline sofort korrekt startet.
+      async function restorePurchasesFromStore() {
+        try {
+          if (!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases)) {
+            return; // kein Plugin (Browser-Test) -> nichts zu tun, nichts anfassen
+          }
+          const result = await window.Capacitor.Plugins.NativePurchases.getPurchases({ productType: 'inapp' });
+          const purchases = (result && result.purchases) || [];
+          // NUR HINZUFUEGEN: fuer jeden von Google bestaetigten Kauf den Token setzen,
+          // falls er lokal noch fehlt. Niemals ein removeItem, niemals ein Ueberschreiben
+          // mit "nicht vorhanden", falls Google z.B. eine unvollstaendige Liste liefert.
+          purchases.forEach(p => {
+            const isValid = p && p.productIdentifier &&
+              (p.purchaseState === 'PURCHASED' || p.purchaseState === 1 || p.purchaseState === '1' || p.purchaseState === 0 || p.purchaseState === '0');
+            if (isValid) {
+              const tokenKey = PURCHASE_TOKEN[p.productIdentifier];
+              if (tokenKey) setToken(tokenKey);
+            }
+          });
+        } catch (e) {
+          // Offline, Timeout, oder jeder andere Fehler: lokalen Stand komplett unveraendert lassen
+          kippTrack('purchase_restore_error', { error: e && e.message });
+        }
+        // In JEDEM Fall (Erfolg oder Fehler): Anzeige einmal aktualisieren,
+        // falls im Hintergrund neue Tokens dazugekommen sind. Blockiert nichts,
+        // weil applyUnlockState() bereits vorher, sofort beim Start, einmal gelaufen ist.
+        if (typeof applyUnlockState === 'function') applyUnlockState();
+      }
       function getWallGame(slide) {
         if (!slide) return null;
         if (slide.classList.contains('cardWallSlide'))  return 'card';
@@ -1712,10 +1746,12 @@ Merken, Logik, Kopfzerbrechen.">
         document.querySelectorAll('[data-game]').forEach(el => {
           attachClick(el);
         });
-        // Nach Click-Setup und nach Layout-rebuild: Freigabe-Status pruefen
+        // Zuerst SOFORT aus lokalem Speicher anzeigen — funktioniert immer, auch offline.
+        // Danach im Hintergrund bei Google abgleichen (nicht blockierend, "fire and forget").
         setTimeout(() => {
           requestAnimationFrame(() => {
             applyUnlockState();
+            restorePurchasesFromStore(); // laeuft im Hintergrund, blockiert die Anzeige nicht
           });
         }, 50);
       });
