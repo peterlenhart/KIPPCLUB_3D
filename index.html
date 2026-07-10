@@ -853,6 +853,7 @@ Merken, Logik, Kopfzerbrechen.">
       root.style.setProperty("--screen31", (31 / (scale || 1)).toFixed(2) + "px");
     })();
   </script>
+  <script src="share-helper.js"></script>
 </head>
 
 <body>
@@ -2044,17 +2045,19 @@ Merken, Logik, Kopfzerbrechen.">
     closeModal.onclick = (e) => { if(e.target === closeModal) closeModal.classList.add("hidden"); };
 
     // Teilen
+    const STORE_URL = "https://play.google.com/store/apps/details?id=com.lennoy.kippclub";
+
     function shareApp(){
-      const url = window.location.href;
       const t = LVL_T[currentLang] || LVL_T.de;
       const text = t.share;
 
-      kippTrack('share_click', { screen_name: 'hauptmenue', method: navigator.share ? 'native' : 'whatsapp' });
-      if(navigator.share){
-        navigator.share({ title:"KIPP CLUB", text, url }).catch(()=>{});
-      } else {
-        window.open("https://wa.me/?text=" + encodeURIComponent(text + " " + url), "_blank");
-      }
+      kippTrack('share_click', { screen_name: 'hauptmenue', method: 'universal' });
+
+      universalShare({
+        title: "KIPP CLUB",
+        text: text,
+        url: STORE_URL
+      });
     }
 
     document.getElementById("shareBtn").onclick = shareApp;
