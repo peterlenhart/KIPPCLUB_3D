@@ -1012,6 +1012,7 @@
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
   </style>
+  <script src="share-helper.js"></script>
 </head>
 <body>
   <div id="container"></div>
@@ -2727,12 +2728,11 @@
       const shareUrl = _lvlKey
         ? window._DIGIKIPP_URL + 'training.html?level=' + _lvlKey + _modeQuery
         : window._DIGIKIPP_URL + 'training.html' + _modeQueryOnly;
-      const _modeLabel = (_digikippMode === 'offen') ? ' OFFEN' : ' BLIND';
+      const _modeLabel = (_digikippMode === 'offen') ? ' OFFEN' : '';
       return 'KIPP NUMBERS' + _modeLabel + ' \u2014 ' + levelName + '\n' +
         pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
         grid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
-        shareUrl + '\n' +
         '#KippClub #KippNumbers';
     }
 
@@ -2775,15 +2775,19 @@
 
       btnTeilen.onclick = () => {
         const shareText = buildShareText(levelName, hits, fails);
-        kippTrack('share_click', { screen_name: 'kipp_number', level: currentLevel });
-        if (navigator.share) {
-          navigator.share({ text: shareText }).catch(() => {});
-        } else {
-          navigator.clipboard.writeText(shareText).then(() => {
-            btnTeilen.textContent = T.cKopiert || 'KOPIERT!';
-            setTimeout(() => { btnTeilen.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-          }).catch(() => {});
-        }
+        kippTrack('share_click', { screen_name: 'kipp_number', level: currentLevel, method: 'universal' });
+        const _lvlMap2 = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
+        const _lvlKey2 = _lvlMap2[currentLevel];
+        const _modeQuery2 = (_digikippMode === 'offen') ? '&mode=offen' : '';
+        const _modeQueryOnly2 = (_digikippMode === 'offen') ? '?mode=offen' : '';
+        const shareUrl2 = _lvlKey2
+          ? window._DIGIKIPP_URL + 'training.html?level=' + _lvlKey2 + _modeQuery2
+          : window._DIGIKIPP_URL + 'training.html' + _modeQueryOnly2;
+        universalShare({
+          title: 'KIPP NUMBERS',
+          text: shareText,
+          url: shareUrl2
+        });
       };
 
       if (btnNext) {
@@ -3454,6 +3458,7 @@
         if (typeof window._kippHits !== 'number') window._kippHits = 0;
         const hitIdx = window._kippHits; // 0,1,2,3 — links nach rechts
         window._kippHits++;
+        window._hitMissSeq.push('hit');
         setTimeout(() => {
           animateCardFly(card, treffer.quadrant, treffer.slot).then(() => {
             gamePhase = 'kipp21';
@@ -3469,6 +3474,7 @@
       } else {
         // MISS — Lebens-Würfel 3× blinken, dann ausgrauen. Slots bleiben verdeckt (außer angetippter), Kippziel bleibt.
         brainyFails++;
+        window._hitMissSeq.push('miss');
         const wrap = brainyEnsureLivesUI();
         const hearts = wrap.querySelectorAll('.brainyLife');
         const idx = brainyFails - 1;
