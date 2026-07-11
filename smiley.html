@@ -1126,6 +1126,7 @@
       object-fit: contain;
     }
   </style>
+  <script src="share-helper.js"></script>
 </head>
 <body>
   <div id="container"></div>
@@ -5941,23 +5942,33 @@
             if (playedSeq.length === 4) {
               challengeUrl += '?c=' + playedSeq.join(',') + '&p=' + pts;
             }
-                        var shareTextOnly = challengeUrl + '\n#KippClub #KippSmiley';
-            
-            // Bild generieren (600x600)
+            var shareTextOnly = challengeUrl + '\n#KippClub #KippSmiley';
+
+            kippTrack('share_click', { screen_name: 'kipp_smiley', method: 'universal' });
+
+            // Bild generieren (600x600) — jedes Teilbild einzeln abgesichert,
+            // damit ein einzelnes fehlendes/fehlerhaftes Bild nicht die
+            // gesamte Bild-Erstellung stoppt.
+            var blob = null;
             try {
               var canvas = document.createElement('canvas');
               canvas.width = 600; canvas.height = 600;
               var ctx = canvas.getContext('2d');
-              // Hintergrund Wiese
-              var bgImg = new Image();
-              await new Promise(function(res) {
-                bgImg.onload = res;
-                bgImg.onerror = res;
-                bgImg.src = 'overlaywiese_smiley.webp';
-              });
-              if (bgImg.complete && bgImg.naturalWidth > 0) {
-                ctx.drawImage(bgImg, 0, 0, 600, 600);
-              } else {
+
+              function loadImgSafe(src) {
+                return new Promise(function(res) {
+                  var im = new Image();
+                  im.onload = function(){ res(im); };
+                  im.onerror = function(){ res(null); };
+                  im.src = src;
+                });
+              }
+
+              var bgImg = await loadImgSafe('overlaywiese_smiley.webp');
+              if (bgImg && bgImg.naturalWidth > 0) {
+                try { ctx.drawImage(bgImg, 0, 0, 600, 600); } catch(e) { console.warn('[SHARE] Hintergrund konnte nicht gezeichnet werden:', e); }
+              }
+              if (!bgImg || bgImg.naturalWidth === 0) {
                 ctx.fillStyle = '#4a7c2e';
                 ctx.fillRect(0, 0, 600, 600);
               }
@@ -5979,24 +5990,21 @@
               ctx.fillStyle = '#fff';
               ctx.shadowColor = 'rgba(0,0,0,0.9)';
               ctx.shadowBlur = 10;
-              // 4 Smileys zentriert
+              // 4 Smileys zentriert — jedes einzeln abgesichert
               var smileySize = 110;
               var gap = 16;
               var totalW = 4 * smileySize + 3 * gap;
               var startX = (600 - totalW) / 2;
               var yS = 170;
               var smileyImgs = await Promise.all(playedSeq.map(function(fn) {
-                return new Promise(function(res) {
-                  var im = new Image();
-                  im.onload = function(){ res(im); };
-                  im.onerror = function(){ res(null); };
-                  im.src = fn + '.png';
-                });
+                return loadImgSafe(fn + '.png');
               }));
               for (var i = 0; i < smileyImgs.length; i++) {
                 if (smileyImgs[i]) {
-                  var x = startX + i * (smileySize + gap);
-                  ctx.drawImage(smileyImgs[i], x, yS, smileySize, smileySize);
+                  try {
+                    var x = startX + i * (smileySize + gap);
+                    ctx.drawImage(smileyImgs[i], x, yS, smileySize, smileySize);
+                  } catch(e) { console.warn('[SHARE] Smiley ' + i + ' konnte nicht gezeichnet werden:', e); }
                 }
               }
               // Punkte (groß, gold)
@@ -6007,43 +6015,21 @@
               ctx.font = 'bold 44px Arial';
               ctx.fillStyle = '#fff';
               ctx.fillText(T.cWasSchaffst || 'Was schaffst DU?', 300, 490);
-              
-              // Canvas → Blob → File
-              canvas.toBlob(async function(blob) {
-                kippTrack('share_click', { screen_name: 'kipp_smiley' });
-                if (!blob) {
-                  // Fallback: nur Text
-                  if (navigator.share) {
-                    navigator.share({ text: shareTextOnly }).catch(function(){});
-                  } else {
-                    navigator.clipboard.writeText(shareTextOnly).then(function(){
-                      teilenBtn.textContent = T.cKopiert || 'KOPIERT!';
-                      setTimeout(function(){ teilenBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-                    }).catch(function(){});
-                  }
-                  return;
-                }
-                var file = new File([blob], 'kippsmiley.png', { type: 'image/png' });
-                var shareData = { files: [file], text: shareTextOnly };
-                if (navigator.canShare && navigator.canShare(shareData)) {
-                  try {
-                    await navigator.share(shareData);
-                  } catch(e) {}
-                } else if (navigator.share) {
-                  navigator.share({ text: shareTextOnly }).catch(function(){});
-                } else {
-                  navigator.clipboard.writeText(shareTextOnly).then(function(){
-                    teilenBtn.textContent = T.cKopiert || 'KOPIERT!';
-                    setTimeout(function(){ teilenBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-                  }).catch(function(){});
-                }
-              }, 'image/png');
+
+              blob = await new Promise(function(resolve) {
+                canvas.toBlob(function(b){ resolve(b); }, 'image/png');
+              });
             } catch(e) {
-              console.error('Share-Bild Fehler:', e);
-              if (navigator.share) {
-                navigator.share({ text: shareTextOnly }).catch(function(){});
-              }
+              console.error('[SHARE] Bild-Erstellung fehlgeschlagen, teile nur Text:', e);
+              blob = null;
             }
+
+            var shareOpts = { title: 'KIPP CLUB \u2014 SMILEY', text: shareTextOnly };
+            if (blob) {
+              shareOpts.filesBlob = blob;
+              shareOpts.fileName = 'kippsmiley.png';
+            }
+            universalShare(shareOpts);
           };
         }
         // NEU WÄHLEN ausblenden
