@@ -2094,23 +2094,29 @@ Merken, Logik, Kopfzerbrechen.">
       });
     })();
 
-    // === VERSTECKTES TEST-UNLOCK: 7x auf "SPIELEN"-Text tippen schaltet alle Kaeufe frei ===
+    // === VERSTECKTES TEST-UNLOCK: Slogan 3 Sekunden lang gedrückt halten schaltet alle Kaeufe frei ===
+    // (nutzt denselben, bereits erprobten Slogan-Text wie der Reset oben — aber "halten"
+    //  statt "tippen", damit es sich nicht mit dem 5x-Tipp-Reset ueberschneidet)
     (function setupHiddenUnlock() {
-      var tapCount = 0;
-      var tapTimer = null;
-      var spielenText = document.getElementById("globalSpielenText");
-      if (!spielenText) return;
-      spielenText.addEventListener("click", function() {
-        tapCount++;
-        clearTimeout(tapTimer);
-        tapTimer = setTimeout(function() { tapCount = 0; }, 2000);
-        if (tapCount >= 7) {
-          tapCount = 0;
+      var subtitle2 = document.getElementById("kippClubSubtitle");
+      if (!subtitle2) return;
+      var pressTimer = null;
+      function startPress() {
+        pressTimer = setTimeout(function() {
           var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked"];
           keys.forEach(function(k) { try { localStorage.setItem(k, '1'); } catch(e) {} });
           alert("TEST-UNLOCK OK: Alle Spiele freigeschaltet. App neu starten.");
-        }
-      });
+        }, 3000);
+      }
+      function cancelPress() {
+        clearTimeout(pressTimer);
+      }
+      subtitle2.addEventListener("mousedown", startPress);
+      subtitle2.addEventListener("touchstart", startPress, { passive: true });
+      subtitle2.addEventListener("mouseup", cancelPress);
+      subtitle2.addEventListener("mouseleave", cancelPress);
+      subtitle2.addEventListener("touchend", cancelPress);
+      subtitle2.addEventListener("touchcancel", cancelPress);
     })();
 
     // Aktive Sprache aus localStorage oder default DE
