@@ -2094,6 +2094,25 @@ Merken, Logik, Kopfzerbrechen.">
       });
     })();
 
+    // === VERSTECKTES TEST-UNLOCK: 7x auf "SPIELEN"-Text tippen schaltet alle Kaeufe frei ===
+    (function setupHiddenUnlock() {
+      var tapCount = 0;
+      var tapTimer = null;
+      var spielenText = document.getElementById("globalSpielenText");
+      if (!spielenText) return;
+      spielenText.addEventListener("click", function() {
+        tapCount++;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(function() { tapCount = 0; }, 2000);
+        if (tapCount >= 7) {
+          tapCount = 0;
+          var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked"];
+          keys.forEach(function(k) { try { localStorage.setItem(k, '1'); } catch(e) {} });
+          alert("TEST-UNLOCK OK: Alle Spiele freigeschaltet. App neu starten.");
+        }
+      });
+    })();
+
     // Aktive Sprache aus localStorage oder default DE
     let currentLang = localStorage.getItem("digikipp_lang") || "de";
 
