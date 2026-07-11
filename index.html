@@ -133,6 +133,9 @@ Merken, Logik, Kopfzerbrechen.">
       z-index: 9;
       font-family: Arial, sans-serif;
       font-weight: 900;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
       animation: none !important;
       transition: none !important;
       opacity: 1 !important;
@@ -2112,7 +2115,7 @@ Merken, Logik, Kopfzerbrechen.">
         clearTimeout(pressTimer);
       }
       subtitle2.addEventListener("mousedown", startPress);
-      subtitle2.addEventListener("touchstart", startPress, { passive: true });
+      subtitle2.addEventListener("touchstart", function(e) { e.preventDefault(); startPress(); }, { passive: false });
       subtitle2.addEventListener("mouseup", cancelPress);
       subtitle2.addEventListener("mouseleave", cancelPress);
       subtitle2.addEventListener("touchend", cancelPress);
