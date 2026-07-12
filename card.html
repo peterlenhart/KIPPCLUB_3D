@@ -1026,6 +1026,7 @@
 }
 </style>
 
+<script src="share-helper.js"></script>
 </head>
 <body>
 <div id="_versDisplay" style="display:none;"></div>
@@ -1175,9 +1176,9 @@
       // Sharelink-Aufruf erkennen — URL hat irgendeinen Level/Play-Parameter
       const params = new URLSearchParams(window.location.search);
       const isSharelinkCall = params.has('level') || params.has('play') || params.has('c') || params.has('mode');
-      // Sharelink + Test noch nicht verbraucht → 1 Testrunde
-      if (isSharelinkCall && !hasToken('kippclub_test_used')) {
-        setToken('kippclub_test_used');
+      // Sharelink + Test noch nicht verbraucht → 1 Testrunde (pro Spiel, nicht global)
+      if (isSharelinkCall && !hasToken('kippclub_test_used_' + GAME_KEY)) {
+        setToken('kippclub_test_used_' + GAME_KEY);
         return; // normaler Spielablauf
       }
       // Sonst: zurück zur Index, wo die Paywall sichtbar ist
@@ -1218,7 +1219,7 @@
         cWon:"GEWONNEN!", cLost:"VERLOREN", cDraw:"UNENTSCHIEDEN",
         cStiche:"von 6 STICHEN", cPerfekt:"perfekt +1", cEffizienz:"EFFIZIENZ",
         cTeilen:"TEILEN", cKopiert:"KOPIERT!", cMenu:"MEN\u00dc",
-        cSchaffst:"Schaffst du das auch?", cAnlBtn:"Anleitung",
+        cSchaffst:"Schaffst du das auch?", cWasSchaffst:"Was schaffst DU?", cAnlBtn:"Anleitung",
         cTut1:"Decke die Bankkarte auf", cTut2:"Schau dir die Kartenwerte an", cTut3:"Kippe den Würfel", cTut4:"Zurückkippen nicht erlaubt!", cTut5:"Halte eine Karte gedrückt", cTut6:"NACH 6 PERFEKTEN STICHEN", cTut7:"BEISPIEL-ERGEBNIS", cTut8:"WIEDERHOLEN", cTut9:"Tippe auf den Würfel um ihn zu senken", cIntro:"Überbiete alle 6<br>Target-Karten um +1",
         cAnlTitle:"ANLEITUNG", cAnlBtnMenu:"ANLEITUNGEN", cAnlSec:["ZIEL","AUFDECKEN","KIPPEN","STICH-WERTUNG","STRATEGIE"],
         cAnl:[
@@ -1286,7 +1287,7 @@
         cTut1:"Reveal the bank card", cTut2:"Check the card values", cTut3:"Tip the cube", cTut4:"No tipping back!", cTut5:"Hold a card to play", cTut6:"AFTER 6 PERFECT TRICKS", cTut7:"SAMPLE RESULT", cTut8:"REPLAY", cTut9:"Tap the cube to lower it", cIntro:"Beat all 6<br>target cards by +1",
         cStiche:"of 6 TRICKS", cPerfekt:"perfect +1", cEffizienz:"EFFICIENCY",
         cTeilen:"SHARE", cKopiert:"COPIED!", cMenu:"MENU",
-        cSchaffst:"Can you beat this?", cAnlBtn:"Guide",
+        cSchaffst:"Can you beat this?", cWasSchaffst:"What can YOU do?", cAnlBtn:"Guide",
         cAnlTitle:"GUIDE", cAnlBtnMenu:"GUIDES", cAnlSec:["GOAL","REVEAL","TIP","TRICK SCORE","STRATEGY"],
         cAnl:[
           "Tap the eye icon at the center of the box. Beat the bank! The cube carries 12 card values from 3 to Ace. Memorize their positions.",
@@ -1352,7 +1353,7 @@
         cWon:"\u00a1GANASTE!", cLost:"PERDISTE", cDraw:"EMPATE",
         cStiche:"de 6 BAZAS", cPerfekt:"perfecto +1", cEffizienz:"EFICIENCIA",
         cTeilen:"COMPARTIR", cKopiert:"\u00a1COPIADO!", cMenu:"MEN\u00da",
-        cSchaffst:"\u00bfPuedes superarlo?", cAnlBtn:"Gu\u00eda",
+        cSchaffst:"\u00bfPuedes superarlo?", cWasSchaffst:"\u00bfQu\u00e9 puedes lograr T\u00da?", cAnlBtn:"Gu\u00eda",
         cAnlTitle:"GU\u00cdA", cAnlBtnMenu:"GU\u00cdAS", cAnlSec:["OBJETIVO","DESCUBRIR","VOLCAR","PUNTUACI\u00d3N","ESTRATEGIA"],
         cAnl:[
           "Toca el icono del ojo en el centro de la caja. \u00a1Gana a la banca! El cubo lleva 12 valores de carta del 3 al As. Memoriza sus posiciones.",
@@ -1418,7 +1419,7 @@
         cWon:"GAGN\u00c9 !", cLost:"PERDU", cDraw:"\u00c9GALIT\u00c9",
         cStiche:"sur 6 PLIS", cPerfekt:"parfait +1", cEffizienz:"EFFICACIT\u00c9",
         cTeilen:"PARTAGER", cKopiert:"COPI\u00c9 !", cMenu:"MENU",
-        cSchaffst:"Tu fais mieux ?", cAnlBtn:"Guide",
+        cSchaffst:"Tu fais mieux ?", cWasSchaffst:"Toi, tu fais quoi ?", cAnlBtn:"Guide",
         cAnlTitle:"GUIDE", cAnlBtnMenu:"GUIDES", cAnlSec:["OBJECTIF","D\u00c9COUVRIR","BASCULER","SCORE DU PLI","STRAT\u00c9GIE"],
         cAnl:[
           "Touche l'icone de l'œil au centre de la boîte. Bats la banque ! Le cube porte 12 valeurs de carte du 3 \u00e0 l\u2019As. M\u00e9morise leurs positions.",
@@ -1485,7 +1486,7 @@
         cWon:"VITTORIA!", cLost:"SCONFITTA", cDraw:"PAREGGIO",
         cStiche:"su 6 PRESE", cPerfekt:"perfetto +1", cEffizienz:"EFFICIENZA",
         cTeilen:"CONDIVIDI", cKopiert:"COPIATO!", cMenu:"MENU",
-        cSchaffst:"Riesci a fare meglio?", cAnlBtn:"Guida",
+        cSchaffst:"Riesci a fare meglio?", cWasSchaffst:"Tu cosa riesci a fare?", cAnlBtn:"Guida",
         cAnlTitle:"GUIDA", cAnlBtnMenu:"GUIDE", cAnlSec:["OBIETTIVO","SCOPRIRE","RIBALTARE","PUNTEGGIO","STRATEGIA"],
         cAnl:[
           "Tocca l'icona dell'occhio al centro della scatola. Batti il banco! Il cubo porta 12 valori di carta dal 3 all\u2019Asso. Memorizza le loro posizioni.",
@@ -1551,7 +1552,7 @@
         cWon:"KAZANDIN!", cLost:"KAYBETT\u0130N", cDraw:"BERABERE",
         cStiche:"/ 6 EL", cPerfekt:"m\u00fckemmel +1", cEffizienz:"VER\u0130ML\u0130L\u0130K",
         cTeilen:"PAYLA\u015e", cKopiert:"KOPYALANDI!", cMenu:"MEN\u00dc",
-        cSchaffst:"Sen de yapabilir misin?", cAnlBtn:"K\u0131lavuz",
+        cSchaffst:"Sen de yapabilir misin?", cWasSchaffst:"Sen ne ba\u015farabilirsin?", cAnlBtn:"K\u0131lavuz",
         cAnlTitle:"REHBER", cAnlBtnMenu:"REHBERLER", cAnlSec:["HEDEF","A\u00c7","DEV\u0130R","EL PUANI","STRATEJ\u0130"],
         cAnl:[
           "G\u00f6z simgesine dokunun. Bankay\u0131 yen! K\u00fcp 3\u2019ten As\u2019a kadar 12 kart de\u011feri ta\u015f\u0131r. Pozisyonlar\u0131n\u0131 ezberle.",
@@ -12709,8 +12710,8 @@
     function buildMatchShareText(modeLabel, winner, plScore, bScore) {
       var result = (winner === 'player') ? '\u{2705}' : (winner === 'bank') ? '\u{274C}' : '\u{1F7F0}';
       return 'KIPP MATCH \u2014 ' + modeLabel + ' ' + result + '\n' +
+        (T.cWasSchaffst || 'Was schaffst DU?') + '\n' +
         'Player ' + plScore + ' | Bank ' + bScore + '\n' +
-        (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         'https://peterlenhart.github.io/KIPPCLUB_3D/card.html?play=match' + '\n' +
         '#KippClub #KippMatch';
     }
@@ -12906,14 +12907,8 @@
               window._matchScorePlayer || 0,
               window._matchScoreBank || 0
             );
-            if (navigator.share) {
-              navigator.share({ text: shareText }).catch(function(){});
-            } else {
-              navigator.clipboard.writeText(shareText).then(function() {
-                tlBtn.textContent = T.cKopiert || 'KOPIERT!';
-                setTimeout(function() { tlBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-              }).catch(function(){});
-            }
+            kippTrack('share_click', { screen_name: 'kipp_match', method: 'universal' });
+            universalShare({ title: 'KIPP MATCH', text: shareText });
           };
 
           window._bluffNochmalActive = false;
@@ -13217,14 +13212,8 @@
               window._matchScorePlayer || 0,
               window._matchScoreBank || 0
             );
-            if (navigator.share) {
-              navigator.share({ text: shareText }).catch(function(){});
-            } else {
-              navigator.clipboard.writeText(shareText).then(function() {
-                tlBtn.textContent = T.cKopiert || 'KOPIERT!';
-                setTimeout(function() { tlBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-              }).catch(function(){});
-            }
+            kippTrack('share_click', { screen_name: 'kipp_match', method: 'universal' });
+            universalShare({ title: 'KIPP MATCH', text: shareText });
           };
 
           window._bluffNochmalActive = false;
@@ -13597,11 +13586,11 @@
 
       const dailyTag = window._dailyMode ? ' #' + window._dailyDayNum : '';
       const shareText = 'KIPP +1' + dailyTag + '\n' +
+        (T.cWasSchaffst || 'Was schaffst DU?') + '\n' +
         starStr + '\n' +
         'PLAYER ' + String(ps).padStart(3,'0') + ' : BANK ' + String(bs).padStart(3,'0') + '\n' +
         (T.cEffizienz || 'EFFIZIENZ') + ': ' + effizienz + '%\n' +
         shareGrid + '\n' +
-        (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         window._DIGIKIPP_URL + '?play=plus1' + '\n' +
         '#KippClub #KippPlusOne';
 
@@ -13614,17 +13603,8 @@
         'display:flex;align-items:center;justify-content:center;margin-top:10px;' +
         'text-shadow:0 1px 3px rgba(0,0,0,0.6);';
       btnShare.onclick = () => {
-        if (navigator.share) {
-          kippTrack('share_click', { screen_name: 'kipp_card' });
-            navigator.share({ text: shareText }).catch(() => {});
-        } else {
-          navigator.clipboard.writeText(shareText).then(() => {
-            btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">' + (T.cKopiert || 'KOPIERT!') + '</span>';
-            setTimeout(() => {
-              btnShare.innerHTML = '<span style="display:flex;align-items:center;justify-content:center;gap:8px;">' + (T.cTeilen || 'TEILEN') + '</span>';
-            }, 2000);
-          }).catch(() => {});
-        }
+        kippTrack('share_click', { screen_name: 'kipp_card', method: 'universal' });
+        universalShare({ title: 'KIPP +1', text: shareText });
       };
       addBtn(btnShare);
       inner.appendChild(btnShare);
@@ -14287,11 +14267,8 @@
             window._matchScorePlayer || 0,
             window._matchScoreBank || 0
           );
-          if (navigator.share) {
-            navigator.share({ text: shareText }).catch(function(){});
-          } else {
-            navigator.clipboard.writeText(shareText).then(function() {}).catch(function(){});
-          }
+          kippTrack('share_click', { screen_name: 'kipp_match_3d', method: 'universal' });
+          universalShare({ title: 'KIPP MATCH', text: shareText });
           return;
         }
       }
@@ -14357,11 +14334,8 @@
             window._matchScorePlayer || 0,
             window._matchScoreBank || 0
           );
-          if (navigator.share) {
-            navigator.share({ text: shareText }).catch(function(){});
-          } else {
-            navigator.clipboard.writeText(shareText).then(function() {}).catch(function(){});
-          }
+          kippTrack('share_click', { screen_name: 'kipp_match_3d', method: 'universal' });
+          universalShare({ title: 'KIPP MATCH', text: shareText });
           return;
         }
       }

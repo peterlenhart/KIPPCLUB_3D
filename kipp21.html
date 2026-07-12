@@ -917,6 +917,7 @@
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
   </style>
+  <script src="share-helper.js"></script>
 </head>
 <body>
   <div id="container"></div>
@@ -4118,16 +4119,9 @@
           const shareText = 'KIPP CLUB \u2013 KIPP 27\n' +
             kipp21KippCount + ' KIPPS\n' +
             (T.cSchaffst || 'Schaffst DU\'s mit 27?') + '\n' +
-            'https://peterlenhart.github.io/KIPPCLUB_3D/';
-          kippTrack('share_click', { screen_name: 'kipp27' });
-          if (navigator.share) {
-            navigator.share({ text: shareText }).catch(() => {});
-          } else {
-            navigator.clipboard.writeText(shareText).then(() => {
-              teilenBtn.textContent = T.cKopiert || 'KOPIERT!';
-              setTimeout(() => { teilenBtn.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-            }).catch(() => {});
-          }
+            'https://peterlenhart.github.io/KIPPCLUB_3D/kipp21.html';
+          kippTrack('share_click', { screen_name: 'kipp27', method: 'universal' });
+          universalShare({ title: 'KIPP 27', text: shareText });
         };
 
         // Button 3: KIPP PRINZIP (565px)
