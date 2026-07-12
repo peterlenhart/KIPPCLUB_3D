@@ -901,6 +901,7 @@ Merken, Logik, Kopfzerbrechen.">
               </div>
               <div class="wallCardPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
               <div class="wallCardPaywallSingleSub">Nur KING</div>
+              <div id="kingSecretUnlockZone" style="position:absolute; left:calc(50% - 135px); top:calc(50% - 135px); width:270px; height:270px; z-index:5; background:transparent;"></div>
             </div>
             <div class="wallSlide queenWallSlide">
               <img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen">
@@ -2097,29 +2098,24 @@ Merken, Logik, Kopfzerbrechen.">
       });
     })();
 
-    // === VERSTECKTES TEST-UNLOCK: Slogan 3 Sekunden lang gedrückt halten schaltet alle Kaeufe frei ===
-    // (nutzt denselben, bereits erprobten Slogan-Text wie der Reset oben — aber "halten"
-    //  statt "tippen", damit es sich nicht mit dem 5x-Tipp-Reset ueberschneidet)
-    (function setupHiddenUnlock() {
-      var subtitle2 = document.getElementById("kippClubSubtitle");
-      if (!subtitle2) return;
-      var pressTimer = null;
-      function startPress() {
-        pressTimer = setTimeout(function() {
+    // === VERSTECKTES TEST-UNLOCK #2: 7x auf unsichtbaren Bereich mittig der KING-Karte tippen ===
+    (function setupHiddenUnlockKing() {
+      var zone = document.getElementById("kingSecretUnlockZone");
+      if (!zone) return;
+      var tapCount2 = 0;
+      var tapTimer2 = null;
+      zone.addEventListener("click", function(e) {
+        e.stopPropagation();
+        tapCount2++;
+        clearTimeout(tapTimer2);
+        tapTimer2 = setTimeout(function() { tapCount2 = 0; }, 3000);
+        if (tapCount2 >= 7) {
+          tapCount2 = 0;
           var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked"];
           keys.forEach(function(k) { try { localStorage.setItem(k, '1'); } catch(e) {} });
           alert("TEST-UNLOCK OK: Alle Spiele freigeschaltet. App neu starten.");
-        }, 3000);
-      }
-      function cancelPress() {
-        clearTimeout(pressTimer);
-      }
-      subtitle2.addEventListener("mousedown", startPress);
-      subtitle2.addEventListener("touchstart", function(e) { e.preventDefault(); startPress(); }, { passive: false });
-      subtitle2.addEventListener("mouseup", cancelPress);
-      subtitle2.addEventListener("mouseleave", cancelPress);
-      subtitle2.addEventListener("touchend", cancelPress);
-      subtitle2.addEventListener("touchcancel", cancelPress);
+        }
+      });
     })();
 
     // Aktive Sprache aus localStorage oder default DE
