@@ -1037,6 +1037,7 @@
       50% { box-shadow: 0 0 12px rgba(255,255,255,0.7); }
     }
   </style>
+  <script src="share-helper.js"></script>
 </head>
 <body>
 <div id="_versDisplay" style="display:none;"></div>
@@ -1246,9 +1247,9 @@
       // Sharelink-Aufruf erkennen — URL hat irgendeinen Level/Play-Parameter
       const params = new URLSearchParams(window.location.search);
       const isSharelinkCall = params.has('level') || params.has('play') || params.has('c') || params.has('mode');
-      // Sharelink + Test noch nicht verbraucht → 1 Testrunde
-      if (isSharelinkCall && !hasToken('kippclub_test_used')) {
-        setToken('kippclub_test_used');
+      // Sharelink + Test noch nicht verbraucht → 1 Testrunde (pro Spiel, nicht global)
+      if (isSharelinkCall && !hasToken('kippclub_test_used_' + GAME_KEY)) {
+        setToken('kippclub_test_used_' + GAME_KEY);
         return; // normaler Spielablauf
       }
       // Sonst: zurück zur Index, wo die Paywall sichtbar ist
@@ -2368,31 +2369,22 @@
                        _shareUrl + '\n' +
                        '#KippClub #KippKing';
           
-          // Versuche Bild als Datei mitzuschicken
-          let _shareData = { title: 'KIPP CLUB – KING', text: _txt };
+          // Bild als Datei laden (fuer universalShare)
+          let _trophyBlob = null;
           try {
             const resp = await fetch(_trophyFile);
-            if (resp.ok) {
-              const blob = await resp.blob();
-              const file = new File([blob], _trophyFile, { type: blob.type || 'image/webp' });
-              if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                _shareData.files = [file];
-              }
-            }
+            if (resp.ok) _trophyBlob = await resp.blob();
           } catch (e) {
-            console.warn('[QUEEN-SHARE] Trophaenbild-Fetch fehlgeschlagen:', e);
+            console.warn('[KING-SHARE] Trophaenbild-Fetch fehlgeschlagen:', e);
           }
-          
-          if (navigator.share) {
-            kippTrack('share_click', { screen_name: 'kipp_king', trophies: collected });
-            navigator.share(_shareData).catch(() => {});
-          } else if (navigator.clipboard) {
-            kippTrack('share_click', { screen_name: 'kipp_king', method: 'clipboard', trophies: collected });
-            navigator.clipboard.writeText(_txt).then(() => {
-              shareBtn.textContent = (T.cKopiert || 'KOPIERT!');
-              setTimeout(() => { shareBtn.textContent = (T.cTeilen || 'TEILEN'); }, 2000);
-            }).catch(() => {});
-          }
+
+          kippTrack('share_click', { screen_name: 'kipp_king', trophies: collected, method: 'universal' });
+          universalShare({
+            title: 'KIPP CLUB \u2013 KING',
+            text: _txt,
+            filesBlob: _trophyBlob,
+            fileName: _trophyFile
+          });
         };
         shareBtn.addEventListener('click', _doShare);
         shareBtn.addEventListener('touchend', (e) => { e.preventDefault(); _doShare(); }, { passive: false });
@@ -4168,15 +4160,15 @@
       const _modeQuery = (_digikippMode === 'offen') ? '&mode=offen' : '';
       const _modeQueryOnly = (_digikippMode === 'offen') ? '?mode=offen' : '';
       const shareUrl = _lvlKey
-        ? window._DIGIKIPP_URL + 'training.html?level=' + _lvlKey + _modeQuery
-        : window._DIGIKIPP_URL + 'training.html' + _modeQueryOnly;
+        ? window._DIGIKIPP_URL + 'kipp_king.html?level=' + _lvlKey + _modeQuery
+        : window._DIGIKIPP_URL + 'kipp_king.html' + _modeQueryOnly;
       const _modeLabel = (_digikippMode === 'offen') ? ' OFFEN' : ' BLIND';
-      return 'KIPP NUMBERS' + _modeLabel + ' \u2014 ' + levelName + '\n' +
+      return 'KIPP KING' + _modeLabel + ' \u2014 ' + levelName + '\n' +
         pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
         grid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         shareUrl + '\n' +
-        '#KippClub #KippNumbers';
+        '#KippClub #KippKing';
     }
 
     function showLevelEndButtons(levelName, hits, fails, btn1Action, btn2Label, btn2Action) {
@@ -4218,14 +4210,8 @@
 
       btnTeilen.onclick = () => {
         const shareText = buildShareText(levelName, hits, fails);
-        if (navigator.share) {
-          navigator.share({ text: shareText }).catch(() => {});
-        } else {
-          navigator.clipboard.writeText(shareText).then(() => {
-            btnTeilen.textContent = T.cKopiert || 'KOPIERT!';
-            setTimeout(() => { btnTeilen.textContent = T.cTeilen || 'TEILEN'; }, 2000);
-          }).catch(() => {});
-        }
+        kippTrack('share_click', { screen_name: 'kipp_king_level', method: 'universal' });
+        universalShare({ title: 'KIPP KING', text: shareText });
       };
 
       if (btnNext) {
