@@ -133,9 +133,6 @@ Merken, Logik, Kopfzerbrechen.">
       z-index: 9;
       font-family: Arial, sans-serif;
       font-weight: 900;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
       animation: none !important;
       transition: none !important;
       opacity: 1 !important;
@@ -901,7 +898,6 @@ Merken, Logik, Kopfzerbrechen.">
               </div>
               <div class="wallCardPaywallBundleSub">SMILEY, CARD,<br>QUEEN u. KING</div>
               <div class="wallCardPaywallSingleSub">Nur KING</div>
-              <div id="kingSecretUnlockZone" style="position:absolute; left:calc(50% - 135px); top:calc(50% - 135px); width:270px; height:270px; z-index:5; background:transparent;"></div>
             </div>
             <div class="wallSlide queenWallSlide">
               <img src="queenpaywall.webp" alt="KIPP QUEEN" data-theme="queen">
@@ -969,6 +965,7 @@ Merken, Logik, Kopfzerbrechen.">
         <!-- Unsichtbare Klickbereiche für Icons -->
         <div id="closeBtn" class="iconClickArea"></div>
         <div id="legalBtn" class="iconClickArea"></div>
+        <div id="secretUnlockZone" class="iconClickArea" style="width:150px;"></div>
         <div id="shareBtn" class="iconClickArea"></div>
 
         <!-- Language Icon at 2F -->
@@ -1151,6 +1148,14 @@ Merken, Logik, Kopfzerbrechen.">
       const shareBtn = document.getElementById("shareBtn");
       shareBtn.style.left = (cellPx * 6.5) + "px";
       shareBtn.style.top = iconRow + "px";
+
+      // Geheimer Testbereich: exakt mittig zwischen Legal-Button (endet bei 3*cellPx)
+      // und Sprach-Icon (beginnt bei 4.5*cellPx) — Mitte bei 3.75*cellPx
+      const secretZone = document.getElementById("secretUnlockZone");
+      if (secretZone) {
+        secretZone.style.left = (cellPx * 3.75 - 75) + "px";
+        secretZone.style.top = iconRow + "px";
+      }
 
       // Language Icon: Zelle 2F (Spalte F = index 5, row 0_2)
       const langIcon = document.getElementById("langIcon");
@@ -2066,6 +2071,27 @@ Merken, Logik, Kopfzerbrechen.">
 
     document.getElementById("shareBtn").onclick = shareApp;
 
+    // === VERSTECKTES TEST-UNLOCK: 7x auf Bereich zwischen §-Button und Sprach-Icon tippen ===
+    (function setupSecretUnlock() {
+      var zone = document.getElementById("secretUnlockZone");
+      if (!zone) return;
+      var tapCount = 0;
+      var tapTimer = null;
+      zone.addEventListener("click", function(e) {
+        e.stopPropagation();
+        tapCount++;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(function() { tapCount = 0; }, 3000);
+        if (tapCount >= 7) {
+          tapCount = 0;
+          var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked"];
+          keys.forEach(function(k) { try { localStorage.setItem(k, '1'); } catch(e) {} });
+          if (typeof applyUnlockState === 'function') applyUnlockState();
+          alert("TEST-UNLOCK: Alle Spiele freigeschaltet.");
+        }
+      });
+    })();
+
     // Legal (§) Button
     document.getElementById("legalBtn").onclick = () => {
       window.open("legal.html", "_blank");
@@ -2094,26 +2120,6 @@ Merken, Logik, Kopfzerbrechen.">
           var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked","digikipp_kipp27_played"];
           keys.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
           alert("RESET OK: Alle Kauf-Tokens geloescht. App neu starten.");
-        }
-      });
-    })();
-
-    // === VERSTECKTES TEST-UNLOCK #2: 7x auf unsichtbaren Bereich mittig der KING-Karte tippen ===
-    (function setupHiddenUnlockKing() {
-      var zone = document.getElementById("kingSecretUnlockZone");
-      if (!zone) return;
-      var tapCount2 = 0;
-      var tapTimer2 = null;
-      zone.addEventListener("click", function(e) {
-        e.stopPropagation();
-        tapCount2++;
-        clearTimeout(tapTimer2);
-        tapTimer2 = setTimeout(function() { tapCount2 = 0; }, 3000);
-        if (tapCount2 >= 7) {
-          tapCount2 = 0;
-          var keys = ["kippclub_smileys_unlocked","kippclub_card_unlocked","kippclub_queen_unlocked","kippclub_king_unlocked","kippclub_bundle_unlocked","kippclub_kipp27_unlocked"];
-          keys.forEach(function(k) { try { localStorage.setItem(k, '1'); } catch(e) {} });
-          alert("TEST-UNLOCK OK: Alle Spiele freigeschaltet. App neu starten.");
         }
       });
     })();
