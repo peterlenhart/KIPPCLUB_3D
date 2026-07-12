@@ -1050,16 +1050,21 @@
     #leveltafelHint.hidden { opacity: 0; }
     #hintLine1, #hintLine2 {
       position: absolute;
+      left: 0;
       width: 100%;
+      box-sizing: border-box;
+      padding: 0 10px;
       text-align: center;
       font-family: Arial, sans-serif;
       font-weight: bold;
       color: #ffffff;
       text-shadow: 0 2px 6px rgba(0,0,0,0.8);
       transition: opacity 0.8s ease;
+      white-space: nowrap;
+      line-height: 1.15;
     }
-    #hintLine1 { font-size: 36px; opacity: 1; }
-    #hintLine2 { font-size: 28px; opacity: 0; }
+    #hintLine1 { font-size: 32px; opacity: 1; }
+    #hintLine2 { font-size: 26px; opacity: 0; }
 
     @keyframes _challengePulseAnim {
       0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px #FFD700); }
@@ -1566,9 +1571,9 @@
           if (allValid) isSharelinkCall = true;
         }
       }
-      // Sharelink + Test noch nicht verbraucht → 1 Testrunde
-      if (isSharelinkCall && !hasToken('kippclub_test_used')) {
-        setToken('kippclub_test_used');
+      // Sharelink + Test noch nicht verbraucht → 1 Testrunde (pro Spiel, nicht global)
+      if (isSharelinkCall && !hasToken('kippclub_test_used_' + GAME_KEY)) {
+        setToken('kippclub_test_used_' + GAME_KEY);
         return; // normaler Spielablauf
       }
       // Sonst: zurück zur Index, wo die Paywall sichtbar ist
