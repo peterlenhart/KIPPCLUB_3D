@@ -1097,7 +1097,7 @@ Merken, Logik, Kopfzerbrechen.">
       clickColor.style.width = (cellPx * 3) + "px";
       clickColor.style.height = zahlenHeight + "px";
 
-      // Motive (coloricon.html): Zeile 7, Spalten E-G
+      // Motive (kipp_kids.html): Zeile 7, Spalten E-G
       clickCard.style.left = (cellPx * 4) + "px";
       clickCard.style.top = zahlenTop + "px";
       clickCard.style.width = (cellPx * 3) + "px";
@@ -1249,7 +1249,7 @@ Merken, Logik, Kopfzerbrechen.">
         kipp21Button.style.top  = btnTop + "px";
         // Click-Handler nur einmal binden
         if (!kipp21Button.dataset.clickBound) {
-          kipp21Button.addEventListener('click', () => { location.href = 'kipp21.html'; });
+          kipp21Button.addEventListener('click', () => { location.href = 'kipp_27.html'; });
           kipp21Button.dataset.clickBound = '1';
         }
       }
@@ -1462,7 +1462,7 @@ Merken, Logik, Kopfzerbrechen.">
             p.style.cssText = 'position:absolute;text-align:center;pointer-events:auto;cursor:pointer;z-index:202;white-space:nowrap;display:block;';
             p.addEventListener('click', (e) => {
               e.stopPropagation();
-              location.href = 'kipp21.html';
+              location.href = 'kipp_27.html';
             });
           } else {
             // Noch nicht gekauft: €1,99
@@ -1555,11 +1555,11 @@ Merken, Logik, Kopfzerbrechen.">
     // Klick startet Capacitor-In-App-Purchase. Nach erfolgreichem Kauf: Token setzen + ins Spiel
     (function setupPaywallClicks() {
       const GAME_TARGETS = {
-        smileys: 'smiley.html',
-        card:    'card.html',
+        smileys: 'kipp_smiley.html',
+        card:    'kipp_card.html',
         queen:   'kipp_queen.html?level=masterbrain',
         king:    'kipp_king.html?level=masterbrain',
-        kipp27:  'kipp21.html'
+        kipp27:  'kipp_27.html'
       };
       // Capacitor-Produkt-IDs (im Play Store Console anlegen!)
       const PRODUCT_IDS = {
@@ -1834,8 +1834,8 @@ Merken, Logik, Kopfzerbrechen.">
         
         // Klick-Verhalten umstellen: nicht mehr kaufen, sondern direkt ins Spiel
         const GAME_TARGETS_UNLOCK = {
-          smileys: 'smiley.html',
-          card:    'card.html',
+          smileys: 'kipp_smiley.html',
+          card:    'kipp_card.html',
           queen:   'kipp_queen.html?level=masterbrain',
           king:    'kipp_king.html?level=masterbrain'
         };
@@ -1884,14 +1884,14 @@ Merken, Logik, Kopfzerbrechen.">
     function updateLevelLinks() {
       let base, mb;
       if (selectedSkin === 'icons') {
-        base = 'coloricon.html';
+        base = 'kipp_kids.html';
         mb = 'kipp21_icon.html';
       } else if (selectedSkin === 'card') {
-        base = 'card.html';
-        mb = 'card.html?level=masterbrain';
+        base = 'kipp_card.html';
+        mb = 'kipp_card.html?level=masterbrain';
       } else {
-        base = 'training.html';
-        mb = 'training.html?level=masterbrain';
+        base = 'kipp_number.html';
+        mb = 'kipp_number.html?level=masterbrain';
       }
       document.getElementById('lvlTraining').onclick = () => location.href = base;
       document.getElementById('lvlBrainy').onclick = () => location.href = base + '?level=brainy';
@@ -1954,13 +1954,13 @@ Merken, Logik, Kopfzerbrechen.">
     document.querySelectorAll('[data-theme-button="smileys"]').forEach(el => {
       el.onclick = (e) => {
         e.stopPropagation();
-        location.href = 'smiley.html';
+        location.href = 'kipp_smiley.html';
       };
     });
     document.querySelectorAll('[data-theme-button="card"]').forEach(el => {
       el.onclick = (e) => {
         e.stopPropagation();
-        location.href = 'card.html';
+        location.href = 'kipp_card.html';
       };
     });
 
@@ -2021,13 +2021,13 @@ Merken, Logik, Kopfzerbrechen.">
     // KIPP CARD
     document.getElementById("clickKippCard").onclick = () => {
       kippTrack('game_open', { game: 'kipp_card', screen_name: 'hauptmenue' });
-      location.href = 'card.html';
+      location.href = 'kipp_card.html';
     };
 
     // KIPP SMILEY
     document.getElementById("clickSmiley").onclick = () => {
       kippTrack('game_open', { game: 'kipp_smiley', screen_name: 'hauptmenue' });
-      location.href = 'smiley.html';
+      location.href = 'kipp_smiley.html';
     };
 
     // Modal
