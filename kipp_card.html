@@ -1030,6 +1030,20 @@
 </head>
 <body>
 <div id="_versDisplay" style="display:none;"></div>
+<div id="_diagOverlay" style="position:fixed; top:0; left:0; right:0; max-height:40vh; overflow-y:auto; background:rgba(0,0,0,0.85); color:#39ff14; font-family:monospace; font-size:11px; padding:6px; z-index:99999; white-space:pre-wrap; word-break:break-all; display:none;"></div>
+<script>
+  window._diagLines = [];
+  window.diagLog = function(msg) {
+    console.log(msg);
+    window._diagLines.push(msg);
+    var el = document.getElementById('_diagOverlay');
+    if (el) {
+      el.style.display = 'block';
+      el.textContent = window._diagLines.join('\n\n');
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+</script>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -3417,6 +3431,7 @@
           unlockAndPlayBgMusic();
           window._cardMode = 'offen';
           _cardModePhase = 1;
+          diagLog('[DIAG-SHARELINK] plus1-Einstieg gestartet. gamePhase=' + gamePhase + ' _cardMode=' + window._cardMode + ' _cardModePhase=' + _cardModePhase + ' stichNum=' + window._stichNum + ' stichGeneration=' + window._stichGeneration);
           // Polling: warten bis ALLE relevanten Meshes existieren, dann handleStart
           var _playReadyPoll = setInterval(function(){
             var allReady = texturesReady
@@ -3429,7 +3444,8 @@
               && window._stichMeshes && Object.keys(window._stichMeshes).length >= 12;
             if (allReady) {
               clearInterval(_playReadyPoll);
-              try { handleStart(false); } catch(e){}
+              diagLog('[DIAG-SHARELINK] Alle Meshes bereit, rufe handleStart(false) auf. gamePhase=' + gamePhase + ' stichNum=' + window._stichNum + ' stichGeneration=' + window._stichGeneration);
+              try { handleStart(false); } catch(e){ console.error('[DIAG-SHARELINK] Fehler in handleStart:', e); }
             }
           }, 100);
           // Sicherheitsnetz: nach 15s Fallback-Aufruf
@@ -16743,7 +16759,7 @@
       }
       const sideNum = (result.winner === 'player') ? window._playerWinCount : window._bankWinCount;
       const _thisStichGen = window._stichGeneration || 0;
-      console.log('[STICH-GFX] gesamt=' + sNum + ' sideNum=' + sideNum + ' winner=' + result.winner);
+      diagLog('[STICH-GFX] gesamt=' + sNum + ' sideNum=' + sideNum + ' winner=' + result.winner);
       st.currentTarget = null;
 
       // t=4000ms: Spielerkarte + Targetkarte weg, Stich-Grafik + target_verdeckt zeigen
@@ -16770,6 +16786,7 @@
 
         // target_verdeckt sofort wieder drauf (zeitgleich mit Playercard-Verschwinden)
         if (sNum < 6 && window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
+          diagLog('[DIAG-VERDECKT] target_verdeckt wird JETZT wieder eingeblendet. sNum=' + sNum + ' winner=' + result.winner + ' stichGeneration=' + _thisStichGen + ' gamePhase=' + gamePhase);
           window._targetMeshes['target_verdeckt.webp'].visible = true;
           startTargetPulse();
         }
