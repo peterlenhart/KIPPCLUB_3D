@@ -1030,19 +1030,23 @@
 </head>
 <body>
 <div id="_versDisplay" style="display:none;"></div>
-<div id="_diagOverlay" style="position:fixed; top:0; left:0; right:0; max-height:40vh; overflow-y:auto; background:rgba(0,0,0,0.85); color:#39ff14; font-family:monospace; font-size:11px; padding:6px; z-index:99999; white-space:pre-wrap; word-break:break-all; display:none;"></div>
+<button id="_diagToggleBtn" style="position:fixed; bottom:8px; right:8px; width:32px; height:32px; border-radius:50%; background:rgba(57,255,20,0.85); border:none; z-index:100000; font-size:16px;">🐞</button>
+<div id="_diagOverlay" style="position:fixed; top:0; left:0; right:0; max-height:40vh; overflow-y:auto; background:rgba(0,0,0,0.9); color:#39ff14; font-family:monospace; font-size:11px; padding:6px; z-index:99999; white-space:pre-wrap; word-break:break-all; display:none;"></div>
 <script>
   window._diagLines = [];
   window.diagLog = function(msg) {
     console.log(msg);
     window._diagLines.push(msg);
-    var el = document.getElementById('_diagOverlay');
-    if (el) {
-      el.style.display = 'block';
-      el.textContent = window._diagLines.join('\n\n');
-      el.scrollTop = el.scrollHeight;
-    }
   };
+  document.getElementById('_diagToggleBtn').addEventListener('click', function() {
+    var el = document.getElementById('_diagOverlay');
+    if (el.style.display === 'none') {
+      el.textContent = window._diagLines.join('\n\n') || '(noch keine Eintraege)';
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  });
 </script>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
