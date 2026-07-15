@@ -3437,6 +3437,7 @@
           _cardModePhase = 1;
           diagLog('[DIAG-SHARELINK] plus1-Einstieg gestartet. gamePhase=' + gamePhase + ' _cardMode=' + window._cardMode + ' _cardModePhase=' + _cardModePhase + ' stichNum=' + window._stichNum + ' stichGeneration=' + window._stichGeneration);
           // Polling: warten bis ALLE relevanten Meshes existieren, dann handleStart
+          var _plus1AlreadyStarted = false;
           var _playReadyPoll = setInterval(function(){
             var allReady = texturesReady
               && window._buttonOverlay
@@ -3448,13 +3449,19 @@
               && window._stichMeshes && Object.keys(window._stichMeshes).length >= 12;
             if (allReady) {
               clearInterval(_playReadyPoll);
+              _plus1AlreadyStarted = true;
               diagLog('[DIAG-SHARELINK] Alle Meshes bereit, rufe handleStart(false) auf. gamePhase=' + gamePhase + ' stichNum=' + window._stichNum + ' stichGeneration=' + window._stichGeneration);
               try { handleStart(false); } catch(e){ console.error('[DIAG-SHARELINK] Fehler in handleStart:', e); }
             }
           }, 100);
-          // Sicherheitsnetz: nach 15s Fallback-Aufruf
+          // Sicherheitsnetz: nach 15s Fallback-Aufruf (NUR falls noch nicht gestartet)
           setTimeout(function(){
             clearInterval(_playReadyPoll);
+            if (_plus1AlreadyStarted) {
+              diagLog('[DIAG-SHARELINK] Sicherheitsnetz uebersprungen, Spiel lief bereits.');
+              return;
+            }
+            diagLog('[DIAG-SHARELINK] Sicherheitsnetz ausgeloest (Meshes nie fertig gemeldet).');
             try { handleStart(false); } catch(e){}
           }, 15000);
           return;
