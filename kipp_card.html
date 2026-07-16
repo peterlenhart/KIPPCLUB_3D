@@ -11951,6 +11951,8 @@
       window._bankWinCount = 0;
       if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
       activateDailyRng();
+      window._cardMode = 'offen';
+      _cardModePhase = 1;
       handleStart(false);
     });
     document.getElementById('btnDaily').addEventListener('touchend', (e) => {
