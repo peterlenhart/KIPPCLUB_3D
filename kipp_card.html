@@ -1030,24 +1030,6 @@
 </head>
 <body>
 <div id="_versDisplay" style="display:none;"></div>
-<button id="_diagToggleBtn" style="position:fixed; bottom:8px; right:8px; width:32px; height:32px; border-radius:50%; background:rgba(57,255,20,0.85); border:none; z-index:100000; font-size:16px;">🐞</button>
-<div id="_diagOverlay" style="position:fixed; top:0; left:0; right:0; max-height:40vh; overflow-y:auto; background:rgba(0,0,0,0.9); color:#39ff14; font-family:monospace; font-size:11px; padding:6px; z-index:99999; white-space:pre-wrap; word-break:break-all; display:none;"></div>
-<script>
-  window._diagLines = [];
-  window.diagLog = function(msg) {
-    console.log(msg);
-    window._diagLines.push(msg);
-  };
-  document.getElementById('_diagToggleBtn').addEventListener('click', function() {
-    var el = document.getElementById('_diagOverlay');
-    if (el.style.display === 'none') {
-      el.textContent = window._diagLines.join('\n\n') || '(noch keine Eintraege)';
-      el.style.display = 'block';
-    } else {
-      el.style.display = 'none';
-    }
-  });
-</script>
   <span style="font-family:'Noto Serif';font-weight:900;position:absolute;left:-9999px;">A3KQ</span>
   <div id="container"></div>
   
@@ -3435,7 +3417,6 @@
           unlockAndPlayBgMusic();
           window._cardMode = 'offen';
           _cardModePhase = 1;
-          diagLog('[DIAG-SHARELINK] plus1-Einstieg gestartet. gamePhase=' + gamePhase + ' _cardMode=' + window._cardMode + ' _cardModePhase=' + _cardModePhase + ' stichNum=' + window._stichNum + ' stichGeneration=' + window._stichGeneration);
           // Polling: warten bis ALLE relevanten Meshes existieren, dann handleStart
           var _plus1AlreadyStarted = false;
           var _playReadyPoll = setInterval(function(){
@@ -3450,7 +3431,6 @@
             if (allReady) {
               clearInterval(_playReadyPoll);
               _plus1AlreadyStarted = true;
-              diagLog('[DIAG-SHARELINK] Alle Meshes bereit, rufe handleStart(false) auf. gamePhase=' + gamePhase + ' stichNum=' + window._stichNum + ' stichGeneration=' + window._stichGeneration);
               try { handleStart(false); } catch(e){ console.error('[DIAG-SHARELINK] Fehler in handleStart:', e); }
             }
           }, 100);
@@ -3458,10 +3438,8 @@
           setTimeout(function(){
             clearInterval(_playReadyPoll);
             if (_plus1AlreadyStarted) {
-              diagLog('[DIAG-SHARELINK] Sicherheitsnetz uebersprungen, Spiel lief bereits.');
               return;
             }
-            diagLog('[DIAG-SHARELINK] Sicherheitsnetz ausgeloest (Meshes nie fertig gemeldet).');
             try { handleStart(false); } catch(e){}
           }, 15000);
           return;
@@ -3475,6 +3453,7 @@
           window._bluffMode = true;
           _cardModePhase = 1;
           // Polling: warten bis kritische Meshes existieren, dann showBluffModeSelection
+          var _matchAlreadyStarted = false;
           var _matchReadyPoll = setInterval(function(){
             var allReady = texturesReady
               && window._buttonOverlay
@@ -3486,11 +3465,15 @@
               && window._stichMeshes && Object.keys(window._stichMeshes).length >= 12;
             if (allReady) {
               clearInterval(_matchReadyPoll);
+              _matchAlreadyStarted = true;
               try { showBluffModeSelection(); } catch(e){ console.error(e); }
             }
           }, 100);
           setTimeout(function(){
             clearInterval(_matchReadyPoll);
+            if (_matchAlreadyStarted) {
+              return;
+            }
             try { showBluffModeSelection(); } catch(e){ console.error(e); }
           }, 15000);
           return;
@@ -16770,7 +16753,6 @@
       }
       const sideNum = (result.winner === 'player') ? window._playerWinCount : window._bankWinCount;
       const _thisStichGen = window._stichGeneration || 0;
-      diagLog('[STICH-GFX] gesamt=' + sNum + ' sideNum=' + sideNum + ' winner=' + result.winner);
       st.currentTarget = null;
 
       // t=4000ms: Spielerkarte + Targetkarte weg, Stich-Grafik + target_verdeckt zeigen
@@ -16797,7 +16779,6 @@
 
         // target_verdeckt sofort wieder drauf (zeitgleich mit Playercard-Verschwinden)
         if (sNum < 6 && window._targetMeshes && window._targetMeshes['target_verdeckt.webp']) {
-          diagLog('[DIAG-VERDECKT] target_verdeckt wird JETZT wieder eingeblendet. sNum=' + sNum + ' winner=' + result.winner + ' stichGeneration=' + _thisStichGen + ' gamePhase=' + gamePhase);
           window._targetMeshes['target_verdeckt.webp'].visible = true;
           startTargetPulse();
         }
