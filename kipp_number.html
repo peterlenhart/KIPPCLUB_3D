@@ -3426,14 +3426,7 @@
           card.mesh.scale.set(s, s, 1);
           requestAnimationFrame(_kippPulseTick);
         })();
-        // Eckblick automatisch starten (nach kurzer Verzögerung)
-        setTimeout(() => {
-          if (window._kippEckblickRunning || window._kippTarget) return;
-          window._kippEckblickRunning = true;
-          window._kippPulseActive = false;
-          if (card && card.mesh) card.mesh.scale.set(1, 1, 1);
-          runKippEckblick().finally(() => { window._kippEckblickRunning = false; });
-        }, 500);
+        // Eckblick entfaellt — Slots sind ohnehin immer offen sichtbar
       }
       
       if (treffer) {
@@ -13142,6 +13135,30 @@
 
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
+
+    // === TEST: 6 Kippziele gleichzeitig anzeigen (rein visuell, Zahl 1-3 + Zufallsfarbe) ===
+    // Aufruf ueber Browser-Konsole: window._testShow6Targets()
+    window._testShow6Targets = function() {
+      recalcCardLayout(6);
+      const usedCombos = new Set();
+      for (let i = 0; i < 6; i++) {
+        let zahl, colorObj, key;
+        do {
+          zahl = 1 + Math.floor(Math.random() * 3);
+          colorObj = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
+          key = zahl + '_' + colorObj.name;
+        } while (usedCombos.has(key) && usedCombos.size < 12);
+        usedCombos.add(key);
+        fillCardWithKombi(i, zahl, colorObj);
+        gameCards[i].mesh.visible = true;
+        gameCards[i].mesh.material.opacity = 1;
+        gameCards[i].mesh.material.transparent = false;
+        gameCards[i].mesh.scale.set(1, 1, 1);
+      }
+    };
+    // Sofort beim Laden anzeigen, zu Testzwecken
+    setTimeout(() => { if (window._testShow6Targets) window._testShow6Targets(); }, 500);
+
 
     // Numpad (1-6 Tasten) positionieren: feste Position
     (function() {
