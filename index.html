@@ -631,6 +631,86 @@ Merken, Logik, Kopfzerbrechen.">
     }
 
     /* Modal */
+    /* ===== PREIS-POPUP (ersetzt sichtbare Preise auf den Walls) ===== */
+    .lockIconBtn {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+      width: 200px;
+      height: var(--cell);
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lockIconBtn svg { height: 84px; width: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); }
+    .lockIconBtn.pulse { animation: lockPulse 1.8s ease-in-out infinite; }
+    @keyframes lockPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50%      { transform: translateX(-50%) scale(1.08); }
+    }
+
+    #pricePopupOverlay {
+      position: fixed; left:0; top:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.72);
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    #pricePopupOverlay.show { display: flex; }
+    .pricePopupBox {
+      width: min(86vw, 420px);
+      background: linear-gradient(180deg, #2a160c, #1a0e06);
+      border: 2px solid #a07020;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      padding: 28px 22px 22px;
+      font-family: Arial, sans-serif;
+      color: #ead7be;
+      text-align: center;
+      position: relative;
+    }
+    .pricePopupClose {
+      position: absolute; top: 10px; right: 14px;
+      font-size: 26px; color: #a07020; cursor: pointer;
+      line-height: 1; font-weight: bold;
+    }
+    .pricePopupTitle {
+      font-size: 22px; font-weight: 900; letter-spacing: 1px;
+      color: #FFD700; margin-bottom: 4px; text-transform: uppercase;
+    }
+    .pricePopupSub { font-size: 14px; color: #c0b098; margin-bottom: 18px; }
+    .pricePopupRow {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    .pricePopupRow:active { background: rgba(255,255,255,0.12); }
+    .pricePopupRow.bundleRow {
+      border-color: #FFD700;
+      background: rgba(255,215,0,0.08);
+    }
+    .pricePopupRowLabel { text-align: left; }
+    .pricePopupRowTitle { font-size: 15px; font-weight: bold; }
+    .pricePopupRowNote { font-size: 12px; color: #a08060; margin-top: 2px; }
+    .pricePopupRowPrice { font-size: 18px; font-weight: 900; color: #ead7be; white-space: nowrap; margin-left: 12px; }
+    .pricePopupRow.bundleRow .pricePopupRowPrice { color: #FFD700; }
+    .pricePopupSave {
+      display: inline-block; font-size: 11px; font-weight: bold;
+      color: #1a0e06; background: #FFD700; border-radius: 6px;
+      padding: 2px 6px; margin-top: 4px;
+    }
+
     .modalOverlay{
       position:fixed;
       left:0;
@@ -1010,6 +1090,32 @@ Merken, Logik, Kopfzerbrechen.">
     </div>
   </div>
 
+  <!-- Preis-Popup -->
+  <div id="pricePopupOverlay">
+    <div class="pricePopupBox">
+      <div class="pricePopupClose" id="pricePopupClose">&times;</div>
+      <div class="pricePopupTitle" id="pricePopupTitle">KIPP CARD</div>
+      <div class="pricePopupSub" id="pricePopupSub">Schalte dieses Spiel frei</div>
+      <div class="pricePopupRow" id="pricePopupSingleRow">
+        <div class="pricePopupRowLabel">
+          <div class="pricePopupRowTitle" id="pricePopupSingleLabel">Nur dieses Spiel</div>
+        </div>
+        <div class="pricePopupRowPrice" id="pricePopupSinglePrice">€ 1,99</div>
+      </div>
+      <div class="pricePopupRow bundleRow" id="pricePopupBundleRow">
+        <div class="pricePopupRowLabel">
+          <div class="pricePopupRowTitle">CLUB Bundle</div>
+          <div class="pricePopupRowNote">SMILEY, CARD, QUEEN &amp; KING</div>
+          <div class="pricePopupSave">Spare 26%</div>
+        </div>
+        <div class="pricePopupRowLabel" style="text-align:right;">
+          <div style="font-size:13px; color:#a08060; text-decoration:line-through;">€ 7,88</div>
+          <div class="pricePopupRowPrice">€ 5,80</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal -->
   <div id="closeModal" class="modalOverlay hidden">
     <div class="modalContainer">
@@ -1172,6 +1278,11 @@ Merken, Logik, Kopfzerbrechen.">
       const wallTopY = wallCarousel ? wallCarousel.offsetTop : 0;
       document.querySelectorAll('[data-theme-button]').forEach(el => {
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
+      });
+
+      // Schloss-Icons (ersetzen die Preistexte optisch): dieselbe Zeile
+      document.querySelectorAll('.lockIconBtn').forEach(el => {
+        el.style.top = ((spielenRow11Y - wallTopY) + 60) + "px";
       });
 
       // Untertext als eigenes Element, ohne Einfluss auf € 0,99 und CLUB € 4,99.
@@ -1678,10 +1789,103 @@ Merken, Logik, Kopfzerbrechen.">
           }
         });
       }
+      // ===== PREIS-POPUP: Schloss statt Preistext, Klick oeffnet Popup =====
+      const LOCK_SVG_WALL = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg">'
+        + '<defs><linearGradient id="wlg" x1="0%" y1="0%" x2="0%" y2="100%">'
+        + '<stop offset="0%" stop-color="#FFF4B0"/><stop offset="40%" stop-color="#FFD700"/><stop offset="100%" stop-color="#a07020"/>'
+        + '</linearGradient><linearGradient id="wlb" x1="0%" y1="0%" x2="0%" y2="100%">'
+        + '<stop offset="0%" stop-color="#FFE680"/><stop offset="100%" stop-color="#c09030"/></linearGradient>'
+        + '<filter id="wlf"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter></defs>'
+        + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="url(#wlb)" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#wlf)"/>'
+        + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#wlg)" stroke="#7a5010" stroke-width="2" filter="url(#wlf)"/>'
+        + '<rect x="20" y="46" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
+        + '<circle cx="40" cy="60" r="5" fill="#3a2010"/><rect x="38" y="60" width="4" height="12" fill="#3a2010"/></svg>';
+
+      const POPUP_INFO = {
+        smileys: { title: 'KIPP SMILEY', singleLabel: 'Nur SMILEY', singlePrice: '€ 0,99' },
+        card:    { title: 'KIPP CARD',   singleLabel: 'Nur CARD',   singlePrice: '€ 1,99' },
+        queen:   { title: 'KIPP QUEEN',  singleLabel: 'Nur QUEEN',  singlePrice: '€ 2,45' },
+        king:    { title: 'KIPP KING',   singleLabel: 'Nur KING',   singlePrice: '€ 2,45' }
+      };
+
+      function setupLockIconsAndPopup() {
+        document.querySelectorAll('.wallPaywallText').forEach(pt => {
+          if (pt.dataset.lockSetup) return;
+          pt.dataset.lockSetup = '1';
+          const game = pt.dataset.themeButton;
+          if (!game || !POPUP_INFO[game]) return;
+
+          // Alten Preistext unsichtbar machen, aber Platz/Positionierung (fuer andere Skripte) beibehalten
+          pt.style.visibility = 'hidden';
+          pt.style.pointerEvents = 'none';
+
+          // Sub-Texte (SMILEY, CARD... / Nur XY) ebenfalls ausblenden
+          const slide = pt.closest('.wallSlide');
+          if (slide) {
+            slide.querySelectorAll('.wallCardPaywallBundleSub, .wallPaywallBundleSub, .wallCardPaywallSingleSub, .wallPaywallSingleSub')
+              .forEach(sub => { sub.style.visibility = 'hidden'; });
+          }
+
+          // Neues Schloss-Icon an derselben Stelle wie der Preistext
+          const lockBtn = document.createElement('div');
+          lockBtn.className = 'lockIconBtn pulse';
+          lockBtn.innerHTML = LOCK_SVG_WALL;
+          lockBtn.style.top = pt.style.top || '0px';
+          pt.parentNode.insertBefore(lockBtn, pt.nextSibling);
+
+          lockBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openPricePopup(game);
+          });
+
+          // Referenz merken, damit applyUnlockState() das Schloss mit ausblenden kann
+          pt._lockBtn = lockBtn;
+        });
+      }
+
+      function openPricePopup(game) {
+        const info = POPUP_INFO[game];
+        if (!info) return;
+        document.getElementById('pricePopupTitle').textContent = info.title;
+        document.getElementById('pricePopupSingleLabel').textContent = info.singleLabel;
+        document.getElementById('pricePopupSinglePrice').textContent = info.singlePrice;
+        kippTrack('paywall_popup_open', { game, screen_name: 'hauptmenue' });
+
+        const singleRow = document.getElementById('pricePopupSingleRow');
+        const bundleRow = document.getElementById('pricePopupBundleRow');
+        const newSingleRow = singleRow.cloneNode(true);
+        singleRow.parentNode.replaceChild(newSingleRow, singleRow);
+        const newBundleRow = bundleRow.cloneNode(true);
+        bundleRow.parentNode.replaceChild(newBundleRow, bundleRow);
+
+        newSingleRow.addEventListener('click', () => {
+          closePricePopup();
+          const productId = PRODUCT_IDS[game];
+          if (productId) triggerPurchase(productId, game);
+        });
+        newBundleRow.addEventListener('click', () => {
+          closePricePopup();
+          const productId = PRODUCT_IDS.bundle;
+          if (productId) triggerPurchase(productId, game);
+        });
+
+        document.getElementById('pricePopupOverlay').classList.add('show');
+      }
+
+      function closePricePopup() {
+        document.getElementById('pricePopupOverlay').classList.remove('show');
+      }
+
+      document.getElementById('pricePopupClose').addEventListener('click', closePricePopup);
+      document.getElementById('pricePopupOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'pricePopupOverlay') closePricePopup();
+      });
+
       window.addEventListener('load', () => {
         document.querySelectorAll('[data-game]').forEach(el => {
           attachClick(el);
         });
+        setupLockIconsAndPopup();
         // Zuerst SOFORT aus lokalem Speicher anzeigen — funktioniert immer, auch offline.
         // Danach im Hintergrund bei Google abgleichen (nicht blockierend, "fire and forget").
         setTimeout(() => {
@@ -1768,7 +1972,11 @@ Merken, Logik, Kopfzerbrechen.">
         if (!game) return;
         const isUnlocked = unlocks[game];
         if (!isUnlocked) return;
-        
+
+        // Popup-Schloss-Icon verstecken, sobald freigeschaltet (die alte SPIELEN/Schloss-Logik unten uebernimmt die Anzeige)
+        const lockBtn = slide.querySelector('.lockIconBtn');
+        if (lockBtn) lockBtn.style.display = 'none';
+
         // Helper: erst Mitte messen, dann ersetzen, dann nach rAF erneut messen und korrigieren
         function centerReplace(el, newInnerHtml) {
           if (!el) return;
