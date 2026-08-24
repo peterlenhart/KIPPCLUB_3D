@@ -2749,8 +2749,8 @@
       };
 
       const gap = 64; // 52px Höhe + 12px Abstand
-      const btnNochmal = mkBtn(T.nml || 'NOCHMAL', baseTop);
-      const btnTeilen = mkBtn(T.cTeilen || 'TEILEN', baseTop + gap);
+      const btnTeilen = mkBtn(T.cTeilen || 'TEILEN', baseTop);
+      const btnNochmal = mkBtn(T.nml || 'NOCHMAL', baseTop + gap);
       const btnNext = btn2Label ? mkBtn(btn2Label, baseTop + gap * 2) : null;
 
       btnNochmal.onclick = () => {
@@ -12939,6 +12939,7 @@
           if (hitIdx >= 0) break;
         }
 
+        let gameOver = false;
         if (hitIdx >= 0) {
           window._sixTargets[hitIdx].done = true;
           const card = gameCards[hitIdx];
@@ -12947,17 +12948,42 @@
             animateCardFly(card, currentQuadrant, hitSlotName, false);
           }
           if (typeof brainyMarkNextCube === 'function') {
-            const over = brainyMarkNextCube(true);
-            if (over) gamePhase = 'ende';
+            gameOver = brainyMarkNextCube(true) || gameOver;
           }
           const allDone = window._sixTargets.every(t => t.done);
-          if (allDone) gamePhase = 'ende';
+          if (allDone) gameOver = true;
         } else {
           if (typeof brainyMarkNextCube === 'function') {
-            const over = brainyMarkNextCube(false);
-            if (over) gamePhase = 'ende';
+            gameOver = brainyMarkNextCube(false) || gameOver;
           }
         }
+
+        if (gameOver) {
+          gamePhase = 'ende';
+          setTimeout(() => { endSixTargetGame(); }, 900);
+        }
+      }
+
+      // Spielende: Score + TEILEN/NOCHMAL/Next-Level Buttons anzeigen
+      function endSixTargetGame() {
+        const hits = (window._brainyResultSeq || []).filter(x => x).length;
+        const fails = (window._brainyResultSeq || []).filter(x => !x).length;
+        if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails);
+        if (typeof showLevelScore === 'function') showLevelScore(hits, fails);
+
+        const levelName = (typeof SCORE_LEVEL_NAMES !== 'undefined' && SCORE_LEVEL_NAMES[currentLevel]) || ('LEVEL ' + currentLevel);
+        const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
+        const _nextDisplayBtn = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTERBRAIN', 4: null };
+        const _nextKey = _nextMap[currentLevel];
+        const btn1Action = () => {
+          location.href = 'kipp_number.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
+        };
+        let btn2Label = null, btn2Action = null;
+        if (_nextKey) {
+          btn2Label = _nextDisplayBtn[currentLevel];
+          btn2Action = () => { location.href = 'kipp_number.html?level=' + _nextKey; };
+        }
+        showLevelEndButtons(levelName, hits, fails, btn1Action, btn2Label, btn2Action);
       }
 
       // Touch: Swipe mit Momentum
