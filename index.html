@@ -129,7 +129,7 @@ Merken, Logik, Kopfzerbrechen.">
       color: #e8dcc0;
       letter-spacing: 4px;
       text-shadow: 0 4px 12px rgba(0,0,0,0.85), 0 0 16px rgba(0,0,0,0.4);
-      pointer-events: none;
+      pointer-events: auto;
       z-index: 9;
       font-family: Arial, sans-serif;
       font-weight: 900;
@@ -1280,9 +1280,12 @@ Merken, Logik, Kopfzerbrechen.">
         el.style.top = ((spielenRow11Y - wallTopY) + 80) + "px";
       });
 
-      // Schloss-Icons (ersetzen die Preistexte optisch): dieselbe Zeile
+      // Schloss-Icons (ersetzen die Preistexte optisch): exakt dieselbe top-Position wie ihr Preistext-Element
       document.querySelectorAll('.lockIconBtn').forEach(el => {
-        el.style.top = ((spielenRow11Y - wallTopY) + 60) + "px";
+        const sib = el.previousElementSibling;
+        if (sib && sib.classList.contains('wallPaywallText')) {
+          el.style.top = sib.style.top;
+        }
       });
 
       // Untertext als eigenes Element, ohne Einfluss auf € 0,99 und CLUB € 4,99.
@@ -1886,6 +1889,7 @@ Merken, Logik, Kopfzerbrechen.">
           attachClick(el);
         });
         setupLockIconsAndPopup();
+        if (typeof positionUI === 'function') positionUI();
         // Zuerst SOFORT aus lokalem Speicher anzeigen — funktioniert immer, auch offline.
         // Danach im Hintergrund bei Google abgleichen (nicht blockierend, "fire and forget").
         setTimeout(() => {
