@@ -1114,11 +1114,11 @@
     <!-- HIT/MISS-Counter (Spielfeld-Zeile 8, Spalten A-B links / G-H rechts) -->
     <!-- HIT/MISS-Counter (3D-Zeile 10, Spalten A-B / G-H — Position via JS) -->
     <div id="hitCounter" style="display:none;position:absolute;transform:translate(-50%,-50%);font:bold 25px Arial;color:#cedb25;text-shadow:0 2px 0 rgba(0,0,0,0.75),0 8px 18px rgba(0,0,0,0.6);letter-spacing:0.05em;pointer-events:none;z-index:5;line-height:1;white-space:nowrap;">1 / 4</div>
-    <div id="missCounter" style="display:none;position:absolute;transform:translate(-50%,-50%);font:bold 25px Arial;color:#e74c3c;text-shadow:0 2px 0 rgba(0,0,0,0.75),0 8px 18px rgba(0,0,0,0.6);letter-spacing:0.05em;pointer-events:none;z-index:5;line-height:1;white-space:nowrap;">1 / 5</div>
+    <div id="missCounter" style="display:none;position:absolute;transform:translate(-50%,-50%);font:bold 25px Arial;color:#e74c3c;text-shadow:0 2px 0 rgba(0,0,0,0.75),0 8px 18px rgba(0,0,0,0.6);letter-spacing:0.05em;pointer-events:none;z-index:5;line-height:1;white-space:nowrap;">1 / 6</div>
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     
     <!-- OFFEN-Modus: Scrollband 1-11 (statt Joker) -->
-    <div id="numBtns" class="hidden" style="display:none; position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
+    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
       <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); position:relative;">
         <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease; position:relative; z-index:1;">
           <div class="numBtn" data-num="1">1</div>
@@ -1156,18 +1156,6 @@
     <button id="actionButton"></button>
     <button id="backButton">↻</button>
     
-
-    <!-- Kippanzahl: 6 Tasten in 2×3 Grid -->
-    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div style="display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(2,38px); gap:4px;">
-        <div class="numBtn" data-num="1">1</div>
-        <div class="numBtn" data-num="2">2</div>
-        <div class="numBtn" data-num="3">3</div>
-        <div class="numBtn" data-num="4">4</div>
-        <div class="numBtn" data-num="5">5</div>
-        <div class="numBtn" data-num="6">6</div>
-      </div>
-    </div>
 
   </div>
 
@@ -3332,8 +3320,7 @@
           _showLevelEndButtonsAndStats();
           return;
         }
-        if (brainyFails >= 5) {
-          // Alle Leben verbraucht → Game Over
+        if (brainyFails >= 6) {
           if (card && card.mesh) card.mesh.visible = false;
           // Pulsation/State stoppen
           window._kippPulseActive = false;
@@ -3494,8 +3481,7 @@
         }
         // Nach Blink-Animation: Game-Over-Check, sonst weiter mit gleichem Kippziel (Slot wieder verdeckt)
         setTimeout(() => {
-          if (brainyFails >= 5) {
-            startNextKippRound();
+          if (brainyFails >= 6) {
             return;
           }
           // Aufgedeckten Slot wieder verdecken (alle _revealedNow zurücksetzen)
@@ -3864,7 +3850,7 @@
       const _mc = document.getElementById('missCounter');
       if (_mc) {
         _mc.style.display = 'block';
-        _mc.textContent = brainyFails + ' / 5';
+        _mc.textContent = brainyFails + ' / 6';
       }
     }
     
@@ -3890,7 +3876,7 @@
       if (_mc) {
         _mc.style.left = _ghX + 'px';
         _mc.style.top = _r10Y + 'px';
-        _mc.textContent = '0 / 5';
+        _mc.textContent = '0 / 6';
         _mc.style.display = 'block';
       }
     }
@@ -4593,7 +4579,7 @@
         _firstLife.style.opacity = '0.4';
         // Tutorial: missCounter direkt auf "1 / 5" setzen (brainyFails wird im Tut nicht erhöht)
         const _mcTut = document.getElementById('missCounter');
-        if (_mcTut) _mcTut.textContent = '1 / 5';
+        if (_mcTut) _mcTut.textContent = '1 / 6';
         await sleep(800);
       }
       
@@ -7156,7 +7142,7 @@
 
     // === LEVEL-Konfig ===
     const LEVEL_CFG = {
-      1: { zahlenProFace: 1, maxZahl: 2,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: true, pairCount: 1 },
+      1: { zahlenProFace: 1, maxZahl: 3,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: false, pairCount: 1 },
       2: { zahlenProFace: 2, maxZahl: 4,  ablenkGems: 1, name: 'BRAINY', pairMode: true, pairCount: 2 },
       3: { zahlenProFace: 3, maxZahl: 8,  ablenkGems: 2, name: 'BRAIN', pairMode: true, pairCount: 4 },
       4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN', pairMode: true, pairCount: 6 }
@@ -7342,7 +7328,7 @@
           // Right face
           '<polygon points="88,30 50,50 50,90 88,70" fill="url(#fRight)" stroke="#5a1812" stroke-width="1.5" stroke-linejoin="round"/>' +
         '</svg>';
-      const _livesCount = 5;
+      const _livesCount = 6;
       for (let i = 0; i < _livesCount; i++) {
         const h = document.createElement('div');
         h.className = 'brainyLife';
@@ -8058,8 +8044,8 @@
         await new Promise(r => setTimeout(r, 1200));
         gem.visible = false;
 
-        // GAME OVER nach 5. Miss (alter Pfad - läuft nur falls brainyExecuteKipp aktiv)
-        if (brainyFails >= 3) {
+        // GAME OVER nach 6. Miss (alter Pfad - läuft nur falls brainyExecuteKipp aktiv)
+        if (brainyFails >= 6) {
           if (brainyActive && gamePhase === 'kipp21') {
             await runGameOverAnimation();
             // Direkt Buttons zeigen, ohne brainyEndGame-Wartezeit
@@ -12871,58 +12857,224 @@
       pulseRichtungButtons(false);
     }
 
-    // === KIPPANZAHL-BUTTONS (6 Tasten) ===
+    // === SCROLLBAND (1-11) — waehlt Kippanzahl UND loest sofort CW-Kipp aus ===
     (function() {
-      const btns = document.querySelectorAll('.numBtn');
-      if (!btns.length) return;
-      
-      let currentNum = null;
-      
-      function selectNum(n) {
-        if (window._brainyTutorialMode) return; // Tutorial sperrt Spieler-Input
-        currentNum = n;
-        btns.forEach(b => {
-          if (parseInt(b.dataset.num) === n) b.classList.add('selected');
-          else b.classList.remove('selected');
+      const strip = document.getElementById('scrollBandStrip');
+      const wrap = document.getElementById('scrollBandWrap');
+      if (!strip || !wrap) return;
+
+      const CELL_W = 56;
+      const TOTAL = 11;
+      let bandIdx = 5; // 0-basiert, 5 = Zahl 6 (Mittelstellung)
+      let touchStartX = 0;
+      let touchStartIdx = 0;
+
+      function updateBandPos(animate) {
+        const wrapW = wrap.offsetWidth || 306;
+        const offset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
+        strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
+        strip.style.transform = 'translateX(' + offset + 'px)';
+        updateBandStyle();
+      }
+
+      function updateBandStyle() {
+        const btns = strip.querySelectorAll('.numBtn');
+        btns.forEach((b, i) => {
+          const dist = Math.abs(i - bandIdx);
+          b.style.minWidth = CELL_W + 'px';
+          b.style.maxWidth = CELL_W + 'px';
+          b.classList.toggle('center', dist === 0);
+          b.style.opacity = Math.max(0.35, 1 - dist * 0.18);
+          b.style.fontSize = Math.round(30 * Math.max(0.65, 1 - dist * 0.08)) + 'px';
         });
       }
-      
-      function clearSelection() {
-        currentNum = null;
-        btns.forEach(b => b.classList.remove('selected'));
+
+      function resetBand() {
+        bandIdx = 5;
+        updateBandPos(true);
       }
-      
-      btns.forEach(btn => {
-        // Prevent touch from bleeding through to canvas
-        btn.addEventListener('touchstart', (e) => { e.stopPropagation(); window._numBtnTouchActive = true; }, { passive: false });
-        btn.addEventListener('touchend', (e) => { e.stopPropagation(); setTimeout(() => { window._numBtnTouchActive = false; }, 100); }, { passive: false });
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (window._brainyTutorialMode) return; // Tutorial: Spieler-Klick ignorieren
-          const n = parseInt(btn.dataset.num);
-          selectNum(n);
-          
-          // Zahl an Spiellogik melden
-          if (gamePhase === 'kipp21' && window._onNumBtn) {
-            window._onNumBtn(n);
-          } else if (gamePhase === 'spielen' && selectedAnzahl === null) {
-            selectedAnzahl = n;
-            startRichtungWarten();
+
+      // Loest den Kipp mit der aktuell zentrierten Zahl aus (immer im Uhrzeigersinn)
+      function fireKipp() {
+        if (window._brainyTutorialMode) return;
+        if (gamePhase !== 'spielen') return;
+        if (window._numBandBusy) return;
+        const n = bandIdx + 1;
+        window._numBandBusy = true;
+        selectedAnzahl = n;
+        Promise.resolve(triggerKipp('cw')).finally(() => {
+          window._numBandBusy = false;
+        });
+      }
+
+      // Touch: Swipe mit Momentum
+      let touchMoved = false;
+      let lastMoveX = 0;
+      let lastMoveTime = 0;
+      let velocity = 0;
+      let momentumAnim = null;
+
+      wrap.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        window._numBtnTouchActive = true;
+        touchStartX = e.touches[0].clientX;
+        touchStartIdx = bandIdx;
+        touchMoved = false;
+        lastMoveX = e.touches[0].clientX;
+        lastMoveTime = performance.now();
+        velocity = 0;
+        if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
+        strip.style.transition = 'none';
+      }, { passive: false });
+
+      wrap.addEventListener('touchmove', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const now = performance.now();
+        const x = e.touches[0].clientX;
+        const dx = x - touchStartX;
+        if (Math.abs(dx) > 4) touchMoved = true;
+        const dt = now - lastMoveTime;
+        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
+        else if (dt >= 60) velocity = 0;
+        lastMoveX = x;
+        lastMoveTime = now;
+        const wrapW = wrap.offsetWidth || 306;
+        const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
+        strip.style.transform = 'translateX(' + tx + 'px)';
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
+        updateBandStyle();
+      }, { passive: false });
+
+      wrap.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setTimeout(() => { window._numBtnTouchActive = false; }, 100);
+
+        if (!touchMoved) {
+          // Tap auf zentrierte Zahl → sofort Kipp ausloesen
+          const touch = e.changedTouches[0];
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = touch.clientX - wrapRect.left;
+          const wrapW = wrapRect.width;
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / CELL_W) + bandIdx));
+          if (tappedIdx === bandIdx) {
+            fireKipp();
+          } else {
+            bandIdx = tappedIdx;
+            updateBandPos(true);
           }
-        });
+        } else {
+          const wrapW = wrap.offsetWidth || 306;
+          const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
+          const txCoasted = tx + velocity * 150;
+          bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
+          const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
+          const startX = tx;
+          const dist = snapOffset - startX;
+          const t0 = performance.now();
+          const dur = 700, A = 0.18, omega = 1.8 * 2 * Math.PI, damping = 5.5;
+          strip.style.transition = 'none';
+          updateBandStyle();
+          function pendulumSnap() {
+            const t = (performance.now() - t0) / dur;
+            if (t >= 1) { strip.style.transform = 'translateX(' + snapOffset + 'px)'; momentumAnim = null; updateBandStyle(); return; }
+            const ease = 1 - Math.pow(1 - t, 3);
+            const swing = A * Math.exp(-damping * t) * Math.sin(omega * t);
+            strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
+            momentumAnim = requestAnimationFrame(pendulumSnap);
+          }
+          momentumAnim = requestAnimationFrame(pendulumSnap);
+        }
+      }, { passive: false });
+
+      // Mouse-Drag (Desktop/PC-Test)
+      let mouseBandActive = false;
+      wrap.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        mouseBandActive = true;
+        touchStartX = e.clientX;
+        touchStartIdx = bandIdx;
+        touchMoved = false;
+        lastMoveX = e.clientX;
+        lastMoveTime = performance.now();
+        velocity = 0;
+        if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
+        strip.style.transition = 'none';
+        wrap.style.cursor = 'grabbing';
       });
-      
-      // Global: Zahl auswählen (für Tutorial)
-      window._scrollBandToNum = function(n) { selectNum(n); };
-      
-      // Global: Reset
-      window._resetScrollBand = function() { clearSelection(); };
-      
-      // Highlight (für Tutorial-Anzeige)
-      window._highlightNum = function(n) {
-        if (n === null) { clearSelection(); return; }
-        selectNum(n);
+      document.addEventListener('mousemove', (e) => {
+        if (!mouseBandActive) return;
+        const now = performance.now();
+        const x = e.clientX;
+        const dx = x - touchStartX;
+        if (Math.abs(dx) > 4) touchMoved = true;
+        const dt = now - lastMoveTime;
+        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
+        else if (dt >= 60) velocity = 0;
+        lastMoveX = x;
+        lastMoveTime = now;
+        const wrapW = wrap.offsetWidth || 306;
+        const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
+        strip.style.transform = 'translateX(' + tx + 'px)';
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
+        updateBandStyle();
+      });
+      document.addEventListener('mouseup', (e) => {
+        if (e.button !== 0 || !mouseBandActive) return;
+        mouseBandActive = false;
+        wrap.style.cursor = '';
+        if (!touchMoved) {
+          const wrapRect = wrap.getBoundingClientRect();
+          const tapX = e.clientX - wrapRect.left;
+          const wrapW = wrapRect.width;
+          const firstBtn = strip.querySelector('.numBtn');
+          const cellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
+          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
+          if (tappedIdx !== bandIdx) {
+            bandIdx = tappedIdx;
+            updateBandPos(true);
+          } else {
+            fireKipp();
+          }
+        } else {
+          const wrapW = wrap.offsetWidth || 306;
+          const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
+          const txCoasted = tx + velocity * 150;
+          bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
+          const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
+          const startX = tx;
+          const dist = snapOffset - startX;
+          const t0m = performance.now();
+          const durM = 700, AM = 0.18, omegaM = 1.8 * 2 * Math.PI, dampingM = 5.5;
+          strip.style.transition = 'none';
+          updateBandStyle();
+          function pendulumSnapM() {
+            const t = (performance.now() - t0m) / durM;
+            if (t >= 1) { strip.style.transform = 'translateX(' + snapOffset + 'px)'; momentumAnim = null; updateBandStyle(); return; }
+            const ease = 1 - Math.pow(1 - t, 3);
+            const swing = AM * Math.exp(-dampingM * t) * Math.sin(omegaM * t);
+            strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
+            momentumAnim = requestAnimationFrame(pendulumSnapM);
+          }
+          momentumAnim = requestAnimationFrame(pendulumSnapM);
+        }
+      });
+      wrap.addEventListener('dragstart', (e) => e.preventDefault());
+
+      // Global API (fuer Tutorial-Steuerung falls benoetigt)
+      window._scrollBandToNum = function(n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
       };
+      window._resetScrollBand = function() { resetBand(); };
+      window._highlightNum = function(n) {
+        if (n === null) return;
+        window._scrollBandToNum(n);
+      };
+
+      updateBandPos(false);
     })();
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
