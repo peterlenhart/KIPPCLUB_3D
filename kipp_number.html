@@ -7349,11 +7349,11 @@
       const wrap = brainyEnsureLivesUI();
       // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts)
       wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
-        'z-index:25;pointer-events:none;display:flex;gap:8px;align-items:center;';
+        'z-index:25;pointer-events:none;display:flex;gap:3px;align-items:center;';
       const hearts = wrap.querySelectorAll('.brainyLife');
       hearts.forEach(h => {
-        h.style.width = '28px';
-        h.style.height = '28px';
+        h.style.width = '22px';
+        h.style.height = '22px';
         h.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
         h.style.opacity = '1';
         h.style.transform = 'scale(1)';
@@ -8569,11 +8569,9 @@
         animLower();
       });
 
-      // BUMBLEBRAIN: Slots verdecken — Würfel-ECKE hat Y=0 erreicht (analog card.html)
-      // Bei Joker-Aufruf zur Vergewisserung: Slots offen lassen
+      // Slots bleiben immer offen sichtbar — keine Verdeckung mehr nach Eckblick
       if (!_noHideSlots) {
-        window._kippSlotsHidden = true;
-        // OFFEN-Modus: Top-Face wieder sichtbar (bis zum ersten Kipp)
+        window._kippSlotsHidden = false;
         window._offenFirstKippDone = false;
         if (typeof updateAllFaceTextures === 'function') updateAllFaceTextures();
       }
@@ -9988,6 +9986,8 @@
     });
 
     function showKniffIcons() {
+      // Joker/Kniff-System entfaellt im Spielmodus — ersetzt durch Scrollband
+      if (gamePhase === 'spielen') return;
       // Kniff Icons 12px nördlich der alten Position
       jokerRow.style.top = '523px';
       
