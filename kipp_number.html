@@ -12910,6 +12910,7 @@
         if (_off === undefined) return;
 
         let hitIdx = -1;
+        let hitSlotName = null;
         for (let _i = 0; _i < 4; _i++) {
           const _z = deck[_off + _i];
           if (_z <= 0) continue;
@@ -12920,6 +12921,7 @@
             const t = window._sixTargets[ti];
             if (!t.done && t.zahl === _z && t.color === _wandFarbe) {
               hitIdx = ti;
+              hitSlotName = _slotNames[_i];
               break;
             }
           }
@@ -12929,9 +12931,9 @@
         if (hitIdx >= 0) {
           window._sixTargets[hitIdx].done = true;
           const card = gameCards[hitIdx];
-          if (card && card.mesh) {
+          if (card && card.mesh && hitSlotName) {
             drawGoldenBorder(card);
-            card.mesh.visible = false; // Karte "fliegt weg" — vereinfachte Sofort-Variante
+            animateCardFly(card, currentQuadrant, hitSlotName, false);
           }
           if (typeof brainyMarkNextCube === 'function') {
             const over = brainyMarkNextCube(true);
