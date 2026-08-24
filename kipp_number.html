@@ -129,10 +129,10 @@
       left: 0;
       width: 360px;
       height: 58px;
-      display: none;
+      display: none !important;
       z-index: 13;
-      pointer-events: none;
-      opacity: 0;
+      pointer-events: none !important;
+      opacity: 0 !important;
       transition: opacity 0.35s ease;
     }
 
@@ -13204,25 +13204,55 @@
       if (eye) eye.style.display = 'none';
 
       // 6 offene Kippziele anzeigen
-      window._sixTargets = window._sixTargets || [];
+      // Regel: Mindestens 1 Ziel zeigt die aktuell sichtbare Deckflaechen-Zahl,
+      // aber NIE kombiniert mit der Wandfarbe, an der diese Zahl gerade in der
+      // Ausgangslage bereits anliegt (sonst waere das Ziel schon erfuellt).
       window._sixTargets = [];
       recalcCardLayout(6);
+
+      // Sichtbare Deckflaechen-Zahl + ihre "verbotene" (bereits erfuellte) Wandfarbe ermitteln
+      const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
+      const _slotNames = ['S1', 'S2', 'S3', 'S4'];
+      const _topOff = _faceOffsets[topFace];
+      let _visibleZahl = null;
+      const _forbiddenColorForVisible = new Set();
+      if (_topOff !== undefined) {
+        for (let _i = 0; _i < 4; _i++) {
+          const _z = deck[_topOff + _i];
+          if (_z > 0) {
+            _visibleZahl = _z; // Bumblebrain: genau 1 Zahl auf der Flaeche
+            const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
+            if (_wandFarbe) _forbiddenColorForVisible.add(_wandFarbe);
+          }
+        }
+      }
+
       const usedCombos = new Set();
-      const colorNamesLocal = GAME_COLORS.map(c => c.name);
-      for (let i = 0; i < 6; i++) {
-        let zahl, colorObj, key;
+      function pickValidCombo(forceZahl) {
+        let zahl, colorObj, key, tries = 0;
         do {
-          zahl = 1 + Math.floor(Math.random() * _cfg.maxZahl);
+          zahl = forceZahl != null ? forceZahl : (1 + Math.floor(Math.random() * _cfg.maxZahl));
           colorObj = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
           key = zahl + '_' + colorObj.name;
-        } while (usedCombos.has(key) && usedCombos.size < 4 * _cfg.maxZahl);
+          tries++;
+          // verbotene Kombi: diese Zahl + die Wandfarbe, an der sie bereits anliegt
+          const isForbidden = (zahl === _visibleZahl) && _forbiddenColorForVisible.has(colorObj.name);
+          if (!usedCombos.has(key) && !isForbidden) break;
+        } while (tries < 50);
         usedCombos.add(key);
-        fillCardWithKombi(i, zahl, colorObj);
+        return { zahl, colorObj };
+      }
+
+      // Erstes Ziel: garantiert die sichtbare Zahl (mit erlaubter Farbe)
+      const _firstTarget = pickValidCombo(_visibleZahl != null ? _visibleZahl : null);
+      for (let i = 0; i < 6; i++) {
+        const combo = (i === 0) ? _firstTarget : pickValidCombo(null);
+        fillCardWithKombi(i, combo.zahl, combo.colorObj);
         gameCards[i].mesh.visible = true;
         gameCards[i].mesh.material.opacity = 1;
         gameCards[i].mesh.material.transparent = false;
         gameCards[i].mesh.scale.set(1, 1, 1);
-        window._sixTargets.push({ zahl: zahl, color: colorObj.name, done: false });
+        window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
       }
 
       // Scrollband einblenden
