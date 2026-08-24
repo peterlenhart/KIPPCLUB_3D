@@ -2705,9 +2705,8 @@
     window._DIGIKIPP_URL = 'https://peterlenhart.github.io/KIPPCLUB_3D/';
 
     function buildShareText(levelName, hits, fails) {
-      const total = hits + fails;
-      const pct = total > 0 ? Math.round(hits / total * 100) : 0;
-      const grid = window._hitMissSeq.map(r => r === 'hit' ? '\u{1F7E9}' : '\u{1F7E5}').join('');
+      const grid = (window._brainyResultSeq || []).map(isHit => isHit ? '\u{1F7E9}' : '\u{1F7E5}').join('');
+      const _lvlLabel = BUMBLEBR_LEVEL_LABEL[currentLevel] || levelName;
       // Sharelink: jedes Level eigener Direkt-Einstieg
       const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
       const _lvlKey = _lvlMap[currentLevel];
@@ -2717,8 +2716,7 @@
         ? window._DIGIKIPP_URL + 'kipp_number.html?level=' + _lvlKey + _modeQuery
         : window._DIGIKIPP_URL + 'kipp_number.html' + _modeQueryOnly;
       const _modeLabel = (_digikippMode === 'offen') ? ' OFFEN' : '';
-      return 'KIPP NUMBERS' + _modeLabel + ' \u2014 ' + levelName + '\n' +
-        pct + '% (' + hits + ' HITS / ' + fails + ' FAIL' + (fails !== 1 ? 'S' : '') + ')\n' +
+      return 'KIPP NUMBERS' + _modeLabel + ' \u2014 ' + _lvlLabel + '\n' +
         grid + '\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         '#KippClub #KippNumbers';
@@ -2808,15 +2806,12 @@
     }
 
     function showLevelScore(hits, fails) {
-      const total = hits + fails;
-      const pct = total > 0 ? Math.round(hits / total * 100) : 0;
       const el = document.getElementById('levelScoreDisplay');
-      console.log('[SCORE] showLevelScore: ' + pct + '% (' + hits + ' hits, ' + fails + ' fails)');
-      el.innerHTML = '<span style="color:#cedb25;font-size:20px;font-weight:bold">' + pct + '%</span>' +
-        ' <span style="color:#999;font-size:14px">(' +
-        '<span style="color:#cedb25;font-weight:bold">' + hits + '</span> HIT' + (hits !== 1 ? 's' : '') +
-        ' / <span style="color:#e05050;font-weight:bold">' + fails + '</span> FAIL' + (fails !== 1 ? 's' : '') +
-        ')</span>';
+      const levelLabel = BUMBLEBR_LEVEL_LABEL[currentLevel] || 'BUMBLEBR.';
+      const seq = window._brainyResultSeq || [];
+      console.log('[SCORE] showLevelScore: ' + levelLabel + ' seq=', seq);
+      el.innerHTML = '<span style="color:#e8dcc8;font-size:14px;font-weight:bold;letter-spacing:1px;">' + levelLabel + '</span> ' +
+        brainyBuildResultRowHTML(seq, 18);
       el.style.display = 'block';
       document.getElementById('btnBestScores').classList.add('pulsing');
     }
@@ -7301,6 +7296,20 @@
     const BRAINY_CUBE_GREEN = () => brainyCubeSVG('#6fdc7a', '#3fb84f', '#2f9c3d', '#1a5c22');
     const BRAINY_CUBE_RED   = () => brainyCubeSVG('#ff6b6b', '#c0392b', '#a0281e', '#5a1812');
 
+    const BUMBLEBR_LEVEL_LABEL = { 1: 'BUMBLEBR.', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBR.' };
+
+    // Baut eine kleine Wuerfel-Ergebnisreihe (gruen/rot) als HTML-String — fuer Scoretafel + Share-Grafik
+    function brainyBuildResultRowHTML(seq, cubeSizePx) {
+      const size = cubeSizePx || 18;
+      let html = '<span style="display:inline-flex;gap:2px;vertical-align:middle;">';
+      (seq || []).forEach(isHit => {
+        const svg = isHit ? BRAINY_CUBE_GREEN() : BRAINY_CUBE_RED();
+        html += '<span style="width:' + size + 'px;height:' + size + 'px;display:inline-block;">' + svg + '</span>';
+      });
+      html += '</span>';
+      return html;
+    }
+
     function brainyEnsureLivesUI() {
       let wrap = document.getElementById('brainyLivesWrap');
       if (wrap) return wrap;
@@ -7358,6 +7367,8 @@
         h.dataset.marked = isHit ? 'hit' : 'fail';
         h.style.transform = 'scale(1)';
       }, 200);
+      window._brainyResultSeq = window._brainyResultSeq || [];
+      window._brainyResultSeq.push(isHit);
       window._brainyNextCubeIdx = idx + 1;
       return window._brainyNextCubeIdx >= cubes.length;
     }
@@ -13200,10 +13211,13 @@
       kipp21Active = false;
       bereitsGetroffen.clear();
       bereitsAusgegeben.clear();
-      if (typeof resetHitMissCounters === 'function') resetHitMissCounters();
+      // Hit/Miss-Text-Counter entfaellt — ersetzt durch die 6 farbigen Wuerfel-Icons
+      const _hc0 = document.getElementById('hitCounter'); if (_hc0) _hc0.style.display = 'none';
+      const _mc0 = document.getElementById('missCounter'); if (_mc0) _mc0.style.display = 'none';
       gamePhase = 'spielen';
 
       brainyResetLives();
+      window._brainyResultSeq = [];
       // Joker-System entfaellt komplett — ersetzt durch Scrollband
 
       const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
