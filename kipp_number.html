@@ -10729,12 +10729,18 @@
       setTimeout(() => { startBrainyLevel(); }, 100);
       setTimeout(() => { _startBtnLock = false; }, 1000);
     }
-    document.getElementById('btnSpielen').addEventListener('click', () => {
-      handleStart(false);
-    });
+    // btnSpielen click-Listener: siehe startSixTargetGame() weiter unten im Code
     document.getElementById('btnSpielen').addEventListener('touchend', (e) => {
       e.preventDefault();
-      handleStart(false);
+      if (!texturesReady || _startBtnLock) return;
+      _startBtnLock = true;
+      unlockAndPlayBgMusic();
+      document.getElementById('startOverlay').style.display = 'none';
+      currentLevel = 1;
+      window._brainyTutorialMode = false;
+      gamePhase = 'spielen';
+      setTimeout(() => { startSixTargetGame(); }, 100);
+      setTimeout(() => { _startBtnLock = false; }, 1000);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
@@ -13136,28 +13142,91 @@
     // resetButton auf Einstiegsseite sofort sichtbar + positionieren
     positionResetButton();
 
-    // === TEST: 6 Kippziele gleichzeitig anzeigen (rein visuell, Zahl 1-3 + Zufallsfarbe) ===
-    // Aufruf ueber Browser-Konsole: window._testShow6Targets()
-    window._testShow6Targets = function() {
+    // === NEUER SPIELABLAUF: SPIELEN-Klick zeigt sofort 6 offene Kippziele + Scrollband ===
+    // Kein Schauen/Eckblick/Joker/einzelnes verdecktes Ziel mehr.
+    async function startSixTargetGame() {
+      hideLevelScore();
+      brainyActive = true;
+      brainyHits = 0;
+      brainyFails = 0;
+      window._kippHits = 0;
+      kipp21Done = 0;
+      kipp21Fails = 0;
+      kipp21KippCount = 0;
+      window._hitMissSeq = [];
+      kipp21Active = false;
+      bereitsGetroffen.clear();
+      bereitsAusgegeben.clear();
+      if (typeof resetHitMissCounters === 'function') resetHitMissCounters();
+      gamePhase = 'spielen';
+
+      brainyResetLives();
+      if (typeof resetJokers === 'function') resetJokers();
+
+      const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
+      window._brLevelCfg = _cfg;
+      brainyBuildDeck(_cfg);
+      updateFaceSlots();
+      updateAllFaceTextures();
+
+      kipGroup.add(cube);
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      kippDirection = 'cw';
+      isAnimating = false;
+
+      // Slots bleiben immer offen — kein Verdecken
+      window._kippSlotsHidden = false;
+
+      // Joker/Eckblick-UI ausblenden
+      const jr = document.getElementById('jokerIconsRow');
+      if (jr) jr.style.display = 'none';
+      const eye = document.getElementById('eyeIcon');
+      if (eye) eye.style.display = 'none';
+
+      // 6 offene Kippziele anzeigen
+      window._sixTargets = window._sixTargets || [];
+      window._sixTargets = [];
       recalcCardLayout(6);
       const usedCombos = new Set();
+      const colorNamesLocal = GAME_COLORS.map(c => c.name);
       for (let i = 0; i < 6; i++) {
         let zahl, colorObj, key;
         do {
-          zahl = 1 + Math.floor(Math.random() * 3);
+          zahl = 1 + Math.floor(Math.random() * _cfg.maxZahl);
           colorObj = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
           key = zahl + '_' + colorObj.name;
-        } while (usedCombos.has(key) && usedCombos.size < 12);
+        } while (usedCombos.has(key) && usedCombos.size < 4 * _cfg.maxZahl);
         usedCombos.add(key);
         fillCardWithKombi(i, zahl, colorObj);
         gameCards[i].mesh.visible = true;
         gameCards[i].mesh.material.opacity = 1;
         gameCards[i].mesh.material.transparent = false;
         gameCards[i].mesh.scale.set(1, 1, 1);
+        window._sixTargets.push({ zahl: zahl, color: colorObj.name, done: false });
       }
-    };
-    // Sofort beim Laden anzeigen, zu Testzwecken
-    setTimeout(() => { if (window._testShow6Targets) window._testShow6Targets(); }, 500);
+
+      // Scrollband einblenden
+      const nb = document.getElementById('numBtns');
+      if (nb) { nb.classList.remove('hidden'); nb.style.display = ''; }
+
+      setButtonsDisabled(false);
+    }
+
+    // SPIELEN-Button (ohne Tutorial) → neuer Ablauf. TUTORIAL-Button bleibt beim alten Ablauf.
+    document.getElementById('btnSpielen').addEventListener('click', () => {
+      if (!texturesReady || _startBtnLock) return;
+      _startBtnLock = true;
+      unlockAndPlayBgMusic();
+      document.getElementById('startOverlay').style.display = 'none';
+      currentLevel = 1;
+      window._brainyTutorialMode = false;
+      gamePhase = 'spielen';
+      setTimeout(() => { startSixTargetGame(); }, 100);
+      setTimeout(() => { _startBtnLock = false; }, 1000);
+    }, { once: false });
 
 
     // Numpad (1-6 Tasten) positionieren: feste Position
