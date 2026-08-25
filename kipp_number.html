@@ -12699,16 +12699,11 @@
       
       
       for (let i = 0; i < steps; i++) {
-        // Erste 3 Kipps normale Geschwindigkeit. Ab Kipp 4 progressiv schneller,
-        // bis Kipp 11 doppelt so schnell (halbe Zeit) wie die ersten 3.
+        // Kontinuierliche Beschleunigung ab dem ersten Kipp,
+        // bis Kipp 11 vierfache Geschwindigkeit (1/4 Zeit) erreicht ist.
         const stepNum = i + 1; // 1-basiert
-        let stepMul;
-        if (stepNum <= 3) {
-          stepMul = 1.0;
-        } else {
-          const t = Math.min(1, (stepNum - 3) / (11 - 3)); // 0 bei Schritt 3, 1 bei Schritt 11
-          stepMul = lerp(1.0, 0.25, t);
-        }
+        const t = Math.min(1, (stepNum - 1) / (11 - 1)); // 0 bei Schritt 1, 1 bei Schritt 11
+        const stepMul = lerp(1.0, 0.25, t);
 
         const kipTime = Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
         const holdTime = Math.max(40, Math.round(T.wMs * stepMul));
@@ -12939,35 +12934,38 @@
         const _off = _faceOffsets[topFace];
         if (_off === undefined) return;
 
-        let hitIdx = -1;
-        let hitSlotName = null;
+        // ALLE Treffer sammeln (nicht nur den ersten) — bei Masterbrain koennen
+        // theoretisch bis zu 4 sichtbare Zahlen gleichzeitig je ein Ziel treffen.
+        const _hits = []; // [{targetIdx, slotName}, ...]
         for (let _i = 0; _i < 4; _i++) {
           const _z = deck[_off + _i];
           if (_z <= 0) continue;
           const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
           if (!_wandFarbe) continue;
-          // Gegen alle noch offenen 6 Ziele pruefen
           for (let ti = 0; ti < window._sixTargets.length; ti++) {
             const t = window._sixTargets[ti];
             if (!t.done && t.zahl === _z && t.color === _wandFarbe) {
-              hitIdx = ti;
-              hitSlotName = _slotNames[_i];
-              break;
+              _hits.push({ targetIdx: ti, slotName: _slotNames[_i] });
+              break; // dieses Ziel nur einmal zaehlen
             }
           }
-          if (hitIdx >= 0) break;
         }
 
         let gameOver = false;
-        if (hitIdx >= 0) {
-          window._sixTargets[hitIdx].done = true;
-          const card = gameCards[hitIdx];
-          if (card && card.mesh && hitSlotName) {
-            drawGoldenBorder(card);
-            animateCardFly(card, currentQuadrant, hitSlotName, false);
-          }
+        if (_hits.length > 0) {
+          _hits.forEach(h => {
+            window._sixTargets[h.targetIdx].done = true;
+            const card = gameCards[h.targetIdx];
+            if (card && card.mesh) {
+              drawGoldenBorder(card);
+              animateCardFly(card, currentQuadrant, h.slotName, false);
+            }
+          });
+          // Fuer jeden Treffer einen eigenen gruenen Wuerfel im Ergebnis einfaerben
           if (typeof brainyMarkNextCube === 'function') {
-            gameOver = brainyMarkNextCube(true) || gameOver;
+            for (let k = 0; k < _hits.length; k++) {
+              gameOver = brainyMarkNextCube(true) || gameOver;
+            }
           }
           const allDone = window._sixTargets.every(t => t.done);
           if (allDone) gameOver = true;
