@@ -570,8 +570,6 @@
     .dirBtnFixed {
       width: 45px;
       height: 45px;
-      background-size: cover;
-      background-repeat: no-repeat;
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
@@ -580,10 +578,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font: bold 11px Arial;
-      color: #3a2410;
-      text-align: center;
-      border-radius: 6px;
+      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
+      border: 2px solid #8a7a66;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
     .dirBtnFixed.dirBtnBlink {
       animation: dirBtnBlinkAnim 0.9s ease-in-out infinite;
@@ -1181,8 +1179,8 @@
       <div class="numBtnFixed" data-num="4" style="position:absolute;">4</div>
       <div class="numBtnFixed" data-num="5" style="position:absolute;">5</div>
       <div class="numBtnFixed" data-num="6" style="position:absolute;">6</div>
-      <div id="ccwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('ccw.webp');"></div>
-      <div id="cwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('cw.webp');"></div>
+      <div id="ccwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('ccw.webp'); background-size:cover; background-repeat:no-repeat;"></div>
+      <div id="cwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('cw.webp'); background-size:cover; background-repeat:no-repeat;"></div>
     </div>
     
     <!-- KIPP-TIPP Overlay -->
@@ -1501,21 +1499,20 @@
       0.01,
       100
     );
-    
-    const baseY = 2.143;
-    const verticalAngle = -1.0;
-    const horizontal = 0;
-    const radius = 1.25;
-    const southShift = -0.143;
-    
+
+    // Isometrische Ansicht: zeigt gleichzeitig +Y (oben, f2), +Z (Sued, f0), -X (West, f1)
+    const cubeCenterX = 0, cubeCenterY = 0.234375, cubeCenterZ = 0.109375;
+    const isoDistance = 1.6;
+    const isoHorizAngle = -45 * Math.PI / 180; // negativ -> zeigt -X Flaeche
+    const isoVertAngle = 35 * Math.PI / 180;
+
     camera.position.set(
-      0 + Math.sin(horizontal) * 0.5,
-      baseY + radius * Math.sin(-verticalAngle),
-      radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
+      cubeCenterX + isoDistance * Math.cos(isoVertAngle) * Math.sin(isoHorizAngle),
+      cubeCenterY + isoDistance * Math.sin(isoVertAngle),
+      cubeCenterZ + isoDistance * Math.cos(isoVertAngle) * Math.cos(isoHorizAngle)
     );
-    
-    camera.lookAt(0, 0.46875, 0.7 + southShift);
-    
+    camera.lookAt(cubeCenterX, cubeCenterY, cubeCenterZ);
+
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
     renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
@@ -2018,8 +2015,15 @@
       map: wallTexture,
       color: 0x666666  // Dunkler (40% Helligkeit)
     });
+    // Transparentes Material fuer West- und Suedwand (Sicht auf Wuerfel freigeben)
+    const wallMaterialTransparent = new THREE.MeshBasicMaterial({
+      map: wallTexture,
+      color: 0x666666,
+      transparent: true,
+      opacity: 0.3
+    });
     
-    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall = new THREE.Mesh(wallGeometry, wallMaterialTransparent);
     wall.position.set(0, 0.234375, 0.597125);
     wall.castShadow = false;
     wall.receiveShadow = true;
@@ -2033,7 +2037,7 @@
 
     const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.46875, 1.00675);
     
-    const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterialTransparent);
     wallLeft.position.set(-0.48550, 0.234375, 0.1105);
     wallLeft.castShadow = false;
     wallLeft.receiveShadow = true;
@@ -2059,7 +2063,8 @@
       const spieltischMaterial = new THREE.MeshStandardMaterial({ 
         map: texture,
         transparent: true,
-        alphaTest: 0.5,
+        opacity: 0.3,
+        alphaTest: 0.01,
         roughness: 0.8,
         metalness: 0.2,
         depthWrite: true
@@ -13330,8 +13335,8 @@
         // CW links (Rasterspalte 0), CCW rechts (Rasterspalte 7) von der Zahlenreihe
         const cwBtn = document.getElementById('cwDirBtn');
         const ccwBtn = document.getElementById('ccwDirBtn');
-        if (cwBtn) { cwBtn.style.left = '0px'; cwBtn.style.top = '527px'; }
-        if (ccwBtn) { ccwBtn.style.left = '315px'; ccwBtn.style.top = '527px'; }
+        if (cwBtn) { cwBtn.style.left = '2px'; cwBtn.style.top = '527px'; }
+        if (ccwBtn) { ccwBtn.style.left = '313px'; ccwBtn.style.top = '527px'; }
         if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
       }
 
