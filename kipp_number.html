@@ -7424,9 +7424,14 @@
       const wrap = document.getElementById('brainyLivesWrap');
       if (!wrap) return false;
       const cubes = wrap.querySelectorAll('.brainyLife');
-      if (targetIdx < 0 || targetIdx >= cubes.length) return false;
-      const h = cubes[targetIdx];
-      if (h.dataset.marked === 'hit') return Array.from(cubes).every(c => c.dataset.marked === 'hit');
+      if (!cubes.length) return false;
+      // Lueckenlos von links nach rechts: den am weitesten links stehenden noch beigen Wuerfel gruen faerben
+      let leftmostBeige = -1;
+      for (let i = 0; i < cubes.length; i++) {
+        if (cubes[i].dataset.marked !== 'hit') { leftmostBeige = i; break; }
+      }
+      if (leftmostBeige === -1) return true; // bereits alle gruen
+      const h = cubes[leftmostBeige];
       h.style.transform = 'scale(1.25)';
       setTimeout(() => {
         h.innerHTML = BRAINY_CUBE_GREEN();
@@ -7435,7 +7440,7 @@
       }, 200);
       window._brainyResultSeq = window._brainyResultSeq || [];
       window._brainyResultSeq.push(true);
-      const allGreen = Array.from(cubes).every((c, i) => i === targetIdx || c.dataset.marked === 'hit');
+      const allGreen = Array.from(cubes).every((c, i) => i === leftmostBeige || c.dataset.marked === 'hit');
       return allGreen;
     }
 
