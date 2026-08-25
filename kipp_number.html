@@ -2747,19 +2747,9 @@
     window._DIGIKIPP_URL = 'https://peterlenhart.github.io/KIPPCLUB_3D/';
 
     function buildShareText(levelName, hits, fails) {
-      const grid = brainyGetReliableResultSeq().map(isHit => isHit ? '\u{1F7E9}' : '\u{1F7E5}').join('');
-      const _lvlLabel = BUMBLEBR_LEVEL_LABEL[currentLevel] || levelName;
-      // Sharelink: jedes Level eigener Direkt-Einstieg
-      const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
-      const _lvlKey = _lvlMap[currentLevel];
-      const _modeQuery = (_digikippMode === 'offen') ? '&mode=offen' : '';
-      const _modeQueryOnly = (_digikippMode === 'offen') ? '?mode=offen' : '';
-      const shareUrl = _lvlKey
-        ? window._DIGIKIPP_URL + 'kipp_number.html?level=' + _lvlKey + _modeQuery
-        : window._DIGIKIPP_URL + 'kipp_number.html' + _modeQueryOnly;
-      const _modeLabel = (_digikippMode === 'offen') ? ' OFFEN' : '';
-      return 'KIPP NUMBERS' + _modeLabel + ' \u2014 ' + _lvlLabel + '\n' +
-        grid + '\n' +
+      const _modeQuery = (_digikippMode === 'offen') ? '?mode=offen' : '';
+      const shareUrl = window._DIGIKIPP_URL + 'kipp_number.html' + _modeQuery;
+      return 'KIPP NUMBERS \u2014 ' + hits + '/24 Treffer\n' +
         (T.cSchaffst || 'Schaffst du das auch?') + '\n' +
         '#KippClub #KippNumbers';
     }
@@ -2803,14 +2793,9 @@
 
       btnTeilen.onclick = () => {
         const shareText = buildShareText(levelName, hits, fails);
-        kippTrack('share_click', { screen_name: 'kipp_number', level: currentLevel, method: 'universal' });
-        const _lvlMap2 = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
-        const _lvlKey2 = _lvlMap2[currentLevel];
-        const _modeQuery2 = (_digikippMode === 'offen') ? '&mode=offen' : '';
-        const _modeQueryOnly2 = (_digikippMode === 'offen') ? '?mode=offen' : '';
-        const shareUrl2 = _lvlKey2
-          ? window._DIGIKIPP_URL + 'kipp_number.html?level=' + _lvlKey2 + _modeQuery2
-          : window._DIGIKIPP_URL + 'kipp_number.html' + _modeQueryOnly2;
+        kippTrack('share_click', { screen_name: 'kipp_number', method: 'universal' });
+        const _modeQuery2 = (_digikippMode === 'offen') ? '?mode=offen' : '';
+        const shareUrl2 = window._DIGIKIPP_URL + 'kipp_number.html' + _modeQuery2;
         universalShare({
           title: 'KIPP NUMBERS',
           text: shareText,
@@ -2830,6 +2815,19 @@
       ui.appendChild(btnNochmal);
       ui.appendChild(btnTeilen);
       if (btnNext) ui.appendChild(btnNext);
+    }
+
+    function saveHighScore(hits) {
+      try {
+        const scores = loadBestScores();
+        scores.push({ hits: hits, ts: Date.now() });
+        scores.sort((a, b) => b.hits - a.hits);
+        const top11 = scores.slice(0, 11);
+        localStorage.setItem('digikipp_bestscores_v2' + _scoreSuffix, JSON.stringify(top11));
+        return top11;
+      } catch(e) {
+        return [];
+      }
     }
 
     function saveBestScore(level, hits, fails, resultSeq) {
@@ -2875,43 +2873,27 @@
     }
 
     function renderBestScores() {
+      const scores = loadBestScores();
+      const bestHits = scores.length ? Math.max(...scores.map(s => s.hits || 0)) : 0;
       const titleEl = document.getElementById('bsTitleText');
       if (titleEl) {
-        const allGreenSeq = [true, true, true, true, true, true];
-        titleEl.innerHTML = 'HIGHSCORE: ' + brainyBuildResultRowHTML(allGreenSeq, 16);
+        titleEl.textContent = 'HIGHSCORE: ' + bestHits;
       }
-      const scores = loadBestScores();
-      
+
       let latestIdx = -1;
       let latestTs = 0;
       for (let i = 0; i < scores.length; i++) {
         if ((scores[i].ts || 0) > latestTs) { latestTs = scores[i].ts; latestIdx = i; }
       }
-      
+
       for (let i = 0; i < 11; i++) {
         const el = document.getElementById('bsRow' + (i + 1));
         if (!el) continue;
         if (i < scores.length) {
           const s = scores[i];
-          const lvName = s.levelName || SCORE_LEVEL_NAMES[s.level || 1] || '?';
-          const hits = s.hits || 0;
-          const fails = s.fails || 0;
-          const total = hits + fails;
-          const pct = total > 0 ? Math.round(hits / total * 100) : 0;
           const ul = (i === latestIdx) ? 'text-decoration:underline;text-underline-offset:3px;' : '';
-          if (s.resultSeq && s.resultSeq.length) {
-            el.innerHTML = '<span style="color:#c8c0b0;font-size:13px;' + ul + '">' + lvName + '</span>' +
-              ' <span style="color:#888;font-size:12px">|</span> ' +
-              brainyBuildResultRowHTML(s.resultSeq, 15);
-          } else {
-            el.innerHTML = '<span style="color:#c8c0b0;font-size:13px;' + ul + '">' + lvName + '</span>' +
-              ' <span style="color:#888;font-size:12px">|</span> ' +
-              '<span style="color:#cedb25;font-size:17px;font-weight:bold;' + ul + '">' + pct + '%</span>' +
-              ' <span style="color:#999;font-size:12px;' + ul + '">(' +
-              '<span style="color:#cedb25">' + hits + '</span> HIT' + (hits !== 1 ? 's' : '') +
-              ' / <span style="color:#e05050">' + fails + '</span> FAIL' + (fails !== 1 ? 's' : '') +
-              ')</span>';
-          }
+          el.innerHTML = '<span style="color:#4fdc5a;font-size:20px;font-weight:bold;' + ul + '">' + (s.hits || 0) + '</span>' +
+            ' <span style="color:#888;font-size:13px;' + ul + '">/ 24</span>';
         } else {
           el.textContent = '';
         }
@@ -7382,94 +7364,42 @@
       if (wrap) return wrap;
       wrap = document.createElement('div');
       wrap.id = 'brainyLivesWrap';
-      wrap.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(calc(-50% + 22px));' +
-        'z-index:25;pointer-events:none;display:flex;gap:10px;';
-      const _livesCount = 6;
-      for (let i = 0; i < _livesCount; i++) {
-        const h = document.createElement('div');
-        h.className = 'brainyLife';
-        h.innerHTML = BRAINY_CUBE_BEIGE();
-        h.style.cssText = 'width:40px;height:40px;' +
-          'filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));' +
-          'transition:filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;';
-        wrap.appendChild(h);
-      }
+      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
+        'z-index:25;pointer-events:none;display:flex;align-items:center;gap:6px;' +
+        'font-family:Arial,sans-serif;font-weight:bold;font-size:22px;';
+      const counterEl = document.createElement('div');
+      counterEl.id = 'brainyClickCounter';
+      counterEl.style.cssText = 'color:#e8dcc4;text-shadow:0 1px 3px rgba(0,0,0,0.8);';
+      counterEl.textContent = '0/24';
+      const hitEl = document.createElement('div');
+      hitEl.id = 'brainyHitCounter';
+      hitEl.style.cssText = 'color:#4fdc5a;text-shadow:0 1px 3px rgba(0,0,0,0.8);';
+      hitEl.textContent = '0';
+      wrap.appendChild(counterEl);
+      wrap.appendChild(hitEl);
       document.getElementById('uiOverlay').appendChild(wrap);
       return wrap;
     }
 
     function brainyResetLives() {
-      // Alten wrap entfernen, damit UI bei Level-Wechsel neu (richtige Anzahl) aufgebaut wird
       const old = document.getElementById('brainyLivesWrap');
       if (old) old.remove();
-      const oldCd = document.getElementById('brainyClicksCountdown');
-      if (oldCd) oldCd.remove();
-
-      const wrap = brainyEnsureLivesUI();
-      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts)
-      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
-        'z-index:25;pointer-events:none;display:flex;gap:3px;align-items:center;';
-      const hearts = wrap.querySelectorAll('.brainyLife');
-      hearts.forEach(h => {
-        h.style.width = '22px';
-        h.style.height = '22px';
-        h.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
-        h.style.opacity = '1';
-        h.style.transform = 'scale(1)';
-        h.innerHTML = BRAINY_CUBE_BEIGE();
-        h.dataset.marked = '';
-      });
-      window._brainyNextCubeIdx = 0;
+      brainyEnsureLivesUI();
       window._brainyClicksUsed = 0;
+      window._brainyHitsTotal = 0;
+      brainyUpdateCounterDisplay();
+    }
+
+    // Aktualisiert die X/24-Anzeige und die gruene Trefferzahl
+    function brainyUpdateCounterDisplay() {
+      const cEl = document.getElementById('brainyClickCounter');
+      const hEl = document.getElementById('brainyHitCounter');
+      if (cEl) cEl.textContent = (window._brainyClicksUsed || 0) + '/24';
+      if (hEl) hEl.textContent = String(window._brainyHitsTotal || 0);
     }
 
     // Faerbt den naechsten noch beigen Wuerfel (von links nach rechts) gruen (Treffer) oder rot (Fehlversuch) ein.
     // Gibt true zurueck wenn danach kein beiger Wuerfel mehr uebrig ist (Spielende).
-    function brainyMarkNextCube(isHit) {
-      const wrap = document.getElementById('brainyLivesWrap');
-      if (!wrap) return false;
-      const cubes = wrap.querySelectorAll('.brainyLife');
-      const idx = window._brainyNextCubeIdx || 0;
-      if (idx >= cubes.length) return true;
-      const h = cubes[idx];
-      h.style.transform = 'scale(1.25)';
-      setTimeout(() => {
-        h.innerHTML = isHit ? BRAINY_CUBE_GREEN() : BRAINY_CUBE_RED();
-        h.dataset.marked = isHit ? 'hit' : 'fail';
-        h.style.transform = 'scale(1)';
-      }, 200);
-      window._brainyResultSeq = window._brainyResultSeq || [];
-      window._brainyResultSeq.push(isHit);
-      window._brainyNextCubeIdx = idx + 1;
-      return window._brainyNextCubeIdx >= cubes.length;
-    }
-
-    // Faerbt genau den Wuerfel fuer targetIdx (0-5) gruen ein — bleibt sonst beige.
-    // Rueckgabe: true wenn danach alle 6 gruen sind.
-    function brainyMarkTargetHit(targetIdx) {
-      const wrap = document.getElementById('brainyLivesWrap');
-      if (!wrap) return false;
-      const cubes = wrap.querySelectorAll('.brainyLife');
-      if (!cubes.length) return false;
-      // Lueckenlos von links nach rechts: den am weitesten links stehenden noch beigen Wuerfel gruen faerben
-      let leftmostBeige = -1;
-      for (let i = 0; i < cubes.length; i++) {
-        if (cubes[i].dataset.marked !== 'hit') { leftmostBeige = i; break; }
-      }
-      if (leftmostBeige === -1) return true; // bereits alle gruen
-      const h = cubes[leftmostBeige];
-      h.dataset.marked = 'hit'; // SOFORT setzen (synchron), damit Mehrfach-Treffer in derselben Runde korrekt weiterzaehlen
-      h.style.transform = 'scale(1.25)';
-      setTimeout(() => {
-        h.innerHTML = BRAINY_CUBE_GREEN();
-        h.style.transform = 'scale(1)';
-      }, 200);
-      window._brainyResultSeq = window._brainyResultSeq || [];
-      window._brainyResultSeq.push(true);
-      const allGreen = Array.from(cubes).every(c => c.dataset.marked === 'hit');
-      return allGreen;
-    }
-
     function brainyUpdateLives() {
       const wrap = brainyEnsureLivesUI();
       const hearts = wrap.querySelectorAll('.brainyLife');
@@ -13048,13 +12978,12 @@
       const _off = _faceOffsets[topFace];
       if (_off === undefined) return;
 
-      // Klick-Budget: max 12 Kippentscheidungen pro Spiel
+      // Klick-Zaehler: max 24 Kippentscheidungen pro Spiel
       window._brainyClicksUsed = (window._brainyClicksUsed || 0) + 1;
-      if (typeof brainyUpdateClicksCountdown === 'function') brainyUpdateClicksCountdown();
 
       // ALLE Treffer sammeln (nicht nur den ersten) — bei Masterbrain koennen
       // theoretisch bis zu 4 sichtbare Zahlen gleichzeitig je ein Ziel treffen.
-      const _hits = []; // [{targetIdx, slotName}, ...]
+      const _hits = [];
       for (let _i = 0; _i < 4; _i++) {
         const _z = deck[_off + _i];
         if (_z <= 0) continue;
@@ -13064,12 +12993,11 @@
           const t = window._sixTargets[ti];
           if (!t.done && t.zahl === _z && t.color === _wandFarbe) {
             _hits.push({ targetIdx: ti, slotName: _slotNames[_i] });
-            break; // dieses Ziel nur einmal zaehlen
+            break;
           }
         }
       }
 
-      let allGreenNow = false;
       if (_hits.length > 0) {
         _hits.forEach(h => {
           window._sixTargets[h.targetIdx].done = true;
@@ -13078,29 +13006,31 @@
             drawGoldenBorder(card);
             animateCardFly(card, currentQuadrant, h.slotName, false);
           }
-          if (typeof brainyMarkTargetHit === 'function') {
-            allGreenNow = brainyMarkTargetHit(h.targetIdx) || allGreenNow;
-          }
         });
+        window._brainyHitsTotal = (window._brainyHitsTotal || 0) + _hits.length;
       }
-      // Bei Nichttreffer: Wuerfel bleibt beige, kein Rot, nur Klick-Budget sinkt.
+      brainyUpdateCounterDisplay();
 
-      const gameOver = allGreenNow || (window._brainyClicksUsed >= 12);
+      const clicksNow = window._brainyClicksUsed;
+      const gameOver = clicksNow >= 24;
 
       if (gameOver) {
         gamePhase = 'ende';
         setTimeout(() => { endSixTargetGame(); }, 900);
+      } else if (clicksNow % 6 === 0) {
+        // Automatischer Level-Aufstieg alle 6 Kippentscheidungen (bei 6, 12, 18)
+        setTimeout(() => { brainyLevelUp(); }, 900);
       }
     }
 
-    // Spielende: Score + TEILEN/NOCHMAL/Next-Level Buttons anzeigen
+    // Spielende: Score + TEILEN/NOCHMAL Buttons anzeigen
     function endSixTargetGame() {
       // Tasten ausblenden
       const nb = document.getElementById('numBtns');
       if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
       if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
 
-      // Oben (BUMBLEBR. + Wuerfelreihe) bleibt unveraendert stehen — keine Aenderung hier.
+      // Oben (X/24 + gruene Trefferzahl) bleibt unveraendert stehen — keine Aenderung hier.
 
       // Noch offene (nicht getroffene) Kippziel-Karten entfernen
       for (let i = 0; i < 6; i++) {
@@ -13109,23 +13039,11 @@
         }
       }
 
-      const hits = (window._sixTargets || []).filter(t => t.done).length;
-      const fails = (window._sixTargets || []).filter(t => !t.done).length;
-      if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails, brainyGetReliableResultSeq());
+      const totalHits = window._brainyHitsTotal || 0;
+      if (typeof saveHighScore === 'function') saveHighScore(totalHits);
 
-      const levelName = (typeof SCORE_LEVEL_NAMES !== 'undefined' && SCORE_LEVEL_NAMES[currentLevel]) || ('LEVEL ' + currentLevel);
-      const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
-      const _nextDisplayBtn = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTERBRAIN', 4: null };
-      const _nextKey = _nextMap[currentLevel];
-      const btn1Action = () => {
-        location.href = 'kipp_number.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
-      };
-      let btn2Label = null, btn2Action = null;
-      if (_nextKey) {
-        btn2Label = _nextDisplayBtn[currentLevel];
-        btn2Action = () => { location.href = 'kipp_number.html?level=' + _nextKey; };
-      }
-      showLevelEndButtons(levelName, hits, fails, btn1Action, btn2Label, btn2Action);
+      const btn1Action = () => { location.href = 'kipp_number.html'; };
+      showLevelEndButtons('', totalHits, 24 - totalHits, btn1Action, null, null);
     }
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
@@ -13196,64 +13114,18 @@
 
     // === NEUER SPIELABLAUF: SPIELEN-Klick zeigt sofort 6 offene Kippziele + Scrollband ===
     // Kein Schauen/Eckblick/Joker/einzelnes verdecktes Ziel mehr.
-    async function startSixTargetGame() {
-      hideLevelScore();
-      brainyActive = true;
-      brainyHits = 0;
-      brainyFails = 0;
-      window._kippHits = 0;
-      kipp21Done = 0;
-      kipp21Fails = 0;
-      kipp21KippCount = 0;
-      window._hitMissSeq = [];
-      kipp21Active = false;
-      bereitsGetroffen.clear();
-      bereitsAusgegeben.clear();
-      // Hit/Miss-Text-Counter entfaellt — ersetzt durch die 6 farbigen Wuerfel-Icons
-      const _hc0 = document.getElementById('hitCounter'); if (_hc0) _hc0.style.display = 'none';
-      const _mc0 = document.getElementById('missCounter'); if (_mc0) _mc0.style.display = 'none';
-      gamePhase = 'spielen';
-
-      brainyResetLives();
-      window._brainyResultSeq = [];
-      window._brainyClicksUsed = 0;
-      // Joker-System entfaellt komplett — ersetzt durch Scrollband
-
-      const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
-      window._brLevelCfg = _cfg;
-      brainyBuildDeck(_cfg);
-      updateFaceSlots();
-      updateAllFaceTextures();
-
-      kipGroup.add(cube);
-      cube.position.set(-offset, offset, 0.109375 + offset);
-      cube.quaternion.set(0, 0, 0, 1);
-      currentQuadrant = 3;
-      topFace = 'f2';
-      kippDirection = 'cw';
-      isAnimating = false;
-
-      // Slots bleiben immer offen — kein Verdecken
-      window._kippSlotsHidden = false;
-
-      // Joker/Eckblick-UI ausblenden
-      const jr = document.getElementById('jokerIconsRow');
-      if (jr) jr.style.display = 'none';
-      const eye = document.getElementById('eyeIcon');
-      if (eye) eye.style.display = 'none';
-
-      // 6 offene Kippziele anzeigen
-      // Regel: Mindestens 1 Ziel zeigt die aktuell sichtbare Deckflaechen-Zahl,
-      // aber NIE kombiniert mit der Wandfarbe, an der diese Zahl gerade in der
-      // Ausgangslage bereits anliegt (sonst waere das Ziel schon erfuellt).
+    // Generiert 6 neue offene Kippziele fuer den aktuellen Zahlenpool (_cfg.maxZahl),
+    // unter Beachtung der Ausschlussregel (sichtbare Zahl+Wandfarbe schon erfuellt)
+    // und der "nicht alle 6 mit Zahl 1"-Regel. Wiederverwendbar bei Spielstart UND nach Level-Aufstieg.
+    function brainyGenerateSixTargets() {
+      const _cfg = window._brLevelCfg || LEVEL_CFG[1];
       window._sixTargets = [];
       recalcCardLayout(6);
 
-      // ALLE sichtbaren Zahl+Wandfarbe-Paare sammeln (nicht nur eine!) — jede davon ist "bereits erfuellt" und verboten
       const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
       const _slotNames = ['S1', 'S2', 'S3', 'S4'];
       const _topOff = _faceOffsets[topFace];
-      const _visiblePairs = []; // [{zahl, forbiddenColor}, ...]
+      const _visiblePairs = [];
       if (_topOff !== undefined) {
         for (let _i = 0; _i < 4; _i++) {
           const _z = deck[_topOff + _i];
@@ -13281,17 +13153,14 @@
         return { zahl, colorObj };
       }
 
-      // Fuer jede sichtbare Zahl garantiert 1 Ziel mit dieser Zahl (aber erlaubter Farbe) erzeugen
       const _guaranteedTargets = _visiblePairs.map(p => pickValidCombo(p.zahl));
       const _combos = [];
       for (let i = 0; i < 6; i++) {
         _combos.push(i < _guaranteedTargets.length ? _guaranteedTargets[i] : pickValidCombo(null));
       }
 
-      // Regel: nicht alle 6 Ziele duerfen mit "Zahl 1" hintereinander abkippbar sein
       const _allAreOne = _combos.every(c => c.zahl === 1);
       if (_allAreOne && _cfg.maxZahl > 1) {
-        // Ein nicht-garantiertes Ziel (falls vorhanden) auf eine andere Zahl umziehen
         const _freeIdx = (_combos.length > _guaranteedTargets.length) ? _guaranteedTargets.length : 0;
         let _newZahl, _tries2 = 0;
         do {
@@ -13313,6 +13182,69 @@
         gameCards[i].mesh.scale.set(1, 1, 1);
         window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
       }
+    }
+
+    // Erweitert den Wuerfel um 3 zusaetzliche Zahlen (1 pro Flaeche) beim automatischen Level-Aufstieg.
+    // Level 1->2: maxZahl 3->6, Level 2->3: 6->9, Level 3->4: 9->12
+    function brainyLevelUp() {
+      if (currentLevel >= 4) return;
+      currentLevel++;
+      const _cfg = LEVEL_CFG[currentLevel];
+      window._brLevelCfg = _cfg;
+      brainyBuildDeck(_cfg);
+      updateFaceSlots();
+      updateAllFaceTextures();
+      brainyGenerateSixTargets();
+    }
+
+    async function startSixTargetGame() {
+      hideLevelScore();
+      brainyActive = true;
+      brainyHits = 0;
+      brainyFails = 0;
+      window._kippHits = 0;
+      kipp21Done = 0;
+      kipp21Fails = 0;
+      kipp21KippCount = 0;
+      window._hitMissSeq = [];
+      kipp21Active = false;
+      bereitsGetroffen.clear();
+      bereitsAusgegeben.clear();
+      // Hit/Miss-Text-Counter entfaellt — ersetzt durch die X/24 + gruene Trefferzahl-Anzeige
+      const _hc0 = document.getElementById('hitCounter'); if (_hc0) _hc0.style.display = 'none';
+      const _mc0 = document.getElementById('missCounter'); if (_mc0) _mc0.style.display = 'none';
+      gamePhase = 'spielen';
+
+      brainyResetLives();
+      window._brainyResultSeq = [];
+      // Joker-System entfaellt komplett — ersetzt durch Scrollband
+
+      currentLevel = 1; // Start immer bei Bumblebrain, automatischer Aufstieg folgt
+      const _cfg = LEVEL_CFG[1];
+      window._brLevelCfg = _cfg;
+      brainyBuildDeck(_cfg);
+      updateFaceSlots();
+      updateAllFaceTextures();
+
+      kipGroup.add(cube);
+      cube.position.set(-offset, offset, 0.109375 + offset);
+      cube.quaternion.set(0, 0, 0, 1);
+      currentQuadrant = 3;
+      topFace = 'f2';
+      kippDirection = 'cw';
+      isAnimating = false;
+
+      // Slots bleiben immer offen — kein Verdecken
+      window._kippSlotsHidden = false;
+
+      // Joker/Eckblick-UI ausblenden
+      const jr = document.getElementById('jokerIconsRow');
+      if (jr) jr.style.display = 'none';
+      const eye = document.getElementById('eyeIcon');
+      if (eye) eye.style.display = 'none';
+
+      // 6 offene Kippziele anzeigen
+      brainyGenerateSixTargets();
 
       // Tasten einblenden: exakt im 45px-Raster positioniert (8 Spalten, 6 Tasten zentriert),
       // vertikal 0,5 Rasterquadrat (22,5px) unter den Kippziel-Karten
