@@ -13300,21 +13300,22 @@
       window._sixTargets = [];
       recalcCardLayout(6);
 
-      // Sichtbare Deckflaechen-Zahl + ihre "verbotene" (bereits erfuellte) Wandfarbe ermitteln
+      // ALLE sichtbaren Zahl+Wandfarbe-Paare sammeln (nicht nur eine!) — jede davon ist "bereits erfuellt" und verboten
       const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
       const _slotNames = ['S1', 'S2', 'S3', 'S4'];
       const _topOff = _faceOffsets[topFace];
-      let _visibleZahl = null;
-      const _forbiddenColorForVisible = new Set();
+      const _visiblePairs = []; // [{zahl, forbiddenColor}, ...]
       if (_topOff !== undefined) {
         for (let _i = 0; _i < 4; _i++) {
           const _z = deck[_topOff + _i];
           if (_z > 0) {
-            _visibleZahl = _z; // Bumblebrain: genau 1 Zahl auf der Flaeche
             const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
-            if (_wandFarbe) _forbiddenColorForVisible.add(_wandFarbe);
+            if (_wandFarbe) _visiblePairs.push({ zahl: _z, forbiddenColor: _wandFarbe });
           }
         }
+      }
+      function isForbiddenCombo(zahl, colorName) {
+        return _visiblePairs.some(p => p.zahl === zahl && p.forbiddenColor === colorName);
       }
 
       const usedCombos = new Set();
@@ -13325,18 +13326,20 @@
           colorObj = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
           key = zahl + '_' + colorObj.name;
           tries++;
-          // verbotene Kombi: diese Zahl + die Wandfarbe, an der sie bereits anliegt
-          const isForbidden = (zahl === _visibleZahl) && _forbiddenColorForVisible.has(colorObj.name);
-          if (!usedCombos.has(key) && !isForbidden) break;
+          if (!usedCombos.has(key) && !isForbiddenCombo(zahl, colorObj.name)) break;
         } while (tries < 50);
         usedCombos.add(key);
         return { zahl, colorObj };
       }
 
-      // Erstes Ziel: garantiert die sichtbare Zahl (mit erlaubter Farbe)
-      const _firstTarget = pickValidCombo(_visibleZahl != null ? _visibleZahl : null);
+      // Fuer jede sichtbare Zahl garantiert 1 Ziel mit dieser Zahl (aber erlaubter Farbe) erzeugen
+      const _guaranteedTargets = _visiblePairs.map(p => pickValidCombo(p.zahl));
+      const _combos = [];
       for (let i = 0; i < 6; i++) {
-        const combo = (i === 0) ? _firstTarget : pickValidCombo(null);
+        _combos.push(i < _guaranteedTargets.length ? _guaranteedTargets[i] : pickValidCombo(null));
+      }
+      for (let i = 0; i < 6; i++) {
+        const combo = _combos[i];
         fillCardWithKombi(i, combo.zahl, combo.colorObj);
         gameCards[i].mesh.visible = true;
         gameCards[i].mesh.material.opacity = 1;
