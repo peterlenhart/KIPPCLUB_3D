@@ -563,6 +563,9 @@
       background-blend-mode: multiply;
       color: #f0e0c0;
     }
+    .numBtnFixed.numBtnBlink {
+      animation: dirBtnBlinkAnim 0.9s ease-in-out infinite;
+    }
 
     .dirBtnFixed {
       width: 45px;
@@ -12954,11 +12957,20 @@
       const ccwBtn = document.getElementById('ccwDirBtn');
       let selectedNum = null;
 
+      function startNumPulse() {
+        btns.forEach(b => b.classList.add('numBtnBlink'));
+      }
+      function stopNumPulse() {
+        btns.forEach(b => b.classList.remove('numBtnBlink'));
+      }
+      window._startNumPulse = startNumPulse;
+
       function clearSelection() {
         selectedNum = null;
         btns.forEach(b => b.classList.remove('numBtnSelected'));
         if (cwBtn) { cwBtn.style.display = 'none'; cwBtn.classList.remove('dirBtnBlink'); }
         if (ccwBtn) { ccwBtn.style.display = 'none'; ccwBtn.classList.remove('dirBtnBlink'); }
+        startNumPulse();
       }
       window._clearNumSelection = clearSelection;
 
@@ -12967,6 +12979,7 @@
         if (gamePhase !== 'spielen') return;
         if (window._numBandBusy) return;
         selectedNum = n;
+        stopNumPulse();
         btns.forEach(b => b.classList.remove('numBtnSelected'));
         btn.classList.add('numBtnSelected');
         if (cwBtn) { cwBtn.style.display = 'block'; cwBtn.classList.add('dirBtnBlink'); }
