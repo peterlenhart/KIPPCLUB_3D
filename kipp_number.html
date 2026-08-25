@@ -12979,14 +12979,18 @@
         const nb = document.getElementById('numBtns');
         if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
 
-        // Permanente Kopf-Würfelreihe ausblenden — Ergebnis kommt nur noch in der Scoretafel
-        const livesWrap = document.getElementById('brainyLivesWrap');
-        if (livesWrap) livesWrap.style.display = 'none';
+        // Oben (BUMBLEBR. + Wuerfelreihe) bleibt unveraendert stehen — keine Aenderung hier.
+
+        // Noch offene (nicht getroffene) Kippziel-Karten entfernen
+        for (let i = 0; i < 6; i++) {
+          if (window._sixTargets[i] && !window._sixTargets[i].done && gameCards[i] && gameCards[i].mesh) {
+            gameCards[i].mesh.visible = false;
+          }
+        }
 
         const hits = (window._brainyResultSeq || []).filter(x => x).length;
         const fails = (window._brainyResultSeq || []).filter(x => !x).length;
         if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails, window._brainyResultSeq || []);
-        if (typeof showLevelScore === 'function') showLevelScore(hits, fails);
 
         const levelName = (typeof SCORE_LEVEL_NAMES !== 'undefined' && SCORE_LEVEL_NAMES[currentLevel]) || ('LEVEL ' + currentLevel);
         const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
