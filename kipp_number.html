@@ -4857,12 +4857,14 @@
     }
 
     function cardScreenX(ci) {
-      if (gameCards && gameCards[ci] && gameCards[ci].mesh) {
-        const pos = gameCards[ci].mesh.position.clone();
-        pos.project(camera);
-        return Math.round((pos.x * 0.5 + 0.5) * 360);
-      }
-      return 180; // Fallback
+      // Direkte Pixel-Berechnung nach derselben Formel wie recalcCardLayout(),
+      // unabhaengig von 3D-Kamera-Projektion (robuster, keine Verschiebung durch Fly-Animation)
+      const n = 6;
+      const worldToPx = 360 / 1.25; // 1.25 Weltbreite = 360px Bildschirmbreite
+      const startXWorld = cardStartX;
+      const stepWorld = cardWidth + cardGap;
+      const xWorld = startXWorld + ci * stepWorld;
+      return Math.round(180 + xWorld * worldToPx); // 180 = Bildschirmmitte (360/2)
     }
     
     // --- Kniff-Icon-Position (liest aus DOM) ---
@@ -7387,8 +7389,8 @@
       cd.id = 'brainyClicksCountdown';
       cd.style.cssText = 'position:absolute;top:36px;left:50%;transform:translateX(calc(-50% + 24px));' +
         'z-index:25;pointer-events:none;text-align:center;width:180px;' +
-        'font-family:Arial,sans-serif;font-size:13px;font-weight:bold;color:#e8dcc4;' +
-        'text-shadow:0 1px 2px rgba(0,0,0,0.7);letter-spacing:1px;';
+        'font-family:Arial,sans-serif;font-size:24px;font-weight:bold;color:#e8dcc4;' +
+        'text-shadow:0 1px 3px rgba(0,0,0,0.8);letter-spacing:1px;';
       cd.textContent = '12';
       document.getElementById('uiOverlay').appendChild(cd);
       window._brainyClicksUsed = 0;
