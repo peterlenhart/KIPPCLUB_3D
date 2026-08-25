@@ -506,13 +506,6 @@
 
 
     /* BUTTONS 1-6 */
-    #numBtns {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: auto;
-      z-index: 20;
-    }
     .numBtn {
       width: 42px;
       height: 38px;
@@ -542,27 +535,27 @@
 
     /* Feste quadratische 1-6 Tasten (ersetzen das alte Scrollband) */
     .numBtnFixed {
-      width: 42px;
-      height: 42px;
+      width: 45px;
+      height: 45px;
       flex-shrink: 0;
       pointer-events: auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      font: bold 20px Arial;
-      color: #2a1810;
-      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
-      border: 2px solid #8a7a66;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      font: bold 22px Arial;
+      color: #3a2410;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.3);
+      background-image: url('zielpadleer.webp');
+      background-size: cover;
+      background-repeat: no-repeat;
+      border: none;
       cursor: pointer;
-      transition: all 0.12s ease;
+      transition: transform 0.12s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     .numBtnFixed:active {
       transform: scale(0.90);
-      background: linear-gradient(180deg, #3a2a1a 0%, #2a1810 100%);
       color: #e8dcc8;
     }
 
@@ -13245,16 +13238,16 @@
         window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
       }
 
-      // Tasten einblenden: vertikal an der alten Scrollband-Position (527px),
-      // horizontal jede Taste einzeln exakt auf der X-Position ihres Kippziels
+      // Tasten einblenden: exakt im 45px-Raster positioniert (8 Spalten, 6 Tasten zentriert),
+      // vertikal 0,5 Rasterquadrat (22,5px) unter den Kippziel-Karten
       const nb = document.getElementById('numBtns');
       if (nb) {
         nb.classList.remove('hidden');
-        nb.style.display = 'block';
+        nb.style.setProperty('display', 'block', 'important');
         const btnEls = nb.querySelectorAll('.numBtnFixed');
+        const fixedLeft = [45, 90, 135, 180, 225, 270];
         btnEls.forEach((btn, i) => {
-          const cx = cardScreenX(i);
-          btn.style.left = (cx - 21) + 'px'; // 21 = halbe Buttonbreite (42px)
+          btn.style.left = fixedLeft[i] + 'px';
           btn.style.top = '527px';
         });
       }
