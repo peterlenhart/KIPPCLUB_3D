@@ -544,6 +544,7 @@
     .numBtnFixed {
       width: 42px;
       height: 42px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1142,7 +1143,7 @@
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     
     <!-- OFFEN-Modus: Scrollband 1-11 (statt Joker) -->
-    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; gap:8px;">
+    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; flex-direction:row; flex-wrap:nowrap; gap:8px; width:308px; justify-content:center;">
       <div class="numBtnFixed" data-num="1">1</div>
       <div class="numBtnFixed" data-num="2">2</div>
       <div class="numBtnFixed" data-num="3">3</div>
@@ -13232,9 +13233,14 @@
         window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
       }
 
-      // Scrollband einblenden
+      // Tasten einblenden, waagrecht in gleicher Flucht wie die Kippziel-Karten
       const nb = document.getElementById('numBtns');
-      if (nb) { nb.classList.remove('hidden'); nb.style.display = ''; }
+      if (nb) {
+        nb.classList.remove('hidden');
+        nb.style.display = 'flex';
+        const cardTop = cardScreenY(0);
+        nb.style.top = cardTop + 'px';
+      }
 
       setButtonsDisabled(false);
 
@@ -13267,12 +13273,8 @@
     }, { once: false });
 
 
-    // Numpad (1-6 Tasten) positionieren: feste Position
-    (function() {
-      const el = document.getElementById('numBtns');
-      if (!el) return;
-      el.style.top = '527px';
-    })();
+    // Numpad (1-6 Tasten) Startposition: wird in startSixTargetGame() dynamisch
+    // auf dieselbe Bildschirmhoehe wie die Kippziel-Karten gesetzt.
 
     // DEBUG: If this text appears, the script reached the end without crash
 
