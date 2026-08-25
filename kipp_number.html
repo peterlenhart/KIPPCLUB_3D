@@ -7384,6 +7384,27 @@
       return window._brainyNextCubeIdx >= cubes.length;
     }
 
+    // Faerbt genau den Wuerfel fuer targetIdx (0-5) gruen ein — bleibt sonst beige.
+    // Rueckgabe: true wenn danach alle 6 gruen sind.
+    function brainyMarkTargetHit(targetIdx) {
+      const wrap = document.getElementById('brainyLivesWrap');
+      if (!wrap) return false;
+      const cubes = wrap.querySelectorAll('.brainyLife');
+      if (targetIdx < 0 || targetIdx >= cubes.length) return false;
+      const h = cubes[targetIdx];
+      if (h.dataset.marked === 'hit') return Array.from(cubes).every(c => c.dataset.marked === 'hit');
+      h.style.transform = 'scale(1.25)';
+      setTimeout(() => {
+        h.innerHTML = BRAINY_CUBE_GREEN();
+        h.dataset.marked = 'hit';
+        h.style.transform = 'scale(1)';
+      }, 200);
+      window._brainyResultSeq = window._brainyResultSeq || [];
+      window._brainyResultSeq.push(true);
+      const allGreen = Array.from(cubes).every((c, i) => i === targetIdx || c.dataset.marked === 'hit');
+      return allGreen;
+    }
+
     function brainyUpdateLives() {
       const wrap = brainyEnsureLivesUI();
       const hearts = wrap.querySelectorAll('.brainyLife');
@@ -12934,6 +12955,9 @@
         const _off = _faceOffsets[topFace];
         if (_off === undefined) return;
 
+        // Klick-Budget: max 12 Kippentscheidungen pro Spiel
+        window._brainyClicksUsed = (window._brainyClicksUsed || 0) + 1;
+
         // ALLE Treffer sammeln (nicht nur den ersten) — bei Masterbrain koennen
         // theoretisch bis zu 4 sichtbare Zahlen gleichzeitig je ein Ziel treffen.
         const _hits = []; // [{targetIdx, slotName}, ...]
@@ -12951,7 +12975,7 @@
           }
         }
 
-        let gameOver = false;
+        let allGreenNow = false;
         if (_hits.length > 0) {
           _hits.forEach(h => {
             window._sixTargets[h.targetIdx].done = true;
@@ -12960,20 +12984,14 @@
               drawGoldenBorder(card);
               animateCardFly(card, currentQuadrant, h.slotName, false);
             }
-          });
-          // Fuer jeden Treffer einen eigenen gruenen Wuerfel im Ergebnis einfaerben
-          if (typeof brainyMarkNextCube === 'function') {
-            for (let k = 0; k < _hits.length; k++) {
-              gameOver = brainyMarkNextCube(true) || gameOver;
+            if (typeof brainyMarkTargetHit === 'function') {
+              allGreenNow = brainyMarkTargetHit(h.targetIdx) || allGreenNow;
             }
-          }
-          const allDone = window._sixTargets.every(t => t.done);
-          if (allDone) gameOver = true;
-        } else {
-          if (typeof brainyMarkNextCube === 'function') {
-            gameOver = brainyMarkNextCube(false) || gameOver;
-          }
+          });
         }
+        // Bei Nichttreffer: Wuerfel bleibt beige, kein Rot, nur Klick-Budget sinkt.
+
+        const gameOver = allGreenNow || (window._brainyClicksUsed >= 12);
 
         if (gameOver) {
           gamePhase = 'ende';
@@ -13273,6 +13291,7 @@
 
       brainyResetLives();
       window._brainyResultSeq = [];
+      window._brainyClicksUsed = 0;
       // Joker-System entfaellt komplett — ersetzt durch Scrollband
 
       const _cfg = LEVEL_CFG[currentLevel] || LEVEL_CFG[1];
