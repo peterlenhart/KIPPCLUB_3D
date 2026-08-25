@@ -2648,12 +2648,14 @@
           return;
         }
         
-        // SPIELEN / TUTORIAL Buttons einblenden
+        // Kein Startbildschirm mehr — direkt ins Spiel
         sct.style.display = 'none';
-        document.getElementById('btnSpielen').disabled = false;
-        document.getElementById('btnSpielen').style.opacity = '1';
-        document.getElementById('btnDemo').disabled = false;
-        document.getElementById('btnDemo').style.opacity = '1';
+        document.getElementById('startOverlay').style.display = 'none';
+        unlockAndPlayBgMusic();
+        currentLevel = 1;
+        window._brainyTutorialMode = false;
+        gamePhase = 'spielen';
+        setTimeout(() => { startSixTargetGame(); }, 100);
       }
     }
 
@@ -13120,6 +13122,18 @@
     function brainyGenerateSixTargets() {
       const _cfg = window._brLevelCfg || LEVEL_CFG[1];
       window._sixTargets = [];
+
+      // ALLE 6 Karten komplett zuruecksetzen (auch nicht getroffene alte Ziele werden geloescht)
+      for (let i = 0; i < 6; i++) {
+        if (gameCards[i] && gameCards[i].mesh) {
+          gameCards[i].mesh.visible = false;
+          gameCards[i].mesh.rotation.z = 0;
+          gameCards[i].mesh.scale.set(1, 1, 1);
+          gameCards[i].mesh.material.opacity = 1;
+          gameCards[i].mesh.material.transparent = false;
+        }
+      }
+
       recalcCardLayout(6);
 
       const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
@@ -13153,25 +13167,57 @@
         return { zahl, colorObj };
       }
 
-      const _guaranteedTargets = _visiblePairs.map(p => pickValidCombo(p.zahl));
-      const _combos = [];
-      for (let i = 0; i < 6; i++) {
-        _combos.push(i < _guaranteedTargets.length ? _guaranteedTargets[i] : pickValidCombo(null));
+      // Hilfsfunktion: alle Zahlen einer bestimmten Flaeche auslesen
+      function zahlenVonFace(faceKey) {
+        const off = _faceOffsets[faceKey];
+        const out = [];
+        if (off === undefined) return out;
+        for (let i = 0; i < 4; i++) {
+          const z = deck[off + i];
+          if (z > 0) out.push(z);
+        }
+        return out;
       }
 
-      const _allAreOne = _combos.every(c => c.zahl === 1);
-      if (_allAreOne && _cfg.maxZahl > 1) {
-        const _freeIdx = (_combos.length > _guaranteedTargets.length) ? _guaranteedTargets.length : 0;
-        let _newZahl, _tries2 = 0;
-        do {
-          _newZahl = 1 + Math.floor(Math.random() * _cfg.maxZahl);
-          _tries2++;
-        } while (_newZahl === 1 && _tries2 < 20);
-        if (_newZahl !== 1) {
-          usedCombos.delete(_combos[_freeIdx].zahl + '_' + _combos[_freeIdx].colorObj.name);
-          _combos[_freeIdx] = pickValidCombo(_newZahl);
+      function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+      }
+
+      // === Levelabhaengige Zahlenverteilung fuer die 6 Kippziele ===
+      let _zahlenPlan = [];
+      if (currentLevel === 1) {
+        // BUMBLEBRAIN (Zahlen 1-3): jede Zahl doppelt = 6 Ziele
+        for (let z = 1; z <= 3; z++) { _zahlenPlan.push(z); _zahlenPlan.push(z); }
+        _zahlenPlan = shuffle(_zahlenPlan);
+      } else if (currentLevel === 2) {
+        // BRAINY (Zahlen 1-6): jede Zahl genau einmal = 6 Ziele
+        for (let z = 1; z <= 6; z++) _zahlenPlan.push(z);
+        _zahlenPlan = shuffle(_zahlenPlan);
+      } else {
+        // BRAIN / MASTERBRAIN: 1 Zahl von der Topface, 5 von den anderen beiden Faces
+        const allFaces = ['f0', 'f1', 'f2'];
+        const otherFaces = allFaces.filter(f => f !== topFace);
+        const topZahlen = shuffle(zahlenVonFace(topFace));
+        let otherZahlen = [];
+        otherFaces.forEach(f => { otherZahlen = otherZahlen.concat(zahlenVonFace(f)); });
+        otherZahlen = shuffle(otherZahlen);
+
+        if (topZahlen.length > 0) _zahlenPlan.push(topZahlen[0]);
+        for (let i = 0; i < otherZahlen.length && _zahlenPlan.length < 6; i++) {
+          _zahlenPlan.push(otherZahlen[i]);
+        }
+        // Falls noch nicht 6 zusammen: mit zufaelligen Zahlen aus dem Pool auffuellen
+        while (_zahlenPlan.length < 6) {
+          _zahlenPlan.push(1 + Math.floor(Math.random() * _cfg.maxZahl));
         }
       }
+
+      const _combos = _zahlenPlan.slice(0, 6).map(z => pickValidCombo(z));
 
       for (let i = 0; i < 6; i++) {
         const combo = _combos[i];
@@ -13180,6 +13226,7 @@
         gameCards[i].mesh.material.opacity = 1;
         gameCards[i].mesh.material.transparent = false;
         gameCards[i].mesh.scale.set(1, 1, 1);
+        gameCards[i].mesh.rotation.z = 0; // Rotation von evtl. vorherigem Flug zuruecksetzen
         window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
       }
     }

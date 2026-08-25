@@ -2071,10 +2071,7 @@ Merken, Logik, Kopfzerbrechen.">
     let selectedSkin = 'numbers';
     document.getElementById("clickColor").onclick = () => {
       kippTrack('game_open', { game: 'kipp_number', screen_name: 'hauptmenue' });
-      selectedSkin = 'numbers';
-      updateLevelLinks();
-      updateLevelBests();
-      document.getElementById("levelOverlay").classList.add("show");
+      location.href = 'kipp_number.html';
     };
     document.getElementById("clickCard").onclick = () => {
       kippTrack('game_open', { game: 'kids_kipp', screen_name: 'hauptmenue' });
@@ -2148,10 +2145,7 @@ Merken, Logik, Kopfzerbrechen.">
     document.querySelectorAll('[data-theme-button="numbers"]').forEach(el => {
       el.onclick = (e) => {
         e.stopPropagation();
-        selectedSkin = 'numbers';
-        updateLevelLinks();
-        updateLevelBests();
-        document.getElementById("levelOverlay").classList.add("show");
+        location.href = 'kipp_number.html';
       };
     });
     document.querySelectorAll('[data-theme-button="icons"]').forEach(el => {
@@ -2221,10 +2215,12 @@ Merken, Logik, Kopfzerbrechen.">
     }
     updateLevelBests();
 
-    // ?theme= Parameter: automatisch Level-Overlay öffnen
+    // ?theme= Parameter: automatisch Level-Overlay öffnen (nur icons), numbers leitet direkt weiter
     const _themeParam = new URLSearchParams(window.location.search).get('theme');
-    if (_themeParam === 'numbers' || _themeParam === 'icons') {
-      selectedSkin = _themeParam === 'icons' ? 'icons' : 'numbers';
+    if (_themeParam === 'numbers') {
+      location.href = 'kipp_number.html';
+    } else if (_themeParam === 'icons') {
+      selectedSkin = 'icons';
       updateLevelLinks();
       updateLevelBests();
       document.getElementById("levelOverlay").classList.add("show");
