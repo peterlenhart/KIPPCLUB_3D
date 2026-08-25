@@ -7432,15 +7432,15 @@
       }
       if (leftmostBeige === -1) return true; // bereits alle gruen
       const h = cubes[leftmostBeige];
+      h.dataset.marked = 'hit'; // SOFORT setzen (synchron), damit Mehrfach-Treffer in derselben Runde korrekt weiterzaehlen
       h.style.transform = 'scale(1.25)';
       setTimeout(() => {
         h.innerHTML = BRAINY_CUBE_GREEN();
-        h.dataset.marked = 'hit';
         h.style.transform = 'scale(1)';
       }, 200);
       window._brainyResultSeq = window._brainyResultSeq || [];
       window._brainyResultSeq.push(true);
-      const allGreen = Array.from(cubes).every((c, i) => i === leftmostBeige || c.dataset.marked === 'hit');
+      const allGreen = Array.from(cubes).every(c => c.dataset.marked === 'hit');
       return allGreen;
     }
 
