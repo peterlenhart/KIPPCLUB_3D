@@ -558,6 +558,33 @@
       transform: scale(0.90);
       color: #e8dcc8;
     }
+    .numBtnFixed.numBtnSelected {
+      background-color: rgba(60, 40, 20, 0.65);
+      background-blend-mode: multiply;
+      color: #f0e0c0;
+    }
+
+    .dirBtnFixed {
+      width: 45px;
+      height: 45px;
+      background-size: cover;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      opacity: 0.35;
+      transition: opacity 0.15s ease;
+    }
+    .dirBtnFixed.dirBtnBlink {
+      animation: dirBtnBlinkAnim 0.9s ease-in-out infinite;
+    }
+    @keyframes dirBtnBlinkAnim {
+      0%, 100% { opacity: 0.35; }
+      50%      { opacity: 1; }
+    }
+    .dirBtnFixed:active {
+      transform: scale(0.90);
+    }
 
     /* OFFEN-Modus Scrollband (numBtn) */
     .numBtn {
@@ -1144,6 +1171,8 @@
       <div class="numBtnFixed" data-num="4" style="position:absolute;">4</div>
       <div class="numBtnFixed" data-num="5" style="position:absolute;">5</div>
       <div class="numBtnFixed" data-num="6" style="position:absolute;">6</div>
+      <div id="ccwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('ccw.webp');"></div>
+      <div id="cwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('cw.webp');"></div>
     </div>
     
     <!-- KIPP-TIPP Overlay -->
@@ -7368,8 +7397,8 @@
       if (oldCd) oldCd.remove();
 
       const wrap = brainyEnsureLivesUI();
-      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts), etwas nördlicher
-      wrap.style.cssText = 'position:absolute;top:10px;left:50%;transform:translateX(calc(-50% + 24px));' +
+      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts)
+      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
         'z-index:25;pointer-events:none;display:flex;gap:3px;align-items:center;';
       const hearts = wrap.querySelectorAll('.brainyLife');
       hearts.forEach(h => {
@@ -7382,25 +7411,7 @@
         h.dataset.marked = '';
       });
       window._brainyNextCubeIdx = 0;
-
-      // Countdown-Zaehler (12 -> 0), zentriert unter der Wuerfelreihe
-      const cd = document.createElement('div');
-      cd.id = 'brainyClicksCountdown';
-      cd.style.cssText = 'position:absolute;top:36px;left:50%;transform:translateX(calc(-50% + 24px));' +
-        'z-index:25;pointer-events:none;text-align:center;width:180px;' +
-        'font-family:Arial,sans-serif;font-size:24px;font-weight:bold;color:#e8dcc4;' +
-        'text-shadow:0 1px 3px rgba(0,0,0,0.8);letter-spacing:1px;';
-      cd.textContent = '12';
-      document.getElementById('uiOverlay').appendChild(cd);
       window._brainyClicksUsed = 0;
-    }
-
-    // Aktualisiert den Countdown-Text (12 - verbrauchte Klicks)
-    function brainyUpdateClicksCountdown() {
-      const cd = document.getElementById('brainyClicksCountdown');
-      if (!cd) return;
-      const remaining = Math.max(0, 12 - (window._brainyClicksUsed || 0));
-      cd.textContent = String(remaining);
     }
 
     // Faerbt den naechsten noch beigen Wuerfel (von links nach rechts) gruen (Treffer) oder rot (Fehlversuch) ein.
@@ -12935,18 +12946,40 @@
       pulseRichtungButtons(false);
     }
 
-    // === FESTE 1-6 TASTEN — waehlt Kippanzahl UND loest sofort CW-Kipp aus ===
+    // === FESTE 1-6 TASTEN + CW/CCW — 2-Schritt: Zahl waehlen, dann Richtung waehlen ===
     (function() {
       const btns = document.querySelectorAll('.numBtnFixed');
       if (!btns.length) return;
+      const cwBtn = document.getElementById('cwDirBtn');
+      const ccwBtn = document.getElementById('ccwDirBtn');
+      let selectedNum = null;
 
-      // Loest den Kipp mit der geklickten Zahl aus (immer im Uhrzeigersinn)
-      async function fireKipp(n) {
+      function clearSelection() {
+        selectedNum = null;
+        btns.forEach(b => b.classList.remove('numBtnSelected'));
+        if (cwBtn) { cwBtn.style.display = 'none'; cwBtn.classList.remove('dirBtnBlink'); }
+        if (ccwBtn) { ccwBtn.style.display = 'none'; ccwBtn.classList.remove('dirBtnBlink'); }
+      }
+      window._clearNumSelection = clearSelection;
+
+      function selectNumber(n, btn) {
         if (window._brainyTutorialMode) return;
         if (gamePhase !== 'spielen') return;
         if (window._numBandBusy) return;
+        selectedNum = n;
+        btns.forEach(b => b.classList.remove('numBtnSelected'));
+        btn.classList.add('numBtnSelected');
+        if (cwBtn) { cwBtn.style.display = 'block'; cwBtn.classList.add('dirBtnBlink'); }
+        if (ccwBtn) { ccwBtn.style.display = 'block'; ccwBtn.classList.add('dirBtnBlink'); }
+      }
+
+      async function fireKipp(direction) {
+        if (selectedNum === null) return;
+        if (window._numBandBusy) return;
         window._numBandBusy = true;
-        kippDirection = 'cw';
+        const n = selectedNum;
+        kippDirection = direction;
+        clearSelection();
         try {
           await runKippSequence(n);
         } finally {
@@ -12964,14 +12997,23 @@
           e.preventDefault();
           setTimeout(() => { window._numBtnTouchActive = false; }, 100);
           const n = parseInt(btn.dataset.num, 10);
-          fireKipp(n);
+          selectNumber(n, btn);
         }, { passive: false });
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const n = parseInt(btn.dataset.num, 10);
-          fireKipp(n);
+          selectNumber(n, btn);
         });
       });
+
+      if (cwBtn) {
+        cwBtn.addEventListener('touchend', (e) => { e.stopPropagation(); e.preventDefault(); fireKipp('cw'); }, { passive: false });
+        cwBtn.addEventListener('click', (e) => { e.stopPropagation(); fireKipp('cw'); });
+      }
+      if (ccwBtn) {
+        ccwBtn.addEventListener('touchend', (e) => { e.stopPropagation(); e.preventDefault(); fireKipp('ccw'); }, { passive: false });
+        ccwBtn.addEventListener('click', (e) => { e.stopPropagation(); fireKipp('ccw'); });
+      }
     })();
 
     // Prueft nach jedem Kipp, ob die sichtbare Zahl+Wandfarbe-Kombination
@@ -13034,6 +13076,7 @@
       // Tasten ausblenden
       const nb = document.getElementById('numBtns');
       if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
+      if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
 
       // Oben (BUMBLEBR. + Wuerfelreihe) bleibt unveraendert stehen — keine Aenderung hier.
 
@@ -13261,6 +13304,12 @@
           btn.style.left = fixedLeft[i] + 'px';
           btn.style.top = '527px';
         });
+        // CW links (Rasterspalte 0), CCW rechts (Rasterspalte 7) von der Zahlenreihe
+        const cwBtn = document.getElementById('cwDirBtn');
+        const ccwBtn = document.getElementById('ccwDirBtn');
+        if (cwBtn) { cwBtn.style.left = '0px'; cwBtn.style.top = '527px'; }
+        if (ccwBtn) { ccwBtn.style.left = '315px'; ccwBtn.style.top = '527px'; }
+        if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
       }
 
       setButtonsDisabled(false);
