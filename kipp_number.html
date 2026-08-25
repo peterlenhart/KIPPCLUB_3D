@@ -1502,7 +1502,7 @@
 
     // Isometrische Ansicht: zeigt gleichzeitig +Y (oben, f2), +Z (Sued, f0), -X (West, f1)
     const cubeCenterX = 0, cubeCenterY = 0.234375, cubeCenterZ = 0.109375;
-    const isoDistance = 2.4;
+    const isoDistance = 3.2;
     const isoHorizAngle = -45 * Math.PI / 180; // negativ -> zeigt -X Flaeche
     const isoVertAngle = 35 * Math.PI / 180;
 
@@ -1558,6 +1558,10 @@
     const fillLightSouth = new THREE.DirectionalLight(0xffffff, 0.28);
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
+
+    const fillLightWest = new THREE.DirectionalLight(0xffffff, 0.45);
+    fillLightWest.position.set(-3, 2, 1);
+    scene.add(fillLightWest);
 
     // =========================
     // TISCH (π1 Ebene)
@@ -2020,7 +2024,7 @@
       map: wallTexture,
       color: 0x666666,
       transparent: true,
-      opacity: 0.3
+      opacity: 0
     });
     
     const wall = new THREE.Mesh(wallGeometry, wallMaterialTransparent);
