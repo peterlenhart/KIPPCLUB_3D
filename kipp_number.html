@@ -540,6 +540,30 @@
       transform: scale(0.92);
     }
 
+    /* Feste quadratische 1-6 Tasten (ersetzen das alte Scrollband) */
+    .numBtnFixed {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: bold 20px Arial;
+      color: #2a1810;
+      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
+      border: 2px solid #8a7a66;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: all 0.12s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .numBtnFixed:active {
+      transform: scale(0.90);
+      background: linear-gradient(180deg, #3a2a1a 0%, #2a1810 100%);
+      color: #e8dcc8;
+    }
+
     /* OFFEN-Modus Scrollband (numBtn) */
     .numBtn {
       min-width: 56px;
@@ -1118,31 +1142,13 @@
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     
     <!-- OFFEN-Modus: Scrollband 1-11 (statt Joker) -->
-    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20;">
-      <div id="scrollBandWrap" style="width:306px; overflow:hidden; border-radius:8px; border:2px solid #8a7a66; background:linear-gradient(180deg,#e8e0d4 0%,#c8b8a4 100%); position:relative;">
-        <div id="scrollBandStrip" style="display:flex; transition:transform 0.25s ease; position:relative; z-index:1;">
-          <div class="numBtn" data-num="1">1</div>
-          <div class="numBtn" data-num="2">2</div>
-          <div class="numBtn" data-num="3">3</div>
-          <div class="numBtn" data-num="4">4</div>
-          <div class="numBtn" data-num="5">5</div>
-          <div class="numBtn" data-num="6">6</div>
-          <div class="numBtn" data-num="7">7</div>
-          <div class="numBtn" data-num="8">8</div>
-          <div class="numBtn" data-num="9">9</div>
-          <div class="numBtn" data-num="10">10</div>
-          <div class="numBtn" data-num="11">11</div>
-        </div>
-        <div id="scrollBandCenter" style="
-          position:absolute; top:0; bottom:0;
-          left:50%; transform:translateX(-50%);
-          width:56px;
-          border-left:2px solid rgba(90,60,20,0.55);
-          border-right:2px solid rgba(90,60,20,0.55);
-          pointer-events:none; z-index:3;
-          box-shadow: inset 0 0 8px rgba(90,60,20,0.12);
-        "></div>
-      </div>
+    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; gap:8px;">
+      <div class="numBtnFixed" data-num="1">1</div>
+      <div class="numBtnFixed" data-num="2">2</div>
+      <div class="numBtnFixed" data-num="3">3</div>
+      <div class="numBtnFixed" data-num="4">4</div>
+      <div class="numBtnFixed" data-num="5">5</div>
+      <div class="numBtnFixed" data-num="6">6</div>
     </div>
     
     <!-- KIPP-TIPP Overlay -->
@@ -7346,9 +7352,12 @@
       // Alten wrap entfernen, damit UI bei Level-Wechsel neu (richtige Anzahl) aufgebaut wird
       const old = document.getElementById('brainyLivesWrap');
       if (old) old.remove();
+      const oldCd = document.getElementById('brainyClicksCountdown');
+      if (oldCd) oldCd.remove();
+
       const wrap = brainyEnsureLivesUI();
-      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts)
-      wrap.style.cssText = 'position:absolute;top:18px;left:50%;transform:translateX(calc(-50% + 24px));' +
+      // Lebenswürfel oben mittig zwischen Sound-Button (links) und Pokal (rechts), etwas nördlicher
+      wrap.style.cssText = 'position:absolute;top:10px;left:50%;transform:translateX(calc(-50% + 24px));' +
         'z-index:25;pointer-events:none;display:flex;gap:3px;align-items:center;';
       const hearts = wrap.querySelectorAll('.brainyLife');
       hearts.forEach(h => {
@@ -7361,6 +7370,25 @@
         h.dataset.marked = '';
       });
       window._brainyNextCubeIdx = 0;
+
+      // Countdown-Zaehler (12 -> 0), zentriert unter der Wuerfelreihe
+      const cd = document.createElement('div');
+      cd.id = 'brainyClicksCountdown';
+      cd.style.cssText = 'position:absolute;top:36px;left:50%;transform:translateX(calc(-50% + 24px));' +
+        'z-index:25;pointer-events:none;text-align:center;width:180px;' +
+        'font-family:Arial,sans-serif;font-size:13px;font-weight:bold;color:#e8dcc4;' +
+        'text-shadow:0 1px 2px rgba(0,0,0,0.7);letter-spacing:1px;';
+      cd.textContent = '12';
+      document.getElementById('uiOverlay').appendChild(cd);
+      window._brainyClicksUsed = 0;
+    }
+
+    // Aktualisiert den Countdown-Text (12 - verbrauchte Klicks)
+    function brainyUpdateClicksCountdown() {
+      const cd = document.getElementById('brainyClicksCountdown');
+      if (!cd) return;
+      const remaining = Math.max(0, 12 - (window._brainyClicksUsed || 0));
+      cd.textContent = String(remaining);
     }
 
     // Faerbt den naechsten noch beigen Wuerfel (von links nach rechts) gruen (Treffer) oder rot (Fehlversuch) ein.
@@ -12890,55 +12918,21 @@
       pulseRichtungButtons(false);
     }
 
-    // === SCROLLBAND (1-11) — waehlt Kippanzahl UND loest sofort CW-Kipp aus ===
+    // === FESTE 1-6 TASTEN — waehlt Kippanzahl UND loest sofort CW-Kipp aus ===
     (function() {
-      const strip = document.getElementById('scrollBandStrip');
-      const wrap = document.getElementById('scrollBandWrap');
-      if (!strip || !wrap) return;
+      const btns = document.querySelectorAll('.numBtnFixed');
+      if (!btns.length) return;
 
-      const CELL_W = 56;
-      const TOTAL = 11;
-      let bandIdx = 5; // 0-basiert, 5 = Zahl 6 (Mittelstellung)
-      let touchStartX = 0;
-      let touchStartIdx = 0;
-
-      function updateBandPos(animate) {
-        const wrapW = wrap.offsetWidth || 306;
-        const offset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
-        strip.style.transition = animate ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
-        strip.style.transform = 'translateX(' + offset + 'px)';
-        updateBandStyle();
-      }
-
-      function updateBandStyle() {
-        const btns = strip.querySelectorAll('.numBtn');
-        btns.forEach((b, i) => {
-          const dist = Math.abs(i - bandIdx);
-          b.style.minWidth = CELL_W + 'px';
-          b.style.maxWidth = CELL_W + 'px';
-          b.classList.toggle('center', dist === 0);
-          b.style.opacity = Math.max(0.35, 1 - dist * 0.18);
-          b.style.fontSize = Math.round(30 * Math.max(0.65, 1 - dist * 0.08)) + 'px';
-        });
-      }
-
-      function resetBand() {
-        bandIdx = 5;
-        updateBandPos(true);
-      }
-
-      // Loest den Kipp mit der aktuell zentrierten Zahl aus (immer im Uhrzeigersinn)
-      async function fireKipp() {
+      // Loest den Kipp mit der geklickten Zahl aus (immer im Uhrzeigersinn)
+      async function fireKipp(n) {
         if (window._brainyTutorialMode) return;
         if (gamePhase !== 'spielen') return;
         if (window._numBandBusy) return;
         window._numBandBusy = true;
-        const n = bandIdx + 1;
         kippDirection = 'cw';
         try {
           await runKippSequence(n);
         } finally {
-          // Nach dem Kipp: sichtbare Zahl+Wandfarbe ermitteln und gegen alle 6 Ziele pruefen
           if (typeof checkSixTargetsHit === 'function') {
             checkSixTargetsHit();
           }
@@ -12946,262 +12940,111 @@
         }
       }
 
-      // Prueft nach jedem Kipp, ob die sichtbare Zahl+Wandfarbe-Kombination
-      // einem der noch offenen 6 Kippziele entspricht. Bei Treffer fliegt genau
-      // diese Karte, sonst faerbt sich der naechste Wuerfel rot (Fehlversuch).
-      function checkSixTargetsHit() {
-        const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
-        const _slotNames = ['S1', 'S2', 'S3', 'S4'];
-        const _off = _faceOffsets[topFace];
-        if (_off === undefined) return;
-
-        // Klick-Budget: max 12 Kippentscheidungen pro Spiel
-        window._brainyClicksUsed = (window._brainyClicksUsed || 0) + 1;
-
-        // ALLE Treffer sammeln (nicht nur den ersten) — bei Masterbrain koennen
-        // theoretisch bis zu 4 sichtbare Zahlen gleichzeitig je ein Ziel treffen.
-        const _hits = []; // [{targetIdx, slotName}, ...]
-        for (let _i = 0; _i < 4; _i++) {
-          const _z = deck[_off + _i];
-          if (_z <= 0) continue;
-          const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
-          if (!_wandFarbe) continue;
-          for (let ti = 0; ti < window._sixTargets.length; ti++) {
-            const t = window._sixTargets[ti];
-            if (!t.done && t.zahl === _z && t.color === _wandFarbe) {
-              _hits.push({ targetIdx: ti, slotName: _slotNames[_i] });
-              break; // dieses Ziel nur einmal zaehlen
-            }
-          }
-        }
-
-        let allGreenNow = false;
-        if (_hits.length > 0) {
-          _hits.forEach(h => {
-            window._sixTargets[h.targetIdx].done = true;
-            const card = gameCards[h.targetIdx];
-            if (card && card.mesh) {
-              drawGoldenBorder(card);
-              animateCardFly(card, currentQuadrant, h.slotName, false);
-            }
-            if (typeof brainyMarkTargetHit === 'function') {
-              allGreenNow = brainyMarkTargetHit(h.targetIdx) || allGreenNow;
-            }
-          });
-        }
-        // Bei Nichttreffer: Wuerfel bleibt beige, kein Rot, nur Klick-Budget sinkt.
-
-        const gameOver = allGreenNow || (window._brainyClicksUsed >= 12);
-
-        if (gameOver) {
-          gamePhase = 'ende';
-          setTimeout(() => { endSixTargetGame(); }, 900);
-        }
-      }
-
-      // Spielende: Score + TEILEN/NOCHMAL/Next-Level Buttons anzeigen
-      function endSixTargetGame() {
-        // Scrollband ausblenden
-        const nb = document.getElementById('numBtns');
-        if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
-
-        // Oben (BUMBLEBR. + Wuerfelreihe) bleibt unveraendert stehen — keine Aenderung hier.
-
-        // Noch offene (nicht getroffene) Kippziel-Karten entfernen
-        for (let i = 0; i < 6; i++) {
-          if (window._sixTargets[i] && !window._sixTargets[i].done && gameCards[i] && gameCards[i].mesh) {
-            gameCards[i].mesh.visible = false;
-          }
-        }
-
-        const hits = (window._brainyResultSeq || []).filter(x => x).length;
-        const fails = (window._brainyResultSeq || []).filter(x => !x).length;
-        if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails, window._brainyResultSeq || []);
-
-        const levelName = (typeof SCORE_LEVEL_NAMES !== 'undefined' && SCORE_LEVEL_NAMES[currentLevel]) || ('LEVEL ' + currentLevel);
-        const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
-        const _nextDisplayBtn = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTERBRAIN', 4: null };
-        const _nextKey = _nextMap[currentLevel];
-        const btn1Action = () => {
-          location.href = 'kipp_number.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
-        };
-        let btn2Label = null, btn2Action = null;
-        if (_nextKey) {
-          btn2Label = _nextDisplayBtn[currentLevel];
-          btn2Action = () => { location.href = 'kipp_number.html?level=' + _nextKey; };
-        }
-        showLevelEndButtons(levelName, hits, fails, btn1Action, btn2Label, btn2Action);
-      }
-
-      // Touch: Swipe mit Momentum
-      let touchMoved = false;
-      let lastMoveX = 0;
-      let lastMoveTime = 0;
-      let velocity = 0;
-      let momentumAnim = null;
-
-      wrap.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
-        window._numBtnTouchActive = true;
-        touchStartX = e.touches[0].clientX;
-        touchStartIdx = bandIdx;
-        touchMoved = false;
-        lastMoveX = e.touches[0].clientX;
-        lastMoveTime = performance.now();
-        velocity = 0;
-        if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
-        strip.style.transition = 'none';
-      }, { passive: false });
-
-      wrap.addEventListener('touchmove', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        const now = performance.now();
-        const x = e.touches[0].clientX;
-        const dx = x - touchStartX;
-        if (Math.abs(dx) > 4) touchMoved = true;
-        const dt = now - lastMoveTime;
-        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
-        else if (dt >= 60) velocity = 0;
-        lastMoveX = x;
-        lastMoveTime = now;
-        const wrapW = wrap.offsetWidth || 306;
-        const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
-        strip.style.transform = 'translateX(' + tx + 'px)';
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
-        updateBandStyle();
-      }, { passive: false });
-
-      wrap.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        setTimeout(() => { window._numBtnTouchActive = false; }, 100);
-
-        if (!touchMoved) {
-          // Tap auf zentrierte Zahl → sofort Kipp ausloesen
-          const touch = e.changedTouches[0];
-          const wrapRect = wrap.getBoundingClientRect();
-          const tapX = touch.clientX - wrapRect.left;
-          const wrapW = wrapRect.width;
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / CELL_W) + bandIdx));
-          if (tappedIdx === bandIdx) {
-            fireKipp();
-          } else {
-            bandIdx = tappedIdx;
-            updateBandPos(true);
-          }
-        } else {
-          const wrapW = wrap.offsetWidth || 306;
-          const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
-          const txCoasted = tx + velocity * 150;
-          bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
-          const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
-          const startX = tx;
-          const dist = snapOffset - startX;
-          const t0 = performance.now();
-          const dur = 700, A = 0.18, omega = 1.8 * 2 * Math.PI, damping = 5.5;
-          strip.style.transition = 'none';
-          updateBandStyle();
-          function pendulumSnap() {
-            const t = (performance.now() - t0) / dur;
-            if (t >= 1) { strip.style.transform = 'translateX(' + snapOffset + 'px)'; momentumAnim = null; updateBandStyle(); return; }
-            const ease = 1 - Math.pow(1 - t, 3);
-            const swing = A * Math.exp(-damping * t) * Math.sin(omega * t);
-            strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
-            momentumAnim = requestAnimationFrame(pendulumSnap);
-          }
-          momentumAnim = requestAnimationFrame(pendulumSnap);
-        }
-      }, { passive: false });
-
-      // Mouse-Drag (Desktop/PC-Test)
-      let mouseBandActive = false;
-      wrap.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
-        e.stopPropagation();
-        mouseBandActive = true;
-        touchStartX = e.clientX;
-        touchStartIdx = bandIdx;
-        touchMoved = false;
-        lastMoveX = e.clientX;
-        lastMoveTime = performance.now();
-        velocity = 0;
-        if (momentumAnim) { cancelAnimationFrame(momentumAnim); momentumAnim = null; }
-        strip.style.transition = 'none';
-        wrap.style.cursor = 'grabbing';
+      btns.forEach(btn => {
+        btn.addEventListener('touchstart', (e) => { e.stopPropagation(); window._numBtnTouchActive = true; }, { passive: false });
+        btn.addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setTimeout(() => { window._numBtnTouchActive = false; }, 100);
+          const n = parseInt(btn.dataset.num, 10);
+          fireKipp(n);
+        }, { passive: false });
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const n = parseInt(btn.dataset.num, 10);
+          fireKipp(n);
+        });
       });
-      document.addEventListener('mousemove', (e) => {
-        if (!mouseBandActive) return;
-        const now = performance.now();
-        const x = e.clientX;
-        const dx = x - touchStartX;
-        if (Math.abs(dx) > 4) touchMoved = true;
-        const dt = now - lastMoveTime;
-        if (dt > 0 && dt < 60) velocity = velocity * 0.5 + ((x - lastMoveX) / dt) * 0.5;
-        else if (dt >= 60) velocity = 0;
-        lastMoveX = x;
-        lastMoveTime = now;
-        const wrapW = wrap.offsetWidth || 306;
-        const tx = wrapW / 2 - CELL_W / 2 - touchStartIdx * CELL_W + dx;
-        strip.style.transform = 'translateX(' + tx + 'px)';
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - tx) / CELL_W)));
-        updateBandStyle();
-      });
-      document.addEventListener('mouseup', (e) => {
-        if (e.button !== 0 || !mouseBandActive) return;
-        mouseBandActive = false;
-        wrap.style.cursor = '';
-        if (!touchMoved) {
-          const wrapRect = wrap.getBoundingClientRect();
-          const tapX = e.clientX - wrapRect.left;
-          const wrapW = wrapRect.width;
-          const firstBtn = strip.querySelector('.numBtn');
-          const cellW = firstBtn ? firstBtn.getBoundingClientRect().width : (wrapW / 5);
-          const tappedIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((tapX - wrapW / 2) / cellW) + bandIdx));
-          if (tappedIdx !== bandIdx) {
-            bandIdx = tappedIdx;
-            updateBandPos(true);
-          } else {
-            fireKipp();
-          }
-        } else {
-          const wrapW = wrap.offsetWidth || 306;
-          const tx = parseFloat(strip.style.transform.replace('translateX(', '')) || 0;
-          const txCoasted = tx + velocity * 150;
-          bandIdx = Math.max(0, Math.min(TOTAL - 1, Math.round((wrapW / 2 - CELL_W / 2 - txCoasted) / CELL_W)));
-          const snapOffset = wrapW / 2 - CELL_W / 2 - bandIdx * CELL_W;
-          const startX = tx;
-          const dist = snapOffset - startX;
-          const t0m = performance.now();
-          const durM = 700, AM = 0.18, omegaM = 1.8 * 2 * Math.PI, dampingM = 5.5;
-          strip.style.transition = 'none';
-          updateBandStyle();
-          function pendulumSnapM() {
-            const t = (performance.now() - t0m) / durM;
-            if (t >= 1) { strip.style.transform = 'translateX(' + snapOffset + 'px)'; momentumAnim = null; updateBandStyle(); return; }
-            const ease = 1 - Math.pow(1 - t, 3);
-            const swing = AM * Math.exp(-dampingM * t) * Math.sin(omegaM * t);
-            strip.style.transform = 'translateX(' + (startX + dist * (ease + swing)) + 'px)';
-            momentumAnim = requestAnimationFrame(pendulumSnapM);
-          }
-          momentumAnim = requestAnimationFrame(pendulumSnapM);
-        }
-      });
-      wrap.addEventListener('dragstart', (e) => e.preventDefault());
-
-      // Global API (fuer Tutorial-Steuerung falls benoetigt)
-      window._scrollBandToNum = function(n) {
-        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
-        updateBandPos(true);
-      };
-      window._resetScrollBand = function() { resetBand(); };
-      window._highlightNum = function(n) {
-        if (n === null) return;
-        window._scrollBandToNum(n);
-      };
-
-      updateBandPos(false);
     })();
+
+    // Prueft nach jedem Kipp, ob die sichtbare Zahl+Wandfarbe-Kombination
+    // einem der noch offenen 6 Kippziele entspricht. Bei Treffer fliegt genau
+    // diese Karte, der zugehoerige Wuerfel wird gruen. Bei Nichttreffer bleibt
+    // der Wuerfel beige, nur das 12-Klick-Budget sinkt.
+    function checkSixTargetsHit() {
+      const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
+      const _slotNames = ['S1', 'S2', 'S3', 'S4'];
+      const _off = _faceOffsets[topFace];
+      if (_off === undefined) return;
+
+      // Klick-Budget: max 12 Kippentscheidungen pro Spiel
+      window._brainyClicksUsed = (window._brainyClicksUsed || 0) + 1;
+      if (typeof brainyUpdateClicksCountdown === 'function') brainyUpdateClicksCountdown();
+
+      // ALLE Treffer sammeln (nicht nur den ersten) — bei Masterbrain koennen
+      // theoretisch bis zu 4 sichtbare Zahlen gleichzeitig je ein Ziel treffen.
+      const _hits = []; // [{targetIdx, slotName}, ...]
+      for (let _i = 0; _i < 4; _i++) {
+        const _z = deck[_off + _i];
+        if (_z <= 0) continue;
+        const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
+        if (!_wandFarbe) continue;
+        for (let ti = 0; ti < window._sixTargets.length; ti++) {
+          const t = window._sixTargets[ti];
+          if (!t.done && t.zahl === _z && t.color === _wandFarbe) {
+            _hits.push({ targetIdx: ti, slotName: _slotNames[_i] });
+            break; // dieses Ziel nur einmal zaehlen
+          }
+        }
+      }
+
+      let allGreenNow = false;
+      if (_hits.length > 0) {
+        _hits.forEach(h => {
+          window._sixTargets[h.targetIdx].done = true;
+          const card = gameCards[h.targetIdx];
+          if (card && card.mesh) {
+            drawGoldenBorder(card);
+            animateCardFly(card, currentQuadrant, h.slotName, false);
+          }
+          if (typeof brainyMarkTargetHit === 'function') {
+            allGreenNow = brainyMarkTargetHit(h.targetIdx) || allGreenNow;
+          }
+        });
+      }
+      // Bei Nichttreffer: Wuerfel bleibt beige, kein Rot, nur Klick-Budget sinkt.
+
+      const gameOver = allGreenNow || (window._brainyClicksUsed >= 12);
+
+      if (gameOver) {
+        gamePhase = 'ende';
+        setTimeout(() => { endSixTargetGame(); }, 900);
+      }
+    }
+
+    // Spielende: Score + TEILEN/NOCHMAL/Next-Level Buttons anzeigen
+    function endSixTargetGame() {
+      // Tasten ausblenden
+      const nb = document.getElementById('numBtns');
+      if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
+
+      // Oben (BUMBLEBR. + Wuerfelreihe) bleibt unveraendert stehen — keine Aenderung hier.
+
+      // Noch offene (nicht getroffene) Kippziel-Karten entfernen
+      for (let i = 0; i < 6; i++) {
+        if (window._sixTargets[i] && !window._sixTargets[i].done && gameCards[i] && gameCards[i].mesh) {
+          gameCards[i].mesh.visible = false;
+        }
+      }
+
+      const hits = (window._brainyResultSeq || []).filter(x => x).length;
+      const fails = (window._brainyResultSeq || []).filter(x => !x).length;
+      if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails, window._brainyResultSeq || []);
+
+      const levelName = (typeof SCORE_LEVEL_NAMES !== 'undefined' && SCORE_LEVEL_NAMES[currentLevel]) || ('LEVEL ' + currentLevel);
+      const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
+      const _nextDisplayBtn = { 1: 'BRAINY', 2: 'BRAIN', 3: 'MASTERBRAIN', 4: null };
+      const _nextKey = _nextMap[currentLevel];
+      const btn1Action = () => {
+        location.href = 'kipp_number.html?level=' + ({1:'bumblebrain',2:'brainy',3:'brain',4:'masterbrain'}[currentLevel]);
+      };
+      let btn2Label = null, btn2Action = null;
+      if (_nextKey) {
+        btn2Label = _nextDisplayBtn[currentLevel];
+        btn2Action = () => { location.href = 'kipp_number.html?level=' + _nextKey; };
+      }
+      showLevelEndButtons(levelName, hits, fails, btn1Action, btn2Label, btn2Action);
+    }
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
     async function triggerKipp(direction) {
