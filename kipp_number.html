@@ -1501,7 +1501,8 @@
     );
 
     // Isometrische Ansicht: zeigt gleichzeitig +Y (oben, f2), +Z (Sued, f0), -X (West, f1)
-    const cubeCenterX = 0, cubeCenterY = 0.234375, cubeCenterZ = 0.109375;
+    const shiftNorth = 2.5 * 0.15625; // 2,5 Rasterquadrate
+    const cubeCenterX = 0, cubeCenterY = 0.234375, cubeCenterZ = 0.109375 + shiftNorth;
     const isoDistance = 3.2;
     const isoHorizAngle = -45 * Math.PI / 180; // negativ -> zeigt -X Flaeche
     const isoVertAngle = 35 * Math.PI / 180;
@@ -1511,7 +1512,7 @@
       cubeCenterY + isoDistance * Math.sin(isoVertAngle),
       cubeCenterZ + isoDistance * Math.cos(isoVertAngle) * Math.cos(isoHorizAngle)
     );
-    camera.lookAt(cubeCenterX, cubeCenterY, cubeCenterZ);
+    camera.lookAt(0, 0.7, 0.109375);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
@@ -1521,6 +1522,7 @@
 
     
     document.getElementById('container').appendChild(renderer.domElement);
+    renderer.domElement.style.transform = 'translateY(-280px)';
 
     // =========================
     // BELEUCHTUNG
