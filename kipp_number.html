@@ -2837,8 +2837,11 @@
 
     function renderBestScores() {
       const titleEl = document.getElementById('bsTitleText');
-      const bestPct = getBestPct();
-      if (titleEl) titleEl.textContent = (T.bs || 'HIGHSCORES') + ' (Best = ' + bestPct + '%)';
+      if (titleEl) {
+        const allGreenSeq = [true, true, true, true, true, true];
+        titleEl.innerHTML = (T.bs || 'HIGHSCORES') + ' (' +
+          brainyBuildResultRowHTML(allGreenSeq, 16) + ')';
+      }
       const scores = loadBestScores();
       
       let latestIdx = -1;
@@ -7140,7 +7143,7 @@
     // === LEVEL-Konfig ===
     const LEVEL_CFG = {
       1: { zahlenProFace: 1, maxZahl: 3,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: false, pairCount: 1 },
-      2: { zahlenProFace: 2, maxZahl: 4,  ablenkGems: 1, name: 'BRAINY', pairMode: true, pairCount: 2 },
+      2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY', pairMode: false, pairCount: 2 },
       3: { zahlenProFace: 3, maxZahl: 8,  ablenkGems: 2, name: 'BRAIN', pairMode: true, pairCount: 4 },
       4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN', pairMode: true, pairCount: 6 }
     };
