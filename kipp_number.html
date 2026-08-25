@@ -2709,7 +2709,7 @@
     window._DIGIKIPP_URL = 'https://peterlenhart.github.io/KIPPCLUB_3D/';
 
     function buildShareText(levelName, hits, fails) {
-      const grid = (window._brainyResultSeq || []).map(isHit => isHit ? '\u{1F7E9}' : '\u{1F7E5}').join('');
+      const grid = brainyGetReliableResultSeq().map(isHit => isHit ? '\u{1F7E9}' : '\u{1F7E5}').join('');
       const _lvlLabel = BUMBLEBR_LEVEL_LABEL[currentLevel] || levelName;
       // Sharelink: jedes Level eigener Direkt-Einstieg
       const _lvlMap = { 1: 'bumblebrain', 2: 'brainy', 3: 'brain', 4: 'masterbrain' };
@@ -2812,7 +2812,7 @@
     function showLevelScore(hits, fails) {
       const el = document.getElementById('levelScoreDisplay');
       const levelLabel = BUMBLEBR_LEVEL_LABEL[currentLevel] || 'BUMBLEBR.';
-      const seq = window._brainyResultSeq || [];
+      const seq = brainyGetReliableResultSeq();
       console.log('[SCORE] showLevelScore: ' + levelLabel + ' seq=', seq);
       el.innerHTML = '<span style="color:#e8dcc8;font-size:14px;font-weight:bold;letter-spacing:1px;">' + levelLabel + '</span> ' +
         brainyBuildResultRowHTML(seq, 18);
@@ -7320,6 +7320,12 @@
     const BRAINY_CUBE_RED   = () => brainyCubeSVG('#ff6b6b', '#c0392b', '#a0281e', '#5a1812');
 
     const BUMBLEBR_LEVEL_LABEL = { 1: 'BUMBLEBR.', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBR.' };
+
+    // Zuverlaessige 6-Werte-Ergebnissequenz direkt aus sixTargets.done ableiten,
+    // statt aus dem separaten _brainyResultSeq Array (das durch Timing-Effekte verfaelscht werden kann)
+    function brainyGetReliableResultSeq() {
+      return (window._sixTargets || []).map(t => !!t.done);
+    }
 
     // Baut eine kleine Wuerfel-Ergebnisreihe (gruen/rot) als HTML-String — fuer Scoretafel + Share-Grafik
     function brainyBuildResultRowHTML(seq, cubeSizePx) {
@@ -13038,9 +13044,9 @@
         }
       }
 
-      const hits = (window._brainyResultSeq || []).filter(x => x).length;
-      const fails = (window._brainyResultSeq || []).filter(x => !x).length;
-      if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails, window._brainyResultSeq || []);
+      const hits = (window._sixTargets || []).filter(t => t.done).length;
+      const fails = (window._sixTargets || []).filter(t => !t.done).length;
+      if (typeof saveBestScore === 'function') saveBestScore(currentLevel, hits, fails, brainyGetReliableResultSeq());
 
       const levelName = (typeof SCORE_LEVEL_NAMES !== 'undefined' && SCORE_LEVEL_NAMES[currentLevel]) || ('LEVEL ' + currentLevel);
       const _nextMap = { 1: 'brainy', 2: 'brain', 3: 'masterbrain', 4: null };
