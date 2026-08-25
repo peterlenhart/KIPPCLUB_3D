@@ -545,6 +545,7 @@
       width: 42px;
       height: 42px;
       flex-shrink: 0;
+      pointer-events: auto;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1143,13 +1144,13 @@
     <button id="zumSpielBtn" style="display:none;">zum SPIEL</button>
     
     <!-- OFFEN-Modus: Scrollband 1-11 (statt Joker) -->
-    <div id="numBtns" class="hidden" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:auto; z-index:20; display:flex; flex-direction:row; flex-wrap:nowrap; gap:8px; width:308px; justify-content:center;">
-      <div class="numBtnFixed" data-num="1">1</div>
-      <div class="numBtnFixed" data-num="2">2</div>
-      <div class="numBtnFixed" data-num="3">3</div>
-      <div class="numBtnFixed" data-num="4">4</div>
-      <div class="numBtnFixed" data-num="5">5</div>
-      <div class="numBtnFixed" data-num="6">6</div>
+    <div id="numBtns" class="hidden" style="position:absolute; left:0; top:0; width:360px; height:100%; pointer-events:none; z-index:20;">
+      <div class="numBtnFixed" data-num="1" style="position:absolute;">1</div>
+      <div class="numBtnFixed" data-num="2" style="position:absolute;">2</div>
+      <div class="numBtnFixed" data-num="3" style="position:absolute;">3</div>
+      <div class="numBtnFixed" data-num="4" style="position:absolute;">4</div>
+      <div class="numBtnFixed" data-num="5" style="position:absolute;">5</div>
+      <div class="numBtnFixed" data-num="6" style="position:absolute;">6</div>
     </div>
     
     <!-- KIPP-TIPP Overlay -->
@@ -4853,6 +4854,15 @@
         return Math.round((-pos.y * 0.5 + 0.5) * 720);
       }
       return 612; // Fallback
+    }
+
+    function cardScreenX(ci) {
+      if (gameCards && gameCards[ci] && gameCards[ci].mesh) {
+        const pos = gameCards[ci].mesh.position.clone();
+        pos.project(camera);
+        return Math.round((pos.x * 0.5 + 0.5) * 360);
+      }
+      return 180; // Fallback
     }
     
     // --- Kniff-Icon-Position (liest aus DOM) ---
@@ -13233,13 +13243,18 @@
         window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
       }
 
-      // Tasten einblenden, waagrecht in gleicher Flucht wie die Kippziel-Karten
+      // Tasten einblenden: vertikal an der alten Scrollband-Position (527px),
+      // horizontal jede Taste einzeln exakt auf der X-Position ihres Kippziels
       const nb = document.getElementById('numBtns');
       if (nb) {
         nb.classList.remove('hidden');
-        nb.style.display = 'flex';
-        const cardTop = cardScreenY(0);
-        nb.style.top = cardTop + 'px';
+        nb.style.display = 'block';
+        const btnEls = nb.querySelectorAll('.numBtnFixed');
+        btnEls.forEach((btn, i) => {
+          const cx = cardScreenX(i);
+          btn.style.left = (cx - 21) + 'px'; // 21 = halbe Buttonbreite (42px)
+          btn.style.top = '527px';
+        });
       }
 
       setButtonsDisabled(false);
