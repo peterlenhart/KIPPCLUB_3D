@@ -954,9 +954,6 @@ Merken, Logik, Kopfzerbrechen.">
         <!-- Slogan in der Zeile oberhalb der Walls -->
         <div id="kippClubSubtitle">Merken, Logik, Kopfzerbrechen.</div>
 
-        <!-- TEMPORÄRE DEBUG-ANZEIGE: zeigt Token-Status direkt sichtbar an -->
-        <div id="debugTokenDisplay" style="position:absolute; left:10px; top:10px; z-index:99999; background:rgba(0,0,0,0.85); color:#0f0; font-family:monospace; font-size:24px; padding:12px; border:2px solid #0f0; white-space:pre; pointer-events:none;"></div>
-
         <!-- SPIELEN-Text direkt im uiLayer, NICHT in den Walls — Wall-unabhaengig auf Raster-Position -->
         <div id="globalSpielenText">SPIELEN</div>
 
@@ -1143,23 +1140,6 @@ Merken, Logik, Kopfzerbrechen.">
       flashImg.onerror = hideFlash;
     }
     
-    // TEMPORÄRE DEBUG-ANZEIGE
-    (function showDebugTokens() {
-      try {
-        const keys = ['kippclub_smileys_unlocked','kippclub_card_unlocked','kippclub_queen_unlocked','kippclub_king_unlocked','kippclub_bundle_unlocked'];
-        let out = 'TOKEN-STATUS:\n';
-        keys.forEach(k => {
-          const v = localStorage.getItem(k);
-          out += k + ' = ' + (v === null ? 'LEER' : v) + '\n';
-        });
-        const el = document.getElementById('debugTokenDisplay');
-        if (el) el.textContent = out;
-      } catch(e) {
-        const el = document.getElementById('debugTokenDisplay');
-        if (el) el.textContent = 'FEHLER: ' + e.message;
-      }
-    })();
-
     function hideFlash() {
       const noFlash = new URLSearchParams(window.location.search).get('noflash') === '1';
       const delay = noFlash ? 0 : 2000;
