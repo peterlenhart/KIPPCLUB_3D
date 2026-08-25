@@ -564,7 +564,7 @@
       color: #f0e0c0;
     }
     .numBtnFixed.numBtnBlink {
-      animation: dirBtnBlinkAnim 0.9s ease-in-out infinite;
+      animation: dirBtnBlinkAnim 1.5s ease-in-out infinite;
     }
 
     .dirBtnFixed {
@@ -577,6 +577,13 @@
       -webkit-tap-highlight-color: transparent;
       opacity: 0.35;
       transition: opacity 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: bold 11px Arial;
+      color: #3a2410;
+      text-align: center;
+      border-radius: 6px;
     }
     .dirBtnFixed.dirBtnBlink {
       animation: dirBtnBlinkAnim 0.9s ease-in-out infinite;
@@ -12958,7 +12965,10 @@
       let selectedNum = null;
 
       function startNumPulse() {
-        btns.forEach(b => b.classList.add('numBtnBlink'));
+        btns.forEach((b, i) => {
+          b.style.animationDelay = (i * 0.15) + 's';
+          b.classList.add('numBtnBlink');
+        });
       }
       function stopNumPulse() {
         btns.forEach(b => b.classList.remove('numBtnBlink'));
@@ -12982,8 +12992,8 @@
         stopNumPulse();
         btns.forEach(b => b.classList.remove('numBtnSelected'));
         btn.classList.add('numBtnSelected');
-        if (cwBtn) { cwBtn.style.display = 'block'; cwBtn.classList.add('dirBtnBlink'); }
-        if (ccwBtn) { ccwBtn.style.display = 'block'; ccwBtn.classList.add('dirBtnBlink'); }
+        if (cwBtn) { cwBtn.style.display = 'flex'; cwBtn.classList.add('dirBtnBlink'); }
+        if (ccwBtn) { ccwBtn.style.display = 'flex'; ccwBtn.classList.add('dirBtnBlink'); }
       }
 
       async function fireKipp(direction) {
