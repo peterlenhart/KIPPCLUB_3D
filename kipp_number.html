@@ -12707,7 +12707,7 @@
           stepMul = 1.0;
         } else {
           const t = Math.min(1, (stepNum - 3) / (11 - 3)); // 0 bei Schritt 3, 1 bei Schritt 11
-          stepMul = lerp(1.0, 0.5, t);
+          stepMul = lerp(1.0, 0.25, t);
         }
 
         const kipTime = Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
