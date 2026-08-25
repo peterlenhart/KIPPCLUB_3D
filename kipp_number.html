@@ -1499,21 +1499,21 @@
       0.01,
       100
     );
-
-    // Isometrische Ansicht: zeigt gleichzeitig +Y (oben, f2), +Z (Sued, f0), -X (West, f1)
-    const shiftNorth = 2.5 * 0.15625; // 2,5 Rasterquadrate
-    const cubeCenterX = 0, cubeCenterY = 0.234375, cubeCenterZ = 0.109375 + shiftNorth;
-    const isoDistance = 3.2;
-    const isoHorizAngle = -45 * Math.PI / 180; // negativ -> zeigt -X Flaeche
-    const isoVertAngle = 35 * Math.PI / 180;
-
+    
+    const baseY = 2.143;
+    const verticalAngle = -1.0;
+    const horizontal = 0;
+    const radius = 1.25;
+    const southShift = -0.143;
+    
     camera.position.set(
-      cubeCenterX + isoDistance * Math.cos(isoVertAngle) * Math.sin(isoHorizAngle),
-      cubeCenterY + isoDistance * Math.sin(isoVertAngle),
-      cubeCenterZ + isoDistance * Math.cos(isoVertAngle) * Math.cos(isoHorizAngle)
+      0 + Math.sin(horizontal) * 0.5,
+      baseY + radius * Math.sin(-verticalAngle),
+      radius * Math.cos(verticalAngle) + Math.cos(horizontal) * 0.3 + southShift
     );
-    camera.lookAt(0, 0.7, 0.109375);
-
+    
+    camera.lookAt(0, 0.46875, 0.7 + southShift);
+    
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(360, 720);
     renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
@@ -1522,7 +1522,6 @@
 
     
     document.getElementById('container').appendChild(renderer.domElement);
-    renderer.domElement.style.transform = 'translateY(-257.5px)';
 
     // =========================
     // BELEUCHTUNG
@@ -1561,9 +1560,6 @@
     fillLightSouth.position.set(0, 2, 4);
     scene.add(fillLightSouth);
 
-    const fillLightWest = new THREE.DirectionalLight(0xffffff, 0.45);
-    fillLightWest.position.set(-3, 2, 1);
-    scene.add(fillLightWest);
 
     // =========================
     // TISCH (π1 Ebene)
@@ -2021,15 +2017,8 @@
       map: wallTexture,
       color: 0x666666  // Dunkler (40% Helligkeit)
     });
-    // Transparentes Material fuer West- und Suedwand (Sicht auf Wuerfel freigeben)
-    const wallMaterialTransparent = new THREE.MeshBasicMaterial({
-      map: wallTexture,
-      color: 0x666666,
-      transparent: true,
-      opacity: 0
-    });
     
-    const wall = new THREE.Mesh(wallGeometry, wallMaterialTransparent);
+    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
     wall.position.set(0, 0.234375, 0.597125);
     wall.castShadow = false;
     wall.receiveShadow = true;
@@ -2043,7 +2032,7 @@
 
     const sideWallGeometry = new THREE.BoxGeometry(0.0335, 0.46875, 1.00675);
     
-    const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterialTransparent);
+    const wallLeft = new THREE.Mesh(sideWallGeometry, wallMaterial);
     wallLeft.position.set(-0.48550, 0.234375, 0.1105);
     wallLeft.castShadow = false;
     wallLeft.receiveShadow = true;
@@ -2069,8 +2058,7 @@
       const spieltischMaterial = new THREE.MeshStandardMaterial({ 
         map: texture,
         transparent: true,
-        opacity: 0.3,
-        alphaTest: 0.01,
+        alphaTest: 0.5,
         roughness: 0.8,
         metalness: 0.2,
         depthWrite: true
@@ -2079,9 +2067,9 @@
       
       spieltisch.rotation.x = -Math.PI / 2;
       
-      // Position ABSOLUT FINAL (135px suedlicher wegen geaenderter Datei-Massse)
+      // Position ABSOLUT FINAL
       const xCenter = -0.625 + SPIEL_WIDTH / 2;
-      const zCenter = -0.828125 + height / 2 + 0.3125;
+      const zCenter = -0.828125 + height / 2;
       const yPos = 0.001 + 3 * 0.15625;
       
       spieltisch.position.set(xCenter, yPos, zCenter);
