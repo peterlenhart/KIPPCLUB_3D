@@ -2839,8 +2839,7 @@
       const titleEl = document.getElementById('bsTitleText');
       if (titleEl) {
         const allGreenSeq = [true, true, true, true, true, true];
-        titleEl.innerHTML = (T.bs || 'HIGHSCORES') + ' (' +
-          brainyBuildResultRowHTML(allGreenSeq, 16) + ')';
+        titleEl.innerHTML = 'HIGHSCORE: ' + brainyBuildResultRowHTML(allGreenSeq, 16);
       }
       const scores = loadBestScores();
       
@@ -12700,9 +12699,17 @@
       
       
       for (let i = 0; i < steps; i++) {
-        const tStep = (steps <= 1) ? 0 : (i / (steps - 1));
-        const stepMul = lerp(1.0, STEP_MAX, tStep);
-        
+        // Erste 3 Kipps normale Geschwindigkeit. Ab Kipp 4 progressiv schneller,
+        // bis Kipp 11 doppelt so schnell (halbe Zeit) wie die ersten 3.
+        const stepNum = i + 1; // 1-basiert
+        let stepMul;
+        if (stepNum <= 3) {
+          stepMul = 1.0;
+        } else {
+          const t = Math.min(1, (stepNum - 3) / (11 - 3)); // 0 bei Schritt 3, 1 bei Schritt 11
+          stepMul = lerp(1.0, 0.5, t);
+        }
+
         const kipTime = Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
         const holdTime = Math.max(40, Math.round(T.wMs * stepMul));
         
@@ -13338,6 +13345,23 @@
       for (let i = 0; i < 6; i++) {
         _combos.push(i < _guaranteedTargets.length ? _guaranteedTargets[i] : pickValidCombo(null));
       }
+
+      // Regel: nicht alle 6 Ziele duerfen mit "Zahl 1" hintereinander abkippbar sein
+      const _allAreOne = _combos.every(c => c.zahl === 1);
+      if (_allAreOne && _cfg.maxZahl > 1) {
+        // Ein nicht-garantiertes Ziel (falls vorhanden) auf eine andere Zahl umziehen
+        const _freeIdx = (_combos.length > _guaranteedTargets.length) ? _guaranteedTargets.length : 0;
+        let _newZahl, _tries2 = 0;
+        do {
+          _newZahl = 1 + Math.floor(Math.random() * _cfg.maxZahl);
+          _tries2++;
+        } while (_newZahl === 1 && _tries2 < 20);
+        if (_newZahl !== 1) {
+          usedCombos.delete(_combos[_freeIdx].zahl + '_' + _combos[_freeIdx].colorObj.name);
+          _combos[_freeIdx] = pickValidCombo(_newZahl);
+        }
+      }
+
       for (let i = 0; i < 6; i++) {
         const combo = _combos[i];
         fillCardWithKombi(i, combo.zahl, combo.colorObj);
