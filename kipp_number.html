@@ -3761,7 +3761,12 @@
       return new Promise(resolve => {
         const target = HIT_TARGETS[quadrant][slot];
         const mesh = card.mesh;
-        
+
+        // Generations-Marker: verhindert, dass eine alte Animation eine
+        // zwischenzeitlich neu generierte Karte wieder ausblendet
+        if (mesh.userData._flyGen === undefined) mesh.userData._flyGen = 0;
+        const _flyGenAtStart = mesh.userData._flyGen;
+
         // Zähler in die Box fliegen lassen
         flyCountersToBox();
         
@@ -3784,6 +3789,8 @@
         const startTime = performance.now();
         
         function tick(now) {
+          // Abbruch, wenn die Karte zwischenzeitlich neu generiert wurde
+          if (mesh.userData._flyGen !== _flyGenAtStart) { resolve(); return; }
           const elapsed = now - startTime;
           const t = Math.min(elapsed / duration, 1);
           // Ease: schnell abheben, sanft landen
@@ -3819,6 +3826,8 @@
             const holdDur = 1500;
             const fadeDur = 300;
             function landPulse(now) {
+              // Abbruch, wenn die Karte zwischenzeitlich neu generiert wurde
+              if (mesh.userData._flyGen !== _flyGenAtStart) { resolve(); return; }
               const elapsed = now - landTime;
               if (elapsed < pulseDur) {
                 // Puls: 1→1.2→1
@@ -3838,10 +3847,13 @@
                 mesh.material.needsUpdate = true;
                 requestAnimationFrame(landPulse);
               } else {
-                mesh.visible = false;
-                mesh.material.opacity = 1;
-                mesh.material.transparent = false;
-                mesh.material.needsUpdate = true;
+                // Nur ausblenden, wenn die Karte seither nicht neu generiert wurde
+                if (mesh.userData._flyGen === _flyGenAtStart) {
+                  mesh.visible = false;
+                  mesh.material.opacity = 1;
+                  mesh.material.transparent = false;
+                  mesh.material.needsUpdate = true;
+                }
                 // Zähler 2s halten, dann zurückfliegen
                 setTimeout(() => { flyCountersBack(); }, 2500);
                 resolve();
@@ -13021,7 +13033,7 @@
         setTimeout(() => { endSixTargetGame(); }, 900);
       } else if (clicksNow % 6 === 0) {
         // Automatischer Level-Aufstieg alle 6 Kippentscheidungen (bei 6, 12, 18)
-        setTimeout(() => { brainyLevelUp(); }, 900);
+        setTimeout(() => { brainyLevelUp(); }, 2000);
       }
     }
 
@@ -13126,11 +13138,15 @@
       // ALLE 6 Karten komplett zuruecksetzen (auch nicht getroffene alte Ziele werden geloescht)
       for (let i = 0; i < 6; i++) {
         if (gameCards[i] && gameCards[i].mesh) {
-          gameCards[i].mesh.visible = false;
-          gameCards[i].mesh.rotation.z = 0;
-          gameCards[i].mesh.scale.set(1, 1, 1);
-          gameCards[i].mesh.material.opacity = 1;
-          gameCards[i].mesh.material.transparent = false;
+          const m = gameCards[i].mesh;
+          // Generation hochzaehlen: entwertet alle noch laufenden Flug-Animationen dieser Karte
+          if (m.userData._flyGen === undefined) m.userData._flyGen = 0;
+          m.userData._flyGen++;
+          m.visible = false;
+          m.rotation.z = 0;
+          m.scale.set(1, 1, 1);
+          m.material.opacity = 1;
+          m.material.transparent = false;
         }
       }
 
