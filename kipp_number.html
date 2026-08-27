@@ -12958,13 +12958,19 @@
           // Spielerkipp (doppelte Geschwindigkeit)
           await runKippSequence(n, 'player');
 
-          // Trefferpruefung sofort nach dem Spielerkipp
+          // Trefferpruefung inkl. aller Animationen/Overlays komplett abwarten
           if (typeof checkSixTargetsHit === 'function') {
-            checkSixTargetsHit();
+            await checkSixTargetsHit();
           }
 
-          // Automatisch zurueck nach Q3 (normale Geschwindigkeit)
+          // Erst danach automatisch zurueck nach Q3 (normale Geschwindigkeit)
           await brainyAutoReturnToQ3(direction);
+
+          // Neues Kippziel erst jetzt — es haengt von der finalen Topface ab
+          if (window._brainyZielAbgeschlossen) {
+            window._brainyZielAbgeschlossen = false;
+            brainyNextTargetOrEnd();
+          }
         } finally {
           window._numBandBusy = false;
         }
@@ -13052,60 +13058,69 @@
     }
 
     function checkSixTargetsHit() {
-      const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
-      const _slotNames = ['S1', 'S2', 'S3', 'S4'];
-      const _off = _faceOffsets[topFace];
-      if (_off === undefined) return;
+      return new Promise(resolveAll => {
+        const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
+        const _slotNames = ['S1', 'S2', 'S3', 'S4'];
+        const _off = _faceOffsets[topFace];
+        if (_off === undefined) { resolveAll(); return; }
 
-      window._targetVersuche = (window._targetVersuche || 0) + 1;
-      const versuch = window._targetVersuche;
+        window._targetVersuche = (window._targetVersuche || 0) + 1;
+        const versuch = window._targetVersuche;
 
-      // Pruefen ob das eine Kippziel getroffen wurde
-      const t = window._sixTargets[0];
-      let hitSlot = null;
-      if (t && !t.done) {
-        for (let _i = 0; _i < 4; _i++) {
-          const _z = deck[_off + _i];
-          if (_z <= 0) continue;
-          const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
-          if (!_wandFarbe) continue;
-          if (t.zahl === _z && t.color === _wandFarbe) { hitSlot = _slotNames[_i]; break; }
+        // Pruefen ob das eine Kippziel getroffen wurde
+        const t = window._sixTargets[0];
+        let hitSlot = null;
+        if (t && !t.done) {
+          for (let _i = 0; _i < 4; _i++) {
+            const _z = deck[_off + _i];
+            if (_z <= 0) continue;
+            const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
+            if (!_wandFarbe) continue;
+            if (t.zahl === _z && t.color === _wandFarbe) { hitSlot = _slotNames[_i]; break; }
+          }
         }
-      }
 
-      if (hitSlot) {
-        // TREFFER — Punkte je nach Versuchsnummer
-        t.done = true;
-        const card = gameCards[0];
-        if (card && card.mesh) {
-          drawGoldenBorder(card);
-          animateCardFly(card, currentQuadrant, hitSlot, false);
+        if (hitSlot) {
+          // TREFFER — Punkte je nach Versuchsnummer
+          t.done = true;
+          window._brainyZielAbgeschlossen = true;
+          const card = gameCards[0];
+          if (card && card.mesh) {
+            drawGoldenBorder(card);
+            animateCardFly(card, currentQuadrant, hitSlot, false);
+          }
+          let pts = 0, label = '';
+          if (versuch === 1) { pts = 3; label = 'Perfekte Kippfolge'; }
+          else if (versuch === 2) { pts = 2; label = 'BRAVO'; }
+          else { pts = 1; label = ''; }
+
+          window._brainyHitsTotal = (window._brainyHitsTotal || 0) + pts;
+          window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
+          brainyUpdateCounterDisplay();
+
+          setTimeout(() => {
+            brainyShowScoreFlash('+' + pts, label, () => {
+              resolveAll();
+            });
+          }, 1200);
+
+        } else if (versuch >= 3) {
+          // Dritter Fehlversuch — 0 Punkte, naechstes Ziel
+          window._brainyZielAbgeschlossen = true;
+          window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
+          brainyUpdateCounterDisplay();
+          brainyShowScoreFlash('0', '3 Fehl-Versuche', () => {
+            resolveAll();
+          });
+
+        } else {
+          // Fehlversuch 1 oder 2 — roter Puls, danach darf erneut gewaehlt werden
+          brainyPulseRedBorder(() => {
+            if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+            resolveAll();
+          });
         }
-        let pts = 0, label = '';
-        if (versuch === 1) { pts = 3; label = 'Perfekte Kippfolge'; }
-        else if (versuch === 2) { pts = 2; label = 'BRAVO'; }
-        else { pts = 1; label = ''; }
-
-        window._brainyHitsTotal = (window._brainyHitsTotal || 0) + pts;
-        window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
-        brainyUpdateCounterDisplay();
-
-        setTimeout(() => {
-          brainyShowScoreFlash('+' + pts, label, () => { brainyNextTargetOrEnd(); });
-        }, 1200);
-
-      } else if (versuch >= 3) {
-        // Dritter Fehlversuch — 0 Punkte, naechstes Ziel
-        window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
-        brainyUpdateCounterDisplay();
-        brainyShowScoreFlash('0', '3 Fehl-Versuche', () => { brainyNextTargetOrEnd(); });
-
-      } else {
-        // Fehlversuch 1 oder 2 — roter Puls, danach darf erneut gewaehlt werden
-        brainyPulseRedBorder(() => {
-          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
-        });
-      }
+      });
     }
 
     // Naechstes Kippziel oder Spielende nach 6 Zielen
