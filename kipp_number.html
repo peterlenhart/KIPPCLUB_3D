@@ -13262,11 +13262,14 @@
           brainyAnnounceAndStartTarget(true);
         });
       } else {
-        // Zu wenig Punkte — gleiches Level nochmal von vorne
+        // Zu wenig Punkte — gleiches Level nochmal von vorne.
+        // Die Punkte des misslungenen Versuchs werden von der Gesamtsumme abgezogen,
+        // man startet also wieder mit dem Stand vom Levelbeginn.
         const fehlt = 14 - levelPunkte;
         brainyShowScoreFlash('Um ' + fehlt + ' zu wenig', 'f&uuml;rs n&auml;chste Level', () => {
+          window._brainyHitsTotal = Math.max(0, (window._brainyHitsTotal || 0) - levelPunkte);
           window._brainyZieleGespielt = 0;
-          window._brainyLevelPunkte = 0;   // Levelzaehler zurueck, Gesamtpunkte bleiben
+          window._brainyLevelPunkte = 0;
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
           brainyAnnounceAndStartTarget(true);
