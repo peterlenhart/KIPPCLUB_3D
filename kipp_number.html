@@ -12727,11 +12727,13 @@
       });
     }
 
-    async function runKippSequence(steps) {
+    async function runKippSequence(steps, speedMode) {
       if (isAnimating) return;
       
       const T = getTiming();
       const kipFactor = 1;
+      // Spielerkipp doppelt so schnell (halbe Zeit), Autokipp normal
+      const speedFactor = (speedMode === 'auto') ? 1.0 : 0.5;
       
       
       for (let i = 0; i < steps; i++) {
@@ -12739,7 +12741,7 @@
         // bis Kipp 11 vierfache Geschwindigkeit (1/4 Zeit) erreicht ist.
         const stepNum = i + 1; // 1-basiert
         const t = Math.min(1, (stepNum - 1) / (11 - 1)); // 0 bei Schritt 1, 1 bei Schritt 11
-        const stepMul = lerp(1.0, 0.25, t);
+        const stepMul = lerp(1.0, 0.25, t) * speedFactor;
 
         const kipTime = Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
         const holdTime = Math.max(40, Math.round(T.wMs * stepMul));
@@ -12953,11 +12955,17 @@
         kippDirection = direction;
         clearSelection();
         try {
-          await runKippSequence(n);
-        } finally {
+          // Spielerkipp (doppelte Geschwindigkeit)
+          await runKippSequence(n, 'player');
+
+          // Trefferpruefung sofort nach dem Spielerkipp
           if (typeof checkSixTargetsHit === 'function') {
             checkSixTargetsHit();
           }
+
+          // Automatisch zurueck nach Q3 (normale Geschwindigkeit)
+          await brainyAutoReturnToQ3(direction);
+        } finally {
           window._numBandBusy = false;
         }
       }
@@ -13101,6 +13109,34 @@
     }
 
     // Naechstes Kippziel oder Spielende nach 6 Zielen
+    // Kippt den Wuerfel nach dem Spielerzug automatisch zurueck auf Q3 — dabei
+    // liegt garantiert eine ANDERE Face oben als zuvor, und es sind mind. 2 Kipps.
+    // Es wird die kuerzere der beiden Richtungen gewaehlt.
+    async function brainyAutoReturnToQ3(playerDirection) {
+      const startIdx = stateIndex(currentQuadrant, topFace);
+      if (startIdx < 0) return;
+
+      const q3Indices = [0, 4, 8];   // Q3-Zustaende im 12er-Zyklus
+      const startFace = topFace;
+
+      let bestCw = null, bestCcw = null;
+      for (let s = 2; s <= 12; s++) {
+        const idx = (startIdx + s) % 12;
+        if (q3Indices.indexOf(idx) !== -1 && CW_CYCLE[idx][1] !== startFace) { bestCw = s; break; }
+      }
+      for (let s = 2; s <= 12; s++) {
+        const idx = ((startIdx - s) % 12 + 12) % 12;
+        if (q3Indices.indexOf(idx) !== -1 && CW_CYCLE[idx][1] !== startFace) { bestCcw = s; break; }
+      }
+
+      const useCcw = (bestCcw !== null) && (bestCw === null || bestCcw < bestCw);
+      const steps = useCcw ? bestCcw : bestCw;
+      if (steps === null || steps === undefined) return;
+
+      kippDirection = useCcw ? 'ccw' : 'cw';
+      await runKippSequence(steps, 'auto');
+    }
+
     function brainyNextTargetOrEnd() {
       const gespielt = window._brainyZieleGespielt || 0;
       if (gespielt >= 6) {
@@ -13275,14 +13311,32 @@
         }
       }
 
-      // Eine sichtbare Zahl waehlen
+      // Zahlen der beiden NICHT-Topfaces sammeln (fuer Ziel 3-6)
+      const _andereFaceZahlen = [];
+      ['f0', 'f1', 'f2'].forEach(fk => {
+        if (fk === topFace) return;
+        const off = _faceOffsets[fk];
+        if (off === undefined) return;
+        for (let i = 0; i < 4; i++) {
+          const z = deck[off + i];
+          if (z > 0) _andereFaceZahlen.push(z);
+        }
+      });
+
+      // Ziel 1 und 2: Zahl von der Topface.
+      // Ab Ziel 3: nur Zahlen der beiden anderen Faces (Topface-Zahlen ausgeschlossen).
+      const _zielNr = (window._brainyZieleGespielt || 0) + 1;
       let zahl, forbiddenColor = null;
-      if (_visiblePairs.length > 0) {
+      if (_zielNr <= 2 && _visiblePairs.length > 0) {
         const pick = _visiblePairs[Math.floor(Math.random() * _visiblePairs.length)];
         zahl = pick.zahl;
         forbiddenColor = pick.forbiddenColor;
+      } else if (_andereFaceZahlen.length > 0) {
+        zahl = _andereFaceZahlen[Math.floor(Math.random() * _andereFaceZahlen.length)];
       } else {
         zahl = 1 + Math.floor(Math.random() * _cfg.maxZahl);
+        const vis = _visiblePairs.find(p => p.zahl === zahl);
+        if (vis) forbiddenColor = vis.forbiddenColor;
       }
 
       // Farbe waehlen, aber nie die bereits erfuellte
