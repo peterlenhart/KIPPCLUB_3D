@@ -1149,6 +1149,11 @@
   </div>
   
   <div id="uiOverlay">
+    <!-- Punkte-Overlay: verdunkelt das Display, zeigt zweizeilig Punkte + Text -->
+    <div id="scoreFlashOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; background:rgba(0,0,0,0.75); z-index:9000; display:none; pointer-events:none; align-items:center; justify-content:center; flex-direction:column;">
+      <div id="scoreFlashPoints" style="font-family:Arial,sans-serif; font-weight:bold; font-size:64px; color:#4fdc5a; text-shadow:0 2px 8px rgba(0,0,0,0.9); line-height:1.1;"></div>
+      <div id="scoreFlashText" style="font-family:Arial,sans-serif; font-weight:bold; font-size:22px; color:#e8dcc4; text-shadow:0 2px 6px rgba(0,0,0,0.9); letter-spacing:1px; margin-top:6px; text-align:center;"></div>
+    </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
@@ -7399,8 +7404,9 @@
       const old = document.getElementById('brainyLivesWrap');
       if (old) old.remove();
       brainyEnsureLivesUI();
-      window._brainyClicksUsed = 0;
+      window._brainyZieleGespielt = 0;
       window._brainyHitsTotal = 0;
+      window._targetVersuche = 0;
       brainyUpdateCounterDisplay();
     }
 
@@ -7408,7 +7414,7 @@
     function brainyUpdateCounterDisplay() {
       const cEl = document.getElementById('brainyClickCounter');
       const hEl = document.getElementById('brainyHitCounter');
-      if (cEl) cEl.textContent = (window._brainyClicksUsed || 0) + '/24';
+      if (cEl) cEl.textContent = (window._brainyZieleGespielt || 0) + '/6';
       if (hEl) hEl.textContent = String(window._brainyHitsTotal || 0);
     }
 
@@ -12986,78 +12992,174 @@
     // einem der noch offenen 6 Kippziele entspricht. Bei Treffer fliegt genau
     // diese Karte, der zugehoerige Wuerfel wird gruen. Bei Nichttreffer bleibt
     // der Wuerfel beige, nur das 12-Klick-Budget sinkt.
+    // Zeigt das Punkte-Overlay (Verdunkelung + 2-zeiliger Text), ruft danach onDone auf
+    function brainyShowScoreFlash(pointsText, labelText, onDone) {
+      const ov = document.getElementById('scoreFlashOverlay');
+      const pEl = document.getElementById('scoreFlashPoints');
+      const tEl = document.getElementById('scoreFlashText');
+      if (!ov) { if (onDone) onDone(); return; }
+      pEl.textContent = pointsText;
+      tEl.innerHTML = labelText;
+      ov.style.display = 'flex';
+      setTimeout(() => {
+        ov.style.display = 'none';
+        if (onDone) onDone();
+      }, 1800);
+    }
+
+    // Roter pulsierender Rahmen am Kippziel bei Fehlversuch
+    function brainyPulseRedBorder(onDone) {
+      const card = gameCards[0];
+      if (!card || !card.mesh) { if (onDone) onDone(); return; }
+      const ctx = card.ctx, canvas = card.canvas;
+      const startTime = performance.now();
+      const dur = 1400;
+      function pulse(now) {
+        const el = now - startTime;
+        if (el >= dur) {
+          // Rahmen entfernen: Karte neu zeichnen
+          const t = window._sixTargets[0];
+          if (t) {
+            const colorObj = GAME_COLORS.find(c => c.name === t.color);
+            if (colorObj) fillCardWithKombi(0, t.zahl, colorObj);
+          }
+          if (onDone) onDone();
+          return;
+        }
+        const a = 0.45 + 0.55 * Math.abs(Math.sin(el / 220));
+        const t = window._sixTargets[0];
+        if (t) {
+          const colorObj = GAME_COLORS.find(c => c.name === t.color);
+          if (colorObj) fillCardWithKombi(0, t.zahl, colorObj);
+        }
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,40,40,' + a.toFixed(3) + ')';
+        ctx.lineWidth = 22;
+        ctx.strokeRect(11, 11, canvas.width - 22, canvas.height - 22);
+        ctx.restore();
+        card.texture.needsUpdate = true;
+        requestAnimationFrame(pulse);
+      }
+      requestAnimationFrame(pulse);
+    }
+
     function checkSixTargetsHit() {
       const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
       const _slotNames = ['S1', 'S2', 'S3', 'S4'];
       const _off = _faceOffsets[topFace];
       if (_off === undefined) return;
 
-      // Klick-Zaehler: max 24 Kippentscheidungen pro Spiel
-      window._brainyClicksUsed = (window._brainyClicksUsed || 0) + 1;
+      window._targetVersuche = (window._targetVersuche || 0) + 1;
+      const versuch = window._targetVersuche;
 
-      // ALLE Treffer sammeln (nicht nur den ersten) — bei Masterbrain koennen
-      // theoretisch bis zu 4 sichtbare Zahlen gleichzeitig je ein Ziel treffen.
-      const _hits = [];
-      for (let _i = 0; _i < 4; _i++) {
-        const _z = deck[_off + _i];
-        if (_z <= 0) continue;
-        const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
-        if (!_wandFarbe) continue;
-        for (let ti = 0; ti < window._sixTargets.length; ti++) {
-          const t = window._sixTargets[ti];
-          if (!t.done && t.zahl === _z && t.color === _wandFarbe) {
-            _hits.push({ targetIdx: ti, slotName: _slotNames[_i] });
-            break;
-          }
+      // Pruefen ob das eine Kippziel getroffen wurde
+      const t = window._sixTargets[0];
+      let hitSlot = null;
+      if (t && !t.done) {
+        for (let _i = 0; _i < 4; _i++) {
+          const _z = deck[_off + _i];
+          if (_z <= 0) continue;
+          const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
+          if (!_wandFarbe) continue;
+          if (t.zahl === _z && t.color === _wandFarbe) { hitSlot = _slotNames[_i]; break; }
         }
       }
 
-      if (_hits.length > 0) {
-        _hits.forEach(h => {
-          window._sixTargets[h.targetIdx].done = true;
-          const card = gameCards[h.targetIdx];
-          if (card && card.mesh) {
-            drawGoldenBorder(card);
-            animateCardFly(card, currentQuadrant, h.slotName, false);
-          }
+      if (hitSlot) {
+        // TREFFER — Punkte je nach Versuchsnummer
+        t.done = true;
+        const card = gameCards[0];
+        if (card && card.mesh) {
+          drawGoldenBorder(card);
+          animateCardFly(card, currentQuadrant, hitSlot, false);
+        }
+        let pts = 0, label = '';
+        if (versuch === 1) { pts = 3; label = 'Perfekte Kippfolge'; }
+        else if (versuch === 2) { pts = 2; label = 'BRAVO'; }
+        else { pts = 1; label = ''; }
+
+        window._brainyHitsTotal = (window._brainyHitsTotal || 0) + pts;
+        window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
+        brainyUpdateCounterDisplay();
+
+        setTimeout(() => {
+          brainyShowScoreFlash('+' + pts, label, () => { brainyNextTargetOrEnd(); });
+        }, 1200);
+
+      } else if (versuch >= 3) {
+        // Dritter Fehlversuch — 0 Punkte, naechstes Ziel
+        window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
+        brainyUpdateCounterDisplay();
+        brainyShowScoreFlash('0', '3 Fehl-Versuche', () => { brainyNextTargetOrEnd(); });
+
+      } else {
+        // Fehlversuch 1 oder 2 — roter Puls, danach darf erneut gewaehlt werden
+        brainyPulseRedBorder(() => {
+          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
         });
-        window._brainyHitsTotal = (window._brainyHitsTotal || 0) + _hits.length;
-      }
-      brainyUpdateCounterDisplay();
-
-      const clicksNow = window._brainyClicksUsed;
-      const gameOver = clicksNow >= 24;
-
-      if (gameOver) {
-        gamePhase = 'ende';
-        setTimeout(() => { endSixTargetGame(); }, 900);
-      } else if (clicksNow % 6 === 0) {
-        // Automatischer Level-Aufstieg alle 6 Kippentscheidungen (bei 6, 12, 18)
-        setTimeout(() => { brainyLevelUp(); }, 2000);
       }
     }
 
-    // Spielende: Score + TEILEN/NOCHMAL Buttons anzeigen
+    // Naechstes Kippziel oder Spielende nach 6 Zielen
+    function brainyNextTargetOrEnd() {
+      const gespielt = window._brainyZieleGespielt || 0;
+      if (gespielt >= 6) {
+        gamePhase = 'ende';
+        endSixTargetGame();
+      } else {
+        brainyGenerateSingleTarget();
+        if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+      }
+    }
+
+
+    // Spielende nach 6 Kippzielen: ab 12 Punkten Level-Aufstieg, sonst Wiederholung
     function endSixTargetGame() {
-      // Tasten ausblenden
-      const nb = document.getElementById('numBtns');
-      if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
-      if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+      const punkte = window._brainyHitsTotal || 0;
 
-      // Oben (X/24 + gruene Trefferzahl) bleibt unveraendert stehen — keine Aenderung hier.
-
-      // Noch offene (nicht getroffene) Kippziel-Karten entfernen
+      // Alle Karten ausblenden
       for (let i = 0; i < 6; i++) {
-        if (window._sixTargets[i] && !window._sixTargets[i].done && gameCards[i] && gameCards[i].mesh) {
-          gameCards[i].mesh.visible = false;
-        }
+        if (gameCards[i] && gameCards[i].mesh) gameCards[i].mesh.visible = false;
       }
 
-      const totalHits = window._brainyHitsTotal || 0;
-      if (typeof saveHighScore === 'function') saveHighScore(totalHits);
-
-      const btn1Action = () => { location.href = 'kipp_number.html'; };
-      showLevelEndButtons('', totalHits, 24 - totalHits, btn1Action, null, null);
+      if (punkte >= 12) {
+        // Genug Punkte — automatisch ins naechste Level
+        if (currentLevel >= 4) {
+          // Alle Level geschafft: Spiel endgueltig zu Ende
+          const nb = document.getElementById('numBtns');
+          if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
+          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+          if (typeof saveHighScore === 'function') saveHighScore(punkte);
+          const btn1Action = () => { location.href = 'kipp_number.html'; };
+          showLevelEndButtons('', punkte, 0, btn1Action, null, null);
+          return;
+        }
+        brainyShowScoreFlash('', 'Naechstes Level!', () => {
+          currentLevel++;
+          const _cfg = LEVEL_CFG[currentLevel];
+          window._brLevelCfg = _cfg;
+          brainyBuildDeck(_cfg);
+          updateFaceSlots();
+          updateAllFaceTextures();
+          window._brainyZieleGespielt = 0;
+          window._brainyHitsTotal = 0;
+          brainyUpdateCounterDisplay();
+          gamePhase = 'spielen';
+          brainyGenerateSingleTarget();
+          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+        });
+      } else {
+        // Zu wenig Punkte — gleiches Level nochmal von vorne
+        const fehlt = 12 - punkte;
+        brainyShowScoreFlash('Um ' + fehlt + ' zu wenig', 'f&uuml;rs n&auml;chste Level', () => {
+          window._brainyZieleGespielt = 0;
+          window._brainyHitsTotal = 0;
+          brainyUpdateCounterDisplay();
+          gamePhase = 'spielen';
+          brainyGenerateSingleTarget();
+          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+        });
+      }
     }
 
     // CW/CCW: wenn Zahl schon gewählt → Kipp starten
@@ -13131,15 +13233,17 @@
     // Generiert 6 neue offene Kippziele fuer den aktuellen Zahlenpool (_cfg.maxZahl),
     // unter Beachtung der Ausschlussregel (sichtbare Zahl+Wandfarbe schon erfuellt)
     // und der "nicht alle 6 mit Zahl 1"-Regel. Wiederverwendbar bei Spielstart UND nach Level-Aufstieg.
-    function brainyGenerateSixTargets() {
+    // === EINZEL-KIPPZIEL-SYSTEM ===
+    // Erzeugt genau EIN Kippziel, waagrecht mittig zentriert.
+    // Zahl muss auf der aktuellen Topface sichtbar sein, aber NIE mit der Farbe
+    // kombiniert, an der sie bereits anliegt (waere sonst schon erfuellt).
+    function brainyGenerateSingleTarget() {
       const _cfg = window._brLevelCfg || LEVEL_CFG[1];
-      window._sixTargets = [];
 
-      // ALLE 6 Karten komplett zuruecksetzen (auch nicht getroffene alte Ziele werden geloescht)
+      // Alle Karten zuruecksetzen, laufende Animationen entwerten
       for (let i = 0; i < 6; i++) {
         if (gameCards[i] && gameCards[i].mesh) {
           const m = gameCards[i].mesh;
-          // Generation hochzaehlen: entwertet alle noch laufenden Flug-Animationen dieser Karte
           if (m.userData._flyGen === undefined) m.userData._flyGen = 0;
           m.userData._flyGen++;
           m.visible = false;
@@ -13150,102 +13254,52 @@
         }
       }
 
-      recalcCardLayout(6);
+      // Nur 1 Karte, mittig zentriert
+      numActiveCards = 1;
+      cardStartX = 0;
+      gameCards[0].mesh.position.set(0, cardY, cardZ);
 
       const _faceOffsets = { f0: 0, f1: 4, f2: 8 };
       const _slotNames = ['S1', 'S2', 'S3', 'S4'];
       const _topOff = _faceOffsets[topFace];
+
+      // Sichtbare Zahlen auf der Topface + ihre bereits erfuellte Wandfarbe
       const _visiblePairs = [];
       if (_topOff !== undefined) {
         for (let _i = 0; _i < 4; _i++) {
           const _z = deck[_topOff + _i];
           if (_z > 0) {
             const _wandFarbe = SLOT_NEIGHBOR_COLORS[currentQuadrant] && SLOT_NEIGHBOR_COLORS[currentQuadrant][_slotNames[_i]];
-            if (_wandFarbe) _visiblePairs.push({ zahl: _z, forbiddenColor: _wandFarbe });
+            _visiblePairs.push({ zahl: _z, forbiddenColor: _wandFarbe || null });
           }
         }
       }
-      function isForbiddenCombo(zahl, colorName) {
-        return _visiblePairs.some(p => p.zahl === zahl && p.forbiddenColor === colorName);
-      }
 
-      const usedCombos = new Set();
-      function pickValidCombo(forceZahl) {
-        let zahl, colorObj, key, tries = 0;
-        do {
-          zahl = forceZahl != null ? forceZahl : (1 + Math.floor(Math.random() * _cfg.maxZahl));
-          colorObj = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
-          key = zahl + '_' + colorObj.name;
-          tries++;
-          if (!usedCombos.has(key) && !isForbiddenCombo(zahl, colorObj.name)) break;
-        } while (tries < 50);
-        usedCombos.add(key);
-        return { zahl, colorObj };
-      }
-
-      // Hilfsfunktion: alle Zahlen einer bestimmten Flaeche auslesen
-      function zahlenVonFace(faceKey) {
-        const off = _faceOffsets[faceKey];
-        const out = [];
-        if (off === undefined) return out;
-        for (let i = 0; i < 4; i++) {
-          const z = deck[off + i];
-          if (z > 0) out.push(z);
-        }
-        return out;
-      }
-
-      function shuffle(arr) {
-        const a = arr.slice();
-        for (let i = a.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          const t = a[i]; a[i] = a[j]; a[j] = t;
-        }
-        return a;
-      }
-
-      // === Levelabhaengige Zahlenverteilung fuer die 6 Kippziele ===
-      let _zahlenPlan = [];
-      if (currentLevel === 1) {
-        // BUMBLEBRAIN (Zahlen 1-3): jede Zahl doppelt = 6 Ziele
-        for (let z = 1; z <= 3; z++) { _zahlenPlan.push(z); _zahlenPlan.push(z); }
-        _zahlenPlan = shuffle(_zahlenPlan);
-      } else if (currentLevel === 2) {
-        // BRAINY (Zahlen 1-6): jede Zahl genau einmal = 6 Ziele
-        for (let z = 1; z <= 6; z++) _zahlenPlan.push(z);
-        _zahlenPlan = shuffle(_zahlenPlan);
+      // Eine sichtbare Zahl waehlen
+      let zahl, forbiddenColor = null;
+      if (_visiblePairs.length > 0) {
+        const pick = _visiblePairs[Math.floor(Math.random() * _visiblePairs.length)];
+        zahl = pick.zahl;
+        forbiddenColor = pick.forbiddenColor;
       } else {
-        // BRAIN / MASTERBRAIN: 1 Zahl von der Topface, 5 von den anderen beiden Faces
-        const allFaces = ['f0', 'f1', 'f2'];
-        const otherFaces = allFaces.filter(f => f !== topFace);
-        const topZahlen = shuffle(zahlenVonFace(topFace));
-        let otherZahlen = [];
-        otherFaces.forEach(f => { otherZahlen = otherZahlen.concat(zahlenVonFace(f)); });
-        otherZahlen = shuffle(otherZahlen);
-
-        if (topZahlen.length > 0) _zahlenPlan.push(topZahlen[0]);
-        for (let i = 0; i < otherZahlen.length && _zahlenPlan.length < 6; i++) {
-          _zahlenPlan.push(otherZahlen[i]);
-        }
-        // Falls noch nicht 6 zusammen: mit zufaelligen Zahlen aus dem Pool auffuellen
-        while (_zahlenPlan.length < 6) {
-          _zahlenPlan.push(1 + Math.floor(Math.random() * _cfg.maxZahl));
-        }
+        zahl = 1 + Math.floor(Math.random() * _cfg.maxZahl);
       }
 
-      const _combos = _zahlenPlan.slice(0, 6).map(z => pickValidCombo(z));
+      // Farbe waehlen, aber nie die bereits erfuellte
+      const erlaubteFarben = GAME_COLORS.filter(c => c.name !== forbiddenColor);
+      const colorObj = erlaubteFarben[Math.floor(Math.random() * erlaubteFarben.length)];
 
-      for (let i = 0; i < 6; i++) {
-        const combo = _combos[i];
-        fillCardWithKombi(i, combo.zahl, combo.colorObj);
-        gameCards[i].mesh.visible = true;
-        gameCards[i].mesh.material.opacity = 1;
-        gameCards[i].mesh.material.transparent = false;
-        gameCards[i].mesh.scale.set(1, 1, 1);
-        gameCards[i].mesh.rotation.z = 0; // Rotation von evtl. vorherigem Flug zuruecksetzen
-        window._sixTargets.push({ zahl: combo.zahl, color: combo.colorObj.name, done: false });
-      }
+      fillCardWithKombi(0, zahl, colorObj);
+      gameCards[0].mesh.visible = true;
+      gameCards[0].mesh.material.opacity = 1;
+      gameCards[0].mesh.material.transparent = false;
+      gameCards[0].mesh.scale.set(1, 1, 1);
+      gameCards[0].mesh.rotation.z = 0;
+
+      window._sixTargets = [{ zahl: zahl, color: colorObj.name, done: false }];
+      window._targetVersuche = 0; // Versuchszaehler fuer dieses Ziel (0-3)
     }
+
 
     // Erweitert den Wuerfel um 3 zusaetzliche Zahlen (1 pro Flaeche) beim automatischen Level-Aufstieg.
     // Level 1->2: maxZahl 3->6, Level 2->3: 6->9, Level 3->4: 9->12
@@ -13257,7 +13311,7 @@
       brainyBuildDeck(_cfg);
       updateFaceSlots();
       updateAllFaceTextures();
-      brainyGenerateSixTargets();
+      brainyGenerateSingleTarget();
     }
 
     async function startSixTargetGame() {
@@ -13307,7 +13361,7 @@
       if (eye) eye.style.display = 'none';
 
       // 6 offene Kippziele anzeigen
-      brainyGenerateSixTargets();
+      brainyGenerateSingleTarget();
 
       // Tasten einblenden: exakt im 45px-Raster positioniert (8 Spalten, 6 Tasten zentriert),
       // vertikal 0,5 Rasterquadrat (22,5px) unter den Kippziel-Karten
