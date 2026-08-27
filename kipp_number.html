@@ -13201,15 +13201,17 @@
       await runKippSequence(steps, 'auto');
     }
 
-    // Zeigt "Kippziel x/4" an, erzeugt danach das Ziel und gibt den Spieler frei
+    // Erzeugt das naechste Ziel; nur bei Levelwechsel/Start mit kurzer Level-Ansage
     function brainyAnnounceAndStartTarget(showLevelToo) {
-      const zielNr = (window._brainyZieleGespielt || 0) + 1;
-      const zeile1 = showLevelToo ? ('Level ' + currentLevel + '/4') : '';
-      const zeile2 = 'Kippziel ' + zielNr + '/4';
-      brainyShowScoreFlash(zeile1, zeile2, () => {
+      if (showLevelToo) {
+        brainyShowScoreFlash('', 'Level ' + currentLevel + '/4', () => {
+          brainyGenerateSingleTarget();
+          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+        });
+      } else {
         brainyGenerateSingleTarget();
         if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
-      });
+      }
     }
 
     function brainyNextTargetOrEnd() {
