@@ -12972,8 +12972,16 @@
             await checkSixTargetsHit();
           }
 
-          // Erst danach automatisch zurueck nach Q3 (normale Geschwindigkeit)
-          await brainyAutoReturnToQ3(direction);
+          if (window._brainyFailRetry) {
+            // Fehlversuch mit weiteren Versuchen: Spielerkipp exakt rueckwaerts,
+            // damit die Ausgangslage fuer den naechsten Versuch identisch ist
+            window._brainyFailRetry = false;
+            kippDirection = (direction === 'cw') ? 'ccw' : 'cw';
+            await runKippSequence(n, 'auto');
+          } else {
+            // Ziel abgeschlossen: automatisch zurueck nach Q3 mit anderer Face
+            await brainyAutoReturnToQ3(direction);
+          }
 
           // Neues Kippziel erst jetzt — es haengt von der finalen Topface ab
           if (window._brainyZielAbgeschlossen) {
@@ -13137,6 +13145,7 @@
 
         } else {
           // Fehlversuch 1 oder 2 — roter Puls, danach Versuchsanzeige
+          window._brainyFailRetry = true;
           brainyPulseRedBorder(() => {
             const naechsterVersuch = versuch + 1;
             brainyShowScoreFlash('', 'Versuch ' + naechsterVersuch + '/3', () => {
@@ -13392,6 +13401,7 @@
 
       window._sixTargets = [{ zahl: zahl, color: colorObj.name, done: false }];
       window._targetVersuche = 0; // Versuchszaehler fuer dieses Ziel (0-3)
+      window._brainyFailRetry = false;
     }
 
 
