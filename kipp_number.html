@@ -13013,12 +13013,25 @@
       const tEl = document.getElementById('scoreFlashText');
       if (!ov) { if (onDone) onDone(); return; }
       pEl.textContent = pointsText;
+      pEl.style.display = pointsText ? 'block' : 'none';
       tEl.innerHTML = labelText;
+      tEl.style.fontSize = pointsText ? '22px' : '30px';
+
+      const fadeMs = 400, holdMs = 2500;
+      ov.style.transition = 'opacity ' + fadeMs + 'ms ease';
+      ov.style.opacity = '0';
       ov.style.display = 'flex';
+      // Fade in
+      requestAnimationFrame(() => { ov.style.opacity = '1'; });
+
       setTimeout(() => {
-        ov.style.display = 'none';
-        if (onDone) onDone();
-      }, 1800);
+        // Fade out
+        ov.style.opacity = '0';
+        setTimeout(() => {
+          ov.style.display = 'none';
+          if (onDone) onDone();
+        }, fadeMs);
+      }, fadeMs + holdMs);
     }
 
     // Roter pulsierender Rahmen am Kippziel bei Fehlversuch
@@ -13048,8 +13061,8 @@
         }
         ctx.save();
         ctx.strokeStyle = 'rgba(255,40,40,' + a.toFixed(3) + ')';
-        ctx.lineWidth = 22;
-        ctx.strokeRect(11, 11, canvas.width - 22, canvas.height - 22);
+        ctx.lineWidth = 11;
+        ctx.strokeRect(5.5, 5.5, canvas.width - 11, canvas.height - 11);
         ctx.restore();
         card.texture.needsUpdate = true;
         requestAnimationFrame(pulse);
@@ -13114,10 +13127,13 @@
           });
 
         } else {
-          // Fehlversuch 1 oder 2 — roter Puls, danach darf erneut gewaehlt werden
+          // Fehlversuch 1 oder 2 — roter Puls, danach Versuchsanzeige
           brainyPulseRedBorder(() => {
-            if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
-            resolveAll();
+            const naechsterVersuch = versuch + 1;
+            brainyShowScoreFlash('', 'Versuch ' + naechsterVersuch + '/3', () => {
+              if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+              resolveAll();
+            });
           });
         }
       });
