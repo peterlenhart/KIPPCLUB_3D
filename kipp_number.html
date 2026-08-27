@@ -2824,10 +2824,10 @@
       if (btnNext) ui.appendChild(btnNext);
     }
 
-    function saveHighScore(hits) {
+    function saveHighScore(hits, level) {
       try {
         const scores = loadBestScores();
-        scores.push({ hits: hits, ts: Date.now() });
+        scores.push({ hits: hits, level: level || currentLevel || 1, ts: Date.now() });
         scores.sort((a, b) => b.hits - a.hits);
         const top11 = scores.slice(0, 11);
         localStorage.setItem('digikipp_bestscores_v2' + _scoreSuffix, JSON.stringify(top11));
@@ -2881,10 +2881,14 @@
 
     function renderBestScores() {
       const scores = loadBestScores();
-      const bestHits = scores.length ? Math.max(...scores.map(s => s.hits || 0)) : 0;
       const titleEl = document.getElementById('bsTitleText');
       if (titleEl) {
-        titleEl.textContent = 'HIGHSCORE: ' + bestHits;
+        if (scores.length) {
+          const best = scores[0]; // bereits nach hits absteigend sortiert
+          titleEl.textContent = 'Highscore: Level ' + (best.level || 1) + ' | ' + (best.hits || 0);
+        } else {
+          titleEl.textContent = 'Highscore: —';
+        }
       }
 
       let latestIdx = -1;
@@ -2899,8 +2903,9 @@
         if (i < scores.length) {
           const s = scores[i];
           const ul = (i === latestIdx) ? 'text-decoration:underline;text-underline-offset:3px;' : '';
-          el.innerHTML = '<span style="color:#4fdc5a;font-size:20px;font-weight:bold;' + ul + '">' + (s.hits || 0) + '</span>' +
-            ' <span style="color:#888;font-size:13px;' + ul + '">/ 24</span>';
+          el.innerHTML = '<span style="color:#c8c0b0;font-size:15px;' + ul + '">Level ' + (s.level || 1) + '</span>' +
+            ' <span style="color:#888;font-size:14px;' + ul + '">|</span> ' +
+            '<span style="color:#4fdc5a;font-size:20px;font-weight:bold;' + ul + '">' + (s.hits || 0) + '</span>';
         } else {
           el.textContent = '';
         }
@@ -7415,7 +7420,7 @@
     function brainyUpdateCounterDisplay() {
       const cEl = document.getElementById('brainyClickCounter');
       const hEl = document.getElementById('brainyHitCounter');
-      if (cEl) cEl.textContent = (window._brainyZieleGespielt || 0) + '/6';
+      if (cEl) cEl.textContent = (window._brainyZieleGespielt || 0) + '/4';
       if (hEl) hEl.textContent = String(window._brainyHitsTotal || 0);
     }
 
@@ -10797,6 +10802,12 @@
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
+      // Laufenden Punktestand als Highscore-Eintrag sichern (Abbruch)
+      if (gamePhase === 'spielen' && (window._brainyHitsTotal || 0) > 0) {
+        if (typeof saveHighScore === 'function') {
+          saveHighScore(window._brainyHitsTotal, currentLevel);
+        }
+      }
       // KIPP-TIPP Overlay schließen falls offen
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
       disableReplayBlocker();
@@ -13037,8 +13048,8 @@
       tEl.innerHTML = labelText;
       tEl.style.fontSize = pointsText ? (istZahl ? '22px' : '26px') : '30px';
 
-      const fadeMs = 400, holdMs = 2500;
-      ov.style.transition = 'opacity ' + fadeMs + 'ms ease';
+      const fadeMs = 700, holdMs = 3000;
+      ov.style.transition = 'opacity ' + fadeMs + 'ms cubic-bezier(0.4, 0.0, 0.2, 1)';
       ov.style.opacity = '0';
       ov.style.display = 'flex';
       // Fade in
@@ -13190,14 +13201,24 @@
       await runKippSequence(steps, 'auto');
     }
 
+    // Zeigt "Kippziel x/4" an, erzeugt danach das Ziel und gibt den Spieler frei
+    function brainyAnnounceAndStartTarget(showLevelToo) {
+      const zielNr = (window._brainyZieleGespielt || 0) + 1;
+      const zeile1 = showLevelToo ? ('Level ' + currentLevel + '/4') : '';
+      const zeile2 = 'Kippziel ' + zielNr + '/4';
+      brainyShowScoreFlash(zeile1, zeile2, () => {
+        brainyGenerateSingleTarget();
+        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+      });
+    }
+
     function brainyNextTargetOrEnd() {
       const gespielt = window._brainyZieleGespielt || 0;
-      if (gespielt >= 6) {
+      if (gespielt >= 4) {
         gamePhase = 'ende';
         endSixTargetGame();
       } else {
-        brainyGenerateSingleTarget();
-        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+        brainyAnnounceAndStartTarget(false);
       }
     }
 
@@ -13213,7 +13234,7 @@
         if (gameCards[i] && gameCards[i].mesh) gameCards[i].mesh.visible = false;
       }
 
-      if (levelPunkte >= 12) {
+      if (levelPunkte >= 9) {
         // Genug Punkte — automatisch ins naechste Level
         if (currentLevel >= 4) {
           // Alle Level geschafft: Spiel endgueltig zu Ende
@@ -13225,7 +13246,7 @@
           showLevelEndButtons('', gesamtPunkte, 0, btn1Action, null, null);
           return;
         }
-        brainyShowScoreFlash('', 'N&auml;chstes Level!', () => {
+        brainyShowScoreFlash('', 'Level ' + (currentLevel + 1) + '/4', () => {
           currentLevel++;
           const _cfg = LEVEL_CFG[currentLevel];
           window._brLevelCfg = _cfg;
@@ -13236,19 +13257,17 @@
           window._brainyLevelPunkte = 0;   // Levelzaehler zurueck, Gesamtpunkte bleiben
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
-          brainyGenerateSingleTarget();
-          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+          brainyAnnounceAndStartTarget(true);
         });
       } else {
         // Zu wenig Punkte — gleiches Level nochmal von vorne
-        const fehlt = 12 - levelPunkte;
+        const fehlt = 9 - levelPunkte;
         brainyShowScoreFlash('Um ' + fehlt + ' zu wenig', 'f&uuml;rs n&auml;chste Level', () => {
           window._brainyZieleGespielt = 0;
           window._brainyLevelPunkte = 0;   // Levelzaehler zurueck, Gesamtpunkte bleiben
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
-          brainyGenerateSingleTarget();
-          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+          brainyAnnounceAndStartTarget(true);
         });
       }
     }
@@ -13382,7 +13401,7 @@
       // Ab Ziel 3: nur Zahlen der beiden anderen Faces (Topface-Zahlen ausgeschlossen).
       const _zielNr = (window._brainyZieleGespielt || 0) + 1;
       let zahl, forbiddenColor = null;
-      if (_zielNr <= 2 && _visiblePairs.length > 0) {
+      if (_zielNr === 1 && _visiblePairs.length > 0) {
         const pick = _visiblePairs[Math.floor(Math.random() * _visiblePairs.length)];
         zahl = pick.zahl;
         forbiddenColor = pick.forbiddenColor;
@@ -13470,8 +13489,8 @@
       const eye = document.getElementById('eyeIcon');
       if (eye) eye.style.display = 'none';
 
-      // 6 offene Kippziele anzeigen
-      brainyGenerateSingleTarget();
+      // Startanzeige "Level 1/4" + "Kippziel 1/4", danach erstes Ziel
+      brainyAnnounceAndStartTarget(true);
 
       // Tasten einblenden: exakt im 45px-Raster positioniert (8 Spalten, 6 Tasten zentriert),
       // vertikal 0,5 Rasterquadrat (22,5px) unter den Kippziel-Karten
@@ -13490,7 +13509,7 @@
         const ccwBtn = document.getElementById('ccwDirBtn');
         if (cwBtn) { cwBtn.style.left = '2px'; cwBtn.style.top = '527px'; }
         if (ccwBtn) { ccwBtn.style.left = '313px'; ccwBtn.style.top = '527px'; }
-        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+        if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
       }
 
       setButtonsDisabled(false);
