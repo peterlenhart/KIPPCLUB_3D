@@ -13134,8 +13134,8 @@
             animateCardFly(card, currentQuadrant, hitSlot, false);
           }
           let pts = 0, label = '';
-          if (versuch === 1) { pts = 3; label = 'Perfekte Kippfolge'; }
-          else if (versuch === 2) { pts = 2; label = 'BRAVO'; }
+          if (versuch === 1) { pts = 5; label = 'Perfekte Kippfolge'; }
+          else if (versuch === 2) { pts = 3; label = 'BRAVO'; }
           else { pts = 1; label = ''; }
 
           window._brainyHitsTotal = (window._brainyHitsTotal || 0) + pts;
@@ -13236,7 +13236,7 @@
         if (gameCards[i] && gameCards[i].mesh) gameCards[i].mesh.visible = false;
       }
 
-      if (levelPunkte >= 9) {
+      if (levelPunkte >= 14) {
         // Genug Punkte — automatisch ins naechste Level
         if (currentLevel >= 4) {
           // Alle Level geschafft: Spiel endgueltig zu Ende
@@ -13263,7 +13263,7 @@
         });
       } else {
         // Zu wenig Punkte — gleiches Level nochmal von vorne
-        const fehlt = 9 - levelPunkte;
+        const fehlt = 14 - levelPunkte;
         brainyShowScoreFlash('Um ' + fehlt + ' zu wenig', 'f&uuml;rs n&auml;chste Level', () => {
           window._brainyZieleGespielt = 0;
           window._brainyLevelPunkte = 0;   // Levelzaehler zurueck, Gesamtpunkte bleiben
