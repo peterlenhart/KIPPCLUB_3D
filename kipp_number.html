@@ -7192,8 +7192,8 @@
 
     // === LEVEL-Konfig ===
     const LEVEL_CFG = {
-      1: { zahlenProFace: 1, maxZahl: 3,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: false, pairCount: 1 },
-      2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY', pairMode: false, pairCount: 2 },
+      1: { zahlenProFace: 1, maxZahl: 4,  ablenkGems: 0, name: 'BUMBLEBRAIN', pairMode: true, pairCount: 2 },
+      2: { zahlenProFace: 2, maxZahl: 6,  ablenkGems: 1, name: 'BRAINY', pairMode: true, pairCount: 3 },
       3: { zahlenProFace: 3, maxZahl: 8,  ablenkGems: 2, name: 'BRAIN', pairMode: true, pairCount: 4 },
       4: { zahlenProFace: 4, maxZahl: 12, ablenkGems: 3, name: 'MASTERBRAIN', pairMode: true, pairCount: 6 }
     };
@@ -12925,15 +12925,24 @@
         btns.forEach(b => b.classList.remove('numBtnBlink'));
       }
       window._startNumPulse = startNumPulse;
+      window._stopNumPulse = stopNumPulse;
 
+      // Setzt Auswahl zurueck OHNE das Blinken zu starten
       function clearSelection() {
         selectedNum = null;
         btns.forEach(b => b.classList.remove('numBtnSelected'));
         if (cwBtn) { cwBtn.style.display = 'none'; cwBtn.classList.remove('dirBtnBlink'); }
         if (ccwBtn) { ccwBtn.style.display = 'none'; ccwBtn.classList.remove('dirBtnBlink'); }
-        startNumPulse();
+        stopNumPulse();
       }
       window._clearNumSelection = clearSelection;
+
+      // Spieler ist am Zug: Auswahl zuruecksetzen UND Blinken starten
+      function enablePlayerTurn() {
+        clearSelection();
+        startNumPulse();
+      }
+      window._enablePlayerTurn = enablePlayerTurn;
 
       function selectNumber(n, btn) {
         if (window._brainyTutorialMode) return;
@@ -13131,7 +13140,7 @@
           brainyPulseRedBorder(() => {
             const naechsterVersuch = versuch + 1;
             brainyShowScoreFlash('', 'Versuch ' + naechsterVersuch + '/3', () => {
-              if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+              if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
               resolveAll();
             });
           });
@@ -13175,7 +13184,7 @@
         endSixTargetGame();
       } else {
         brainyGenerateSingleTarget();
-        if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
       }
     }
 
@@ -13213,7 +13222,7 @@
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
           brainyGenerateSingleTarget();
-          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
         });
       } else {
         // Zu wenig Punkte — gleiches Level nochmal von vorne
@@ -13224,7 +13233,7 @@
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
           brainyGenerateSingleTarget();
-          if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
         });
       }
     }
@@ -13465,7 +13474,7 @@
         const ccwBtn = document.getElementById('ccwDirBtn');
         if (cwBtn) { cwBtn.style.left = '2px'; cwBtn.style.top = '527px'; }
         if (ccwBtn) { ccwBtn.style.left = '313px'; ccwBtn.style.top = '527px'; }
-        if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
       }
 
       setButtonsDisabled(false);
