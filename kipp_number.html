@@ -7406,6 +7406,7 @@
       brainyEnsureLivesUI();
       window._brainyZieleGespielt = 0;
       window._brainyHitsTotal = 0;
+      window._brainyLevelPunkte = 0;
       window._targetVersuche = 0;
       brainyUpdateCounterDisplay();
     }
@@ -12973,11 +12974,9 @@
           }
 
           if (window._brainyFailRetry) {
-            // Fehlversuch mit weiteren Versuchen: Spielerkipp exakt rueckwaerts,
-            // damit die Ausgangslage fuer den naechsten Versuch identisch ist
+            // Fehlversuch mit weiteren Versuchen: KEIN Rueckkipp,
+            // der Wuerfel bleibt in seiner aktuellen Lage stehen
             window._brainyFailRetry = false;
-            kippDirection = (direction === 'cw') ? 'ccw' : 'cw';
-            await runKippSequence(n, 'auto');
           } else {
             // Ziel abgeschlossen: automatisch zurueck nach Q3 mit anderer Face
             await brainyAutoReturnToQ3(direction);
@@ -13125,6 +13124,7 @@
           else { pts = 1; label = ''; }
 
           window._brainyHitsTotal = (window._brainyHitsTotal || 0) + pts;
+          window._brainyLevelPunkte = (window._brainyLevelPunkte || 0) + pts;
           window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
           brainyUpdateCounterDisplay();
 
@@ -13198,28 +13198,30 @@
     }
 
 
-    // Spielende nach 6 Kippzielen: ab 12 Punkten Level-Aufstieg, sonst Wiederholung
+    // Spielende nach 6 Kippzielen: ab 12 Levelpunkten Aufstieg, sonst Wiederholung.
+    // Die Gesamtpunktzahl laeuft ueber alle Level weiter (Uebertrag).
     function endSixTargetGame() {
-      const punkte = window._brainyHitsTotal || 0;
+      const levelPunkte = window._brainyLevelPunkte || 0;
+      const gesamtPunkte = window._brainyHitsTotal || 0;
 
       // Alle Karten ausblenden
       for (let i = 0; i < 6; i++) {
         if (gameCards[i] && gameCards[i].mesh) gameCards[i].mesh.visible = false;
       }
 
-      if (punkte >= 12) {
+      if (levelPunkte >= 12) {
         // Genug Punkte — automatisch ins naechste Level
         if (currentLevel >= 4) {
           // Alle Level geschafft: Spiel endgueltig zu Ende
           const nb = document.getElementById('numBtns');
           if (nb) { nb.classList.add('hidden'); nb.style.display = 'none'; }
           if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
-          if (typeof saveHighScore === 'function') saveHighScore(punkte);
+          if (typeof saveHighScore === 'function') saveHighScore(gesamtPunkte);
           const btn1Action = () => { location.href = 'kipp_number.html'; };
-          showLevelEndButtons('', punkte, 0, btn1Action, null, null);
+          showLevelEndButtons('', gesamtPunkte, 0, btn1Action, null, null);
           return;
         }
-        brainyShowScoreFlash('', 'Naechstes Level!', () => {
+        brainyShowScoreFlash('', 'N&auml;chstes Level!', () => {
           currentLevel++;
           const _cfg = LEVEL_CFG[currentLevel];
           window._brLevelCfg = _cfg;
@@ -13227,7 +13229,7 @@
           updateFaceSlots();
           updateAllFaceTextures();
           window._brainyZieleGespielt = 0;
-          window._brainyHitsTotal = 0;
+          window._brainyLevelPunkte = 0;   // Levelzaehler zurueck, Gesamtpunkte bleiben
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
           brainyGenerateSingleTarget();
@@ -13235,10 +13237,10 @@
         });
       } else {
         // Zu wenig Punkte — gleiches Level nochmal von vorne
-        const fehlt = 12 - punkte;
+        const fehlt = 12 - levelPunkte;
         brainyShowScoreFlash('Um ' + fehlt + ' zu wenig', 'f&uuml;rs n&auml;chste Level', () => {
           window._brainyZieleGespielt = 0;
-          window._brainyHitsTotal = 0;
+          window._brainyLevelPunkte = 0;   // Levelzaehler zurueck, Gesamtpunkte bleiben
           brainyUpdateCounterDisplay();
           gamePhase = 'spielen';
           brainyGenerateSingleTarget();
