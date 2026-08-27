@@ -13030,8 +13030,12 @@
       if (!ov) { if (onDone) onDone(); return; }
       pEl.textContent = pointsText;
       pEl.style.display = pointsText ? 'block' : 'none';
+      // Reine Zahlen gross, Textmeldungen kleiner und zentriert
+      const istZahl = /^[+\-]?\d+$/.test(pointsText.trim());
+      pEl.style.fontSize = istZahl ? '64px' : '26px';
+      pEl.style.textAlign = 'center';
       tEl.innerHTML = labelText;
-      tEl.style.fontSize = pointsText ? '22px' : '30px';
+      tEl.style.fontSize = pointsText ? (istZahl ? '22px' : '26px') : '30px';
 
       const fadeMs = 400, holdMs = 2500;
       ov.style.transition = 'opacity ' + fadeMs + 'ms ease';
