@@ -586,6 +586,62 @@
     .dirBtnFixed.dirBtnBlink {
       animation: dirBtnBlinkAnim 1.5s ease-in-out infinite;
     }
+    @keyframes goldRays {
+      0%   { transform: rotate(0deg) scale(0.3); opacity:0; }
+      20%  { opacity:0.85; }
+      100% { transform: rotate(220deg) scale(1.5); opacity:0; }
+    }
+    @keyframes goldShockwave {
+      0%   { transform: scale(0.2); opacity:0.95; border-width:6px; }
+      100% { transform: scale(3.2); opacity:0; border-width:1px; }
+    }
+    @keyframes goldFlash {
+      0%   { opacity:0; }
+      12%  { opacity:0.85; }
+      100% { opacity:0; }
+    }
+    @keyframes goldTitleIn {
+      0%   { transform:translateY(26px) scale(0.7); opacity:0; letter-spacing:16px; }
+      60%  { transform:translateY(0) scale(1.06); opacity:1; letter-spacing:6px; }
+      100% { transform:translateY(0) scale(1); opacity:1; letter-spacing:8px; }
+    }
+    @keyframes goldShimmer {
+      0%   { background-position:-220% 0; }
+      100% { background-position: 320% 0; }
+    }
+    /* === GOLDWUERFEL-PRAESENTATION === */
+    @keyframes goldSpin {
+      0%   { transform: rotateX(-22deg) rotateY(0deg)   rotateZ(45deg) scale(0.4); }
+      18%  { transform: rotateX(-22deg) rotateY(140deg) rotateZ(45deg) scale(1.08); }
+      30%  { transform: rotateX(-22deg) rotateY(260deg) rotateZ(45deg) scale(1); }
+      70%  { transform: rotateX(-22deg) rotateY(540deg) rotateZ(45deg) scale(1); }
+      100% { transform: rotateX(-22deg) rotateY(720deg) rotateZ(45deg) scale(1); }
+    }
+    @keyframes goldGlow {
+      0%,100% { filter: drop-shadow(0 0 14px rgba(255,190,60,0.55)) drop-shadow(0 0 34px rgba(255,150,20,0.3)); }
+      50%     { filter: drop-shadow(0 0 26px rgba(255,220,110,0.95)) drop-shadow(0 0 60px rgba(255,170,40,0.6)); }
+    }
+    @keyframes sparkFly {
+      0%   { transform: translate(0,0) scale(0); opacity:0; }
+      15%  { opacity:1; }
+      100% { transform: translate(var(--sx), var(--sy)) scale(1.15); opacity:0; }
+    }
+    @keyframes gridPop {
+      0%   { transform: rotate(45deg) scale(2.2); opacity:0; }
+      55%  { transform: rotate(45deg) scale(0.88); opacity:1; }
+      100% { transform: rotate(45deg) scale(1); opacity:1; }
+    }
+    .goldSpark {
+      position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px;
+      background:radial-gradient(circle, #fff 0%, #ffd447 40%, rgba(255,180,40,0) 70%);
+      border-radius:50%; pointer-events:none;
+      animation: sparkFly 1.5s ease-out forwards;
+    }
+    .goldGridCube {
+      position:absolute;
+      animation: gridPop 620ms cubic-bezier(0.16,1,0.3,1) forwards;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,0.8)) drop-shadow(0 0 10px rgba(255,190,60,0.45));
+    }
     @keyframes dirBtnBlinkAnim {
       0%, 100% { opacity: 0.35; }
       50%      { opacity: 1; }
@@ -1153,6 +1209,12 @@
     <div id="scoreFlashOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; background:radial-gradient(ellipse at 50% 38%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.88) 65%); z-index:9000; display:none; pointer-events:none; align-items:flex-start; justify-content:flex-start; flex-direction:column; padding-top:215px;">
       <div id="scoreFlashPoints" style="width:100%; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:76px; letter-spacing:2px; line-height:1; color:#f4e4b8; text-shadow:0 0 22px rgba(255,200,80,0.55), 0 4px 0 #6b4a18, 0 6px 14px rgba(0,0,0,0.95);"></div>
       <div id="scoreFlashText" style="width:100%; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:40px; letter-spacing:5px; line-height:1.15; margin-top:14px; color:#ffffff; text-shadow:0 0 26px rgba(255,255,255,0.4), 0 3px 0 rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.9);"></div>
+    </div>
+
+    <!-- Goldwuerfel-Sammlung: 2 Spalten x 5 Zeilen, Wuerfel wachsen progressiv -->
+    <div id="goldSammlungOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; z-index:9100; display:none; pointer-events:none; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.85) 0%, rgba(0,0,0,0.95) 70%);">
+      <div id="goldGrid" style="position:absolute; left:0; top:150px; width:360px; height:500px;"></div>
+      <div id="goldPresenter" style="position:absolute; left:50%; top:265px; width:200px; height:200px; margin-left:-100px; opacity:0;"></div>
     </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
@@ -3110,11 +3172,12 @@
       kipp21Active = _savedKipp21Active;
     });
     
+    // Pokal zeigt die Goldwuerfel-Sammlung statt der alten Scoretafel
     document.getElementById('btnBestScores').addEventListener('click', () => {
-      showBestScores();
+      brainyZeigeSammlung();
     });
     document.getElementById('btnBestScores').addEventListener('touchend', (e) => {
-      e.preventDefault(); showBestScores();
+      e.preventDefault(); brainyZeigeSammlung();
     }, { passive: false });
     
     function updateSoundIcon() {
@@ -7266,7 +7329,7 @@
     function brainyBuildDeck(cfg, additiv) {
       // Schwierigkeitsstufe 1/5: nur die "1" auf einem beliebigen Slot der Topface (f2 in Q3).
       // Mit 3 Kipps sind von dort genau die beiden benachbarten Farbfelder erreichbar.
-      if (window._brainySchwierigkeit === 1) {
+      if (window._brainySchwierigkeit <= 2) {
         deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
         visibleDeckIndices.clear();
         const slotIdx = Math.floor(Math.random() * 4);  // 0..3 = S1..S4
@@ -7455,6 +7518,215 @@
     const BRAINY_CUBE_BEIGE = () => brainyCubeSVG('#e8dcc4', '#c8b89c', '#b0a086', '#7a6b52');
     const BRAINY_CUBE_GREEN = () => brainyCubeSVG('#6fdc7a', '#3fb84f', '#2f9c3d', '#1a5c22');
     const BRAINY_CUBE_RED   = () => brainyCubeSVG('#ff6b6b', '#c0392b', '#a0281e', '#5a1812');
+    const BRAINY_CUBE_GOLD  = () => brainyCubeSVG('#ffe066', '#e0a92e', '#b8801c', '#6b4a10');
+
+    // === GOLDWUERFEL-SAMMLUNG (2 Spalten x 5 Zeilen, progressiv wachsend) ===
+    // Berechnet: Zelle 180x100px. Auf die Ecke gestellt braucht ein Wuerfel
+    // das 1.4142-fache seiner Kantenlaenge -> max. 59px bei 8px Rand.
+    const GOLD_GRID = { spalten: 2, zeilen: 5, top: 150, hoehe: 500, breite: 360 };
+    const GOLD_MIN = 26, GOLD_MAX = 59;
+
+    function goldZellGeometrie(nr) {           // nr = 1..10
+      const i = nr - 1;
+      const zelleB = GOLD_GRID.breite / GOLD_GRID.spalten;   // 180
+      const zelleH = GOLD_GRID.hoehe / GOLD_GRID.zeilen;     // 100
+      const zeile = Math.floor(i / GOLD_GRID.spalten);
+      const spalte = i % GOLD_GRID.spalten;
+      const groesse = GOLD_MIN + i * ((GOLD_MAX - GOLD_MIN) / 9);
+      return {
+        groesse: groesse,
+        cx: spalte * zelleB + zelleB / 2,
+        cy: zeile * zelleH + zelleH / 2
+      };
+    }
+
+    // Gold-Wuerfel als 3D-CSS-Koerper mit sechs Flaechen
+    function goldCubeHTML(kante) {
+      const h = kante / 2;
+      const flaechen = [
+        ['translateZ(' + h + 'px)',                    'linear-gradient(135deg,#fff3b0 0%,#ffd447 38%,#e0a92e 100%)'],
+        ['rotateY(180deg) translateZ(' + h + 'px)',    'linear-gradient(135deg,#c9922a 0%,#a8761c 100%)'],
+        ['rotateY(90deg) translateZ(' + h + 'px)',     'linear-gradient(135deg,#ffe58a 0%,#d9a02c 100%)'],
+        ['rotateY(-90deg) translateZ(' + h + 'px)',    'linear-gradient(135deg,#d4a032 0%,#9c6f18 100%)'],
+        ['rotateX(90deg) translateZ(' + h + 'px)',     'linear-gradient(135deg,#fffbe0 0%,#ffe073 60%,#e8b83c 100%)'],
+        ['rotateX(-90deg) translateZ(' + h + 'px)',    'linear-gradient(135deg,#b8861f 0%,#8a5f12 100%)']
+      ];
+      let s = '<div style="position:absolute;left:50%;top:50%;width:' + kante + 'px;height:' + kante +
+              'px;margin:' + (-h) + 'px 0 0 ' + (-h) + 'px;transform-style:preserve-3d;">';
+      flaechen.forEach(f => {
+        s += '<div style="position:absolute;width:' + kante + 'px;height:' + kante +
+             'px;background:' + f[1] + ';border:1px solid rgba(120,80,10,0.55);' +
+             'box-shadow:inset 0 0 ' + Math.round(kante/3) + 'px rgba(255,255,255,0.35);' +
+             'transform:' + f[0] + ';"></div>';
+      });
+      return s + '</div>';
+    }
+
+    // Setzt einen bereits gewonnenen Wuerfel statisch ins Raster
+    function goldGridAdd(nr, mitAnimation) {
+      const grid = document.getElementById('goldGrid');
+      if (!grid) return;
+      const g = goldZellGeometrie(nr);
+      const el = document.createElement('div');
+      el.className = 'goldGridCube';
+      el.style.left = (g.cx - g.groesse / 2) + 'px';
+      el.style.top  = (g.cy - g.groesse / 2) + 'px';
+      el.style.width = g.groesse + 'px';
+      el.style.height = g.groesse + 'px';
+      if (!mitAnimation) { el.style.animation = 'none'; el.style.transform = 'rotate(45deg)'; }
+      el.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg,#fff3b0 0%,#ffd447 40%,#d9a02c 100%);border:1px solid rgba(120,80,10,0.6);box-shadow:inset 0 0 ' +
+                     Math.round(g.groesse/3) + 'px rgba(255,255,255,0.45);"></div>';
+      grid.appendChild(el);
+    }
+
+    // Funkelpartikel um den praesentierten Wuerfel
+    function goldSparks(host, anzahl) {
+      for (let i = 0; i < anzahl; i++) {
+        const w = (Math.PI * 2 * i) / anzahl + Math.random() * 0.4;
+        const d = 70 + Math.random() * 55;
+        const sp = document.createElement('div');
+        sp.className = 'goldSpark';
+        sp.style.setProperty('--sx', Math.cos(w) * d + 'px');
+        sp.style.setProperty('--sy', Math.sin(w) * d + 'px');
+        sp.style.animationDelay = (Math.random() * 0.5) + 's';
+        const s = 4 + Math.random() * 7;
+        sp.style.width = s + 'px'; sp.style.height = s + 'px';
+        host.appendChild(sp);
+      }
+    }
+
+    // Zeigt nur die Sammlung (Pokal-Klick) — ohne Praesentation
+    function brainyZeigeSammlung() {
+      const ov = document.getElementById('goldSammlungOverlay');
+      const grid = document.getElementById('goldGrid');
+      if (!ov || !grid) return;
+      if (window._goldOverlayOffen) {   // zweiter Klick schliesst wieder
+        ov.style.opacity = '0';
+        setTimeout(() => { ov.style.display = 'none'; }, 380);
+        window._goldOverlayOffen = false;
+        return;
+      }
+      grid.innerHTML = '';
+      const n = window._brainyGoldwuerfel || 0;
+      for (let i = 1; i <= n; i++) goldGridAdd(i, false);
+      goldZeichneLeereZellen(n);
+      ov.style.pointerEvents = 'none';
+      ov.style.display = 'block';
+      ov.style.transition = 'opacity 380ms ease';
+      ov.style.opacity = '0';
+      requestAnimationFrame(() => { ov.style.opacity = '1'; });
+      window._goldOverlayOffen = true;
+    }
+
+    // Leere Zellen als dezente Platzhalter zeichnen
+    function goldZeichneLeereZellen(abNr) {
+      const grid = document.getElementById('goldGrid');
+      if (!grid) return;
+      for (let nr = abNr + 1; nr <= 10; nr++) {
+        const g = goldZellGeometrie(nr);
+        const el = document.createElement('div');
+        el.style.cssText = 'position:absolute;left:' + (g.cx - g.groesse/2) + 'px;top:' + (g.cy - g.groesse/2) +
+          'px;width:' + g.groesse + 'px;height:' + g.groesse + 'px;transform:rotate(45deg);' +
+          'border:1px dashed rgba(200,160,70,0.28);background:rgba(255,210,110,0.04);';
+        grid.appendChild(el);
+      }
+    }
+
+    // Grosse Praesentation eines neu gewonnenen Goldwuerfels
+    function brainyZeigeGoldwuerfel(nr, onDone) {
+      const ov = document.getElementById('goldSammlungOverlay');
+      const grid = document.getElementById('goldGrid');
+      const pres = document.getElementById('goldPresenter');
+      if (!ov || !pres) { if (onDone) onDone(); return; }
+
+      // Bisher gewonnene Wuerfel + Platzhalter im Hintergrund
+      grid.innerHTML = '';
+      for (let i = 1; i < nr; i++) goldGridAdd(i, false);
+      goldZeichneLeereZellen(nr - 1);
+
+      const kante = 112;
+      pres.innerHTML =
+        // Lichtstrahlen hinter dem Wuerfel
+        '<div style="position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;' +
+        'background:conic-gradient(from 0deg, rgba(255,214,110,0) 0deg, rgba(255,214,110,0.5) 10deg, rgba(255,214,110,0) 24deg,' +
+        'rgba(255,214,110,0) 45deg, rgba(255,230,150,0.45) 55deg, rgba(255,214,110,0) 70deg,' +
+        'rgba(255,214,110,0) 100deg, rgba(255,214,110,0.5) 112deg, rgba(255,214,110,0) 128deg,' +
+        'rgba(255,214,110,0) 160deg, rgba(255,230,150,0.45) 172deg, rgba(255,214,110,0) 188deg,' +
+        'rgba(255,214,110,0) 220deg, rgba(255,214,110,0.5) 232deg, rgba(255,214,110,0) 248deg,' +
+        'rgba(255,214,110,0) 285deg, rgba(255,230,150,0.45) 297deg, rgba(255,214,110,0) 312deg,' +
+        'rgba(255,214,110,0) 360deg);animation:goldRays 2600ms ease-out forwards;"></div>' +
+        // Schockwellen-Ringe
+        '<div style="position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;' +
+        'border:5px solid rgba(255,215,90,0.9);border-radius:50%;animation:goldShockwave 1100ms cubic-bezier(0.2,0.8,0.3,1) 260ms forwards;"></div>' +
+        '<div style="position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;' +
+        'border:3px solid rgba(255,240,170,0.7);border-radius:50%;animation:goldShockwave 1300ms cubic-bezier(0.2,0.8,0.3,1) 460ms forwards;"></div>' +
+        // Der drehende Wuerfel
+        '<div style="position:absolute;left:0;top:0;width:100%;height:100%;perspective:560px;">' +
+        '<div style="position:absolute;left:0;top:0;width:100%;height:100%;transform-style:preserve-3d;' +
+        'animation:goldSpin 2600ms cubic-bezier(0.22,1,0.36,1) forwards, goldGlow 1300ms ease-in-out infinite;">' +
+        goldCubeHTML(kante) + '</div></div>';
+
+      goldSparks(pres, 26);
+
+      // Kurzer heller Blitz ueber das ganze Display
+      const flash = document.createElement('div');
+      flash.style.cssText = 'position:absolute;left:0;top:0;width:360px;height:720px;pointer-events:none;' +
+        'background:radial-gradient(circle at 50% 45%, rgba(255,240,190,0.9) 0%, rgba(255,200,80,0.35) 35%, rgba(255,180,40,0) 65%);' +
+        'animation:goldFlash 900ms ease-out forwards;';
+      ov.appendChild(flash);
+      setTimeout(() => { if (flash.parentNode) flash.parentNode.removeChild(flash); }, 950);
+
+      // Schriftzug mit Gold-Schimmer
+      const titel = document.createElement('div');
+      titel.id = 'goldTitel';
+      titel.textContent = 'GOLD';
+      titel.style.cssText = 'position:absolute;left:0;top:150px;width:360px;text-align:center;' +
+        "font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:52px;letter-spacing:8px;" +
+        'background:linear-gradient(100deg,#a9761c 0%,#ffe89a 28%,#fffdf0 44%,#ffe89a 60%,#a9761c 100%);' +
+        'background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;' +
+        '-webkit-text-fill-color:transparent;filter:drop-shadow(0 3px 0 rgba(70,45,5,0.9)) drop-shadow(0 0 22px rgba(255,190,60,0.7));' +
+        'animation:goldTitleIn 700ms cubic-bezier(0.16,1,0.3,1) 220ms both, goldShimmer 2200ms linear 500ms infinite;';
+      ov.appendChild(titel);
+
+      ov.style.pointerEvents = 'none';
+      ov.style.display = 'block';
+      ov.style.transition = 'opacity 380ms ease';
+      ov.style.opacity = '0';
+      requestAnimationFrame(() => { ov.style.opacity = '1'; });
+      pres.style.transition = 'opacity 350ms ease';
+      pres.style.opacity = '1';
+
+      // Nach der Drehung: schrumpfen und in die Zielzelle fliegen
+      setTimeout(() => {
+        titel.style.transition = 'opacity 400ms ease, transform 400ms ease';
+        titel.style.opacity = '0';
+        titel.style.transform = 'translateY(-18px)';
+
+        const g = goldZellGeometrie(nr);
+        const zielX = g.cx - 180;
+        const zielY = (GOLD_GRID.top + g.cy) - 365;
+        const skala = g.groesse / kante;
+        pres.style.transition = 'transform 950ms cubic-bezier(0.5,0,0.2,1), opacity 300ms ease 800ms';
+        pres.style.transform = 'translate(' + zielX + 'px,' + zielY + 'px) scale(' + skala.toFixed(3) + ')';
+        pres.style.opacity = '0';
+
+        setTimeout(() => {
+          goldGridAdd(nr, true);
+          goldZeichneLeereZellen(nr);
+          setTimeout(() => {
+            ov.style.opacity = '0';
+            setTimeout(() => {
+              ov.style.display = 'none';
+              pres.style.transition = 'none';
+              pres.style.transform = 'none';
+              pres.innerHTML = '';
+              if (titel.parentNode) titel.parentNode.removeChild(titel);
+              if (onDone) onDone();
+            }, 400);
+          }, 1200);
+        }, 930);
+      }, 2700);
+    }
 
     const BUMBLEBR_LEVEL_LABEL = { 1: 'BUMBLEBR.', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBR.' };
 
@@ -7513,9 +7785,23 @@
 
     // Aktualisiert die X/24-Anzeige und die gruene Trefferzahl
     function brainyUpdateCounterDisplay() {
-      // Zaehler in der Iconleiste entfaellt — Status wird ueber die Wuerfeloptik gezeigt
       const wrap = document.getElementById('brainyLivesWrap');
-      if (wrap) wrap.style.display = 'none';
+      if (!wrap) return;
+      const gold = window._brainyGoldwuerfel || 0;
+      if (gold <= 0) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'flex';
+      wrap.style.alignItems = 'center';
+      wrap.style.gap = '4px';
+      const cEl = document.getElementById('brainyClickCounter');
+      const hEl = document.getElementById('brainyHitCounter');
+      if (cEl) {
+        cEl.innerHTML = '<span style="display:inline-block;width:30px;height:30px;vertical-align:middle;">' + BRAINY_CUBE_GOLD() + '</span>';
+      }
+      if (hEl) {
+        hEl.textContent = String(gold);
+        hEl.style.color = '#ffd447';
+        hEl.style.fontSize = '26px';
+      }
     }
 
     // Faerbt den naechsten noch beigen Wuerfel (von links nach rechts) gruen (Treffer) oder rot (Fehlversuch) ein.
@@ -13022,9 +13308,12 @@
       let selectedNum = null;
 
       function startNumPulse() {
-        btns.forEach((b, i) => {
-          b.style.animationDelay = (i * 0.15) + 's';
+        let idx = 0;
+        btns.forEach(b => {
+          if (b.style.display === 'none') { b.classList.remove('numBtnBlink'); return; }
+          b.style.animationDelay = (idx * 0.35) + 's';
           b.classList.add('numBtnBlink');
+          idx++;
         });
       }
       function stopNumPulse() {
@@ -13064,6 +13353,7 @@
             ccwBtn.classList.add('dirBtnBlink');
           }
         } else {
+          // Ab Stufe 2/5: Spieler waehlt die Zahl selbst
           startNumPulse();
         }
       }
@@ -13077,8 +13367,16 @@
         stopNumPulse();
         btns.forEach(b => b.classList.remove('numBtnSelected'));
         btn.classList.add('numBtnSelected');
-        if (cwBtn) { cwBtn.style.display = 'flex'; cwBtn.style.animationDelay = '0s'; cwBtn.classList.add('dirBtnBlink'); }
-        if (ccwBtn) { ccwBtn.style.display = 'flex'; ccwBtn.style.animationDelay = '0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
+
+        // Bei 6 Kipps ist die Richtung irrelevant — wenn 6 die richtige Wahl ist,
+        // sofort kippen, ohne Richtungsabfrage.
+        if (n === 6 && window._st1LoesungIst6) {
+          fireKipp('cw');
+          return;
+        }
+
+        if (cwBtn) { cwBtn.style.setProperty('display', 'flex', 'important'); cwBtn.style.animationDelay = '0s'; cwBtn.classList.add('dirBtnBlink'); }
+        if (ccwBtn) { ccwBtn.style.setProperty('display', 'flex', 'important'); ccwBtn.style.animationDelay = '0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
       }
 
       async function fireKipp(direction) {
@@ -13179,7 +13477,7 @@
       tEl.style.textShadow = '0 0 30px ' + farbe + '99, 0 3px 0 rgba(0,0,0,0.85), 0 6px 18px rgba(0,0,0,0.9)';
       // Lange Materialnamen kleiner setzen, damit sie in die Breite passen
       const len = (labelText || '').replace(/<[^>]*>/g, '').length;
-      const istStufenAnzeige = /^\d\/\d$/.test((labelText || '').trim());
+      const istStufenAnzeige = /^\d+\/\d+$/.test((labelText || '').trim());
       if (istStufenAnzeige) {
         tEl.style.fontSize = '72px';
         tEl.style.letterSpacing = '2px';
@@ -13304,9 +13602,11 @@
             if (neueStufe >= BRAINY_STUFEN.length - 1) {
               // GOLD erreicht — Goldwuerfel gesammelt, naechste Schwierigkeitsstufe
               window._brainyGoldwuerfel = (window._brainyGoldwuerfel || 0) + 1;
-              window._brainySchwierigkeit = Math.min(5, (window._brainySchwierigkeit || 1) + 1);
-              brainyShowScoreFlash('', MAT_NAMEN[neueStufe], () => {
-                brainySetStufe(BRAINY_STUFE_START);
+              window._brainySchwierigkeit = Math.min(10, (window._brainySchwierigkeit || 1) + 1);
+              brainyUpdateCounterDisplay();
+              const goldNr = window._brainyGoldwuerfel;
+              brainySetStufe(BRAINY_STUFE_START);
+              brainyZeigeGoldwuerfel(goldNr, () => {
                 resolveAll();
               });
             } else {
@@ -13359,7 +13659,7 @@
       if (showLevelToo) {
         const schwierigkeit = window._brainySchwierigkeit || 1;
         // Erst "SCHWIERIGKEIT / 1/5", danach ausblenden und "HOLZ" einblenden
-        brainyShowScoreFlash(SCHW_LABEL, schwierigkeit + '/5', () => {
+        brainyShowScoreFlash(SCHW_LABEL, schwierigkeit + '/10', () => {
           brainyShowScoreFlash('', MAT_NAMEN[BRAINY_STUFE_START], () => {
             brainyGenerateSingleTarget();
             if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
@@ -13576,16 +13876,21 @@
 
       // Farbe waehlen, aber nie die bereits erfuellte
       let colorObj;
-      if (window._brainySchwierigkeit === 1) {
-        // Stufe 1/5: Von der Position der "1" sind mit 3 Kipps genau die beiden
-        // benachbarten Farbfelder erreichbar (eines cw, eines ccw).
+      if (window._brainySchwierigkeit === 1 || window._brainySchwierigkeit === 2) {
         const slotNames = ['S1', 'S2', 'S3', 'S4'];
         const si = window._st1SlotIdx || 0;
-        const nachbarn = [
-          SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 1) % 4]],
-          SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 3) % 4]]
-        ];
-        const zielFarbe = nachbarn[Math.floor(Math.random() * 2)];
+        const nachbar1 = SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 1) % 4]]; // 3 Kipps
+        const nachbar2 = SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 3) % 4]]; // 3 Kipps
+        const diagonal = SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 2) % 4]]; // 6 Kipps
+        let auswahl;
+        if (window._brainySchwierigkeit === 2) {
+          // Stufe 2/5: zusaetzlich die diagonale Farbe (6 Kipps, Richtung egal)
+          auswahl = [nachbar1, nachbar2, diagonal];
+        } else {
+          auswahl = [nachbar1, nachbar2];
+        }
+        const zielFarbe = auswahl[Math.floor(Math.random() * auswahl.length)];
+        window._st1LoesungIst6 = (zielFarbe === diagonal);
         colorObj = GAME_COLORS.find(c => c.name === zielFarbe) || GAME_COLORS[0];
       } else {
         const erlaubteFarben = GAME_COLORS.filter(c => c.name !== forbiddenColor);
@@ -13676,7 +13981,7 @@
         const ccwBtn = document.getElementById('ccwDirBtn');
 
         if (window._brainySchwierigkeit === 1) {
-          // Stufe 1/5: nur Taste "3", mittig, dazwischen die beiden Richtungstasten
+          // Stufe 1/5: nur Taste "3", mittig, Richtungstasten links und rechts
           btnEls.forEach(btn => {
             if (btn.dataset.num === '3') {
               btn.style.display = 'flex';
@@ -13688,6 +13993,23 @@
           });
           if (cwBtn) { cwBtn.style.left = '90px'; cwBtn.style.top = '527px'; }
           if (ccwBtn) { ccwBtn.style.left = '225px'; ccwBtn.style.top = '527px'; }
+        } else if (window._brainySchwierigkeit === 2) {
+          // Stufe 2/5: Tasten "3" und "6", Richtungstasten aussen
+          btnEls.forEach(btn => {
+            if (btn.dataset.num === '3') {
+              btn.style.display = 'flex';
+              btn.style.left = '112px';
+              btn.style.top = '527px';
+            } else if (btn.dataset.num === '6') {
+              btn.style.display = 'flex';
+              btn.style.left = '202px';
+              btn.style.top = '527px';
+            } else {
+              btn.style.display = 'none';
+            }
+          });
+          if (cwBtn) { cwBtn.style.left = '45px'; cwBtn.style.top = '527px'; }
+          if (ccwBtn) { ccwBtn.style.left = '270px'; ccwBtn.style.top = '527px'; }
         } else {
           const fixedLeft = [45, 90, 135, 180, 225, 270];
           btnEls.forEach((btn, i) => {
