@@ -1354,6 +1354,17 @@
         ma:"SPIEL MIT ANLEITUNG",sp:"SPIELEN",dm:"TUTORIAL",wh:"WIEDERHOLEN",nm:"NEUES SPIEL",bs:"HIGHSCORES",ch1:"4 HITS",ch2:"4 HITS",jw:"W\u00fcrfel-Einblick<br>w\u00e4hlen",kp:"Kippen!",kb:"KIPPBLICK",eb:"ECKBLICK",erg:"Ergebnis: {k} KIPPS | {z}",best21:"BEST: 21 KIPPS unter 21 Sek.",
         d5a:"Tutorial wiederholen?<br>Oder die sechs",d5b:"KIPP-KNIFF-JOKER<br>kennenlernen?",d5c:"Klick auf Beginn-Button,<br>unten links.",fV:"Violett",fB:"Blau",fG:"Gr\u00fcn",fO:"Orange"};
     document.getElementById("btnSpielen").textContent = T.sp;
+
+    // === Materialnamen der Wuerfel-Stufen in allen 6 Sprachen ===
+    const MATERIAL_NAMEN = {
+      de: ['VERROTTET','MORSCH','VERWITTERT','HOLZ','BRONZE','SILBER','GOLD'],
+      en: ['DECAYED','ROTTEN','WEATHERED','WOOD','BRONZE','SILVER','GOLD'],
+      es: ['DESCOMPUESTA','PODRIDA','DESGASTADA','MADERA','BRONCE','PLATA','ORO'],
+      fr: ['D\u00c9COMPOS\u00c9','POURRI','US\u00c9','BOIS','BRONZE','ARGENT','OR'],
+      it: ['DECOMPOSTO','MARCIO','LOGORO','LEGNO','BRONZO','ARGENTO','ORO'],
+      tr: ['\u00c7\u00d6KM\u00dc\u015e','\u00c7\u00dcR\u00dcK','YIPRANMI\u015e','AH\u015eAP','BRONZ','G\u00dcM\u00dc\u015e','ALTIN']
+    };
+    const MAT_NAMEN = MATERIAL_NAMEN[_digikippLang] || MATERIAL_NAMEN.de;
     document.getElementById("btnDemo").textContent = T.dm;
     // Exit overlay translations
     if (T.exQ) document.querySelector('.sgLine1').innerHTML = T.exQ;
@@ -7271,11 +7282,15 @@
     };
     
     function brainyBuildDeck(cfg, additiv) {
-      // Schwierigkeitsstufe 1/5: nur die "1" auf einem zufaelligen Slot der Topface (f2 in Q3)
+      // Schwierigkeitsstufe 1/5: nur die "1" auf einem Slot der Topface (f2 in Q3),
+      // und zwar nur dort, wo gruen genau 90 Grad versetzt liegt -> mit 3 Kipps cw ODER ccw loesbar.
+      // Q3-Farbfolge: S1=violett, S2=gruen, S3=orange, S4=blau
+      // -> gruen(S2) ist 90 Grad von S1 und S3 entfernt. S4 waere 180 Grad (6 Kipps), S2 schon erfuellt.
       if (window._brainySchwierigkeit === 1) {
         deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
         visibleDeckIndices.clear();
-        const slot = 8 + Math.floor(Math.random() * 4); // f2 = deck[8..11]
+        const erlaubteSlots = [8, 10]; // f2-S1 und f2-S3
+        const slot = erlaubteSlots[Math.floor(Math.random() * erlaubteSlots.length)];
         deck[slot] = 1;
         visibleDeckIndices.add(slot);
         return;
@@ -7518,13 +7533,9 @@
 
     // Aktualisiert die X/24-Anzeige und die gruene Trefferzahl
     function brainyUpdateCounterDisplay() {
-      const cEl = document.getElementById('brainyClickCounter');
-      const hEl = document.getElementById('brainyHitCounter');
-      if (cEl) cEl.textContent = (window._brainyZieleGespielt || 0) + '/4';
-      if (hEl) {
-        const gold = window._brainyGoldwuerfel || 0;
-        hEl.textContent = gold > 0 ? ('\u25C6 ' + gold) : String(window._brainyHitsTotal || 0);
-      }
+      // Zaehler in der Iconleiste entfaellt — Status wird ueber die Wuerfeloptik gezeigt
+      const wrap = document.getElementById('brainyLivesWrap');
+      if (wrap) wrap.style.display = 'none';
     }
 
     // Faerbt den naechsten noch beigen Wuerfel (von links nach rechts) gruen (Treffer) oder rot (Fehlversuch) ein.
@@ -13254,13 +13265,17 @@
               // GOLD erreicht — Goldwuerfel gesammelt, naechste Schwierigkeitsstufe
               window._brainyGoldwuerfel = (window._brainyGoldwuerfel || 0) + 1;
               window._brainySchwierigkeit = Math.min(5, (window._brainySchwierigkeit || 1) + 1);
-              if (typeof brainySetGrauFelder === 'function') {
-                brainySetGrauFelder(window._brainySchwierigkeit === 1);
-              }
-              brainySetStufe(BRAINY_STUFE_START);
-              resolveAll();
+              brainyShowScoreFlash('', MAT_NAMEN[neueStufe], () => {
+                if (typeof brainySetGrauFelder === 'function') {
+                  brainySetGrauFelder(window._brainySchwierigkeit === 1);
+                }
+                brainySetStufe(BRAINY_STUFE_START);
+                resolveAll();
+              });
             } else {
-              resolveAll();
+              brainyShowScoreFlash('', MAT_NAMEN[neueStufe], () => {
+                resolveAll();
+              });
             }
           }, 1200);
 
@@ -13268,27 +13283,28 @@
           // Dritter Fehlversuch — naechstes Ziel
           window._brainyZielAbgeschlossen = true;
           window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
-          brainyUpdateCounterDisplay();
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
-          if (stufeNachFail <= 0) brainySetStufe(BRAINY_STUFE_START);
-          resolveAll();
+          brainyShowScoreFlash('', MAT_NAMEN[stufeNachFail], () => {
+            if (stufeNachFail <= 0) brainySetStufe(BRAINY_STUFE_START);
+            resolveAll();
+          });
 
         } else {
           // Fehlversuch 1 oder 2 — Stufe runter, roter Puls
           window._brainyFailRetry = true;
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
           brainyPulseRedBorder(() => {
-            if (stufeNachFail <= 0) {
-              window._brainyZielAbgeschlossen = true;
-              window._brainyFailRetry = false;
-              window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
-              brainyUpdateCounterDisplay();
-              brainySetStufe(BRAINY_STUFE_START);
+            brainyShowScoreFlash('', MAT_NAMEN[stufeNachFail], () => {
+              if (stufeNachFail <= 0) {
+                window._brainyZielAbgeschlossen = true;
+                window._brainyFailRetry = false;
+                window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
+                brainySetStufe(BRAINY_STUFE_START);
+              } else {
+                if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+              }
               resolveAll();
-            } else {
-              if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
-              resolveAll();
-            }
+            });
           });
         }
       });
@@ -13325,8 +13341,16 @@
 
     // Erzeugt das naechste Ziel; nur bei Levelwechsel/Start mit kurzer Level-Ansage
     function brainyAnnounceAndStartTarget(showLevelToo) {
-      brainyGenerateSingleTarget();
-      if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+      if (showLevelToo) {
+        const schwierigkeit = window._brainySchwierigkeit || 1;
+        brainyShowScoreFlash(schwierigkeit + '/5', MAT_NAMEN[BRAINY_STUFE_START], () => {
+          brainyGenerateSingleTarget();
+          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+        });
+      } else {
+        brainyGenerateSingleTarget();
+        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+      }
     }
 
     function brainyNextTargetOrEnd() {
@@ -13627,16 +13651,32 @@
         nb.classList.remove('hidden');
         nb.style.setProperty('display', 'block', 'important');
         const btnEls = nb.querySelectorAll('.numBtnFixed');
-        const fixedLeft = [45, 90, 135, 180, 225, 270];
-        btnEls.forEach((btn, i) => {
-          btn.style.left = fixedLeft[i] + 'px';
-          btn.style.top = '527px';
-        });
-        // CW links (Rasterspalte 0), CCW rechts (Rasterspalte 7) von der Zahlenreihe
         const cwBtn = document.getElementById('cwDirBtn');
         const ccwBtn = document.getElementById('ccwDirBtn');
-        if (cwBtn) { cwBtn.style.left = '2px'; cwBtn.style.top = '527px'; }
-        if (ccwBtn) { ccwBtn.style.left = '313px'; ccwBtn.style.top = '527px'; }
+
+        if (window._brainySchwierigkeit === 1) {
+          // Stufe 1/5: nur Taste "3", mittig, dazwischen die beiden Richtungstasten
+          btnEls.forEach(btn => {
+            if (btn.dataset.num === '3') {
+              btn.style.display = 'flex';
+              btn.style.left = '157px';
+              btn.style.top = '527px';
+            } else {
+              btn.style.display = 'none';
+            }
+          });
+          if (cwBtn) { cwBtn.style.left = '90px'; cwBtn.style.top = '527px'; }
+          if (ccwBtn) { ccwBtn.style.left = '225px'; ccwBtn.style.top = '527px'; }
+        } else {
+          const fixedLeft = [45, 90, 135, 180, 225, 270];
+          btnEls.forEach((btn, i) => {
+            btn.style.display = 'flex';
+            btn.style.left = fixedLeft[i] + 'px';
+            btn.style.top = '527px';
+          });
+          if (cwBtn) { cwBtn.style.left = '2px'; cwBtn.style.top = '527px'; }
+          if (ccwBtn) { ccwBtn.style.left = '313px'; ccwBtn.style.top = '527px'; }
+        }
         if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
       }
 
