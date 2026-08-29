@@ -633,9 +633,9 @@
       100% { transform: translate(var(--sx), var(--sy)) scale(1.15); opacity:0; }
     }
     @keyframes gridPop {
-      0%   { transform: rotate(45deg) scale(2.2); opacity:0; }
-      55%  { transform: rotate(45deg) scale(0.88); opacity:1; }
-      100% { transform: rotate(45deg) scale(1); opacity:1; }
+      0%   { transform: scale(2.2); opacity:0; }
+      55%  { transform: scale(0.88); opacity:1; }
+      100% { transform: scale(1); opacity:1; }
     }
     .goldSpark {
       position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px;
@@ -7335,12 +7335,28 @@
     function brainyBuildDeck(cfg, additiv) {
       // Schwierigkeitsstufe 1/5: nur die "1" auf einem beliebigen Slot der Topface (f2 in Q3).
       // Mit 3 Kipps sind von dort genau die beiden benachbarten Farbfelder erreichbar.
-      if (window._brainySchwierigkeit <= 2) {
+      if (window._brainySchwierigkeit <= 4) {
+        // Stufen 1-4: nur die Zahl "1" auf dem Wuerfel.
+        // Stufen 1+2: sie liegt OBEN (Loesung 3 oder 6 Kipps).
+        // Stufe   3 : sie liegt VERDECKT (Loesung 1, 2, 4 oder 5 Kipps).
+        // Stufe   4 : Lage zufaellig, dadurch alle Kippanzahlen moeglich.
         deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
         visibleDeckIndices.clear();
-        const slotIdx = Math.floor(Math.random() * 4);  // 0..3 = S1..S4
-        deck[8 + slotIdx] = 1;
-        visibleDeckIndices.add(8 + slotIdx);
+        const faceOff = { f0: 0, f1: 4, f2: 8 };
+        let zielFace;
+        if (window._brainySchwierigkeit <= 2) {
+          zielFace = topFace;                                   // oben
+        } else if (window._brainySchwierigkeit === 3) {
+          const verdeckt = ['f0','f1','f2'].filter(f => f !== topFace);
+          zielFace = verdeckt[Math.floor(Math.random() * verdeckt.length)];
+        } else {
+          const alle = ['f0','f1','f2'];
+          zielFace = alle[Math.floor(Math.random() * alle.length)];
+        }
+        const slotIdx = Math.floor(Math.random() * 4);
+        const pos = faceOff[zielFace] + slotIdx;
+        deck[pos] = 1;
+        visibleDeckIndices.add(pos);
         window._st1SlotIdx = slotIdx;
         return;
       }
@@ -7525,6 +7541,86 @@
     const BRAINY_CUBE_GREEN = () => brainyCubeSVG('#6fdc7a', '#3fb84f', '#2f9c3d', '#1a5c22');
     const BRAINY_CUBE_RED   = () => brainyCubeSVG('#ff6b6b', '#c0392b', '#a0281e', '#5a1812');
     const BRAINY_CUBE_GOLD  = () => brainyCubeSVG('#ffe066', '#e0a92e', '#b8801c', '#6b4a10');
+
+    // === HALBKIPP ZUR ZAHLEN-ANSICHT ===
+    // Kippt den Wuerfel um etwa 55 Grad auf eine Kante, haelt kurz an, damit der
+    // Spieler das neu hinzugekommene Zahlenpaar sehen kann, und kippt zurueck.
+    // Die Achse wird so gewaehlt, dass die Kante zum Betrachter zeigt.
+    function brainyHalbkippAnsicht(richtung, haltenMs) {
+      return new Promise(resolve => {
+        const pivot = new THREE.Group();
+        // Drehpunkt: untere Kante des Wuerfels, je nach Richtung
+        const halb = cubeSize / 2;
+        const wp = new THREE.Vector3();
+        cube.getWorldPosition(wp);
+
+        let achse, winkel, pivotPos;
+        if (richtung === 'nord') {
+          pivotPos = new THREE.Vector3(wp.x, wp.y - halb, wp.z - halb);
+          achse = 'x'; winkel = -0.96;          // ~55 Grad nach hinten
+        } else if (richtung === 'sued') {
+          pivotPos = new THREE.Vector3(wp.x, wp.y - halb, wp.z + halb);
+          achse = 'x'; winkel = 0.96;
+        } else if (richtung === 'west') {
+          pivotPos = new THREE.Vector3(wp.x - halb, wp.y - halb, wp.z);
+          achse = 'z'; winkel = 0.96;
+        } else {
+          pivotPos = new THREE.Vector3(wp.x + halb, wp.y - halb, wp.z);
+          achse = 'z'; winkel = -0.96;
+        }
+
+        pivot.position.copy(pivotPos);
+        kipGroup.add(pivot);
+        kipGroup.remove(cube);
+        cube.position.copy(wp.clone().sub(pivotPos));
+        pivot.add(cube);
+
+        const hinMs = 620, zurueckMs = 620;
+        const halten = (haltenMs === undefined) ? 3600 : haltenMs;   // 3,6 s Betrachtungszeit
+        const start = performance.now();
+
+        function phase(jetzt) {
+          const t = jetzt - start;
+          if (t < hinMs) {
+            const p = t / hinMs;
+            const e = 1 - Math.pow(1 - p, 3);      // sanftes Ausklingen
+            pivot.rotation[achse] = winkel * e;
+            requestAnimationFrame(phase);
+          } else if (t < hinMs + halten) {
+            pivot.rotation[achse] = winkel;
+            requestAnimationFrame(phase);
+          } else if (t < hinMs + halten + zurueckMs) {
+            const p = (t - hinMs - halten) / zurueckMs;
+            const e = p * p * (3 - 2 * p);          // weiches Ein- und Ausklingen
+            pivot.rotation[achse] = winkel * (1 - e);
+            requestAnimationFrame(phase);
+          } else {
+            // Wuerfel exakt zurueck in die Ausgangslage setzen
+            pivot.rotation[achse] = 0;
+            pivot.remove(cube);
+            cube.position.copy(wp);
+            kipGroup.add(cube);
+            kipGroup.remove(pivot);
+            resolve();
+          }
+        }
+        requestAnimationFrame(phase);
+      });
+    }
+
+    // Zeigt ein neu hinzugekommenes Zahlenpaar: Halbkipp zur passenden Kante,
+    // dabei werden die beiden Zahlen sichtbar, danach zurueck.
+    async function brainyZeigeNeuesPaar(slotA, slotB) {
+      const faceVon = i => ['f0', 'f1', 'f2'][Math.floor(i / 4)];
+      const fA = faceVon(slotA), fB = faceVon(slotB);
+      // Kante zwischen den beiden Flaechen bestimmen -> passende Kipprichtung
+      const kombi = [fA, fB].sort().join('');
+      let richtung = 'nord';
+      if (kombi === 'f0f1') richtung = 'west';
+      else if (kombi === 'f0f2') richtung = 'nord';
+      else if (kombi === 'f1f2') richtung = 'ost';
+      await brainyHalbkippAnsicht(richtung, 3600);   // 3,6 s zum Merken
+    }
 
     // === WUERFEL-ZERFALL (verrottet) ===
     // Der Wuerfel zerbricht in Bruchstuecke, die mit Schwerkraft auf den
@@ -7767,9 +7863,15 @@
       el.style.top  = (g.cy - g.groesse / 2) + 'px';
       el.style.width = g.groesse + 'px';
       el.style.height = g.groesse + 'px';
-      if (!mitAnimation) { el.style.animation = 'none'; el.style.transform = 'rotate(45deg)'; }
-      el.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg,#fff3b0 0%,#ffd447 40%,#d9a02c 100%);border:1px solid rgba(120,80,10,0.6);box-shadow:inset 0 0 ' +
-                     Math.round(g.groesse/3) + 'px rgba(255,255,255,0.45);"></div>';
+      if (!mitAnimation) { el.style.animation = 'none'; el.style.transform = 'none'; }
+      // Echter 3D-Wuerfel, auf die Ecke gestellt und leicht von oben betrachtet.
+      // Perspektive und 3D-Kontext liegen getrennt, damit nichts abgeflacht wird.
+      const kante = g.groesse * 0.62;   // Kantenlaenge, damit der gedrehte Wuerfel in die Zelle passt
+      el.innerHTML =
+        '<div style="width:100%;height:100%;perspective:' + Math.round(g.groesse * 5) + 'px;">' +
+        '<div style="position:absolute;left:0;top:0;width:100%;height:100%;transform-style:preserve-3d;' +
+        'transform:rotateZ(45deg) rotateX(-32deg) rotateY(35deg);">' +
+        goldCubeHTML(kante) + '</div></div>';
       grid.appendChild(el);
     }
 
@@ -7819,9 +7921,17 @@
       for (let nr = abNr + 1; nr <= 10; nr++) {
         const g = goldZellGeometrie(nr);
         const el = document.createElement('div');
+        // Platzhalter als angedeuteter Wuerfelumriss (Sechseck), passend zur 3D-Optik
+        const k = g.groesse * 0.62;
         el.style.cssText = 'position:absolute;left:' + (g.cx - g.groesse/2) + 'px;top:' + (g.cy - g.groesse/2) +
-          'px;width:' + g.groesse + 'px;height:' + g.groesse + 'px;transform:rotate(45deg);' +
-          'border:1px dashed rgba(200,160,70,0.28);background:rgba(255,210,110,0.04);';
+          'px;width:' + g.groesse + 'px;height:' + g.groesse + 'px;' +
+          'display:flex;align-items:center;justify-content:center;';
+        el.innerHTML = '<svg width="' + g.groesse + '" height="' + g.groesse + '" viewBox="0 0 100 100">' +
+          '<polygon points="50,12 88,33 88,72 50,93 12,72 12,33" ' +
+          'fill="rgba(255,210,110,0.045)" stroke="rgba(200,160,70,0.30)" ' +
+          'stroke-width="2" stroke-dasharray="5 4"/>' +
+          '<path d="M50,12 L50,52 M50,52 L88,33 M50,52 L12,33" ' +
+          'stroke="rgba(200,160,70,0.20)" stroke-width="1.5" fill="none"/></svg>';
         grid.appendChild(el);
       }
     }
@@ -7921,9 +8031,9 @@
               if (titel.parentNode) titel.parentNode.removeChild(titel);
               if (onDone) onDone();
             }, 400);
-          }, 1200);
+          }, 3600);   // 3,6 s: gesammelte Wuerfel im Raster betrachten
         }, 930);
-      }, 2700);
+      }, 3600);   // Drehung 2,6 s + 1,0 s Standzeit = 3,6 s Betrachtung
     }
 
     const BUMBLEBR_LEVEL_LABEL = { 1: 'BUMBLEBR.', 2: 'BRAINY', 3: 'BRAIN', 4: 'MASTERBR.' };
@@ -11836,8 +11946,9 @@
         window._kippLongTapStart = Date.now();
       }
       // BUMBLEBRAIN: Finger-Kipp Touchstart — Würfelberührung erkennen
-      // Kippen nur wenn Kippziel aktiv (nicht in leernohit-Phase)
-      if (!kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating && window._kippTarget) {
+      // DEAKTIVIERT: Der Wuerfel darf nicht mehr direkt mit dem Finger gekippt
+      // werden. Gekippt wird ausschliesslich ueber Zahlen- und Richtungstasten.
+      if (false && !kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating && window._kippTarget) {
         const rectBD = renderer.domElement.getBoundingClientRect();
         vkMouse.x = ((e.touches[0].clientX - rectBD.left) / rectBD.width) * 2 - 1;
         vkMouse.y = -((e.touches[0].clientY - rectBD.top) / rectBD.height) * 2 + 1;
@@ -13568,10 +13679,16 @@
 
         // Bei 6 Kipps ist die Richtung irrelevant — wenn 6 die richtige Wahl ist,
         // sofort kippen, ohne Richtungsabfrage.
+        // Bei 6 Kipps ist die Richtung irrelevant. Ist die 6 richtig,
+        // sofort kippen — ohne Richtungsabfrage.
         if (n === 6 && window._st1LoesungIst6) {
+          window._letzterKippWar6 = true;
           fireKipp('cw');
           return;
         }
+        // Ist die 6 falsch, werden die Richtungstasten dennoch eingeblendet:
+        // der Spieler soll die Wahl haben und selbst sehen, dass es nicht passt.
+        if (n === 6) window._letzterKippWar6 = true;
 
         if (cwBtn) { cwBtn.style.setProperty('display', 'flex', 'important'); cwBtn.style.animationDelay = '0s'; cwBtn.classList.add('dirBtnBlink'); }
         if (ccwBtn) { ccwBtn.style.setProperty('display', 'flex', 'important'); ccwBtn.style.animationDelay = '-0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
@@ -13682,7 +13799,7 @@
         tEl.style.letterSpacing = len > 10 ? '2px' : '5px';
       }
 
-      const fadeMs = 500, holdMs = 2400;
+      const fadeMs = 500, holdMs = 3600;   // 3,6 s Standzeit
       ov.style.transition = 'opacity ' + fadeMs + 'ms cubic-bezier(0.4, 0.0, 0.2, 1)';
       ov.style.opacity = '0';
       ov.style.display = 'flex';
@@ -13844,8 +13961,13 @@
     // Naechstes Kippziel oder Spielende nach 6 Zielen
     // Nach dem Spielerzug: 3 weitere Kipps in dieselbe Richtung wie der Spielerkipp.
     async function brainyAutoReturnToQ3(playerDirection) {
+      // Weiterkipp in Spielerrichtung. Bei einer 6er-Aufgabe sind es 6 Kipps,
+      // damit der Wuerfel wieder in einer Lage steht, aus der das naechste
+      // Ziel mit der vorgesehenen Kippanzahl loesbar ist.
+      const schritte = window._letzterKippWar6 ? 6 : 3;
+      window._letzterKippWar6 = false;
       kippDirection = playerDirection;
-      await runKippSequence(3, 'auto');
+      await runKippSequence(schritte, 'auto');
     }
 
     // Erzeugt das naechste Ziel; nur bei Levelwechsel/Start mit kurzer Level-Ansage
@@ -14068,9 +14190,53 @@
         if (vis) forbiddenColor = vis.forbiddenColor;
       }
 
+      // Ermittelt fuer jede Kippanzahl/Richtung, welche Farbe die Zielzahl beruehrt.
+      // Grundlage: CW_CYCLE liefert (Quadrant, Topface) nach n Kipps. Liegt die
+      // Flaeche der Zahl dann oben, beruehrt ihr Slot die Farbe aus SLOT_NEIGHBOR_COLORS.
+      function erreichbareZiele(zielZahl) {
+        const faceKeys = ['f0', 'f1', 'f2'];
+        const slotNames = ['S1', 'S2', 'S3', 'S4'];
+        let pos = -1;
+        for (let k = 0; k < 12; k++) if (deck[k] === zielZahl) { pos = k; break; }
+        if (pos < 0) return [];
+        const zFace = faceKeys[Math.floor(pos / 4)];
+        const zSlot = slotNames[pos % 4];
+        const startIdx = stateIndex(currentQuadrant, topFace);
+        if (startIdx < 0) return [];
+
+        const treffer = [];
+        for (let n = 1; n <= 6; n++) {
+          [[1, 'cw'], [-1, 'ccw']].forEach(r => {
+            const i = ((startIdx + r[0] * n) % 12 + 12) % 12;
+            if (CW_CYCLE[i][1] !== zFace) return;
+            const farbe = SLOT_NEIGHBOR_COLORS[CW_CYCLE[i][0]][zSlot];
+            if (farbe) treffer.push({ kipps: n, richtung: r[1], farbe: farbe });
+          });
+        }
+        return treffer;
+      }
+
       // Farbe waehlen, aber nie die bereits erfuellte
       let colorObj;
-      if (window._brainySchwierigkeit === 1 || window._brainySchwierigkeit === 2) {
+      if (window._brainySchwierigkeit >= 3) {
+        // Ab Stufe 3: Ziel aus den tatsaechlich erreichbaren Kombinationen waehlen.
+        // Stufe 3 erlaubt nur 1, 2, 4, 5 Kipps (Zahl liegt verdeckt),
+        // ab Stufe 4 ist jede Kippanzahl zugelassen.
+        let moeglich = erreichbareZiele(zahl);
+        if (window._brainySchwierigkeit === 3) {
+          moeglich = moeglich.filter(m => m.kipps !== 3 && m.kipps !== 6);
+        }
+        if (moeglich.length > 0) {
+          const w = moeglich[Math.floor(Math.random() * moeglich.length)];
+          window._st1LoesungIst6 = (w.kipps === 6);
+          window._loesungKipps = w.kipps;
+          window._loesungRichtung = w.richtung;
+          colorObj = GAME_COLORS.find(c => c.name === w.farbe) || GAME_COLORS[0];
+        } else {
+          const erlaubteFarben = GAME_COLORS.filter(c => c.name !== forbiddenColor);
+          colorObj = erlaubteFarben[Math.floor(Math.random() * erlaubteFarben.length)];
+        }
+      } else if (window._brainySchwierigkeit === 1 || window._brainySchwierigkeit === 2) {
         // WICHTIG: Immer aus der AKTUELLEN Wuerfellage rechnen, nicht aus Q3.
         // Sonst waere das Ziel nach den Weiterkipps nicht mehr mit 3 Kipps loesbar.
         const slotNames = ['S1', 'S2', 'S3', 'S4'];
@@ -14288,7 +14454,8 @@
         const touch = pt(e);
 
         // === BUMBLEBRAIN: Raycaster-Hit auf Würfel (Kipp-Start) ===
-        if (!kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating && window._kippTarget) {
+        // DEAKTIVIERT: kein direktes Kippen per Maus/Finger am Wuerfel.
+        if (false && !kippDragActive && !window._kippEckblickRunning && !window._kippResultRunning && !isAnimating && window._kippTarget) {
           const rectBD = el.getBoundingClientRect();
           vkMouse.x = ((touch.clientX - rectBD.left) / rectBD.width) * 2 - 1;
           vkMouse.y = -((touch.clientY - rectBD.top)  / rectBD.height) * 2 + 1;
