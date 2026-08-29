@@ -570,10 +570,6 @@
     .dirBtnFixed {
       width: 45px;
       height: 45px;
-      /* Dezente Unterlage: die Taste ist auch dann sichtbar, wenn cw.webp /
-         ccw.webp noch nicht geladen ist. Das Bild liegt unveraendert darueber. */
-      background-color: rgba(200, 184, 160, 0.30);
-      border-radius: 8px;
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
@@ -582,10 +578,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
-      border: 2px solid #8a7a66;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      /* KEINE background-Kurzform hier! Sie wuerde das background-image
+         aus dem HTML (cw.webp / ccw.webp) ueberschreiben. */
+      background-color: rgba(190, 172, 148, 0.22);
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
     }
     .dirBtnFixed.dirBtnBlink {
       animation: dirBtnBlinkAnim 1.5s ease-in-out infinite;
