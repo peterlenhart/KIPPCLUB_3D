@@ -13820,6 +13820,8 @@
           // wird ein komplett neues erzeugt.
           if (window._brainyZielAbgeschlossen) {
             window._brainyZielAbgeschlossen = false;
+            // Stufe 3: Wuerfel weiterkippen, bis die Zahl verdeckt liegt
+            await brainySichereVerdeckteLage();
             if (brainyZielAnzahl() > 1) {
               if (window._letzterTrefferIdx >= 0) {
                 brainyZielNachruecken(window._letzterTrefferIdx);
@@ -14115,6 +14117,7 @@
         brainyShowScoreFlash(SCHW_LABEL, stufe + '/10', () => {
           brainyShowScoreFlash('', MAT_NAMEN[BRAINY_STUFE_START], async () => {
             await neuesPaarZeigen();
+            await brainySichereVerdeckteLage();
             brainyGenerateMehrfachZiele();
             if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
           });
@@ -14383,7 +14386,6 @@
     function brainyGenerateMehrfachZiele() {
       const anzahl = brainyZielAnzahl();
       if (anzahl === 1) { brainyGenerateSingleTarget(); return; }
-      brainySichereVerdeckteLage();
 
       // Alle Karten zuruecksetzen
       for (let i = 0; i < 6; i++) {
@@ -14466,36 +14468,40 @@
       window._brainyFailRetry = false;
     }
 
-    // Stufe 3 verlangt, dass die Zielzahl VERDECKT liegt (nicht auf der Topface).
-    // Da sich topFace durch die Kipps aendert, muss das vor jedem neuen Ziel
-    // geprueft und die Zahl gegebenenfalls auf eine verdeckte Flaeche gelegt werden.
-    function brainySichereVerdeckteLage() {
+    // Stufe 3: die Zielzahl muss VERDECKT liegen.
+    // Die Zahl bleibt dabei auf ihrem Slot — stattdessen wird der WUERFEL
+    // so weit gekippt, bis die Flaeche mit der Zahl nicht mehr oben liegt.
+    async function brainySichereVerdeckteLage() {
       if ((window._brainySchwierigkeit || 1) !== 3) return;
       const faceOff = { f0: 0, f1: 4, f2: 8 };
-      const off = faceOff[topFace];
-      if (off === undefined) return;
 
-      // Liegt die 1 gerade oben?
-      let obenPos = -1;
-      for (let k = 0; k < 4; k++) if (deck[off + k] === 1) { obenPos = off + k; break; }
-      if (obenPos < 0) return;                       // schon verdeckt, nichts zu tun
+      // Auf welcher Flaeche liegt die 1?
+      let pos = -1;
+      for (let k = 0; k < 12; k++) if (deck[k] === 1) { pos = k; break; }
+      if (pos < 0) return;
+      const zahlFace = ['f0', 'f1', 'f2'][Math.floor(pos / 4)];
 
-      // Auf eine der beiden verdeckten Flaechen umlegen
-      const verdeckt = ['f0', 'f1', 'f2'].filter(f => f !== topFace);
-      const zielFace = verdeckt[Math.floor(Math.random() * verdeckt.length)];
-      const neuerSlot = faceOff[zielFace] + Math.floor(Math.random() * 4);
+      // Liegt sie gerade oben? Dann Wuerfel weiterkippen, bis sie verdeckt ist.
+      if (topFace !== zahlFace) return;
 
-      deck[obenPos] = 0;
-      visibleDeckIndices.delete(obenPos);
-      deck[neuerSlot] = 1;
-      visibleDeckIndices.add(neuerSlot);
-      window._st1SlotIdx = neuerSlot % 4;
-      updateFaceSlots();
-      updateAllFaceTextures();
+      const startIdx = stateIndex(currentQuadrant, topFace);
+      if (startIdx < 0) return;
+
+      // Kuerzeste Kippfolge suchen, nach der die Flaeche NICHT mehr oben liegt
+      let schritte = 0, richtung = 'cw';
+      for (let n = 1; n <= 12; n++) {
+        const iCw  = (startIdx + n) % 12;
+        const iCcw = ((startIdx - n) % 12 + 12) % 12;
+        if (CW_CYCLE[iCw][1] !== zahlFace)  { schritte = n; richtung = 'cw';  break; }
+        if (CW_CYCLE[iCcw][1] !== zahlFace) { schritte = n; richtung = 'ccw'; break; }
+      }
+      if (schritte === 0) return;
+
+      kippDirection = richtung;
+      await runKippSequence(schritte, 'auto');
     }
 
     function brainyGenerateSingleTarget() {
-      brainySichereVerdeckteLage();
       const _cfg = window._brLevelCfg || LEVEL_CFG[1];
 
       // Alle Karten zuruecksetzen, laufende Animationen entwerten
