@@ -570,6 +570,10 @@
     .dirBtnFixed {
       width: 45px;
       height: 45px;
+      /* Dezente Unterlage: die Taste ist auch dann sichtbar, wenn cw.webp /
+         ccw.webp noch nicht geladen ist. Das Bild liegt unveraendert darueber. */
+      background-color: rgba(200, 184, 160, 0.30);
+      border-radius: 8px;
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
@@ -13589,14 +13593,10 @@
             await checkSixTargetsHit();
           }
 
-          if (window._brainyFailRetry) {
-            // Fehlversuch mit weiteren Versuchen: KEIN Rueckkipp,
-            // der Wuerfel bleibt in seiner aktuellen Lage stehen
-            window._brainyFailRetry = false;
-          } else {
-            // Ziel abgeschlossen: automatisch zurueck nach Q3 mit anderer Face
-            await brainyAutoReturnToQ3(direction);
-          }
+          // Immer gleiches Prinzip — ob Treffer oder Fehlkipp:
+          // 3 Weiterkipps, danach wird das neue Ziel aus der neuen Lage berechnet.
+          window._brainyFailRetry = false;
+          await brainyAutoReturnToQ3(direction);
 
           // Neues Kippziel erst jetzt — es haengt von der finalen Topface ab
           if (window._brainyZielAbgeschlossen) {
@@ -13824,18 +13824,15 @@
           });
 
         } else {
-          // Fehlversuch 1 oder 2 — Stufe runter, roter Puls
-          window._brainyFailRetry = true;
+          // Fehlkipp — Stufe runter, roter Puls, danach neues Ziel aus der neuen Lage.
+          // Gleiches Prinzip wie beim Aufstieg: immer 3 Weiterkipps, immer neues Ziel.
+          window._brainyZielAbgeschlossen = true;
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
           brainyPulseRedBorder(() => {
             brainyShowScoreFlash('', MAT_NAMEN[stufeNachFail], () => {
               if (stufeNachFail <= 0) {
-                window._brainyZielAbgeschlossen = true;
-                window._brainyFailRetry = false;
-                window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
                 brainyZerfallUndNeuaufbau(() => resolveAll());
               } else {
-                if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
                 resolveAll();
               }
             });
@@ -14074,11 +14071,19 @@
       // Farbe waehlen, aber nie die bereits erfuellte
       let colorObj;
       if (window._brainySchwierigkeit === 1 || window._brainySchwierigkeit === 2) {
+        // WICHTIG: Immer aus der AKTUELLEN Wuerfellage rechnen, nicht aus Q3.
+        // Sonst waere das Ziel nach den Weiterkipps nicht mehr mit 3 Kipps loesbar.
         const slotNames = ['S1', 'S2', 'S3', 'S4'];
-        const si = window._st1SlotIdx || 0;
-        const nachbar1 = SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 1) % 4]]; // 3 Kipps
-        const nachbar2 = SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 3) % 4]]; // 3 Kipps
-        const diagonal = SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 2) % 4]]; // 6 Kipps
+        const faceOff = { f0: 0, f1: 4, f2: 8 }[topFace];
+        let si = 0;
+        for (let k = 0; k < 4; k++) {
+          if (deck[faceOff + k] === 1) { si = k; break; }
+        }
+        window._st1SlotIdx = si;
+        const farbenJetzt = SLOT_NEIGHBOR_COLORS[currentQuadrant];
+        const nachbar1 = farbenJetzt[slotNames[(si + 1) % 4]]; // 3 Kipps
+        const nachbar2 = farbenJetzt[slotNames[(si + 3) % 4]]; // 3 Kipps
+        const diagonal = farbenJetzt[slotNames[(si + 2) % 4]]; // 6 Kipps
         let auswahl;
         if (window._brainySchwierigkeit === 2) {
           // Stufe 2/5: zusaetzlich die diagonale Farbe (6 Kipps, Richtung egal)
