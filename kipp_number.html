@@ -7541,6 +7541,45 @@
     const BRAINY_CUBE_RED   = () => brainyCubeSVG('#ff6b6b', '#c0392b', '#a0281e', '#5a1812');
     const BRAINY_CUBE_GOLD  = () => brainyCubeSVG('#ffe066', '#e0a92e', '#b8801c', '#6b4a10');
 
+    // Belegt und positioniert die Tasten passend zur aktuellen Schwierigkeitsstufe.
+    // MUSS nach jedem Stufenwechsel erneut aufgerufen werden.
+    function brainySetzeTasten() {
+      const nb = document.getElementById('numBtns');
+      if (!nb) return;
+      nb.classList.remove('hidden');
+      nb.style.setProperty('display', 'block', 'important');
+      const btnEls = nb.querySelectorAll('.numBtnFixed');
+      const cwBtn = document.getElementById('cwDirBtn');
+      const ccwBtn = document.getElementById('ccwDirBtn');
+      const stufe = window._brainySchwierigkeit || 1;
+
+      function zeige(map, cwL, ccwL) {
+        btnEls.forEach(btn => {
+          const p = map[btn.dataset.num];
+          if (p) { btn.style.display = 'flex'; btn.style.left = p; btn.style.top = '527px'; }
+          else   { btn.style.display = 'none'; }
+        });
+        if (cwBtn)  { cwBtn.style.left  = cwL;  cwBtn.style.top  = '527px'; }
+        if (ccwBtn) { ccwBtn.style.left = ccwL; ccwBtn.style.top = '527px'; }
+      }
+
+      if (stufe === 1) {
+        // Nur Taste 3, fest vorgewaehlt
+        zeige({ '3': '157px' }, '90px', '225px');
+      } else if (stufe === 2) {
+        // Tasten 3 und 6
+        zeige({ '3': '112px', '6': '202px' }, '45px', '270px');
+      } else if (stufe === 3) {
+        // Zahl liegt verdeckt -> nur 1, 2, 4, 5 moeglich
+        zeige({ '1': '68px', '2': '113px', '4': '158px', '5': '203px' }, '18px', '253px');
+      } else {
+        // Ab Stufe 4: alle sechs Zahlentasten
+        zeige({ '1': '45px', '2': '90px', '3': '135px',
+                '4': '180px', '5': '225px', '6': '270px' }, '2px', '313px');
+      }
+      if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
+    }
+
     // === HALBKIPP ZUR ZAHLEN-ANSICHT ===
     // Kippt den Wuerfel um etwa 55 Grad auf eine Kante, haelt kurz an, damit der
     // Spieler das neu hinzugekommene Zahlenpaar sehen kann, und kippt zurueck.
@@ -13914,6 +13953,8 @@
               window._brainyGoldwuerfel = (window._brainyGoldwuerfel || 0) + 1;
               window._brainySchwierigkeit = Math.min(10, (window._brainySchwierigkeit || 1) + 1);
               brainyUpdateCounterDisplay();
+              // Tasten der neuen Schwierigkeitsstufe setzen (Stufe 2: 3 und 6 usw.)
+              if (typeof brainySetzeTasten === 'function') brainySetzeTasten();
               const goldNr = window._brainyGoldwuerfel;
               brainySetStufe(BRAINY_STUFE_START);
               brainyZeigeGoldwuerfel(goldNr, () => {
@@ -14339,56 +14380,7 @@
 
       // Tasten zuerst positionieren, DANACH das Spiel starten —
       // sonst wuerde clearSelection() die Richtungstasten wieder verstecken.
-      const nb = document.getElementById('numBtns');
-      if (nb) {
-        nb.classList.remove('hidden');
-        nb.style.setProperty('display', 'block', 'important');
-        const btnEls = nb.querySelectorAll('.numBtnFixed');
-        const cwBtn = document.getElementById('cwDirBtn');
-        const ccwBtn = document.getElementById('ccwDirBtn');
-
-        if (window._brainySchwierigkeit === 1) {
-          // Stufe 1/5: nur Taste "3", mittig, Richtungstasten links und rechts
-          btnEls.forEach(btn => {
-            if (btn.dataset.num === '3') {
-              btn.style.display = 'flex';
-              btn.style.left = '157px';
-              btn.style.top = '527px';
-            } else {
-              btn.style.display = 'none';
-            }
-          });
-          if (cwBtn) { cwBtn.style.left = '90px'; cwBtn.style.top = '527px'; }
-          if (ccwBtn) { ccwBtn.style.left = '225px'; ccwBtn.style.top = '527px'; }
-        } else if (window._brainySchwierigkeit === 2) {
-          // Stufe 2/5: Tasten "3" und "6", Richtungstasten aussen
-          btnEls.forEach(btn => {
-            if (btn.dataset.num === '3') {
-              btn.style.display = 'flex';
-              btn.style.left = '112px';
-              btn.style.top = '527px';
-            } else if (btn.dataset.num === '6') {
-              btn.style.display = 'flex';
-              btn.style.left = '202px';
-              btn.style.top = '527px';
-            } else {
-              btn.style.display = 'none';
-            }
-          });
-          if (cwBtn) { cwBtn.style.left = '45px'; cwBtn.style.top = '527px'; }
-          if (ccwBtn) { ccwBtn.style.left = '270px'; ccwBtn.style.top = '527px'; }
-        } else {
-          const fixedLeft = [45, 90, 135, 180, 225, 270];
-          btnEls.forEach((btn, i) => {
-            btn.style.display = 'flex';
-            btn.style.left = fixedLeft[i] + 'px';
-            btn.style.top = '527px';
-          });
-          if (cwBtn) { cwBtn.style.left = '2px'; cwBtn.style.top = '527px'; }
-          if (ccwBtn) { ccwBtn.style.left = '313px'; ccwBtn.style.top = '527px'; }
-        }
-        if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
-      }
+      brainySetzeTasten();
 
       // Startanzeige, danach erstes Ziel und Freigabe der Tasten
       brainyAnnounceAndStartTarget(true);
