@@ -584,7 +584,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
     .dirBtnFixed.dirBtnBlink {
-      animation: dirBtnBlinkAnim 0.9s ease-in-out infinite;
+      animation: dirBtnBlinkAnim 1.5s ease-in-out infinite;
     }
     @keyframes dirBtnBlinkAnim {
       0%, 100% { opacity: 0.35; }
@@ -1150,9 +1150,9 @@
   
   <div id="uiOverlay">
     <!-- Punkte-Overlay: verdunkelt das Display, zeigt zweizeilig Punkte + Text -->
-    <div id="scoreFlashOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; background:rgba(0,0,0,0.75); z-index:9000; display:none; pointer-events:none; align-items:center; justify-content:center; flex-direction:column;">
-      <div id="scoreFlashPoints" style="font-family:Arial,sans-serif; font-weight:bold; font-size:64px; color:#4fdc5a; text-shadow:0 2px 8px rgba(0,0,0,0.9); line-height:1.1;"></div>
-      <div id="scoreFlashText" style="font-family:Arial,sans-serif; font-weight:bold; font-size:22px; color:#e8dcc4; text-shadow:0 2px 6px rgba(0,0,0,0.9); letter-spacing:1px; margin-top:6px; text-align:center;"></div>
+    <div id="scoreFlashOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; background:radial-gradient(ellipse at 50% 38%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.88) 65%); z-index:9000; display:none; pointer-events:none; align-items:flex-start; justify-content:center; flex-direction:column; padding-top:196px;">
+      <div id="scoreFlashPoints" style="width:100%; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:76px; letter-spacing:2px; line-height:1; color:#f4e4b8; text-shadow:0 0 22px rgba(255,200,80,0.55), 0 4px 0 #6b4a18, 0 6px 14px rgba(0,0,0,0.95);"></div>
+      <div id="scoreFlashText" style="width:100%; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:40px; letter-spacing:5px; line-height:1.15; margin-top:14px; color:#ffffff; text-shadow:0 0 26px rgba(255,255,255,0.4), 0 3px 0 rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.9);"></div>
     </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
@@ -13066,7 +13066,26 @@
       // Spieler ist am Zug: Auswahl zuruecksetzen UND Blinken starten
       function enablePlayerTurn() {
         clearSelection();
-        startNumPulse();
+        if (window._brainySchwierigkeit === 1) {
+          // Stufe 1/5: die "3" ist fest vorgewaehlt, nur die Richtung ist offen
+          const btn3 = Array.prototype.find.call(btns, b => b.dataset.num === '3');
+          if (btn3) {
+            selectedNum = 3;
+            btn3.classList.add('numBtnSelected');
+          }
+          if (cwBtn) {
+            cwBtn.style.display = 'flex';
+            cwBtn.style.animationDelay = '0s';
+            cwBtn.classList.add('dirBtnBlink');
+          }
+          if (ccwBtn) {
+            ccwBtn.style.display = 'flex';
+            ccwBtn.style.animationDelay = '0.75s';   // deutlich versetzt, wechselseitig
+            ccwBtn.classList.add('dirBtnBlink');
+          }
+        } else {
+          startNumPulse();
+        }
       }
       window._enablePlayerTurn = enablePlayerTurn;
 
@@ -13078,8 +13097,8 @@
         stopNumPulse();
         btns.forEach(b => b.classList.remove('numBtnSelected'));
         btn.classList.add('numBtnSelected');
-        if (cwBtn) { cwBtn.style.display = 'flex'; cwBtn.classList.add('dirBtnBlink'); }
-        if (ccwBtn) { ccwBtn.style.display = 'flex'; ccwBtn.classList.add('dirBtnBlink'); }
+        if (cwBtn) { cwBtn.style.display = 'flex'; cwBtn.style.animationDelay = '0s'; cwBtn.classList.add('dirBtnBlink'); }
+        if (ccwBtn) { ccwBtn.style.display = 'flex'; ccwBtn.style.animationDelay = '0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
       }
 
       async function fireKipp(direction) {
@@ -13147,30 +13166,59 @@
     // einem der noch offenen 6 Kippziele entspricht. Bei Treffer fliegt genau
     // diese Karte, der zugehoerige Wuerfel wird gruen. Bei Nichttreffer bleibt
     // der Wuerfel beige, nur das 12-Klick-Budget sinkt.
-    // Zeigt das Punkte-Overlay (Verdunkelung + 2-zeiliger Text), ruft danach onDone auf
+    // Farbgebung je Material — passend zur Wuerfeloptik
+    const MAT_FARBEN = {
+      'GOLD':'#ffd447','ORO':'#ffd447','ALTIN':'#ffd447','OR':'#ffd447',
+      'SILBER':'#e2e8ef','SILVER':'#e2e8ef','PLATA':'#e2e8ef','ARGENT':'#e2e8ef','ARGENTO':'#e2e8ef','G\u00dcM\u00dc\u015e':'#e2e8ef',
+      'BRONZE':'#d99456','BRONCE':'#d99456','BRONZO':'#d99456','BRONZ':'#d99456',
+      'HOLZ':'#e8c9a0','WOOD':'#e8c9a0','MADERA':'#e8c9a0','BOIS':'#e8c9a0','LEGNO':'#e8c9a0','AH\u015eAP':'#e8c9a0'
+    };
+    function matFarbe(name) {
+      const n = (name || '').toUpperCase();
+      if (MAT_FARBEN[n]) return MAT_FARBEN[n];
+      return '#c96a5a'; // Verfallsstufen: gedaempftes Rot
+    }
+
     function brainyShowScoreFlash(pointsText, labelText, onDone) {
       const ov = document.getElementById('scoreFlashOverlay');
       const pEl = document.getElementById('scoreFlashPoints');
       const tEl = document.getElementById('scoreFlashText');
       if (!ov) { if (onDone) onDone(); return; }
+
       pEl.textContent = pointsText;
       pEl.style.display = pointsText ? 'block' : 'none';
-      // Reine Zahlen gross, Textmeldungen kleiner und zentriert
-      const istZahl = /^[+\-]?\d+$/.test(pointsText.trim());
-      pEl.style.fontSize = istZahl ? '64px' : '26px';
-      pEl.style.textAlign = 'center';
       tEl.innerHTML = labelText;
-      tEl.style.fontSize = pointsText ? (istZahl ? '22px' : '26px') : '30px';
 
-      const fadeMs = 700, holdMs = 3000;
+      // Textfarbe + Leuchten passend zum Material
+      const farbe = matFarbe(labelText);
+      tEl.style.color = farbe;
+      tEl.style.textShadow = '0 0 30px ' + farbe + '99, 0 3px 0 rgba(0,0,0,0.85), 0 6px 18px rgba(0,0,0,0.9)';
+      // Lange Materialnamen kleiner setzen, damit sie in die Breite passen
+      const len = (labelText || '').replace(/<[^>]*>/g, '').length;
+      tEl.style.fontSize = len > 10 ? '28px' : (len > 7 ? '34px' : '40px');
+      tEl.style.letterSpacing = len > 10 ? '2px' : '5px';
+
+      const fadeMs = 500, holdMs = 2400;
       ov.style.transition = 'opacity ' + fadeMs + 'ms cubic-bezier(0.4, 0.0, 0.2, 1)';
       ov.style.opacity = '0';
       ov.style.display = 'flex';
-      // Fade in
-      requestAnimationFrame(() => { ov.style.opacity = '1'; });
+
+      // Einblenden mit leichtem Heranzoomen — wirkt wertiger als reines Fade
+      [pEl, tEl].forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = 'scale(0.82)';
+        el.style.opacity = '0';
+      });
+      requestAnimationFrame(() => {
+        ov.style.opacity = '1';
+        [pEl, tEl].forEach((el, i) => {
+          el.style.transition = 'transform 520ms cubic-bezier(0.16,1,0.3,1) ' + (i * 90) + 'ms, opacity 420ms ease ' + (i * 90) + 'ms';
+          el.style.transform = 'scale(1)';
+          el.style.opacity = '1';
+        });
+      });
 
       setTimeout(() => {
-        // Fade out
         ov.style.opacity = '0';
         setTimeout(() => {
           ov.style.display = 'none';
