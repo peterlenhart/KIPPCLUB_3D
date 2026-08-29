@@ -570,10 +570,6 @@
     .dirBtnFixed {
       width: 45px;
       height: 45px;
-      background: linear-gradient(180deg, #e8e0d4 0%, #c8b8a4 100%);
-      border: 2px solid #8a7a66;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.55);
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
@@ -1252,18 +1248,8 @@
       <div class="numBtnFixed" data-num="4" style="position:absolute;">4</div>
       <div class="numBtnFixed" data-num="5" style="position:absolute;">5</div>
       <div class="numBtnFixed" data-num="6" style="position:absolute;">6</div>
-      <div id="ccwDirBtn" class="dirBtnFixed" style="position:absolute; display:none;">
-        <svg viewBox="0 0 100 100" width="34" height="34" style="pointer-events:none;">
-          <path d="M 74 34 A 30 30 0 1 0 78 58" stroke="#3a2410" stroke-width="11" fill="none" stroke-linecap="round"/>
-          <polygon points="58,16 84,24 74,46" fill="#3a2410"/>
-        </svg>
-      </div>
-      <div id="cwDirBtn" class="dirBtnFixed" style="position:absolute; display:none;">
-        <svg viewBox="0 0 100 100" width="34" height="34" style="pointer-events:none;">
-          <path d="M 26 34 A 30 30 0 1 1 22 58" stroke="#3a2410" stroke-width="11" fill="none" stroke-linecap="round"/>
-          <polygon points="42,16 16,24 26,46" fill="#3a2410"/>
-        </svg>
-      </div>
+      <div id="ccwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('ccw.webp'); background-size:cover; background-repeat:no-repeat;"></div>
+      <div id="cwDirBtn" class="dirBtnFixed" style="position:absolute; display:none; background-image:url('cw.webp'); background-size:cover; background-repeat:no-repeat;"></div>
     </div>
     
     <!-- KIPP-TIPP Overlay -->
