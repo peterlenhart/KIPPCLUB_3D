@@ -1150,7 +1150,7 @@
   
   <div id="uiOverlay">
     <!-- Punkte-Overlay: verdunkelt das Display, zeigt zweizeilig Punkte + Text -->
-    <div id="scoreFlashOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; background:radial-gradient(ellipse at 50% 38%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.88) 65%); z-index:9000; display:none; pointer-events:none; align-items:flex-start; justify-content:center; flex-direction:column; padding-top:196px;">
+    <div id="scoreFlashOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; background:radial-gradient(ellipse at 50% 38%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.88) 65%); z-index:9000; display:none; pointer-events:none; align-items:flex-start; justify-content:flex-start; flex-direction:column; padding-top:215px;">
       <div id="scoreFlashPoints" style="width:100%; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:76px; letter-spacing:2px; line-height:1; color:#f4e4b8; text-shadow:0 0 22px rgba(255,200,80,0.55), 0 4px 0 #6b4a18, 0 6px 14px rgba(0,0,0,0.95);"></div>
       <div id="scoreFlashText" style="width:100%; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:40px; letter-spacing:5px; line-height:1.15; margin-top:14px; color:#ffffff; text-shadow:0 0 26px rgba(255,255,255,0.4), 0 3px 0 rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.9);"></div>
     </div>
@@ -1365,6 +1365,13 @@
       tr: ['\u00c7\u00d6KM\u00dc\u015e','\u00c7\u00dcR\u00dcK','YIPRANMI\u015e','AH\u015eAP','BRONZ','G\u00dcM\u00dc\u015e','ALTIN']
     };
     const MAT_NAMEN = MATERIAL_NAMEN[_digikippLang] || MATERIAL_NAMEN.de;
+
+    // Wort "Schwierigkeit" in allen 6 Sprachen
+    const SCHWIERIGKEIT_LABEL = {
+      de: 'SCHWIERIGKEIT', en: 'DIFFICULTY', es: 'DIFICULTAD',
+      fr: 'DIFFICULT\u00c9', it: 'DIFFICOLT\u00c0', tr: 'ZORLUK'
+    };
+    const SCHW_LABEL = SCHWIERIGKEIT_LABEL[_digikippLang] || SCHWIERIGKEIT_LABEL.de;
     document.getElementById("btnDemo").textContent = T.dm;
     // Exit overlay translations
     if (T.exQ) document.querySelector('.sgLine1').innerHTML = T.exQ;
@@ -13187,6 +13194,10 @@
 
       pEl.textContent = pointsText;
       pEl.style.display = pointsText ? 'block' : 'none';
+      // Lange Woerter kleiner setzen, kurze Zahlen gross
+      const pLen = (pointsText || '').length;
+      pEl.style.fontSize = pLen > 10 ? '30px' : (pLen > 5 ? '46px' : '76px');
+      pEl.style.letterSpacing = pLen > 10 ? '1px' : '2px';
       tEl.innerHTML = labelText;
 
       // Textfarbe + Leuchten passend zum Material
@@ -13195,8 +13206,16 @@
       tEl.style.textShadow = '0 0 30px ' + farbe + '99, 0 3px 0 rgba(0,0,0,0.85), 0 6px 18px rgba(0,0,0,0.9)';
       // Lange Materialnamen kleiner setzen, damit sie in die Breite passen
       const len = (labelText || '').replace(/<[^>]*>/g, '').length;
-      tEl.style.fontSize = len > 10 ? '28px' : (len > 7 ? '34px' : '40px');
-      tEl.style.letterSpacing = len > 10 ? '2px' : '5px';
+      const istStufenAnzeige = /^\d\/\d$/.test((labelText || '').trim());
+      if (istStufenAnzeige) {
+        tEl.style.fontSize = '72px';
+        tEl.style.letterSpacing = '2px';
+        tEl.style.color = '#f4e4b8';
+        tEl.style.textShadow = '0 0 26px rgba(255,200,80,0.5), 0 4px 0 #6b4a18, 0 6px 16px rgba(0,0,0,0.95)';
+      } else {
+        tEl.style.fontSize = len > 10 ? '28px' : (len > 7 ? '34px' : '40px');
+        tEl.style.letterSpacing = len > 10 ? '2px' : '5px';
+      }
 
       const fadeMs = 500, holdMs = 2400;
       ov.style.transition = 'opacity ' + fadeMs + 'ms cubic-bezier(0.4, 0.0, 0.2, 1)';
@@ -13391,9 +13410,12 @@
     function brainyAnnounceAndStartTarget(showLevelToo) {
       if (showLevelToo) {
         const schwierigkeit = window._brainySchwierigkeit || 1;
-        brainyShowScoreFlash(schwierigkeit + '/5', MAT_NAMEN[BRAINY_STUFE_START], () => {
-          brainyGenerateSingleTarget();
-          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+        // Erst "SCHWIERIGKEIT / 1/5", danach ausblenden und "HOLZ" einblenden
+        brainyShowScoreFlash(SCHW_LABEL, schwierigkeit + '/5', () => {
+          brainyShowScoreFlash('', MAT_NAMEN[BRAINY_STUFE_START], () => {
+            brainyGenerateSingleTarget();
+            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+          });
         });
       } else {
         brainyGenerateSingleTarget();
