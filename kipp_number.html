@@ -3787,7 +3787,32 @@
       ]
     };
 
-        // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
+    // === STUFE 1/5: alle Farbfelder ausser gruen mit farbfeld_grau ueberdecken ===
+    const grauFeldMeshes = [];
+    (function buildGrauFelder() {
+      const grauTex = new THREE.TextureLoader().load('farbfeld_grau.png');
+      const grauGeo = new THREE.PlaneGeometry(0.15625, 0.15625);
+      const yPos = 0.0012; // knapp ueber dem Spieltisch
+      ['violett', 'blau', 'orange'].forEach(farbe => {
+        COLOR_FIELD_POS[farbe].forEach(pos => {
+          const m = new THREE.Mesh(grauGeo, new THREE.MeshBasicMaterial({
+            map: grauTex, transparent: true
+          }));
+          m.rotation.x = -Math.PI / 2;
+          m.position.set(pos.x, yPos, pos.z);
+          m.visible = false;
+          scene.add(m);
+          grauFeldMeshes.push(m);
+        });
+      });
+    })();
+
+    // Blendet die grauen Abdeckungen ein/aus
+    function brainySetGrauFelder(sichtbar) {
+      grauFeldMeshes.forEach(m => { m.visible = !!sichtbar; });
+    }
+
+    // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
     // Zähler-Flug: in die würfelfreie Boxhälfte
     let counterOrigPos = null;
     let lastCounterTarget = { x: 180, y: 300 }; // Fallback
@@ -7246,6 +7271,16 @@
     };
     
     function brainyBuildDeck(cfg, additiv) {
+      // Schwierigkeitsstufe 1/5: nur die "1" auf einem zufaelligen Slot der Topface (f2 in Q3)
+      if (window._brainySchwierigkeit === 1) {
+        deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
+        visibleDeckIndices.clear();
+        const slot = 8 + Math.floor(Math.random() * 4); // f2 = deck[8..11]
+        deck[slot] = 1;
+        visibleDeckIndices.add(slot);
+        return;
+      }
+
       // additiv = true: bestehende Zahlen bleiben an ihren Slots, es kommen nur
       // die fehlenden Paare auf freie Slots dazu (Levelaufstieg).
       if (!additiv) {
@@ -13216,57 +13251,43 @@
 
           setTimeout(() => {
             if (neueStufe >= BRAINY_STUFEN.length - 1) {
-              // GOLD erreicht — Goldwuerfel gesammelt, zurueck auf Holz
+              // GOLD erreicht — Goldwuerfel gesammelt, naechste Schwierigkeitsstufe
               window._brainyGoldwuerfel = (window._brainyGoldwuerfel || 0) + 1;
-              brainyShowScoreFlash('+' + pts, 'GOLDW&Uuml;RFEL!', () => {
-                brainySetStufe(BRAINY_STUFE_START);
-                resolveAll();
-              });
+              window._brainySchwierigkeit = Math.min(5, (window._brainySchwierigkeit || 1) + 1);
+              if (typeof brainySetGrauFelder === 'function') {
+                brainySetGrauFelder(window._brainySchwierigkeit === 1);
+              }
+              brainySetStufe(BRAINY_STUFE_START);
+              resolveAll();
             } else {
-              brainyShowScoreFlash('+' + pts, label, () => {
-                resolveAll();
-              });
+              resolveAll();
             }
           }, 1200);
 
         } else if (versuch >= 3) {
-          // Dritter Fehlversuch — 0 Punkte, naechstes Ziel
+          // Dritter Fehlversuch — naechstes Ziel
           window._brainyZielAbgeschlossen = true;
           window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
           brainyUpdateCounterDisplay();
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
-          if (stufeNachFail <= 0) {
-            brainyShowScoreFlash('0', 'W&Uuml;RFEL ZERFALLEN', () => {
-              brainySetStufe(BRAINY_STUFE_START);
-              resolveAll();
-            });
-          } else {
-            brainyShowScoreFlash('0', '3 Fehl-Versuche', () => {
-              resolveAll();
-            });
-          }
+          if (stufeNachFail <= 0) brainySetStufe(BRAINY_STUFE_START);
+          resolveAll();
 
         } else {
-          // Fehlversuch 1 oder 2 — Stufe runter, roter Puls, danach Versuchsanzeige
+          // Fehlversuch 1 oder 2 — Stufe runter, roter Puls
           window._brainyFailRetry = true;
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
           brainyPulseRedBorder(() => {
             if (stufeNachFail <= 0) {
-              // Wuerfel zerfallen — Runde vorbei, Ziel gilt als gespielt
               window._brainyZielAbgeschlossen = true;
               window._brainyFailRetry = false;
               window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
               brainyUpdateCounterDisplay();
-              brainyShowScoreFlash('0', 'W&Uuml;RFEL ZERFALLEN', () => {
-                brainySetStufe(BRAINY_STUFE_START);
-                resolveAll();
-              });
+              brainySetStufe(BRAINY_STUFE_START);
+              resolveAll();
             } else {
-              const naechsterVersuch = versuch + 1;
-              brainyShowScoreFlash('', 'Versuch ' + naechsterVersuch + '/3', () => {
-                if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
-                resolveAll();
-              });
+              if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+              resolveAll();
             }
           });
         }
@@ -13304,34 +13325,13 @@
 
     // Erzeugt das naechste Ziel; nur bei Levelwechsel/Start mit kurzer Level-Ansage
     function brainyAnnounceAndStartTarget(showLevelToo) {
-      if (showLevelToo) {
-        let bestHits = 0;
-        try {
-          const scores = loadBestScores();
-          if (scores.length) bestHits = scores[0].hits || 0;
-        } catch(e) {}
-        brainyShowScoreFlash(
-          'Level ' + currentLevel + '/4',
-          'Highscore: ' + bestHits,
-          () => {
-            brainyGenerateSingleTarget();
-            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
-          }
-        );
-      } else {
-        brainyGenerateSingleTarget();
-        if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
-      }
+      brainyGenerateSingleTarget();
+      if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
     }
 
     function brainyNextTargetOrEnd() {
-      const gespielt = window._brainyZieleGespielt || 0;
-      if (gespielt >= 4) {
-        gamePhase = 'ende';
-        endSixTargetGame();
-      } else {
-        brainyAnnounceAndStartTarget(false);
-      }
+      brainyGenerateSingleTarget();
+      if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
     }
 
 
@@ -13517,7 +13517,10 @@
       // Ab Ziel 3: nur Zahlen der beiden anderen Faces (Topface-Zahlen ausgeschlossen).
       const _zielNr = (window._brainyZieleGespielt || 0) + 1;
       let zahl, forbiddenColor = null;
-      if (_zielNr === 1 && _visiblePairs.length > 0) {
+      if (window._brainySchwierigkeit === 1) {
+        // Stufe 1/5: immer die "1", immer gruen
+        zahl = 1;
+      } else if (_zielNr === 1 && _visiblePairs.length > 0) {
         const pick = _visiblePairs[Math.floor(Math.random() * _visiblePairs.length)];
         zahl = pick.zahl;
         forbiddenColor = pick.forbiddenColor;
@@ -13530,8 +13533,13 @@
       }
 
       // Farbe waehlen, aber nie die bereits erfuellte
-      const erlaubteFarben = GAME_COLORS.filter(c => c.name !== forbiddenColor);
-      const colorObj = erlaubteFarben[Math.floor(Math.random() * erlaubteFarben.length)];
+      let colorObj;
+      if (window._brainySchwierigkeit === 1) {
+        colorObj = GAME_COLORS.find(c => c.name === 'gruen') || GAME_COLORS[0];
+      } else {
+        const erlaubteFarben = GAME_COLORS.filter(c => c.name !== forbiddenColor);
+        colorObj = erlaubteFarben[Math.floor(Math.random() * erlaubteFarben.length)];
+      }
 
       fillCardWithKombi(0, zahl, colorObj);
       gameCards[0].mesh.visible = true;
@@ -13582,6 +13590,10 @@
       // Joker-System entfaellt komplett — ersetzt durch Scrollband
 
       currentLevel = 1; // Start immer bei Bumblebrain, automatischer Aufstieg folgt
+      window._brainySchwierigkeit = window._brainySchwierigkeit || 1;
+      if (typeof brainySetGrauFelder === 'function') {
+        brainySetGrauFelder(window._brainySchwierigkeit === 1);
+      }
       const _cfg = LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
       brainyBuildDeck(_cfg);
