@@ -573,7 +573,7 @@
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
-      opacity: 0.35;
+      opacity: 1;
       transition: opacity 0.15s ease;
       display: flex;
       align-items: center;
@@ -610,12 +610,14 @@
       100% { background-position: 320% 0; }
     }
     /* === GOLDWUERFEL-PRAESENTATION === */
+    /* Auf die Ecke gestellt: rotateZ(45) kippt die Kante nach vorn,
+       rotateX(-32) neigt von oben -> drei Flaechen gleichzeitig sichtbar */
     @keyframes goldSpin {
-      0%   { transform: rotateX(-22deg) rotateY(0deg)   rotateZ(45deg) scale(0.4); }
-      18%  { transform: rotateX(-22deg) rotateY(140deg) rotateZ(45deg) scale(1.08); }
-      30%  { transform: rotateX(-22deg) rotateY(260deg) rotateZ(45deg) scale(1); }
-      70%  { transform: rotateX(-22deg) rotateY(540deg) rotateZ(45deg) scale(1); }
-      100% { transform: rotateX(-22deg) rotateY(720deg) rotateZ(45deg) scale(1); }
+      0%   { transform: rotateZ(45deg) rotateX(-32deg) rotateY(25deg)  scale(0.35); }
+      18%  { transform: rotateZ(45deg) rotateX(-32deg) rotateY(165deg) scale(1.10); }
+      32%  { transform: rotateZ(45deg) rotateX(-32deg) rotateY(285deg) scale(1); }
+      70%  { transform: rotateZ(45deg) rotateX(-32deg) rotateY(565deg) scale(1); }
+      100% { transform: rotateZ(45deg) rotateX(-32deg) rotateY(745deg) scale(1); }
     }
     @keyframes goldGlow {
       0%,100% { filter: drop-shadow(0 0 14px rgba(255,190,60,0.55)) drop-shadow(0 0 34px rgba(255,150,20,0.3)); }
@@ -643,8 +645,8 @@
       filter: drop-shadow(0 3px 8px rgba(0,0,0,0.8)) drop-shadow(0 0 10px rgba(255,190,60,0.45));
     }
     @keyframes dirBtnBlinkAnim {
-      0%, 100% { opacity: 0.35; }
-      50%      { opacity: 1; }
+      0%, 100% { opacity: 0.62; transform: scale(0.97); }
+      50%      { opacity: 1;    transform: scale(1.06); }
     }
     .dirBtnFixed:active {
       transform: scale(0.90);
@@ -7520,6 +7522,194 @@
     const BRAINY_CUBE_RED   = () => brainyCubeSVG('#ff6b6b', '#c0392b', '#a0281e', '#5a1812');
     const BRAINY_CUBE_GOLD  = () => brainyCubeSVG('#ffe066', '#e0a92e', '#b8801c', '#6b4a10');
 
+    // === WUERFEL-ZERFALL (verrottet) ===
+    // Der Wuerfel zerbricht in Bruchstuecke, die mit Schwerkraft auf den
+    // Boxboden fallen, dort aufprallen und langsam verblassen.
+    const ZERFALL = {
+      teile: 48,
+      bodenY: 0.001,
+      gravitation: -1.9,
+      dauerMs: 3200
+    };
+
+    function brainyWuerfelZerfall(onDone) {
+      if (!cube || !cube.visible) { if (onDone) onDone(); return; }
+
+      const wuerfelPos = new THREE.Vector3();
+      cube.getWorldPosition(wuerfelPos);
+      const kante = cubeSize;
+
+      // Farben aus der Verfallsstufe: morsches, graubraunes Holz
+      const holzfarben = [0x6b5638, 0x7d6544, 0x574530, 0x8a7050, 0x453626];
+
+      const bruchstuecke = [];
+      const teilGeo = [];
+      for (let i = 0; i < 3; i++) {
+        const s = kante * (0.10 + i * 0.045);
+        teilGeo.push(new THREE.BoxGeometry(s, s * 0.75, s * 0.9));
+      }
+
+      for (let i = 0; i < ZERFALL.teile; i++) {
+        const geo = teilGeo[i % teilGeo.length];
+        const mat = new THREE.MeshStandardMaterial({
+          color: holzfarben[i % holzfarben.length],
+          roughness: 0.95, metalness: 0.0,
+          transparent: true, opacity: 1
+        });
+        const m = new THREE.Mesh(geo, mat);
+
+        // Startposition zufaellig im Wuerfelvolumen
+        m.position.set(
+          wuerfelPos.x + (Math.random() - 0.5) * kante * 0.8,
+          wuerfelPos.y + (Math.random() - 0.5) * kante * 0.8,
+          wuerfelPos.z + (Math.random() - 0.5) * kante * 0.8
+        );
+        m.rotation.set(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
+        m.castShadow = false;
+        scene.add(m);
+
+        // Auseinanderstieben: radial vom Zentrum weg, leicht nach oben
+        const dx = m.position.x - wuerfelPos.x;
+        const dz = m.position.z - wuerfelPos.z;
+        const laenge = Math.max(0.001, Math.sqrt(dx*dx + dz*dz));
+        bruchstuecke.push({
+          mesh: m,
+          vx: (dx / laenge) * (0.12 + Math.random() * 0.30),
+          vy: 0.15 + Math.random() * 0.55,
+          vz: (dz / laenge) * (0.12 + Math.random() * 0.30),
+          rx: (Math.random() - 0.5) * 7,
+          ry: (Math.random() - 0.5) * 7,
+          rz: (Math.random() - 0.5) * 7,
+          gelandet: false,
+          huepfer: 0,
+          halbe: (geo.parameters.height || 0.02) / 2
+        });
+      }
+
+      // Staubwolke aus flachen, halbtransparenten Flaechen
+      const staub = [];
+      const staubGeo = new THREE.PlaneGeometry(kante * 0.42, kante * 0.42);
+      for (let i = 0; i < 14; i++) {
+        const mat = new THREE.MeshBasicMaterial({
+          color: 0x8a7355, transparent: true, opacity: 0.30, depthWrite: false
+        });
+        const m = new THREE.Mesh(staubGeo, mat);
+        m.position.copy(wuerfelPos);
+        m.position.x += (Math.random() - 0.5) * kante * 0.5;
+        m.position.z += (Math.random() - 0.5) * kante * 0.5;
+        m.rotation.z = Math.random() * 6.28;
+        scene.add(m);
+        staub.push({
+          mesh: m,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: 0.18 + Math.random() * 0.28,
+          vz: (Math.random() - 0.5) * 0.35,
+          drehung: (Math.random() - 0.5) * 1.6
+        });
+      }
+
+      // Originalwuerfel verschwindet im Moment des Zerbrechens
+      cube.visible = false;
+
+      // Kurzes Ruckeln der Kamera
+      const kamStart = camera.position.clone();
+      let ruckelZeit = 0;
+
+      const startZeit = performance.now();
+      function animiere(jetzt) {
+        const t = jetzt - startZeit;
+        const dt = 0.016;
+
+        // Kamera-Ruckeln in den ersten 260ms
+        if (t < 260) {
+          ruckelZeit += dt;
+          const staerke = 0.010 * (1 - t / 260);
+          camera.position.set(
+            kamStart.x + (Math.random() - 0.5) * staerke,
+            kamStart.y + (Math.random() - 0.5) * staerke,
+            kamStart.z + (Math.random() - 0.5) * staerke
+          );
+        } else if (camera.position.distanceTo(kamStart) > 0.0001) {
+          camera.position.copy(kamStart);
+        }
+
+        // Bruchstuecke bewegen
+        bruchstuecke.forEach(b => {
+          if (!b.gelandet) {
+            b.vy += ZERFALL.gravitation * dt;
+            b.mesh.position.x += b.vx * dt;
+            b.mesh.position.y += b.vy * dt;
+            b.mesh.position.z += b.vz * dt;
+            b.mesh.rotation.x += b.rx * dt;
+            b.mesh.rotation.y += b.ry * dt;
+            b.mesh.rotation.z += b.rz * dt;
+
+            const boden = ZERFALL.bodenY + b.halbe;
+            if (b.mesh.position.y <= boden) {
+              b.mesh.position.y = boden;
+              if (b.huepfer < 1 && Math.abs(b.vy) > 0.25) {
+                b.vy = -b.vy * 0.32;          // einmal abprallen
+                b.vx *= 0.55; b.vz *= 0.55;
+                b.rx *= 0.4; b.ry *= 0.4; b.rz *= 0.4;
+                b.huepfer++;
+              } else {
+                b.gelandet = true;
+                b.vx = b.vy = b.vz = 0;
+                b.rx = b.ry = b.rz = 0;
+              }
+            }
+          }
+          // Ausblenden gegen Ende
+          if (t > ZERFALL.dauerMs - 900) {
+            const p = (t - (ZERFALL.dauerMs - 900)) / 900;
+            b.mesh.material.opacity = Math.max(0, 1 - p);
+          }
+        });
+
+        // Staub aufsteigen und verwehen lassen
+        staub.forEach(s => {
+          s.vy *= 0.975;
+          s.mesh.position.x += s.vx * dt;
+          s.mesh.position.y += s.vy * dt;
+          s.mesh.position.z += s.vz * dt;
+          s.mesh.rotation.z += s.drehung * dt;
+          s.mesh.scale.multiplyScalar(1.010);
+          s.mesh.material.opacity *= 0.982;
+        });
+
+        if (t < ZERFALL.dauerMs) {
+          requestAnimationFrame(animiere);
+        } else {
+          bruchstuecke.forEach(b => { scene.remove(b.mesh); b.mesh.material.dispose(); });
+          staub.forEach(s => { scene.remove(s.mesh); s.mesh.material.dispose(); });
+          teilGeo.forEach(g => g.dispose());
+          staubGeo.dispose();
+          camera.position.copy(kamStart);
+          if (onDone) onDone();
+        }
+      }
+      requestAnimationFrame(animiere);
+    }
+
+    // Zerfall abspielen und den Wuerfel danach neu in Holzoptik aufbauen
+    function brainyZerfallUndNeuaufbau(onDone) {
+      brainyWuerfelZerfall(() => {
+        brainySetStufe(BRAINY_STUFE_START);
+        cube.visible = true;
+        cube.scale.set(0.01, 0.01, 0.01);
+        const start = performance.now();
+        function wachse(jetzt) {
+          const p = Math.min(1, (jetzt - start) / 620);
+          const e = 1 - Math.pow(1 - p, 3);          // sanftes Ausklingen
+          const s = 0.01 + e * 0.99;
+          cube.scale.set(s, s, s);
+          if (p < 1) requestAnimationFrame(wachse);
+          else { cube.scale.set(1, 1, 1); if (onDone) onDone(); }
+        }
+        requestAnimationFrame(wachse);
+      });
+    }
+
     // === GOLDWUERFEL-SAMMLUNG (2 Spalten x 5 Zeilen, progressiv wachsend) ===
     // Berechnet: Zelle 180x100px. Auf die Ecke gestellt braucht ein Wuerfel
     // das 1.4142-fache seiner Kantenlaenge -> max. 59px bei 8px Rand.
@@ -7661,10 +7851,14 @@
         '<div style="position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;' +
         'border:3px solid rgba(255,240,170,0.7);border-radius:50%;animation:goldShockwave 1300ms cubic-bezier(0.2,0.8,0.3,1) 460ms forwards;"></div>' +
         // Der drehende Wuerfel
-        '<div style="position:absolute;left:0;top:0;width:100%;height:100%;perspective:560px;">' +
+        // WICHTIG: filter (goldGlow) und preserve-3d duerfen NICHT auf demselben
+        // Element liegen — ein Filter flacht die 3D-Darstellung ab.
+        '<div style="position:absolute;left:0;top:0;width:100%;height:100%;' +
+        'animation:goldGlow 1300ms ease-in-out infinite;">' +
+        '<div style="position:absolute;left:0;top:0;width:100%;height:100%;perspective:600px;">' +
         '<div style="position:absolute;left:0;top:0;width:100%;height:100%;transform-style:preserve-3d;' +
-        'animation:goldSpin 2600ms cubic-bezier(0.22,1,0.36,1) forwards, goldGlow 1300ms ease-in-out infinite;">' +
-        goldCubeHTML(kante) + '</div></div>';
+        'animation:goldSpin 2600ms cubic-bezier(0.22,1,0.36,1) forwards;">' +
+        goldCubeHTML(kante) + '</div></div></div>';
 
       goldSparks(pres, 26);
 
@@ -13349,7 +13543,7 @@
           }
           if (ccwBtn) {
             ccwBtn.style.setProperty('display', 'flex', 'important');
-            ccwBtn.style.animationDelay = '0.75s';   // deutlich versetzt, wechselseitig
+            ccwBtn.style.animationDelay = '-0.75s';   // negativ: startet sofort, nur phasenversetzt
             ccwBtn.classList.add('dirBtnBlink');
           }
         } else {
@@ -13376,7 +13570,7 @@
         }
 
         if (cwBtn) { cwBtn.style.setProperty('display', 'flex', 'important'); cwBtn.style.animationDelay = '0s'; cwBtn.classList.add('dirBtnBlink'); }
-        if (ccwBtn) { ccwBtn.style.setProperty('display', 'flex', 'important'); ccwBtn.style.animationDelay = '0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
+        if (ccwBtn) { ccwBtn.style.setProperty('display', 'flex', 'important'); ccwBtn.style.animationDelay = '-0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
       }
 
       async function fireKipp(direction) {
@@ -13622,8 +13816,11 @@
           window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
           brainyShowScoreFlash('', MAT_NAMEN[stufeNachFail], () => {
-            if (stufeNachFail <= 0) brainySetStufe(BRAINY_STUFE_START);
-            resolveAll();
+            if (stufeNachFail <= 0) {
+              brainyZerfallUndNeuaufbau(() => resolveAll());
+            } else {
+              resolveAll();
+            }
           });
 
         } else {
@@ -13636,11 +13833,11 @@
                 window._brainyZielAbgeschlossen = true;
                 window._brainyFailRetry = false;
                 window._brainyZieleGespielt = (window._brainyZieleGespielt || 0) + 1;
-                brainySetStufe(BRAINY_STUFE_START);
+                brainyZerfallUndNeuaufbau(() => resolveAll());
               } else {
                 if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+                resolveAll();
               }
-              resolveAll();
             });
           });
         }
