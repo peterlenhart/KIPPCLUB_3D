@@ -3810,7 +3810,7 @@
     (function buildGrauFelder() {
       const grauTex = new THREE.TextureLoader().load('farbfeld_grau.png');
       const grauGeo = new THREE.PlaneGeometry(0.15625, 0.15625);
-      const yPos = 0.0012; // knapp ueber dem Spieltisch
+      const yPos = 0.001 + 3 * 0.15625 + 0.0015; // knapp ueber dem Spieltisch (Farbfeld-Ebene)
       ['violett', 'blau', 'orange'].forEach(farbe => {
         COLOR_FIELD_POS[farbe].forEach(pos => {
           const m = new THREE.Mesh(grauGeo, new THREE.MeshBasicMaterial({
@@ -13081,12 +13081,12 @@
             btn3.classList.add('numBtnSelected');
           }
           if (cwBtn) {
-            cwBtn.style.display = 'flex';
+            cwBtn.style.setProperty('display', 'flex', 'important');
             cwBtn.style.animationDelay = '0s';
             cwBtn.classList.add('dirBtnBlink');
           }
           if (ccwBtn) {
-            ccwBtn.style.display = 'flex';
+            ccwBtn.style.setProperty('display', 'flex', 'important');
             ccwBtn.style.animationDelay = '0.75s';   // deutlich versetzt, wechselseitig
             ccwBtn.classList.add('dirBtnBlink');
           }
@@ -13711,11 +13711,8 @@
       const eye = document.getElementById('eyeIcon');
       if (eye) eye.style.display = 'none';
 
-      // Startanzeige "Level 1/4" + "Kippziel 1/4", danach erstes Ziel
-      brainyAnnounceAndStartTarget(true);
-
-      // Tasten einblenden: exakt im 45px-Raster positioniert (8 Spalten, 6 Tasten zentriert),
-      // vertikal 0,5 Rasterquadrat (22,5px) unter den Kippziel-Karten
+      // Tasten zuerst positionieren, DANACH das Spiel starten —
+      // sonst wuerde clearSelection() die Richtungstasten wieder verstecken.
       const nb = document.getElementById('numBtns');
       if (nb) {
         nb.classList.remove('hidden');
@@ -13749,6 +13746,9 @@
         }
         if (typeof window._clearNumSelection === 'function') window._clearNumSelection();
       }
+
+      // Startanzeige, danach erstes Ziel und Freigabe der Tasten
+      brainyAnnounceAndStartTarget(true);
 
       setButtonsDisabled(false);
 
