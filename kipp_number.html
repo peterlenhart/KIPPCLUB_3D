@@ -3805,31 +3805,6 @@
       ]
     };
 
-    // === STUFE 1/5: alle Farbfelder ausser gruen mit farbfeld_grau ueberdecken ===
-    const grauFeldMeshes = [];
-    (function buildGrauFelder() {
-      const grauTex = new THREE.TextureLoader().load('farbfeld_grau.png');
-      const grauMat = new THREE.MeshBasicMaterial({ map: grauTex, transparent: true });
-      const grauGeo = new THREE.PlaneGeometry(0.15625, 0.15625);
-      const yPos = 0.4805; // Rahmen-Oberkante (wie endY in animateCardFly) + minimal darueber
-      ['violett', 'blau', 'orange'].forEach(farbe => {
-        COLOR_FIELD_POS[farbe].forEach(pos => {
-          const m = new THREE.Mesh(grauGeo, grauMat);
-          m.rotation.x = -Math.PI / 2;
-          m.position.set(pos.x, yPos, pos.z);
-          m.renderOrder = 5;
-          m.visible = false;
-          scene.add(m);
-          grauFeldMeshes.push(m);
-        });
-      });
-    })();
-
-    // Blendet die grauen Abdeckungen ein/aus
-    function brainySetGrauFelder(sichtbar) {
-      grauFeldMeshes.forEach(m => { m.visible = !!sichtbar; });
-    }
-
     // Kippziel-Fluganimation: Card hebt ab, fliegt zum Treffer-Slot, legt sich deckungsgleich drauf
     // Zähler-Flug: in die würfelfreie Boxhälfte
     let counterOrigPos = null;
@@ -7289,17 +7264,15 @@
     };
     
     function brainyBuildDeck(cfg, additiv) {
-      // Schwierigkeitsstufe 1/5: nur die "1" auf einem Slot der Topface (f2 in Q3),
-      // und zwar nur dort, wo gruen genau 90 Grad versetzt liegt -> mit 3 Kipps cw ODER ccw loesbar.
-      // Q3-Farbfolge: S1=violett, S2=gruen, S3=orange, S4=blau
-      // -> gruen(S2) ist 90 Grad von S1 und S3 entfernt. S4 waere 180 Grad (6 Kipps), S2 schon erfuellt.
+      // Schwierigkeitsstufe 1/5: nur die "1" auf einem beliebigen Slot der Topface (f2 in Q3).
+      // Mit 3 Kipps sind von dort genau die beiden benachbarten Farbfelder erreichbar.
       if (window._brainySchwierigkeit === 1) {
         deck = [0,0,0,0, 0,0,0,0, 0,0,0,0];
         visibleDeckIndices.clear();
-        const erlaubteSlots = [8, 10]; // f2-S1 und f2-S3
-        const slot = erlaubteSlots[Math.floor(Math.random() * erlaubteSlots.length)];
-        deck[slot] = 1;
-        visibleDeckIndices.add(slot);
+        const slotIdx = Math.floor(Math.random() * 4);  // 0..3 = S1..S4
+        deck[8 + slotIdx] = 1;
+        visibleDeckIndices.add(8 + slotIdx);
+        window._st1SlotIdx = slotIdx;
         return;
       }
 
@@ -13333,9 +13306,6 @@
               window._brainyGoldwuerfel = (window._brainyGoldwuerfel || 0) + 1;
               window._brainySchwierigkeit = Math.min(5, (window._brainySchwierigkeit || 1) + 1);
               brainyShowScoreFlash('', MAT_NAMEN[neueStufe], () => {
-                if (typeof brainySetGrauFelder === 'function') {
-                  brainySetGrauFelder(window._brainySchwierigkeit === 1);
-                }
                 brainySetStufe(BRAINY_STUFE_START);
                 resolveAll();
               });
@@ -13378,32 +13348,10 @@
     }
 
     // Naechstes Kippziel oder Spielende nach 6 Zielen
-    // Kippt den Wuerfel nach dem Spielerzug automatisch zurueck auf Q3 — dabei
-    // liegt garantiert eine ANDERE Face oben als zuvor, und es sind mind. 2 Kipps.
-    // Es wird die kuerzere der beiden Richtungen gewaehlt.
+    // Nach dem Spielerzug: 3 weitere Kipps in dieselbe Richtung wie der Spielerkipp.
     async function brainyAutoReturnToQ3(playerDirection) {
-      const startIdx = stateIndex(currentQuadrant, topFace);
-      if (startIdx < 0) return;
-
-      const q3Indices = [0, 4, 8];   // Q3-Zustaende im 12er-Zyklus
-      const startFace = topFace;
-
-      let bestCw = null, bestCcw = null;
-      for (let s = 2; s <= 12; s++) {
-        const idx = (startIdx + s) % 12;
-        if (q3Indices.indexOf(idx) !== -1 && CW_CYCLE[idx][1] !== startFace) { bestCw = s; break; }
-      }
-      for (let s = 2; s <= 12; s++) {
-        const idx = ((startIdx - s) % 12 + 12) % 12;
-        if (q3Indices.indexOf(idx) !== -1 && CW_CYCLE[idx][1] !== startFace) { bestCcw = s; break; }
-      }
-
-      const useCcw = (bestCcw !== null) && (bestCw === null || bestCcw < bestCw);
-      const steps = useCcw ? bestCcw : bestCw;
-      if (steps === null || steps === undefined) return;
-
-      kippDirection = useCcw ? 'ccw' : 'cw';
-      await runKippSequence(steps, 'auto');
+      kippDirection = playerDirection;
+      await runKippSequence(3, 'auto');
     }
 
     // Erzeugt das naechste Ziel; nur bei Levelwechsel/Start mit kurzer Level-Ansage
@@ -13629,7 +13577,16 @@
       // Farbe waehlen, aber nie die bereits erfuellte
       let colorObj;
       if (window._brainySchwierigkeit === 1) {
-        colorObj = GAME_COLORS.find(c => c.name === 'gruen') || GAME_COLORS[0];
+        // Stufe 1/5: Von der Position der "1" sind mit 3 Kipps genau die beiden
+        // benachbarten Farbfelder erreichbar (eines cw, eines ccw).
+        const slotNames = ['S1', 'S2', 'S3', 'S4'];
+        const si = window._st1SlotIdx || 0;
+        const nachbarn = [
+          SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 1) % 4]],
+          SLOT_NEIGHBOR_COLORS[3][slotNames[(si + 3) % 4]]
+        ];
+        const zielFarbe = nachbarn[Math.floor(Math.random() * 2)];
+        colorObj = GAME_COLORS.find(c => c.name === zielFarbe) || GAME_COLORS[0];
       } else {
         const erlaubteFarben = GAME_COLORS.filter(c => c.name !== forbiddenColor);
         colorObj = erlaubteFarben[Math.floor(Math.random() * erlaubteFarben.length)];
@@ -13685,9 +13642,6 @@
 
       currentLevel = 1; // Start immer bei Bumblebrain, automatischer Aufstieg folgt
       window._brainySchwierigkeit = window._brainySchwierigkeit || 1;
-      if (typeof brainySetGrauFelder === 'function') {
-        brainySetGrauFelder(window._brainySchwierigkeit === 1);
-      }
       const _cfg = LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
       brainyBuildDeck(_cfg);
