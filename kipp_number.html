@@ -1143,6 +1143,13 @@
     <button class="startClickZone" id="btnDemo" disabled style="opacity:0">TUTORIAL</button>
     <button class="startClickZone" id="btnKippPrinzip" disabled style="opacity:0;display:none">KIPP Prinzip</button>
   </div>
+
+  <!-- Einstiegswahl: welche Schwierigkeitsstufe soll gespielt werden.
+       Liegt direkt im Body, damit es ueber startOverlay und uiOverlay liegt. -->
+  <div id="stufenWahlOverlay" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; z-index:99999; display:none; opacity:0; pointer-events:none; transition:opacity 380ms ease; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.94) 0%, rgba(0,0,0,0.98) 70%);">
+    <div id="stufenWahlTitel" style="position:absolute; left:0; top:150px; width:360px; text-align:center; font-family:Arial,sans-serif; font-size:21px; font-weight:bold; color:#f4e4b8; letter-spacing:1px; text-shadow:0 0 22px rgba(255,200,80,0.45), 0 3px 0 #6b4a18, 0 5px 14px rgba(0,0,0,0.95);"></div>
+    <div id="stufenWahlBtns" style="position:absolute; left:30px; top:215px; width:300px; display:flex; flex-wrap:wrap; justify-content:center; gap:12px;"></div>
+  </div>
   
   <!-- SAVE GAME Overlay -->
   <div id="saveGameOverlay">
@@ -1220,12 +1227,6 @@
     <div id="goldSammlungOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; z-index:9100; display:none; pointer-events:none; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.85) 0%, rgba(0,0,0,0.95) 70%);">
       <div id="goldGrid" style="position:absolute; left:0; top:150px; width:360px; height:500px;"></div>
       <div id="goldPresenter" style="position:absolute; left:50%; top:265px; width:200px; height:200px; margin-left:-100px; opacity:0;"></div>
-    </div>
-
-    <!-- Einstiegswahl: welche Schwierigkeitsstufe soll gespielt werden -->
-    <div id="stufenWahlOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; z-index:9200; display:none; opacity:0; pointer-events:none; transition:opacity 380ms ease; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.92) 0%, rgba(0,0,0,0.97) 70%);">
-      <div id="stufenWahlTitel" style="position:absolute; left:0; top:150px; width:360px; text-align:center; font-family:Arial,sans-serif; font-size:22px; font-weight:bold; color:#f4e4b8; letter-spacing:1px; text-shadow:0 0 22px rgba(255,200,80,0.45), 0 3px 0 #6b4a18, 0 5px 14px rgba(0,0,0,0.95);"></div>
-      <div id="stufenWahlBtns" style="position:absolute; left:30px; top:220px; width:300px; display:flex; flex-wrap:wrap; justify-content:center; gap:12px;"></div>
     </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
@@ -8085,11 +8086,9 @@
         return;
       }
       grid.innerHTML = '';
-      // Laeuft kein Spiel (Startbildschirm), wird der gespeicherte Bestand
-      // aus dem letzten Spielstand angezeigt.
-      const n = (gamePhase === 'start' || gamePhase === 'demo')
-        ? kippLadeFortschritt().gold
-        : (window._brainyGoldwuerfel || 0);
+      // Immer der hoechste bekannte Stand: der laufende Spielstand oder der
+      // gespeicherte Bestand aus frueheren Spielen — je nachdem was groesser ist.
+      const n = Math.max(window._brainyGoldwuerfel || 0, kippLadeFortschritt().gold);
       for (let i = 1; i <= n; i++) goldGridAdd(i, false);
       goldZeichneLeereZellen(n);
       ov.style.pointerEvents = 'none';
@@ -11678,6 +11677,10 @@
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
+      // Fortschritt sichern, bevor der Spielstand verworfen wird
+      if (typeof kippSpeichereFortschritt === 'function') {
+        kippSpeichereFortschritt(window._brainySchwierigkeit || 1, window._brainyGoldwuerfel || 0);
+      }
       // Laufenden Punktestand als Highscore-Eintrag sichern (Abbruch)
       if (gamePhase === 'spielen' && (window._brainyHitsTotal || 0) > 0) {
         if (typeof saveHighScore === 'function') {
@@ -13976,6 +13979,17 @@
           //   3. Spieler freigeben
           if (window._brainyZielAbgeschlossen) {
             window._brainyZielAbgeschlossen = false;
+
+            // Stufenwechsel per Goldwuerfel: Ansage + Zielgenerierung erst
+            // JETZT, wenn alle Weiterkipps durch sind und der Wuerfel still
+            // steht. Sonst lief die Zielberechnung parallel zu den Kipps und
+            // ein richtiger Spielerkipp wurde faelschlich als Fehler gewertet.
+            if (window._pendingSchwierigkeitAnsage) {
+              window._pendingSchwierigkeitAnsage = false;
+              brainyAnnounceAndStartTarget(true);
+              return;
+            }
+
             await brainySichereVerdeckteLage();          // letzte Kippbewegung
 
             if (brainyZielAnzahl() > 1) {
@@ -14197,16 +14211,13 @@
               const goldNr = window._brainyGoldwuerfel;
               brainySetStufe(BRAINY_STUFE_START);
               brainyZeigeGoldwuerfel(goldNr, () => {
-                // Ab Schwierigkeit 4 wird das Ziel erst NACH dem Rueckkippen
-                // erzeugt (siehe fireKipp). Stufen 1-3 unveraendert.
-                if ((window._brainySchwierigkeit || 1) >= 4) {
-                  window._pendingSchwierigkeitAnsage = true;
-                  resolveAll();
-                  return;
-                }
-                // Neue Stufe ansagen, dabei neues Zahlenpaar per Halbkipp zeigen
-                window._brainyZielAbgeschlossen = false;
-                brainyAnnounceAndStartTarget(true);
+                // Das neue Ziel darf hier NICHT erzeugt werden: nach resolveAll()
+                // laufen in fireKipp noch die Weiterkipps bzw. das Rueckkippen.
+                // Wurde das Ziel vorher berechnet, veraenderte sich die Lage
+                // waehrenddessen weiter -> ein richtiger Kipp galt als Fehler.
+                // Ansage + Zielgenerierung passieren daher erst, wenn der
+                // Wuerfel still steht (siehe fireKipp, _pendingSchwierigkeitAnsage).
+                window._pendingSchwierigkeitAnsage = true;
                 resolveAll();
               });
             } else {
