@@ -13762,10 +13762,7 @@
       
       const T = getTiming();
       const kipFactor = 1;
-      // Spielerkipp doppelt so schnell (halbe Zeit), Autokipp normal.
-      // 'mix' = Mischvorgang: extrem schnell und ohne Pause, damit der Spieler
-      // die Kippfolge nicht mitzaehlen kann.
-      const istMix = (speedMode === 'mix');
+      // Spielerkipp doppelt so schnell (halbe Zeit), Autokipp normal
       const speedFactor = (speedMode === 'auto') ? 1.0 : 0.5;
 
 
@@ -13776,12 +13773,8 @@
         const t = Math.min(1, (stepNum - 1) / (11 - 1)); // 0 bei Schritt 1, 1 bei Schritt 11
         const stepMul = lerp(1.0, 0.25, t) * speedFactor;
 
-        const kipTime = istMix
-          ? brainyMixKippZeit()
-          : Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
-        const holdTime = istMix
-          ? brainyMixHaltZeit()
-          : Math.max(40, Math.round(T.wMs * stepMul));
+        const kipTime = Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
+        const holdTime = Math.max(40, Math.round(T.wMs * stepMul));
         
         
         let direction;
@@ -14068,38 +14061,33 @@
           }
 
           // ============================================================
-          // AB SCHWIERIGKEIT 4: RUECKKIPPSYSTEM
-          //   Fehlkipp  -> Wuerfel bleibt liegen, Ziel bleibt, neue Auswahl
-          //   Treffer   -> Rueckkehr nach Q3, danach neues Ziel
+          // AB SCHWIERIGKEIT 4
+          //   Treffer  -> Rueckkehr nach Q3, danach neues Ziel
+          //   Fehlkipp -> Wuerfel bleibt exakt liegen, aber NEUES Ziel
+          // In beiden Faellen wird das Ziel neu erzeugt. Bewusstes
+          // Falschkippen bringt dem Spieler damit keinen Vorteil mehr.
           // Schwierigkeit 1-3 laeuft unveraendert im Code darunter.
           // ============================================================
           if ((window._brainySchwierigkeit || 1) >= 4) {
             window._brainyFailRetry = false;
             window._letzterKippWar6 = false;
-            if (window._brainyZielAbgeschlossen) {
-              window._brainyZielAbgeschlossen = false;
+            window._brainyZielAbgeschlossen = false;
+
+            // Nur nach einem Treffer kippt der Wuerfel zurueck nach Q3.
+            if (window._letzterKippWarTreffer) {
               await brainyRueckkippNachQ3();
-              if (window._pendingSchwierigkeitAnsage) {
-                window._pendingSchwierigkeitAnsage = false;
-                brainyAnnounceAndStartTarget(true);
-                return;
-              }
-              if (brainyZielAnzahl() > 1) {
-                if (window._letzterTrefferIdx >= 0) {
-                  brainyZielNachruecken(window._letzterTrefferIdx);
-                  window._letzterTrefferIdx = -1;
-                }
-                brainyZielePruefen();
-              } else {
-                brainyGenerateMehrfachZiele();
-              }
-            } else {
-              // Fehlkipp (Versuch 1 oder 2): Der Wuerfel wird gemischt, damit
-              // der Spieler nicht einfach zurueckkippen kann. Das Kippziel
-              // bleibt bestehen, der Versuchszaehler laeuft weiter (5/3/1).
-              await brainyMischen();
-              if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+              window._letzterKippWarTreffer = false;
             }
+
+            if (window._pendingSchwierigkeitAnsage) {
+              window._pendingSchwierigkeitAnsage = false;
+              brainyAnnounceAndStartTarget(true);
+              return;
+            }
+
+            window._letzterTrefferIdx = -1;
+            brainyGenerateMehrfachZiele();
+            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
             return;
           }
 
@@ -14323,9 +14311,10 @@
         }
 
         if (hitSlot) {
-          // TREFFER — Punkte je nach Versuchsnummer
+          // TREFFER
           t.done = true;
           window._brainyZielAbgeschlossen = true;
+          window._letzterKippWarTreffer = true;
           window._letzterTrefferIdx = tIdx;
           const card = gameCards[tIdx];
           if (card && card.mesh) {
@@ -14392,8 +14381,13 @@
         } else {
           // Fehlkipp — Stufe runter, roter Puls, danach neues Ziel aus der neuen Lage.
           // Gleiches Prinzip wie beim Aufstieg: immer 3 Weiterkipps, immer neues Ziel.
-          // Ab Schwierigkeit 4: Ziel bleibt bestehen, Wuerfel bleibt liegen.
-          window._brainyZielAbgeschlossen = ((window._brainySchwierigkeit || 1) < 4);
+          // Ab Schwierigkeit 4 wird das Kippziel ebenfalls VERWORFEN — der
+          // Wuerfel bleibt aber liegen. Sonst koennte ein Spieler bewusst
+          // falsch kippen, um zu sehen wo die Zahl liegt, und die verlorene
+          // Stufe mit dem sicheren Treffer danach sofort zurueckholen. Die
+          // Information waere gratis. Mit neuem Ziel ist der Fehlkipp Verlust.
+          window._letzterKippWarTreffer = false;
+          window._brainyZielAbgeschlossen = true;
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
           brainyPulseRedBorder(() => {
             brainyShowScoreFlash('', MAT_NAMEN[stufeNachFail], () => {
@@ -14929,103 +14923,6 @@
       await runKippSequence(schritte, 'auto');
     }
 
-    // === MISCHEN NACH EINEM FEHLKIPP ===
-    // Eine einzige Kippfolge: zufaellige Richtung (CW oder CCW), 5 bis 14
-    // Kipps, mit Beschleunigung. Der Spieler kann die Folge nicht mitzaehlen
-    // und muss die Lage aus dem Gedaechtnis neu bestimmen — Zurueckkippen ist
-    // damit ausgeschlossen.
-    //
-    // Die Endlage ist frei: KEINE feste Ausgangslage wie Q3. Der Spieler soll
-    // Quadrant UND Topface selbst bestimmen muessen. Aus jeder der 12 Lagen ist
-    // jedes Ziel in 1 bis 6 Kipps erreichbar, es kann also keine unloesbare
-    // Lage entstehen.
-    //
-    // Einzige Bedingung: Die Endlage darf das offene Ziel nicht bereits
-    // erfuellen, sonst waeren null Kipps die Loesung. Trifft das zu, wird die
-    // Kippzahl verschoben, bis die Lage sauber ist.
-    function brainyBerechneMischfolge() {
-      const startIdx = stateIndex(currentQuadrant, topFace);
-      if (startIdx < 0) return null;
-
-      const cw = Math.random() < 0.5;
-      const d = cw ? 1 : -1;
-      const gewuenscht = 5 + Math.floor(Math.random() * 10);   // 5..14
-
-      // Erfuellt eine Lage bereits eines der offenen Ziele?
-      const slotNamen = ['S1', 'S2', 'S3', 'S4'];
-      const faceOff = { f0: 0, f1: 4, f2: 8 };
-      function lageErfuelltZiel(i) {
-        const ziele = window._sixTargets || [];
-        const off = faceOff[CW_CYCLE[i][1]];
-        if (off === undefined) return false;
-        for (let t = 0; t < ziele.length; t++) {
-          const z = ziele[t];
-          if (!z || z.done) continue;
-          for (let s = 0; s < 4; s++) {
-            if (deck[off + s] !== z.zahl) continue;
-            if (SLOT_NEIGHBOR_COLORS[CW_CYCLE[i][0]][slotNamen[s]] === z.color) return true;
-          }
-        }
-        return false;
-      }
-
-      // Kippzahl notfalls verschieben, damit das Ziel offen bleibt
-      let anzahl = gewuenscht;
-      for (let versuch = 0; versuch < 10; versuch++) {
-        const c = 5 + ((gewuenscht - 5 + versuch) % 10);
-        const ende = ((startIdx + d * c) % 12 + 12) % 12;
-        if (!lageErfuelltZiel(ende)) { anzahl = c; break; }
-      }
-
-      return { startCw: cw, folgen: [anzahl] };
-    }
-
-    // === TEMPOKURVE DES MISCHENS ===
-    // Der Wuerfel soll nicht schlagartig losfetzen. Er startet mit der
-    // gewohnten Kippgeschwindigkeit und wird ueber die Kippfolge hinweg
-    // kontinuierlich schneller, bis er das Endtempo erreicht hat.
-    const MIX_KIPP_START = 200;   // ms fuer den ersten Kipp
-    const MIX_KIPP_ENDE  = 50;    // ms fuer den letzten Kipp
-    const MIX_HALT_START = 50;    // ms Pause nach dem ersten Kipp
-    const MIX_HALT_ENDE  = 0;     // keine Pause mehr am Ende
-
-    // Die Beschleunigung laeuft ueber die ersten 60% der Folge. Damit erreicht
-    // auch eine kurze Folge (5 Kipps) noch das Endtempo, und eine lange
-    // (14 Kipps) beschleunigt nicht zu abrupt.
-    function brainyMixFortschritt() {
-      const gesamt = window._mixGesamt || 1;
-      const i = window._mixIndex || 0;
-      const rampe = Math.max(1, Math.round(gesamt * 0.6));
-      return Math.min(1, i / rampe);
-    }
-
-    function brainyMixKippZeit() {
-      const p = brainyMixFortschritt();
-      return Math.round(lerp(MIX_KIPP_START, MIX_KIPP_ENDE, p));
-    }
-
-    function brainyMixHaltZeit() {
-      const p = brainyMixFortschritt();
-      const t = Math.round(lerp(MIX_HALT_START, MIX_HALT_ENDE, p));
-      window._mixIndex = (window._mixIndex || 0) + 1;   // Zaehler weiterstellen
-      return t;
-    }
-
-    async function brainyMischen() {
-      const m = brainyBerechneMischfolge();
-      if (!m) return;
-      // Zaehler ueber die gesamte Folge, damit die Beschleunigung nicht bei
-      // jeder Teilfolge von vorne beginnt.
-      window._mixGesamt = m.folgen.reduce((a, b) => a + b, 0);
-      window._mixIndex = 0;
-      let cw = m.startCw;
-      for (let k = 0; k < m.folgen.length; k++) {
-        kippDirection = cw ? 'cw' : 'ccw';
-        await runKippSequence(m.folgen[k], 'mix');
-        cw = !cw;
-      }
-    }
-
     // Ab Schwierigkeit 4: Rueckkehr nach Q3 (Ausgangslage) nach festem Schema.
     // Der Spieler kann dabei die Zahlen auf den Slots mitverfolgen.
     //   Q3 -> 4x CW (volle Runde, wieder Q3)
@@ -15108,13 +15005,10 @@
         zahl = 1;
       } else if (_zahlenAufWuerfel.length === 1) {
         zahl = _zahlenAufWuerfel[0];
-      } else if (_zielNr === 1 && _visiblePairs.length > 0) {
-        const pick = _visiblePairs[Math.floor(Math.random() * _visiblePairs.length)];
-        zahl = pick.zahl;
-        forbiddenColor = pick.forbiddenColor;
-      } else if (_andereFaceZahlen.length > 0) {
-        zahl = _andereFaceZahlen[Math.floor(Math.random() * _andereFaceZahlen.length)];
       } else {
+        // Frei zufaellig aus allen Zahlen, die auf dem Wuerfel liegen.
+        // Mal trifft es eine sichtbare Zahl der Topface (leichter), mal eine
+        // verdeckte (schwerer) — genau das soll den Reiz ausmachen.
         zahl = _zahlenAufWuerfel[Math.floor(Math.random() * _zahlenAufWuerfel.length)];
         const vis = _visiblePairs.find(p => p.zahl === zahl);
         if (vis) forbiddenColor = vis.forbiddenColor;
