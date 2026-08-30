@@ -1221,6 +1221,12 @@
       <div id="goldGrid" style="position:absolute; left:0; top:150px; width:360px; height:500px;"></div>
       <div id="goldPresenter" style="position:absolute; left:50%; top:265px; width:200px; height:200px; margin-left:-100px; opacity:0;"></div>
     </div>
+
+    <!-- Einstiegswahl: welche Schwierigkeitsstufe soll gespielt werden -->
+    <div id="stufenWahlOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; z-index:9200; display:none; opacity:0; pointer-events:none; transition:opacity 380ms ease; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.92) 0%, rgba(0,0,0,0.97) 70%);">
+      <div id="stufenWahlTitel" style="position:absolute; left:0; top:150px; width:360px; text-align:center; font-family:Arial,sans-serif; font-size:22px; font-weight:bold; color:#f4e4b8; letter-spacing:1px; text-shadow:0 0 22px rgba(255,200,80,0.45), 0 3px 0 #6b4a18, 0 5px 14px rgba(0,0,0,0.95);"></div>
+      <div id="stufenWahlBtns" style="position:absolute; left:30px; top:220px; width:300px; display:flex; flex-wrap:wrap; justify-content:center; gap:12px;"></div>
+    </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
@@ -7355,11 +7361,38 @@
         const belegt = {}, kantenBelegt = {};
         let gesetzteZahlen = 0;
         for (let s = 0; s < 12; s++) if (deck[s] > 0) { belegt[s] = true; gesetzteZahlen++; }
+
+        // FIX Uebergang Stufe 4 -> 5: Aus den Stufen 1-4 liegt die "1" ALLEIN
+        // auf dem Wuerfel (kein Paar). Ohne Sonderbehandlung wuerde ein neues
+        // Paar mit den Zahlen 2 und 3 dazugelegt -> der Wuerfel haette 1, 2, 3
+        // und es konnte ein Kippziel mit der 3 entstehen.
+        // Richtig: die "2" kommt auf den Kantenpartner der bestehenden "1",
+        // damit genau das Paar (1, 2) auf dem Wuerfel liegt.
+        if (gesetzteZahlen === 1) {
+          let einzelSlot = -1;
+          for (let s = 0; s < 12; s++) if (deck[s] > 0) { einzelSlot = s; break; }
+          const partnerPaar = KANTEN_PAARE.find(p =>
+            p.slots[0] === einzelSlot || p.slots[1] === einzelSlot);
+          if (partnerPaar) {
+            const partnerSlot = (partnerPaar.slots[0] === einzelSlot)
+              ? partnerPaar.slots[1] : partnerPaar.slots[0];
+            deck[partnerSlot] = deck[einzelSlot] + 1;      // die "2"
+            visibleDeckIndices.add(einzelSlot);
+            visibleDeckIndices.add(partnerSlot);
+            belegt[partnerSlot] = true;
+            gesetzteZahlen = 2;
+            window._neuesPaarSlots = [einzelSlot, partnerSlot];
+            // Nur die neu dazugekommene Zahl per Halbkipp zeigen
+            window._neueZahlSlot = partnerSlot;
+          }
+        }
+
         KANTEN_PAARE.forEach(p => {
           if (deck[p.slots[0]] > 0 || deck[p.slots[1]] > 0) kantenBelegt[p.edge] = true;
         });
 
         const fehlend = paareAnzahl - Math.floor(gesetzteZahlen / 2);
+        if (fehlend <= 0) return;   // Paar (1,2) vollstaendig — nichts weiter noetig
         const frei = KANTEN_PAARE.slice();
         for (let i = frei.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -7706,7 +7739,13 @@
     // sichtbar wird — je nach Lage also ein Nord/Sued- oder ein Ost/West-Kipp.
     async function brainyZeigeNeuesPaar(slotA, slotB) {
       const faceVon = i => ['f0', 'f1', 'f2'][Math.floor(i / 4)];
-      const zielFaces = [faceVon(slotA), faceVon(slotB)];
+      // Ist nur EINE Zahl neu dazugekommen (Uebergang Stufe 4 -> 5, die "2"),
+      // wird gezielt deren Flaeche aufgekippt — der Spieler soll genau sehen,
+      // wo die neue Zahl liegt.
+      const zielFaces = (window._neueZahlSlot !== undefined && window._neueZahlSlot !== null)
+        ? [faceVon(window._neueZahlSlot)]
+        : [faceVon(slotA), faceVon(slotB)];
+      window._neueZahlSlot = null;
 
       // Richtungszuordnung wie im regulaeren Spielkipp
       const cwDir  = { 0: 'east',  1: 'south_from_q1', 2: 'west_from_q2',  3: 'north' };
@@ -7720,7 +7759,13 @@
       const faceCcw = CW_CYCLE[((startIdx - 1) % 12 + 12) % 12][1];
 
       let richtung = null;
-      if (zielFaces.indexOf(faceCw) !== -1) {
+      if (zielFaces.indexOf(topFace) !== -1) {
+        // Die neue Zahl liegt bereits auf der Topface und ist damit sichtbar.
+        // Ein Halbkipp wuerde die falsche Flaeche zeigen -> kurzes Halten statt
+        // Kippbewegung, danach geht es direkt weiter.
+        await sleep(1200);
+        return;
+      } else if (zielFaces.indexOf(faceCw) !== -1) {
         richtung = cwDir[currentQuadrant];
       } else if (zielFaces.indexOf(faceCcw) !== -1) {
         richtung = ccwDir[currentQuadrant];
@@ -8003,6 +8048,31 @@
       }
     }
 
+    // === SPEICHERSTAND: Goldwuerfel + hoechste erreichte Schwierigkeit ===
+    const KIPP_FORTSCHRITT_KEY = 'kippnumbers_fortschritt';
+
+    function kippLadeFortschritt() {
+      try {
+        const roh = localStorage.getItem(KIPP_FORTSCHRITT_KEY);
+        if (!roh) return { maxStufe: 1, gold: 0 };
+        const o = JSON.parse(roh);
+        return {
+          maxStufe: Math.min(10, Math.max(1, parseInt(o.maxStufe, 10) || 1)),
+          gold: Math.max(0, parseInt(o.gold, 10) || 0)
+        };
+      } catch (e) { return { maxStufe: 1, gold: 0 }; }
+    }
+
+    function kippSpeichereFortschritt(stufe, gold) {
+      try {
+        const alt = kippLadeFortschritt();
+        localStorage.setItem(KIPP_FORTSCHRITT_KEY, JSON.stringify({
+          maxStufe: Math.max(alt.maxStufe, Math.min(10, stufe || 1)),
+          gold: Math.max(alt.gold, gold || 0)
+        }));
+      } catch (e) {}
+    }
+
     // Zeigt nur die Sammlung (Pokal-Klick) — ohne Praesentation
     function brainyZeigeSammlung() {
       const ov = document.getElementById('goldSammlungOverlay');
@@ -8015,7 +8085,11 @@
         return;
       }
       grid.innerHTML = '';
-      const n = window._brainyGoldwuerfel || 0;
+      // Laeuft kein Spiel (Startbildschirm), wird der gespeicherte Bestand
+      // aus dem letzten Spielstand angezeigt.
+      const n = (gamePhase === 'start' || gamePhase === 'demo')
+        ? kippLadeFortschritt().gold
+        : (window._brainyGoldwuerfel || 0);
       for (let i = 1; i <= n; i++) goldGridAdd(i, false);
       goldZeichneLeereZellen(n);
       ov.style.pointerEvents = 'none';
@@ -11592,11 +11666,9 @@
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      currentLevel = 1;
-      window._brainyTutorialMode = false;
-      gamePhase = 'spielen';
-      setTimeout(() => { startSixTargetGame(); }, 100);
       setTimeout(() => { _startBtnLock = false; }, 1000);
+      if (kippLadeFortschritt().maxStufe > 1) { kippZeigeStufenwahl(); return; }
+      kippStarteSpielMitStufe(1);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
@@ -13103,8 +13175,9 @@
         return;
       }
       if (!isSwiping || isAnimating || (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') || currentMode !== 'kanten') return;
-      // TRAINING: Kein Swipe-Kippen — Buttons steuern den Würfel
-      if (gamePhase === 'kipp21') return;
+      // KEIN Swipe-Kippen im Spiel — der Wuerfel wird ausschliesslich ueber die
+      // Zahlen- und Richtungstasten gesteuert.
+      if (gamePhase === 'kipp21' || gamePhase === 'spielen') { isSwiping = false; return; }
       e.preventDefault();
 
       const touch = e.touches[0];
@@ -13860,6 +13933,37 @@
             await checkSixTargetsHit();
           }
 
+          // ============================================================
+          // AB SCHWIERIGKEIT 4: RUECKKIPPSYSTEM
+          //   Fehlkipp  -> Wuerfel bleibt liegen, Ziel bleibt, neue Auswahl
+          //   Treffer   -> Rueckkehr nach Q3, danach neues Ziel
+          // Schwierigkeit 1-3 laeuft unveraendert im Code darunter.
+          // ============================================================
+          if ((window._brainySchwierigkeit || 1) >= 4) {
+            window._brainyFailRetry = false;
+            window._letzterKippWar6 = false;
+            if (window._brainyZielAbgeschlossen) {
+              window._brainyZielAbgeschlossen = false;
+              await brainyRueckkippNachQ3();
+              if (window._pendingSchwierigkeitAnsage) {
+                window._pendingSchwierigkeitAnsage = false;
+                brainyAnnounceAndStartTarget(true);
+                return;
+              }
+              if (brainyZielAnzahl() > 1) {
+                if (window._letzterTrefferIdx >= 0) {
+                  brainyZielNachruecken(window._letzterTrefferIdx);
+                  window._letzterTrefferIdx = -1;
+                }
+                brainyZielePruefen();
+              } else {
+                brainyGenerateMehrfachZiele();
+              }
+            }
+            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
+            return;
+          }
+
           // Immer gleiches Prinzip — ob Treffer oder Fehlkipp:
           // 3 Weiterkipps, danach wird das neue Ziel aus der neuen Lage berechnet.
           window._brainyFailRetry = false;
@@ -13872,17 +13976,6 @@
           //   3. Spieler freigeben
           if (window._brainyZielAbgeschlossen) {
             window._brainyZielAbgeschlossen = false;
-
-            // FIX: Schwierigkeitswechsel (Goldwuerfel) — Ansage + Zielgenerierung
-            // erst JETZT, nachdem alle Weiterkipps abgeschlossen sind und der
-            // Wuerfel endgueltig still steht. Vorher wurde das Ziel vor den
-            // Weiterkipps erzeugt und war danach oft bereits erfuellt.
-            if (window._pendingSchwierigkeitAnsage) {
-              window._pendingSchwierigkeitAnsage = false;
-              brainyAnnounceAndStartTarget(true);   // macht Lagekorrektur + Ziel + Freigabe
-              return;
-            }
-
             await brainySichereVerdeckteLage();          // letzte Kippbewegung
 
             if (brainyZielAnzahl() > 1) {
@@ -14095,6 +14188,8 @@
               window._brainyGoldwuerfel = (window._brainyGoldwuerfel || 0) + 1;
               const vorherStufe = window._brainySchwierigkeit || 1;
               window._brainySchwierigkeit = Math.min(10, vorherStufe + 1);
+              // Fortschritt dauerhaft sichern: neue Stufe + Goldwuerfel-Anzahl
+              kippSpeichereFortschritt(window._brainySchwierigkeit, window._brainyGoldwuerfel);
               brainyUpdateCounterDisplay();
               if (typeof brainySetzeTasten === 'function') brainySetzeTasten();
               // Ab Stufe 5 kommt ein neues Zahlenpaar dazu -> Deck erweitern
@@ -14102,13 +14197,16 @@
               const goldNr = window._brainyGoldwuerfel;
               brainySetStufe(BRAINY_STUFE_START);
               brainyZeigeGoldwuerfel(goldNr, () => {
-                // FIX: Das neue Ziel darf hier noch NICHT generiert werden!
-                // Nach resolveAll() folgen in fireKipp() erst die 3 Weiterkipps.
-                // Wurde das Ziel vorher generiert, konnte der Wuerfel genau auf
-                // die Zielkombination weiterkippen -> Ziel bereits erfuellt.
-                // Stattdessen: Flag setzen, Ansage + Zielgenerierung laufen in
-                // fireKipp() NACH den Weiterkipps (Wuerfel steht dann still).
-                window._pendingSchwierigkeitAnsage = true;
+                // Ab Schwierigkeit 4 wird das Ziel erst NACH dem Rueckkippen
+                // erzeugt (siehe fireKipp). Stufen 1-3 unveraendert.
+                if ((window._brainySchwierigkeit || 1) >= 4) {
+                  window._pendingSchwierigkeitAnsage = true;
+                  resolveAll();
+                  return;
+                }
+                // Neue Stufe ansagen, dabei neues Zahlenpaar per Halbkipp zeigen
+                window._brainyZielAbgeschlossen = false;
+                brainyAnnounceAndStartTarget(true);
                 resolveAll();
               });
             } else {
@@ -14134,7 +14232,8 @@
         } else {
           // Fehlkipp — Stufe runter, roter Puls, danach neues Ziel aus der neuen Lage.
           // Gleiches Prinzip wie beim Aufstieg: immer 3 Weiterkipps, immer neues Ziel.
-          window._brainyZielAbgeschlossen = true;
+          // Ab Schwierigkeit 4: Ziel bleibt bestehen, Wuerfel bleibt liegen.
+          window._brainyZielAbgeschlossen = ((window._brainySchwierigkeit || 1) < 4);
           const stufeNachFail = brainySetStufe(brainyStufe - 1);
           brainyPulseRedBorder(() => {
             brainyShowScoreFlash('', MAT_NAMEN[stufeNachFail], () => {
@@ -14529,11 +14628,9 @@
 
     // Anzahl gleichzeitiger Kippziele je Schwierigkeitsstufe
     function brainyZielAnzahl() {
-      const s = window._brainySchwierigkeit || 1;
-      if (s <= 4) return 1;
-      if (s === 5) return 2;
-      if (s === 6) return 4;
-      return 6;                 // Stufen 7 bis 10
+      // Immer genau EIN Kippziel, waagrecht mittig — in allen Stufen 1 bis 10.
+      // Die Schwierigkeit steigt allein ueber die Anzahl der Zahlen am Wuerfel.
+      return 1;
     }
 
     // Erzeugt mehrere Kippziele gleichzeitig — keine Zahl doppelt,
@@ -14647,6 +14744,22 @@
       const schritte = auswahl[Math.floor(Math.random() * auswahl.length)];
 
       kippDirection = (Math.random() < 0.5) ? 'cw' : 'ccw';
+      await runKippSequence(schritte, 'auto');
+    }
+
+    // Ab Schwierigkeit 4: Rueckkehr nach Q3 (Ausgangslage) nach festem Schema.
+    // Der Spieler kann dabei die Zahlen auf den Slots mitverfolgen.
+    //   Q3 -> 4x CW (volle Runde, wieder Q3)
+    //   Q0 -> 3x CW
+    //   Q1 -> 2x CW
+    //   Q2 -> 3x CCW
+    async function brainyRueckkippNachQ3() {
+      let schritte, dir;
+      if (currentQuadrant === 3)      { schritte = 4; dir = 'cw'; }
+      else if (currentQuadrant === 0) { schritte = 3; dir = 'cw'; }
+      else if (currentQuadrant === 1) { schritte = 2; dir = 'cw'; }
+      else                            { schritte = 3; dir = 'ccw'; } // Q2
+      kippDirection = dir;
       await runKippSequence(schritte, 'auto');
     }
 
@@ -14811,10 +14924,6 @@
         } else {
           auswahl = [nachbar1, nachbar2];
         }
-        // AUSNAHME (harte Regel): Farben, die der Wuerfel in seiner aktuellen
-        // Lage mit dieser Zahl bereits erfuellt, duerfen NIE als Ziel erscheinen.
-        const _ohneErfuellte = auswahl.filter(f => f && !brainyKombiBereitsErfuellt(zahl, f));
-        if (_ohneErfuellte.length > 0) auswahl = _ohneErfuellte;
         const zielFarbe = auswahl[Math.floor(Math.random() * auswahl.length)];
         window._st1LoesungIst6 = (zielFarbe === diagonal);
         colorObj = GAME_COLORS.find(c => c.name === zielFarbe) || GAME_COLORS[0];
@@ -14883,6 +14992,10 @@
 
       currentLevel = 1; // Start immer bei Bumblebrain, automatischer Aufstieg folgt
       window._brainySchwierigkeit = window._brainySchwierigkeit || 1;
+      // Beim Einstieg in eine hoehere Stufe die bereits verdienten Goldwuerfel
+      // wiederherstellen — brainyResetLives() hat sie zuvor auf 0 gesetzt.
+      window._brainyGoldwuerfel = Math.max(0, window._brainySchwierigkeit - 1);
+      brainyUpdateCounterDisplay();
       const _cfg = LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
       brainyBuildDeck(_cfg);
@@ -14930,17 +15043,79 @@
       }
     }
 
+    // === EINSTIEGSWAHL DER SCHWIERIGKEITSSTUFE ===
+    const STUFEN_WAHL_TEXT = {
+      de: 'Wo m\u00f6chtest du beginnen?',
+      en: 'Where would you like to start?',
+      es: '\u00bfD\u00f3nde quieres empezar?',
+      fr: 'O\u00f9 veux-tu commencer\u00a0?',
+      it: 'Dove vuoi iniziare?',
+      tr: 'Nereden ba\u015flamak istersin?'
+    };
+
+    function kippStarteSpielMitStufe(stufe) {
+      window._brainySchwierigkeit = Math.min(10, Math.max(1, stufe));
+      currentLevel = 1;
+      window._brainyTutorialMode = false;
+      gamePhase = 'spielen';
+      setTimeout(() => { startSixTargetGame(); }, 100);
+    }
+
+    function kippZeigeStufenwahl() {
+      const ov   = document.getElementById('stufenWahlOverlay');
+      const tEl  = document.getElementById('stufenWahlTitel');
+      const bEl  = document.getElementById('stufenWahlBtns');
+      if (!ov || !bEl) { kippStarteSpielMitStufe(1); return; }
+
+      tEl.innerHTML = STUFEN_WAHL_TEXT[_digikippLang] || STUFEN_WAHL_TEXT.de;
+
+      // Alle bereits mit Goldwuerfel abgeschlossenen Stufen plus die naechste,
+      // noch nicht geschaffte Stufe zur Auswahl stellen.
+      const maxStufe = kippLadeFortschritt().maxStufe;
+      bEl.innerHTML = '';
+      for (let s = 1; s <= maxStufe; s++) {
+        const btn = document.createElement('div');
+        btn.textContent = s + '/10';
+        btn.style.cssText =
+          'width:84px; height:52px; display:flex; align-items:center; justify-content:center;' +
+          'font-family:Arial,sans-serif; font-size:20px; font-weight:bold; cursor:pointer;' +
+          'pointer-events:auto; border-radius:9px; letter-spacing:1px;' +
+          'color:' + (s === maxStufe ? '#fff3d0' : '#ffd447') + ';' +
+          'background:linear-gradient(180deg, rgba(90,64,20,0.85) 0%, rgba(48,32,8,0.9) 100%);' +
+          'border:2px solid ' + (s === maxStufe ? 'rgba(255,235,170,0.85)' : 'rgba(200,160,70,0.55)') + ';' +
+          'box-shadow:0 3px 10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,220,140,0.25);' +
+          'text-shadow:0 2px 3px rgba(0,0,0,0.9);';
+        const waehle = (e) => {
+          e.stopPropagation();
+          if (e.type === 'touchend') e.preventDefault();
+          ov.style.opacity = '0';
+          ov.style.pointerEvents = 'none';
+          setTimeout(() => { ov.style.display = 'none'; }, 380);
+          kippStarteSpielMitStufe(s);
+        };
+        btn.addEventListener('click', waehle);
+        btn.addEventListener('touchend', waehle, { passive: false });
+        bEl.appendChild(btn);
+      }
+
+      ov.style.display = 'block';
+      ov.style.pointerEvents = 'auto';
+      requestAnimationFrame(() => { ov.style.opacity = '1'; });
+    }
+
     // SPIELEN-Button (ohne Tutorial) → neuer Ablauf. TUTORIAL-Button bleibt beim alten Ablauf.
     document.getElementById('btnSpielen').addEventListener('click', () => {
       if (!texturesReady || _startBtnLock) return;
       _startBtnLock = true;
       unlockAndPlayBgMusic();
       document.getElementById('startOverlay').style.display = 'none';
-      currentLevel = 1;
-      window._brainyTutorialMode = false;
-      gamePhase = 'spielen';
-      setTimeout(() => { startSixTargetGame(); }, 100);
       setTimeout(() => { _startBtnLock = false; }, 1000);
+      // Gibt es bereits Fortschritt, darf der Spieler die Einstiegsstufe waehlen.
+      if (kippLadeFortschritt().maxStufe > 1) {
+        kippZeigeStufenwahl();
+        return;
+      }
+      kippStarteSpielMitStufe(1);
     }, { once: false });
 
 
@@ -15107,7 +15282,8 @@
         if (!isSwiping || isAnimating ||
             (gamePhase !== 'kippen' && gamePhase !== 'spielen' && gamePhase !== 'kipp21') ||
             currentMode !== 'kanten') return;
-        if (gamePhase === 'kipp21') return;
+        // KEIN Maus-Kippen im Spiel — nur Zahlen- und Richtungstasten.
+        if (gamePhase === 'kipp21' || gamePhase === 'spielen') { isSwiping = false; return; }
 
         const deltaX = touch.clientX - swipeStartX;
         const deltaY = touch.clientY - swipeStartY;
