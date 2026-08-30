@@ -7736,41 +7736,59 @@
     // Zeigt ein neu hinzugekommenes Zahlenpaar per Halbkipp.
     // Es wird die Richtung gewaehlt, bei der eine der beiden neuen Zahlen
     // sichtbar wird — je nach Lage also ein Nord/Sued- oder ein Ost/West-Kipp.
+    // Liefert den Slot, der ueber die Wuerfelkante gegenueber liegt.
+    // Die zwoelf Slots bilden sechs feste Kantenpaare.
+    const KIPP_KANTEN_PAARE = [
+      { slots: [0, 7],  edge: 'f0f1' },
+      { slots: [1, 6],  edge: 'f0f1' },
+      { slots: [2, 9],  edge: 'f0f2' },
+      { slots: [3, 8],  edge: 'f0f2' },
+      { slots: [4, 11], edge: 'f1f2' },
+      { slots: [5, 10], edge: 'f1f2' }
+    ];
+    function brainyKantenPartner(slot) {
+      const p = KIPP_KANTEN_PAARE.find(x => x.slots[0] === slot || x.slots[1] === slot);
+      if (!p) return -1;
+      return (p.slots[0] === slot) ? p.slots[1] : p.slots[0];
+    }
+
     async function brainyZeigeNeuesPaar(slotA, slotB) {
       const faceVon = i => ['f0', 'f1', 'f2'][Math.floor(i / 4)];
       window._neueZahlSlot = null;
       const faceA = faceVon(slotA);
       const faceB = faceVon(slotB);
+      if (faceA === faceB) return;   // kein Kantenpaar, nichts zu zeigen
 
-      // Richtungszuordnung wie im regulaeren Spielkipp
+      // Die Kante, an der das neue Zahlenpaar sitzt. Genau um DIESE Kante muss
+      // der Wuerfel halb aufkippen, sonst sieht der Spieler die neuen Zahlen
+      // nicht. Ein Kipp rollt immer ueber die Kante zwischen der oben
+      // liegenden Flaeche und der Flaeche, die dabei hochkommt.
+      const zielKante = [faceA, faceB].sort().join('');
+
       const cwDir  = { 0: 'east',  1: 'south_from_q1', 2: 'west_from_q2',  3: 'north' };
       const ccwDir = { 0: 'south', 1: 'west',          2: 'north_from_q2', 3: 'east_from_q3' };
 
-      // Ermittelt fuer die aktuelle Lage die Richtung, die eine Flaeche des
-      // Paars nach oben bringt, waehrend die andere bereits oben liegt.
-      // Nur so sieht der Spieler beim Halbkipp BEIDE neuen Zahlen gleichzeitig.
+      // Prueft fuer die aktuelle Lage, welche Richtung ueber die Zielkante rollt
       function findeKippRichtung() {
         const idx = stateIndex(currentQuadrant, topFace);
         if (idx < 0) return null;
+        const kante = f => [topFace, f].sort().join('');
         const faceCw  = CW_CYCLE[(idx + 1) % 12][1];
         const faceCcw = CW_CYCLE[((idx - 1) % 12 + 12) % 12][1];
-        if (topFace === faceA) {
-          if (faceCw  === faceB) return cwDir[currentQuadrant];
-          if (faceCcw === faceB) return ccwDir[currentQuadrant];
-        }
-        if (topFace === faceB) {
-          if (faceCw  === faceA) return cwDir[currentQuadrant];
-          if (faceCcw === faceA) return ccwDir[currentQuadrant];
-        }
+        // Die oben liegende Flaeche muss zum Paar gehoeren, sonst zeigt der
+        // Halbkipp nur eine der beiden Zahlen.
+        if (topFace !== faceA && topFace !== faceB) return null;
+        if (faceCw  !== topFace && kante(faceCw)  === zielKante) return cwDir[currentQuadrant];
+        if (faceCcw !== topFace && kante(faceCcw) === zielKante) return ccwDir[currentQuadrant];
         return null;
       }
 
       let richtung = findeKippRichtung();
 
-      // Liegt keine der beiden Flaechen oben (der Wuerfel zeigt die dritte
-      // Flaeche), wird zuerst ein ganzer Kipp ausgefuehrt. Danach liegt eine
-      // der beiden Paar-Flaechen oben und der Halbkipp zeigt die andere dazu.
-      if (!richtung) {
+      // Liegt keine der beiden Paar-Flaechen oben, wird zuerst so weit
+      // weitergekippt, bis eine von ihnen oben liegt und die Zielkante
+      // aufkippbar ist. Zwei Kipps reichen dafuer immer aus.
+      for (let versuch = 0; versuch < 2 && !richtung; versuch++) {
         kippDirection = 'cw';
         await runKippSequence(1, 'auto');
         richtung = findeKippRichtung();
@@ -14409,13 +14427,26 @@
       // Ab Stufe 5: neues Zahlenpaar aufs Deck legen und per Halbkipp zeigen
       async function neuesPaarZeigen() {
         if (stufe < 5) return;
-        const vorher = deck.filter(x => x > 0).length;
+        // Deckstand VOR dem Erweitern sichern, damit die neu dazugekommenen
+        // Slots exakt bestimmt werden koennen. Auf gemerkte Werte aus
+        // brainyBuildDeck ist kein Verlass — die koennen aus einem frueheren
+        // Aufbau stammen und dann kippt der Wuerfel die falsche Kante auf.
+        const vorherDeck = deck.slice();
         brainyBuildDeck(window._brLevelCfg || LEVEL_CFG[1], true);
         updateFaceSlots();
         updateAllFaceTextures();
-        const nachher = deck.filter(x => x > 0).length;
-        if (nachher > vorher && window._neuesPaarSlots) {
-          await brainyZeigeNeuesPaar(window._neuesPaarSlots[0], window._neuesPaarSlots[1]);
+
+        const neueSlots = [];
+        for (let s = 0; s < 12; s++) {
+          if (deck[s] > 0 && !(vorherDeck[s] > 0)) neueSlots.push(s);
+        }
+        if (neueSlots.length >= 2) {
+          await brainyZeigeNeuesPaar(neueSlots[0], neueSlots[1]);
+        } else if (neueSlots.length === 1) {
+          // Uebergang Stufe 4 -> 5: nur die "2" kommt zur bestehenden "1" dazu.
+          // Der Kantenpartner ist die "1" — beide zusammen zeigen.
+          const partner = brainyKantenPartner(neueSlots[0]);
+          if (partner >= 0) await brainyZeigeNeuesPaar(neueSlots[0], partner);
         }
       }
 
@@ -14899,26 +14930,26 @@
     }
 
     // === MISCHEN NACH EINEM FEHLKIPP ===
-    // Wie beim Kartenmischen: vier Teilfolgen mit Richtungswechsel
-    // (CW-CCW-CW-CCW oder umgekehrt), je 5 bis 13 Kipps, in sehr hohem Tempo.
-    // Der Spieler kann die Folge nicht mitzaehlen und muss die Lage aus dem
-    // Gedaechtnis neu bestimmen — Zurueckkippen ist damit ausgeschlossen.
+    // Eine einzige Kippfolge: zufaellige Richtung (CW oder CCW), 5 bis 14
+    // Kipps, mit Beschleunigung. Der Spieler kann die Folge nicht mitzaehlen
+    // und muss die Lage aus dem Gedaechtnis neu bestimmen — Zurueckkippen ist
+    // damit ausgeschlossen.
     //
-    // Die Endlage ist bewusst voellig frei: KEINE feste Ausgangslage wie Q3.
-    // Der Spieler soll Quadrant UND Topface selbst bestimmen muessen. Aus jeder
-    // der 12 Lagen ist jedes Ziel in 1 bis 6 Kipps erreichbar, es kann also
-    // keine unloesbare Lage entstehen.
+    // Die Endlage ist frei: KEINE feste Ausgangslage wie Q3. Der Spieler soll
+    // Quadrant UND Topface selbst bestimmen muessen. Aus jeder der 12 Lagen ist
+    // jedes Ziel in 1 bis 6 Kipps erreichbar, es kann also keine unloesbare
+    // Lage entstehen.
     //
     // Einzige Bedingung: Die Endlage darf das offene Ziel nicht bereits
     // erfuellen, sonst waeren null Kipps die Loesung. Trifft das zu, wird die
-    // letzte Teilfolge um einen Kipp verschoben, bis die Lage sauber ist.
+    // Kippzahl verschoben, bis die Lage sauber ist.
     function brainyBerechneMischfolge() {
       const startIdx = stateIndex(currentQuadrant, topFace);
       if (startIdx < 0) return null;
 
-      const startCw = Math.random() < 0.5;
-      const folgen = [];
-      for (let k = 0; k < 4; k++) folgen.push(5 + Math.floor(Math.random() * 9)); // 5..13
+      const cw = Math.random() < 0.5;
+      const d = cw ? 1 : -1;
+      const gewuenscht = 5 + Math.floor(Math.random() * 10);   // 5..14
 
       // Erfuellt eine Lage bereits eines der offenen Ziele?
       const slotNamen = ['S1', 'S2', 'S3', 'S4'];
@@ -14938,36 +14969,34 @@
         return false;
       }
 
-      // Lage nach den ersten drei Teilfolgen
-      let idx = startIdx;
-      let d = startCw ? 1 : -1;
-      for (let k = 0; k < 3; k++) { idx = ((idx + d * folgen[k]) % 12 + 12) % 12; d = -d; }
-
-      // Letzte Teilfolge notfalls verschieben, damit das Ziel offen bleibt
-      for (let versuch = 0; versuch < 9; versuch++) {
-        const c = 5 + ((folgen[3] - 5 + versuch) % 9);
-        const ende = ((idx + d * c) % 12 + 12) % 12;
-        if (!lageErfuelltZiel(ende)) { folgen[3] = c; break; }
+      // Kippzahl notfalls verschieben, damit das Ziel offen bleibt
+      let anzahl = gewuenscht;
+      for (let versuch = 0; versuch < 10; versuch++) {
+        const c = 5 + ((gewuenscht - 5 + versuch) % 10);
+        const ende = ((startIdx + d * c) % 12 + 12) % 12;
+        if (!lageErfuelltZiel(ende)) { anzahl = c; break; }
       }
 
-      return { startCw: startCw, folgen: folgen };
+      return { startCw: cw, folgen: [anzahl] };
     }
 
     // === TEMPOKURVE DES MISCHENS ===
     // Der Wuerfel soll nicht schlagartig losfetzen. Er startet mit der
     // gewohnten Kippgeschwindigkeit und wird ueber die Kippfolge hinweg
     // kontinuierlich schneller, bis er das Endtempo erreicht hat.
-    // Die Werte gelten fuer die GESAMTE Mischfolge, nicht je Teilfolge —
-    // dafuer zaehlt _mixIndex ueber alle vier Teilfolgen durch.
     const MIX_KIPP_START = 200;   // ms fuer den ersten Kipp
     const MIX_KIPP_ENDE  = 50;    // ms fuer den letzten Kipp
     const MIX_HALT_START = 50;    // ms Pause nach dem ersten Kipp
     const MIX_HALT_ENDE  = 0;     // keine Pause mehr am Ende
-    const MIX_RAMPE_KIPPS = 10;   // ueber so viele Kipps wird beschleunigt
 
+    // Die Beschleunigung laeuft ueber die ersten 60% der Folge. Damit erreicht
+    // auch eine kurze Folge (5 Kipps) noch das Endtempo, und eine lange
+    // (14 Kipps) beschleunigt nicht zu abrupt.
     function brainyMixFortschritt() {
+      const gesamt = window._mixGesamt || 1;
       const i = window._mixIndex || 0;
-      return Math.min(1, i / MIX_RAMPE_KIPPS);
+      const rampe = Math.max(1, Math.round(gesamt * 0.6));
+      return Math.min(1, i / rampe);
     }
 
     function brainyMixKippZeit() {
