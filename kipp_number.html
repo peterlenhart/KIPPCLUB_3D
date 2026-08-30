@@ -1216,13 +1216,12 @@
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
   </div>
   
-  <!-- FINALE: alle zehn Schwierigkeitsstufen mit Goldwuerfel geschlossen -->
-  <div id="finaleOverlay" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; z-index:99998; display:none; opacity:0; pointer-events:none; transition:opacity 600ms ease; background:radial-gradient(ellipse at 50% 50%, rgba(40,26,4,0.96) 0%, rgba(0,0,0,0.99) 70%); overflow:hidden;">
-    <div id="finaleCube" style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; perspective:900px;"></div>
-    <div id="finaleText" style="position:absolute; left:0; top:0; width:360px; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; opacity:0; transition:opacity 900ms ease;">
-      <div id="finaleZeile1" style="font-size:52px; letter-spacing:4px; color:#fff3c4; text-shadow:0 0 30px rgba(255,200,80,0.7), 0 4px 0 #6b4a18, 0 8px 20px rgba(0,0,0,0.95);"></div>
-      <div id="finaleZeile2" style="font-size:38px; letter-spacing:6px; margin-top:10px; color:#ffd447; text-shadow:0 0 26px rgba(255,200,80,0.6), 0 3px 0 #5a3d12, 0 6px 16px rgba(0,0,0,0.95);"></div>
-    </div>
+  <!-- FINALE: Schriftzug nach dem Abschluss aller zehn Stufen.
+       Der Goldwuerfel selbst wird in Three.js animiert, die Szene wird dafuer
+       ausgeblendet — deshalb liegt hier kein abdunkelndes Overlay. -->
+  <div id="finaleText" style="position:fixed; left:50%; transform:translateX(-50%); top:470px; width:360px; text-align:center; font-family:'Arial Black',Arial,sans-serif; font-weight:900; z-index:99998; opacity:0; pointer-events:none; transition:opacity 1100ms ease;">
+    <div id="finaleZeile1" style="font-size:56px; letter-spacing:5px; color:#fff6d0; text-shadow:0 0 34px rgba(255,205,90,0.85), 0 0 70px rgba(255,180,40,0.45), 0 5px 0 #6b4a18, 0 9px 22px rgba(0,0,0,0.95);"></div>
+    <div id="finaleZeile2" style="font-size:40px; letter-spacing:8px; margin-top:8px; color:#ffd447; text-shadow:0 0 30px rgba(255,200,80,0.8), 0 3px 0 #5a3d12, 0 7px 18px rgba(0,0,0,0.95);"></div>
   </div>
 
   <div id="uiOverlay">
@@ -8178,9 +8177,11 @@
       return true;
     }
 
+
     // === FINALE: alle zehn Schwierigkeitsstufen mit Goldwuerfel geschlossen ===
-    // Der Goldwuerfel stellt sich in der Boxmitte auf die Ecke, steigt auf und
-    // waechst, bis er den Bildschirm fuellt. Danach erscheint der Schriftzug.
+    // Kein CSS-Nachbau, sondern der echte Spielwuerfel: Gold-Textur, echtes
+    // Licht, echte Reflexe. Er richtet sich in der Boxmitte auf die Ecke auf,
+    // steigt und waechst, bis er das Bild fuellt, und dreht sich dabei.
     const FINALE_TEXT = {
       de: ['BRAVO', 'GENIAL'],
       en: ['BRAVO', 'BRILLIANT'],
@@ -8190,92 +8191,118 @@
       tr: ['BRAVO', 'DAH\u0130CE']
     };
 
-    function brainyFinale() {
-      const ov  = document.getElementById('finaleOverlay');
-      const cEl = document.getElementById('finaleCube');
+    async function brainyFinale() {
       const tEl = document.getElementById('finaleText');
-      if (!ov || !cEl) return;
-
       const txt = FINALE_TEXT[_digikippLang] || FINALE_TEXT.de;
-      document.getElementById('finaleZeile1').textContent = txt[0];
-      document.getElementById('finaleZeile2').textContent = txt[1];
-      tEl.style.opacity = '0';
+      if (tEl) {
+        document.getElementById('finaleZeile1').textContent = txt[0];
+        document.getElementById('finaleZeile2').textContent = txt[1];
+        tEl.style.opacity = '0';
+      }
 
-      // Startlage: klein, in der Boxmitte (Y ca. 300px im 360x720-Raster)
-      const START_PX = 44, END_PX = 330;
-      const START_TOP = 300, END_TOP = 300;
-      cEl.style.width = START_PX + 'px';
-      cEl.style.height = START_PX + 'px';
-      cEl.style.margin = (-START_PX / 2) + 'px 0 0 ' + (-START_PX / 2) + 'px';
-      cEl.style.top = START_TOP + 'px';
-      cEl.innerHTML =
-        '<div id="finaleCubeInner" style="position:absolute;left:0;top:0;width:100%;height:100%;' +
-        'transform-style:preserve-3d;transform:rotateZ(45deg) rotateX(-32deg) rotateY(35deg);">' +
-        goldCubeHTML(START_PX * 0.62) + '</div>';
-
-      ov.style.display = 'block';
-      ov.style.pointerEvents = 'auto';
-      requestAnimationFrame(() => { ov.style.opacity = '1'; });
-
-      const DAUER = 3800;
-      const start = performance.now();
-      let funkenGesetzt = false;
-
-      (function wachse(jetzt) {
-        const p = Math.min(1, (jetzt - start) / DAUER);
-        const e = 1 - Math.pow(1 - p, 3);            // sanftes Ausklingen
-        const groesse = START_PX + (END_PX - START_PX) * e;
-        const top = START_TOP + (END_TOP - START_TOP) * e;
-
-        cEl.style.width = groesse + 'px';
-        cEl.style.height = groesse + 'px';
-        cEl.style.margin = (-groesse / 2) + 'px 0 0 ' + (-groesse / 2) + 'px';
-        cEl.style.top = top + 'px';
-        cEl.style.perspective = Math.round(groesse * 5) + 'px';
-
-        // Auf der Ecke stehend, dabei langsam um die Hochachse drehend
-        const inner = document.getElementById('finaleCubeInner');
-        if (inner) {
-          inner.style.transform =
-            'rotateZ(45deg) rotateX(-32deg) rotateY(' + (35 + e * 300) + 'deg)';
-          const kante = groesse * 0.62;
-          if (Math.abs(kante - (inner._kante || 0)) > 6) {
-            inner._kante = kante;
-            inner.innerHTML = goldCubeHTML(kante);
+      // Alles ausblenden, was nicht zum Wuerfel gehoert. Kein HTML-Overlay —
+      // der Canvas darf nicht verdeckt werden. Box, Rahmen, Tisch und Karten
+      // verschwinden, uebrig bleibt der Goldwuerfel auf schwarzem Grund.
+      try {
+        const istTeilVomWuerfel = (obj) => {
+          let p = obj;
+          while (p) { if (p === cube) return true; p = p.parent; }
+          return false;
+        };
+        window._finaleVersteckt = [];
+        scene.traverse(obj => {
+          if (obj.visible && (obj.isMesh || obj.isSprite) && !istTeilVomWuerfel(obj)) {
+            window._finaleVersteckt.push(obj);
+            obj.visible = false;
           }
-        }
+        });
+        const nb = document.getElementById('numBtns');
+        if (nb) nb.style.setProperty('display', 'none', 'important');
+        ['brainyLivesWrap', 'kippTarget', 'hitCounter', 'missCounter'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+      } catch (e) { console.warn('[FINALE] Szene ausblenden:', e); }
 
-        if (!funkenGesetzt && p > 0.55) {
-          funkenGesetzt = true;
-          if (typeof goldSparks === 'function') goldSparks(cEl, 18);
-        }
+      // Wuerfel auf Goldoptik setzen und aus der Kippgruppe loesen
+      if (typeof brainySetStufe === 'function') brainySetStufe(BRAINY_STUFEN.length - 1);
 
-        if (p < 1) {
-          requestAnimationFrame(wachse);
-        } else {
-          // Schriftzug ueber dem Wuerfel einblenden
-          tEl.style.top = (END_TOP - 90) + 'px';
-          tEl.style.opacity = '1';
-          // Tippen fuehrt zurueck zum Spielstart
-          ov.addEventListener('click', brainyFinaleSchliessen);
-          ov.addEventListener('touchend', function (ev) {
-            ev.preventDefault(); brainyFinaleSchliessen();
-          }, { passive: false });
-        }
-      })(performance.now());
+      cube.updateMatrixWorld();
+      const startPos  = new THREE.Vector3(); cube.getWorldPosition(startPos);
+      const startQuat = new THREE.Quaternion(); cube.getWorldQuaternion(startQuat);
+      if (cube.parent) cube.parent.remove(cube);
+      scene.add(cube);
+      cube.position.copy(startPos);
+      cube.quaternion.copy(startQuat);
+      cube.visible = true;
+
+      // Zielhaltung: Koerperdiagonale senkrecht — der Wuerfel steht auf der Ecke
+      const o = 0.234375;
+      const diagVecs = {
+        0: new THREE.Vector3(-o, o, -o), 1: new THREE.Vector3( o, o, -o),
+        2: new THREE.Vector3( o, o,  o), 3: new THREE.Vector3(-o, o,  o)
+      };
+      const diag = (diagVecs[currentQuadrant] || diagVecs[3]).clone().normalize();
+      const aufEckeQuat = new THREE.Quaternion()
+        .setFromUnitVectors(diag, new THREE.Vector3(0, 1, 0))
+        .multiply(startQuat);
+
+      // Endlage: mittig vor der Kamera, gross genug um das Bild zu fuellen
+      const zielPos = new THREE.Vector3(0, 0.62, 0.30);
+      const ZIEL_SCALE = 3.4;
+
+      // Kein abdunkelndes Overlay — der schwarze Body-Hintergrund reicht,
+      // nachdem die Szene ausgeblendet ist.
+
+      const DAUER = 4200;
+      const start = performance.now();
+
+      await new Promise(fertig => {
+        (function schritt(jetzt) {
+          const p = Math.min(1, (jetzt - start) / DAUER);
+          // Erst sanft anheben, dann kraftvoll heranwachsen
+          const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+
+          cube.position.lerpVectors(startPos, zielPos, e);
+          const s = 1 + (ZIEL_SCALE - 1) * e;
+          cube.scale.set(s, s, s);
+
+          // Aufrichten auf die Ecke, danach langsame Drehung um die Hochachse
+          const aufrichten = Math.min(1, p / 0.35);
+          const q = new THREE.Quaternion().copy(startQuat).slerp(aufEckeQuat, aufrichten);
+          const drehung = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 1, 0), e * Math.PI * 1.6);
+          cube.quaternion.copy(drehung.multiply(q));
+
+          if (p < 1) requestAnimationFrame(schritt);
+          else fertig();
+        })(performance.now());
+      });
+
+      // Weiter langsam drehen, waehrend der Schriftzug kommt
+      window._finaleDreht = true;
+      (function drehWeiter() {
+        if (!window._finaleDreht) return;
+        cube.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), 0.004);
+        requestAnimationFrame(drehWeiter);
+      })();
+
+      if (tEl) {
+        tEl.style.opacity = '1';
+        tEl.style.pointerEvents = 'auto';
+        tEl.style.cursor = 'pointer';
+        const schliessen = (ev) => { if (ev) ev.preventDefault(); brainyFinaleSchliessen(); };
+        tEl.addEventListener('click', schliessen);
+        tEl.addEventListener('touchend', schliessen, { passive: false });
+      }
     }
 
     function brainyFinaleSchliessen() {
-      const ov = document.getElementById('finaleOverlay');
-      if (ov) {
-        ov.style.opacity = '0';
-        ov.style.pointerEvents = 'none';
-        setTimeout(() => { ov.style.display = 'none'; }, 600);
-      }
-      // Zurueck auf die Einstiegsseite — der Spieler kann neu waehlen
+      window._finaleDreht = false;
+      const tEl = document.getElementById('finaleText');
+      if (tEl) { tEl.style.opacity = '0'; tEl.style.pointerEvents = 'none'; }
       setTimeout(() => { window.location.href = 'index.html?theme=numbers'; }, 650);
     }
-
 
     function brainyZeigeSammlung() {
       const ov = document.getElementById('goldSammlungOverlay');
