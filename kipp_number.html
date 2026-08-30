@@ -13872,6 +13872,17 @@
           //   3. Spieler freigeben
           if (window._brainyZielAbgeschlossen) {
             window._brainyZielAbgeschlossen = false;
+
+            // FIX: Schwierigkeitswechsel (Goldwuerfel) — Ansage + Zielgenerierung
+            // erst JETZT, nachdem alle Weiterkipps abgeschlossen sind und der
+            // Wuerfel endgueltig still steht. Vorher wurde das Ziel vor den
+            // Weiterkipps erzeugt und war danach oft bereits erfuellt.
+            if (window._pendingSchwierigkeitAnsage) {
+              window._pendingSchwierigkeitAnsage = false;
+              brainyAnnounceAndStartTarget(true);   // macht Lagekorrektur + Ziel + Freigabe
+              return;
+            }
+
             await brainySichereVerdeckteLage();          // letzte Kippbewegung
 
             if (brainyZielAnzahl() > 1) {
@@ -14091,9 +14102,13 @@
               const goldNr = window._brainyGoldwuerfel;
               brainySetStufe(BRAINY_STUFE_START);
               brainyZeigeGoldwuerfel(goldNr, () => {
-                // Neue Stufe ansagen, dabei neues Zahlenpaar per Halbkipp zeigen
-                window._brainyZielAbgeschlossen = false;
-                brainyAnnounceAndStartTarget(true);
+                // FIX: Das neue Ziel darf hier noch NICHT generiert werden!
+                // Nach resolveAll() folgen in fireKipp() erst die 3 Weiterkipps.
+                // Wurde das Ziel vorher generiert, konnte der Wuerfel genau auf
+                // die Zielkombination weiterkippen -> Ziel bereits erfuellt.
+                // Stattdessen: Flag setzen, Ansage + Zielgenerierung laufen in
+                // fireKipp() NACH den Weiterkipps (Wuerfel steht dann still).
+                window._pendingSchwierigkeitAnsage = true;
                 resolveAll();
               });
             } else {
@@ -14796,6 +14811,10 @@
         } else {
           auswahl = [nachbar1, nachbar2];
         }
+        // AUSNAHME (harte Regel): Farben, die der Wuerfel in seiner aktuellen
+        // Lage mit dieser Zahl bereits erfuellt, duerfen NIE als Ziel erscheinen.
+        const _ohneErfuellte = auswahl.filter(f => f && !brainyKombiBereitsErfuellt(zahl, f));
+        if (_ohneErfuellte.length > 0) auswahl = _ohneErfuellte;
         const zielFarbe = auswahl[Math.floor(Math.random() * auswahl.length)];
         window._st1LoesungIst6 = (zielFarbe === diagonal);
         colorObj = GAME_COLORS.find(c => c.name === zielFarbe) || GAME_COLORS[0];
