@@ -9711,8 +9711,11 @@
 
       // 4. Halten
       if (!kipp21KniffAbort) {
+        // Haltezeit kann per Option gesetzt werden. Der Schaugang beim
+        // Neueinstieg braucht weniger Zeit als der Joker-Eckblick.
+        const _halteMs = (opts && opts.holdMs) ? opts.holdMs : KNIFF_SHOW_DURATION;
         await new Promise(resolve => {
-          kipp21KniffTimeout = setTimeout(resolve, KNIFF_SHOW_DURATION);
+          kipp21KniffTimeout = setTimeout(resolve, _halteMs);
           const checkAbort = setInterval(() => {
             if (kipp21KniffAbort) {
               clearInterval(checkAbort);
@@ -14630,21 +14633,23 @@
       }
 
       if (showLevelToo) {
-        brainyShowScoreFlash(SCHW_LABEL, stufe + '/10', () => {
-          brainyShowScoreFlash('', MAT_NAMEN[BRAINY_STUFE_START], async () => {
-            // Die Kette laeuft in einem async-Callback. Ohne try/catch wuerde
-            // ein Fehler still abbrechen und der Spieler bekaeme keine Tasten.
-            try {
-              await neuesPaarZeigen();
-              await brainySichereVerdeckteLage();
-              await brainySchauGenau();      // nur beim Neueinstieg
-            } catch (e) {
-              console.warn('[START] Ansage-Ablauf abgebrochen:', e);
-            }
-            try { brainyGenerateMehrfachZiele(); }
-            catch (e) { console.warn('[START] Zielerzeugung fehlgeschlagen:', e); }
-            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
-          });
+        // Nur die Schwierigkeitsstufe ansagen. Die Materialansage ("HOLZ")
+        // entfaellt hier bewusst: zu Spielbeginn und beim Neueinstieg sagt sie
+        // dem Spieler nichts und steht nur im Weg. Sie erscheint weiterhin im
+        // laufenden Spiel bei jeder Auf- und Abwertung, wo sie verstaendlich ist.
+        brainyShowScoreFlash(SCHW_LABEL, stufe + '/10', async () => {
+          // Die Kette laeuft in einem async-Callback. Ohne try/catch wuerde
+          // ein Fehler still abbrechen und der Spieler bekaeme keine Tasten.
+          try {
+            await neuesPaarZeigen();
+            await brainySichereVerdeckteLage();
+            await brainySchauGenau();      // nur beim Neueinstieg
+          } catch (e) {
+            console.warn('[START] Ansage-Ablauf abgebrochen:', e);
+          }
+          try { brainyGenerateMehrfachZiele(); }
+          catch (e) { console.warn('[START] Zielerzeugung fehlgeschlagen:', e); }
+          if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
         });
       } else {
         (async () => {
@@ -15112,10 +15117,11 @@
     // === SCHAUGANG BEIM NEUEINSTIEG ===
     // Steigt der Spieler ueber die Stufenwahl direkt in eine hoehere Stufe ein,
     // wird das Deck frisch gewuerfelt — er kennt keine einzige Zahlenposition
-    // und saehe nur die vier Slots der Topface. Deshalb: Ansage "SCHAU GENAU",
-    // danach vier CW-Kipps. Bei jedem Kipp wechselt die Topface, nach vier
-    // Kipps war also jede der drei Wuerfelflaechen oben und alle zwoelf Slots
-    // waren sichtbar.
+    // und saehe nur die vier Slots der Topface. Ohne Hilfe waere der erste Kipp
+    // reines Raten.
+    // Dafuer wird der bereits vorhandene ECKBLICK verwendet: der Wuerfel hebt
+    // sich aus der Box, stellt sich auf die Ecke und zeigt alle drei Flaechen
+    // gleichzeitig. Das ist deutlich lesbarer als schnelle Einzelkipps.
     // Beim Aufstieg innerhalb einer Partie laeuft der Schaugang NICHT — dort
     // kennt der Spieler die Zahlen schon und der Halbkipp zeigt das neue Paar.
     const SCHAU_GENAU_TEXT = {
@@ -15132,8 +15138,21 @@
       window._schaugangNoetig = false;
       const txt = SCHAU_GENAU_TEXT[_digikippLang] || SCHAU_GENAU_TEXT.de;
       await new Promise(fertig => brainyShowScoreFlash(txt, '', fertig));
-      kippDirection = 'cw';
-      await runKippSequence(4, 'auto');
+      if (typeof runKippEckblick !== 'function') return;
+
+      // runKippEckblick erzeugt am Ende ein Ziel im alten Format
+      // (window._kippTarget), das dieses Spiel nicht verwendet — hier zaehlen
+      // _sixTargets. Ein belegter Platzhalter verhindert das, danach wird er
+      // wieder entfernt, damit das eigentliche Kippziel sauber entsteht.
+      const _altesTarget = window._kippTarget;
+      window._kippTarget = _altesTarget || { _platzhalter: true };
+      try {
+        // noHideSlots: true — alle Zahlen bleiben sichtbar, nichts wird verdeckt
+        // holdMs: 4500 — 4,5 Sekunden auf der Ecke stehen bleiben
+        await runKippEckblick({ noHideSlots: true, holdMs: 4500 });
+      } finally {
+        window._kippTarget = _altesTarget || null;
+      }
     }
 
     // Ab Schwierigkeit 4: Rueckkehr nach Q3 (Ausgangslage) nach festem Schema.
