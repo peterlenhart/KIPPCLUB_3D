@@ -7609,7 +7609,9 @@
       const nb = document.getElementById('numBtns');
       if (!nb) return;
       nb.classList.remove('hidden');
-      nb.style.setProperty('display', 'block', 'important');
+      // Noch nicht sichtbar machen — das erledigt enablePlayerTurn(),
+      // sobald der Wuerfel ruht und das Kippziel liegt.
+      nb.style.setProperty('display', 'none', 'important');
       const btnEls = nb.querySelectorAll('.numBtnFixed');
       const cwBtn = document.getElementById('cwDirBtn');
       const ccwBtn = document.getElementById('ccwDirBtn');
@@ -7632,8 +7634,9 @@
         // Tasten 3 und 6
         zeige({ '3': '112px', '6': '202px' }, '45px', '270px');
       } else if (stufe === 3) {
-        // Zahl liegt verdeckt -> nur 1, 2, 4, 5 moeglich
-        zeige({ '1': '68px', '2': '113px', '4': '158px', '5': '203px' }, '18px', '253px');
+        // Zahl liegt verdeckt -> nur 1, 2, 4, 5 moeglich.
+        // 4 Tasten a 45px = 180px, mittig zentriert ab (360-180)/2 = 90px
+        zeige({ '1': '90px', '2': '135px', '4': '180px', '5': '225px' }, '37px', '278px');
       } else {
         // Ab Stufe 4: alle sechs Zahlentasten
         zeige({ '1': '45px', '2': '90px', '3': '135px',
@@ -13776,8 +13779,11 @@
       }
       window._clearNumSelection = clearSelection;
 
-      // Spieler ist am Zug: Auswahl zuruecksetzen UND Blinken starten
+      // Spieler ist am Zug: Tasten einblenden, Auswahl zuruecksetzen, Blinken starten.
+      // Wird erst aufgerufen, wenn der Wuerfel ruht und das Kippziel liegt.
       function enablePlayerTurn() {
+        const nb = document.getElementById('numBtns');
+        if (nb) nb.style.setProperty('display', 'block', 'important');
         clearSelection();
         if (window._brainySchwierigkeit === 1) {
           // Stufe 1/5: die "3" ist fest vorgewaehlt, nur die Richtung ist offen
@@ -13814,16 +13820,16 @@
 
         // Bei 6 Kipps ist die Richtung irrelevant — wenn 6 die richtige Wahl ist,
         // sofort kippen, ohne Richtungsabfrage.
-        // Bei 6 Kipps ist die Richtung irrelevant. Ist die 6 richtig,
-        // sofort kippen — ohne Richtungsabfrage.
-        if (n === 6 && window._st1LoesungIst6) {
+        // Bei 6 Kipps ist die Richtung mathematisch ohne Bedeutung.
+        // Trifft die 6 ein offenes Ziel, sofort kippen — ohne Richtungsabfrage.
+        if (n === 6) {
           window._letzterKippWar6 = true;
-          fireKipp('cw');
-          return;
+          if (brainyTrifftMitKipps(6)) {
+            fireKipp('cw');
+            return;
+          }
+          // Trifft die 6 nicht, erscheinen die Richtungstasten dennoch.
         }
-        // Ist die 6 falsch, werden die Richtungstasten dennoch eingeblendet:
-        // der Spieler soll die Wahl haben und selbst sehen, dass es nicht passt.
-        if (n === 6) window._letzterKippWar6 = true;
 
         if (cwBtn) { cwBtn.style.setProperty('display', 'flex', 'important'); cwBtn.style.animationDelay = '0s'; cwBtn.classList.add('dirBtnBlink'); }
         if (ccwBtn) { ccwBtn.style.setProperty('display', 'flex', 'important'); ccwBtn.style.animationDelay = '-0.75s'; ccwBtn.classList.add('dirBtnBlink'); }
@@ -13833,6 +13839,9 @@
         if (selectedNum === null) return;
         if (window._numBandBusy) return;
         window._numBandBusy = true;
+        // Tasten ausblenden, solange gekippt wird
+        const nbHide = document.getElementById('numBtns');
+        if (nbHide) nbHide.style.setProperty('display', 'none', 'important');
         const n = selectedNum;
         kippDirection = direction;
         clearSelection();
@@ -14407,6 +14416,35 @@
       });
     }
 
+    // Prueft zum Klickzeitpunkt, ob n Kipps ein noch offenes Kippziel treffen.
+    // Bei 6 Kipps ist die Richtung mathematisch ohne Bedeutung, weil +6 und -6
+    // im 12er-Zyklus auf dieselbe Lage fuehren.
+    function brainyTrifftMitKipps(n) {
+      if (!window._sixTargets || !window._sixTargets.length) return false;
+      const startIdx = stateIndex(currentQuadrant, topFace);
+      if (startIdx < 0) return false;
+      const faceKeys = ['f0', 'f1', 'f2'];
+      const slotNames = ['S1', 'S2', 'S3', 'S4'];
+
+      for (let ti = 0; ti < window._sixTargets.length; ti++) {
+        const z = window._sixTargets[ti];
+        if (!z || z.done) continue;
+        let pos = -1;
+        for (let k = 0; k < 12; k++) if (deck[k] === z.zahl) { pos = k; break; }
+        if (pos < 0) continue;
+        const zFace = faceKeys[Math.floor(pos / 4)];
+        const zSlot = slotNames[pos % 4];
+
+        const richtungen = [1, -1];
+        for (let r = 0; r < richtungen.length; r++) {
+          const i = ((startIdx + richtungen[r] * n) % 12 + 12) % 12;
+          if (CW_CYCLE[i][1] !== zFace) continue;
+          if (SLOT_NEIGHBOR_COLORS[CW_CYCLE[i][0]][zSlot] === z.color) return true;
+        }
+      }
+      return false;
+    }
+
     // Anzahl gleichzeitiger Kippziele je Schwierigkeitsstufe
     function brainyZielAnzahl() {
       const s = window._brainySchwierigkeit || 1;
@@ -14506,40 +14544,39 @@
     // Stufe 3: die Zielzahl muss VERDECKT liegen.
     // Die Zahl bleibt dabei auf ihrem Slot — stattdessen wird der WUERFEL
     // so weit gekippt, bis die Flaeche mit der Zahl nicht mehr oben liegt.
+    // Stufe 3: die Zielzahl muss VERDECKT liegen — mit den Tasten 1, 2, 4, 5
+    // laesst sich eine obenliegende Zahl geometrisch nicht erkippen.
+    // Die Zahl bleibt auf ihrem Slot; stattdessen wird der WUERFEL gekippt,
+    // bis ihre Flaeche nicht mehr oben liegt.
     async function brainySichereVerdeckteLage() {
-      const stufe = window._brainySchwierigkeit || 1;
+      if ((window._brainySchwierigkeit || 1) !== 3) return;
 
-      // Stufe 4: Wuerfel in eine zufaellige Lage kippen. Aus der Geometrie folgt
-      // automatisch 1/3 obenliegend (3 oder 6 Kipps), 2/3 verdeckt (1,2,4,5).
-      if (stufe === 4) {
-        const schritte = 1 + Math.floor(Math.random() * 11);   // 1 bis 11 Kipps
-        kippDirection = (Math.random() < 0.5) ? 'cw' : 'ccw';
-        await runKippSequence(schritte, 'auto');
-        return;
-      }
+      // Alle Zahlen finden, die als Ziel infrage kommen
+      const zahlen = [];
+      for (let k = 0; k < 12; k++) if (deck[k] > 0 && zahlen.indexOf(deck[k]) === -1) zahlen.push(deck[k]);
+      if (!zahlen.length) return;
 
-      if (stufe !== 3) return;
       const faceOff = { f0: 0, f1: 4, f2: 8 };
+      const off = faceOff[topFace];
+      if (off === undefined) return;
 
-      // Auf welcher Flaeche liegt die 1?
-      let pos = -1;
-      for (let k = 0; k < 12; k++) if (deck[k] === 1) { pos = k; break; }
-      if (pos < 0) return;
-      const zahlFace = ['f0', 'f1', 'f2'][Math.floor(pos / 4)];
-
-      // Liegt sie gerade oben? Dann Wuerfel weiterkippen, bis sie verdeckt ist.
-      if (topFace !== zahlFace) return;
+      // Liegt eine dieser Zahlen gerade oben?
+      let obenFace = null;
+      for (let k = 0; k < 4; k++) {
+        if (deck[off + k] > 0) { obenFace = topFace; break; }
+      }
+      if (!obenFace) return;                    // schon verdeckt
 
       const startIdx = stateIndex(currentQuadrant, topFace);
       if (startIdx < 0) return;
 
-      // Kuerzeste Kippfolge suchen, nach der die Flaeche NICHT mehr oben liegt
+      // Kuerzeste Kippfolge, nach der diese Flaeche nicht mehr oben liegt
       let schritte = 0, richtung = 'cw';
       for (let n = 1; n <= 12; n++) {
         const iCw  = (startIdx + n) % 12;
         const iCcw = ((startIdx - n) % 12 + 12) % 12;
-        if (CW_CYCLE[iCw][1] !== zahlFace)  { schritte = n; richtung = 'cw';  break; }
-        if (CW_CYCLE[iCcw][1] !== zahlFace) { schritte = n; richtung = 'ccw'; break; }
+        if (CW_CYCLE[iCw][1] !== obenFace)  { schritte = n; richtung = 'cw';  break; }
+        if (CW_CYCLE[iCcw][1] !== obenFace) { schritte = n; richtung = 'ccw'; break; }
       }
       if (schritte === 0) return;
 
