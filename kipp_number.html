@@ -14373,6 +14373,8 @@
         const w = gefiltert[Math.floor(Math.random() * gefiltert.length)];
         const colorObj = GAME_COLORS.find(cc => cc.name === w.farbe);
         if (!colorObj) continue;
+        // Endkontrolle gegen die aktuelle Wuerfellage
+        if (brainyKombiBereitsErfuellt(zahl, colorObj.name)) continue;
 
         fillCardWithKombi(idx, zahl, colorObj);
         const m = gameCards[idx].mesh;
@@ -14445,6 +14447,19 @@
           if (CW_CYCLE[i][1] !== zFace) continue;
           if (SLOT_NEIGHBOR_COLORS[CW_CYCLE[i][0]][zSlot] === z.color) return true;
         }
+      }
+      return false;
+    }
+
+    // Prueft, ob eine Kombination aus Zahl und Farbe in der AKTUELLEN Wuerfellage
+    // bereits erfuellt ist. Ein solches Ziel darf nie angezeigt werden.
+    function brainyKombiBereitsErfuellt(zahl, farbe) {
+      const off = { f0: 0, f1: 4, f2: 8 }[topFace];
+      if (off === undefined) return false;
+      const slotNames = ['S1', 'S2', 'S3', 'S4'];
+      for (let k = 0; k < 4; k++) {
+        if (deck[off + k] !== zahl) continue;
+        if (SLOT_NEIGHBOR_COLORS[currentQuadrant][slotNames[k]] === farbe) return true;
       }
       return false;
     }
@@ -14530,6 +14545,8 @@
         const w = moeglich[Math.floor(Math.random() * moeglich.length)];
         const colorObj = GAME_COLORS.find(c => c.name === w.farbe);
         if (!colorObj) continue;
+        // Endkontrolle gegen die aktuelle Wuerfellage
+        if (brainyKombiBereitsErfuellt(zahl, colorObj.name)) continue;
 
         fillCardWithKombi(kartenIdx, zahl, colorObj);
         const m = gameCards[kartenIdx].mesh;
@@ -14775,6 +14792,16 @@
       gameCards[0].mesh.scale.set(1, 1, 1);
       gameCards[0].mesh.rotation.z = 0;
 
+      // Endkontrolle: Ist die Kombination in der aktuellen Lage bereits erfuellt,
+      // wird eine andere Farbe gewaehlt. Diese Pruefung greift unabhaengig davon,
+      // was vorher berechnet wurde.
+      if (brainyKombiBereitsErfuellt(zahl, colorObj.name)) {
+        const ersatz = GAME_COLORS.filter(c => !brainyKombiBereitsErfuellt(zahl, c.name));
+        if (ersatz.length) {
+          colorObj = ersatz[Math.floor(Math.random() * ersatz.length)];
+          fillCardWithKombi(0, zahl, colorObj);
+        }
+      }
       window._sixTargets = [{ zahl: zahl, color: colorObj.name, done: false }];
       window._targetVersuche = 0; // Versuchszaehler fuer dieses Ziel (0-3)
       window._brainyFailRetry = false;
