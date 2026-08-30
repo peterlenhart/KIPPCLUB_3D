@@ -2556,6 +2556,13 @@
         cubeMaterial[1] = mat(faceSlots.f1.slotMap, faceSlots.f1.imgRot, 1, 'f1');
         cubeMaterial[2] = mat(faceSlots.f2.slotMap, faceSlots.f2.imgRot, 1, 'f2');
         cubeMaterial[4] = mat(faceSlots.f0.slotMap, faceSlots.f0.imgRot, 1, 'f0');
+        // Die drei unbespielten Seiten [0], [3], [5] wurden bisher nie
+        // mitgezogen und blieben auf Holz stehen. Sie brauchen die
+        // Flaechendatei der aktuellen Stufe (z.B. flaeche_gold.png), sonst
+        // ist der Wuerfel beim Eckblick und im Finale halb Holz, halb Gold.
+        cubeMaterial[0] = matLeer();
+        cubeMaterial[3] = matLeer();
+        cubeMaterial[5] = matLeer();
         cube.material = cubeMaterial;
       }
     }
@@ -7369,12 +7376,12 @@
         let gesetzteZahlen = 0;
         for (let s = 0; s < 12; s++) if (deck[s] > 0) { belegt[s] = true; gesetzteZahlen++; }
 
-        // FIX Uebergang Stufe 4 -> 5: Aus den Stufen 1-4 liegt die "1" ALLEIN
-        // auf dem Wuerfel (kein Paar). Ohne Sonderbehandlung wuerde ein neues
-        // Paar mit den Zahlen 2 und 3 dazugelegt -> der Wuerfel haette 1, 2, 3
-        // und es konnte ein Kippziel mit der 3 entstehen.
-        // Richtig: die "2" kommt auf den Kantenpartner der bestehenden "1",
-        // damit genau das Paar (1, 2) auf dem Wuerfel liegt.
+        // Uebergang Stufe 4 -> 5: Aus den Stufen 1-4 liegt die "1" ALLEIN auf
+        // dem Wuerfel (kein Paar). Ohne Sonderbehandlung wuerde ein komplettes
+        // neues Paar dazugelegt und die "1" bliebe allein.
+        // Richtig: der Kantenpartner der bestehenden Zahl wird belegt — mit
+        // einer ZUFAELLIGEN Zahl, nicht mit der naechsthoeheren. Sonst koennte
+        // der Spieler von einer Zahl auf ihr Gegenueber schliessen.
         if (gesetzteZahlen === 1) {
           let einzelSlot = -1;
           for (let s = 0; s < 12; s++) if (deck[s] > 0) { einzelSlot = s; break; }
@@ -7383,13 +7390,15 @@
           if (partnerPaar) {
             const partnerSlot = (partnerPaar.slots[0] === einzelSlot)
               ? partnerPaar.slots[1] : partnerPaar.slots[0];
-            deck[partnerSlot] = deck[einzelSlot] + 1;      // die "2"
+            // Zufallszahl aus 1..12, die noch nicht auf dem Wuerfel liegt
+            const frei1 = [];
+            for (let z = 1; z <= 12; z++) if (z !== deck[einzelSlot]) frei1.push(z);
+            deck[partnerSlot] = frei1[Math.floor(Math.random() * frei1.length)];
             visibleDeckIndices.add(einzelSlot);
             visibleDeckIndices.add(partnerSlot);
             belegt[partnerSlot] = true;
             gesetzteZahlen = 2;
             window._neuesPaarSlots = [einzelSlot, partnerSlot];
-            // Nur die neu dazugekommene Zahl per Halbkipp zeigen
             window._neueZahlSlot = partnerSlot;
           }
         }
@@ -7423,13 +7432,27 @@
           }
         }
 
-        // Neue Zahlen paarweise vergeben: (1,2), (3,4), (5,6), ...
-        let naechsteZahl = gesetzteZahlen + 1;
+        // Neue Zahlen ZUFAELLIG aus 1..12 vergeben, nicht fortlaufend.
+        // Frueher lagen die Paare als (1,2), (3,4), (5,6) ... auf den Kanten.
+        // Wer die 8 sah, wusste sofort dass gegenueber die 7 liegt — die halbe
+        // Merkaufgabe fiel damit weg. Jetzt ist jede Paarung unvorhersehbar.
+        // Bereits liegende Zahlen bleiben unangetastet, damit sich der Wuerfel
+        // beim Aufstieg nicht unter dem Spieler veraendert.
+        const vergeben = {};
+        for (let s = 0; s < 12; s++) if (deck[s] > 0) vergeben[deck[s]] = true;
+        const pool = [];
+        for (let z = 1; z <= 12; z++) if (!vergeben[z]) pool.push(z);
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+        }
+
         window._neuesPaarSlots = null;
         neuePaare.forEach(p => {
           const a = p.slots[0], b = p.slots[1];
-          deck[a] = naechsteZahl++;
-          deck[b] = naechsteZahl++;
+          if (pool.length < 2) return;
+          deck[a] = pool.pop();
+          deck[b] = pool.pop();
           visibleDeckIndices.add(a); visibleDeckIndices.add(b);
           window._neuesPaarSlots = [a, b];       // fuer die Halbkipp-Ansicht merken
         });
@@ -8218,10 +8241,19 @@
         });
         const nb = document.getElementById('numBtns');
         if (nb) nb.style.setProperty('display', 'none', 'important');
-        ['brainyLivesWrap', 'kippTarget', 'hitCounter', 'missCounter'].forEach(id => {
+        // Die gesamte Bedienoberflaeche verschwindet: Zahlentasten,
+        // Richtungstasten, Kippziel, Zaehler, Pokal, Zurueck- und Soundtaste.
+        // Im Finale sind nur der Goldwuerfel und der Schriftzug zu sehen.
+        const ui = document.getElementById('uiOverlay');
+        if (ui) ui.style.setProperty('display', 'none', 'important');
+        ['startOverlay', 'scoreFlashOverlay', 'goldSammlungOverlay',
+         'stufenWahlOverlay', 'kippTarget', 'hitCounter', 'missCounter',
+         'brainyLivesWrap'].forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
+          if (el) el.style.setProperty('display', 'none', 'important');
         });
+        if (typeof resetButton !== 'undefined' && resetButton) resetButton.style.display = 'none';
+        if (typeof soundToggle !== 'undefined' && soundToggle) soundToggle.style.display = 'none';
       } catch (e) { console.warn('[FINALE] Szene ausblenden:', e); }
 
       // Wuerfel auf Goldoptik setzen und aus der Kippgruppe loesen
@@ -14605,6 +14637,7 @@
             try {
               await neuesPaarZeigen();
               await brainySichereVerdeckteLage();
+              await brainySchauGenau();      // nur beim Neueinstieg
             } catch (e) {
               console.warn('[START] Ansage-Ablauf abgebrochen:', e);
             }
@@ -15076,6 +15109,33 @@
       await runKippSequence(schritte, 'auto');
     }
 
+    // === SCHAUGANG BEIM NEUEINSTIEG ===
+    // Steigt der Spieler ueber die Stufenwahl direkt in eine hoehere Stufe ein,
+    // wird das Deck frisch gewuerfelt — er kennt keine einzige Zahlenposition
+    // und saehe nur die vier Slots der Topface. Deshalb: Ansage "SCHAU GENAU",
+    // danach vier CW-Kipps. Bei jedem Kipp wechselt die Topface, nach vier
+    // Kipps war also jede der drei Wuerfelflaechen oben und alle zwoelf Slots
+    // waren sichtbar.
+    // Beim Aufstieg innerhalb einer Partie laeuft der Schaugang NICHT — dort
+    // kennt der Spieler die Zahlen schon und der Halbkipp zeigt das neue Paar.
+    const SCHAU_GENAU_TEXT = {
+      de: 'SCHAU GENAU',
+      en: 'LOOK CLOSELY',
+      es: 'MIRA BIEN',
+      fr: 'REGARDE BIEN',
+      it: 'GUARDA BENE',
+      tr: 'D\u0130KKATL\u0130 BAK'
+    };
+
+    async function brainySchauGenau() {
+      if (!window._schaugangNoetig) return;
+      window._schaugangNoetig = false;
+      const txt = SCHAU_GENAU_TEXT[_digikippLang] || SCHAU_GENAU_TEXT.de;
+      await new Promise(fertig => brainyShowScoreFlash(txt, '', fertig));
+      kippDirection = 'cw';
+      await runKippSequence(4, 'auto');
+    }
+
     // Ab Schwierigkeit 4: Rueckkehr nach Q3 (Ausgangslage) nach festem Schema.
     // Der Spieler kann dabei die Zahlen auf den Slots mitverfolgen.
     //   Q3 -> 4x CW (volle Runde, wieder Q3)
@@ -15325,6 +15385,12 @@
       const _cfg = LEVEL_CFG[1];
       window._brLevelCfg = _cfg;
       brainyBuildDeck(_cfg);
+      // Das Deck wurde komplett neu gewuerfelt — der Spieler kennt keine
+      // einzige Zahlenposition. Ab Stufe 5 liegen mehrere Zahlen auf dem
+      // Wuerfel, davon hoechstens vier sichtbar. Ohne Schaugang waere der
+      // erste Kipp reines Raten. Beim Aufstieg innerhalb einer Partie ist das
+      // nicht noetig, dort kennt der Spieler die Zahlen bereits.
+      window._schaugangNoetig = ((window._brainySchwierigkeit || 1) >= 5);
       updateFaceSlots();
       updateAllFaceTextures();
 
