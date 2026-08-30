@@ -13959,9 +13959,22 @@
       // Wird erst aufgerufen, wenn der Wuerfel ruht und das Kippziel liegt.
       function enablePlayerTurn() {
         // Letzte Kontrolle: kein Ziel darf in der aktuellen Lage schon erfuellt sein
-        if (typeof brainyZieleFinalPruefen === 'function') brainyZieleFinalPruefen();
+        try {
+          if (typeof brainyZieleFinalPruefen === 'function') brainyZieleFinalPruefen();
+        } catch (e) { console.warn('[TASTEN] Zielpruefung fehlgeschlagen:', e); }
+
+        // Tastenbelegung der aktuellen Stufe IMMER neu setzen. Sonst koennen
+        // einzelne Zahlentasten aus einer frueheren Stufe auf display:none
+        // stehenbleiben und der Spieler bekommt keine Tasten.
+        try {
+          if (typeof brainySetzeTasten === 'function') brainySetzeTasten();
+        } catch (e) { console.warn('[TASTEN] Belegung fehlgeschlagen:', e); }
+
         const nb = document.getElementById('numBtns');
-        if (nb) nb.style.setProperty('display', 'block', 'important');
+        if (nb) {
+          nb.classList.remove('hidden');
+          nb.style.setProperty('display', 'block', 'important');
+        }
         clearSelection();
         if (window._brainySchwierigkeit === 1) {
           // Stufe 1/5: die "3" ist fest vorgewaehlt, nur die Richtung ist offen
@@ -14106,6 +14119,19 @@
           }
         } finally {
           window._numBandBusy = false;
+          // Sicherheitsnetz: Sollte oben etwas fehlschlagen, waeren die Tasten
+          // weg und das Spiel blockiert. Deshalb hier pruefen und notfalls
+          // erzwingen — ausser der Wuerfel bewegt sich noch.
+          setTimeout(() => {
+            if (gamePhase !== 'spielen' || isAnimating) return;
+            const nb = document.getElementById('numBtns');
+            if (!nb) return;
+            if (getComputedStyle(nb).display === 'none' &&
+                typeof window._enablePlayerTurn === 'function') {
+              console.warn('[TASTEN] Notfall-Freigabe');
+              window._enablePlayerTurn();
+            }
+          }, 900);
         }
       }
 
@@ -14392,17 +14418,26 @@
       if (showLevelToo) {
         brainyShowScoreFlash(SCHW_LABEL, stufe + '/10', () => {
           brainyShowScoreFlash('', MAT_NAMEN[BRAINY_STUFE_START], async () => {
-            await neuesPaarZeigen();
-            await brainySichereVerdeckteLage();
-            await brainySchauGenau();          // vier CW-Kipps zum Ansehen
-            brainyGenerateMehrfachZiele();
+            // Die Kette laeuft in einem async-Callback. Ohne try/catch wuerde
+            // ein Fehler still abbrechen und der Spieler bekaeme keine Tasten.
+            try {
+              await neuesPaarZeigen();
+              await brainySichereVerdeckteLage();
+              await brainySchauGenau();          // vier CW-Kipps zum Ansehen
+            } catch (e) {
+              console.warn('[START] Ansage-Ablauf abgebrochen:', e);
+            }
+            try { brainyGenerateMehrfachZiele(); }
+            catch (e) { console.warn('[START] Zielerzeugung fehlgeschlagen:', e); }
             if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
           });
         });
       } else {
         (async () => {
-          await brainySichereVerdeckteLage();
-          brainyGenerateMehrfachZiele();
+          try {
+            await brainySichereVerdeckteLage();
+            brainyGenerateMehrfachZiele();
+          } catch (e) { console.warn('[ZIEL] Ablauf abgebrochen:', e); }
           if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
         })();
       }
