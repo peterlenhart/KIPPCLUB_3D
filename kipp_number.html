@@ -13786,6 +13786,8 @@
       // Spieler ist am Zug: Tasten einblenden, Auswahl zuruecksetzen, Blinken starten.
       // Wird erst aufgerufen, wenn der Wuerfel ruht und das Kippziel liegt.
       function enablePlayerTurn() {
+        // Letzte Kontrolle: kein Ziel darf in der aktuellen Lage schon erfuellt sein
+        if (typeof brainyZieleFinalPruefen === 'function') brainyZieleFinalPruefen();
         const nb = document.getElementById('numBtns');
         if (nb) nb.style.setProperty('display', 'block', 'important');
         clearSelection();
@@ -13863,25 +13865,25 @@
           window._brainyFailRetry = false;
           await brainyAutoReturnToQ3(direction);
 
-          // Ziele auffrischen. Bei mehreren gleichzeitigen Zielen rueckt nur das
-          // getroffene nach, die uebrigen bleiben stehen. Bei nur einem Ziel
-          // wird ein komplett neues erzeugt.
+          // Feste Reihenfolge, damit das Kippziel IMMER erst dann entsteht,
+          // wenn der Wuerfel endgueltig liegt:
+          //   1. Lagekorrektur (Stufe 3: Zahl muss verdeckt sein)
+          //   2. Ziel(e) erzeugen — jetzt steht der Wuerfel still
+          //   3. Spieler freigeben
           if (window._brainyZielAbgeschlossen) {
             window._brainyZielAbgeschlossen = false;
-            // Stufe 3: Wuerfel weiterkippen, bis die Zahl verdeckt liegt
-            await brainySichereVerdeckteLage();
+            await brainySichereVerdeckteLage();          // letzte Kippbewegung
+
             if (brainyZielAnzahl() > 1) {
               if (window._letzterTrefferIdx >= 0) {
                 brainyZielNachruecken(window._letzterTrefferIdx);
                 window._letzterTrefferIdx = -1;
               }
-              // Alle verbliebenen Ziele auf Erreichbarkeit pruefen und
-              // gegebenenfalls neu setzen — die Wuerfellage hat sich geaendert.
               brainyZielePruefen();
-              if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
             } else {
-              brainyNextTargetOrEnd();
+              brainyGenerateMehrfachZiele();             // ohne erneutes Kippen
             }
+            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
           }
         } finally {
           window._numBandBusy = false;
@@ -14453,6 +14455,48 @@
         }
       }
       return false;
+    }
+
+    // Letzte Kontrolle unmittelbar bevor der Spieler dran ist:
+    // Jedes offene Ziel wird gegen die tatsaechliche Wuerfellage geprueft.
+    // Ist eine Kombination bereits erfuellt, wird sie durch eine gueltige ersetzt.
+    function brainyZieleFinalPruefen() {
+      if (!window._sixTargets) return;
+      const faceKeys = ['f0', 'f1', 'f2'];
+      const slotNames = ['S1', 'S2', 'S3', 'S4'];
+      const startIdx = stateIndex(currentQuadrant, topFace);
+      if (startIdx < 0) return;
+      const stufe = window._brainySchwierigkeit || 1;
+
+      window._sixTargets.forEach((z, i) => {
+        if (!z || z.done) return;
+        if (!brainyKombiBereitsErfuellt(z.zahl, z.color)) return;   // in Ordnung
+
+        // Ziel ist bereits erfuellt -> gueltige Ersatzfarbe suchen
+        let pos = -1;
+        for (let k = 0; k < 12; k++) if (deck[k] === z.zahl) { pos = k; break; }
+        if (pos < 0) return;
+        const zFace = faceKeys[Math.floor(pos / 4)];
+        const zSlot = slotNames[pos % 4];
+
+        const moeglich = [];
+        for (let n = 1; n <= 6; n++) {
+          if (stufe === 3 && (n === 3 || n === 6)) continue;
+          [1, -1].forEach(r => {
+            const i2 = ((startIdx + r * n) % 12 + 12) % 12;
+            if (CW_CYCLE[i2][1] !== zFace) return;
+            const farbe = SLOT_NEIGHBOR_COLORS[CW_CYCLE[i2][0]][zSlot];
+            if (farbe && !brainyKombiBereitsErfuellt(z.zahl, farbe)) moeglich.push(farbe);
+          });
+        }
+        if (!moeglich.length) return;
+
+        const neueFarbe = moeglich[Math.floor(Math.random() * moeglich.length)];
+        const colorObj = GAME_COLORS.find(c => c.name === neueFarbe);
+        if (!colorObj) return;
+        fillCardWithKombi(i, z.zahl, colorObj);
+        z.color = colorObj.name;
+      });
     }
 
     // Prueft, ob eine Kombination aus Zahl und Farbe in der AKTUELLEN Wuerfellage
