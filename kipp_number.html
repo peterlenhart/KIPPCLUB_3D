@@ -13744,10 +13744,13 @@
       
       const T = getTiming();
       const kipFactor = 1;
-      // Spielerkipp doppelt so schnell (halbe Zeit), Autokipp normal
+      // Spielerkipp doppelt so schnell (halbe Zeit), Autokipp normal.
+      // 'mix' = Mischvorgang: extrem schnell und ohne Pause, damit der Spieler
+      // die Kippfolge nicht mitzaehlen kann.
+      const istMix = (speedMode === 'mix');
       const speedFactor = (speedMode === 'auto') ? 1.0 : 0.5;
-      
-      
+
+
       for (let i = 0; i < steps; i++) {
         // Kontinuierliche Beschleunigung ab dem ersten Kipp,
         // bis Kipp 11 vierfache Geschwindigkeit (1/4 Zeit) erreicht ist.
@@ -13755,8 +13758,8 @@
         const t = Math.min(1, (stepNum - 1) / (11 - 1)); // 0 bei Schritt 1, 1 bei Schritt 11
         const stepMul = lerp(1.0, 0.25, t) * speedFactor;
 
-        const kipTime = Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
-        const holdTime = Math.max(40, Math.round(T.wMs * stepMul));
+        const kipTime = istMix ? 52 : Math.max(40, Math.round(T.kipMs * kipFactor * stepMul));
+        const holdTime = istMix ? 0 : Math.max(40, Math.round(T.wMs * stepMul));
         
         
         let direction;
@@ -14055,8 +14058,13 @@
               } else {
                 brainyGenerateMehrfachZiele();
               }
+            } else {
+              // Fehlkipp (Versuch 1 oder 2): Der Wuerfel wird gemischt, damit
+              // der Spieler nicht einfach zurueckkippen kann. Das Kippziel
+              // bleibt bestehen, der Versuchszaehler laeuft weiter (5/3/1).
+              await brainyMischen();
+              if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
             }
-            if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
             return;
           }
 
@@ -14386,6 +14394,7 @@
           brainyShowScoreFlash('', MAT_NAMEN[BRAINY_STUFE_START], async () => {
             await neuesPaarZeigen();
             await brainySichereVerdeckteLage();
+            await brainySchauGenau();          // vier CW-Kipps zum Ansehen
             brainyGenerateMehrfachZiele();
             if (typeof window._enablePlayerTurn === 'function') window._enablePlayerTurn();
           });
@@ -14849,6 +14858,97 @@
 
       kippDirection = (Math.random() < 0.5) ? 'cw' : 'ccw';
       await runKippSequence(schritte, 'auto');
+    }
+
+    // === MISCHEN NACH EINEM FEHLKIPP ===
+    // Wie beim Kartenmischen: vier Teilfolgen mit Richtungswechsel
+    // (CW-CCW-CW-CCW oder umgekehrt), je 5 bis 13 Kipps, in sehr hohem Tempo.
+    // Der Spieler kann die Folge nicht mitzaehlen und muss die Lage aus dem
+    // Gedaechtnis neu bestimmen — Zurueckkippen ist damit ausgeschlossen.
+    //
+    // Die Endlage ist bewusst voellig frei: KEINE feste Ausgangslage wie Q3.
+    // Der Spieler soll Quadrant UND Topface selbst bestimmen muessen. Aus jeder
+    // der 12 Lagen ist jedes Ziel in 1 bis 6 Kipps erreichbar, es kann also
+    // keine unloesbare Lage entstehen.
+    //
+    // Einzige Bedingung: Die Endlage darf das offene Ziel nicht bereits
+    // erfuellen, sonst waeren null Kipps die Loesung. Trifft das zu, wird die
+    // letzte Teilfolge um einen Kipp verschoben, bis die Lage sauber ist.
+    function brainyBerechneMischfolge() {
+      const startIdx = stateIndex(currentQuadrant, topFace);
+      if (startIdx < 0) return null;
+
+      const startCw = Math.random() < 0.5;
+      const folgen = [];
+      for (let k = 0; k < 4; k++) folgen.push(5 + Math.floor(Math.random() * 9)); // 5..13
+
+      // Erfuellt eine Lage bereits eines der offenen Ziele?
+      const slotNamen = ['S1', 'S2', 'S3', 'S4'];
+      const faceOff = { f0: 0, f1: 4, f2: 8 };
+      function lageErfuelltZiel(i) {
+        const ziele = window._sixTargets || [];
+        const off = faceOff[CW_CYCLE[i][1]];
+        if (off === undefined) return false;
+        for (let t = 0; t < ziele.length; t++) {
+          const z = ziele[t];
+          if (!z || z.done) continue;
+          for (let s = 0; s < 4; s++) {
+            if (deck[off + s] !== z.zahl) continue;
+            if (SLOT_NEIGHBOR_COLORS[CW_CYCLE[i][0]][slotNamen[s]] === z.color) return true;
+          }
+        }
+        return false;
+      }
+
+      // Lage nach den ersten drei Teilfolgen
+      let idx = startIdx;
+      let d = startCw ? 1 : -1;
+      for (let k = 0; k < 3; k++) { idx = ((idx + d * folgen[k]) % 12 + 12) % 12; d = -d; }
+
+      // Letzte Teilfolge notfalls verschieben, damit das Ziel offen bleibt
+      for (let versuch = 0; versuch < 9; versuch++) {
+        const c = 5 + ((folgen[3] - 5 + versuch) % 9);
+        const ende = ((idx + d * c) % 12 + 12) % 12;
+        if (!lageErfuelltZiel(ende)) { folgen[3] = c; break; }
+      }
+
+      return { startCw: startCw, folgen: folgen };
+    }
+
+    async function brainyMischen() {
+      const m = brainyBerechneMischfolge();
+      if (!m) return;
+      let cw = m.startCw;
+      for (let k = 0; k < m.folgen.length; k++) {
+        kippDirection = cw ? 'cw' : 'ccw';
+        await runKippSequence(m.folgen[k], 'mix');
+        cw = !cw;
+      }
+    }
+
+    // === SCHAUGANG ZU SPIELBEGINN ===
+    // Damit der Spieler nicht raten muss, wird ihm zuerst der ganze Wuerfel
+    // gezeigt: Ansage "SCHAU GENAU", danach vier CW-Kipps. Im 12er-Zyklus
+    // wechselt die Topface bei jedem Kipp — nach vier Kipps war also jede der
+    // drei Wuerfelflaechen mindestens einmal oben und der Spieler konnte sich
+    // alle Zahlenpositionen ansehen.
+    // Gilt ab Schwierigkeit 4. Die Stufen 1-3 bleiben unveraendert, dort liegt
+    // ohnehin nur die "1" und ihre Lage ist durch eigene Regeln festgelegt.
+    const SCHAU_GENAU_TEXT = {
+      de: 'SCHAU GENAU',
+      en: 'LOOK CLOSELY',
+      es: 'MIRA BIEN',
+      fr: 'REGARDE BIEN',
+      it: 'GUARDA BENE',
+      tr: 'D\u0130KKATL\u0130 BAK'
+    };
+
+    async function brainySchauGenau() {
+      if ((window._brainySchwierigkeit || 1) < 4) return;
+      const txt = SCHAU_GENAU_TEXT[_digikippLang] || SCHAU_GENAU_TEXT.de;
+      await new Promise(fertig => brainyShowScoreFlash(txt, '', fertig));
+      kippDirection = 'cw';
+      await runKippSequence(4, 'auto');
     }
 
     // Ab Schwierigkeit 4: Rueckkehr nach Q3 (Ausgangslage) nach festem Schema.
