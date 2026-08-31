@@ -2299,6 +2299,14 @@
       
       // Tutorial-Klicksperre aufheben
       _queenRemoveTutBlocker();
+
+      // VORSCHAU: Das Tutorial ist zu Ende. Der Spieler muss nichts mehr
+      // klicken — es geht automatisch zurueck auf die eigene Wall, wo das
+      // Kauffenster aufgeht. Ohne dieses return liefe der Spielablauf weiter.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        window.location.href = 'index.html?wall=queen&buy=queen';
+        return;
+      }
       
       // Aufgedeckten Slot wieder verdecken (alle _revealedNow zurücksetzen)
       ['f0','f1','f2'].forEach(fk => {
@@ -14074,6 +14082,13 @@
     resetButton.addEventListener('click', () => {
       // Auf SPIELEN/TUTORIAL-Auswahlseite → zur Themenauswahl
       // Sonst (Boutique, Spielverlauf, Win, Game Over) → zur SPIELEN/TUTORIAL-Auswahlseite
+      // In der VORSCHAU fuehrt der Rueck-Button IMMER zurueck auf die eigene
+      // Wall. Der zweite Zweig wuerde sonst das Spiel neu laden, obwohl es
+      // gar nicht gekauft ist — und die Paywall wirft dann irgendwohin.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        window.location.href = 'index.html?wall=queen&buy=queen';
+        return;
+      }
       if (window._queenAtStartChoice) {
         window.location.href = vorschauIndexZiel('index.html');
       } else {
