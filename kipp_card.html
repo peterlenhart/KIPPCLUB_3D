@@ -3421,6 +3421,21 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
+        // === VORSCHAU VON DER WALL ===
+        // Alles ist geladen. Hier wird derselbe Ablauf ausgeloest, den
+        // sonst der TUTORIAL-Button im Spiel startet — es gibt also zwei
+        // Ausloeser fuer dasselbe Tutorial: der Vorschau-Button auf der
+        // index und der TUTORIAL-Button hier im Spiel.
+        if (window._vorschauModus && !window._vorschauGestartet) {
+          window._vorschauGestartet = true;
+          window._vorschauStartZeit = Date.now();
+          try { document.getElementById('startChallengeText').style.display = 'none'; } catch (e) {}
+          try { unlockAndPlayBgMusic(); } catch (e) {}
+          vorschauStartbildAus();
+          setTimeout(function () { window._menuSelState = 1; handleStart(true); }, 80);
+          return;
+        }
+
         // NEUES MATCH: nach reload Modi-Auswahl direkt oeffnen
         try {
           if (sessionStorage.getItem('kippOpenMatchModi') === '1') {
@@ -3541,16 +3556,6 @@
         document.getElementById('btnSpielen').style.opacity = '1';
         document.getElementById('btnDemo').disabled = false;
         document.getElementById('btnDemo').style.opacity = '1';
-        // Vorschau von der Wall: direkt das KIPP+1 Tutorial (nicht KIPP MATCH)
-        if (window._vorschauModus && !window._vorschauGestartet) {
-          window._vorschauGestartet = true;
-          window._vorschauStartZeit = Date.now();
-          vorschauStartbildAus();
-          setTimeout(function () {
-            window._menuSelState = 1;
-            handleStart(true);
-          }, 60);
-        }
         document.getElementById('btnAnleitung').disabled = false;
         document.getElementById('btnAnleitung').style.opacity = '1';
         // Daily Button

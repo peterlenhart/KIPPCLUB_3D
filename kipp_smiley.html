@@ -2878,6 +2878,21 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
+        // === VORSCHAU VON DER WALL ===
+        // Alles ist geladen. Hier wird derselbe Ablauf ausgeloest, den
+        // sonst der TUTORIAL-Button im Spiel startet — es gibt also zwei
+        // Ausloeser fuer dasselbe Tutorial: der Vorschau-Button auf der
+        // index und der TUTORIAL-Button hier im Spiel.
+        if (window._vorschauModus && !window._vorschauGestartet) {
+          window._vorschauGestartet = true;
+          window._vorschauStartZeit = Date.now();
+          try { document.getElementById('startChallengeText').style.display = 'none'; } catch (e) {}
+          try { unlockAndPlayBgMusic(); } catch (e) {}
+          vorschauStartbildAus();
+          setTimeout(function () { showAnleitung(); }, 80);
+          return;
+        }
+
         // Sequenz stoppen
         sctRunning = false;
         if (sctTimerId) { clearTimeout(sctTimerId); sctTimerId = null; }
@@ -2916,13 +2931,6 @@
         document.getElementById('btnSpielen').style.opacity = '1';
         document.getElementById('btnDemo').disabled = false;
         document.getElementById('btnDemo').style.opacity = '1';
-        // Vorschau von der Wall: direkt die Anleitung zeigen
-        if (window._vorschauModus && !window._vorschauGestartet) {
-          window._vorschauGestartet = true;
-          window._vorschauStartZeit = Date.now();
-          vorschauStartbildAus();
-          setTimeout(function () { showAnleitung(); }, 60);
-        }
       }
     }
 
