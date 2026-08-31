@@ -14532,6 +14532,7 @@
               }
 
               window._brainySchwierigkeit = Math.min(10, vorherStufe + 1);
+              window._st2Beutel = [];   // Beutel der Stufe 2 neu beginnen
               // Fortschritt dauerhaft sichern: neue Stufe + Goldwuerfel-Anzahl
               kippSpeichereFortschritt(window._brainySchwierigkeit, window._brainyGoldwuerfel);
               brainyUpdateCounterDisplay();
@@ -15326,14 +15327,41 @@
         const nachbar1 = farbenJetzt[slotNames[(si + 1) % 4]]; // 3 Kipps
         const nachbar2 = farbenJetzt[slotNames[(si + 3) % 4]]; // 3 Kipps
         const diagonal = farbenJetzt[slotNames[(si + 2) % 4]]; // 6 Kipps
-        let auswahl;
+        let zielFarbe;
         if (window._brainySchwierigkeit === 2) {
-          // Stufe 2/5: zusaetzlich die diagonale Farbe (6 Kipps, Richtung egal)
-          auswahl = [nachbar1, nachbar2, diagonal];
+          // Stufe 2 hat genau drei Loesungen: 3 Kipps CW, 3 Kipps CCW,
+          // 6 Kipps (Richtung egal). Bei reinem Zufall konnte die 6 lange
+          // ausbleiben, obwohl die Taste angeboten wird — das wirkt seltsam.
+          // Deshalb Beutel-Prinzip: die drei Moeglichkeiten werden gemischt und
+          // der Reihe nach ausgegeben, dann neu gemischt. In je drei Zielen
+          // kommt jede Variante genau einmal vor.
+          const moeglich = [nachbar1, nachbar2, diagonal];
+          if (!Array.isArray(window._st2Beutel) || window._st2Beutel.length === 0) {
+            window._st2Beutel = [0, 1, 2];
+            for (let i = 2; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              const t = window._st2Beutel[i];
+              window._st2Beutel[i] = window._st2Beutel[j];
+              window._st2Beutel[j] = t;
+            }
+          }
+          // Bereits erfuellte Kombinationen ueberspringen — sie waeren mit
+          // null Kipps geloest und kommen als Ziel nicht in Frage.
+          let idx = -1;
+          for (let v = 0; v < window._st2Beutel.length; v++) {
+            const kandidat = moeglich[window._st2Beutel[v]];
+            if (kandidat && !brainyKombiBereitsErfuellt(1, kandidat)) { idx = v; break; }
+          }
+          if (idx < 0) { window._st2Beutel = []; idx = 0; }
+          const wahl = window._st2Beutel.splice(idx, 1)[0];
+          zielFarbe = moeglich[wahl !== undefined ? wahl : 0];
         } else {
-          auswahl = [nachbar1, nachbar2];
+          // Stufe 1: nur die beiden Nachbarfarben, jeweils 3 Kipps
+          let auswahl = [nachbar1, nachbar2];
+          const ohneErfuellte = auswahl.filter(f => f && !brainyKombiBereitsErfuellt(1, f));
+          if (ohneErfuellte.length > 0) auswahl = ohneErfuellte;
+          zielFarbe = auswahl[Math.floor(Math.random() * auswahl.length)];
         }
-        const zielFarbe = auswahl[Math.floor(Math.random() * auswahl.length)];
         window._st1LoesungIst6 = (zielFarbe === diagonal);
         colorObj = GAME_COLORS.find(c => c.name === zielFarbe) || GAME_COLORS[0];
       } else {
