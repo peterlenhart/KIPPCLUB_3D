@@ -1270,10 +1270,49 @@
       catch (e) { return false; }
     })();
 
+
     function vorschauZurueckZurIndex() {
       if (!window._vorschauModus) return;
+      // Schutz: In den ersten Sekunden nach dem Start nicht zurueckspringen.
+      // Sonst wuerde ein verfrueht ausgeloester Endpunkt die Vorschau sofort
+      // wieder schliessen und der Spieler saehe nur ein Aufblitzen.
+      if (Date.now() - (window._vorschauStartZeit || 0) < 4000) return;
       window._vorschauModus = false;   // nur einmal ausloesen
       setTimeout(function () { window.location.href = 'index.html'; }, 900);
+    }
+
+    // Startet die Vorschau ueber den echten TUTORIAL-Button, sobald dieser
+    // freigeschaltet ist. Dadurch laufen alle Vorbedingungen genauso ab wie
+    // bei einem Spielerklick. Der Startbildschirm wird anschliessend
+    // dauerhaft ausgeblendet, damit SPIELEN und TUTORIAL nicht ueber dem
+    // laufenden Tutorial stehen bleiben.
+    function vorschauStarten(klickFn) {
+      if (!window._vorschauModus) return;
+      var versuche = 0;
+      (function warte() {
+        var btnD = document.getElementById('btnDemo');
+        var bereit = btnD && !btnD.disabled &&
+                     (typeof texturesReady === 'undefined' || texturesReady);
+        if (bereit) {
+          window._vorschauStartZeit = Date.now();
+          klickFn();
+          // Startbildschirm sicher ausblenden — auch gegen spaetere Aufrufe,
+          // die ihn wieder einblenden wuerden.
+          var aus = function () {
+            var so = document.getElementById('startOverlay');
+            if (so) so.style.setProperty('display', 'none', 'important');
+            ['btnSpielen', 'btnDemo', 'btnAnleitung', 'btnDaily', 'btnKippPrinzip']
+              .forEach(function (id) {
+                var b = document.getElementById(id);
+                if (b) b.style.setProperty('display', 'none', 'important');
+              });
+          };
+          aus();
+          for (var t = 100; t <= 3000; t += 300) setTimeout(aus, t);
+          return;
+        }
+        if (++versuche < 200) setTimeout(warte, 100);
+      })();
     }
 
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
@@ -12763,18 +12802,8 @@
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
 
-    // Vorschau von der Wall: Startbildschirm ueberspringen, Tutorial starten
-    if (window._vorschauModus) {
-      (function warteAufTexturen() {
-        if (typeof texturesReady !== 'undefined' && texturesReady) {
-          const so = document.getElementById('startOverlay');
-          if (so) so.style.display = 'none';
-          handleStart(true);
-        } else {
-          setTimeout(warteAufTexturen, 150);
-        }
-      })();
-    }
+    // Vorschau von der Wall: Tutorial ueber den echten TUTORIAL-Weg starten
+    vorschauStarten(function () { handleStart(true); });
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault(); handleStart(true);
     }, { passive: false });
