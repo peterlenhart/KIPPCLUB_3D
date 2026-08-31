@@ -1878,11 +1878,14 @@ Merken, Logik, Kopfzerbrechen.">
           // Position wird aus dem Preis-Element gemessen: es ist zwar auf
           // visibility:hidden gesetzt, nimmt im Layout aber weiterhin Platz
           // ein — dadurch braucht hier kein Wert fest eingetragen zu werden.
+          // Wichtig: fuer die Vorschau OHNE level=masterbrain. Dieser Parameter
+          // schaltet in queen und king den TUTORIAL-Button ab
+          // (btnDemo.disabled = true) — das Tutorial waere dann nicht startbar.
           const VORSCHAU_ZIEL = {
             smileys: 'kipp_smiley.html?tutorial=1',
             card:    'kipp_card.html?tutorial=1',
-            queen:   'kipp_queen.html?level=masterbrain&tutorial=1',
-            king:    'kipp_king.html?level=masterbrain&tutorial=1'
+            queen:   'kipp_queen.html?tutorial=1',
+            king:    'kipp_king.html?tutorial=1'
           };
           const VORSCHAU_TEXT = {
             de:'VORSCHAU', en:'PREVIEW', es:'VISTA PREVIA',

@@ -1281,39 +1281,23 @@
       setTimeout(function () { window.location.href = 'index.html'; }, 900);
     }
 
-    // Startet die Vorschau ueber den echten TUTORIAL-Button, sobald dieser
-    // freigeschaltet ist. Dadurch laufen alle Vorbedingungen genauso ab wie
-    // bei einem Spielerklick. Der Startbildschirm wird anschliessend
-    // dauerhaft ausgeblendet, damit SPIELEN und TUTORIAL nicht ueber dem
-    // laufenden Tutorial stehen bleiben.
-    function vorschauStarten(klickFn) {
-      if (!window._vorschauModus) return;
-      var versuche = 0;
-      (function warte() {
-        var btnD = document.getElementById('btnDemo');
-        var bereit = btnD && !btnD.disabled &&
-                     (typeof texturesReady === 'undefined' || texturesReady);
-        if (bereit) {
-          window._vorschauStartZeit = Date.now();
-          klickFn();
-          // Startbildschirm sicher ausblenden — auch gegen spaetere Aufrufe,
-          // die ihn wieder einblenden wuerden.
-          var aus = function () {
-            var so = document.getElementById('startOverlay');
-            if (so) so.style.setProperty('display', 'none', 'important');
-            ['btnSpielen', 'btnDemo', 'btnAnleitung', 'btnDaily', 'btnKippPrinzip']
-              .forEach(function (id) {
-                var b = document.getElementById(id);
-                if (b) b.style.setProperty('display', 'none', 'important');
-              });
-          };
-          aus();
-          for (var t = 100; t <= 3000; t += 300) setTimeout(aus, t);
-          return;
-        }
-        if (++versuche < 200) setTimeout(warte, 100);
-      })();
+    // Blendet den Startbildschirm dauerhaft aus. Wird im Vorschaumodus
+    // aufgerufen, weil einzelne Stellen ihn spaeter wieder einblenden wuerden
+    // und dann SPIELEN und TUTORIAL ueber dem Tutorial staenden.
+    function vorschauStartbildAus() {
+      var aus = function () {
+        var so = document.getElementById('startOverlay');
+        if (so) so.style.setProperty('display', 'none', 'important');
+        ['btnSpielen', 'btnDemo', 'btnAnleitung', 'btnDaily', 'btnKippPrinzip',
+         'startChallengeText', 'perfektGameText'].forEach(function (id) {
+          var b = document.getElementById(id);
+          if (b) b.style.setProperty('display', 'none', 'important');
+        });
+      };
+      aus();
+      for (var t = 60; t <= 4000; t += 200) setTimeout(aus, t);
     }
+
 
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     
@@ -12801,9 +12785,6 @@
       handleStart(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => handleStart(true));
-
-    // Vorschau von der Wall: Tutorial ueber den echten TUTORIAL-Weg starten
-    vorschauStarten(function () { handleStart(true); });
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault(); handleStart(true);
     }, { passive: false });
@@ -12864,6 +12845,14 @@
       const _bDm = document.getElementById('btnDemo');
       _bSp.disabled = false; _bDm.disabled = false;
       _bSp.style.opacity = '1'; _bDm.style.opacity = '1';
+      // Vorschau von der Wall: hier ist alles geladen und der TUTORIAL-Weg
+      // freigeschaltet — genau jetzt direkt ins Tutorial.
+      if (window._vorschauModus && !window._vorschauGestartet) {
+        window._vorschauGestartet = true;
+        window._vorschauStartZeit = Date.now();
+        vorschauStartbildAus();
+        setTimeout(function () { handleStart(true); }, 60);
+      }
     }
     
     // === ENTSCHEIDUNGS-PHASE ===
