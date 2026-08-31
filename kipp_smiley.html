@@ -1419,6 +1419,16 @@
       if (st && st.parentNode) st.parentNode.removeChild(st);
     }
 
+    // Im Vorschaumodus fuehrt JEDER Weg zurueck auf die eigene Wall mit
+    // geoeffnetem Kauffenster — nie auf die Startseite mit KIPP NUMBER.
+    // Nur dort kann der Spieler das Spiel kaufen, das er gerade gesehen hat.
+    function vorschauIndexZiel(normal) {
+      if (window._vorschauModus || window._vorschauGestartet) {
+        return 'index.html?wall=smileys&buy=smileys';
+      }
+      return normal;
+    }
+
 
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     var T = {
@@ -1658,7 +1668,7 @@
         return; // normaler Spielablauf
       }
       // Sonst: zurück zur Index, wo die Paywall sichtbar ist
-      window.location.href = 'index.html';
+      window.location.href = vorschauIndexZiel('index.html');
     })();
     
     // Kipp-Prinzip Button Text & Overlay Content
@@ -2974,9 +2984,10 @@
           try { unlockAndPlayBgMusic(); } catch (e) {}
           vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
-            // Dieselbe Methode wie bei card: die Funktion direkt aufrufen,
-            // die auch der TUTORIAL-Button im Spiel ausloest.
-            showAnleitung();
+            // Tutorial mit Vorfuehrung: handleStart(true) -> startKipp21(true).
+            // showAnleitung() waere die Textanleitung, ein anderer Weg.
+            _startBtnLock = false;
+            handleStart(true);
           }, 600);
         }
 
@@ -3291,11 +3302,22 @@
       kipp21Active = _savedKipp21Active;
     });
     
-    document.getElementById('btnBestScores').addEventListener('click', () => {
-      showBestScores();
-    });
+    // Pokal als Umschalter: offen -> schliessen, zu -> oeffnen.
+    function _smileyScoreSchliessen() {
+      const ov = document.getElementById('bestScoresOverlay');
+      if (ov) ov.style.display = 'none';
+      const cl = document.getElementById('bestScoresClose');
+      if (cl) cl.style.display = 'none';
+      if (typeof _savedKipp21Active !== 'undefined') kipp21Active = _savedKipp21Active;
+    }
+    function _pokalUmschalten() {
+      const ov = document.getElementById('bestScoresOverlay');
+      if (ov && ov.style.display === 'block') _smileyScoreSchliessen();
+      else showBestScores();
+    }
+    document.getElementById('btnBestScores').addEventListener('click', _pokalUmschalten);
     document.getElementById('btnBestScores').addEventListener('touchend', (e) => {
-      e.preventDefault(); showBestScores();
+      e.preventDefault(); _pokalUmschalten();
     }, { passive: false });
 
     // Scorecard: eigenes Overlay über allem, berührt nichts darunter
@@ -5163,7 +5185,7 @@
             if (window._kippclubPaywall && window._kippclubPaywall.check()) return;
             hideAllEndBtns();
             try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-            window.location.href = 'index.html?noflash=1';
+            window.location.href = vorschauIndexZiel('index.html?noflash=1');
           };
         }
         
@@ -11293,16 +11315,27 @@
       document.getElementById('saveGameOverlay').style.display = 'none';
     }, { passive: false });
     document.getElementById('sgBtnQuit').addEventListener('click', () => {
-      window.location.href = 'index.html?noflash=1';
+      window.location.href = vorschauIndexZiel('index.html?noflash=1');
     });
     document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
       e.preventDefault();
-      window.location.href = 'index.html?noflash=1';
+      window.location.href = vorschauIndexZiel('index.html?noflash=1');
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
+      // Ist die Bestenliste offen, schliesst der Rueck-Button zuerst nur diese.
+      const _sov = document.getElementById('bestScoresOverlay');
+      if (_sov && _sov.style.display === 'block') {
+        if (typeof _smileyScoreSchliessen === 'function') _smileyScoreSchliessen();
+        return;
+      }
+      // VORSCHAU: zurueck auf die eigene Wall mit dem Kauffenster.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        window.location.href = 'index.html?wall=smileys&buy=smileys';
+        return;
+      }
       if (gamePhase === 'start') {
-        window.location.href = 'index.html';
+        window.location.href = vorschauIndexZiel('index.html');
       } else {
         window.location.href = 'kipp_smiley.html';
       }
