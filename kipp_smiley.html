@@ -1396,6 +1396,103 @@
     // Blendet den Startbildschirm dauerhaft aus. Wird im Vorschaumodus
     // aufgerufen, weil einzelne Stellen ihn spaeter wieder einblenden wuerden
     // und dann SPIELEN und TUTORIAL ueber dem Tutorial staenden.
+
+    // === AUTOMATISCHE VORFUEHRUNG FUER DIE VORSCHAU (SMILEY) ===
+    // Smiley hat kein eigenes Tutorial. Fuer die Vorschau wird der normale
+    // Spielablauf automatisch durchgespielt: Leveltafel oeffnen, einen Smiley
+    // auswaehlen, bestaetigen, dann die richtige Kippzahl waehlen und kippen.
+    // Alles was der Spieler sonst antippt, blinkt kurz auf.
+    function _vsBlink(el, dauer) {
+      if (!el) return;
+      const alt = el.style.filter || '';
+      let an = true, n = 0;
+      const iv = setInterval(() => {
+        el.style.filter = an
+          ? 'drop-shadow(0 0 14px #fff) drop-shadow(0 0 26px #ffd447) brightness(1.5)'
+          : alt;
+        an = !an;
+        if (++n > 7) { clearInterval(iv); el.style.filter = alt; }
+      }, dauer / 8);
+    }
+
+    function _vsWarte(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function vorschauSmileyVorfuehrung() {
+      // 1. Leveltafel oeffnen
+      if (typeof showLeveltafel === 'function') showLeveltafel(false);
+      await _vsWarte(1400);
+
+      // 2. Einen sichtbaren Smiley auswaehlen — blinkt vorher auf
+      const alle = Array.from(document.querySelectorAll('.leveltafelSmiley'))
+        .filter(el => el.offsetParent !== null);
+      if (alle.length === 0) return;
+      const pick = alle[Math.floor(Math.random() * alle.length)];
+      _vsBlink(pick, 1200);
+      await _vsWarte(1300);
+      pick.click();
+      await _vsWarte(900);
+
+      // 3. Auswahl bestaetigen — der OK-Button blinkt ebenfalls
+      const bereit = document.getElementById('btnBereit');
+      if (bereit) {
+        _vsBlink(bereit, 1000);
+        await _vsWarte(1100);
+        if (!bereit.disabled) bereit.click();
+      }
+      await _vsWarte(2200);
+
+      // 4. Richtige Kippzahl suchen und ausfuehren
+      await vorschauSmileyKipp();
+    }
+
+    // Probiert 1 bis 11 durch und nimmt die Zahl, die zum Treffer fuehrt.
+    // Geprueft wird rechnerisch, ohne den Wuerfel zu bewegen.
+    function _vsFindeKippzahl() {
+      if (typeof stateIndex !== 'function' || typeof CW_CYCLE === 'undefined') return null;
+      const start = stateIndex(currentQuadrant, topFace);
+      if (start < 0) return null;
+      const zielSrc = window._smileyTargetSrc;
+      if (!zielSrc) return null;
+      const zielDatei = zielSrc.replace(/^.*[\\/]/, '').split('?')[0];
+
+      for (let n = 1; n <= 11; n++) {
+        const i = (start + n) % 12;
+        const q = CW_CYCLE[i][0], face = CW_CYCLE[i][1];
+        const sm = faceSlots[face] && faceSlots[face].slotMap;
+        if (!sm) continue;
+        for (const key in sm) {
+          const slot = sm[key];
+          if (!slot.img || !slot.img.src) continue;
+          const datei = slot.img.src.replace(/^.*[\\/]/, '').split('?')[0];
+          if (datei !== zielDatei) continue;
+          const slotName = GRID_TO_SLOT[face] && GRID_TO_SLOT[face][key];
+          if (!slotName) continue;
+          const farbe = SLOT_NEIGHBOR_COLORS[q][slotName];
+          if (farbe === window._smileyTargetColor) return n;
+        }
+      }
+      return null;
+    }
+
+    async function vorschauSmileyKipp() {
+      const n = _vsFindeKippzahl();
+      if (!n) return;
+      // Scrollband sichtbar auf die Zahl fahren
+      if (typeof window._scrollBandScrollOnly === 'function') {
+        window._scrollBandScrollOnly(n);
+        await _vsWarte(900);
+      }
+      const strip = document.getElementById('scrollBandStrip');
+      if (strip) {
+        const btn = strip.querySelector('.numBtn[data-num="' + n + '"]');
+        _vsBlink(btn, 1000);
+        await _vsWarte(1100);
+      }
+      if (typeof window._tutTriggerKipp === 'function') {
+        await window._tutTriggerKipp(n);
+      }
+    }
+
     function vorschauStartbildAus() {
       // Dauerhaft per Stylesheet ausblenden. Einzelne style-Zuweisungen
       // wuerden von spaeterem Code wieder ueberschrieben — eine CSS-Regel mit
@@ -2984,10 +3081,9 @@
           try { unlockAndPlayBgMusic(); } catch (e) {}
           vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
-            // Tutorial mit Vorfuehrung: handleStart(true) -> startKipp21(true).
-            // showAnleitung() waere die Textanleitung, ein anderer Weg.
-            _startBtnLock = false;
-            handleStart(true);
+            // Smiley hat kein eigenes Tutorial — stattdessen laeuft die
+            // automatische Vorfuehrung: Leveltafel, Smiley-Auswahl, Kipp.
+            vorschauSmileyVorfuehrung();
           }, 600);
         }
 
