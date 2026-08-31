@@ -1932,11 +1932,16 @@ Merken, Logik, Kopfzerbrechen.">
             });
             window.addEventListener('resize', vorschauPositionieren);
 
-            // Der Button ist reine Beschriftung. Geklickt wird die vorhandene
-            // Klickflaeche der Wall (clickQueen, clickKing, clickSmiley,
-            // clickKippCard) — sie liegt darunter und leitet je nach
-            // Kaufzustand ins Tutorial oder ins Spiel.
-            vb.style.pointerEvents = 'none';
+            const vorschauStarten = (e) => {
+              e.stopPropagation();
+              if (e.type === 'touchend') e.preventDefault();
+              // Gekauft -> direkt ins Spiel. Gesperrt -> Tutorial als Vorschau.
+              const ziel = vb.dataset.gekauft === '1'
+                ? SPIEL_ZIEL[game] : VORSCHAU_ZIEL[game];
+              window.location.href = ziel;
+            };
+            vb.addEventListener('click', vorschauStarten);
+            vb.addEventListener('touchend', vorschauStarten, { passive: false });
 
             pt._previewBtn = vb;
           }
