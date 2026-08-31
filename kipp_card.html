@@ -11929,10 +11929,12 @@
     }
 
     function handleStart(withTutorial) {
-      // VORSCHAU: SPIELEN startet das ungekaufte Spiel nicht. Der
-      // Tutorial-Zweig (_menuSelState === 1) laeuft weiterhin normal.
+      // VORSCHAU: SPIELEN darf das ungekaufte Spiel nicht starten.
+      // Erst ab 5 Sekunden nach dem Start greifen, sonst wuerde der
+      // Tutorial-Aufruf selbst abgefangen und zur index zurueckspringen.
       if ((window._vorschauModus || window._vorschauGestartet) &&
-          window._menuSelState !== 1) {
+          window._menuSelState !== 1 &&
+          (Date.now() - (window._vorschauStartZeit || 0)) > 5000) {
         window.location.href = 'index.html?wall=card&buy=card';
         return;
       }
@@ -13876,9 +13878,13 @@
     }
 
     function backToStartScreen() {
-      // VORSCHAU: Es gibt keinen Startbildschirm zum Zurueckkehren — das Spiel
-      // ist nicht gekauft. Jeder Abbruch fuehrt auf die eigene Wall.
-      if (window._vorschauModus || window._vorschauGestartet) {
+      // VORSCHAU: Nach dem Tutorial gibt es keinen Startbildschirm — das Spiel
+      // ist nicht gekauft, es geht auf die eigene Wall zurueck.
+      // WICHTIG: Erst ab 5 Sekunden nach dem Start. Das Tutorial ruft diese
+      // Funktion beim Aufraeumen auch zu Beginn auf — ohne diese Frist wuerde
+      // der Aufruf sofort abbrechen und zur index zurueckspringen.
+      if ((window._vorschauModus || window._vorschauGestartet) &&
+          (Date.now() - (window._vorschauStartZeit || 0)) > 5000) {
         window.location.href = 'index.html?wall=card&buy=card';
         return;
       }
