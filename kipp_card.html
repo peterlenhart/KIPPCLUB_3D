@@ -3421,30 +3421,6 @@
 
     function checkEnableButtons() {
       if (texturesReady && loadingAnimDone) {
-        // === VORSCHAU VON DER WALL ===
-        // Alles ist geladen. Hier wird derselbe Ablauf ausgeloest, den
-        // sonst der TUTORIAL-Button im Spiel startet — es gibt also zwei
-        // Ausloeser fuer dasselbe Tutorial: der Vorschau-Button auf der
-        // index und der TUTORIAL-Button hier im Spiel.
-        if (window._vorschauModus && !window._vorschauGestartet) {
-          window._vorschauGestartet = true;
-          window._vorschauStartZeit = Date.now();
-          try { document.getElementById('startChallengeText').style.display = 'none'; } catch (e) {}
-          try { unlockAndPlayBgMusic(); } catch (e) {}
-          setTimeout(function () {
-            // Denselben Klick ausloesen, den der TUTORIAL-Button im Spiel
-            // bekommt. Der Button wird vorher freigeschaltet, weil er in
-            // manchen Startpfaden auf disabled steht und dann nicht feuern wuerde.
-            var _bd = document.getElementById('btnDemo');
-            if (_bd) { _bd.disabled = false; _bd.click(); }
-            setTimeout(function () {
-              var _bs = document.getElementById('btnSpielen');
-              if (_bs) { _bs.disabled = false; _bs.click(); }
-            }, 120);
-          }, 80);
-          setTimeout(vorschauStartbildAus, 300);   // erst nach dem Klick ausblenden
-          return;
-        }
 
         // NEUES MATCH: nach reload Modi-Auswahl direkt oeffnen
         try {
@@ -3580,6 +3556,31 @@
           dailyBtn.textContent = 'DAILY #' + getDailyDayNum();
         }
       }
+        // === VORSCHAU VON DER WALL ===
+        // Der normale Startpfad ist komplett durchgelaufen. Erst JETZT wird
+        // derselbe Ablauf ausgeloest, den
+        // sonst der TUTORIAL-Button im Spiel startet — es gibt also zwei
+        // Ausloeser fuer dasselbe Tutorial: der Vorschau-Button auf der
+        // index und der TUTORIAL-Button hier im Spiel.
+        if (window._vorschauModus && !window._vorschauGestartet) {
+          window._vorschauGestartet = true;
+          window._vorschauStartZeit = Date.now();
+          try { document.getElementById('startChallengeText').style.display = 'none'; } catch (e) {}
+          try { unlockAndPlayBgMusic(); } catch (e) {}
+          setTimeout(function () {
+            // Denselben Klick ausloesen, den der TUTORIAL-Button im Spiel
+            // bekommt. Der Button wird vorher freigeschaltet, weil er in
+            // manchen Startpfaden auf disabled steht und dann nicht feuern wuerde.
+            var _bd = document.getElementById('btnDemo');
+            if (_bd) { _bd.disabled = false; _bd.click(); }
+            setTimeout(function () {
+              var _bs = document.getElementById('btnSpielen');
+              if (_bs) { _bs.disabled = false; _bs.click(); }
+            }, 120);
+          }, 600);
+          setTimeout(vorschauStartbildAus, 900);   // erst nach dem Klick ausblenden
+        }
+
     }
 
     // =========================
