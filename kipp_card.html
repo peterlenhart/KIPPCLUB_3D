@@ -1213,7 +1213,7 @@
         return; // normaler Spielablauf
       }
       // Sonst: zurück zur Index, wo die Paywall sichtbar ist
-      window.location.href = 'index.html';
+      window.location.href = vorschauIndexZiel('index.html');
     })();
     // === GLOBAL ERROR HANDLER (VISUAL for debugging) ===
 
@@ -1270,6 +1270,16 @@
     function vorschauStartbildFrei() {
       var st = document.getElementById('vorschauStyle');
       if (st && st.parentNode) st.parentNode.removeChild(st);
+    }
+
+    // Im Vorschaumodus fuehrt JEDER Weg zurueck auf die eigene Wall mit
+    // geoeffnetem Kauffenster — nie auf die Startseite mit KIPP NUMBER.
+    // Nur dort kann der Spieler das Spiel kaufen, das er gerade gesehen hat.
+    function vorschauIndexZiel(normal) {
+      if (window._vorschauModus || window._vorschauGestartet) {
+        return 'index.html?wall=card&buy=card';
+      }
+      return normal;
     }
 
 
@@ -4119,11 +4129,21 @@
       kipp21Active = _savedKipp21Active;
     });
     
-    document.getElementById('btnBestScores').addEventListener('click', () => {
-      showBestScores();
-    });
+    // Pokal wirkt als Umschalter: offen -> schliessen, zu -> oeffnen.
+    // Sonst kaeme man aus der Bestenliste nicht mehr heraus.
+    function _cardScoreSchliessen() {
+      document.getElementById('bestScoresOverlay').style.display = 'none';
+      document.getElementById('bestScoresClose').style.display = 'none';
+      kipp21Active = _savedKipp21Active;
+    }
+    function _pokalUmschalten() {
+      const ov = document.getElementById('bestScoresOverlay');
+      if (ov && ov.style.display === 'block') _cardScoreSchliessen();
+      else showBestScores();
+    }
+    document.getElementById('btnBestScores').addEventListener('click', _pokalUmschalten);
     document.getElementById('btnBestScores').addEventListener('touchend', (e) => {
-      e.preventDefault(); showBestScores();
+      e.preventDefault(); _pokalUmschalten();
     }, { passive: false });
     
     function updateSoundIcon() {
@@ -7085,7 +7105,12 @@
             disableReplayBlocker();
             backToStartScreen();
             _cardModePhase = 1; window._cardMode = 'offen';
-            if (window._vorschauModus) { vorschauZurueckZurIndex(); return; }
+            // VORSCHAU: Tutorial fertig — ohne weiteren Klick zurueck auf die
+            // eigene Wall, wo das Kauffenster aufgeht.
+            if (window._vorschauModus || window._vorschauGestartet) {
+              window.location.href = 'index.html?wall=card&buy=card';
+              return;
+            }
             setTimeout(() => handleStart(false), 500);
           };
           btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
@@ -8047,7 +8072,7 @@
             if (window._kippclubPaywall && window._kippclubPaywall.check()) return;
             hideAllEndBtns();
             try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-            window.location.href = 'index.html';
+            window.location.href = vorschauIndexZiel('index.html');
           };
         }
         
@@ -11904,6 +11929,13 @@
     }
 
     function handleStart(withTutorial) {
+      // VORSCHAU: SPIELEN startet das ungekaufte Spiel nicht. Der
+      // Tutorial-Zweig (_menuSelState === 1) laeuft weiterhin normal.
+      if ((window._vorschauModus || window._vorschauGestartet) &&
+          window._menuSelState !== 1) {
+        window.location.href = 'index.html?wall=card&buy=card';
+        return;
+      }
       console.log('[DEBUG] handleStart aufgerufen, nextMatchBlock=' + window._nextMatchBlock + ', withTut=' + withTutorial);
       if (window._nextMatchBlock) { 
         console.log('[DEBUG] handleStart abgebrochen wegen nextMatchBlock');
@@ -13828,7 +13860,7 @@
           };
           localStorage.setItem('digikipp_card_frozen', JSON.stringify(state));
         } catch(e) { console.error('[FREEZE]', e); }
-        location.href = 'index.html';
+        location.href = vorschauIndexZiel('index.html');
       };
 
       const btn2 = document.createElement('button');
@@ -13844,6 +13876,12 @@
     }
 
     function backToStartScreen() {
+      // VORSCHAU: Es gibt keinen Startbildschirm zum Zurueckkehren — das Spiel
+      // ist nicht gekauft. Jeder Abbruch fuehrt auf die eigene Wall.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        window.location.href = 'index.html?wall=card&buy=card';
+        return;
+      }
       // Daily RNG deaktivieren
       deactivateDailyRng();
       // KIPP-TIPP Overlay schließen falls offen
@@ -15458,14 +15496,27 @@
       document.getElementById('saveGameOverlay').style.display = 'none';
     }, { passive: false });
     document.getElementById('sgBtnQuit').addEventListener('click', () => {
-      window.location.href = 'index.html';
+      window.location.href = vorschauIndexZiel('index.html');
     });
     document.getElementById('sgBtnQuit').addEventListener('touchend', (e) => {
       e.preventDefault();
-      window.location.href = 'index.html';
+      window.location.href = vorschauIndexZiel('index.html');
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
+      // Ist die Bestenliste offen, schliesst der Rueck-Button zuerst nur
+      // diese — man kommt also einen Schritt zurueck ins Tutorial.
+      const _sov = document.getElementById('bestScoresOverlay');
+      if (_sov && _sov.style.display === 'block') {
+        if (typeof _cardScoreSchliessen === 'function') _cardScoreSchliessen();
+        return;
+      }
+      // VORSCHAU: Der Rueck-Button fuehrt immer zurueck auf die eigene Wall
+      // mit dem Kauffenster — dorthin, wo der Spieler hergekommen ist.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        window.location.href = 'index.html?wall=card&buy=card';
+        return;
+      }
       // Bluff-Overlays offen → zurück zur Startseite (kipp_card.html)
       if (document.getElementById('_bluffModeOverlay') || document.getElementById('_bluffPreviewOverlay') || window._bluffOverlayMesh) {
         if (window._bluffOverlayMesh) { scene.remove(window._bluffOverlayMesh); window._bluffOverlayMesh = null; }
@@ -15493,7 +15544,7 @@
       if (document.getElementById('_cardAnleitungOverlay') || gamePhase !== 'start') {
         window.location.href = 'kipp_card.html';
       } else {
-        window.location.href = 'index.html';
+        window.location.href = vorschauIndexZiel('index.html');
       }
     });
 
