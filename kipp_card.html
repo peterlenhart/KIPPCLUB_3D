@@ -3431,8 +3431,18 @@
           window._vorschauStartZeit = Date.now();
           try { document.getElementById('startChallengeText').style.display = 'none'; } catch (e) {}
           try { unlockAndPlayBgMusic(); } catch (e) {}
-          vorschauStartbildAus();
-          setTimeout(function () { window._menuSelState = 1; handleStart(true); }, 80);
+          setTimeout(function () {
+            // Denselben Klick ausloesen, den der TUTORIAL-Button im Spiel
+            // bekommt. Der Button wird vorher freigeschaltet, weil er in
+            // manchen Startpfaden auf disabled steht und dann nicht feuern wuerde.
+            var _bd = document.getElementById('btnDemo');
+            if (_bd) { _bd.disabled = false; _bd.click(); }
+            setTimeout(function () {
+              var _bs = document.getElementById('btnSpielen');
+              if (_bs) { _bs.disabled = false; _bs.click(); }
+            }, 120);
+          }, 80);
+          setTimeout(vorschauStartbildAus, 300);   // erst nach dem Klick ausblenden
           return;
         }
 

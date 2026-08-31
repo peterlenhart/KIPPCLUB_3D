@@ -1932,16 +1932,11 @@ Merken, Logik, Kopfzerbrechen.">
             });
             window.addEventListener('resize', vorschauPositionieren);
 
-            const vorschauStarten = (e) => {
-              e.stopPropagation();
-              if (e.type === 'touchend') e.preventDefault();
-              // Gekauft -> direkt ins Spiel. Gesperrt -> Tutorial als Vorschau.
-              const ziel = vb.dataset.gekauft === '1'
-                ? SPIEL_ZIEL[game] : VORSCHAU_ZIEL[game];
-              window.location.href = ziel;
-            };
-            vb.addEventListener('click', vorschauStarten);
-            vb.addEventListener('touchend', vorschauStarten, { passive: false });
+            // Der Button ist reine Beschriftung. Geklickt wird die vorhandene
+            // Klickflaeche der Wall (clickQueen, clickKing, clickSmiley,
+            // clickKippCard) — sie liegt darunter und leitet je nach
+            // Kaufzustand ins Tutorial oder ins Spiel.
+            vb.style.pointerEvents = 'none';
 
             pt._previewBtn = vb;
           }
@@ -2085,6 +2080,10 @@ Merken, Logik, Kopfzerbrechen.">
         // Popup-Schloss-Icon verstecken, sobald freigeschaltet (die alte SPIELEN/Schloss-Logik unten uebernimmt die Anzeige)
         const lockBtn = slide.querySelector('.lockIconBtn');
         if (lockBtn) lockBtn.style.display = 'none';
+        // Kaufzustand fuer die Klick-Weiche merken
+        window._spielGekauft = window._spielGekauft || {};
+        window._spielGekauft[game] = true;
+
         // Ist das Spiel gekauft, wird aus VORSCHAU der SPIELEN-Button —
         // gleiche Stelle, gleiche Optik, nur anderer Text und anderes Ziel.
         const prevBtn = slide.querySelector('.previewBtn');
@@ -2183,6 +2182,18 @@ Merken, Logik, Kopfzerbrechen.">
 
     // Game navigation
     let selectedSkin = 'numbers';
+
+    // === VORSCHAU-WEICHE FUER DIE KOSTENPFLICHTIGEN SPIELE ===
+    // Solange ein Spiel gesperrt ist, fuehrt der Klick auf die Wall in das
+    // Tutorial des Spiels (Vorschau). Ist es gekauft, fuehrt er wie bisher
+    // ins Spiel. Es gibt damit zwei Ausloeser fuer dasselbe Tutorial: hier auf
+    // der Startseite und der TUTORIAL-Button im Spiel selbst.
+    window._spielGekauft = window._spielGekauft || {};
+
+    function kippZielFuer(spiel, spielUrl, tutorialUrl) {
+      return window._spielGekauft[spiel] ? spielUrl : tutorialUrl;
+    }
+
     document.getElementById("clickColor").onclick = () => {
       kippTrack('game_open', { game: 'kipp_number', screen_name: 'hauptmenue' });
       location.href = 'kipp_number.html';
@@ -2197,12 +2208,14 @@ Merken, Logik, Kopfzerbrechen.">
     // KIPP QUEEN: eigene HTML, Level MASTERBRAIN
     document.getElementById("clickQueen").onclick = () => {
       kippTrack('game_open', { game: 'kipp_queen', screen_name: 'hauptmenue' });
-      location.href = 'kipp_queen.html?level=masterbrain';
+      location.href = kippZielFuer('queen',
+        'kipp_queen.html?level=masterbrain', 'kipp_queen.html?tutorial=1');
     };
     // KIPP KING: eigene HTML, Level MASTERBRAIN
     document.getElementById("clickKing").onclick = () => {
       kippTrack('game_open', { game: 'kipp_king', screen_name: 'hauptmenue' });
-      location.href = 'kipp_king.html?level=masterbrain';
+      location.href = kippZielFuer('king',
+        'kipp_king.html?level=masterbrain', 'kipp_king.html?tutorial=1');
     };
     function updateLevelLinks() {
       let base, mb;
@@ -2343,13 +2356,15 @@ Merken, Logik, Kopfzerbrechen.">
     // KIPP CARD
     document.getElementById("clickKippCard").onclick = () => {
       kippTrack('game_open', { game: 'kipp_card', screen_name: 'hauptmenue' });
-      location.href = 'kipp_card.html';
+      location.href = kippZielFuer('card',
+        'kipp_card.html', 'kipp_card.html?tutorial=1');
     };
 
     // KIPP SMILEY
     document.getElementById("clickSmiley").onclick = () => {
       kippTrack('game_open', { game: 'kipp_smiley', screen_name: 'hauptmenue' });
-      location.href = 'kipp_smiley.html';
+      location.href = kippZielFuer('smileys',
+        'kipp_smiley.html', 'kipp_smiley.html?tutorial=1');
     };
 
     // Modal
