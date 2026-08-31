@@ -1284,7 +1284,7 @@
         return; // normaler Spielablauf
       }
       // Sonst: zurück zur Index, wo die Paywall sichtbar ist
-      window.location.href = 'index.html';
+      window.location.href = vorschauIndexZiel('index.html');
     })();
     // === GLOBAL ERROR HANDLER (VISUAL for debugging) ===
 
@@ -1341,6 +1341,16 @@
     function vorschauStartbildFrei() {
       var st = document.getElementById('vorschauStyle');
       if (st && st.parentNode) st.parentNode.removeChild(st);
+    }
+
+    // Im Vorschaumodus fuehrt JEDER Weg zurueck auf die eigene Wall mit
+    // geoeffnetem Kauffenster — nie auf die Startseite mit KIPP NUMBER.
+    // Nur dort kann der Spieler das Spiel kaufen, das er gerade gesehen hat.
+    function vorschauIndexZiel(normal) {
+      if (window._vorschauModus || window._vorschauGestartet) {
+        return 'index.html?wall=king&buy=king';
+      }
+      return normal;
     }
 
 
@@ -4154,10 +4164,20 @@
           try { unlockAndPlayBgMusic(); } catch (e) {}
           vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
-            // Dieselbe Methode wie bei card: die Funktion direkt aufrufen,
-            // die auch der TUTORIAL-Button im Spiel ausloest.
+            // _startBtnLock muss frei sein, sonst kehrt handleStart sofort
+            // zurueck (if (!texturesReady || _startBtnLock) return;) und das
+            // Tutorial startet nie.
+            _startBtnLock = false;
+            // Der Queen/King-Startpfad setzt _queenWaitForSymbol = true und
+            // wartet auf die Statussymbol-Auswahl. Das Tutorial laeuft ohne
+            // Symbol — bleibt das Flag stehen, wird der Ablauf blockiert.
+            window._queenWaitForSymbol = false;
             handleStart(true);
           }, 600);
+          // Sperre nach dem Start wieder loesen: der Startbildschirm ist
+          // dann laengst weg, aber die Buttons am Tutorial-ENDE nutzen
+          // dieselben IDs und muessen sichtbar sein.
+          setTimeout(vorschauStartbildFrei, 2500);
         }
         return;
       }
@@ -7409,7 +7429,7 @@
             if (window._kippclubPaywall && window._kippclubPaywall.check()) return;
             hideAllEndBtns();
             try { localStorage.setItem('digikipp_training_done', 'true'); } catch(e) {}
-            window.location.href = 'index.html?noflash=1';
+            window.location.href = vorschauIndexZiel('index.html?noflash=1');
           };
         }
         
@@ -14055,7 +14075,7 @@
       // Auf SPIELEN/TUTORIAL-Auswahlseite → zur Themenauswahl
       // Sonst (Boutique, Spielverlauf, Win, Game Over) → zur SPIELEN/TUTORIAL-Auswahlseite
       if (window._queenAtStartChoice) {
-        window.location.href = 'index.html';
+        window.location.href = vorschauIndexZiel('index.html');
       } else {
         window.location.href = 'kipp_king.html?level=masterbrain';
       }
