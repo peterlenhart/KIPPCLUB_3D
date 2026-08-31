@@ -632,6 +632,37 @@ Merken, Logik, Kopfzerbrechen.">
 
     /* Modal */
     /* ===== PREIS-POPUP (ersetzt sichtbare Preise auf den Walls) ===== */
+
+    /* VORSCHAU-Button auf den kostenpflichtigen Walls.
+       Sitzt exakt dort, wo frueher der Bundle-Preis stand — die Position wird
+       zur Laufzeit aus dem (unsichtbaren, aber im Layout vorhandenen)
+       Preis-Element gemessen, damit kein Wert fest eingetragen werden muss. */
+    .previewBtn {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      font-size: 52px;
+      letter-spacing: 4px;
+      color: #FFD700;
+      text-shadow:
+        0 0 24px rgba(0,0,0,0.95),
+        0 0 48px rgba(0,0,0,0.7),
+        0 8px 16px rgba(0,0,0,0.85);
+      cursor: pointer;
+      pointer-events: auto;
+      z-index: 102;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .previewBtn.pulse { animation: paywallBundlePulse 1.8s ease-in-out infinite; }
+
     .lockIconBtn {
       position: absolute;
       left: 50%;
@@ -1841,6 +1872,77 @@ Merken, Logik, Kopfzerbrechen.">
             openPricePopup(game);
           });
 
+
+          // === VORSCHAU-BUTTON ===
+          // Sitzt an der Stelle, wo frueher der Bundle-Preis stand. Die
+          // Position wird aus dem Preis-Element gemessen: es ist zwar auf
+          // visibility:hidden gesetzt, nimmt im Layout aber weiterhin Platz
+          // ein — dadurch braucht hier kein Wert fest eingetragen zu werden.
+          const VORSCHAU_ZIEL = {
+            smileys: 'kipp_smiley.html?tutorial=1',
+            card:    'kipp_card.html?tutorial=1',
+            queen:   'kipp_queen.html?level=masterbrain&tutorial=1',
+            king:    'kipp_king.html?level=masterbrain&tutorial=1'
+          };
+          const VORSCHAU_TEXT = {
+            de:'VORSCHAU', en:'PREVIEW', es:'VISTA PREVIA',
+            fr:'APER\u00c7U', it:'ANTEPRIMA', tr:'\u00d6N \u0130ZLEME'
+          };
+          // Ziel nach dem Kauf: dasselbe Spiel, aber ohne Tutorial-Parameter
+          const SPIEL_ZIEL = {
+            smileys: 'kipp_smiley.html',
+            card:    'kipp_card.html',
+            queen:   'kipp_queen.html?level=masterbrain',
+            king:    'kipp_king.html?level=masterbrain'
+          };
+
+          if (VORSCHAU_ZIEL[game]) {
+            const bundleSpan = pt.querySelector('.wallCardPaywallBundle, .wallPaywallBundle');
+            const vb = document.createElement('div');
+            vb.className = 'previewBtn pulse';
+            // Sprache direkt aus dem Speicher lesen: currentLang wird erst weiter
+            // unten deklariert und waere hier noch nicht verfuegbar.
+            let _vl = 'de';
+            try { _vl = localStorage.getItem('digikipp_lang') || 'de'; } catch (e) {}
+            vb.textContent = VORSCHAU_TEXT[_vl] || VORSCHAU_TEXT.de;
+            vb.dataset.previewFor = game;
+            pt.parentNode.insertBefore(vb, pt.nextSibling);
+
+            // Position aus dem alten Preis-Element uebernehmen
+            function vorschauPositionieren() {
+              if (!bundleSpan) return;
+              const slide = pt.closest('.wallSlide');
+              if (!slide) return;
+              const r = bundleSpan.getBoundingClientRect();
+              const sr = slide.getBoundingClientRect();
+              if (r.width === 0) return;   // noch nicht gerendert
+              let scale = parseFloat(getComputedStyle(document.documentElement)
+                            .getPropertyValue('--scale')) || 1;
+              const mitteX = ((r.left + r.width / 2) - sr.left) / scale;
+              vb.style.width = '360px';
+              vb.style.left = (mitteX - 180) + 'px';
+              vb.style.top = (((r.top + r.height / 2) - sr.top) / scale
+                              - (parseFloat(getComputedStyle(vb).height) / 2)) + 'px';
+            }
+            requestAnimationFrame(() => {
+              requestAnimationFrame(vorschauPositionieren);
+            });
+            window.addEventListener('resize', vorschauPositionieren);
+
+            const vorschauStarten = (e) => {
+              e.stopPropagation();
+              if (e.type === 'touchend') e.preventDefault();
+              // Gekauft -> direkt ins Spiel. Gesperrt -> Tutorial als Vorschau.
+              const ziel = vb.dataset.gekauft === '1'
+                ? SPIEL_ZIEL[game] : VORSCHAU_ZIEL[game];
+              window.location.href = ziel;
+            };
+            vb.addEventListener('click', vorschauStarten);
+            vb.addEventListener('touchend', vorschauStarten, { passive: false });
+
+            pt._previewBtn = vb;
+          }
+
           // Referenz merken, damit applyUnlockState() das Schloss mit ausblenden kann
           pt._lockBtn = lockBtn;
         });
@@ -1980,6 +2082,15 @@ Merken, Logik, Kopfzerbrechen.">
         // Popup-Schloss-Icon verstecken, sobald freigeschaltet (die alte SPIELEN/Schloss-Logik unten uebernimmt die Anzeige)
         const lockBtn = slide.querySelector('.lockIconBtn');
         if (lockBtn) lockBtn.style.display = 'none';
+        // Ist das Spiel gekauft, wird aus VORSCHAU der SPIELEN-Button —
+        // gleiche Stelle, gleiche Optik, nur anderer Text und anderes Ziel.
+        const prevBtn = slide.querySelector('.previewBtn');
+        if (prevBtn) {
+          const _pT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
+          prevBtn.textContent = (_pT && _pT.play) ? _pT.play : 'SPIELEN';
+          prevBtn.dataset.gekauft = '1';
+          prevBtn.style.display = '';
+        }
 
         // Helper: erst Mitte messen, dann ersetzen, dann nach rAF erneut messen und korrigieren
         function centerReplace(el, newInnerHtml) {
@@ -2395,6 +2506,16 @@ const LVL_T = {
 
     function applyLevelLang() {
       const t = LVL_T[currentLang] || LVL_T.de;
+      // Vorschau- bzw. Spielen-Buttons auf den Walls mit uebersetzen
+      const _vT = {
+        de:'VORSCHAU', en:'PREVIEW', es:'VISTA PREVIA',
+        fr:'APER\u00c7U', it:'ANTEPRIMA', tr:'\u00d6N \u0130ZLEME'
+      };
+      document.querySelectorAll('.previewBtn').forEach(function (b) {
+        b.textContent = (b.dataset.gekauft === '1')
+          ? (t.play || 'SPIELEN')
+          : (_vT[currentLang] || _vT.de);
+      });
       document.getElementById('lvlTitle').textContent = t.title;
       document.getElementById('lvlSubTraining').textContent = t.s1;
       document.getElementById('modalTitle').textContent = t.mT;

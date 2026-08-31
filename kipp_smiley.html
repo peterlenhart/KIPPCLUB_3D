@@ -1344,6 +1344,21 @@
     // === SPRACH-SYSTEM ===
 
     var _digikippLang = "de";
+    // === VORSCHAU-MODUS (Aufruf von der Wall mit ?tutorial=1) ===
+    // Der Spieler tippt auf einer gesperrten Wall den VORSCHAU-Button. Das Spiel
+    // startet dann ohne Startbildschirm direkt mit dem Tutorial. Ist das
+    // Tutorial durchgelaufen, geht es automatisch zurueck zur Startseite.
+    window._vorschauModus = (function () {
+      try { return new URLSearchParams(window.location.search).get('tutorial') === '1'; }
+      catch (e) { return false; }
+    })();
+
+    function vorschauZurueckZurIndex() {
+      if (!window._vorschauModus) return;
+      window._vorschauModus = false;   // nur einmal ausloesen
+      setTimeout(function () { window.location.href = 'index.html'; }, 900);
+    }
+
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     var T = {
       "de": {
@@ -10164,6 +10179,19 @@
       showLeveltafel(false);
     }, { passive: false });
     document.getElementById('btnDemo').addEventListener('click', () => showAnleitung());
+
+    // Vorschau von der Wall: Startbildschirm ueberspringen, Anleitung zeigen
+    if (window._vorschauModus) {
+      (function warteAufTexturen() {
+        if (typeof texturesReady !== 'undefined' && texturesReady) {
+          const so = document.getElementById('startOverlay');
+          if (so) so.style.display = 'none';
+          showAnleitung();
+        } else {
+          setTimeout(warteAufTexturen, 150);
+        }
+      })();
+    }
     document.getElementById('btnDemo').addEventListener('touchend', (e) => {
       e.preventDefault(); showAnleitung();
     }, { passive: false });
@@ -10254,7 +10282,10 @@
       btn.style.cssText = 'background:url("button_lang_smiley_bl.webp") center/cover no-repeat;' +
         'border:none;width:282px;height:52px;font:bold 20px Arial;letter-spacing:2px;' +
         'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);cursor:pointer;border-radius:6px;padding-bottom:5px;';
-      btn.onclick = () => ov.remove();
+      btn.onclick = () => {
+        ov.remove();
+        vorschauZurueckZurIndex();   // Vorschau beendet -> zurueck zur Startseite
+      };
       btnWrap.appendChild(btn);
       ov.appendChild(btnWrap);
 

@@ -1190,6 +1190,21 @@
     // === SPRACH-SYSTEM ===
 
     var _digikippLang = "de";
+    // === VORSCHAU-MODUS (Aufruf von der Wall mit ?tutorial=1) ===
+    // Der Spieler tippt auf einer gesperrten Wall den VORSCHAU-Button. Das Spiel
+    // startet dann ohne Startbildschirm direkt mit dem Tutorial. Ist das
+    // Tutorial durchgelaufen, geht es automatisch zurueck zur Startseite.
+    window._vorschauModus = (function () {
+      try { return new URLSearchParams(window.location.search).get('tutorial') === '1'; }
+      catch (e) { return false; }
+    })();
+
+    function vorschauZurueckZurIndex() {
+      if (!window._vorschauModus) return;
+      window._vorschauModus = false;   // nur einmal ausloesen
+      setTimeout(function () { window.location.href = 'index.html'; }, 900);
+    }
+
     try { _digikippLang = localStorage.getItem("digikipp_lang") || "de"; } catch(e) {}
     var T = {
       "de": {
@@ -6967,6 +6982,7 @@
             disableReplayBlocker();
             backToStartScreen();
             _cardModePhase = 1; window._cardMode = 'offen';
+            if (window._vorschauModus) { vorschauZurueckZurIndex(); return; }
             setTimeout(() => handleStart(false), 500);
           };
           btnPlay.addEventListener('touchend', (e) => { e.preventDefault(); btnPlay.click(); }, { passive: false });
@@ -11927,6 +11943,23 @@
       }
     }, { passive: false });
     document.getElementById('btnAnleitung').addEventListener('click', () => showCardAnleitung());
+
+    // Vorschau von der Wall: direkt das KIPP+1 Tutorial starten
+    // (nicht KIPP MATCH — dafuer gibt es keine Vorschau)
+    if (window._vorschauModus) {
+      (function warteAufTexturen() {
+        if (typeof texturesReady !== 'undefined' && texturesReady) {
+          const so = document.getElementById('startOverlay');
+          if (so) so.style.display = 'none';
+          window._menuSelState = 0;
+          window._cardMode = 'offen';
+          _cardModePhase = 1;
+          runCardTutorial();
+        } else {
+          setTimeout(warteAufTexturen, 150);
+        }
+      })();
+    }
     document.getElementById('btnAnleitung').addEventListener('touchend', (e) => {
       e.preventDefault(); showCardAnleitung();
     }, { passive: false });
