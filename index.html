@@ -1540,6 +1540,23 @@ Merken, Logik, Kopfzerbrechen.">
     window.addEventListener("resize", rebuild);
     requestAnimationFrame(rebuild);
 
+    // KIPP CLUB: ?buy=<key> → nach der Vorschau direkt das Kauffenster oeffnen.
+    // Der Spieler kommt aus dem Tutorial zurueck und hat das Spiel gerade
+    // gesehen — hier faellt die Kaufentscheidung.
+    (function setupBuyParam() {
+      var key;
+      try { key = new URLSearchParams(location.search).get('buy'); } catch (e) { return; }
+      if (!key) return;
+      var versuche = 40;
+      (function warte() {
+        if (typeof openPricePopup === 'function') {
+          setTimeout(function () { try { openPricePopup(key); } catch (e) {} }, 700);
+          return;
+        }
+        if (--versuche > 0) setTimeout(warte, 100);
+      })();
+    })();
+
     // KIPP CLUB: ?wall=<key> Parameter → Karussell auf passende Wall scrollen
     (function setupWallParam() {
       const WALL_INDEX = { numbers:0, kids:1, icons:1, smileys:2, card:3, queen:4, king:5 };

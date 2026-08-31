@@ -1238,7 +1238,12 @@
       // wieder schliessen und der Spieler saehe nur ein Aufblitzen.
       if (Date.now() - (window._vorschauStartZeit || 0) < 4000) return;
       window._vorschauModus = false;   // nur einmal ausloesen
-      setTimeout(function () { window.location.href = 'index.html'; }, 900);
+      setTimeout(function () {
+        // Zurueck auf die passende Wall — und dort gleich das
+        // Kauffenster oeffnen. Der Spieler hat das Spiel gerade
+        // gesehen, das ist der Moment fuer die Entscheidung.
+        window.location.href = 'index.html?wall=card&buy=card';
+      }, 900);
     }
 
     // Blendet den Startbildschirm dauerhaft aus. Wird im Vorschaumodus
@@ -7063,7 +7068,13 @@
           innerDiv.appendChild(btnRepeat);
 
           const btnPlay = document.createElement('button');
-          btnPlay.textContent = T.sp || 'SPIELEN';
+          // In der Vorschau fuehrt der Button nicht ins Spiel, sondern zurueck
+          // zur Wall mit dem Kauffenster. Deshalb passende Beschriftung.
+          var _fsT = { de:'FREISCHALTEN', en:'UNLOCK', es:'DESBLOQUEAR',
+                       fr:'D\u00c9BLOQUER', it:'SBLOCCA', tr:'K\u0130L\u0130D\u0130 A\u00c7' };
+          btnPlay.textContent = window._vorschauModus
+            ? (_fsT[_digikippLang] || _fsT.de)
+            : (T.sp || 'SPIELEN');
           btnPlay.style.cssText = btnStyle + 'margin-top:6px;';
           btnPlay.onclick = () => {
             endOv.remove();
