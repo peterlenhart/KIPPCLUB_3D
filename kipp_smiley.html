@@ -1417,6 +1417,24 @@
 
     function _vsWarte(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+
+    // Wartet, bis der Wuerfel wirklich ruht und das Scrollband sichtbar ist.
+    // Nach LOS GEHT'S hebt sich der Wuerfel noch (Eckblick) — waehrenddessen
+    // waere jede Berechnung der Kippzahl falsch, weil sich die Lage aendert.
+    async function _vsWarteAufSpielbereit(maxMs) {
+      const bis = Date.now() + (maxMs || 20000);
+      while (Date.now() < bis) {
+        const band = document.getElementById('scrollBandWrap');
+        const sichtbar = band && band.offsetParent !== null &&
+                         getComputedStyle(band).visibility !== 'hidden';
+        const ruht = (typeof isAnimating === 'undefined' || !isAnimating) &&
+                     !window._kippEckblickRunning;
+        if (sichtbar && ruht) { await _vsWarte(600); return true; }
+        await _vsWarte(200);
+      }
+      return false;
+    }
+
     async function vorschauSmileyVorfuehrung() {
       // 1. Leveltafel oeffnen
       if (typeof showLeveltafel === 'function') showLeveltafel(false);
@@ -1452,7 +1470,10 @@
         await _vsWarte(2000);
       }
 
-      // 5. Richtige Kippzahl waehlen und kippen
+      // 5. Warten bis der Wuerfel ruht und das Scrollband da ist.
+      //    Erst dann stimmt die Lage und die Kippzahl kann berechnet werden.
+      const bereitZumKippen = await _vsWarteAufSpielbereit(20000);
+      if (!bereitZumKippen) return;
       await vorschauSmileyKipp();
     }
 
