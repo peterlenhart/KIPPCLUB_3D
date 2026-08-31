@@ -11929,15 +11929,6 @@
     }
 
     function handleStart(withTutorial) {
-      // VORSCHAU: SPIELEN darf das ungekaufte Spiel nicht starten.
-      // Erst ab 5 Sekunden nach dem Start greifen, sonst wuerde der
-      // Tutorial-Aufruf selbst abgefangen und zur index zurueckspringen.
-      if ((window._vorschauModus || window._vorschauGestartet) &&
-          window._menuSelState !== 1 &&
-          (Date.now() - (window._vorschauStartZeit || 0)) > 5000) {
-        window.location.href = 'index.html?wall=card&buy=card';
-        return;
-      }
       console.log('[DEBUG] handleStart aufgerufen, nextMatchBlock=' + window._nextMatchBlock + ', withTut=' + withTutorial);
       if (window._nextMatchBlock) { 
         console.log('[DEBUG] handleStart abgebrochen wegen nextMatchBlock');
@@ -13878,16 +13869,6 @@
     }
 
     function backToStartScreen() {
-      // VORSCHAU: Nach dem Tutorial gibt es keinen Startbildschirm — das Spiel
-      // ist nicht gekauft, es geht auf die eigene Wall zurueck.
-      // WICHTIG: Erst ab 5 Sekunden nach dem Start. Das Tutorial ruft diese
-      // Funktion beim Aufraeumen auch zu Beginn auf — ohne diese Frist wuerde
-      // der Aufruf sofort abbrechen und zur index zurueckspringen.
-      if ((window._vorschauModus || window._vorschauGestartet) &&
-          (Date.now() - (window._vorschauStartZeit || 0)) > 5000) {
-        window.location.href = 'index.html?wall=card&buy=card';
-        return;
-      }
       // Daily RNG deaktivieren
       deactivateDailyRng();
       // KIPP-TIPP Overlay schließen falls offen
