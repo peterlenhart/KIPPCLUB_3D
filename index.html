@@ -1559,24 +1559,45 @@ Merken, Logik, Kopfzerbrechen.">
 
     // KIPP CLUB: ?wall=<key> Parameter → Karussell auf passende Wall scrollen
     (function setupWallParam() {
-      const WALL_INDEX = { numbers:0, kids:1, icons:1, smileys:2, card:3, queen:4, king:5 };
+      // Die feste Tabelle stimmte nicht mit der Reihenfolge im HTML ueberein:
+      // dort steht King an Position 1, die Tabelle sagte 5. Deshalb wird der
+      // Index jetzt aus dem data-theme der Bilder gelesen — das kann nicht
+      // auseinanderlaufen, egal wie die Walls sortiert werden.
       const param = new URLSearchParams(location.search).get('wall');
       if (!param) return;
-      const idx = WALL_INDEX[param];
-      if (idx == null) return;
+      const findeIndex = () => {
+        const car = document.getElementById('wallCarousel');
+        if (!car) return -1;
+        const slides = car.querySelectorAll('.wallSlide');
+        for (let i = 0; i < slides.length; i++) {
+          const img = slides[i].querySelector('img[data-theme]');
+          if (!img) continue;
+          const th = img.getAttribute('data-theme');
+          if (th === param) return i;
+          // 'kids' und 'icons' bezeichnen dieselbe Wall
+          if ((param === 'kids' || param === 'icons') &&
+              (th === 'kids' || th === 'icons')) return i;
+        }
+        return -1;
+      };
       const scrollWhenReady = (tries) => {
         const car = document.getElementById('wallCarousel');
         if (!car) { if (tries > 0) setTimeout(() => scrollWhenReady(tries-1), 50); return; }
         const slides = car.querySelectorAll('.wallSlide');
         if (!slides.length) { if (tries > 0) setTimeout(() => scrollWhenReady(tries-1), 50); return; }
+        const idx = findeIndex();
+        if (idx < 0) return;
         const target = slides[idx];
         if (!target) return;
         // Bei scroll-snap genuegt scrollLeft auf die Slide-Position
         car.scrollLeft = target.offsetLeft;
       };
-      // Mehrfach versuchen, falls Layout noch nicht stabil ist
+      // Mehrfach versuchen, falls Layout noch nicht stabil ist.
+      // Zusaetzlich ueber einige Sekunden nachfassen: der Wall-Aufbau setzt
+      // das Karussell danach sonst wieder auf die erste Slide zurueck.
       scrollWhenReady(20);
       window.addEventListener('load', () => scrollWhenReady(5));
+      for (let t = 200; t <= 3000; t += 200) setTimeout(() => scrollWhenReady(3), t);
     })();
 
     // KIPP 27: Einmaliges Setup — Preis-Label + Haken bei gesetztem Flag erzeugen
