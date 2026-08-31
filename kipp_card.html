@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
+    // === TESTZUGANG FUER DIE ENTWICKLUNG ===
+    // ?unlock=1 schaltet alle Spiele dauerhaft frei (zum Testen ohne Kauf).
+    // ?unlock=0 entfernt die Freischaltung wieder.
+    (function () {
+      try {
+        var u = new URLSearchParams(window.location.search).get('unlock');
+        if (u === '1') { localStorage.setItem('kippclub_bundle_unlocked', '1'); }
+        else if (u === '0') { localStorage.removeItem('kippclub_bundle_unlocked'); }
+      } catch (e) {}
+    })();
+
   // === KIPP CLUB Paywall-Guard ===
   (function() {
     var GAME_KEY = 'card';
@@ -1181,7 +1192,14 @@
       function setToken(key) {
         try { localStorage.setItem(key, '1'); } catch(e) {}
       }
+      var params0;
+      try { params0 = new URLSearchParams(window.location.search); }
+      catch (e) { params0 = { get: function () { return null; } }; }
       const GAME_KEY = 'card'; // wird pro Datei ersetzt
+      // VORSCHAU von der Wall: Das Tutorial ist der bewusst erlaubte
+      // Einblick ins gesperrte Spiel. Diese zweite Paywall-Sperre darf
+      // deshalb nicht zurueckwerfen — sonst kommt der Spieler nie an.
+      if (params0.get('tutorial') === '1') return;
       // Bundle gekauft → alles frei
       if (hasToken('kippclub_bundle_unlocked')) return;
       // Spezifisches Spiel einzeln gekauft → frei
@@ -1227,17 +1245,26 @@
     // aufgerufen, weil einzelne Stellen ihn spaeter wieder einblenden wuerden
     // und dann SPIELEN und TUTORIAL ueber dem Tutorial staenden.
     function vorschauStartbildAus() {
-      var aus = function () {
-        var so = document.getElementById('startOverlay');
-        if (so) so.style.setProperty('display', 'none', 'important');
-        ['btnSpielen', 'btnDemo', 'btnAnleitung', 'btnDaily', 'btnKippPrinzip',
-         'startChallengeText', 'perfektGameText'].forEach(function (id) {
-          var b = document.getElementById(id);
-          if (b) b.style.setProperty('display', 'none', 'important');
-        });
-      };
-      aus();
-      for (var t = 60; t <= 4000; t += 200) setTimeout(aus, t);
+      // Dauerhaft per Stylesheet ausblenden. Einzelne style-Zuweisungen
+      // wuerden von spaeterem Code wieder ueberschrieben — eine CSS-Regel mit
+      // !important nicht. Damit koennen SPIELEN und TUTORIAL nicht mehr ueber
+      // dem laufenden Tutorial erscheinen.
+      if (document.getElementById('vorschauStyle')) return;
+      var st = document.createElement('style');
+      st.id = 'vorschauStyle';
+      st.textContent =
+        '#startOverlay, #startChallengeText, #perfektGameText,' +
+        '#sctHead, #sctSub, #sctBest { display: none !important; }' +
+        '#btnSpielen, #btnDemo, #btnAnleitung, #btnDaily, #btnKippPrinzip' +
+        ' { visibility: hidden !important; opacity: 0 !important; }';
+      document.head.appendChild(st);
+    }
+
+    // Nach dem Tutorial wieder freigeben, damit die Oberflaeche normal
+    // funktioniert, falls der Spieler doch im Spiel bleibt.
+    function vorschauStartbildFrei() {
+      var st = document.getElementById('vorschauStyle');
+      if (st && st.parentNode) st.parentNode.removeChild(st);
     }
 
 
@@ -3580,18 +3607,21 @@
           window._vorschauStartZeit = Date.now();
           try { document.getElementById('startChallengeText').style.display = 'none'; } catch (e) {}
           try { unlockAndPlayBgMusic(); } catch (e) {}
+          vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
+            // ... dann klicken. Der Button bleibt dabei klickbar,
+            // weil visibility statt display verwendet wird.
             // Denselben Klick ausloesen, den der TUTORIAL-Button im Spiel
             // bekommt. Der Button wird vorher freigeschaltet, weil er in
             // manchen Startpfaden auf disabled steht und dann nicht feuern wuerde.
-            var _bd = document.getElementById('btnDemo');
-            if (_bd) { _bd.disabled = false; _bd.click(); }
-            setTimeout(function () {
-              var _bs = document.getElementById('btnSpielen');
-              if (_bs) { _bs.disabled = false; _bs.click(); }
-            }, 120);
+            // Genau das, was der Button KIPP +1 im Spiel ausloest:
+            // btnSpielen ruft handleStart(false) auf, und dort entscheidet
+            // allein _menuSelState === 1 ueber den Tutorial-Zweig. Der
+            // Parameter withTutorial spielt dabei keine Rolle.
+            window._nextMatchBlock = false;
+            window._menuSelState = 1;
+            handleStart(false);
           }, 600);
-          setTimeout(vorschauStartbildAus, 900);   // erst nach dem Klick ausblenden
         }
 
     }

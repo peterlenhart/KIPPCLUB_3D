@@ -1924,24 +1924,43 @@ Merken, Logik, Kopfzerbrechen.">
               const mitteX = ((r.left + r.width / 2) - sr.left) / scale;
               vb.style.width = '360px';
               vb.style.left = (mitteX - 180) + 'px';
-              vb.style.top = (((r.top + r.height / 2) - sr.top) / scale
-                              - (parseFloat(getComputedStyle(vb).height) / 2)) + 'px';
+              const oben = ((r.top + r.height / 2) - sr.top) / scale
+                           - (parseFloat(getComputedStyle(vb).height) / 2);
+              vb.style.top = oben + 'px';
+              // Klickflaeche deckungsgleich unter den Text legen
+              vbHit.style.left = (mitteX - 180) + 'px';
+              vbHit.style.top = oben + 'px';
+              vbHit.style.width = '360px';
+              vbHit.style.height = getComputedStyle(vb).height;
             }
             requestAnimationFrame(() => {
               requestAnimationFrame(vorschauPositionieren);
             });
             window.addEventListener('resize', vorschauPositionieren);
 
+            // Eigene Klickflaeche unter dem Text. Sie deckt den ganzen Balken
+            // ab und liegt ueber allem anderen auf der Wall, damit kein
+            // darueberliegendes Element den Klick abfangen kann.
+            const vbHit = document.createElement('div');
+            vbHit.className = 'previewHit';
+            vbHit.style.cssText =
+              'position:absolute; z-index:9500; cursor:pointer;' +
+              'pointer-events:auto; -webkit-tap-highlight-color:transparent;' +
+              'background:transparent;';
+            pt.parentNode.insertBefore(vbHit, vb.nextSibling);
+
             const vorschauStarten = (e) => {
               e.stopPropagation();
               if (e.type === 'touchend') e.preventDefault();
               // Gekauft -> direkt ins Spiel. Gesperrt -> Tutorial als Vorschau.
-              const ziel = vb.dataset.gekauft === '1'
+              const ziel = (vb.dataset.gekauft === '1' || vbHit.dataset.gekauft === '1')
                 ? SPIEL_ZIEL[game] : VORSCHAU_ZIEL[game];
               window.location.href = ziel;
             };
-            vb.addEventListener('click', vorschauStarten);
-            vb.addEventListener('touchend', vorschauStarten, { passive: false });
+            vbHit.addEventListener('click', vorschauStarten);
+            vbHit.addEventListener('touchend', vorschauStarten, { passive: false });
+            vb.style.pointerEvents = 'none';   // Text ist nur Beschriftung
+            vb._hit = vbHit;
 
             pt._previewBtn = vb;
           }
@@ -2093,6 +2112,7 @@ Merken, Logik, Kopfzerbrechen.">
         // gleiche Stelle, gleiche Optik, nur anderer Text und anderes Ziel.
         const prevBtn = slide.querySelector('.previewBtn');
         if (prevBtn) {
+          if (prevBtn._hit) prevBtn._hit.dataset.gekauft = '1';
           const _pT = (typeof LVL_T !== 'undefined' && LVL_T[currentLang]) ? LVL_T[currentLang] : null;
           prevBtn.textContent = (_pT && _pT.play) ? _pT.play : 'SPIELEN';
           prevBtn.dataset.gekauft = '1';
