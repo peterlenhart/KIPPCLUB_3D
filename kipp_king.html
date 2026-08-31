@@ -4174,10 +4174,6 @@
             window._queenWaitForSymbol = false;
             handleStart(true);
           }, 600);
-          // Sperre nach dem Start wieder loesen: der Startbildschirm ist
-          // dann laengst weg, aber die Buttons am Tutorial-ENDE nutzen
-          // dieselben IDs und muessen sichtbar sein.
-          setTimeout(vorschauStartbildFrei, 2500);
         }
         return;
       }
