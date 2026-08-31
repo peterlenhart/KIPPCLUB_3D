@@ -2432,7 +2432,14 @@
       if (shareBtn) {
         // Beschriftung aus Sprache
         shareBtn.textContent = (T.cTeilen || 'TEILEN');
+        if (window._vorschauModus || window._vorschauGestartet) {
+          shareBtn.style.opacity = '0.35';
+          shareBtn.style.cursor = 'default';
+        }
         const _doShare = async () => {
+          // VORSCHAU: Teilen ist hier ohne Funktion — es gibt noch keinen
+          // eigenen Spielstand zum Teilen, das Spiel ist nicht gekauft.
+          if (window._vorschauModus || window._vorschauGestartet) return;
           const _trophyFiles = ['highheels.webp','handtasche.webp','qu_kette.webp','qu_vip.webp','qu_lambo.webp','qu_jet.webp'];
           let totalCount = 0;
           let collected = 0;
@@ -4575,11 +4582,20 @@
       kipp21Active = _savedKipp21Active;
     });
     
-    document.getElementById('btnBestScores').addEventListener('click', () => {
-      showBestScores();
-    });
+    // Pokal wirkt als Umschalter: offen -> schliessen, zu -> oeffnen.
+    // Sonst kaeme man aus der Galerie nicht mehr heraus.
+    function _pokalUmschalten() {
+      var ov = document.getElementById('queenTrophyOverlay');
+      var offen = ov && ov.style.display !== 'none' && ov.style.display !== '';
+      if (offen && typeof _hideQueenTrophyGallery === 'function') {
+        _hideQueenTrophyGallery();
+      } else {
+        showBestScores();
+      }
+    }
+    document.getElementById('btnBestScores').addEventListener('click', _pokalUmschalten);
     document.getElementById('btnBestScores').addEventListener('touchend', (e) => {
-      e.preventDefault(); showBestScores();
+      e.preventDefault(); _pokalUmschalten();
     }, { passive: false });
     
     function updateSoundIcon() {
@@ -14093,6 +14109,14 @@
     // - In allen anderen Phasen → Reset + zurück zum Start-Overlay
     // Quit confirmation handlers
     resetButton.addEventListener('click', () => {
+      // Ist die Trophaeen-Galerie offen, schliesst der Rueck-Button zuerst
+      // nur diese — man kommt also einen Schritt zurueck ins Tutorial.
+      var _tov = document.getElementById('queenTrophyOverlay');
+      if (_tov && _tov.style.display !== 'none' && _tov.style.display !== '') {
+        if (typeof _hideQueenTrophyGallery === 'function') _hideQueenTrophyGallery();
+        return;
+      }
+
       // Auf SPIELEN/TUTORIAL-Auswahlseite → zur Themenauswahl
       // Sonst (Boutique, Spielverlauf, Win, Game Over) → zur SPIELEN/TUTORIAL-Auswahlseite
       // In der VORSCHAU fuehrt der Rueck-Button IMMER zurueck auf die eigene
