@@ -2364,6 +2364,11 @@
       const overlay = document.getElementById('queenTrophyOverlay');
       const grid = document.getElementById('queenTrophyGrid');
       if (!overlay || !grid) return;
+      // Waehrend des Tutorials liegt die Klicksperre 'queenTutBlocker' mit
+      // z-index 200 ueber allem. Die Galerie hat denselben Wert — dadurch war
+      // der OK-Button nicht erreichbar. Sie wird deshalb hoeher gelegt,
+      // solange sie offen ist. Der Blocker bleibt fuer alles andere aktiv.
+      overlay.style.zIndex = '100002';
       
       // Spielzustand pausieren: alle laufenden Animationen stoppen
       window._queenPaused = true;
