@@ -1411,8 +1411,8 @@
           ? 'drop-shadow(0 0 14px #fff) drop-shadow(0 0 26px #ffd447) brightness(1.5)'
           : alt;
         an = !an;
-        if (++n > 7) { clearInterval(iv); el.style.filter = alt; }
-      }, dauer / 8);
+        if (++n > 5) { clearInterval(iv); el.style.filter = alt; }
+      }, dauer / 6);
     }
 
     function _vsWarte(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1420,28 +1420,39 @@
     async function vorschauSmileyVorfuehrung() {
       // 1. Leveltafel oeffnen
       if (typeof showLeveltafel === 'function') showLeveltafel(false);
-      await _vsWarte(1400);
+      await _vsWarte(2000);
 
       // 2. Einen sichtbaren Smiley auswaehlen — blinkt vorher auf
       const alle = Array.from(document.querySelectorAll('.leveltafelSmiley'))
-        .filter(el => el.offsetParent !== null);
+        .filter(el => el.offsetParent !== null && !el.dataset.played);
       if (alle.length === 0) return;
       const pick = alle[Math.floor(Math.random() * alle.length)];
-      _vsBlink(pick, 1200);
-      await _vsWarte(1300);
+      _vsBlink(pick, 1800);
+      await _vsWarte(2000);
       pick.click();
-      await _vsWarte(900);
+      await _vsWarte(1600);
 
-      // 3. Auswahl bestaetigen — der OK-Button blinkt ebenfalls
+      // 3. Auswahl bestaetigen
       const bereit = document.getElementById('btnBereit');
       if (bereit) {
-        _vsBlink(bereit, 1000);
-        await _vsWarte(1100);
+        _vsBlink(bereit, 1500);
+        await _vsWarte(1700);
         if (!bereit.disabled) bereit.click();
       }
-      await _vsWarte(2200);
+      await _vsWarte(2500);
 
-      // 4. Richtige Kippzahl suchen und ausfuehren
+      // 4. Hinweistext lesen lassen, dann LOS GEHT'S druecken.
+      //    Erst danach erscheint das Scrollband — dieser Schritt fehlte.
+      const los = document.getElementById('_smileyLosBtn');
+      if (los && los.style.display !== 'none') {
+        await _vsWarte(3200);        // Zeit zum Lesen des Hinweistextes
+        _vsBlink(los, 1500);
+        await _vsWarte(1700);
+        los.click();
+        await _vsWarte(2000);
+      }
+
+      // 5. Richtige Kippzahl waehlen und kippen
       await vorschauSmileyKipp();
     }
 
@@ -1480,13 +1491,13 @@
       // Scrollband sichtbar auf die Zahl fahren
       if (typeof window._scrollBandScrollOnly === 'function') {
         window._scrollBandScrollOnly(n);
-        await _vsWarte(900);
+        await _vsWarte(1400);
       }
       const strip = document.getElementById('scrollBandStrip');
       if (strip) {
         const btn = strip.querySelector('.numBtn[data-num="' + n + '"]');
-        _vsBlink(btn, 1000);
-        await _vsWarte(1100);
+        _vsBlink(btn, 1500);
+        await _vsWarte(1700);
       }
       if (typeof window._tutTriggerKipp === 'function') {
         await window._tutTriggerKipp(n);
