@@ -1330,7 +1330,8 @@
       st.id = 'vorschauStyle';
       st.textContent =
         '#startOverlay, #startChallengeText, #perfektGameText,' +
-        '#sctHead, #sctSub, #sctBest { display: none !important; }' +
+        '#sctHead, #sctSub, #sctBest,' +
+        '#queenStartChoiceWrap { display: none !important; }' +
         '#btnSpielen, #btnDemo, #btnAnleitung, #btnDaily, #btnKippPrinzip' +
         ' { visibility: hidden !important; opacity: 0 !important; }';
       document.head.appendChild(st);
@@ -4151,15 +4152,25 @@
           try { unlockAndPlayBgMusic(); } catch (e) {}
           vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
-            // _startBtnLock muss frei sein, sonst kehrt handleStart sofort
-            // zurueck (if (!texturesReady || _startBtnLock) return;) und das
-            // Tutorial startet nie.
-            _startBtnLock = false;
-            // Der Queen/King-Startpfad setzt _queenWaitForSymbol = true und
-            // wartet auf die Statussymbol-Auswahl. Das Tutorial laeuft ohne
-            // Symbol — bleibt das Flag stehen, wird der Ablauf blockiert.
-            window._queenWaitForSymbol = false;
-            handleStart(true);
+            // Exakt das, was der TUTORIAL-Button in der Queen/King-Auswahl
+            // macht (siehe _mkBtn(_tTutorial, ...) im Auswahl-Overlay).
+            // handleStart(true) waere FALSCH: das setzt currentLevel = 1 und
+            // startet das Bumblebrain-Tutorial mit nur zwei Zeichen.
+            window._queenSkipTutorial = false;
+            window._queenAtStartChoice = false;
+            KNIFF_SHOW_DURATION = 2000;   // Tutorial: kurze Eckblick-Dauer
+            try {
+              window._queenTutorialOrigTrophyCount =
+                parseInt(localStorage.getItem('queen_trophy_0') || '0', 10) || 0;
+            } catch (e) { window._queenTutorialOrigTrophyCount = 0; }
+            // Auswahl-Overlay entfernen, falls es schon aufgebaut wurde
+            try {
+              var _wrap = document.getElementById('queenStartChoiceWrap');
+              if (_wrap && _wrap.parentNode) _wrap.parentNode.removeChild(_wrap);
+            } catch (e) {}
+            if (window._codetafelMesh) window._codetafelMesh.visible = true;
+            if (window._tischoverlay) window._tischoverlay.visible = true;
+            if (typeof initStatusScrollband === 'function') initStatusScrollband();
           }, 600);
         }
         return;
