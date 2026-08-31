@@ -746,6 +746,11 @@
       pointer-events: none;
       z-index: 50;
     }
+    /* Die obere Icon-Leiste (Zurueck, Ton, Pokal) muss ueber allen Overlays
+       liegen — auch ueber der Stufenwahl und der Goldsammlung. Sonst waere sie
+       dort verdeckt und der Spieler kaeme nicht mehr heraus. */
+    #resetButton, #soundToggle, #btnBestScores { z-index: 100000; }
+
     #resetButton {
       display: none;
       position: absolute;
@@ -1150,6 +1155,13 @@
     <div id="stufenWahlTitel" style="position:absolute; left:0; top:150px; width:360px; text-align:center; font-family:Arial,sans-serif; font-size:21px; font-weight:bold; color:#f4e4b8; letter-spacing:1px; text-shadow:0 0 22px rgba(255,200,80,0.45), 0 3px 0 #6b4a18, 0 5px 14px rgba(0,0,0,0.95);"></div>
     <div id="stufenWahlBtns" style="position:absolute; left:30px; top:215px; width:300px; display:flex; flex-wrap:wrap; justify-content:center; gap:12px;"></div>
   </div>
+
+  <!-- Goldsammlung: liegt im Body, damit sie auch ueber der Stufenwahl
+       erscheint. Im uiOverlay waere sie durch dessen z-index gefangen. -->
+    <div id="goldSammlungOverlay" style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:360px; height:720px; z-index:99999; display:none; pointer-events:none; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.85) 0%, rgba(0,0,0,0.95) 70%);">
+      <div id="goldGrid" style="position:absolute; left:0; top:150px; width:360px; height:500px;"></div>
+      <div id="goldPresenter" style="position:absolute; left:50%; top:265px; width:200px; height:200px; margin-left:-100px; opacity:0;"></div>
+    </div>
   
   <!-- SAVE GAME Overlay -->
   <div id="saveGameOverlay">
@@ -1232,10 +1244,6 @@
     </div>
 
     <!-- Goldwuerfel-Sammlung: 2 Spalten x 5 Zeilen, Wuerfel wachsen progressiv -->
-    <div id="goldSammlungOverlay" style="position:absolute; left:0; top:0; width:360px; height:720px; z-index:9100; display:none; pointer-events:none; background:radial-gradient(ellipse at 50% 45%, rgba(28,18,4,0.85) 0%, rgba(0,0,0,0.95) 70%);">
-      <div id="goldGrid" style="position:absolute; left:0; top:150px; width:360px; height:500px;"></div>
-      <div id="goldPresenter" style="position:absolute; left:50%; top:265px; width:200px; height:200px; margin-left:-100px; opacity:0;"></div>
-    </div>
     <div id="progressDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
     <div id="handIcon">👆</div>
     <div id="hintText"></div>
@@ -7446,6 +7454,13 @@
           const j = Math.floor(Math.random() * (i + 1));
           const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
         }
+        // Die "1" liegt immer auf dem Wuerfel. Beim Hochspielen bleibt sie aus
+        // den Stufen 1-4 liegen; beim Direkteinstieg ist das Deck leer, dann
+        // wird sie hier als erste vergeben. Sonst haette der Spieler je nach
+        // Einstiegsweg ein anderes Zahlenbild — etwa 5 und 9 statt der 1.
+        // pool.pop() nimmt vom Ende, deshalb kommt die 1 ans Ende.
+        const iEins = pool.indexOf(1);
+        if (iEins >= 0) { pool.splice(iEins, 1); pool.push(1); }
 
         window._neuesPaarSlots = null;
         neuePaare.forEach(p => {
@@ -8196,6 +8211,11 @@
 
       ov.style.display = 'block';
       ov.style.pointerEvents = 'auto';
+      // Obere Icon-Leiste sichtbar halten — der Spieler soll auch hier
+      // zurueckgehen, den Ton schalten und die Sammlung ansehen koennen.
+      if (typeof positionResetButton === 'function') positionResetButton();
+      const pokalBtn = document.getElementById('btnBestScores');
+      if (pokalBtn) pokalBtn.style.display = 'block';
       requestAnimationFrame(() => { ov.style.opacity = '1'; });
       return true;
     }
@@ -8336,6 +8356,22 @@
       setTimeout(() => { window.location.href = 'index.html?theme=numbers'; }, 650);
     }
 
+    // Spiel nach dem Schliessen der Sammlung fortsetzen
+    function brainySammlungFortsetzen() {
+      window._spielPausiert = false;
+      window._numBandBusy = false;
+      // Ausgeblendete Szenenobjekte wieder sichtbar machen
+      if (Array.isArray(window._sammlungVersteckt)) {
+        window._sammlungVersteckt.forEach(o => { if (o) o.visible = true; });
+        window._sammlungVersteckt = [];
+      }
+      // Tasten nur zurueckholen, wenn ueberhaupt gespielt wird
+      if (gamePhase === 'spielen' && !isAnimating &&
+          typeof window._enablePlayerTurn === 'function') {
+        window._enablePlayerTurn();
+      }
+    }
+
     function brainyZeigeSammlung() {
       const ov = document.getElementById('goldSammlungOverlay');
       const grid = document.getElementById('goldGrid');
@@ -8344,8 +8380,31 @@
         ov.style.opacity = '0';
         setTimeout(() => { ov.style.display = 'none'; }, 380);
         window._goldOverlayOffen = false;
+        brainySammlungFortsetzen();
         return;
       }
+      // Laeuft gerade eine Kippbewegung, wird der Pokal ignoriert. So kann
+      // keine Animation im Hintergrund weiterlaufen, waehrend die Sammlung
+      // offen ist.
+      if (isAnimating) return;
+
+      // Spiel anhalten: keine Eingaben, keine Tasten.
+      window._spielPausiert = true;
+      window._numBandBusy = true;
+      const nbPause = document.getElementById('numBtns');
+      if (nbPause) nbPause.style.setProperty('display', 'none', 'important');
+      // Auch die Spielszene ausblenden — in der Sammlung soll nur die
+      // Goldwuerfel-Reihe zu sehen sein, kein Wuerfel und kein Kippziel.
+      try {
+        window._sammlungVersteckt = [];
+        scene.traverse(obj => {
+          if (obj.visible && (obj.isMesh || obj.isSprite)) {
+            window._sammlungVersteckt.push(obj);
+            obj.visible = false;
+          }
+        });
+      } catch (e) {}
+
       grid.innerHTML = '';
       // Immer der hoechste bekannte Stand: der laufende Spielstand oder der
       // gespeicherte Bestand aus frueheren Spielen — je nachdem was groesser ist.
@@ -8356,6 +8415,11 @@
       ov.style.display = 'block';
       ov.style.transition = 'opacity 380ms ease';
       ov.style.opacity = '0';
+      // Icon-Leiste sichtbar halten — der Pokal muss zum Schliessen erreichbar
+      // bleiben, Zurueck und Ton ebenfalls.
+      if (typeof positionResetButton === 'function') positionResetButton();
+      const pokalOffen = document.getElementById('btnBestScores');
+      if (pokalOffen) pokalOffen.style.display = 'block';
       requestAnimationFrame(() => { ov.style.opacity = '1'; });
       window._goldOverlayOffen = true;
     }
@@ -14146,6 +14210,9 @@
       // Spieler ist am Zug: Tasten einblenden, Auswahl zuruecksetzen, Blinken starten.
       // Wird erst aufgerufen, wenn der Wuerfel ruht und das Kippziel liegt.
       function enablePlayerTurn() {
+        // Ist die Sammlung offen, wird das Spiel angehalten — dann duerfen
+        // die Tasten nicht erscheinen, egal von wo der Aufruf kommt.
+        if (window._spielPausiert) return;
         // Letzte Kontrolle: kein Ziel darf in der aktuellen Lage schon erfuellt sein
         try {
           if (typeof brainyZieleFinalPruefen === 'function') brainyZieleFinalPruefen();
@@ -14307,6 +14374,8 @@
           // erzwingen — ausser der Wuerfel bewegt sich noch.
           setTimeout(() => {
             if (gamePhase !== 'spielen' || isAnimating) return;
+            // Ist die Sammlung offen, bleiben die Tasten bewusst aus.
+            if (window._spielPausiert) return;
             const nb = document.getElementById('numBtns');
             if (!nb) return;
             if (getComputedStyle(nb).display === 'none' &&
@@ -14647,8 +14716,11 @@
           // ein Fehler still abbrechen und der Spieler bekaeme keine Tasten.
           try {
             await neuesPaarZeigen();
-            await brainySichereVerdeckteLage();
+            // Reihenfolge wichtig: Der Eckblick endet in einer zufaelligen
+            // Lage. Er muss VOR der Verdeckt-Sicherung laufen, sonst waere die
+            // "1" bei Stufe 3 danach womoeglich wieder sichtbar.
             await brainySchauGenau();      // nur beim Neueinstieg
+            await brainySichereVerdeckteLage();
           } catch (e) {
             console.warn('[START] Ansage-Ablauf abgebrochen:', e);
           }
@@ -15437,11 +15509,13 @@
       window._brLevelCfg = _cfg;
       brainyBuildDeck(_cfg);
       // Das Deck wurde komplett neu gewuerfelt — der Spieler kennt keine
-      // einzige Zahlenposition. Ab Stufe 5 liegen mehrere Zahlen auf dem
-      // Wuerfel, davon hoechstens vier sichtbar. Ohne Schaugang waere der
-      // erste Kipp reines Raten. Beim Aufstieg innerhalb einer Partie ist das
-      // nicht noetig, dort kennt der Spieler die Zahlen bereits.
-      window._schaugangNoetig = ((window._brainySchwierigkeit || 1) >= 5);
+      // einzige Zahlenposition. Schon ab Stufe 3 liegt die "1" verdeckt, ab
+      // Stufe 5 kommen weitere Zahlen dazu. Ohne Schaugang waere der erste
+      // Kipp reines Raten. Nur bei Stufe 1 und 2 ist er entbehrlich, dort
+      // liegt die "1" sichtbar auf der Topface.
+      // Beim Aufstieg innerhalb einer Partie ist das nicht noetig, dort kennt
+      // der Spieler die Zahlen bereits.
+      window._schaugangNoetig = ((window._brainySchwierigkeit || 1) >= 3);
       updateFaceSlots();
       updateAllFaceTextures();
 
