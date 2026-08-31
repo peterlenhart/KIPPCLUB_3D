@@ -13,8 +13,21 @@
       unlockKey: 'kippclub_' + GAME_KEY + '_unlocked',
       isPlayed: function() { try { return localStorage.getItem(this.playedKey) === '1'; } catch(e) { return false; } },
       isUnlocked: function() { try { return localStorage.getItem(this.unlockKey) === '1'; } catch(e) { return false; } },
-      markPlayed: function() { try { localStorage.setItem(this.playedKey, '1'); } catch(e) {} },
+      markPlayed: function() {
+        // In der Vorschau nichts vermerken: Sie soll den einmaligen
+        // kostenlosen Durchgang des Spielers nicht aufbrauchen.
+        try {
+          if (new URLSearchParams(window.location.search).get('tutorial') === '1') return;
+        } catch (e) {}
+        try { localStorage.setItem(this.playedKey, '1'); } catch(e) {}
+      },
       check: function() {
+        // VORSCHAU von der Wall: Das Tutorial ist der bewusst erlaubte
+        // Einblick ins gesperrte Spiel. Die Paywall darf hier NICHT
+        // zurueckwerfen, sonst kaeme der Spieler nie beim Tutorial an.
+        try {
+          if (new URLSearchParams(window.location.search).get('tutorial') === '1') return false;
+        } catch (e) {}
         if (this.isPlayed() && !this.isUnlocked()) {
           try { location.replace('index.html?wall=' + this.gameKey); }
           catch(e) { location.href = 'index.html?wall=' + this.gameKey; }
