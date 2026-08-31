@@ -12862,6 +12862,12 @@
     // =========================
     let _startBtnLock = false;
     function handleStart(withTutorial) {
+      // VORSCHAU: Ein Klick auf SPIELEN darf das ungekaufte Spiel nicht
+      // starten. Stattdessen zurueck auf die eigene Wall zum Kauf.
+      if ((window._vorschauModus || window._vorschauGestartet) && !withTutorial) {
+        window.location.href = 'index.html?wall=queen&buy=queen';
+        return;
+      }
       if (!texturesReady || _startBtnLock) return;
       _startBtnLock = true;
       unlockAndPlayBgMusic();
@@ -12891,6 +12897,13 @@
     
     // Zurück zur Startseite (resetButton in Start/Spielziel-Phase)
     function backToStartScreen() {
+      // VORSCHAU: Es gibt keinen Startbildschirm zum Zurueckkehren — das Spiel
+      // ist nicht gekauft. Jeder Abbruch fuehrt direkt zurueck auf die eigene
+      // Wall mit dem Kauffenster.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        window.location.href = 'index.html?wall=queen&buy=queen';
+        return;
+      }
       // KIPP-TIPP Overlay schließen falls offen
       // ReplayBlocker MUSS weg, sonst sind Buttons tot
       disableReplayBlocker();
