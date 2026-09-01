@@ -13222,6 +13222,14 @@
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
+      // Ist die Stufenwahl offen, fuehrt der Button einen Schritt zurueck:
+      // Overlay schliessen und zur Startseite. Ohne das blieb man dort haengen.
+      const _sw = document.getElementById('stufenWahlOverlay');
+      if (_sw && _sw.style.display === 'block') {
+        _sw.style.opacity = '0';
+        _sw.style.pointerEvents = 'none';
+        _sw.style.display = 'none';
+      }
       // WICHTIG: Der Button verlaesst die Seite. Der Fortschritt muss vorher
       // gesichert werden, sonst geht der Spielstand verloren.
       if (typeof kippSpeichereFortschritt === 'function') {
