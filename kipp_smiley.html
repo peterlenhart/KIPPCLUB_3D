@@ -1435,6 +1435,63 @@
       return false;
     }
 
+
+    // === GESTEUERTE VORFUEHRUNG ===
+    // Der Smiley wird gezielt so auf dem Wuerfel platziert, dass er nach
+    // genau vier CW-Kipps auf dem passenden Farbfeld liegt. Damit ist die
+    // Loesung immer die 4 — die Vorfuehrung laeuft vorhersehbar ab.
+    // Zum Aendern des gezeigten Smileys nur diese eine Zeile anpassen:
+    const VORSCHAU_SMILEY = 'smiley_gruen_24.png';
+    const VORSCHAU_KIPPS  = 4;
+
+    // Legt den Smiley so, dass er nach VORSCHAU_KIPPS CW-Kipps passt.
+    // Rueckgabe: true, wenn die Platzierung geklappt hat.
+    function _vsPlatziereSmiley() {
+      const start = stateIndex(currentQuadrant, topFace);
+      if (start < 0) return false;
+      const ende = (start + VORSCHAU_KIPPS) % 12;
+      const qEnde = CW_CYCLE[ende][0];
+      const fEnde = CW_CYCLE[ende][1];
+
+      // Farbe des Ziels bestimmen
+      const farbe = window._smileyTargetColor;
+      if (!farbe) return false;
+
+      // Slot auf der Endflaeche finden, der bei qEnde diese Farbe hat
+      let slotName = null;
+      ['S1','S2','S3','S4'].forEach(sn => {
+        if (!slotName && SLOT_NEIGHBOR_COLORS[qEnde][sn] === farbe) slotName = sn;
+      });
+      if (!slotName) return false;
+
+      // Gitterposition zu diesem Slot suchen
+      let gridKey = null;
+      const map = GRID_TO_SLOT[fEnde];
+      for (const k in map) { if (map[k] === slotName) { gridKey = k; break; } }
+      if (!gridKey) return false;
+
+      // Zielbild ueberall entfernen, dann genau auf diesen Slot legen
+      const zielDatei = (window._smileyTargetSrc || '').replace(/^.*[\\/]/, '').split('?')[0];
+      ['f0','f1','f2'].forEach(face => {
+        const sm = faceSlots[face] && faceSlots[face].slotMap;
+        if (!sm) return;
+        for (const k in sm) {
+          const sl = sm[k];
+          if (!sl.img || !sl.img.src) continue;
+          const d = sl.img.src.replace(/^.*[\\/]/, '').split('?')[0];
+          if (d === zielDatei) { sl.img = null; sl.vis = false; }
+        }
+      });
+      const zielSlot = faceSlots[fEnde].slotMap[gridKey];
+      if (!zielSlot) return false;
+      const bild = new Image();
+      bild.src = window._smileyTargetSrc;
+      zielSlot.img = bild;
+      zielSlot.vis = true;
+      if (typeof updateCubeMaterials === 'function') updateCubeMaterials();
+      return true;
+    }
+
     async function vorschauSmileyVorfuehrung() {
       // Ablauf exakt wie beim Spieler:
       //   Leveltafel -> VIER Smileys waehlen -> btnLosGehts ->
@@ -1442,29 +1499,24 @@
       if (typeof showLeveltafel === 'function') showLeveltafel(false);
       await _vsWarte(2000);
 
-      // Vier Smileys nacheinander auswaehlen, jeder blinkt vorher auf
+      // Genau EINEN Smiley auswaehlen — den festgelegten. Dafuer ist der
+      // Button btnBereit zustaendig (btnLosGehts braucht vier).
       const alle = Array.from(document.querySelectorAll('.leveltafelSmiley'))
         .filter(el => el.offsetParent !== null);
-      if (alle.length < 4) return;
-      const misch = alle.slice();
-      for (let i = misch.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const t = misch[i]; misch[i] = misch[j]; misch[j] = t;
-      }
-      for (let k = 0; k < 4; k++) {
-        _vsBlink(misch[k], 1100);
-        await _vsWarte(1250);
-        misch[k].click();
-        await _vsWarte(700);
-      }
-      await _vsWarte(1200);
+      const wunsch = alle.find(el => (el.src || '').indexOf(VORSCHAU_SMILEY) !== -1)
+                     || alle[0];
+      if (!wunsch) return;
+      _vsBlink(wunsch, 1800);
+      await _vsWarte(2000);
+      wunsch.click();
+      await _vsWarte(1600);
 
-      // Auswahl bestaetigen — LOS GEHT'S der Leveltafel
-      const losGehts = document.getElementById('btnLosGehts');
-      if (losGehts) {
-        _vsBlink(losGehts, 1500);
+      // Auswahl bestaetigen
+      const bereit = document.getElementById('btnBereit');
+      if (bereit) {
+        _vsBlink(bereit, 1500);
         await _vsWarte(1700);
-        losGehts.click();
+        if (!bereit.disabled) bereit.click();
       }
       await _vsWarte(2500);
 
@@ -1515,8 +1567,11 @@
     }
 
     async function vorschauSmileyKipp() {
-      const n = _vsFindeKippzahl();
+      // Smiley gezielt platzieren, damit die Loesung genau VORSCHAU_KIPPS ist
+      const gelegt = _vsPlatziereSmiley();
+      const n = gelegt ? VORSCHAU_KIPPS : _vsFindeKippzahl();
       if (!n) return;
+      await _vsWarte(500);
 
       // Scrollband auf die Zahl fahren. In smiley gibt es keine fertige
       // Hilfsfunktion dafuer — der Streifen wird direkt verschoben, genau wie
