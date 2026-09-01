@@ -1576,48 +1576,17 @@
       // Scrollband auf die Zahl fahren. In smiley gibt es keine fertige
       // Hilfsfunktion dafuer — der Streifen wird direkt verschoben, genau wie
       // es die Wischgeste tut.
-      const wrap = document.getElementById('scrollBandWrap');
+      // Scrollband ueber die vorhandene Steuerung auf die Zahl fahren
       const strip = document.getElementById('scrollBandStrip');
-      if (wrap && strip) {
-        const CELL_W = 56;   // muss zum Wert im Scrollband passen (Zeile ~12558)
-        const wrapW = wrap.offsetWidth || 306;
-        const idx = n - 1;
-        const tx = wrapW / 2 - CELL_W / 2 - idx * CELL_W;
-        strip.style.transition = 'transform 800ms cubic-bezier(0.22,1,0.36,1)';
-        strip.style.transform = 'translateX(' + tx + 'px)';
-        // Zahlen-Optik mitziehen: die zentrierte gross, die anderen kleiner
-        const btns = strip.querySelectorAll('.numBtn');
-        btns.forEach((b, i) => {
-          const dist = Math.abs(i - idx);
-          b.classList.toggle('center', dist === 0);
-          if (dist === 0) {
-            // Gewaehlte Zahl klar hervorheben: voll deckend, gross, fett.
-            // Ueber setProperty mit important, damit keine andere Regel
-            // sie wieder abschwaecht.
-            b.style.setProperty('opacity', '1', 'important');
-            b.style.setProperty('font-size', '34px', 'important');
-            b.style.setProperty('font-weight', '900', 'important');
-            b.style.setProperty('color', '#2a1a0a', 'important');
-            b.style.setProperty('filter', 'none', 'important');
-          } else {
-            b.style.removeProperty('font-weight');
-            b.style.removeProperty('color');
-            b.style.opacity = Math.max(0.35, 1 - dist * 0.18);
-            b.style.fontSize = Math.round(30 * Math.max(0.65, 1 - dist * 0.08)) + 'px';
-          }
-        });
-        window._selectedKippAnzahl = n;
-        await _vsWarte(1200);
-
-        // Ausgewaehlte Zahl markieren und aufblinken lassen
+      if (typeof window._vsSetzeBand === 'function') {
+        window._vsSetzeBand(n);
+        await _vsWarte(1400);
+      }
+      if (strip) {
         const ziel = strip.querySelector('.numBtn[data-num="' + n + '"]');
         if (ziel) {
-          // Kein 'selected' setzen — diese Klasse faerbt die Zahl hell und
-          // wuerde die hervorgehobene zentrierte Zahl wieder abschwaechen.
           _vsBlink(ziel, 1500);
           await _vsWarte(1700);
-          ziel.style.setProperty('opacity', '1', 'important');
-          ziel.style.setProperty('color', '#2a1a0a', 'important');
         }
       }
 
@@ -12578,6 +12547,13 @@
         else updateBandStyle();
       }
       
+      // Steuerung nach aussen geben, damit die Vorfuehrung dieselbe Mechanik
+      // benutzt wie eine Wischgeste — statt die Position nachzurechnen.
+      window._vsSetzeBand = function (n) {
+        bandIdx = Math.max(0, Math.min(TOTAL - 1, n - 1));
+        updateBandPos(true);
+      };
+
       function updateBandStyle() {
         const btns = strip.querySelectorAll('.numBtn');
         btns.forEach((b, i) => {
