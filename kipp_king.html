@@ -4,16 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
-    // === TESTZUGANG FUER DIE ENTWICKLUNG ===
-    // ?unlock=1 schaltet alle Spiele dauerhaft frei (zum Testen ohne Kauf).
-    // ?unlock=0 entfernt die Freischaltung wieder.
-    (function () {
-      try {
-        var u = new URLSearchParams(window.location.search).get('unlock');
-        if (u === '1') { localStorage.setItem('kippclub_bundle_unlocked', '1'); }
-        else if (u === '0') { localStorage.removeItem('kippclub_bundle_unlocked'); }
-      } catch (e) {}
-    })();
 
   // === KIPP CLUB Paywall-Guard ===
   (function() {
