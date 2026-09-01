@@ -1217,7 +1217,7 @@
   
   <!-- RESET-BUTTON (Body-Ebene, z-index 50 — über allen Overlays, immer klickbar) -->
   <div id="resetButtonWrap">
-    <button id="resetButton"><img src="rw.webp" alt="Zurück"></button>
+    <button id="resetButton" type="button" onclick="window.location.href='index.html';"><img src="rw.webp" alt="Zurück"></button>
     <button id="soundToggle"><img id="soundImg" src="tonein.webp" alt="Sound"></button>
     <div id="btnBestScores" style="position:absolute; right:5px; top:11px; width:57px; height:57px; cursor:pointer; pointer-events:auto;"><img src="pokal.png" style="width:57px;height:57px;object-fit:contain;pointer-events:none;"></div>
     <div id="levelScoreDisplay" style="display:none; position:absolute; left:110px; right:65px; top:14px; height:42px; text-align:center; pointer-events:none; z-index:20; font-family:Arial,sans-serif; line-height:42px;"></div>
@@ -13235,20 +13235,11 @@
     }, { passive: false });
 
     resetButton.addEventListener('click', () => {
-      // Ist die Stufenwahl offen, fuehrt der Button einen Schritt zurueck:
-      // Overlay schliessen und zur Startseite. Ohne das blieb man dort haengen.
-      const _sw = document.getElementById('stufenWahlOverlay');
-      if (_sw && _sw.style.display === 'block') {
-        _sw.style.opacity = '0';
-        _sw.style.pointerEvents = 'none';
-        _sw.style.display = 'none';
-      }
-      // WICHTIG: Der Button verlaesst die Seite. Der Fortschritt muss vorher
-      // gesichert werden, sonst geht der Spielstand verloren.
+      // Fortschritt sichern, falls das restliche Spiel-JavaScript bis hierher geladen wurde.
       if (typeof kippSpeichereFortschritt === 'function') {
         kippSpeichereFortschritt(window._brainySchwierigkeit || 1, window._brainyGoldwuerfel || 0);
       }
-      window.location.href = 'index.html?theme=numbers';
+      window.location.href = 'index.html';
     });
 
     // Zusaetzliche Absicherung: auch beim Schliessen/Wechseln der App sichern
