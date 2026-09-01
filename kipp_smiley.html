@@ -6595,7 +6595,20 @@
 
         doPulseSlot();
       }
-      window._checkTrainingResult = checkTrainingResult;
+      // VORSCHAU: Nach dem ersten ausgewerteten Kipp ist die Vorschau vorbei.
+      // Der Haken sitzt hier, weil checkTrainingResult nach JEDEM Kipp laeuft —
+      // unabhaengig davon, welchen Weg das Spiel danach intern nimmt.
+      window._checkTrainingResult = function (idx) {
+        const r = checkTrainingResult(idx);
+        if ((window._vorschauModus || window._vorschauGestartet) &&
+            !window._vorschauEndeGesetzt) {
+          window._vorschauEndeGesetzt = true;
+          setTimeout(function () {
+            window.location.href = 'index.html?wall=smileys&buy=smileys';
+          }, 5000);
+        }
+        return r;
+      };
       
       function showTrainingButtons() {
         // Buttons IMMER zeigen
