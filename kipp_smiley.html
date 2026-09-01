@@ -1436,44 +1436,52 @@
     }
 
     async function vorschauSmileyVorfuehrung() {
-      // 1. Leveltafel oeffnen
+      // Ablauf exakt wie beim Spieler:
+      //   Leveltafel -> VIER Smileys waehlen -> btnLosGehts ->
+      //   Hinweistext -> LOS GEHT'S -> Eckblick -> Scrollband -> Kipp
       if (typeof showLeveltafel === 'function') showLeveltafel(false);
       await _vsWarte(2000);
 
-      // 2. Einen sichtbaren Smiley auswaehlen — blinkt vorher auf
+      // Vier Smileys nacheinander auswaehlen, jeder blinkt vorher auf
       const alle = Array.from(document.querySelectorAll('.leveltafelSmiley'))
-        .filter(el => el.offsetParent !== null && !el.dataset.played);
-      if (alle.length === 0) return;
-      const pick = alle[Math.floor(Math.random() * alle.length)];
-      _vsBlink(pick, 1800);
-      await _vsWarte(2000);
-      pick.click();
-      await _vsWarte(1600);
+        .filter(el => el.offsetParent !== null);
+      if (alle.length < 4) return;
+      const misch = alle.slice();
+      for (let i = misch.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = misch[i]; misch[i] = misch[j]; misch[j] = t;
+      }
+      for (let k = 0; k < 4; k++) {
+        _vsBlink(misch[k], 1100);
+        await _vsWarte(1250);
+        misch[k].click();
+        await _vsWarte(700);
+      }
+      await _vsWarte(1200);
 
-      // 3. Auswahl bestaetigen
-      const bereit = document.getElementById('btnBereit');
-      if (bereit) {
-        _vsBlink(bereit, 1500);
+      // Auswahl bestaetigen — LOS GEHT'S der Leveltafel
+      const losGehts = document.getElementById('btnLosGehts');
+      if (losGehts) {
+        _vsBlink(losGehts, 1500);
         await _vsWarte(1700);
-        if (!bereit.disabled) bereit.click();
+        losGehts.click();
       }
       await _vsWarte(2500);
 
-      // 4. Hinweistext lesen lassen, dann LOS GEHT'S druecken.
-      //    Erst danach erscheint das Scrollband — dieser Schritt fehlte.
-      const los = document.getElementById('_smileyLosBtn');
-      if (los && los.style.display !== 'none') {
-        await _vsWarte(3200);        // Zeit zum Lesen des Hinweistextes
-        _vsBlink(los, 1500);
+      // Hinweistext lesen lassen, dann den zweiten LOS GEHT'S druecken.
+      // Der loest den Eckblick aus (runKipp21EckblickKniff).
+      const los2 = document.getElementById('_smileyLosBtn');
+      if (los2 && los2.style.display !== 'none') {
+        await _vsWarte(3000);
+        _vsBlink(los2, 1500);
         await _vsWarte(1700);
-        los.click();
-        await _vsWarte(2000);
+        los2.click();
       }
 
-      // 5. Warten bis der Wuerfel ruht und das Scrollband da ist.
-      //    Erst dann stimmt die Lage und die Kippzahl kann berechnet werden.
-      const bereitZumKippen = await _vsWarteAufSpielbereit(20000);
+      // Eckblick abwarten — erst danach steht die Lage fest
+      const bereitZumKippen = await _vsWarteAufSpielbereit(25000);
       if (!bereitZumKippen) return;
+      await _vsWarte(800);
       await vorschauSmileyKipp();
     }
 
@@ -3113,8 +3121,7 @@
           try { unlockAndPlayBgMusic(); } catch (e) {}
           vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
-            // Smiley hat kein eigenes Tutorial — stattdessen laeuft die
-            // automatische Vorfuehrung: Leveltafel, Smiley-Auswahl, Kipp.
+            // Automatische Vorfuehrung: Leveltafel, vier Smileys, Kipp.
             vorschauSmileyVorfuehrung();
           }, 600);
         }
