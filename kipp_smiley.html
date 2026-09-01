@@ -3201,8 +3201,10 @@
           try { unlockAndPlayBgMusic(); } catch (e) {}
           vorschauStartbildAus();   // erst unsichtbar machen ...
           setTimeout(function () {
-            // Automatische Vorfuehrung: Leveltafel, vier Smileys, Kipp.
-            vorschauSmileyVorfuehrung();
+            // Vorschau: Das Spiel startet ganz normal — der Spieler waehlt
+            // seinen Smiley und spielt eine Runde.
+            _startBtnLock = false;
+            showLeveltafel(false);
           }, 600);
         }
 
