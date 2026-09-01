@@ -1517,20 +1517,55 @@
     async function vorschauSmileyKipp() {
       const n = _vsFindeKippzahl();
       if (!n) return;
-      // Scrollband sichtbar auf die Zahl fahren
-      if (typeof window._scrollBandScrollOnly === 'function') {
-        window._scrollBandScrollOnly(n);
-        await _vsWarte(1400);
-      }
+
+      // Scrollband auf die Zahl fahren. In smiley gibt es keine fertige
+      // Hilfsfunktion dafuer — der Streifen wird direkt verschoben, genau wie
+      // es die Wischgeste tut.
+      const wrap = document.getElementById('scrollBandWrap');
       const strip = document.getElementById('scrollBandStrip');
-      if (strip) {
-        const btn = strip.querySelector('.numBtn[data-num="' + n + '"]');
-        _vsBlink(btn, 1500);
-        await _vsWarte(1700);
+      if (wrap && strip) {
+        const CELL_W = 51;
+        const wrapW = wrap.offsetWidth || 306;
+        const idx = n - 1;
+        const tx = wrapW / 2 - CELL_W / 2 - idx * CELL_W;
+        strip.style.transition = 'transform 800ms cubic-bezier(0.22,1,0.36,1)';
+        strip.style.transform = 'translateX(' + tx + 'px)';
+        // Zahlen-Optik mitziehen: die zentrierte gross, die anderen kleiner
+        const btns = strip.querySelectorAll('.numBtn');
+        btns.forEach((b, i) => {
+          const dist = Math.abs(i - idx);
+          b.classList.toggle('center', dist === 0);
+          b.style.opacity = Math.max(0.35, 1 - dist * 0.18);
+          b.style.fontSize = Math.round(30 * Math.max(0.65, 1 - dist * 0.08)) + 'px';
+        });
+        window._selectedKippAnzahl = n;
+        await _vsWarte(1200);
+
+        // Ausgewaehlte Zahl markieren und aufblinken lassen
+        const ziel = strip.querySelector('.numBtn[data-num="' + n + '"]');
+        if (ziel) {
+          btns.forEach(b => b.classList.remove('selected'));
+          ziel.classList.add('selected');
+          _vsBlink(ziel, 1500);
+          await _vsWarte(1700);
+        }
       }
-      if (typeof window._tutTriggerKipp === 'function') {
-        await window._tutTriggerKipp(n);
+
+      // Kippen — dieselbe Schleife wie beim Tap auf die Zahl
+      if (typeof isAnimating !== 'undefined' && isAnimating) return;
+      for (let i = 0; i < n; i++) {
+        let dir;
+        if      (currentQuadrant === 0) dir = 'east';
+        else if (currentQuadrant === 1) dir = 'south_from_q1';
+        else if (currentQuadrant === 2) dir = 'west_from_q2';
+        else                            dir = 'north';
+        await performKipp(dir, 600);
+        advanceTopFace();
+        if (i < n - 1) await _vsWarte(200);
       }
+      if (strip) strip.querySelectorAll('.numBtn').forEach(b => b.classList.remove('selected'));
+      // Ergebnis auswerten — zeigt den getroffenen Smiley mit den Punkten
+      if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
     }
 
     function vorschauStartbildAus() {
