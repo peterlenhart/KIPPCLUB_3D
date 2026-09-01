@@ -10095,6 +10095,15 @@
 
     // === SMILEY: Nächstes Kippziel generieren ===
     function generateNextSmileyTarget() {
+      // VORSCHAU: Genau EIN Smiley wird gespielt. Danach ist Schluss und es
+      // geht zurueck auf die eigene Wall mit dem Kauffenster. Die Vorschau ist
+      // kein kostenloser Zugang zum Spiel.
+      if (window._vorschauModus || window._vorschauGestartet) {
+        setTimeout(function () {
+          window.location.href = 'index.html?wall=smileys&buy=smileys';
+        }, 4000);
+        return;
+      }
       if (_smileyCurrentCardIdx >= (window._smileyOrder || selectedSmileys).length) return;
       const nextEl = (window._smileyOrder || selectedSmileys)[_smileyCurrentCardIdx];
       function smileyColor(src) {
