@@ -1579,7 +1579,7 @@
       const wrap = document.getElementById('scrollBandWrap');
       const strip = document.getElementById('scrollBandStrip');
       if (wrap && strip) {
-        const CELL_W = 51;
+        const CELL_W = 56;   // muss zum Wert im Scrollband passen (Zeile ~12558)
         const wrapW = wrap.offsetWidth || 306;
         const idx = n - 1;
         const tx = wrapW / 2 - CELL_W / 2 - idx * CELL_W;
@@ -1636,6 +1636,12 @@
       if (strip) strip.querySelectorAll('.numBtn').forEach(b => b.classList.remove('selected'));
       // Ergebnis auswerten — zeigt den getroffenen Smiley mit den Punkten
       if (window._checkTrainingResult) window._checkTrainingResult(activeCardIdx);
+
+      // Vorfuehrung zu Ende: Erfolg kurz stehen lassen, dann zurueck auf die
+      // eigene Wall mit dem Kauffenster. Weiterspielen darf man nicht, das
+      // Spiel ist ja nicht gekauft.
+      await _vsWarte(4500);
+      window.location.href = 'index.html?wall=smileys&buy=smileys';
     }
 
     function vorschauStartbildAus() {
