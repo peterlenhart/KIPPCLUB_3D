@@ -744,17 +744,8 @@
       width: 360px;
       height: 720px;
       pointer-events: none;
-      /* Muss ueber allen Overlays liegen (Stufenwahl und Goldsammlung haben
-         99999). Der Wrapper bildet einen eigenen Stacking-Context — ein hoher
-         z-index auf den Icons selbst wuerde darin gefangen bleiben und nichts
-         bewirken. Deshalb sitzt der Wert hier am Container. */
-      z-index: 100001;
+      z-index: 50;
     }
-    /* Die obere Icon-Leiste (Zurueck, Ton, Pokal) muss ueber allen Overlays
-       liegen — auch ueber der Stufenwahl und der Goldsammlung. Sonst waere sie
-       dort verdeckt und der Spieler kaeme nicht mehr heraus. */
-    #resetButton, #soundToggle, #btnBestScores { z-index: 100000; }
-
     #resetButton {
       display: block;
       position: absolute;
@@ -8211,6 +8202,28 @@
           btn.addEventListener('touchend', waehle, { passive: false });
         })(s);
         bEl.appendChild(btn);
+      }
+
+      // Eigener Zurueck-Button IM Overlay. Der aeussere Button liegt in einem
+      // anderen Container und wurde dort verdeckt — hier kann ihn nichts
+      // blockieren, weil er Teil des Overlays selbst ist.
+      if (!document.getElementById('stufenWahlZurueck')) {
+        const zb = document.createElement('div');
+        zb.id = 'stufenWahlZurueck';
+        zb.style.cssText =
+          'position:absolute; left:10px; top:10px; width:45px; height:45px;' +
+          'cursor:pointer; pointer-events:auto; z-index:10;' +
+          '-webkit-tap-highlight-color:transparent;';
+        zb.innerHTML = '<img src="rw.webp" alt="Zurueck" ' +
+          'style="width:45px;height:45px;object-fit:contain;pointer-events:none;">';
+        const raus = (e) => {
+          e.stopPropagation();
+          if (e.type === 'touchend') e.preventDefault();
+          window.location.href = 'index.html?theme=numbers';
+        };
+        zb.addEventListener('click', raus);
+        zb.addEventListener('touchend', raus, { passive: false });
+        ov.appendChild(zb);
       }
 
       ov.style.display = 'block';
