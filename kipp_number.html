@@ -8396,6 +8396,9 @@
       if (window._goldOverlayOffen) {   // zweiter Klick schliesst wieder
         ov.style.opacity = '0';
         setTimeout(() => { ov.style.display = 'none'; }, 380);
+        // Icon-Leiste wieder auf ihre normale Ebene setzen.
+        const iconWrap = document.getElementById('resetButtonWrap');
+        if (iconWrap) iconWrap.style.zIndex = '50';
         window._goldOverlayOffen = false;
         brainySammlungFortsetzen();
         return;
@@ -8432,9 +8435,12 @@
       ov.style.display = 'block';
       ov.style.transition = 'opacity 380ms ease';
       ov.style.opacity = '0';
-      // Icon-Leiste sichtbar halten — der Pokal muss zum Schliessen erreichbar
-      // bleiben, Zurueck und Ton ebenfalls.
+      // Icon-Leiste sichtbar UND ueber der Goldsammlung halten.
+      // Das Overlay liegt auf z-index 99999; vorher waren die Buttons deshalb
+      // zwar anklickbar, ihre Bilder wurden aber vom Overlay verdeckt.
       if (typeof positionResetButton === 'function') positionResetButton();
+      const iconWrap = document.getElementById('resetButtonWrap');
+      if (iconWrap) iconWrap.style.zIndex = '100000';
       const pokalOffen = document.getElementById('btnBestScores');
       if (pokalOffen) pokalOffen.style.display = 'block';
       requestAnimationFrame(() => { ov.style.opacity = '1'; });
