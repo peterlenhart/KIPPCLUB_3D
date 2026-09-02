@@ -678,7 +678,7 @@ Merken, Logik, Kopfzerbrechen.">
       align-items: center;
       justify-content: center;
     }
-    .lockIconBtn svg { height: 84px; width: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)); }
+    .lockIconBtn svg { height: 84px; width: auto; display: block; }
     .lockIconBtn.pulse { animation: lockPulse 1.8s ease-in-out infinite; }
     @keyframes lockPulse {
       0%, 100% { transform: translateX(calc(-50% - 205px)) scale(1); }
@@ -1619,10 +1619,9 @@ Merken, Logik, Kopfzerbrechen.">
         + '<stop offset="0%" stop-color="#FFE680"/>'
         + '<stop offset="100%" stop-color="#c09030"/>'
         + '</linearGradient>'
-        + '<filter id="k27lf"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>'
         + '</defs>'
-        + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="url(#k27lb)" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#k27lf)"/>'
-        + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#k27lg)" stroke="#7a5010" stroke-width="2" filter="url(#k27lf)"/>'
+        + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="url(#k27lb)" stroke-width="8" fill="none" stroke-linecap="round"/>'
+        + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#k27lg)" stroke="#7a5010" stroke-width="2"/>'
         + '<rect x="20" y="46" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
         + '<circle cx="40" cy="60" r="5" fill="#3a2010"/>'
         + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
@@ -1862,16 +1861,25 @@ Merken, Logik, Kopfzerbrechen.">
         });
       }
       // ===== PREIS-POPUP: Schloss statt Preistext, Klick oeffnet Popup =====
-      const LOCK_SVG_WALL = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg">'
-        + '<defs><linearGradient id="wlg" x1="0%" y1="0%" x2="0%" y2="100%">'
-        + '<stop offset="0%" stop-color="#FFF4B0"/><stop offset="40%" stop-color="#FFD700"/><stop offset="100%" stop-color="#a07020"/>'
-        + '</linearGradient><linearGradient id="wlb" x1="0%" y1="0%" x2="0%" y2="100%">'
-        + '<stop offset="0%" stop-color="#FFE680"/><stop offset="100%" stop-color="#c09030"/></linearGradient>'
-        + '<filter id="wlf"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter></defs>'
-        + '<path d="M 18 40 L 18 24 Q 18 6 40 6 Q 62 6 62 24 L 62 40" stroke="url(#wlb)" stroke-width="9" fill="none" stroke-linecap="round" filter="url(#wlf)"/>'
-        + '<rect x="14" y="40" width="52" height="48" rx="8" fill="url(#wlg)" stroke="#7a5010" stroke-width="2" filter="url(#wlf)"/>'
-        + '<rect x="20" y="44" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
-        + '<circle cx="40" cy="58" r="5" fill="#3a2010"/><rect x="38" y="58" width="4" height="12" fill="#3a2010"/></svg>';
+      // Android/WebView-robuste Schloss-SVGs: keine SVG-Filter, keine <defs>,
+      // keine url(#id)-Referenzen. Dadurch gibt es weder feDropShadow-Probleme
+      // noch Kollisionen mehrfach verwendeter SVG-IDs im Android WebView.
+      const LOCK_SVG_WALL = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+        + '<path d="M 18 40 L 18 24 Q 18 6 40 6 Q 62 6 62 24 L 62 40" stroke="#E7B93F" stroke-width="9" fill="none" stroke-linecap="round"/>'
+        + '<path d="M 22 39 L 22 24 Q 22 11 40 11 Q 58 11 58 24 L 58 39" stroke="#FFE680" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.75"/>'
+        + '<rect x="14" y="40" width="52" height="48" rx="8" fill="#D7A92C" stroke="#7a5010" stroke-width="2"/>'
+        + '<rect x="18" y="44" width="44" height="10" rx="5" fill="#FFD95A" opacity="0.9"/>'
+        + '<rect x="20" y="46" width="20" height="5" rx="2.5" fill="#FFFADD" opacity="0.65"/>'
+        + '<circle cx="40" cy="61" r="5" fill="#3a2010"/><rect x="38" y="61" width="4" height="12" fill="#3a2010"/></svg>';
+
+      const UNLOCK_SVG_WALL = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+        + '<path d="M 18 40 L 18 25 Q 18 7 40 7 Q 58 7 61 20" stroke="#E7B93F" stroke-width="9" fill="none" stroke-linecap="round"/>'
+        + '<path d="M 22 39 L 22 25 Q 22 12 40 12 Q 53 12 57 21" stroke="#FFE680" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.75"/>'
+        + '<path d="M 61 20 L 68 31" stroke="#E7B93F" stroke-width="9" fill="none" stroke-linecap="round"/>'
+        + '<rect x="14" y="40" width="52" height="48" rx="8" fill="#D7A92C" stroke="#7a5010" stroke-width="2"/>'
+        + '<rect x="18" y="44" width="44" height="10" rx="5" fill="#FFD95A" opacity="0.9"/>'
+        + '<rect x="20" y="46" width="20" height="5" rx="2.5" fill="#FFFADD" opacity="0.65"/>'
+        + '<circle cx="40" cy="61" r="5" fill="#3a2010"/><rect x="38" y="61" width="4" height="12" fill="#3a2010"/></svg>';
 
       const POPUP_INFO = {
         smileys: { title: 'KIPP SMILEY', singleLabel: 'Nur SMILEY', singlePrice: '€ 0,99' },
@@ -2065,48 +2073,23 @@ Merken, Logik, Kopfzerbrechen.">
 
     // Premium-Gold-Schloss als SVG (doppelt so gross, 42 Pre-Scale-Pixel = 14 Display-Pixel westlich)
     const KIPPCLUB_LOCK_SVG = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;height:2.2em;width:auto;position:relative;left:-18px;">'
-      + '<defs>'
-      + '<linearGradient id="kclg" x1="0%" y1="0%" x2="0%" y2="100%">'
-      + '<stop offset="0%" stop-color="#FFF4B0"/>'
-      + '<stop offset="40%" stop-color="#FFD700"/>'
-      + '<stop offset="100%" stop-color="#a07020"/>'
-      + '</linearGradient>'
-      + '<linearGradient id="kclb" x1="0%" y1="0%" x2="0%" y2="100%">'
-      + '<stop offset="0%" stop-color="#FFE680"/>'
-      + '<stop offset="100%" stop-color="#c09030"/>'
-      + '</linearGradient>'
-      + '<filter id="kclf"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>'
-      + '</defs>'
-      + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="url(#kclb)" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#kclf)"/>'
-      + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#kclg)" stroke="#7a5010" stroke-width="2" filter="url(#kclf)"/>'
-      + '<rect x="20" y="46" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
-      + '<circle cx="40" cy="60" r="5" fill="#3a2010"/>'
-      + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
+      + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="#E7B93F" stroke-width="8" fill="none" stroke-linecap="round"/>'
+      + '<rect x="14" y="42" width="52" height="48" rx="8" fill="#D7A92C" stroke="#7a5010" stroke-width="2"/>'
+      + '<rect x="18" y="46" width="44" height="9" rx="4.5" fill="#FFD95A" opacity="0.9"/>'
+      + '<rect x="20" y="47" width="20" height="5" rx="2.5" fill="#FFFADD" opacity="0.65"/>'
+      + '<circle cx="40" cy="61" r="5" fill="#3a2010"/><rect x="38" y="61" width="4" height="12" fill="#3a2010"/>'
       + '</svg>';
 
     // Schloss mit STABILER absoluter Anker-Positionierung — unabhaengig von Layout-Aenderungen
     // Container wird relative, SVG sitzt absolut mittig im Container minus 18 Pre-Scale-Pixel (= 6 Display-Pixel)
     // Original war -42 Pre-Scale-Pixel; -18 entspricht 8 Display-Pixel oestlich vom Original (Faktor scale=1/3)
     const KIPPCLUB_LOCK_SVG_ANCHORED = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" '
-      + 'style="position:absolute;top:50%;left:50%;transform:translate(calc(-50% - 18px), -50%);'
-      + 'height:2.2em;width:auto;pointer-events:none;">'
-      + '<defs>'
-      + '<linearGradient id="kclg2" x1="0%" y1="0%" x2="0%" y2="100%">'
-      + '<stop offset="0%" stop-color="#FFF4B0"/>'
-      + '<stop offset="40%" stop-color="#FFD700"/>'
-      + '<stop offset="100%" stop-color="#a07020"/>'
-      + '</linearGradient>'
-      + '<linearGradient id="kclb2" x1="0%" y1="0%" x2="0%" y2="100%">'
-      + '<stop offset="0%" stop-color="#FFE680"/>'
-      + '<stop offset="100%" stop-color="#c09030"/>'
-      + '</linearGradient>'
-      + '<filter id="kclf2"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>'
-      + '</defs>'
-      + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="url(#kclb2)" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#kclf2)"/>'
-      + '<rect x="14" y="42" width="52" height="48" rx="8" fill="url(#kclg2)" stroke="#7a5010" stroke-width="2" filter="url(#kclf2)"/>'
-      + '<rect x="20" y="46" width="20" height="6" rx="3" fill="#FFFADD" opacity="0.5"/>'
-      + '<circle cx="40" cy="60" r="5" fill="#3a2010"/>'
-      + '<rect x="38" y="60" width="4" height="12" fill="#3a2010"/>'
+      + 'style="position:absolute;top:50%;left:50%;transform:translate(calc(-50% - 18px), -50%);height:2.2em;width:auto;pointer-events:none;">'
+      + '<path d="M 4 38 L 4 22 Q 4 6 13 6 Q 22 6 22 22 L 22 42" stroke="#E7B93F" stroke-width="8" fill="none" stroke-linecap="round"/>'
+      + '<rect x="14" y="42" width="52" height="48" rx="8" fill="#D7A92C" stroke="#7a5010" stroke-width="2"/>'
+      + '<rect x="18" y="46" width="44" height="9" rx="4.5" fill="#FFD95A" opacity="0.9"/>'
+      + '<rect x="20" y="47" width="20" height="5" rx="2.5" fill="#FFFADD" opacity="0.65"/>'
+      + '<circle cx="40" cy="61" r="5" fill="#3a2010"/><rect x="38" y="61" width="4" height="12" fill="#3a2010"/>'
       + '</svg>';
 
     // Pruefe Freigabe-Status und ersetze Preis-Texte durch SPIELEN + Schloss
@@ -2139,9 +2122,16 @@ Merken, Logik, Kopfzerbrechen.">
         const isUnlocked = unlocks[game];
         if (!isUnlocked) return;
 
-        // Popup-Schloss-Icon verstecken, sobald freigeschaltet (die alte SPIELEN/Schloss-Logik unten uebernimmt die Anzeige)
+        // Freigeschaltet: dasselbe Schloss-Element bleibt an exakt derselben Stelle,
+        // zeigt aber ein OFFENES Schloss. Es ist nur Statusanzeige; die bestehende
+        // SPIELEN/VORSCHAU-Klicklogik bleibt unveraendert.
         const lockBtn = slide.querySelector('.lockIconBtn');
-        if (lockBtn) lockBtn.style.display = 'none';
+        if (lockBtn) {
+          lockBtn.innerHTML = UNLOCK_SVG_WALL;
+          lockBtn.style.display = 'flex';
+          lockBtn.style.pointerEvents = 'none';
+          lockBtn.classList.remove('pulse');
+        }
         // Kaufzustand fuer die Klick-Weiche merken
         window._spielGekauft = window._spielGekauft || {};
         window._spielGekauft[game] = true;
